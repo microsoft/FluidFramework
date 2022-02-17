@@ -60,28 +60,26 @@ use_old_ClassDeclaration_BaseTelemetryNullLogger(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.32.1:
-* "RemovedClassDeclaration_BatchManager": {"forwardCompat": false}
+* "ClassDeclaration_BatchManager": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_BatchManager():
     Omit<old.BatchManager<any>,"">;
-declare function use_current_RemovedClassDeclaration_BatchManager(
-    // @ts-expect-error compatibility expected to be broken
+declare function use_current_ClassDeclaration_BatchManager(
     use: Omit<current.BatchManager<any>,"">);
-use_current_RemovedClassDeclaration_BatchManager(
+use_current_ClassDeclaration_BatchManager(
     get_old_ClassDeclaration_BatchManager());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.32.1:
-* "RemovedClassDeclaration_BatchManager": {"backCompat": false}
+* "ClassDeclaration_BatchManager": {"backCompat": false}
 */
-declare function get_current_RemovedClassDeclaration_BatchManager():
-    // @ts-expect-error compatibility expected to be broken
+declare function get_current_ClassDeclaration_BatchManager():
     Omit<current.BatchManager<any>,"">;
 declare function use_old_ClassDeclaration_BatchManager(
     use: Omit<old.BatchManager<any>,"">);
 use_old_ClassDeclaration_BatchManager(
-    get_current_RemovedClassDeclaration_BatchManager());
+    get_current_ClassDeclaration_BatchManager());
 
 /*
 * Validate forward compat by using old type in place of current type

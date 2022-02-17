@@ -136,10 +136,6 @@
         "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {
           "forwardCompat": false,
           "backCompat": false
-        },
-        "RemovedClassDeclaration_BatchManager": {
-          "forwardCompat": false,
-          "backCompat": false
         }
       }
     }

@@ -4,6 +4,7 @@
 
 ```ts
 
+import { BatchManager } from '@fluidframework/common-utils';
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { IAnyDriverError } from '@fluidframework/driver-utils';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
@@ -58,6 +59,8 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     protected initialize(connectMessage: IConnect, timeout: number): Promise<void>;
     get initialMessages(): ISequencedDocumentMessage[];
     get initialSignals(): ISignalMessage[];
+    // (undocumented)
+    protected readonly isBatchManagerDisabled: boolean;
     // @deprecated (undocumented)
     protected get logger(): ITelemetryLogger;
     get maxMessageSize(): number;
@@ -72,6 +75,8 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     submit(messages: IDocumentMessage[]): void;
     // (undocumented)
     protected submitCore(type: string, messages: IDocumentMessage[]): void;
+    // (undocumented)
+    protected readonly submitManager: BatchManager<IDocumentMessage[]>;
     submitSignal(message: IDocumentMessage): void;
     get version(): string;
 }

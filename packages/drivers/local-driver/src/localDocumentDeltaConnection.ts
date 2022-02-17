@@ -63,7 +63,12 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     protected submitCore(type: string, messages: IDocumentMessage[]) {
-        this.emitMessages(type, [messages]);
+        if (this.isBatchManagerDisabled) {
+            this.emitMessages(type, [messages]);
+        } else {
+            this.submitManager.add(type, messages);
+            this.submitManager.drain();
+        }
     }
 
     /**

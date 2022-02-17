@@ -333,6 +333,8 @@ interface OldContainerContextWithLogger extends IContainerContext {
     logger: ITelemetryBaseLogger;
 }
 
+// Local storage key to set the default flush mode to TurnBased
+const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
 
 export enum RuntimeMessage {
@@ -891,7 +893,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly _aliasingEnabled: boolean;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode: FlushMode = FlushMode.TurnBased;
+    private _flushMode: FlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -1009,6 +1011,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
+
+        this._flushMode =
+            this.mc.config.getBoolean(turnBasedFlushModeKey) ?? false
+            ? FlushMode.TurnBased : FlushMode.Immediate;
 
         this._aliasingEnabled =
             (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||

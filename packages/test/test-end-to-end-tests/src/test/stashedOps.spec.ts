@@ -223,8 +223,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(map2.get(testKey), bigString);
     });
 
-    // TODO: investigate reenabling this test if still relevant without a BatchManager
-    it.skip("doesn't resend successful chunked op", async function() {
+    it("doesn't resend successful chunked op", async function() {
         const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
