@@ -21,6 +21,11 @@ import {
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 
+/**
+ * @deprecated 0.58, Will be removed in 0.60
+ * Moved to {@link @fluidframework/container-definitions}
+ * See https://github.com/microsoft/FluidFramework/issues/9166 for context
+ */
 export enum ReconnectMode {
     Never = "Never",
     Disabled = "Disabled",

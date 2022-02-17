@@ -149,6 +149,16 @@ export namespace ConnectionState {
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
 
 /**
+ * Accepted reconnection modes to be used with `setAutoReconnect()`
+ */
+export enum ReconnectMode {
+    Never = "Never",
+    Disabled = "Disabled",
+    Enabled = "Enabled",
+    Custom = "Custom"
+}
+
+/**
  * The Host's view of the Container and its connection to storage
  */
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {

@@ -569,6 +569,18 @@ export type ReadOnlyInfo = {
     readonly storageOnly: boolean;
 };
 
+// @public
+export enum ReconnectMode {
+    // (undocumented)
+    Custom = "Custom",
+    // (undocumented)
+    Disabled = "Disabled",
+    // (undocumented)
+    Enabled = "Enabled",
+    // (undocumented)
+    Never = "Never"
+}
+
 
 // (No @packageDocumentation comment for this package)
 
