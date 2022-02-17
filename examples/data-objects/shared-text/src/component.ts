@@ -117,9 +117,7 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
         const browserContainerHost = new ui.BrowserContainerHost();
 
         const containerDiv = document.createElement("div");
-        containerDiv.id = "flow-container";
-        containerDiv.style.touchAction = "none";
-        containerDiv.style.overflow = "hidden";
+        containerDiv.classList.add("flow-container");
         const container = new controls.FlowContainer(
             containerDiv,
             this.title,
