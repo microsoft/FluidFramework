@@ -306,7 +306,7 @@ async function fetchLatestSnapshotCore(
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
                     sltelemetry: response.odspSnapshotResponse.headers.get("x-fluid-sltelemetry"),
-                    ...response.odspSnapshotResponse.commonSpoHeaders,
+                    ...response.odspSnapshotResponse.propsToLog,
                 });
                 return snapshot;
             },
