@@ -221,6 +221,12 @@ export function configureWebSocketServices(
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
             } catch (err) {
+                Lumberjack.error(
+                    `Error in connect doc+verifytoken; input=${token}`,
+                    getLumberBaseProperties(message.id,
+                        message.tenantId),
+                    err,
+                );
                 // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject({
                     // if we don't understand the error, be lenient and allow retry
@@ -425,6 +431,7 @@ export function configureWebSocketServices(
                         `Error in connect doc; input=${JSON.stringify(connectionMessage)}`,
                         getLumberBaseProperties(connectionMessage.id,
                             connectionMessage.tenantId),
+                        error,
                     );
                     socket.emit("connect_document_error", error);
                     connectMetric.error(`Connect document failed`, error);

@@ -15,7 +15,7 @@ import {
     ISecretManager,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -76,6 +76,12 @@ export class TenantManager {
             // if the tenant doesn't have key2, it will be empty string
             // we should fail token generated with empty string as key
             if (!tenantKeys.key2) {
+                Lumberjack.error(
+                    `error1 token=${token}`,
+                    getLumberBaseProperties("",
+                        tenantId),
+                    error1,
+                );
                 throw error1 instanceof jwt.TokenExpiredError
                     ? new NetworkError(401, "Token expired validated with key1.")
                     : new NetworkError(403, "Invalid token validated with key1.");
@@ -85,6 +91,13 @@ export class TenantManager {
                 if (!error2) {
                     return;
                 }
+
+                Lumberjack.error(
+                    `error2 token=${token}`,
+                    getLumberBaseProperties("",
+                        tenantId),
+                    error2,
+                );
 
                 // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
                 throw (error1 instanceof jwt.TokenExpiredError
