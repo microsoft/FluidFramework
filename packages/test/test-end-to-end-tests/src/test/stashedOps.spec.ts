@@ -151,7 +151,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         [...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), i));
     });
 
-    it("doesn't resend a lot of successful ops", async function() {
+    // Github issue #9163
+    it.skip("doesn't resend a lot of successful ops", async function() {
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
         });
@@ -223,7 +224,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(map2.get(testKey), bigString);
     });
 
-    it("doesn't resend successful chunked op", async function() {
+    // Github issue #9163
+    it.skip(" re resend successful chunked op", async function() {
         const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
