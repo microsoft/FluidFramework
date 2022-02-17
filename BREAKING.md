@@ -10,6 +10,16 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.58 Breaking changes
+- [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from merge-tree-to-sequence-package)
+
+### Move IntervalType from merge-tree to sequence package
+Move the type from the merge-tree package where it isn't used to the sequence package where it is used
+``` diff
+- import { IntervalType } from "@fluidframework/merge-tree";
++ import { IntervalType } from "@fluidframework/sequence";
+```
+
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
 - [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
