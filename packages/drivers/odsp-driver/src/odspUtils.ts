@@ -52,7 +52,7 @@ export interface ISnapshotContents {
 export interface IOdspResponse<T> {
     content: T;
     headers: Map<string, string>;
-    commonSpoHeaders: ITelemetryProperties;
+    propsToLog: ITelemetryProperties;
     duration: number,
 }
 
@@ -122,7 +122,7 @@ export async function fetchHelper(
         return {
             content: response,
             headers,
-            commonSpoHeaders: getSPOAndGraphRequestIdsFromResponse(headers),
+            propsToLog: getSPOAndGraphRequestIdsFromResponse(headers),
             duration: performance.now() - start,
         };
     }, (error) => {
@@ -165,14 +165,14 @@ export async function fetchArray(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<ArrayBuffer>> {
-    const { content, headers, commonSpoHeaders, duration } = await fetchHelper(requestInfo, requestInit);
+    const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
 
     const arrayBuffer = await content.arrayBuffer();
-    commonSpoHeaders.bodySize = arrayBuffer.byteLength;
+    propsToLog.bodySize = arrayBuffer.byteLength;
     return {
         headers,
         content: arrayBuffer,
-        commonSpoHeaders,
+        propsToLog,
         duration,
     };
 }
@@ -186,7 +186,7 @@ export async function fetchAndParseAsJSONHelper<T>(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
-    const { content, headers, commonSpoHeaders, duration } = await fetchHelper(requestInfo, requestInit);
+    const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
     let text: string | undefined;
     try {
         text = await content.text();
@@ -204,11 +204,11 @@ export async function fetchAndParseAsJSONHelper<T>(
         );
     }
 
-    commonSpoHeaders.bodySize = text.length;
+    propsToLog.bodySize = text.length;
     const res = {
         headers,
         content: JSON.parse(text),
-        commonSpoHeaders,
+        propsToLog,
         duration,
     };
     return res;
