@@ -20,12 +20,12 @@ describe("Runtime", () => {
         let ticks = 0;
         new BatchTracker(emitter, mockLogger, 5, 100, () => ticks);
 
-        emitter.emit("batchBegin", batchMessage(1))
+        emitter.emit("batchBegin", batchMessage(2))
         emitter.emit("batchEnd", /* error */ undefined, batchMessage(5));
 
         emitter.emit("batchBegin", batchMessage(1))
         ticks += 10;
-        emitter.emit("batchEnd", /* error */ undefined, batchMessage(6));
+        emitter.emit("batchEnd", /* error */ undefined, batchMessage(5));
 
         emitter.emit("batchBegin", batchMessage(1))
         ticks += 20;
@@ -35,14 +35,16 @@ describe("Runtime", () => {
             {
                 eventName: "Batching:TooManyOps",
                 opCount: 5,
-                referenceSequenceNumber: 6,
-                batchEndSequenceNumber: 6,
+                threshold: 5,
+                referenceSequenceNumber: 5,
+                batchEndSequenceNumber: 5,
                 timeSpanMs: 10,
                 batchError: false,
                 category: "error",
             }, {
                 eventName: "Batching:TooManyOps",
-                opCount: 7,
+                opCount: 8,
+                threshold: 5,
                 referenceSequenceNumber: 8,
                 batchEndSequenceNumber: 8,
                 timeSpanMs: 20,
@@ -59,29 +61,32 @@ describe("Runtime", () => {
         for (let i = 1; i <= 10; i++) {
             emitter.emit("batchBegin", batchMessage(1))
             ticks += i;
-            emitter.emit("batchEnd", /* error */ undefined, batchMessage(1 + i));
+            emitter.emit("batchEnd", /* error */ undefined, batchMessage(i));
         }
 
         mockLogger.assertMatch([
             {
                 eventName: "Batching:OpCount",
                 opCount: 3,
-                referenceSequenceNumber: 4,
-                batchEndSequenceNumber: 4,
+                samplingRate: 3,
+                referenceSequenceNumber: 3,
+                batchEndSequenceNumber: 3,
                 timeSpanMs: 3,
                 category: "performance",
             }, {
                 eventName: "Batching:OpCount",
                 opCount: 6,
-                referenceSequenceNumber: 7,
-                batchEndSequenceNumber: 7,
+                samplingRate: 3,
+                referenceSequenceNumber: 6,
+                batchEndSequenceNumber: 6,
                 timeSpanMs: 6,
                 category: "performance",
             }, {
                 eventName: "Batching:OpCount",
                 opCount: 9,
-                referenceSequenceNumber: 10,
-                batchEndSequenceNumber: 10,
+                samplingRate: 3,
+                referenceSequenceNumber: 9,
+                batchEndSequenceNumber: 9,
                 timeSpanMs: 9,
                 category: "performance",
             },

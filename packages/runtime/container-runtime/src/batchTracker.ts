@@ -35,11 +35,12 @@ export class BatchTracker {
                 this.startBatchSequenceNumber !== undefined && this.batchProcessingStartTimeStamp !== undefined,
                 "batchBegin must fire before batchEnd");
 
-            const opCount = message.sequenceNumber - this.startBatchSequenceNumber;
+            const opCount = message.sequenceNumber - this.startBatchSequenceNumber + 1;
             if (opCount >= this.opCountThreshold) {
                 this.logger.sendErrorEvent({
                     eventName: "TooManyOps",
                     opCount,
+                    threshold: opCountThreshold,
                     referenceSequenceNumber: message.referenceSequenceNumber,
                     batchEndSequenceNumber: message.sequenceNumber,
                     timeSpanMs: this.dateTimeProvider() - this.batchProcessingStartTimeStamp,
@@ -51,6 +52,7 @@ export class BatchTracker {
                 this.logger.sendPerformanceEvent({
                     eventName: "OpCount",
                     opCount,
+                    samplingRate: batchCountSamplingRate,
                     referenceSequenceNumber: message.referenceSequenceNumber,
                     batchEndSequenceNumber: message.sequenceNumber,
                     timeSpanMs: this.dateTimeProvider() - this.batchProcessingStartTimeStamp,
