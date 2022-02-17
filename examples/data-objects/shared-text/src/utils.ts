@@ -4,7 +4,6 @@
  */
 
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
-import { default as axios } from "axios";
 
 export const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
     const maybeValue = map.get<T>(key);
@@ -26,9 +25,3 @@ export const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T>
         map.on("valueChanged", handler);
     });
 };
-
-export async function downloadRawText(textUrl: string): Promise<string> {
-    const data = await axios.get(textUrl);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return data.data;
-}

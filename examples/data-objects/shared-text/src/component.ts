@@ -4,7 +4,6 @@
  */
 
 import { EventEmitter } from "events";
-import { parse } from "querystring";
 import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { performance } from "@fluidframework/common-utils";
@@ -19,7 +18,7 @@ import {
     ISharedMap,
     SharedMap,
 } from "@fluidframework/map";
-import * as MergeTree from "@fluidframework/merge-tree";
+import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
 import {
     IFluidDataStoreContext, IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
@@ -31,7 +30,7 @@ import {
     create404Response,
 } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { downloadRawText, mapWait } from "./utils";
+import { mapWait } from "./utils";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/css/bootstrap-theme.min.css";
@@ -109,23 +108,8 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
 
             debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
             const newString = SharedString.create(this.runtime);
+            newString.insertMarker(0, ReferenceType.Tile, { [reservedTileLabelsKey]: ["pg"] });
 
-            const template = parse(window.location.search.substr(1)).template;
-            const starterText = template
-                ? await downloadRawText(`/public/literature/${template}`)
-                : " ";
-
-            const segments = MergeTree.loadSegments(starterText, 0, true);
-            for (const segment of segments) {
-                if (MergeTree.TextSegment.is(segment)) {
-                    newString.insertText(newString.getLength(), segment.text,
-                        segment.properties);
-                } else {
-                    // Assume marker
-                    const marker = segment as MergeTree.Marker;
-                    newString.insertMarker(newString.getLength(), marker.refType, marker.properties);
-                }
-            }
             this.root.set(textSharedStringId, newString.handle);
 
             // The flowContainerMap MUST be set last
