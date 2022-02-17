@@ -5,7 +5,6 @@
 
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Response } from "express";
-import winston from "winston";
 
 export function handleResponse<T>(
     resultP: Promise<T>,
