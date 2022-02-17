@@ -30,7 +30,6 @@ import {
     create404Response,
 } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { mapWait } from "./utils";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/css/bootstrap-theme.min.css";
@@ -41,7 +40,6 @@ const debug = registerDebug("fluid:shared-text");
 
 const rootMapId = "root";
 const textSharedStringId = "text";
-const flowContainerMapId = "flowContainerMap";
 
 export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IFluidLoadable {
     public static async load(
@@ -106,28 +104,13 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
             this.root = SharedMap.create(this.runtime, rootMapId);
             this.root.bindToContext();
 
-            debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
-            const newString = SharedString.create(this.runtime);
-            newString.insertMarker(0, ReferenceType.Tile, { [reservedTileLabelsKey]: ["pg"] });
-
-            this.root.set(textSharedStringId, newString.handle);
-
-            // The flowContainerMap MUST be set last
-            const flowContainerMap = SharedMap.create(this.runtime);
-            this.root.set(flowContainerMapId, flowContainerMap.handle);
+            this.sharedString = SharedString.create(this.runtime);
+            this.sharedString.insertMarker(0, ReferenceType.Tile, { [reservedTileLabelsKey]: ["pg"] });
+            this.root.set(textSharedStringId, this.sharedString.handle);
         } else {
             this.root = await this.runtime.getChannel(rootMapId) as ISharedMap;
+            this.sharedString = await this.root.get<IFluidHandle<SharedString>>(textSharedStringId).get();
         }
-
-        debug(`collabDoc loaded ${this.runtime.id} - ${performance.now()}`);
-        debug(`Getting root ${this.runtime.id} - ${performance.now()}`);
-
-        await mapWait(this.root, flowContainerMapId);
-
-        this.sharedString = await this.root.get<IFluidHandle<SharedString>>(textSharedStringId).get();
-        debug(`Shared string ready - ${performance.now()}`);
-        debug(`id is ${this.runtime.id}`);
-        debug(`Partial load fired: ${performance.now()}`);
     }
 
     private async initializeUI(div): Promise<void> {
