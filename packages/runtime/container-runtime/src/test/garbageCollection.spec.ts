@@ -97,6 +97,8 @@ describe("Garbage Collection Tests", () => {
         const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
         beforeEach(() => {
             closeCalled = false;
+            const settings = { "Fluid.GarbageCollection.RunSessionExpiry": "true" };
+            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
         });
         afterEach(() => {
             sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
@@ -111,8 +113,6 @@ describe("Garbage Collection Tests", () => {
         });
 
         it("Session expires for a new container", async () => {
-            const settings = { "Fluid.GarbageCollection.RunSessionExpiry": "true" };
-            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
             createGarbageCollector();
             clock.tick(defaultSessionExpiryDurationMs); 
             assert(closeCalled, "Close should have been called.");
