@@ -4,7 +4,8 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import { SharedTextDataObject, SharedTextView } from "./component";
+import { SharedTextDataObject } from "./dataObject";
+import { SharedTextView } from "./view";
 
 
 const sharedTextViewCallback = (sharedTextDataObject: SharedTextDataObject) => new SharedTextView(sharedTextDataObject);
