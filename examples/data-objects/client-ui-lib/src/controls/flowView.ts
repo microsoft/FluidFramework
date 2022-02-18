@@ -6,19 +6,16 @@
 import { performance } from "@fluidframework/common-utils";
 import {
     FluidObject,
-    IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreContext, IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import React from "react";
 import ReactDOM from "react-dom";
 import { CharacterCodes, Paragraph, Table } from "../text";
@@ -46,11 +43,6 @@ function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
 interface IBlockViewMarker extends MergeTree.Marker {
     instanceP?: Promise<IFluidHTMLView>;
     instance?: IFluidHTMLView & FluidObject<IViewLayout>;
-}
-
-interface IFluidViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IFluidHTMLView>;
-    instance?: IFluidHTMLView;
 }
 
 interface IFlowViewUser extends IUser {
@@ -324,13 +316,6 @@ function allowDOMEvents(element: HTMLElement) {
     return element;
 }
 
-function isComponentView(marker: MergeTree.Marker) {
-    if (marker.hasProperty("crefTest")) {
-        const refInfo = marker.properties.crefTest as IReferenceDoc;
-        return refInfo.type.name === "component";
-    }
-}
-
 function renderSegmentIntoLine(
     segment: MergeTree.ISegment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
@@ -366,44 +351,6 @@ function renderSegmentIntoLine(
         }
     } else if (MergeTree.Marker.is(segment)) {
         // Console.log(`marker pos: ${segpos}`);
-
-        // If the marker is a simple reference, see if it's types is registered as an external
-        // component.
-        if (segment.refType === MergeTree.ReferenceType.Simple) {
-            const marker = segment;
-            if (isComponentView(marker)) {
-                const span = document.createElement("span");
-                const componentMarker = marker as IFluidViewMarker;
-
-                // Delay load the instance if not available
-                if (componentMarker.instance === undefined) {
-                    if (componentMarker.instanceP === undefined) {
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        handleFromLegacyUri(
-                            `/${componentMarker.properties.leafId}`,
-                            lineContext.flowView.context.containerRuntime)
-                        .get()
-                        .then(async (component) => {
-                            if (!HTMLViewAdapter.canAdapt(component)) {
-                                return Promise.reject(new Error("component is not viewable"));
-                            }
-
-                            return new HTMLViewAdapter(component);
-                        });
-
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        componentMarker.instanceP.then((instance) => {
-                            // TODO how do I trigger a re-render?
-                            componentMarker.instance = instance;
-                        });
-                    }
-                } else {
-                    componentMarker.instance.render(span, { display: "inline" });
-                    componentMarker.properties.cachedElement = span;
-                    lineContext.contentDiv.appendChild(span);
-                }
-            }
-        }
 
         if (endRenderSegments(segment)) {
             if (lineContext.flowView.cursor.pos === segpos) {
@@ -2057,7 +2004,6 @@ export class FlowView extends ui.Component {
     constructor(
         element: HTMLDivElement,
         public readonly runtime: IFluidDataStoreRuntime,
-        public readonly context: IFluidDataStoreContext,
         public sharedString: Sequence.SharedString,
     ) {
         super(element);
@@ -3274,30 +3220,6 @@ export class FlowView extends ui.Component {
             this.sharedString.annotateRange(start, end, { [name]: valueOn });
         }
         this.undoRedoManager.closeCurrentOperation();
-    }
-
-    public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
-        const router = await this.context.containerRuntime.createDataStore(chaincode);
-        const object: FluidObject<IFluidLoadable> = await requestFluidObject(router, "");
-        const loadable = object.IFluidLoadable;
-
-        const props = {
-            crefTest: {
-                layout: { inline },
-                type: {
-                    name: "component",
-                } as IReferenceDocType,
-                url: loadable.handle,
-            },
-            leafId: loadable.handle,
-        };
-
-        if (!inline) {
-            this.insertParagraph(this.cursor.pos++);
-        }
-
-        const markerPos = this.cursor.pos;
-        this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
     }
 
     private deleteRow() {

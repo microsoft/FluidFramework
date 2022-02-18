@@ -44,10 +44,9 @@ const textSharedStringId = "text";
 export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IFluidLoadable {
     public static async load(
         runtime: FluidDataStoreRuntime,
-        context: IFluidDataStoreContext,
         existing: boolean,
     ): Promise<SharedTextRunner> {
-        const runner = new SharedTextRunner(runtime, context);
+        const runner = new SharedTextRunner(runtime);
         await runner.initialize(existing);
 
         return runner;
@@ -67,7 +66,6 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
 
     private constructor(
         private readonly runtime: FluidDataStoreRuntime,
-        private readonly context: IFluidDataStoreContext,
     ) {
         super();
         this.innerHandle = new FluidObjectHandle(this, "/text", this.runtime.objectsRoutingContext);
@@ -114,7 +112,6 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
             containerDiv,
             "Shared Text",
             this.runtime,
-            this.context,
             this.sharedString,
         );
         const theFlow = container.flowView;
@@ -154,7 +151,7 @@ export class SharedTextDataStoreFactory implements IFluidDataStoreFactory {
             ].map((factory) => [factory.type, factory])),
             existing,
         );
-        const routerP = SharedTextRunner.load(runtime, context, existing);
+        const routerP = SharedTextRunner.load(runtime, existing);
 
         return runtime;
     }
