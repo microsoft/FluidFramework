@@ -91,10 +91,7 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
         const pathParts = RequestParser.getPathParts(request.url);
         if (pathParts.length === 0) {
             return { status: 200, mimeType: "fluid/object", value: this };
-        } else if (pathParts.length === 1 && pathParts[0].toLocaleLowerCase() === "sharedstring") {
-            return { status:200, mimeType: "fluid/sharedstring", value: this.sharedString };
-        }
-        else {
+        } else {
             return create404Response(request);
         }
     }
