@@ -10,6 +10,7 @@ import { performance } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
 import {
     SharedString,
@@ -25,22 +26,11 @@ const debug = registerDebug("fluid:shared-text");
 
 const textSharedStringId = "text";
 
-export class SharedTextRunner extends DataObject implements IFluidHTMLView {
-    public static get Name() { return "@fluid-example/shared-text"; }
-
-    public static readonly factory = new DataObjectFactory(
-        SharedTextRunner.Name,
-        SharedTextRunner,
-        [
-            SharedString.getFactory(),
-        ],
-        {},
-    );
-
+export class SharedTextView implements IFluidHTMLView {
+    private uiInitialized = false;
     public get IFluidHTMLView() { return this; }
 
-    private sharedString: SharedString;
-    private uiInitialized = false;
+    public constructor(private readonly sharedTextDataObject: SharedTextDataObject) { }
 
     public render(element: HTMLElement) {
         if (this.uiInitialized) {
@@ -51,16 +41,6 @@ export class SharedTextRunner extends DataObject implements IFluidHTMLView {
         this.uiInitialized = true;
     }
 
-    protected async initializingFirstTime() {
-        this.sharedString = SharedString.create(this.runtime);
-        this.sharedString.insertMarker(0, ReferenceType.Tile, { [reservedTileLabelsKey]: ["pg"] });
-        this.root.set(textSharedStringId, this.sharedString.handle);
-    }
-
-    protected async hasInitialized() {
-        this.sharedString = await this.root.get<IFluidHandle<SharedString>>(textSharedStringId).get();
-    }
-
     private async initializeUI(div): Promise<void> {
         const browserContainerHost = new ui.BrowserContainerHost();
 
@@ -69,8 +49,8 @@ export class SharedTextRunner extends DataObject implements IFluidHTMLView {
         const container = new controls.FlowContainer(
             containerDiv,
             "Shared Text",
-            this.runtime,
-            this.sharedString,
+            this.sharedTextDataObject.exposedRuntime,
+            this.sharedTextDataObject.sharedString,
         );
         const theFlow = container.flowView;
         browserContainerHost.attach(container, div);
@@ -80,12 +60,46 @@ export class SharedTextRunner extends DataObject implements IFluidHTMLView {
 
         theFlow.setEdit();
 
-        this.sharedString.loaded.then(() => {
+        this.sharedTextDataObject.sharedString.loaded.then(() => {
             theFlow.loadFinished(performance.now());
-            debug(`${this.runtime.id} fully loaded: ${performance.now()} `);
+            debug(`${this.sharedTextDataObject.exposedRuntime.id} fully loaded: ${performance.now()} `);
         })
         .catch((e) => { console.error(e); });
     }
 }
 
-export const SharedTextDataStoreFactory = SharedTextRunner.factory;
+export class SharedTextDataObject extends DataObject {
+    public static get Name() { return "@fluid-example/shared-text"; }
+
+    public static readonly factory = new DataObjectFactory(
+        SharedTextDataObject.Name,
+        SharedTextDataObject,
+        [
+            SharedString.getFactory(),
+        ],
+        {},
+    );
+
+    // It's generally not a good pattern to expose the runtime publicly -- here we do it for legacy reasons.
+    public get exposedRuntime(): IFluidDataStoreRuntime {
+        return this.runtime;
+    }
+
+    private _sharedString: SharedString;
+    // It's also generally not a good pattern to expose raw data structures publicly.
+    public get sharedString(): SharedString {
+        return this._sharedString;
+    }
+
+    protected async initializingFirstTime() {
+        this._sharedString = SharedString.create(this.runtime);
+        this._sharedString.insertMarker(0, ReferenceType.Tile, { [reservedTileLabelsKey]: ["pg"] });
+        this.root.set(textSharedStringId, this._sharedString.handle);
+    }
+
+    protected async hasInitialized() {
+        this._sharedString = await this.root.get<IFluidHandle<SharedString>>(textSharedStringId).get();
+    }
+}
+
+export const SharedTextDataStoreFactory = SharedTextDataObject.factory;

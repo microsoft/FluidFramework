@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@fluid-example/client-ui-lib": "^0.58.0",
+    "@fluid-example/example-utils": "^0.58.0",
     "@fluidframework/aqueduct": "^0.58.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.46.0-0",

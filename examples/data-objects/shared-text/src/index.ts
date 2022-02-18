@@ -3,17 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-    rootDataStoreRequestHandler,
-} from "@fluidframework/request-handler";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { SharedTextDataStoreFactory } from "./component";
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
+import { SharedTextDataObject, SharedTextView } from "./component";
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    SharedTextDataStoreFactory,
-    new Map([
-        [SharedTextDataStoreFactory.type, Promise.resolve(SharedTextDataStoreFactory)]
-    ]),
-    undefined,
-    [rootDataStoreRequestHandler],
-);
+
+const sharedTextViewCallback = (sharedTextDataObject: SharedTextDataObject) => new SharedTextView(sharedTextDataObject);
+
+export const fluidExport = new ContainerViewRuntimeFactory(SharedTextDataObject.factory, sharedTextViewCallback);
