@@ -44,6 +44,7 @@ class SharedTreeAssertionError extends Error {
 	public constructor(message: string) {
 		super(message);
 		this.name = 'Assertion error';
+		// Note: conditional as `captureStackTrace` isn't defined in all browsers (e.g. Safari).
 		Error.captureStackTrace?.(this);
 	}
 }
