@@ -812,6 +812,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
 
                 const abortController = new AbortController();
+                abortController.signal.addEventListener("abort", (event: Event) => { this.close(); });
                 // Actually go and create the resolved document
                 const createNewResolvedUrl = await this.urlResolver.resolve(request);
                 ensureFluidResolvedUrl(createNewResolvedUrl);
