@@ -178,7 +178,7 @@ function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger){
     if(results.unexpectedErrors.length > 0){
         return new Error(
             `Unexpected Errors in Logs. Use itExpects to specify expected errors:\n` +
-            +`${ JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
+            `${ JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
     }
     if(results.expectedNotFound.length > 0){
         return new Error(
