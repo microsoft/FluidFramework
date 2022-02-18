@@ -83,12 +83,6 @@ module.exports = env => {
                     ignored: "**/node_modules/**",
                 }
             },
-            resolveLoader: {
-                alias: {
-                    'blob-url-loader': require.resolve('./loaders/blobUrl'),
-                    'compile-loader': require.resolve('./loaders/compile'),
-                },
-            },
             output: {
                 filename: '[name].bundle.js',
                 chunkFilename: '[name].async.js',
