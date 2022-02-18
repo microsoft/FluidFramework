@@ -560,11 +560,11 @@ function layoutCell(
     } as ILayoutContext;
     // TODO: deferred height calculation for starting in middle of box
     if (isInnerCell(cellView, layoutInfo)) {
-        const cellPos = getPosition(layoutInfo.flowView, cellView.marker);
+        const cellPos = getPosition(layoutInfo.flowView.sharedString, cellView.marker);
         cellLayoutInfo.startPos = cellPos + cellView.marker.cachedLength;
     } else {
         const nextTable = layoutInfo.startingPosStack.table.items[layoutInfo.stackIndex + 1];
-        cellLayoutInfo.startPos = getPosition(layoutInfo.flowView, nextTable as MergeTree.Marker);
+        cellLayoutInfo.startPos = getPosition(layoutInfo.flowView.sharedString, nextTable as MergeTree.Marker);
         cellLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
     }
     if (!cellView.emptyCell) {
@@ -572,7 +572,7 @@ function layoutCell(
         if (cellView.additionalCellMarkers) {
             for (const cellMarker of cellView.additionalCellMarkers) {
                 cellLayoutInfo.endMarker = cellMarker.cell.endMarker;
-                const cellPos = getPosition(layoutInfo.flowView, cellMarker);
+                const cellPos = getPosition(layoutInfo.flowView.sharedString, cellMarker);
                 cellLayoutInfo.startPos = cellPos + cellMarker.cachedLength;
                 const auxRenderOutput = renderFlow(cellLayoutInfo);
                 cellView.renderOutput.deferredHeight += auxRenderOutput.deferredHeight;
@@ -761,9 +761,9 @@ function showCell(pos: number, flowView: FlowView) {
     const startingPosStack = flowView.sharedString.getStackContext(pos, ["cell"]);
     if (startingPosStack.cell && (!startingPosStack.cell.empty())) {
         const cellMarker = startingPosStack.cell.top() as Table.ICellMarker;
-        const start = getPosition(flowView, cellMarker);
+        const start = getPosition(flowView.sharedString, cellMarker);
         const endMarker = cellMarker.cell.endMarker;
-        const end = getPosition(flowView, endMarker) + 1;
+        const end = getPosition(flowView.sharedString, endMarker) + 1;
         // eslint-disable-next-line max-len
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
         console.log(`cell contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
@@ -774,9 +774,9 @@ function showTable(pos: number, flowView: FlowView) {
     const startingPosStack = flowView.sharedString.getStackContext(pos, ["table"]);
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         const tableMarker = startingPosStack.table.top() as Table.ITableMarker;
-        const start = getPosition(flowView, tableMarker);
+        const start = getPosition(flowView.sharedString, tableMarker);
         const endMarker = tableMarker.table.endTableMarker;
-        const end = getPosition(flowView, endMarker) + 1;
+        const end = getPosition(flowView.sharedString, endMarker) + 1;
         console.log(`table ${tableMarker.getId()} at [${start},${end})`);
         console.log(`table contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
     }
@@ -803,7 +803,7 @@ function renderTree(
         layoutContext.stackIndex = 0;
         layoutContext.startingPosStack = startingPosStack;
     } else {
-        const previousTileInfo = findTile(flowView, requestedPosition, "pg", true);
+        const previousTileInfo = findTile(flowView.sharedString, requestedPosition, "pg", true);
         if (previousTileInfo) {
             layoutContext.startPos = previousTileInfo.pos + 1;
         } else {
@@ -1468,7 +1468,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
     // TODO: use end of doc marker
     do {
         if (!segoff) {
-            segoff = getContainingSegment(flowView, currentPos);
+            segoff = getContainingSegment(flowView.sharedString, currentPos);
         }
         if (fetchLog) {
             console.log(`got segment ${segoff.segment.toString()}`);
@@ -1520,7 +1520,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     newBlock.instanceP.then((instance) => {
                         newBlock.instance = instance;
-                        const compPos = getPosition(layoutContext.flowView, asMarker);
+                        const compPos = getPosition(layoutContext.flowView.sharedString, asMarker);
                         layoutContext.flowView.hostSearchMenu(compPos);
                     });
                 }
@@ -1550,7 +1550,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                 tableView = Table.parseTable(asMarker, currentPos, flowView.sharedString,
                     makeFontInfo(layoutContext.docContext));
             }
-            const endTablePos = getPosition(layoutContext.flowView, tableView.endTableMarker);
+            const endTablePos = getPosition(layoutContext.flowView.sharedString, tableView.endTableMarker);
             currentPos = endTablePos + 1;
             segoff = undefined;
             // TODO: if reached end of viewport, get pos ranges
@@ -1566,7 +1566,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                 }
                 curPGMarkerPos = currentPos;
             } else {
-                const curTilePos = findTile(flowView, currentPos, "pg", false);
+                const curTilePos = findTile(flowView.sharedString, currentPos, "pg", false);
                 curPGMarker = curTilePos.tile as Paragraph.IParagraphMarker;
                 curPGMarkerPos = curTilePos.pos;
             }
@@ -1608,7 +1608,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                 currentPos = curPGMarkerPos + curPGMarker.cachedLength;
 
                 if (currentPos < totalLength) {
-                    segoff = getContainingSegment(flowView, currentPos);
+                    segoff = getContainingSegment(flowView.sharedString, currentPos);
                     if (MergeTree.Marker.is(segoff.segment)) {
                         // eslint-disable-next-line max-len
                         if (segoff.segment.hasRangeLabel("cell") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
@@ -1970,20 +1970,20 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
     }
 }
 
-function getLocalRefPos(flowView: FlowView, localRef: MergeTree.LocalReference) {
-    return flowView.sharedString.getPosition(localRef.segment) + localRef.offset;
+function getLocalRefPos(sharedString: Sequence.SharedString, localRef: MergeTree.LocalReference) {
+    return sharedString.getPosition(localRef.segment) + localRef.offset;
 }
 
-function getContainingSegment(flowView: FlowView, pos: number): ISegmentOffset {
-    return flowView.sharedString.getContainingSegment(pos);
+function getContainingSegment(sharedString: Sequence.SharedString, pos: number): ISegmentOffset {
+    return sharedString.getContainingSegment(pos);
 }
 
-function findTile(flowView: FlowView, startPos: number, tileType: string, preceding: boolean) {
-    return flowView.sharedString.findTile(startPos, tileType, preceding);
+function findTile(sharedString: Sequence.SharedString, startPos: number, tileType: string, preceding: boolean) {
+    return sharedString.findTile(startPos, tileType, preceding);
 }
 
-function getPosition(flowView: FlowView, segment: MergeTree.ISegment) {
-    return flowView.sharedString.getPosition(segment);
+function getPosition(sharedString: Sequence.SharedString, segment: MergeTree.ISegment) {
+    return sharedString.getPosition(segment);
 }
 
 function preventD(e: Event) {
@@ -2330,9 +2330,9 @@ export class FlowView extends ui.Component {
 
     private updatePresencePosition(localPresenceInfo: ILocalPresenceInfo) {
         if (localPresenceInfo) {
-            localPresenceInfo.xformPos = getLocalRefPos(this, localPresenceInfo.localRef);
+            localPresenceInfo.xformPos = getLocalRefPos(this.sharedString, localPresenceInfo.localRef);
             if (localPresenceInfo.markLocalRef) {
-                localPresenceInfo.markXformPos = getLocalRefPos(this, localPresenceInfo.markLocalRef);
+                localPresenceInfo.markXformPos = getLocalRefPos(this.sharedString, localPresenceInfo.markLocalRef);
             } else {
                 localPresenceInfo.markXformPos = localPresenceInfo.xformPos;
             }
@@ -2515,7 +2515,7 @@ export class FlowView extends ui.Component {
                 this.childCursor.leave(CursorDirection.Airlift);
                 this.childCursor = undefined;
             }
-            const tilePos = findTile(this, this.cursor.pos, "pg", false);
+            const tilePos = findTile(this.sharedString, this.cursor.pos, "pg", false);
             if (tilePos) {
                 this.curPG = tilePos.tile as MergeTree.Marker;
             }
@@ -2626,7 +2626,7 @@ export class FlowView extends ui.Component {
             if (!skipFirstRev) {
                 this.cursor.pos--;
             }
-            const segoff = getContainingSegment(this, this.cursor.pos);
+            const segoff = getContainingSegment(this.sharedString, this.cursor.pos);
             if (MergeTree.Marker.is(segoff.segment)) {
                 const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
@@ -3078,7 +3078,7 @@ export class FlowView extends ui.Component {
         if (this.cursor.pos === this.cursor.lineDiv().lineEnd) {
             searchPos--;
         }
-        const tileInfo = findTile(this, searchPos, "pg", false);
+        const tileInfo = findTile(this.sharedString, searchPos, "pg", false);
         if (tileInfo) {
             let buf = "";
             if (tileInfo.tile.properties) {
@@ -3096,7 +3096,7 @@ export class FlowView extends ui.Component {
     private setList(listKind = 0) {
         this.undoRedoManager.closeCurrentOperation();
         const searchPos = this.cursor.pos;
-        const tileInfo = findTile(this, searchPos, "pg", false);
+        const tileInfo = findTile(this.sharedString, searchPos, "pg", false);
         if (tileInfo) {
             const tile = tileInfo.tile as Paragraph.IParagraphMarker;
             let listStatus = false;
@@ -3171,7 +3171,7 @@ export class FlowView extends ui.Component {
     // TODO: tab stops in non-list, non-table paragraphs
     private onTAB(shift = false) {
         const searchPos = this.cursor.pos;
-        const tileInfo = findTile(this, searchPos, "pg", false);
+        const tileInfo = findTile(this.sharedString, searchPos, "pg", false);
         if (tileInfo) {
             if (!this.tryMoveCell(tileInfo.pos, shift)) {
                 const tile = tileInfo.tile as Paragraph.IParagraphMarker;
@@ -3181,7 +3181,7 @@ export class FlowView extends ui.Component {
     }
 
     private toggleBlockquote() {
-        const tileInfo = findTile(this, this.cursor.pos, "pg", false);
+        const tileInfo = findTile(this.sharedString, this.cursor.pos, "pg", false);
         if (tileInfo) {
             const tile = tileInfo.tile;
             const props = tile.properties;
@@ -3208,7 +3208,7 @@ export class FlowView extends ui.Component {
     }
 
     private copyFormat() {
-        const segoff = getContainingSegment(this, this.cursor.pos);
+        const segoff = getContainingSegment(this.sharedString, this.cursor.pos);
         if (segoff.segment && MergeTree.TextSegment.is((segoff.segment))) {
             this.formatRegister = MergeTree.extend(MergeTree.createMap(), segoff.segment.properties);
         }
@@ -3306,7 +3306,7 @@ export class FlowView extends ui.Component {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getPosition(this, tableMarker);
+                const tableMarkerPos = getPosition(this.sharedString, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteRow(this.sharedString, rowMarker.row, tableMarker.table);
@@ -3319,7 +3319,7 @@ export class FlowView extends ui.Component {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getPosition(this, tableMarker);
+                const tableMarkerPos = getPosition(this.sharedString, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteCellShiftLeft(this.sharedString, cellMarker.cell, tableMarker.table);
@@ -3333,7 +3333,7 @@ export class FlowView extends ui.Component {
             const rowMarker = stack.row.top() as Table.IRowMarker;
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getPosition(this, tableMarker);
+                const tableMarkerPos = getPosition(this.sharedString, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteColumn(this.sharedString, this.runtime.clientId,
@@ -3347,7 +3347,7 @@ export class FlowView extends ui.Component {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getPosition(this, tableMarker);
+                const tableMarkerPos = getPosition(this.sharedString, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertRow(
@@ -3363,7 +3363,7 @@ export class FlowView extends ui.Component {
         const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
-            const tableMarkerPos = getPosition(this, tableMarker);
+            const tableMarkerPos = getPosition(this.sharedString, tableMarker);
             if (!tableMarker.table) {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
@@ -3378,7 +3378,7 @@ export class FlowView extends ui.Component {
             const rowMarker = stack.row.top() as Table.IRowMarker;
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getPosition(this, tableMarker);
+                const tableMarkerPos = getPosition(this.sharedString, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertColumn(
@@ -3391,7 +3391,7 @@ export class FlowView extends ui.Component {
     }
 
     private setPGProps(props: MergeTree.PropertySet) {
-        const tileInfo = findTile(this, this.cursor.pos, "pg", false);
+        const tileInfo = findTile(this.sharedString, this.cursor.pos, "pg", false);
         if (tileInfo) {
             const pgMarker = tileInfo.tile as Paragraph.IParagraphMarker;
             this.sharedString.annotateRange(tileInfo.pos,
@@ -3571,7 +3571,7 @@ export class FlowView extends ui.Component {
     }
 
     private updatePGInfo(changePos: number) {
-        const tileInfo = findTile(this, changePos, "pg", false);
+        const tileInfo = findTile(this.sharedString, changePos, "pg", false);
         if (tileInfo) {
             const tile = tileInfo.tile as Paragraph.IParagraphMarker;
             Paragraph.clearContentCaches(tile);
@@ -3615,7 +3615,7 @@ export class FlowView extends ui.Component {
     }
 
     private insertParagraph(pos: number) {
-        const curTilePos = findTile(this, pos, "pg", false);
+        const curTilePos = findTile(this.sharedString, pos, "pg", false);
         const pgMarker = curTilePos.tile as Paragraph.IParagraphMarker;
         const pgPos = curTilePos.pos;
         Paragraph.clearContentCaches(pgMarker);
