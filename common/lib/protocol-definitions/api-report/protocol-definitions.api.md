@@ -372,6 +372,10 @@ export interface ISignalMessage {
     clientId: string | null;
     // (undocumented)
     content: any;
+    // (undocumented)
+    signalSequenceNumber?: number;
+    // (undocumented)
+    referenceSequenceNumber?: number;
 }
 
 // @public (undocumented)
