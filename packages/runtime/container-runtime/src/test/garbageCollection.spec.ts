@@ -14,14 +14,16 @@ import {
     IGarbageCollectionState,
     IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { MockLogger, sessionStorageConfigProvider, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import {
+    defaultSessionExpiryDurationMs,
     GarbageCollector,
     gcBlobPrefix,
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
 } from "../garbageCollection";
+import { IContainerRuntimeMetadata } from "../summaryFormat";
 
 describe("Garbage Collection Tests", () => {
     // Nodes in the reference graph.
@@ -34,6 +36,7 @@ describe("Garbage Collection Tests", () => {
 
     let clock: SinonFakeTimers;
     let mockLogger: MockLogger;
+    let closeCalled = false;
     // Time after which unreferenced nodes can be deleted.
     const deleteTimeoutMs = 500;
     const testPkgPath = [ "testPkg" ];
@@ -60,6 +63,7 @@ describe("Garbage Collection Tests", () => {
     const createGarbageCollector = (
         baseSnapshot: ISnapshotTree | undefined = undefined,
         getNodeGCDetails: (id: string) => IGarbageCollectionDetailsBase = () => emptyGCDetails,
+        metadata: IContainerRuntimeMetadata | undefined = undefined,
     ) => {
         mockLogger = new MockLogger();
         return GarbageCollector.create(
@@ -68,11 +72,12 @@ describe("Garbage Collection Tests", () => {
             (unusedRoutes: string[]) => {},
             (nodeId: string) => testPkgPath,
             () => Date.now(),
-            () => { },
+            () => { closeCalled = true; },
             baseSnapshot,
             async <T>(id: string) => getNodeGCDetails(id) as T,
             mockLogger,
-            false /* existing */,
+            metadata !== undefined /* existing */,
+            metadata,
         );
     };
 
@@ -86,6 +91,32 @@ describe("Garbage Collection Tests", () => {
 
     after(() => {
         clock.restore();
+    });
+
+    describe("Session expiry", () => {
+        const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+        beforeEach(() => {
+            closeCalled = false;
+            const settings = { "Fluid.GarbageCollection.RunSessionExpiry": "true" };
+            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
+        });
+        afterEach(() => {
+            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+        });
+
+        it("Session expires for an existing container", async () => {
+            const metadata: IContainerRuntimeMetadata = 
+                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 1 }
+            createGarbageCollector(undefined, undefined, metadata);
+            clock.tick(1);
+            assert(closeCalled, "Close should have been called.");
+        });
+
+        it("Session expires for a new container", async () => {
+            createGarbageCollector();
+            clock.tick(defaultSessionExpiryDurationMs); 
+            assert(closeCalled, "Close should have been called.");
+        });
     });
 
     describe("Inactive events", () => {
