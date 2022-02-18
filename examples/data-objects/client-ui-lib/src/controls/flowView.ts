@@ -29,7 +29,6 @@ import {
     IViewCursor,
     IViewLayout,
 } from "./layout";
-import { PresenceSignal } from "./presenceSignal";
 
 function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
     if (marker && marker.properties && marker.properties.crefTest) {
@@ -1963,6 +1962,8 @@ interface IReferenceDoc {
     layout?: IRefLayoutSpec;
 }
 
+const presenceSignalType = "presence";
+
 export class FlowView extends ui.Component {
     public static docStartPosition = 0;
     public timeToImpression: number;
@@ -1976,7 +1977,6 @@ export class FlowView extends ui.Component {
     public wheelTicking = false;
     public topChar = -1;
     public cursor: FlowCursor;
-    public presenceSignal: PresenceSignal;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
     public curPG: MergeTree.Marker;
     public lastDocContext: IDocumentContext;
@@ -2254,14 +2254,6 @@ export class FlowView extends ui.Component {
                 presenceInfo.cursor.refresh();
             }
         }
-    }
-
-    private addPresenceSignal(presenceSignal: PresenceSignal) {
-        presenceSignal.on("message", (message: IInboundSignalMessage, local: boolean) => {
-            this.remotePresenceUpdate(message, local);
-        });
-
-        this.broadcastPresence();
     }
 
     public presenceInfoInRange(start: number, end: number) {
@@ -3476,8 +3468,14 @@ export class FlowView extends ui.Component {
             // eslint-disable-next-line max-len
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performance.now()}`);
         }
-        this.presenceSignal = new PresenceSignal(this.runtime);
-        this.addPresenceSignal(this.presenceSignal);
+
+        // Set up for presence carets
+        this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            if (message.type === presenceSignalType) {
+                this.remotePresenceUpdate(message, local);
+            }
+        });
+        this.broadcastPresence();
 
         this.sharedString.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);
@@ -3632,21 +3630,19 @@ export class FlowView extends ui.Component {
             return quorumClient.client;
         } else {
             const audience = this.runtime.getAudience().getMembers();
-            if (audience.has(clientId)) {
-                return audience.get(clientId);
-            }
+            return audience.get(clientId);
         }
     }
 
     private broadcastPresence() {
-        if (this.presenceSignal && this.runtime.connected) {
+        if (this.runtime.connected) {
             const presenceInfo: IRemotePresenceInfo = {
                 origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
                 refseq: this.sharedString.getCurrentSeq(),
                 type: "selection",
             };
-            this.presenceSignal.submitPresence(presenceInfo);
+            this.runtime.submitSignal(presenceSignalType, presenceInfo);
         }
     }
 
