@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import EventEmitter from "events";
@@ -18,15 +18,15 @@ export class BatchTracker {
     constructor(
         private readonly batchEventEmitter: EventEmitter,
         logger: ITelemetryLogger,
-        private readonly opCountThreshold: number,
-        private readonly batchCountSamplingRate: number,
-        private readonly dateTimeProvider: () => number = () => Date.now(),
+        batchLengthThreshold: number,
+        batchCountSamplingRate: number,
+        dateTimeProvider: () => number = () => performance.now(),
     ) {
         this.logger = ChildLogger.create(logger, "Batching");
 
         this.batchEventEmitter.on("batchBegin", (message: ISequencedDocumentMessage) => {
             this.startBatchSequenceNumber = message.sequenceNumber;
-            this.batchProcessingStartTimeStamp = this.dateTimeProvider();
+            this.batchProcessingStartTimeStamp = dateTimeProvider();
             this.trackedBatchCount++;
         });
 
@@ -35,27 +35,25 @@ export class BatchTracker {
                 this.startBatchSequenceNumber !== undefined && this.batchProcessingStartTimeStamp !== undefined,
                 "batchBegin must fire before batchEnd");
 
-            const opCount = message.sequenceNumber - this.startBatchSequenceNumber + 1;
-            if (opCount >= this.opCountThreshold) {
+            const length = message.sequenceNumber - this.startBatchSequenceNumber + 1;
+            if (length >= batchLengthThreshold) {
                 this.logger.sendErrorEvent({
-                    eventName: "TooManyOps",
-                    opCount,
-                    threshold: opCountThreshold,
-                    referenceSequenceNumber: message.referenceSequenceNumber,
+                    eventName: "LengthTooBig",
+                    length,
+                    threshold: batchLengthThreshold,
                     batchEndSequenceNumber: message.sequenceNumber,
-                    timeSpanMs: this.dateTimeProvider() - this.batchProcessingStartTimeStamp,
+                    duration: dateTimeProvider() - this.batchProcessingStartTimeStamp,
                     batchError: error !== undefined,
                 });
             }
 
-            if (this.trackedBatchCount % this.batchCountSamplingRate === 0) {
+            if (this.trackedBatchCount % batchCountSamplingRate === 0) {
                 this.logger.sendPerformanceEvent({
-                    eventName: "OpCount",
-                    opCount,
+                    eventName: "Length",
+                    length,
                     samplingRate: batchCountSamplingRate,
-                    referenceSequenceNumber: message.referenceSequenceNumber,
                     batchEndSequenceNumber: message.sequenceNumber,
-                    timeSpanMs: this.dateTimeProvider() - this.batchProcessingStartTimeStamp,
+                    duration: dateTimeProvider() - this.batchProcessingStartTimeStamp,
                 });
             }
 
@@ -70,13 +68,13 @@ export class BatchTracker {
  *
  * @param batchEventEmitter - event emitter which tracks the lifecycle of batch operations
  * @param logger - logger
- * @param opCountThreshold - threshold for the count of ops in a batch when to send an error event
+ * @param batchLengthThreshold - threshold for the length of a batch when to send an error event
  * @param batchCountSamplingRate - rate for batches for which to send an event with its characteristics
  * @returns
  */
 export const BindBatchTracker = (
     batchEventEmitter: EventEmitter,
     logger: ITelemetryLogger,
-    opCountThreshold: number = 128,
+    batchLengthThreshold: number = 128,
     batchCountSamplingRate: number = 1000,
-) => new BatchTracker(batchEventEmitter, logger, opCountThreshold, batchCountSamplingRate)
+) => new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate)

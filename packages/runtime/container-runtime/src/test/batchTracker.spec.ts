@@ -12,11 +12,11 @@ describe("Runtime", () => {
     const emitter = new EventEmitter();
     let mockLogger: MockLogger;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         mockLogger = new MockLogger();
     });
 
-    it("Track only batches with op count over a threshold", async () => {
+    it("Track only batches with op count over a threshold", () => {
         let ticks = 0;
         new BatchTracker(emitter, mockLogger, 5, 100, () => ticks);
 
@@ -33,21 +33,19 @@ describe("Runtime", () => {
 
         mockLogger.assertMatch([
             {
-                eventName: "Batching:TooManyOps",
-                opCount: 5,
+                eventName: "Batching:LengthTooBig",
+                length: 5,
                 threshold: 5,
-                referenceSequenceNumber: 5,
                 batchEndSequenceNumber: 5,
-                timeSpanMs: 10,
+                duration: 10,
                 batchError: false,
                 category: "error",
             }, {
-                eventName: "Batching:TooManyOps",
-                opCount: 8,
+                eventName: "Batching:LengthTooBig",
+                length: 8,
                 threshold: 5,
-                referenceSequenceNumber: 8,
                 batchEndSequenceNumber: 8,
-                timeSpanMs: 20,
+                duration: 20,
                 batchError: true,
                 category: "error",
             },
@@ -66,28 +64,25 @@ describe("Runtime", () => {
 
         mockLogger.assertMatch([
             {
-                eventName: "Batching:OpCount",
-                opCount: 3,
+                eventName: "Batching:Length",
+                length: 3,
                 samplingRate: 3,
-                referenceSequenceNumber: 3,
                 batchEndSequenceNumber: 3,
-                timeSpanMs: 3,
+                duration: 3,
                 category: "performance",
             }, {
-                eventName: "Batching:OpCount",
-                opCount: 6,
+                eventName: "Batching:Length",
+                length: 6,
                 samplingRate: 3,
-                referenceSequenceNumber: 6,
                 batchEndSequenceNumber: 6,
-                timeSpanMs: 6,
+                duration: 6,
                 category: "performance",
             }, {
-                eventName: "Batching:OpCount",
-                opCount: 9,
+                eventName: "Batching:Length",
+                length: 9,
                 samplingRate: 3,
-                referenceSequenceNumber: 9,
                 batchEndSequenceNumber: 9,
-                timeSpanMs: 9,
+                duration: 9,
                 category: "performance",
             },
         ]);
