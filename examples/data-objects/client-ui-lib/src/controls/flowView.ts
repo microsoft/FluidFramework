@@ -2031,7 +2031,6 @@ export class FlowView extends ui.Component {
     public cursor: FlowCursor;
     public presenceSignal: PresenceSignal;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
-    public docRoot: types.ISharedMap;
     public curPG: MergeTree.Marker;
     public lastDocContext: IDocumentContext;
     public focusChild: FlowView;
@@ -2793,9 +2792,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public setEdit(docRoot: types.ISharedMap) {
-        this.docRoot = docRoot;
-
+    public setEdit() {
         window.oncontextmenu = preventD;
         this.element.onmousemove = preventD;
         this.element.onmouseup = preventD;
@@ -3551,7 +3548,7 @@ export class FlowView extends ui.Component {
         });
     }
 
-    public async loadFinished(clockStart = 0) {
+    public loadFinished(clockStart = 0) {
         this.render(0, true);
         if (clockStart > 0) {
             // eslint-disable-next-line max-len

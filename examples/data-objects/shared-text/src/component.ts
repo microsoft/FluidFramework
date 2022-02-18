@@ -64,7 +64,6 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
     private sharedString: SharedString;
     private root: ISharedMap;
     private uiInitialized = false;
-    private readonly title: string = "Shared Text";
 
     private constructor(
         private readonly runtime: FluidDataStoreRuntime,
@@ -81,10 +80,6 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
 
         this.initializeUI(element).catch(debug);
         this.uiInitialized = true;
-    }
-
-    public getRoot(): ISharedMap {
-        return this.root;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -117,7 +112,7 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
         containerDiv.classList.add("flow-container");
         const container = new controls.FlowContainer(
             containerDiv,
-            this.title,
+            "Shared Text",
             this.runtime,
             this.context,
             this.sharedString,
@@ -125,19 +120,16 @@ export class SharedTextRunner extends EventEmitter implements IFluidHTMLView, IF
         const theFlow = container.flowView;
         browserContainerHost.attach(container, div);
 
-        if (this.sharedString.getLength() > 0) {
-            theFlow.render(0, true);
-        }
+        theFlow.render(0, true);
         theFlow.timeToEdit = theFlow.timeToImpression = performance.now();
 
-        theFlow.setEdit(this.root);
+        theFlow.setEdit();
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.sharedString.loaded.then(() => {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             theFlow.loadFinished(performance.now());
             debug(`${this.runtime.id} fully loaded: ${performance.now()} `);
-        });
+        })
+        .catch((e) => { console.error(e); });
     }
 }
 
