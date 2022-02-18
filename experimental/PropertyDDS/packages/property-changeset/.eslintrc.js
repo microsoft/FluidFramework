@@ -7,6 +7,9 @@ module.exports = {
     "extends": [
         "@fluidframework/eslint-config-fluid"
     ],
+    "parserOptions": {
+        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+    },
     "rules": {
         "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/dot-notation": "off",
@@ -17,6 +20,7 @@ module.exports = {
         "no-multi-spaces": "off",
         "no-var": "off",
         "prefer-const": "off",
-        "unicorn/better-regex": "off"
+        "unicorn/better-regex": "off",
+        "unicorn/filename-case": "off"
     }
 }
