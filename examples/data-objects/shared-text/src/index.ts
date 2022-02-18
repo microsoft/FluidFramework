@@ -27,7 +27,7 @@ class SharedTextContainerRuntimeFactory extends RuntimeFactoryHelper {
         const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             [
-                [SharedTextDataStoreFactory.type, Promise.resolve(new SharedTextDataStoreFactory())],
+                [SharedTextDataStoreFactory.type, Promise.resolve(SharedTextDataStoreFactory)],
             ],
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(DefaultComponentName),
