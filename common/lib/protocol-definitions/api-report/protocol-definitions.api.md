@@ -373,9 +373,9 @@ export interface ISignalMessage {
     // (undocumented)
     content: any;
     // (undocumented)
-    signalSequenceNumber?: number;
-    // (undocumented)
     referenceSequenceNumber?: number;
+    // (undocumented)
+    signalSequenceNumber?: number;
 }
 
 // @public (undocumented)
