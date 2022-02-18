@@ -847,6 +847,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     private readonly snapshotTree: ISnapshotTree | undefined;
     protected isRootDataStore: boolean | undefined;
+    /**
+     * @deprecated 0.16 Issue #1635, #3631
+     */
+    public readonly createProps?: any;
 
     constructor(props: ILocalFluidDataStoreContextProps) {
         super(
@@ -859,6 +863,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         this.snapshotTree = props.snapshotTree;
         this.isRootDataStore = props.isRootDataStore;
+        this.createProps = props.createProps;
         this.attachListeners();
     }
 
