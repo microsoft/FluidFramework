@@ -71,6 +71,8 @@ export class AlfredRunner implements IRunner {
         const httpServer = this.server.httpServer;
 
         const usageEmitter = this.config.get("usageEmitter") as IUsageEmitter;
+        const usageEmitterString = JSON.stringify(usageEmitter);
+        winston.info(`configureUsageEmitters: ${usageEmitterString}`);
 
         const maxNumberOfClientsPerDocument = this.config.get("alfred:maxNumberOfClientsPerDocument");
         const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
