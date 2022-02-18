@@ -5,6 +5,13 @@
 
 import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
 
+export interface ITimedClient extends IClient {
+    /**
+     * Timestamp for the last time deli heard about this client
+     */
+    lastKeepAlive: number;
+}
+
 /**
  * Manages the list of clients connected to the websocket.
  */
@@ -23,4 +30,10 @@ export interface IClientManager {
      * Returns all clients currently connected.
      */
     getClients(tenantId: string, documentId: string): Promise<ISignalClient[]>;
+
+    /**
+     * Returns all clients currently connected including a keep alive time.
+     * Should be used with delis read only client functionality.
+     */
+    getTimedClients?(tenantId: string, documentId: string): Promise<Map<string, ITimedClient>>;
 }

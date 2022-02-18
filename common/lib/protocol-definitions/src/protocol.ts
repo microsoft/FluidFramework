@@ -181,6 +181,10 @@ export interface ISignalMessage {
     clientId: string | null;
 
     content: any;
+
+    signalSequenceNumber?: number;
+
+    referenceSequenceNumber?: number;
 }
 
 export interface IUploadedSummaryDetails {

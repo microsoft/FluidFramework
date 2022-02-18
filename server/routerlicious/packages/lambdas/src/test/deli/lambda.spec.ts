@@ -42,6 +42,7 @@ describe("Routerlicious", () => {
             let testTenantManager: TestTenantManager;
             let testKafka: TestKafka;
             let testForwardProducer: IProducer;
+            let testSignalProducer: IProducer;
             let testReverseProducer: IProducer;
             let testContext: TestContext;
             let factory: DeliLambdaFactory;
@@ -90,6 +91,7 @@ describe("Routerlicious", () => {
                 testKafka = new TestKafka();
                 testTenantManager = new TestTenantManager();
                 testForwardProducer = testKafka.createProducer();
+                testSignalProducer = testKafka.createProducer();
                 testReverseProducer = testKafka.createProducer();
                 messageFactory = new MessageFactory(testId, testClientId);
                 kafkaMessageFactory = new KafkaMessageFactory("test", 1, false);
@@ -98,6 +100,7 @@ describe("Routerlicious", () => {
                     testCollection,
                     testTenantManager,
                     testForwardProducer,
+                    testSignalProducer,
                     testReverseProducer,
                     DefaultServiceConfiguration);
 

@@ -62,6 +62,9 @@ export interface IDeliState {
     // Sequence number at logOffset
     sequenceNumber: number;
 
+    // Signal sequence number at logOffset
+    signalSequenceNumber: number;
+
     // Rolling hash at sequenceNumber
     expHash1: string;
 

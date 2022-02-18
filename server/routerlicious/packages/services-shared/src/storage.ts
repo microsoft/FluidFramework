@@ -165,6 +165,7 @@ export class DocumentStorage implements IDocumentStorage {
             expHash1: initialHash,
             logOffset: -1,
             sequenceNumber,
+            signalSequenceNumber: 0,
             epoch: undefined,
             term: 1,
             lastSentMSN: 0,

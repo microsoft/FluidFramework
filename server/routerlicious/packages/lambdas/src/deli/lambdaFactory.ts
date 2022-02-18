@@ -41,6 +41,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         expHash1: defaultHash,
         logOffset: -1,
         sequenceNumber: 0,
+        signalSequenceNumber: 0,
         term: 1,
         lastSentMSN: 0,
         nackMessages: undefined,
@@ -54,6 +55,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly collection: ICollection<IDocument>,
         private readonly tenantManager: ITenantManager,
         private readonly forwardProducer: IProducer,
+        private readonly signalProducer: IProducer,
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration,
         globalDbMongoManager?: MongoManager) {
@@ -124,7 +126,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
                     context.log?.info(`Deli checkpoint from summary:
-                        ${ JSON.stringify(lastCheckpoint)}`, { messageMetaData });
+                        ${JSON.stringify(lastCheckpoint)}`, { messageMetaData });
                 }
             } else {
                 lastCheckpoint = JSON.parse(dbObject.deli);
@@ -160,6 +162,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             checkpointManager,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
+            this.signalProducer,
             this.reverseProducer,
             this.serviceConfiguration,
             sessionMetric,
@@ -170,15 +173,16 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
         sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
         errMsg: string) {
-            sessionMetric?.error(errMsg);
-            sessionStartMetric?.error(errMsg);
+        sessionMetric?.error(errMsg);
+        sessionStartMetric?.error(errMsg);
     }
 
     public async dispose(): Promise<void> {
         const mongoClosedP = this.operationsDbMongoManager.close();
         const forwardProducerClosedP = this.forwardProducer.close();
+        const signalProducerClosedP = this.signalProducer.close();
         const reverseProducerClosedP = this.reverseProducer.close();
-        await Promise.all([mongoClosedP, forwardProducerClosedP, reverseProducerClosedP]);
+        await Promise.all([mongoClosedP, forwardProducerClosedP, signalProducerClosedP, reverseProducerClosedP]);
     }
 
     // Fetches last durable deli state from summary. Returns undefined if not present.

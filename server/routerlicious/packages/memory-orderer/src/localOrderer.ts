@@ -247,7 +247,8 @@ export class LocalOrderer implements IOrderer {
             this.deltasKafka,
             this.setup,
             this.broadcasterContext,
-            async (_, context) => new BroadcasterLambda(this.socketPublisher, context));
+            async (_, context) =>
+                new BroadcasterLambda(this.socketPublisher, context, this.serviceConfiguration, undefined));
 
         this.foremanLambda = new LocalLambdaController(
             this.deltasKafka,
@@ -286,6 +287,7 @@ export class LocalOrderer implements IOrderer {
                     this.documentId,
                     lastCheckpoint,
                     checkpointManager,
+                    undefined,
                     this.deltasKafka,
                     this.rawDeltasKafka,
                     this.serviceConfiguration,

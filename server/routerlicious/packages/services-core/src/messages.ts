@@ -10,6 +10,7 @@ import {
     ISequencedDocumentMessage,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
+import { ISignalMessage } from "@fluidframework/protocol-definitions/src/protocol";
 import { LambdaName } from "./lambdas";
 
 // String identifying the raw operation message
@@ -20,6 +21,9 @@ export const SequencedOperationType = "SequencedOperation";
 
 // String identifying nack messages
 export const NackOperationType = "Nack";
+
+// String identifying signal messages
+export const SignalOperationType = "Signal";
 
 export const SystemType: string = "System";
 
@@ -127,6 +131,21 @@ export interface INackMessage extends ITicketedMessage {
 }
 
 /**
+ * Message sent when a raw operation causes a signal
+ */
+export interface ITicketedSignalMessage extends ITicketedMessage {
+    // The type of the message
+    type: typeof SignalOperationType;
+
+    // The details of the nack
+    operation: ISignalMessage;
+
+    // The time the server created the message, in milliseconds elapsed since
+    // 1 January 1970 00:00:00 UTC, with leap seconds ignored.
+    timestamp: number;
+}
+
+/**
  * A sequenced operation
  */
 export interface ISequencedOperationMessage extends ITicketedMessage {
@@ -165,6 +184,9 @@ export enum ControlMessageType {
 
     // Instruction sent to indicate that the lambda started
     LambdaStartResult = "lambdaStartResult",
+
+    // Instruction sent to indicate a client is still connected
+    ExtendClient = "extendClient",
 }
 
 export interface IUpdateDSNControlMessageContents {
@@ -207,4 +229,8 @@ export interface INackMessagesControlMessageContents {
 export interface ILambdaStartControlMessageContents {
     lambdaName: LambdaName;
     success: boolean;
+}
+
+export interface IExtendClientControlMessageContents {
+    clientId: string;
 }
