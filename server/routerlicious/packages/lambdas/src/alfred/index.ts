@@ -528,11 +528,14 @@ export function configureWebSocketServices(
                 );
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
-                usageEmitter?.emit({
-                    type: core.MeterType.ClientConnectivityMinutes,
-                    value: 15,
-                    tenantId: connection.tenantId,
-                    documentId: connection.documentId});
+                if (usageEmitter !== undefined)
+                {
+                    usageEmitter.emit({
+                        type: core.MeterType.ClientConnectivityMinutes,
+                        value: 15,
+                        tenantId: connection.tenantId,
+                        documentId: connection.documentId});
+                }
             }
             // Send notification messages for all client IDs in the room map
             const removeP: Promise<void>[] = [];
