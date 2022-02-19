@@ -119,7 +119,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             callName,
             this.logger,
             {
-                retry: () => this.checkStorageDisposed(),
+                onRetry: () => this.checkStorageDisposed(),
             },
         );
     }
