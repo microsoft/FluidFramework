@@ -151,8 +151,13 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         [...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), i));
     });
 
-    // Github issue #9163
-    it.skip("doesn't resend a lot of successful ops", async function() {
+    it("doesn't resend a lot of successful ops", async function() {
+        // Github issue #9163
+        if ((provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
+            provider.driver.type === "tinylicious") {
+            this.skip();
+        }
+
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
         });
@@ -224,8 +229,13 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(map2.get(testKey), bigString);
     });
 
-    // Github issue #9163
-    it.skip(" re resend successful chunked op", async function() {
+    it("doesn't resend successful chunked op", async function() {
+        // Github issue #9163
+        if ((provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
+            provider.driver.type === "tinylicious") {
+            this.skip();
+        }
+
         const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
