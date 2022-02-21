@@ -414,7 +414,7 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
                 category: "metric",
                 eventName: "Fluid Signals Submitted",
                 testHarnessEvent: true,
-                value: receivedOps,
+                value: submittedSignals,
                 clientId: container.clientId,
                 userName: getUserName(container),
             });
