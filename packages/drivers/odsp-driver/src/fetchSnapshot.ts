@@ -360,7 +360,9 @@ async function fetchSnapshotContentsCoreV1(
 ): Promise<ISnapshotRequestAndResponseOptions> {
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
-    const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, snapshotOptions);
+    const otherFormOptions = {"prefer": "manualredirect"};
+    const { body, headers } = getFormBodyAndHeaders(
+        odspResolvedUrl, storageToken, snapshotOptions, otherFormOptions);
     const fetchOptions = {
         body,
         headers,
@@ -422,6 +424,7 @@ function getFormBodyAndHeaders(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
     snapshotOptions: ISnapshotOptions | undefined,
+    otherFormOptions?: {[index: string]: string},
 ) {
     const formBoundary = uuid();
     const formParams: string[] = [];
@@ -430,6 +433,13 @@ function getFormBodyAndHeaders(
     formParams.push(`X-HTTP-Method-Override: GET`);
     if (snapshotOptions !== undefined) {
         Object.entries(snapshotOptions).forEach(([key, value]) => {
+            if (value !== undefined) {
+                formParams.push(`${key}: ${value}`);
+            }
+        });
+    }
+    if (otherFormOptions !== undefined) {
+        Object.entries(otherFormOptions).forEach(([key, value]) => {
             if (value !== undefined) {
                 formParams.push(`${key}: ${value}`);
             }

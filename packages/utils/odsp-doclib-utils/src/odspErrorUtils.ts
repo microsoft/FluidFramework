@@ -148,6 +148,16 @@ export function createOdspNetworkError(
             }
             break;
         case 404:
+            if (parseResult.success) {
+                const responseError = parseResult.errorResponse.error;
+                const redirectLocation = responseError["@error.redirectLocation"];
+                if (redirectLocation !== undefined) {
+                    const propsWithRedirectLocation = { ...driverProps, newSiteUri: redirectLocation };
+                    error = new NonRetryableError(
+                        fluidErrorCode, errorMessage, OdspErrorType.fileStorageDomainChange, propsWithRedirectLocation);
+                    break;
+                }
+            }
             error = new NonRetryableError(
                 fluidErrorCode, errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, driverProps);
             break;
