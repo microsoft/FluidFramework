@@ -30,6 +30,25 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
    npm init
    ```
 
+1. Open the `package.json` file and replace the `main` and `scripts` sections with the following:
+
+   ```json
+   "main": "./src/index.js",
+   "scripts": {
+     "build": "npm build",
+     "start:client": "node ./src/index.js",
+     "start:server": "npx tinylicious@latest",
+     "test": "echo \"Error: no test specified\" && exit 1",
+     "test:report": "echo No test for this example"
+   },
+   ```
+   
+   And add the following line after the `dependencies` section, before the final closing bracket:
+
+   ```json
+   "type": "module"
+   ```
+
 1. The project uses two Fluid libraries:
 
     |Library |Description |
