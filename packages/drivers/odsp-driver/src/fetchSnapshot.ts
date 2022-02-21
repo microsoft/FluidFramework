@@ -363,6 +363,7 @@ async function fetchSnapshotContentsCoreV1(
     const otherFormOptions = {"prefer": "manualredirect"};
     const { body, headers } = getFormBodyAndHeaders(
         odspResolvedUrl, storageToken, snapshotOptions, otherFormOptions);
+    headers.accept = "application/json";
     const fetchOptions = {
         body,
         headers,

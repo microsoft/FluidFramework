@@ -10,6 +10,7 @@ export {
     Interval,
     IntervalCollection,
     IntervalCollectionIterator,
+    IntervalType,
     ISerializableInterval,
     ISerializedInterval,
     SequenceInterval,

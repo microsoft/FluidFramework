@@ -69,7 +69,7 @@ const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
-const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {

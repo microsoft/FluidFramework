@@ -193,6 +193,9 @@ export class LocalCodeLoader implements ICodeLoader {
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
 
+// @public
+export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
+
 // @public (undocumented)
 export type SupportedExportInterfaces = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IProvideFluidDataStoreRegistry & IProvideFluidCodeDetailsComparer>;
 
