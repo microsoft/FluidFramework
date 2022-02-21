@@ -18,6 +18,8 @@ import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 function printStatus(runConfig: IRunConfig, message: string) {
     if (runConfig.verbose) {
@@ -190,7 +192,9 @@ async function runnerProcess(
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
             if (enableOpsMetrics) {
-                metricsCleanup = await setupOpsMetrics(container, logger, runConfig.testConfig.progressIntervalMs);
+                const testRuntime = await test.getRuntime();
+                metricsCleanup = await setupOpsMetrics(container, logger, runConfig.testConfig.progressIntervalMs,
+                                                       testRuntime);
             }
 
             // Control fault injection period through config.
@@ -340,7 +344,8 @@ function scheduleContainerClose(
     });
 }
 
-async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, progressIntervalMs: number) {
+async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, progressIntervalMs: number,
+                               testRuntime: IFluidDataStoreRuntime) {
     // Use map to cache userName instead of recomputing.
     const clientIdUserNameMap: { [clientId: string]: string } = {};
 
@@ -375,6 +380,13 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
         }
     });
 
+    let submittedSignals = 0;
+    testRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        if (message.type === "test-signal" && local === true) {
+            submittedSignals += 1;
+        }
+    });
+
     let t: NodeJS.Timeout | undefined;
     const sendMetrics = () => {
         if (submitedOps > 0) {
@@ -397,9 +409,20 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
                 userName: getUserName(container),
             });
         }
+        if (submittedSignals > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Fluid Signals Submitted",
+                testHarnessEvent: true,
+                value: receivedOps,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
 
         submitedOps = 0;
         receivedOps = 0;
+        submittedSignals = 0;
 
         t = setTimeout(sendMetrics, progressIntervalMs);
     };

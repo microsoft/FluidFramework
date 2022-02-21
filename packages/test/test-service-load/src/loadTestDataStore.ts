@@ -31,6 +31,7 @@ export interface IRunConfig {
 export interface ILoadTest {
     run(config: IRunConfig, reset: boolean): Promise<boolean>;
     detached(config: Omit<IRunConfig, "runId">): Promise<LoadTestDataStoreModel>;
+    getRuntime(): Promise<IFluidDataStoreRuntime>;
 }
 
 const taskManagerKey = "taskManager";
@@ -441,6 +442,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
                 if (dataModel.haveTaskLock()) {
                     dataModel.counter.increment(1);
+                    this.runtime.submitSignal("test-signal", true)
                     if (dataModel.counter.value % opsPerCycle === 0) {
                         await dataModel.blobFinish();
                         dataModel.abandonTask();
@@ -461,6 +463,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             }
             dataModel.printStatus();
         }
+    }
+    public async getRuntime(){
+        return this.runtime;
     }
 }
 
