@@ -48,6 +48,7 @@ import {
 import { serialize, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
 import { GenericTransaction } from './GenericTransaction';
 import { newEditId } from './GenericEditUtilities';
+import { NodeIdGenerator } from './NodeIdUtilities';
 
 /**
  * Filename where the snapshot is stored.
@@ -287,9 +288,10 @@ export interface SharedTreeFactoryOptions {
  * A distributed tree.
  * @public
  */
-export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unknown> extends SharedObject<
-	ISharedTreeEvents<GenericSharedTree<TChange, TChangeInternal, TFailure>>
-> {
+export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unknown>
+	extends SharedObject<ISharedTreeEvents<GenericSharedTree<TChange, TChangeInternal, TFailure>>>
+	implements NodeIdGenerator
+{
 	/**
 	 * The log of completed edits for this SharedTree.
 	 */
@@ -450,12 +452,11 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	}
 
 	/**
-	 * Generate an identifier that may be used for a new node that will be inserted into this tree
-	 * @param override - an optional string to associate with the new id for future lookup
+	 * {@inheritdoc NodeIdGenerator.generateNodeId}
 	 * @public
 	 */
-	public generateId(override?: UuidString): NodeId {
-		// TODO:#62125: Re-implement this method to return compressed ids created by an IdCompressor
+	public generateNodeId(override?: UuidString): NodeId {
+		// TODO:#70358: Re-implement this method to return compressed ids created by an IdCompressor
 		if (override !== undefined) {
 			return override as NodeId;
 		}
@@ -947,9 +948,6 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * @internal
 	 */
 	public abstract internalizeChange(change: TChange): TChangeInternal;
-
-	// TODO: do we still need a way to stamp edits themselves?
-	// public abstract internalizeEdit(edit: Omit<Edit, 'changes'>): Omit<Edit, 'changes'>
 
 	private applyEditLocally(
 		edit: Edit<TChangeInternal>,

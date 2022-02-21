@@ -9,7 +9,6 @@ import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime } from '@fluidfr
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../../Common';
 import { Definition, DetachedSequenceId, EditId, TraitLabel } from '../../Identifiers';
 import {
-	BuildNode,
 	ChangeNode,
 	SharedTreeOpType,
 	SharedTreeEvent,
@@ -19,7 +18,17 @@ import {
 	EditCommittedEventArguments,
 	SequencedEditAppliedEventArguments,
 } from '../../generic';
-import { Change, ChangeType, Delete, Insert, StablePlace, StableRange, SharedTree, Move } from '../../default-edits';
+import {
+	Change,
+	ChangeType,
+	Delete,
+	Insert,
+	StablePlace,
+	StableRange,
+	SharedTree,
+	Move,
+	BuildNode,
+} from '../../default-edits';
 import { CachingLogViewer } from '../../LogViewer';
 import { EditLog } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
@@ -140,26 +149,27 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				const childNode = testTree.buildLeaf();
 				const childId = 0 as DetachedSequenceId;
 				const childrenTraitLabel = 'children' as TraitLabel;
+				const parentId = testTree.generateId();
 				const parentNode: BuildNode = {
-					identifier: testTree.generateId(),
+					identifier: parentId,
 					definition: 'node' as Definition,
 					traits: {
 						[childrenTraitLabel]: [childId],
 					},
 				};
-				const parentId = 1 as DetachedSequenceId;
+				const parentDetachedId = 1 as DetachedSequenceId;
 
 				const buildChild = Change.build([childNode], childId);
-				const buildParent = Change.build([parentNode], parentId);
-				const insertParent = Change.insert(parentId, StablePlace.before(testTree.left));
+				const buildParent = Change.build([parentNode], parentDetachedId);
+				const insertParent = Change.insert(parentDetachedId, StablePlace.before(testTree.left));
 
 				sharedTree.applyEdit(buildChild, buildParent, insertParent);
 
 				const leftTrait = sharedTree.currentView.getTrait(testTree.left.traitLocation);
 				expect(leftTrait.length).to.equal(2);
-				expect(leftTrait[0]).to.equal(parentNode.identifier);
+				expect(leftTrait[0]).to.equal(parentId);
 				const childrenTrait = sharedTree.currentView.getTrait({
-					parent: parentNode.identifier,
+					parent: parentId,
 					label: childrenTraitLabel,
 				});
 				expect(childrenTrait.length).to.equal(1);

@@ -5,6 +5,7 @@
 
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import {
+	ChangeNode,
 	convertTreeNodes,
 	deepCloneStablePlace,
 	deepCloneStableRange,
@@ -15,12 +16,14 @@ import {
 } from '../generic';
 import { RevisionView } from '../TreeView';
 import { copyPropertyIfDefined, fail } from '../Common';
+import { DetachedSequenceId } from '../Identifiers';
 import { ChangeInternal, ChangeTypeInternal, ConstraintInternal, DetachInternal } from './PersistedTypes';
 import { SharedTreeFactory } from './Factory';
 import { Transaction } from './Transaction';
 import { getSummaryByVersion } from './Summary';
-import { Change, ChangeType, isDetachedSequenceId } from './EditUtilities';
+import { internalizeBuildNode, isDetachedSequenceId } from './EditUtilities';
 import { revert } from './HistoryEditFactory';
+import { BuildTreeNode, Change, ChangeType } from './ChangeTypes';
 
 /**
  * A distributed tree.
@@ -129,7 +132,11 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 			}
 			case ChangeType.Build: {
 				const source = change.source.map((buildNode) =>
-					convertTreeNodes(buildNode, (nodeData) => nodeData, isDetachedSequenceId)
+					convertTreeNodes<BuildTreeNode, ChangeNode, DetachedSequenceId>(
+						buildNode,
+						(nodeData) => internalizeBuildNode(nodeData, this),
+						isDetachedSequenceId
+					)
 				);
 				return { source, destination: change.destination, type: ChangeTypeInternal.Build };
 			}

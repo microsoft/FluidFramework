@@ -5,19 +5,18 @@
 
 import { expect } from 'chai';
 import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
-import { ChangeNode, EditStatus } from '../generic';
+import { ChangeNode, EditStatus, Side } from '../generic';
 import {
 	Transaction,
 	ChangeInternal,
 	ChangeTypeInternal,
-	ConstraintEffect,
 	StableRange,
 	StablePlace,
 	RangeValidationResultKind,
 	PlaceValidationResult,
 	InsertInternal,
+	ConstraintEffect,
 } from '../default-edits';
-import { Side } from '../TreeView';
 import { assert } from '../Common';
 import { initialTree } from '../InitialTree';
 import { getChangeNodeFromViewNode } from '../SerializationUtilities';

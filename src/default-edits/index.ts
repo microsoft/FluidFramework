@@ -10,16 +10,19 @@ export {
 	ChangeTypeInternal,
 	ChangeInternal,
 	BuildInternal,
+	BuildNodeInternal,
 	InsertInternal,
 	DetachInternal,
 	SetValueInternal,
 	ConstraintInternal,
+	ConstraintEffect,
 	DeleteInternal,
 	MoveInternal,
 	StablePlace,
 	StableRange,
 	getNodeId,
 } from './PersistedTypes';
+export * from './ChangeTypes';
 export * from './Factory';
 export * from './HistoryEditFactory';
 export * from './EditUtilities';

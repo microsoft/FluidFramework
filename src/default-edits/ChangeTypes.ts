@@ -1,0 +1,268 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
+import { assertNotUndefined } from '../Common';
+import { Payload, TreeNode, TreeNodeSequence } from '../generic';
+import { ConstraintEffect, StablePlace, StableRange } from './PersistedTypes';
+
+/**
+ * The type of a Change
+ * @public
+ */
+export enum ChangeType {
+	Insert,
+	Detach,
+	Build,
+	SetValue,
+	Constraint,
+}
+
+/**
+ * A change that composes an Edit.
+ *
+ * `Change` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
+ * @example
+ * TreeChange.insert(sourceId, destination)
+ * @public
+ */
+export type Change = Insert | Detach | Build | SetValue | Constraint;
+
+/**
+ * Node or sequence of Nodes for use in a Build change.
+ *
+ * Other formats for sub-sequences of Nodes can be added here, and those formats should be supported in blobs as well.
+ * Future formats will include referenced blobs containing sequences of Nodes,
+ * template based metadata and identity deduplication, and possibly compressed and binary formats.
+ * These optimized formats should also be used within tree views.
+ * @public
+ */
+export type BuildNode = BuildTreeNode | DetachedSequenceId;
+
+/**
+ * Node for use in a Build change.
+ */
+export interface BuildTreeNode extends Omit<TreeNode<BuildNode>, 'identifier'> {
+	identifier?: NodeId;
+}
+
+/**
+ * Constructs a sequence of nodes, associates it with the supplied ID, and stores it for use in later changes.
+ * Does not modify the document.
+ *
+ * Valid if (transitively) all DetachedSequenceId are used according to their rules (use here counts as a destination),
+ * and all Nodes' identifiers are previously unused.
+ *
+ * TODO: Design Decision:
+ * If allowing 'moving from nowhere' to restore nodes: all new Nodes must have never before used identifiers.
+ * Otherwise could just forbid identifiers currently reachable?
+ * Could also allow introducing a node with a particular identifier to mean replacing that node with the new one
+ * (could include optional constraint to require/prevent this).
+ *
+ * @public
+ */
+export interface Build {
+	readonly destination: DetachedSequenceId;
+	readonly source: TreeNodeSequence<BuildNode>;
+	readonly type: typeof ChangeType.Build;
+}
+
+/**
+ * Inserts a sequence of nodes at the specified destination.
+ * The source can be constructed either by a Build (used to insert new nodes) or a Detach (amounts to a "move" operation).
+ * @public
+ */
+export interface Insert {
+	readonly destination: StablePlace;
+	readonly source: DetachedSequenceId;
+	readonly type: typeof ChangeType.Insert;
+}
+
+/**
+ * Removes a sequence of nodes from the tree.
+ * If a destination is specified, the detached sequence is associated with that ID and held for possible reuse
+ * by later changes in this same Edit (such as by an Insert).
+ * A Detach without a destination is a deletion of the specified sequence, as is a Detach with a destination that is not used later.
+ * @public
+ */
+export interface Detach {
+	readonly destination?: DetachedSequenceId;
+	readonly source: StableRange;
+	readonly type: typeof ChangeType.Detach;
+}
+
+/**
+ * Modifies the payload of a node.
+ * @public
+ */
+export interface SetValue {
+	readonly nodeToModify: NodeId;
+	/**
+	 * Sets or clears the payload.
+	 * To improve ease of forwards compatibility, an explicit `null` value is used to represent the clearing of a payload.
+	 * SetValue may use `undefined` in future API versions to mean "don't change the payload" (which is useful if e.g. other
+	 * fields are added to SetValue that can be changed without altering the payload)
+	 */
+	readonly payload: Payload | null;
+	readonly type: typeof ChangeType.SetValue;
+}
+
+/**
+ * A set of constraints on the validity of an Edit.
+ * A Constraint is used to detect when an Edit, due to other concurrent edits, may have unintended effects or merge in
+ * non-semantic ways. It is processed in order like any other Change in an Edit. It can cause an edit to fail if the
+ * various constraints are not met at the time of evaluation (ex: the parentNode has changed due to concurrent editing).
+ * Does not modify the document.
+ * @public
+ */
+export interface Constraint {
+	/**
+	 * Selects a sequence of nodes which will be checked against the constraints specified by the optional fields.
+	 * If `toConstrain` is invalid, it will be treated like a constraint being unmet.
+	 * Depending on `effect` this may or may not make the Edit invalid.
+	 *
+	 * When a constraint is not met, the effects is specified by `effect`.
+	 */
+	readonly toConstrain: StableRange;
+
+	/**
+	 * Require that the identities of all the nodes in toConstrain hash to this value.
+	 * Hash is order dependent.
+	 * TODO: implement and specify exact hash function.
+	 *
+	 * This is an efficient (O(1) space) way to constrain a sequence of nodes to have specific identities.
+	 */
+	readonly identityHash?: UuidString;
+
+	/**
+	 * Require that the number of nodes in toConstrain is this value.
+	 */
+	readonly length?: number;
+
+	/**
+	 * Require that the contents of all of the nodes in toConstrain hash to this value.
+	 * Hash is an order dependant deep hash, which includes all subtree content recursively.
+	 * TODO: implement and specify exact hash function.
+	 *
+	 * This is an efficient (O(1) space) way to constrain a sequence of nodes have exact values (transitively).
+	 */
+	readonly contentHash?: UuidString;
+
+	/**
+	 * Require that parent under which toConstrain is located has this identifier.
+	 */
+	readonly parentNode?: NodeId;
+
+	/**
+	 * Require that the trait under which toConstrain is located has this label.
+	 */
+	readonly label?: TraitLabel;
+
+	/**
+	 * What to do if a constraint is not met.
+	 */
+	readonly effect: ConstraintEffect;
+
+	/**
+	 * Marker for which kind of Change this is.
+	 */
+	readonly type: typeof ChangeType.Constraint;
+}
+
+// Note: Documentation of this constant is merged with documentation of the `Change` interface.
+/**
+ * @public
+ */
+export const Change = {
+	build: (source: TreeNodeSequence<BuildNode>, destination: DetachedSequenceId): Build => ({
+		destination,
+		source,
+		type: ChangeType.Build,
+	}),
+
+	insert: (source: DetachedSequenceId, destination: StablePlace): Insert => ({
+		destination,
+		source,
+		type: ChangeType.Insert,
+	}),
+
+	detach: (source: StableRange, destination?: DetachedSequenceId): Detach => ({
+		destination,
+		source,
+		type: ChangeType.Detach,
+	}),
+
+	setPayload: (nodeToModify: NodeId, payload: Payload): SetValue => ({
+		nodeToModify,
+		payload,
+		type: ChangeType.SetValue,
+	}),
+
+	clearPayload: (nodeToModify: NodeId): SetValue => ({
+		nodeToModify,
+		// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface above.)
+		// eslint-disable-next-line no-null/no-null
+		payload: null,
+		type: ChangeType.SetValue,
+	}),
+
+	constraint: (
+		toConstrain: StableRange,
+		effect: ConstraintEffect,
+		identityHash?: UuidString,
+		length?: number,
+		contentHash?: UuidString,
+		parentNode?: NodeId,
+		label?: TraitLabel
+	): Constraint => ({
+		toConstrain,
+		effect,
+		identityHash,
+		length,
+		contentHash,
+		parentNode,
+		label,
+		type: ChangeType.Constraint,
+	}),
+};
+
+/**
+ * Helper for creating a `Delete` edit.
+ * @public
+ */
+export const Delete = {
+	/**
+	 * @returns a Change that deletes the supplied part of the tree.
+	 */
+	create: (stableRange: StableRange): Change => Change.detach(stableRange),
+};
+
+/**
+ * Helper for creating an `Insert` edit.
+ * @public
+ */
+export const Insert = {
+	/**
+	 * @returns a Change that inserts 'nodes' into the specified location in the tree.
+	 */
+	create: (nodes: TreeNodeSequence<BuildNode>, destination: StablePlace): Change[] => {
+		const build = Change.build(nodes, 0 as DetachedSequenceId);
+		return [build, Change.insert(build.destination, destination)];
+	},
+};
+
+/**
+ * Helper for creating a `Move` edit.
+ * @public
+ */
+export const Move = {
+	/**
+	 * @returns a Change that moves the specified content to a new location in the tree.
+	 */
+	create: (source: StableRange, destination: StablePlace): Change[] => {
+		const detach = Change.detach(source, 0 as DetachedSequenceId);
+		return [detach, Change.insert(assertNotUndefined(detach.destination), destination)];
+	},
+};

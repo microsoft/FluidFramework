@@ -5,8 +5,8 @@
 
 import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
-import { RevisionView, Side, TreeView } from '../TreeView';
-import { BuildNode, TreeNode } from '../generic';
+import { RevisionView, TreeView } from '../TreeView';
+import { Side, TreeNode } from '../generic';
 import { getChangeNodeFromViewNode } from '../SerializationUtilities';
 import {
 	StableRange,
@@ -19,6 +19,7 @@ import {
 } from './PersistedTypes';
 import { Transaction } from './Transaction';
 import { isDetachedSequenceId, RangeValidationResultKind, validateStableRange } from './EditUtilities';
+import { BuildNode } from './ChangeTypes';
 
 /**
  * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes

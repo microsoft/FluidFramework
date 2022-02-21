@@ -444,7 +444,9 @@ function setTestTree(tree: SharedTree, node: ChangeNode, overrideId?: EditId): E
  *
  * @deprecated Use {@link SimpleTestTree.buildLeaf} instead.
  */
-export function makeEmptyNode(identifier: NodeId = uuidv4() as NodeId): ChangeNode {
+export function makeEmptyNode(
+	identifier: NodeId = uuidv4() as NodeId
+): Omit<ChangeNode, 'traits'> & { traits: Record<string, never> } {
 	const definition = 'node' as Definition;
 	return { definition, identifier, traits: {} };
 }
@@ -784,14 +786,14 @@ const versionComparator = (versionA: string, versionB: string): number => {
 /**
  * Create a {@link SimpleTestTree} from the given {@link SharedTree} or {@link IdCompressor}
  */
-export function setUpTestTree(idSource?: IdCompressor | SharedTree): TestTree {
+export function setUpTestTree(idSource?: IdCompressor | SharedTree, expensiveValidation = false): TestTree {
 	const source = idSource ?? new IdCompressor(createSessionId(), reservedIdCount);
 	if (source instanceof IdCompressor) {
 		// TODO:#62125: Re-implement this case to return compressed ids created by the IdCompressor
 		return new SimpleTestTree(() => v4() as NodeId);
 	}
 	assert(source.edits.length === 0, 'tree must be a new SharedTree');
-	const simpleTestTree = new SimpleTestTree(() => source.generateId());
+	const simpleTestTree = new SimpleTestTree(() => source.generateNodeId(), expensiveValidation);
 	setTestTree(source, simpleTestTree);
 	return simpleTestTree;
 }
@@ -801,11 +803,12 @@ export function setUpTestTree(idSource?: IdCompressor | SharedTree): TestTree {
  */
 export function refreshTestTree(
 	idSourceFactory?: (() => IdCompressor) | (() => SharedTree),
-	fn?: (testTree: TestTree) => void
+	fn?: (testTree: TestTree) => void,
+	expensiveValidation = false
 ): TestTree {
 	const factory = idSourceFactory ?? (() => new IdCompressor(createSessionId(), reservedIdCount));
 	return new RefreshingTestTree(() => {
-		return setUpTestTree(factory());
+		return setUpTestTree(factory(), expensiveValidation);
 	}, fn);
 }
 

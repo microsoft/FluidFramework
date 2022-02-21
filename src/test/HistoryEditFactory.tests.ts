@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { ChangeInternal, DetachInternal, revert, StablePlace, StableRange } from '../default-edits';
-import { Side } from '../TreeView';
+import { Side } from '../generic';
 import { DetachedSequenceId } from '../Identifiers';
 import { expectDefined, refreshTestTree } from './utilities/TestUtilities';
 

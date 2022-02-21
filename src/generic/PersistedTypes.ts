@@ -9,8 +9,32 @@
 // This does mean that the various UuidString types must remain strings, and must never change the format unless the process for changing
 // persisted types (as documented below) is followed.
 import { Serializable } from '@fluidframework/datastore-definitions';
-import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../Identifiers';
+import { Definition, EditId, NodeId, TraitLabel } from '../Identifiers';
 import { SharedTreeSummaryWriteFormat } from './GenericSharedTree';
+
+/**
+ * Defines a place relative to sibling.
+ * The "outside" of a trait is the `undefined` sibling,
+ * so After `undefined` is the beginning of the trait, and before `undefined` is the end.
+ *
+ * For this purpose, traits look like:
+ *
+ * `{undefined} - {Node 0} - {Node 1} - ... - {Node N} - {undefined}`
+ *
+ * Each `{value}` in the diagram is a possible sibling, which is either a Node or undefined.
+ * Each `-` in the above diagram is a `Place`, and can be describe as being `After` a particular `{sibling}` or `Before` it.
+ * This means that `After` `{undefined}` means the same `Place` as before the first node
+ * and `Before` `{undefined}` means the `Place` after the last Node.
+ *
+ * Each place can be specified, (aka 'anchored') in two ways (relative to the sibling before or after):
+ * the choice of which way to anchor a place only matters when the kept across an edit, and thus evaluated in multiple contexts where the
+ * two place description may no longer evaluate to the same place.
+ * @public
+ */
+export enum Side {
+	Before = 0,
+	After = 1,
+}
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.
@@ -96,6 +120,14 @@ export interface TraitMap<TChild> {
 }
 
 /**
+ * An object which may have traits with children of the given type underneath it
+ * @public
+ */
+export interface HasTraits<TChild> {
+	readonly traits: TraitMap<TChild>;
+}
+
+/**
  * A sequence of Nodes that make up a trait under a Node
  * @public
  */
@@ -138,9 +170,7 @@ export interface NodeData {
  * Satisfies `NodeData` and may contain children under traits (which may or may not be `TreeNodes`)
  * @public
  */
-export interface TreeNode<TChild> extends NodeData {
-	readonly traits: TraitMap<TChild>;
-}
+export interface TreeNode<TChild> extends NodeData, HasTraits<TChild> {}
 
 /**
  * A tree whose nodes are either TreeNodes or a placeholder
@@ -151,14 +181,14 @@ export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPl
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree. Safe to persist/serialize.
  * @public
  */
-export type StableTraitLocation = TraitLocation<NodeId>;
+export type StableTraitLocation = TraitLocation;
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
  * @public
  */
-export interface TraitLocation<TId> {
-	readonly parent: TId;
+export interface TraitLocation {
+	readonly parent: NodeId;
 	readonly label: TraitLabel;
 }
 
@@ -167,17 +197,6 @@ export interface TraitLocation<TId> {
  * @public
  */
 export type ChangeNode = PlaceholderTree;
-
-/**
- * Node or sequence of Nodes for use in a Build change.
- *
- * Other formats for sub-sequences of Nodes can be added here, and those formats should be supported in blobs as well.
- * Future formats will include referenced blobs containing sequences of Nodes,
- * template based metadata and identity deduplication, and possibly compressed and binary formats.
- * These optimized formats should also be used within tree views.
- * @public
- */
-export type BuildNode = PlaceholderTree<DetachedSequenceId>;
 
 /**
  * The status code of an attempt to apply the changes in an Edit.

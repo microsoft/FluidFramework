@@ -22,6 +22,7 @@ export {
 	SharedTreeFailureType,
 } from './GenericSharedTree';
 export {
+	Side,
 	Edit,
 	EditWithoutId,
 	EditBase,
@@ -31,12 +32,12 @@ export {
 	NodeData,
 	TreeNode,
 	ChangeNode,
-	BuildNode,
 	EditStatus,
 	TraitLocation,
 	StableTraitLocation,
 	SharedTreeOpType,
 	PlaceholderTree,
+	HasTraits,
 } from './PersistedTypes';
 export {
 	newEdit,
@@ -44,6 +45,7 @@ export {
 	convertTreeNodes,
 	deepCloneStablePlace,
 	deepCloneStableRange,
+	NoTraits,
 } from './GenericEditUtilities';
 export {
 	GenericTransaction,
@@ -68,6 +70,7 @@ export {
 	formatVersion,
 	serialize,
 } from './Summary';
+export { NodeIdGenerator } from './NodeIdUtilities';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package

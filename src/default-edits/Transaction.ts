@@ -7,7 +7,6 @@ import { assert, copyPropertyIfDefined, fail, Result } from '../Common';
 import { NodeId, DetachedSequenceId, TraitLabel } from '../Identifiers';
 import {
 	GenericTransaction,
-	BuildNode,
 	EditStatus,
 	ChangeResult,
 	GenericTransactionPolicy,
@@ -16,8 +15,10 @@ import {
 import { RevisionView, TreeViewNode } from '../TreeView';
 import {
 	BuildInternal,
+	BuildNodeInternal,
 	ChangeInternal,
 	ChangeTypeInternal,
+	ConstraintEffect,
 	ConstraintInternal,
 	DetachInternal,
 	InsertInternal,
@@ -35,7 +36,6 @@ import {
 	BadRangeValidationResult,
 	PlaceValidationResult,
 	RangeValidationResultKind,
-	ConstraintEffect,
 } from './EditUtilities';
 
 /**
@@ -368,12 +368,12 @@ export namespace Transaction {
 		 * @returns all the top-level node IDs in `sequence` (both from nodes and from detached sequences).
 		 */
 		protected createViewNodesForTree(
-			sequence: Iterable<BuildNode>,
+			sequence: Iterable<BuildNodeInternal>,
 			onCreateNode: (id: NodeId, node: TreeViewNode) => boolean,
 			onInvalidDetachedId: (sequenceId: DetachedSequenceId) => void
 		): NodeId[] | undefined {
 			const topLevelIds: NodeId[] = [];
-			const unprocessed: BuildNode[] = [];
+			const unprocessed: BuildNodeInternal[] = [];
 			for (const buildNode of sequence) {
 				if (isDetachedSequenceId(buildNode)) {
 					const detachedIds = this.getDetachedNodeIds(buildNode, onInvalidDetachedId);

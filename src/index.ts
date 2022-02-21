@@ -32,7 +32,6 @@ export {
 	TraitNodeIndex,
 	TreeViewPlace,
 	TreeViewRange,
-	Side,
 } from './TreeView';
 export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
@@ -45,6 +44,8 @@ export {
 	ChangeType,
 	Change,
 	Build,
+	BuildNode,
+	BuildTreeNode,
 	Insert,
 	Detach,
 	SetValue,
@@ -52,6 +53,7 @@ export {
 	ConstraintEffect,
 	ChangeTypeInternal,
 	ChangeInternal,
+	BuildNodeInternal,
 	BuildInternal,
 	InsertInternal,
 	DetachInternal,
@@ -76,6 +78,7 @@ export {
 	isDetachedSequenceId,
 } from './default-edits';
 export {
+	Side,
 	EditCommittedHandler,
 	EditCommittedEventArguments,
 	SequencedEditAppliedHandler,
@@ -91,13 +94,13 @@ export {
 	newEdit,
 	EditWithoutId,
 	EditBase,
+	HasTraits,
 	TraitMap,
 	TreeNodeSequence,
 	Payload,
 	NodeData,
 	TreeNode,
 	ChangeNode,
-	BuildNode,
 	EditStatus,
 	TraitLocation,
 	StableTraitLocation,
@@ -122,4 +125,5 @@ export {
 	getUploadedEditChunkContents,
 	saveUploadedEditChunkContents,
 	PlaceholderTree,
+	NodeIdGenerator,
 } from './generic';

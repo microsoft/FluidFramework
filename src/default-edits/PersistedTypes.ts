@@ -10,9 +10,7 @@
 // persisted types (as documented below) is followed.
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
 import { assert, assertNotUndefined } from '../Common';
-import { Side } from '../TreeView';
-import { BuildNode, NodeData, Payload, StableTraitLocation, TreeNodeSequence } from '../generic';
-import { ConstraintEffect } from './EditUtilities';
+import { NodeData, Payload, PlaceholderTree, Side, StableTraitLocation, TreeNodeSequence } from '../generic';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.
@@ -60,6 +58,12 @@ export enum ChangeTypeInternal {
 export type ChangeInternal = InsertInternal | DetachInternal | BuildInternal | SetValueInternal | ConstraintInternal;
 
 /**
+ * {@inheritdoc BuildNode}
+ * @public
+ */
+export type BuildNodeInternal = PlaceholderTree<DetachedSequenceId>;
+
+/**
  * {@inheritdoc Build}
  * @public
  */
@@ -67,7 +71,7 @@ export interface BuildInternal {
 	/** {@inheritdoc Build.destination } */
 	readonly destination: DetachedSequenceId;
 	/** {@inheritdoc Build.source } */
-	readonly source: TreeNodeSequence<BuildNode>;
+	readonly source: TreeNodeSequence<BuildNodeInternal>;
 	/** {@inheritdoc Build."type" } */
 	readonly type: typeof ChangeTypeInternal.Build;
 }
@@ -112,6 +116,29 @@ export interface SetValueInternal {
 }
 
 /**
+ * What to do when a Constraint is violated.
+ * @public
+ */
+export enum ConstraintEffect {
+	/**
+	 * Discard Edit.
+	 */
+	InvalidAndDiscard,
+
+	/**
+	 * Discard Edit, but record metadata that application may want to try and recover this change by recreating it.
+	 * Should this be the default policy for when another (non Constraint) change is invalid?
+	 */
+	InvalidRetry,
+
+	/**
+	 * Apply the change, but flag it for possible reconsideration by the app
+	 * (applying it is better than not, but perhaps the high level logic could produce something better).
+	 */
+	ValidRetry,
+}
+
+/**
  * {@inheritdoc Constraint}
  * @public
  */
@@ -139,7 +166,7 @@ export interface ConstraintInternal {
  * @public
  */
 export const ChangeInternal = {
-	build: (source: TreeNodeSequence<BuildNode>, destination: DetachedSequenceId): BuildInternal => ({
+	build: (source: TreeNodeSequence<BuildNodeInternal>, destination: DetachedSequenceId): BuildInternal => ({
 		destination,
 		source,
 		type: ChangeTypeInternal.Build,
@@ -206,7 +233,7 @@ export const DeleteInternal = {
  */
 export const InsertInternal = {
 	/** {@inheritdoc (Insert:variable).create } */
-	create: (nodes: TreeNodeSequence<BuildNode>, destination: StablePlace): ChangeInternal[] => {
+	create: (nodes: TreeNodeSequence<BuildNodeInternal>, destination: StablePlace): ChangeInternal[] => {
 		const build = ChangeInternal.build(nodes, 0 as DetachedSequenceId);
 		return [build, ChangeInternal.insert(build.destination, destination)];
 	},
