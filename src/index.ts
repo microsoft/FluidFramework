@@ -126,4 +126,5 @@ export {
 	saveUploadedEditChunkContents,
 	PlaceholderTree,
 	NodeIdGenerator,
+	NodeIdConverter,
 } from './generic';

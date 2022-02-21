@@ -70,7 +70,7 @@ export {
 	formatVersion,
 	serialize,
 } from './Summary';
-export { NodeIdGenerator } from './NodeIdUtilities';
+export { NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package

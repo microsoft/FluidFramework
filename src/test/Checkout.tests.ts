@@ -459,7 +459,7 @@ export function checkoutTests<TChangeInternal>(
 			const checkout = await checkoutFactory(tree);
 			const secondCheckout = await checkoutFactory(secondTree);
 
-			const newLeftNode = simpleTestTree.buildLeaf();
+			const newLeftNode = simpleTestTree.buildLeafWithId();
 			checkout.openEdit();
 			checkout.applyChanges(...setTrait(simpleTestTree.left.traitLocation, [newLeftNode]));
 

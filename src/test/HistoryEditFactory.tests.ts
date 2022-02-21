@@ -9,7 +9,7 @@ describe('revert', () => {
 
 	it('can revert a single detached node', () => {
 		const firstDetachedId = 0 as DetachedSequenceId;
-		const node = simpleTestTree.buildLeaf();
+		const node = simpleTestTree.buildLeafWithId();
 		const firstBuild = ChangeInternal.build([node], firstDetachedId);
 		const insertedNodeId = 1 as DetachedSequenceId;
 		const insertedBuild = ChangeInternal.build([firstDetachedId], insertedNodeId);
@@ -26,10 +26,10 @@ describe('revert', () => {
 
 	it('can revert multiple detached nodes', () => {
 		const firstDetachedId = 0 as DetachedSequenceId;
-		const firstNode = simpleTestTree.buildLeaf();
+		const firstNode = simpleTestTree.buildLeafWithId();
 		const firstBuild = ChangeInternal.build([firstNode], firstDetachedId);
 		const secondDetachedId = 1 as DetachedSequenceId;
-		const secondNode = simpleTestTree.buildLeaf();
+		const secondNode = simpleTestTree.buildLeafWithId();
 		const secondBuild = ChangeInternal.build([secondNode], secondDetachedId);
 		const insertedNodeId = 2 as DetachedSequenceId;
 		const insertedBuild = ChangeInternal.build([firstDetachedId, secondDetachedId], insertedNodeId);
@@ -49,14 +49,14 @@ describe('revert', () => {
 	describe('returns undefined for reverts that require more context than the view directly before the edit', () => {
 		describe('because the edit conflicted', () => {
 			it('when reverting a detach of a node that is not in the tree', () => {
-				const nodeNotInTree = simpleTestTree.buildLeaf();
+				const nodeNotInTree = simpleTestTree.buildLeafWithId();
 				const change = ChangeInternal.detach(StableRange.only(nodeNotInTree));
 				const result = revert([change], simpleTestTree.view);
 				expect(result).to.be.undefined;
 			});
 
 			it('when reverting a set value of a node that is not in the tree', () => {
-				const nodeNotInTree = simpleTestTree.buildLeaf();
+				const nodeNotInTree = simpleTestTree.buildLeafWithId();
 				const change = ChangeInternal.setPayload(nodeNotInTree, '42');
 				const result = revert([change], simpleTestTree.view);
 				expect(result).to.be.undefined;
@@ -77,7 +77,7 @@ describe('revert', () => {
 				expect(
 					revert(
 						[
-							ChangeInternal.build([simpleTestTree.buildLeaf()], detachedId),
+							ChangeInternal.build([simpleTestTree.buildLeafWithId()], detachedId),
 							ChangeInternal.insert(detachedId, StablePlace.atStartOf(simpleTestTree.left.traitLocation)),
 							ChangeInternal.insert(detachedId, StablePlace.atStartOf(simpleTestTree.left.traitLocation)),
 						],
@@ -102,7 +102,7 @@ describe('revert', () => {
 				expect(
 					revert(
 						[
-							ChangeInternal.build([simpleTestTree.buildLeaf()], detachedId),
+							ChangeInternal.build([simpleTestTree.buildLeafWithId()], detachedId),
 							ChangeInternal.detach(StableRange.only(simpleTestTree.left), detachedId),
 						],
 						simpleTestTree.view

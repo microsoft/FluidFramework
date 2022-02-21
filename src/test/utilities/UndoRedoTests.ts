@@ -154,7 +154,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			for (let startIndex = 0; startIndex < 8; ++startIndex) {
 				for (let endIndex = startIndex; endIndex < 8; ++endIndex) {
 					it(`works for Detach [${startIndex} -> ${endIndex}]`, () => {
-						const leftTraitNodes = [testTree.buildLeaf(), testTree.left, testTree.buildLeaf()];
+						const leftTraitNodes = [testTree.buildLeafWithId(), testTree.left, testTree.buildLeafWithId()];
 						const places = leftTraitPlaces(testTree, leftTraitNodes);
 
 						sharedTree.applyEdit(...Insert.create([leftTraitNodes[0]], StablePlace.before(testTree.left)));
@@ -207,7 +207,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 		}
 
 		it('works for SetValue', () => {
-			const newNode = testTree.buildLeaf();
+			const newNode = testTree.buildLeafWithId();
 
 			sharedTree.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));
 			afterEdit();
@@ -272,7 +272,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 		if (testOutOfOrderRevert === true) {
 			it('works for out-of-order Insert', () => {
 				const firstNode = testTree.buildLeaf();
-				const secondNode = testTree.buildLeaf();
+				const secondNode = testTree.buildLeafWithId();
 
 				const { id } = sharedTree.applyEdit(...Insert.create([firstNode], StablePlace.after(testTree.left)));
 				afterEdit();
@@ -315,7 +315,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			});
 
 			it('works for out-of-order Detach', () => {
-				const firstNode = testTree.buildLeaf();
+				const firstNode = testTree.buildLeafWithId();
 				const secondNode = testTree.buildLeaf();
 
 				sharedTree.applyEdit(...Insert.create([firstNode], StablePlace.after(testTree.left)));
@@ -360,7 +360,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			});
 
 			it('works for out-of-order SetValue', () => {
-				const newNode = testTree.buildLeaf();
+				const newNode = testTree.buildLeafWithId();
 
 				sharedTree.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));
 				afterEdit();

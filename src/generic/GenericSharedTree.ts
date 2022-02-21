@@ -18,7 +18,7 @@ import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fl
 import { v4 } from 'uuid';
 import { assert, assertNotUndefined, fail } from '../Common';
 import { EditLog, EditLogSummary, OrderedEditSet } from '../EditLog';
-import { EditId, NodeId, UuidString } from '../Identifiers';
+import { EditId, NodeId, StableNodeId, UuidString } from '../Identifiers';
 import { RevisionView } from '../TreeView';
 import { initialTree } from '../InitialTree';
 import {
@@ -48,7 +48,7 @@ import {
 import { serialize, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
 import { GenericTransaction } from './GenericTransaction';
 import { newEditId } from './GenericEditUtilities';
-import { NodeIdGenerator } from './NodeIdUtilities';
+import { NodeIdConverter, NodeIdGenerator } from './NodeIdUtilities';
 
 /**
  * Filename where the snapshot is stored.
@@ -290,7 +290,7 @@ export interface SharedTreeFactoryOptions {
  */
 export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unknown>
 	extends SharedObject<ISharedTreeEvents<GenericSharedTree<TChange, TChangeInternal, TFailure>>>
-	implements NodeIdGenerator
+	implements NodeIdGenerator, NodeIdConverter
 {
 	/**
 	 * The log of completed edits for this SharedTree.
@@ -462,6 +462,28 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		}
 
 		return v4() as NodeId;
+	}
+
+	/** {@inheritdoc NodeIdConverter.convertToStableNodeId} */
+	convertToStableNodeId(id: NodeId): StableNodeId {
+		return this.tryConvertToStableNodeId(id) ?? fail('Node id is not known to this SharedTree');
+	}
+
+	/** {@inheritdoc NodeIdConverter.tryConvertToStableNodeId} */
+	tryConvertToStableNodeId(id: NodeId): StableNodeId | undefined {
+		// TODO:#70358: Re-implement this method to return ids created by an IdCompressor
+		return id as string as StableNodeId;
+	}
+
+	/** {@inheritdoc NodeIdConverter.convertToNodeId} */
+	convertToNodeId(id: StableNodeId): NodeId {
+		return this.tryConvertToNodeId(id) ?? fail('Stable node id is not known to this SharedTree');
+	}
+
+	/** {@inheritdoc NodeIdConverter.tryConvertToNodeId} */
+	tryConvertToNodeId(id: StableNodeId): NodeId | undefined {
+		// TODO:#70358: Re-implement this method to return ids created by an IdCompressor
+		return id as string as NodeId;
 	}
 
 	/**

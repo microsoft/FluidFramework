@@ -39,6 +39,7 @@ import {
 	getUploadedEditChunkContents,
 	newEdit,
 	NodeData,
+	NodeIdGenerator,
 	SharedTreeDiagnosticEvent,
 	SharedTreeSummaryWriteFormat,
 	StableTraitLocation,
@@ -788,14 +789,18 @@ const versionComparator = (versionA: string, versionB: string): number => {
  */
 export function setUpTestTree(idSource?: IdCompressor | SharedTree, expensiveValidation = false): TestTree {
 	const source = idSource ?? new IdCompressor(createSessionId(), reservedIdCount);
-	if (source instanceof IdCompressor) {
-		// TODO:#62125: Re-implement this case to return compressed ids created by the IdCompressor
-		return new SimpleTestTree(() => v4() as NodeId);
+	if (source instanceof SharedTree) {
+		assert(source.edits.length === 0, 'tree must be a new SharedTree');
+		const simpleTestTree = new SimpleTestTree(source, expensiveValidation);
+		setTestTree(source, simpleTestTree);
+		return simpleTestTree;
 	}
-	assert(source.edits.length === 0, 'tree must be a new SharedTree');
-	const simpleTestTree = new SimpleTestTree(() => source.generateNodeId(), expensiveValidation);
-	setTestTree(source, simpleTestTree);
-	return simpleTestTree;
+
+	if (source instanceof IdCompressor) {
+		return new SimpleTestTree(makeTestNodeContext(source), expensiveValidation);
+	}
+
+	return new SimpleTestTree(source, expensiveValidation);
 }
 
 /**
@@ -810,6 +815,14 @@ export function refreshTestTree(
 	return new RefreshingTestTree(() => {
 		return setUpTestTree(factory(), expensiveValidation);
 	}, fn);
+}
+
+function makeTestNodeContext(idCompressor?: IdCompressor): NodeIdGenerator {
+	// TODO:#70358: Use IdCompressor
+	// const compressor = idCompressor ?? new IdCompressor(createSessionId(), reservedIdCount);
+	return {
+		generateNodeId: (override?: string) => v4() as NodeId,
+	};
 }
 
 /**

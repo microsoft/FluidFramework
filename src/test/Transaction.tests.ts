@@ -257,7 +257,7 @@ describe('Transaction', () => {
 		describe('can be malformed', () => {
 			it('when the detached sequence ID is bogus', () => {
 				const transaction = Transaction.factory(testTree.view);
-				transaction.applyChange(ChangeInternal.build([testTree.buildLeaf()], buildId));
+				transaction.applyChange(ChangeInternal.build([testTree.buildLeafWithId()], buildId));
 				const change = ChangeInternal.insert(
 					// Non-existent detached id
 					1 as DetachedSequenceId,
@@ -275,7 +275,7 @@ describe('Transaction', () => {
 			});
 			it('when the target place is malformed', () => {
 				const transaction = Transaction.factory(testTree.view);
-				transaction.applyChange(ChangeInternal.build([testTree.buildLeaf()], buildId));
+				transaction.applyChange(ChangeInternal.build([testTree.buildLeafWithId()], buildId));
 				const place: StablePlace = {
 					referenceTrait: testTree.left.traitLocation,
 					referenceSibling: testTree.identifier,
@@ -296,7 +296,7 @@ describe('Transaction', () => {
 		});
 		it('can be invalid when the target place is invalid', () => {
 			const transaction = Transaction.factory(testTree.view);
-			transaction.applyChange(ChangeInternal.build([testTree.buildLeaf()], buildId));
+			transaction.applyChange(ChangeInternal.build([testTree.buildLeafWithId()], buildId));
 			// Arbitrary id not present in the tree
 			const place = { referenceSibling: '7969ee2e-5418-43db-929a-4e9a23c5499d' as NodeId, side: Side.After };
 			const change = ChangeInternal.insert(buildId, place);
@@ -314,7 +314,7 @@ describe('Transaction', () => {
 		[Side.Before, Side.After].forEach((side) => {
 			it(`can insert a node at the ${side === Side.After ? 'beginning' : 'end'} of a trait`, () => {
 				const transaction = Transaction.factory(testTree.view);
-				const newNode = testTree.buildLeaf();
+				const newNode = testTree.buildLeafWithId();
 				const newNodeId = newNode.identifier;
 
 				transaction.applyChanges(
@@ -331,7 +331,7 @@ describe('Transaction', () => {
 			});
 			it(`can insert a node ${side === Side.Before ? 'before' : 'after'} another node`, () => {
 				const transaction = Transaction.factory(testTree.view);
-				const newNode = testTree.buildLeaf();
+				const newNode = testTree.buildLeafWithId();
 				const newNodeId = newNode.identifier;
 
 				transaction.applyChanges(
@@ -350,9 +350,9 @@ describe('Transaction', () => {
 		it('can be malformed due to detached ID collision', () => {
 			const transaction = Transaction.factory(testTree.view);
 			// Apply two Build_s with the same detached id
-			transaction.applyChange(ChangeInternal.build([testTree.buildLeaf()], 0 as DetachedSequenceId));
+			transaction.applyChange(ChangeInternal.build([testTree.buildLeafWithId()], 0 as DetachedSequenceId));
 			expect(transaction.status).equals(EditStatus.Applied);
-			const change = ChangeInternal.build([testTree.buildLeaf()], 0 as DetachedSequenceId);
+			const change = ChangeInternal.build([testTree.buildLeafWithId()], 0 as DetachedSequenceId);
 			transaction.applyChange(change);
 			expect(transaction.status).equals(EditStatus.Malformed);
 			const result = transaction.close();
@@ -366,12 +366,12 @@ describe('Transaction', () => {
 		it('can be malformed due to duplicate node identifiers', () => {
 			const transaction = Transaction.factory(testTree.view);
 			// Build two nodes with the same identifier, one of them nested
-			const newNode = testTree.buildLeaf();
+			const newNode = testTree.buildLeafWithId();
 			const change = ChangeInternal.build(
 				[
 					newNode,
 					{
-						...testTree.buildLeaf(),
+						...testTree.buildLeafWithId(),
 						traits: {
 							[testTree.left.traitLabel]: [{ ...testTree.buildLeaf(), identifier: newNode.identifier }],
 						},
@@ -393,7 +393,7 @@ describe('Transaction', () => {
 		it('is invalid when a node already exists with the given identifier', () => {
 			const transaction = Transaction.factory(testTree.view);
 			// Build two nodes with the same identifier
-			const identifier = testTree.generateId();
+			const identifier = testTree.generateNodeId();
 			const node1: ChangeNode = {
 				identifier,
 				definition: SimpleTestTree.definition,
@@ -437,7 +437,7 @@ describe('Transaction', () => {
 
 		it('can build a detached node', () => {
 			const transaction = Transaction.factory(testTree.view);
-			const newNode = testTree.buildLeaf();
+			const newNode = testTree.buildLeafWithId();
 			const identifier = newNode.identifier;
 			transaction.applyChange(ChangeInternal.build([newNode], 0 as DetachedSequenceId));
 			expect(transaction.status).equals(EditStatus.Applied);
@@ -465,7 +465,7 @@ describe('Transaction', () => {
 		});
 		it('can build a node with an explicit empty trait', () => {
 			// Forest should strip off the empty trait
-			const nodeWithEmpty = testTree.buildLeaf();
+			const nodeWithEmpty = testTree.buildLeafWithId();
 			const traits = new Map<TraitLabel, NodeId[]>();
 			const emptyTrait: NodeId[] = [];
 			traits.set(testTree.left.traitLabel, emptyTrait);
@@ -573,7 +573,7 @@ describe('Transaction', () => {
 			const parentDetachedId = 1 as DetachedSequenceId;
 			transaction.applyChange(ChangeInternal.detach(StableRange.only(testTree.left), leftNodeDetachedId));
 			// This is node D, from the example
-			const wrappingParentNode = testTree.buildLeaf();
+			const wrappingParentNode = testTree.buildLeafWithId();
 			const wrappingParentId = wrappingParentNode.identifier;
 			const wrappingTraitLabel = 'wrapTrait' as TraitLabel;
 			transaction.applyChange(
@@ -604,7 +604,7 @@ describe('Transaction', () => {
 			transaction.applyChange(ChangeInternal.detach(StableRange.only(testTree.right), rightNodeDetachedId));
 
 			const detachedSubtree = {
-				...testTree.buildLeaf(),
+				...testTree.buildLeafWithId(),
 				traits: {
 					[testTree.left.traitLabel]: [leftNodeDetachedId],
 					[testTree.right.traitLabel]: [rightNodeDetachedId],

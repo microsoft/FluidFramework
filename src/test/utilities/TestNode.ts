@@ -4,20 +4,25 @@
  */
 
 import { memoizeGetter, fail, setPropertyIfDefined } from '../../Common';
-import { ChangeNode, Payload, StableTraitLocation, TraitMap } from '../../generic';
+import { BuildTreeNode } from '../../default-edits';
+import { NodeIdGenerator, TraitLocation, TraitMap, TreeNode, Payload, ChangeNode } from '../../generic';
 import { Definition, NodeId, TraitLabel } from '../../Identifiers';
 import { initialTree } from '../../InitialTree';
 import { RevisionView } from '../../TreeView';
-import { testTraitLabel } from './TestUtilities';
+
+/**
+ * A node with no children
+ */
+export type LeafNode<T> = Omit<T, 'traits'> & { traits: Record<string, never> };
 
 /**
  * An object containing useful properties for analyzing a node within a test context.
  */
-export interface TestNode extends ChangeNode {
+export interface TestNode extends TreeNode<TestNode> {
 	/** The label of the trait under which this node resides */
 	traitLabel: TraitLabel;
 	/** The trait location at which this node resides */
-	traitLocation: StableTraitLocation;
+	traitLocation: TraitLocation;
 	/** A revision view of this node */
 	view: RevisionView;
 }
@@ -25,16 +30,20 @@ export interface TestNode extends ChangeNode {
 /**
  * A small tree of `TestNode`s consisting of a root/parent node, a "left" child and a "right" child.
  */
-export interface TestTree extends TestNode {
+export interface TestTree extends TestNode, NodeIdGenerator {
 	/** The left child node */
 	left: TestNode;
 	/** The right child node */
 	right: TestNode;
-	/** Create a globally unique identifier for a node */
-	generateId(): NodeId;
-	/** Create an arbitrary unparented node with a unique identifier */
-	buildLeaf(): ChangeNode;
+	/** Create an arbitrary unparented node with the given payload, if specified */
+	buildLeaf(id?: undefined, payload?: Payload): LeafNode<Omit<BuildTreeNode, 'identifier'>>;
+	/** Create an arbitrary unparented node with the given identifier and payload, if specified */
+	buildLeaf(id: NodeId, payload?: Payload): LeafNode<ChangeNode>;
+	/** Create an arbitrary unparented node with a new unique ID and the given payload, if specified */
+	buildLeafWithId(payload?: Payload): LeafNode<ChangeNode>;
 }
+
+const testTraitLabel = 'e276f382-fa99-49a1-ae81-42001791c733' as TraitLabel;
 
 /**
  * A TestTree for general use within the shared-tree package. The nodes in every `SimpleTestTree` will have unique identifiers - i.e. two
@@ -51,10 +60,10 @@ export class SimpleTestTree implements TestTree {
 	public readonly right: TestNode;
 	public readonly expensiveValidation;
 
-	public constructor(public generateId: () => NodeId, expensiveValidation = true) {
-		const leftIdentifier = this.generateId();
-		const rightIdentifier = this.generateId();
-		const rootIdentifier = this.generateId();
+	public constructor(private readonly nodeIdContext: NodeIdGenerator, expensiveValidation = true) {
+		const leftIdentifier = nodeIdContext.generateNodeId();
+		const rightIdentifier = nodeIdContext.generateNodeId();
+		const rootIdentifier = nodeIdContext.generateNodeId();
 		this.expensiveValidation = expensiveValidation;
 		this.left = {
 			definition: SimpleTestTree.definition,
@@ -82,6 +91,7 @@ export class SimpleTestTree implements TestTree {
 				return memoizeGetter(this, 'view', RevisionView.fromTree(this, expensiveValidation));
 			},
 		};
+		const rootParent = initialTree.identifier;
 		this.root = {
 			definition: SimpleTestTree.definition,
 			identifier: rootIdentifier,
@@ -90,7 +100,10 @@ export class SimpleTestTree implements TestTree {
 				[SimpleTestTree.rightTraitLabel]: [this.right],
 			},
 			traitLabel: testTraitLabel,
-			traitLocation: { label: testTraitLabel, parent: initialTree.identifier },
+			traitLocation: {
+				label: testTraitLabel,
+				parent: rootParent,
+			},
 			get view() {
 				return memoizeGetter(this, 'view', RevisionView.fromTree(this, expensiveValidation));
 			},
@@ -109,7 +122,7 @@ export class SimpleTestTree implements TestTree {
 		return this.root.identifier;
 	}
 
-	public get traits(): TraitMap<ChangeNode> {
+	public get traits(): TraitMap<TestNode> {
 		return this.root.traits;
 	}
 
@@ -117,12 +130,28 @@ export class SimpleTestTree implements TestTree {
 		return this.root.traitLabel;
 	}
 
-	public get traitLocation(): StableTraitLocation {
+	public get traitLocation(): TraitLocation {
 		return this.root.traitLocation;
 	}
 
-	public buildLeaf(): ChangeNode {
-		return buildLeaf(this.generateId());
+	public buildLeaf(id?: undefined, payload?: Payload): LeafNode<BuildTreeNode>;
+
+	public buildLeaf(id: NodeId, payload?: Payload): LeafNode<ChangeNode>;
+
+	public buildLeaf(id?: NodeId, payload?: Payload): LeafNode<BuildTreeNode> | LeafNode<ChangeNode> {
+		if (id === undefined) {
+			return buildLeaf(undefined, payload);
+		} else {
+			return buildLeaf(id, payload);
+		}
+	}
+
+	public buildLeafWithId(payload?: Payload): LeafNode<ChangeNode> {
+		return this.buildLeaf(this.generateNodeId(), payload);
+	}
+
+	public generateNodeId(override?: string): NodeId {
+		return this.nodeIdContext.generateNodeId(override);
 	}
 }
 
@@ -135,13 +164,16 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 			this._testTree = createTestTree();
 			fn?.(this._testTree);
 		});
+		afterEach(() => {
+			this._testTree = undefined;
+		});
 	}
 
 	private get testTree(): T {
 		return (
 			this._testTree ??
 			fail(
-				'BeforeEachTestTree should be created within a describe() block and should only be read within it() blocks'
+				'RefreshingTestTree should be created within a describe() block and should only be read within it() blocks'
 			)
 		);
 	}
@@ -162,7 +194,7 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 		return this.testTree.identifier;
 	}
 
-	public get traits(): TraitMap<ChangeNode> {
+	public get traits(): TraitMap<TestNode> {
 		return this.testTree.traits;
 	}
 
@@ -170,7 +202,7 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 		return this.testTree.traitLabel;
 	}
 
-	public get traitLocation(): StableTraitLocation {
+	public get traitLocation(): TraitLocation {
 		return this.testTree.traitLocation;
 	}
 
@@ -178,22 +210,35 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 		return this.testTree.view;
 	}
 
-	public generateId(): NodeId {
-		return this.testTree.generateId();
+	public buildLeaf(id?: undefined, payload?: Payload): LeafNode<BuildTreeNode>;
+	public buildLeaf(id: NodeId, payload?: Payload): LeafNode<ChangeNode>;
+	public buildLeaf(id?: NodeId, payload?: Payload): LeafNode<BuildTreeNode> | LeafNode<ChangeNode> {
+		if (id === undefined) {
+			return this.testTree.buildLeaf(undefined, payload);
+		} else {
+			return this.testTree.buildLeaf(id, payload);
+		}
+	}
+	public buildLeafWithId(payload?: Payload): LeafNode<ChangeNode> {
+		return this.testTree.buildLeafWithId(payload);
 	}
 
-	public buildLeaf(): ChangeNode {
-		return this.testTree.buildLeaf();
+	public generateNodeId(override?: string): NodeId {
+		return this.testTree.generateNodeId(override);
 	}
 }
 
+/** Create a new node with an automatically generated ID and the given payload */
+export function buildLeaf(id?: undefined, payload?: Payload): LeafNode<BuildTreeNode>;
 /** Create a new node with the given ID and payload */
-export function buildLeaf(id: NodeId, payload?: Payload): ChangeNode {
-	const node: ChangeNode = {
+export function buildLeaf(id: NodeId, payload?: Payload): LeafNode<ChangeNode>;
+/** Create a new node with the given ID and payload */
+export function buildLeaf(id?: NodeId, payload?: Payload): LeafNode<BuildTreeNode> | LeafNode<ChangeNode> {
+	const node: LeafNode<BuildTreeNode> = {
 		definition: SimpleTestTree.definition,
-		identifier: id,
 		traits: {},
 	};
+	setPropertyIfDefined(id, node, 'identifier');
 	setPropertyIfDefined(payload, node, 'payload');
 	return node;
 }

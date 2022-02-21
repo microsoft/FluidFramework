@@ -103,6 +103,15 @@ export type LocalCompressedId = number & {
 export type NodeId = UuidString & { readonly NodeId: 'e53e7d6b-c8b9-431a-8805-4843fc639342' };
 
 /**
+ * Globally unique node identifier.
+ * Uniquely identifies a node within and across documents. Can be used across SharedTree instances.
+ * @public
+ */
+// TODO:#70358: Properly type StableNodeId:
+// string & { readonly StableNodeId: 'a0843b38-699d-4bb2-aa7a-16c502a71151' };
+export type StableNodeId = NodeId;
+
+/**
  * Definition.
  * A full (Uuid) persistable definition.
  * @public
