@@ -159,6 +159,8 @@ export enum OdspErrorType {
     // (undocumented)
     fetchTokenError = "fetchTokenError",
     // (undocumented)
+    fileStorageDomainChange = "fileStorageDomainChange",
+    // (undocumented)
     fluidNotEnabled = "fluidNotEnabled",
     invalidFileNameError = "invalidFileNameError",
     outOfStorageError = "outOfStorageError",
