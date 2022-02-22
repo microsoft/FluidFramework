@@ -159,9 +159,6 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         maxTime: 5000 * 12,
         maxAckWaitTime: 600000,
     },
-    orderer: {
-        enableClientLeaveModeProperty: false,
-    },
     deli: {
         enableNackMessages: true,
         enableOpHashing: true,
