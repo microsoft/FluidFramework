@@ -21,7 +21,7 @@ import {
 	SequencedEditResult,
 	SequencedEditResultCallback,
 } from '../LogViewer';
-import { RevisionView } from '../TreeView';
+import { RevisionView } from '../generic/TreeView';
 import { EditId } from '../Identifiers';
 import { assert } from '../Common';
 import { newEdit, Edit, EditStatus } from '../generic';

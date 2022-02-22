@@ -29,11 +29,12 @@ import { assert } from '@fluidframework/common-utils';
 import type { IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { assertNotUndefined, compareArrays, comparePayloads, fail } from '../../Common';
+import { assertNotUndefined, compareArrays, fail } from '../../Common';
 import { initialTree } from '../../InitialTree';
 import { SharedTree, Change, setTrait, SharedTreeFactory, StablePlace, ChangeInternal } from '../../default-edits';
 import {
 	ChangeNode,
+	comparePayloads,
 	Edit,
 	GenericSharedTree,
 	getUploadedEditChunkContents,
@@ -44,7 +45,7 @@ import {
 	SharedTreeSummaryWriteFormat,
 	StableTraitLocation,
 } from '../../generic';
-import { RevisionView, TreeView } from '../../TreeView';
+import { RevisionView, TreeView } from '../../generic/TreeView';
 import { EditLog } from '../../EditLog';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';

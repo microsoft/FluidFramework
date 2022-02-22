@@ -4,11 +4,18 @@
  */
 
 import { DetachedSequenceId, NodeId } from '../Identifiers';
-import { TreeView, TransactionView } from '../TreeView';
 import { assertNotUndefined, copyPropertyIfDefined } from '../Common';
-import { ChangeNode, NodeIdGenerator, StableTraitLocation, TreeNodeSequence } from '../generic';
-import { BuildNodeInternal, ChangeInternal, StablePlace, StableRange } from './PersistedTypes';
-import { BuildNode, BuildTreeNode, Change } from './ChangeTypes';
+import {
+	ChangeNode,
+	NodeIdGenerator,
+	StableTraitLocation,
+	TransactionView,
+	TreeNodeSequence,
+	TreeView,
+} from '../generic';
+import { placeFromStablePlace, rangeFromStableRange } from '../TreeViewUtilities';
+import { BuildNodeInternal, ChangeInternal } from './PersistedTypes';
+import { BuildNode, BuildTreeNode, Change, StablePlace, StableRange } from './ChangeTypes';
 
 /**
  * Functions for constructing edits.
@@ -129,7 +136,7 @@ export function validateStableRange(view: TreeView, range: StableRange): RangeVa
 		return RangeValidationResultKind.PlacesInDifferentTraits;
 	}
 
-	const { start: startPlace, end: endPlace } = view.rangeFromStableRange(range);
+	const { start: startPlace, end: endPlace } = rangeFromStableRange(view, range);
 	const startIndex = view.findIndexWithinTrait(startPlace);
 	const endIndex = view.findIndexWithinTrait(endPlace);
 
@@ -185,7 +192,7 @@ export function insertIntoTrait(
 	nodesToInsert: readonly NodeId[],
 	placeToInsert: StablePlace
 ): TransactionView {
-	return view.attachRange(nodesToInsert, view.placeFromStablePlace(placeToInsert));
+	return view.attachRange(nodesToInsert, placeFromStablePlace(view, placeToInsert));
 }
 
 /**
@@ -196,7 +203,7 @@ export function detachRange(
 	view: TransactionView,
 	rangeToDetach: StableRange
 ): { view: TransactionView; detached: readonly NodeId[] } {
-	return view.detachRange(view.rangeFromStableRange(rangeToDetach));
+	return view.detachRange(rangeFromStableRange(view, rangeToDetach));
 }
 
 /**

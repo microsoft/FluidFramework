@@ -7,9 +7,9 @@ import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces'
 import { serializeHandles } from '@fluidframework/shared-object-base';
 import { assertNotUndefined } from '../Common';
 import { EditLogSummary } from '../EditLog';
-import { RevisionView } from '../TreeView';
 import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { getChangeNodeFromView } from '../SerializationUtilities';
+import { RevisionView } from './TreeView';
 import { ChangeNode, Edit } from './PersistedTypes';
 
 /**

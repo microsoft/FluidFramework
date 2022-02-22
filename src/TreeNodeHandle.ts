@@ -4,8 +4,7 @@
  */
 
 import { Definition, NodeId } from './Identifiers';
-import { ChangeNode, Payload, TraitMap, TreeNode } from './generic';
-import { TreeView, TreeViewNode } from './TreeView';
+import { ChangeNode, Payload, TraitMap, TreeNode, TreeView, TreeViewNode } from './generic';
 import { fail, memoizeGetter } from './Common';
 import { getChangeNodeFromViewNode } from './SerializationUtilities';
 

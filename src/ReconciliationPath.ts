@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeView, TransactionView } from './TreeView';
+import { TransactionView, TreeView } from './generic';
 
 /**
  * The path of edits from the revision view where a change was meant to have been applied to the view where the edit that contains the

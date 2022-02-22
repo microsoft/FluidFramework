@@ -8,7 +8,7 @@ import { BuildTreeNode } from '../../default-edits';
 import { NodeIdGenerator, TraitLocation, TraitMap, TreeNode, Payload, ChangeNode } from '../../generic';
 import { Definition, NodeId, TraitLabel } from '../../Identifiers';
 import { initialTree } from '../../InitialTree';
-import { RevisionView } from '../../TreeView';
+import { RevisionView } from '../../generic/TreeView';
 
 /**
  * A node with no children

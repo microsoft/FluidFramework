@@ -6,7 +6,6 @@
 import { v5 as uuidv5 } from 'uuid';
 import { DetachedSequenceId, EditId, TraitLabel } from '../Identifiers';
 import { assert } from '../Common';
-import { RevisionView } from '../TreeView';
 import { initialTree } from '../InitialTree';
 import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import {
@@ -15,13 +14,15 @@ import {
 	fullHistorySummarizer,
 	fullHistorySummarizer_0_1_1,
 	newEdit,
+	RevisionView,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
 	SharedTreeSummaryWriteFormat,
 } from '../generic';
 import { getChangeNodeFromView } from '../SerializationUtilities';
-import { ChangeInternal, StablePlace } from './PersistedTypes';
+import { ChangeInternal } from './PersistedTypes';
 import { setTraitInternal } from './EditUtilities';
+import { StablePlace } from './ChangeTypes';
 
 const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
 

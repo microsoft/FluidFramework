@@ -18,8 +18,6 @@ export {
 	ConstraintEffect,
 	DeleteInternal,
 	MoveInternal,
-	StablePlace,
-	StableRange,
 	getNodeId,
 } from './PersistedTypes';
 export * from './ChangeTypes';

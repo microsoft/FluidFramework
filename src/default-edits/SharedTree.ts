@@ -11,10 +11,10 @@ import {
 	deepCloneStableRange,
 	EditLogSummarizer,
 	GenericSharedTree,
+	RevisionView,
 	SharedTreeSummaryBase,
 	SharedTreeSummaryWriteFormat,
 } from '../generic';
-import { RevisionView } from '../TreeView';
 import { copyPropertyIfDefined, fail } from '../Common';
 import { DetachedSequenceId } from '../Identifiers';
 import { ChangeInternal, ChangeTypeInternal, ConstraintInternal, DetachInternal } from './PersistedTypes';

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionView } from './TreeView';
 import { Checkout } from './Checkout';
-import { EditCommittedEventArguments, GenericSharedTree, ValidEditingResult } from './generic';
+import { EditCommittedEventArguments, GenericSharedTree, RevisionView, ValidEditingResult } from './generic';
 import { EditId } from './Identifiers';
 
 /**

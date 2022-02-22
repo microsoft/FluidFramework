@@ -19,26 +19,16 @@
 export { initialTree } from './InitialTree';
 export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta, Forest, ForestNode, ParentData } from './Forest';
-export { sharedTreeAssertionErrorType, isSharedTreeEvent, comparePayloads, Result } from './Common';
+export { sharedTreeAssertionErrorType, isSharedTreeEvent, Result } from './Common';
 export * from './Identifiers';
 export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from './EditLog';
-export {
-	NodeInTrait,
-	PlaceIndex,
-	TreeViewNode,
-	TreeView,
-	RevisionView,
-	TransactionView,
-	TraitNodeIndex,
-	TreeViewPlace,
-	TreeViewRange,
-} from './TreeView';
 export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
 export { LazyCheckout } from './LazyCheckout';
 export { EagerCheckout } from './EagerCheckout';
 export * from './ReconciliationPath';
 export * from './MergeHealth';
+export * from './TreeViewUtilities';
 export {
 	SharedTree,
 	ChangeType,
@@ -92,6 +82,7 @@ export {
 	SharedTreeDiagnosticEvent,
 	Edit,
 	newEdit,
+	comparePayloads,
 	EditWithoutId,
 	EditBase,
 	HasTraits,
@@ -127,4 +118,13 @@ export {
 	PlaceholderTree,
 	NodeIdGenerator,
 	NodeIdConverter,
+	NodeInTrait,
+	PlaceIndex,
+	TreeViewNode,
+	TreeView,
+	RevisionView,
+	TransactionView,
+	TraitNodeIndex,
+	TreeViewPlace,
+	TreeViewRange,
 } from './generic';

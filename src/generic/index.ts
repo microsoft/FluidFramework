@@ -13,14 +13,13 @@ export {
 	EditApplicationOutcome,
 	ISharedTreeEvents,
 	GenericSharedTree,
-	SharedTreeEvent,
-	SharedTreeDiagnosticEvent,
 	SharedTreeFactoryOptions,
 	SharedTreeSummaryWriteFormat,
 	SharedTreeSummaryReadFormat,
 	SharedTreeChangeType,
 	SharedTreeFailureType,
 } from './GenericSharedTree';
+export * from './EventTypes';
 export {
 	Side,
 	Edit,
@@ -42,6 +41,7 @@ export {
 export {
 	newEdit,
 	newEditId,
+	comparePayloads,
 	convertTreeNodes,
 	deepCloneStablePlace,
 	deepCloneStableRange,
@@ -70,6 +70,17 @@ export {
 	formatVersion,
 	serialize,
 } from './Summary';
+export {
+	NodeInTrait,
+	PlaceIndex,
+	TreeViewNode,
+	TreeView,
+	RevisionView,
+	TransactionView,
+	TraitNodeIndex,
+	TreeViewPlace,
+	TreeViewRange,
+} from './TreeView';
 export { NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
 
 /**

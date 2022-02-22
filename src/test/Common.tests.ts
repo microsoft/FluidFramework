@@ -7,8 +7,8 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { FluidSerializer } from '@fluidframework/runtime-utils';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
-import { comparePayloads, filter, find, getOrCreate, identity, map, memoizeGetter, noop, reduce } from '../Common';
-import { Payload } from '../generic';
+import { filter, find, getOrCreate, identity, map, memoizeGetter, noop, reduce } from '../Common';
+import { comparePayloads, Payload } from '../generic';
 
 describe('SharedTree common', () => {
 	it('function memoizeGetter() correctly memoizes', () => {

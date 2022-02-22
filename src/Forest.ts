@@ -4,8 +4,8 @@
  */
 
 import BTree from 'sorted-btree';
-import { fail, assert, comparePayloads, copyPropertyIfDefined, compareBtrees, compareStrings } from './Common';
-import { NodeData, Payload } from './generic';
+import { fail, assert, copyPropertyIfDefined, compareBtrees, compareStrings } from './Common';
+import { comparePayloads, NodeData, Payload } from './generic';
 import { NodeId, TraitLabel } from './Identifiers';
 
 type Optional<T> = {

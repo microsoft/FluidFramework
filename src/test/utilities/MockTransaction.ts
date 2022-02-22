@@ -5,7 +5,7 @@
 
 import { Result } from '../../Common';
 import { ChangeResult, EditStatus, GenericTransaction, GenericTransactionPolicy } from '../../generic';
-import { RevisionView } from '../../TreeView';
+import { RevisionView } from '../../generic/TreeView';
 
 /**
  * @internal

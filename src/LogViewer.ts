@@ -6,8 +6,7 @@
 import Denque from 'denque';
 import { assert, fail, noop } from './Common';
 import { EditLog, SequencedOrderedEditId } from './EditLog';
-import { RevisionView } from './TreeView';
-import { Edit, EditStatus, EditingResult, GenericTransaction } from './generic';
+import { Edit, EditStatus, EditingResult, GenericTransaction, RevisionView } from './generic';
 import { EditId } from './Identifiers';
 import { RevisionValueCache } from './RevisionValueCache';
 import { initialTree } from './InitialTree';

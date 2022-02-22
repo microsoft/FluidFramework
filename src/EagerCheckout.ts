@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionView } from './TreeView';
 import { Checkout } from './Checkout';
-import { EditCommittedEventArguments, GenericSharedTree } from './generic';
+import { EditCommittedEventArguments, GenericSharedTree, RevisionView } from './generic';
 
 /**
  * Checkout that always stays up to date with the SharedTree.

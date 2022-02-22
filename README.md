@@ -7,7 +7,7 @@ A [Fluid](https://fluidframework.com/) SharedObject Tree with:
 -   High quality automatic merge resolution
 -   Full History Inspection, Manipulation and Metadata
 
-Revisions of the tree (see [EditLog](.\src\EditLog.ts) and [TreeView](.\src\TreeView.ts)) are created from sequences of Edits.
+Revisions of the tree (see [EditLog](.\src\EditLog.ts) and [TreeView](.\src\generic\TreeView.ts)) are created from sequences of Edits.
 
 Semantically, the current state of the tree is defined as:
 

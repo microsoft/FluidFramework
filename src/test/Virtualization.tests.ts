@@ -8,12 +8,12 @@ import { expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import { v4 } from 'uuid';
 import { EditHandle, EditLog } from '../EditLog';
-import { Edit, EditWithoutId, newEdit, SharedTreeSummary } from '../generic';
+import { Edit, EditWithoutId, newEdit, SharedTreeDiagnosticEvent, SharedTreeSummary } from '../generic';
 import { SharedTree, setTrait, Change, ChangeInternal } from '../default-edits';
 import { assertNotUndefined } from '../Common';
 import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { initialTree } from '../InitialTree';
-import { SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../generic/GenericSharedTree';
+import { SharedTreeSummaryWriteFormat } from '../generic/GenericSharedTree';
 import { EditId, NodeId } from '../Identifiers';
 import {
 	applyNoop,

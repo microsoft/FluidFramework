@@ -11,8 +11,10 @@ import {
 	ChangeResult,
 	GenericTransactionPolicy,
 	SucceedingTransactionState,
+	RevisionView,
+	TreeViewNode,
 } from '../generic';
-import { RevisionView, TreeViewNode } from '../TreeView';
+import { rangeFromStableRange } from '../TreeViewUtilities';
 import {
 	BuildInternal,
 	BuildNodeInternal,
@@ -23,8 +25,6 @@ import {
 	DetachInternal,
 	InsertInternal,
 	SetValueInternal,
-	StablePlace,
-	StableRange,
 } from './PersistedTypes';
 import {
 	detachRange,
@@ -37,6 +37,7 @@ import {
 	PlaceValidationResult,
 	RangeValidationResultKind,
 } from './EditUtilities';
+import { StablePlace, StableRange } from './ChangeTypes';
 
 /**
  * A mutable transaction for applying sequences of changes to a TreeView.
@@ -300,7 +301,7 @@ export namespace Transaction {
 					  });
 			}
 
-			const { start, end } = state.view.rangeFromStableRange(change.toConstrain);
+			const { start, end } = rangeFromStableRange(state.view, change.toConstrain);
 			const startIndex = state.view.findIndexWithinTrait(start);
 			const endIndex = state.view.findIndexWithinTrait(end);
 

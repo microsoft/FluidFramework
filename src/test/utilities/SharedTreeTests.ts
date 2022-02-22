@@ -34,7 +34,7 @@ import { EditLog } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { deserialize, SharedTreeSummary_0_0_2 } from '../../SummaryBackCompatibility';
-import { RevisionView } from '../../TreeView';
+import { RevisionView } from '../../generic/TreeView';
 import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
 import {
 	testTrait,

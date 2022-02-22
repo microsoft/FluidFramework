@@ -5,7 +5,7 @@
 
 import { assert, fail, Result } from '../Common';
 import { ReconciliationChange, ReconciliationPath } from '../ReconciliationPath';
-import { RevisionView, TransactionView } from '../TreeView';
+import { RevisionView, TransactionView } from './TreeView';
 import { EditStatus } from './PersistedTypes';
 
 /**

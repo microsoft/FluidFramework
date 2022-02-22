@@ -7,7 +7,6 @@ import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IDisposable, IErrorEvent } from '@fluidframework/common-definitions';
 import { assert } from './Common';
 import { EditId } from './Identifiers';
-import { TreeView, RevisionView } from './TreeView';
 import {
 	newEditId,
 	ValidEditingResult,
@@ -17,6 +16,8 @@ import {
 	EditCommittedHandler,
 	GenericSharedTree,
 	SharedTreeEvent,
+	TreeView,
+	RevisionView,
 } from './generic';
 import { CachingLogViewer } from './LogViewer';
 

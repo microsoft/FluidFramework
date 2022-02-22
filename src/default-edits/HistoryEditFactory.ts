@@ -5,21 +5,13 @@
 
 import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
-import { RevisionView, TreeView } from '../TreeView';
-import { Side, TreeNode } from '../generic';
+import { RevisionView, Side, TreeNode, TreeView } from '../generic';
 import { getChangeNodeFromViewNode } from '../SerializationUtilities';
-import {
-	StableRange,
-	StablePlace,
-	ChangeInternal,
-	ChangeTypeInternal,
-	DetachInternal,
-	SetValueInternal,
-	InsertInternal,
-} from './PersistedTypes';
+import { rangeFromStableRange } from '../TreeViewUtilities';
+import { ChangeInternal, ChangeTypeInternal, DetachInternal, SetValueInternal, InsertInternal } from './PersistedTypes';
 import { Transaction } from './Transaction';
 import { isDetachedSequenceId, RangeValidationResultKind, validateStableRange } from './EditUtilities';
-import { BuildNode } from './ChangeTypes';
+import { BuildNode, StablePlace, StableRange } from './ChangeTypes';
 
 /**
  * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes
@@ -194,7 +186,7 @@ function createInvertedDetach(
 		return undefined;
 	}
 
-	const { start, end } = viewBeforeChange.rangeFromStableRange(source);
+	const { start, end } = rangeFromStableRange(viewBeforeChange, source);
 	const { trait: referenceTrait } = start;
 	const nodes = viewBeforeChange.getTrait(referenceTrait);
 

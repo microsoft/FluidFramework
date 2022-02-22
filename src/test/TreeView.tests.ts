@@ -5,7 +5,7 @@
 
 import { expect } from 'chai';
 import { Definition, NodeId, TraitLabel } from '../Identifiers';
-import { RevisionView } from '../TreeView';
+import { RevisionView } from '../generic/TreeView';
 import { detachRange, insertIntoTrait, StablePlace, StableRange } from '../default-edits';
 import { ChangeNode } from '../generic';
 import { getChangeNodeFromViewNode } from '../SerializationUtilities';
