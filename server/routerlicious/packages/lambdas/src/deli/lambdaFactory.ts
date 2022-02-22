@@ -55,7 +55,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly collection: ICollection<IDocument>,
         private readonly tenantManager: ITenantManager,
         private readonly forwardProducer: IProducer,
-        private readonly signalProducer: IProducer,
+        private readonly signalProducer: IProducer | undefined,
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration,
         globalDbMongoManager?: MongoManager) {
@@ -180,7 +180,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
     public async dispose(): Promise<void> {
         const mongoClosedP = this.operationsDbMongoManager.close();
         const forwardProducerClosedP = this.forwardProducer.close();
-        const signalProducerClosedP = this.signalProducer.close();
+        const signalProducerClosedP = this.signalProducer?.close();
         const reverseProducerClosedP = this.reverseProducer.close();
         await Promise.all([mongoClosedP, forwardProducerClosedP, signalProducerClosedP, reverseProducerClosedP]);
     }
