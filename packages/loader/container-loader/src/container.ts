@@ -588,7 +588,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.connectionStateHandler = new ConnectionStateHandler(
             {
-                protocolHandler: () => this._protocolHandler,
+                quorumClients: () => this._protocolHandler?.quorum,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
