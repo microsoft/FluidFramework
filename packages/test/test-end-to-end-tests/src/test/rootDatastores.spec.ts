@@ -11,7 +11,7 @@ import {
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { ContainerErrorType, IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
     ContainerMessageType,
@@ -40,19 +40,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const IdleDetectionTime = 100;
     const testContainerConfig: ITestContainerConfig = {
         fluidDataObjectType: DataObjectFactoryType.Test,
-        runtimeOptions: {
-            summaryOptions: {
-                generateSummaries: true,
-                initialSummarizerDelayMs: 10,
-                summaryConfigOverrides: {
-                    idleTime: IdleDetectionTime,
-                    maxTime: IdleDetectionTime * 12,
-                },
-            },
-            gcOptions: {
-                gcAllowed: true,
-            },
-        },
     };
 
     const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => {
@@ -65,6 +52,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         containerConfig: ITestContainerConfig = testContainerConfig,
         featureGates: Record<string, ConfigTypes> = {},
     ) => {
+        provider.reset();
         const configWithFeatureGates = {
             ...containerConfig,
             loaderProps: { configProvider: configProvider(featureGates) }
@@ -84,6 +72,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         containers.map(async (c) => new Promise<boolean>((resolve) => c.once("closed", (error) => {
             resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
         }))));
+
+    const allDataCorruption = async (containers: IContainer[]) => Promise.all(
+        containers.map(async (c) => new Promise<boolean>((resolve) => c.once("closed", (error) => {
+            resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
+        })))).then((all)=>!all.includes(false));
 
     const runtimeOf = (dataObject: ITestFluidObject): ContainerRuntime =>
         dataObject.context.containerRuntime as ContainerRuntime;
@@ -113,7 +106,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         beforeEach(async () => setupContainers(testContainerConfig));
         afterEach(async () => reset());
 
-        it("Root datastore creation fails at attach op", async () => {
+        itExpects("Root datastore creation fails at attach op", [
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"}
+        ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             // Isolate inbound communication
             await container1.deltaManager.inbound.pause();
@@ -129,7 +124,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        it("Root datastore creation with props fails at attach op", async () => {
+        itExpects("Root datastore creation with props fails at attach op",[
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"}
+        ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             // Isolate inbound communication
             await container1.deltaManager.inbound.pause();
@@ -145,7 +142,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        it("Root datastore creation with the same id breaks container", async () => {
+        itExpects("Root datastore creation with the same id breaks container",[
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"}
+        ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             await createRootDataStore(dataObject1, "2");
             await createRootDataStore(dataObject2, "2");
@@ -153,7 +152,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        it("Root datastore creation with the same id and legacy API breaks container", async () => {
+        itExpects("Root datastore creation with the same id and legacy API breaks container",[
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"}
+        ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             await createRootDataStore(dataObject1, "2");
             await createDataStoreWithProps(dataObject2, "2", true /* root */);
@@ -304,7 +305,10 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
-        it("Creating a root data store with an existing alias as an id breaks the container", async () => {
+        itExpects("Creating a root data store with an existing alias as an id breaks the container",[
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"},
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"},
+        ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             assert.equal(await ds1.trySetAlias(alias), AliasResult.Success);
@@ -320,8 +324,12 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.equal((aliasResult as Error).message, "malformedDataStoreAliasMessage");
         });
 
-        it("Receiving a bad alias message breaks the container", async () => {
-            const dataCorruption = anyDataCorruption([container1]);
+        itExpects("Receiving a bad alias message breaks the container", [
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage"},
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage"},
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage"},
+        ], async () => {
+            const dataCorruption = allDataCorruption([container1, container2]);
             await corruptedAliasOp(runtimeOf(dataObject1), alias);
             assert(await dataCorruption);
         });
@@ -355,6 +363,24 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         it("Assign multiple data stores to the same alias, first write wins, " +
         "different containers from snapshot", async () => {
+
+            await setupContainers({
+                ... testContainerConfig,
+                runtimeOptions: {
+                    summaryOptions: {
+                        generateSummaries: true,
+                        initialSummarizerDelayMs: 10,
+                        summaryConfigOverrides: {
+                            idleTime: IdleDetectionTime,
+                            maxTime: IdleDetectionTime * 12,
+                        },
+                    },
+                    gcOptions: {
+                        gcAllowed: true,
+                    },
+                },
+            });
+
             // andre4i: Move this into test utils or something. Same as for other
             // flavors of this function across the end to end tests
             const waitForSummary = async (

@@ -696,7 +696,6 @@ export class GarbageCollector implements IGarbageCollector {
             "Revived",
             toNodePath,
             this.getCurrentTimestampMs(),
-            this.getNodePackagePath(toNodePath),
         );
     }
 
@@ -939,8 +938,7 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Logs an event if a node is inactive and is used. If the package data for the node exists, log immediately. Else,
-     * queue it and it will be logged the next time GC runs as the package data should be available then.
+     * Logs an event if a node is inactive and is used.
      */
     private logIfInactive(
         eventSuffix: "Changed" | "Loaded" | "Revived",
@@ -963,10 +961,14 @@ export class GarbageCollector implements IGarbageCollector {
                 externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
                 viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
             };
-            if (packagePath !== undefined) {
+
+            // If the package data for the node exists, log immediately. Otherwise, queue it and it will be logged the
+            // next time GC runs as the package data should be available then.
+            const pkg = packagePath ?? this.getNodePackagePath(nodeId);
+            if (pkg !== undefined) {
                 this.mc.logger.sendErrorEvent({
                     ...event,
-                    pkg: { value: `/${packagePath.join("/")}`, tag: TelemetryDataTag.PackageData },
+                    pkg: { value: `/${pkg.join("/")}`, tag: TelemetryDataTag.PackageData },
                 });
             } else {
                 this.pendingEventsQueue.push(event);

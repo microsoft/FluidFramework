@@ -152,6 +152,7 @@ import {
     IDataStoreAliasMessage,
     isDataStoreAliasMessage,
 } from "./dataStore";
+import { BindBatchTracker } from "./batchTracker";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -1263,6 +1264,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
+        BindBatchTracker(this, this.logger);
     }
 
     public dispose(error?: Error): void {
