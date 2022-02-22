@@ -360,6 +360,10 @@ async function fetchSnapshotContentsCoreV1(
 ): Promise<ISnapshotRequestAndResponseOptions> {
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
+    // The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
+    // Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
+    // This error thrown by server will contain the new redirect location. Look at the 404 error parsing
+    // for futher reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
     const header = {"prefer": "manualredirect"};
     const { body, headers } = getFormBodyAndHeaders(
         odspResolvedUrl, storageToken, snapshotOptions, header);

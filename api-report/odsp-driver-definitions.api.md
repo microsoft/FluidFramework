@@ -159,10 +159,10 @@ export enum OdspErrorType {
     // (undocumented)
     fetchTokenError = "fetchTokenError",
     // (undocumented)
-    fileStorageDomainChange = "fileStorageDomainChange",
-    // (undocumented)
     fluidNotEnabled = "fluidNotEnabled",
     invalidFileNameError = "invalidFileNameError",
+    // (undocumented)
+    locationRedirection = "locationRedirection",
     outOfStorageError = "outOfStorageError",
     // (undocumented)
     serviceReadOnly = "serviceReadOnly",

@@ -149,8 +149,11 @@ export function createOdspNetworkError(
             break;
         case 404:
             if (parseResult.success) {
-                const responseError = parseResult.errorResponse.error;
-                const redirectLocation = responseError["@error.redirectLocation"];
+                // The location of file can move on Spo. If the manual redirect prefer header is added to network call
+                // it returns 404 error instead of 308. Error thrown by server will contain the new redirect location.
+                // For reference we can look here: \packages\drivers\odsp-driver\src\fetchSnapshot.ts
+                const responseError = parseResult?.errorResponse?.error;
+                const redirectLocation = responseError?.["@error.redirectLocation"];
                 if (redirectLocation !== undefined) {
                     const propsWithRedirectLocation = { ...driverProps, redirectLocation };
                     error = new NonRetryableError(
