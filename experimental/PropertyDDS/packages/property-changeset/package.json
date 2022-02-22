@@ -15,7 +15,7 @@
     "dist/index.d.ts"
   ],
   "scripts": {
-    "build": "npm run build:compile",
+    "build": "concurrently npm:build:compile npm:lint",
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -26,6 +26,7 @@
     "coverage": "npx nyc --silent --cwd --nycrc-path `pwd`/.nycrc npm run test",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
