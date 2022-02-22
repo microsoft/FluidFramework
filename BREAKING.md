@@ -11,8 +11,15 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.58 Breaking changes
-
+- [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from merge-tree-to-sequence-package)
 - [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
+
+### Move IntervalType from merge-tree to sequence package
+Move the type from the merge-tree package where it isn't used to the sequence package where it is used
+``` diff
+- import { IntervalType } from "@fluidframework/merge-tree";
++ import { IntervalType } from "@fluidframework/sequence";
+```
 
 ## Remove logger property from IContainerContext
 The logger property in IContainerContext was set as an optional parameter in [release 0.56](#Set-logger-property-as-optional-parameter-in-IContainerContext) and have now been removed.
@@ -116,6 +123,7 @@ When creating root datastores using `ContainerRuntime.createRootDataStore` or `C
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
 - [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
 - [Removed SharedObject.is](#Removed-SharedObject.is)
+- [Removed IContainerContext.id](#Removed-IContainerContext.id-and-ContainerContext.id)
 - [Remove raiseContainerWarning property](#Remove-raiseContainerWarning-property)
 - [Set logger property as optional parameter in IContainerContext](#Set-logger-property-as-optional-parameter-in-IContainerContext)
 
@@ -181,6 +189,10 @@ The `containerPath` property of `DriverPreCheckInfo` was deprecated and has now 
 
 ### Removed `SharedObject.is`
 The `is` method is removed from SharedObject. This was being used to detect SharedObjects stored inside other SharedObjects (and then binding them), which should not be happening anymore. Instead, use handles to SharedObjects.
+
+### Removed IContainerContext.id and ContainerContext.id
+The `id` property of IContainerContext was deprecated and now removed. The `id` property of ContainerContext was deprecated and now removed. id should not be exposed at
+runtime level anymore. Instead, get from container's resolvedURL if necessary.
 
 ### Remove raiseContainerWarning property
 

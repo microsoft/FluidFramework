@@ -24,11 +24,21 @@ import {
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { describeNoCompat, pkgVersion } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects, pkgVersion } from "@fluidframework/test-version-utils";
 
 // REVIEW: enable compat testing?
 describeNoCompat("SharedString", (getTestObjectProvider) => {
-    it("Failure to Load in Shared String", async () => {
+    itExpects(
+    "Failure to Load in Shared String",
+    [
+        {eventName: "fluid:telemetry:FluidDataStoreRuntime:RemoteChannelContext:ChannelStorageBlobError"},
+        // eslint-disable-next-line max-len
+        {eventName: "fluid:telemetry:FluidDataStoreRuntime:SharedSegmentSequence.MergeTreeClient:SnapshotLoader:CatchupOpsLoadFailure"},
+        {eventName: "fluid:telemetry:FluidDataStoreRuntime:SequenceLoadFailed"},
+        {eventName: "fluid:telemetry:FluidDataStoreRuntime:GetChannelFailedInRequest"},
+        {eventName: "TestException"}
+    ],
+    async () => {
         const stringId = "sharedStringKey";
         const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
         const fluidExport: SupportedExportInterfaces = {
@@ -128,10 +138,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
             });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 
-            try {
-                await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
-                assert.fail("expected failure");
-            } catch { }
+            await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
         }
     });
 
