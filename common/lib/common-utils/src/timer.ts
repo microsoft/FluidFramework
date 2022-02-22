@@ -58,6 +58,31 @@ interface IRunningTimerState extends ITimeout {
 }
 
 /**
+ * The longer the timeout, the less accurate the timeout is exactly going to be
+ * @param timeoutFn - executed when the timeout expires
+ * @param timeoutMs - duration of the timeout in milliseconds
+ * @param setTimerFn - executed to update the timeout if multiple timeouts are required when timeoutMs > maxTimeout
+ * @returns the initial timeout
+ */
+function setLongTimeout(
+    timeoutFn: () => void,
+    timeoutMs: number,
+    setTimerFn: (timer: ReturnType<typeof setTimeout>) => void,
+): number {
+    // The setTimeout max is 24.8 days before looping occurs.
+    const maxTimeout = 2147483647;
+    let timeout: ReturnType<typeof setTimeout>;
+    if (timeoutMs > maxTimeout) {
+        const newTimeoutMs = timeoutMs - maxTimeout;
+        timeout = setTimeout(() => setLongTimeout(timeoutFn, newTimeoutMs, setTimerFn), maxTimeout);
+    } else {
+        timeout = setTimeout(() => timeoutFn(), timeoutMs);
+    }
+    setTimerFn(timeout);
+    return timeout;
+}
+
+/**
  * This class is a thin wrapper over setTimeout and clearTimeout which
  * makes it simpler to keep track of recurring timeouts with the same
  * or similar handlers and timeouts.
@@ -143,7 +168,15 @@ export class Timer implements ITimer {
             duration,
             intendedDuration,
             handler,
-            timeout: setTimeout(() => this.handler(), duration),
+            timeout: setLongTimeout(
+                () => this.handler(),
+                duration,
+                (timer: number) => {
+                    if(this.runningState !== undefined) {
+                        this.runningState.timeout = timer;
+                    }
+                },
+            ),
         };
     }
 
