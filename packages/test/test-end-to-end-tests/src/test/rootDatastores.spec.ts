@@ -52,6 +52,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         containerConfig: ITestContainerConfig = testContainerConfig,
         featureGates: Record<string, ConfigTypes> = {},
     ) => {
+        provider.reset();
         const configWithFeatureGates = {
             ...containerConfig,
             loaderProps: { configProvider: configProvider(featureGates) }
