@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as SearchMenu from "@fluid-example/search-menu";
 import { performance } from "@fluidframework/common-utils";
 import {
     FluidObject,
@@ -20,17 +19,20 @@ import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
+import React from "react";
+import ReactDOM from "react-dom";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
+import { CommandBox } from "./commandBox";
 import { Cursor, IRange } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
-import { PresenceSignal } from "./presenceSignal";
 import {
     CursorDirection,
     IViewCursor,
     IViewLayout,
 } from "./layout";
+import { PresenceSignal } from "./presenceSignal";
 
 function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
     if (marker && marker.properties && marker.properties.crefTest) {
@@ -112,238 +114,6 @@ interface ITextErrorInfo {
     alternates: Alt[];
     color?: string;
 }
-function altsToItems(alts: Alt[]) {
-    return alts.map((v) => ({ key: v.text }));
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
-}
-
-const fontSizeStrings = ["8", "9", "10", "11", "12", "14", "16", "18", "20", "24", "32"];
-const fontSizeTree = new MergeTree.TST<IFlowViewCmd>();
-for (const sizeString of fontSizeStrings) {
-    fontSizeTree.put(sizeString, { key: sizeString });
-}
-const fontSizes = (f: FlowView) => fontSizeTree;
-const defaultFontSize = (f: FlowView) => "18";
-const cssColorStrings = ["AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black",
-    "BlanchedAlmond", "Blue", "BlueViolet", "Brown", "BurlyWood", "CadetBlue", "Chartreuse", "Chocolate",
-    "Coral", "CornflowerBlue", "Cornsilk", "Crimson", "Cyan", "DarkBlue", "DarkCyan", "DarkGoldenRod",
-    "DarkGray", "DarkGrey", "DarkGreen", "DarkKhaki", "DarkMagenta", "DarkOliveGreen", "DarkOrange",
-    "DarkOrchid", "DarkRed", "DarkSalmon", "DarkSeaGreen", "DarkSlateBlue", "DarkSlateGray", "DarkSlateGrey",
-    "DarkTurquoise", "DarkViolet", "DeepPink", "DeepSkyBlue", "DimGray", "DimGrey", "DodgerBlue", "FireBrick",
-    "FloralWhite", "ForestGreen", "Fuchsia", "Gainsboro", "GhostWhite", "Gold", "GoldenRod", "Gray", "Grey",
-    "Green", "GreenYellow", "HoneyDew", "HotPink", "IndianRed", "Indigo", "Ivory", "Khaki", "Lavender",
-    "LavenderBlush", "LawnGreen", "LemonChiffon", "LightBlue", "LightCoral", "LightCyan",
-    "LightGoldenRodYellow", "LightGray", "LightGrey", "LightGreen", "LightPink", "LightSalmon",
-    "LightSeaGreen", "LightSkyBlue", "LightSlateGray", "LightSlateGrey", "LightSteelBlue", "LightYellow",
-    "Lime", "LimeGreen", "Linen", "Magenta", "Maroon", "MediumAquaMarine", "MediumBlue",
-    "MediumOrchid", "MediumPurple", "MediumSeaGreen", "MediumSlateBlue", "MediumSpringGreen",
-    "MediumTurquoise", "MediumVioletRed", "MidnightBlue", "MintCream", "MistyRose", "Moccasin", "NavajoWhite",
-    "Navy", "OldLace", "Olive", "OliveDrab", "Orange", "OrangeRed", "Orchid", "PaleGoldenRod", "PaleGreen",
-    "PaleTurquoise", "PaleVioletRed", "PapayaWhip", "PeachPuff", "Peru", "Pink", "Plum", "PowderBlue",
-    "Purple", "RebeccaPurple", "Red", "RosyBrown", "RoyalBlue", "SaddleBrown", "Salmon", "SandyBrown",
-    "SeaGreen", "SeaShell", "Sienna", "Silver", "SkyBlue", "SlateBlue", "SlateGray", "SlateGrey",
-    "Snow", "SpringGreen", "SteelBlue", "Tan", "Teal", "Thistle", "Tomato", "Turquoise", "Violet", "Wheat",
-    "White", "WhiteSmoke", "Yellow", "YellowGreen"];
-// Const cssColorTree = new MergeTree.TST<IFlowViewCmd>();
-for (const cssColor of cssColorStrings) {
-    fontSizeTree.put(cssColor, { key: cssColor });
-}
-// Const cssColors = (f: FlowView) => cssColorTree;
-// const defaultColor = (f: FlowView) => "Black";
-
-const commands: IFlowViewCmd[] = [
-    {
-        exec: (c, p, f) => {
-            f.copyFormat();
-        },
-        key: "copy format",
-    },
-    {
-        exec: (c, p, f) => {
-            f.paintFormat();
-        },
-        key: "paint format",
-    },
-    {
-        exec: (c, p, f) => {
-            f.toggleBlockquote();
-        },
-        key: "blockquote",
-    },
-    {
-        exec: (c, p, f) => {
-            f.toggleBold();
-        },
-        key: "bold",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setColor("red");
-        },
-        key: "red",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setColor("green");
-        },
-        key: "green",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setColor("gold");
-        },
-        key: "gold",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setColor("pink");
-        },
-        key: "pink",
-    },
-    {
-        exec: (c, p, f) => {
-            f.makeBlink("pink");
-        },
-        key: "blink-pink",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setFont("courier new", "18px");
-        },
-        key: "Courier font",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setFont("tahoma", "18px");
-        },
-        key: "Tahoma",
-        parameters: [
-            { name: "size", defaultValue: defaultFontSize, suffix: "px", values: fontSizes },
-        ],
-    },
-    {
-        exec: (c, p, f) => {
-            f.setPGProps({ header: true });
-        },
-        key: "Heading 2",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setPGProps({ header: null });
-        },
-        key: "Normal",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setFont("georgia", "18px");
-        },
-        key: "Georgia font",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setFont("sans-serif", "18px");
-        },
-        key: "sans font",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setFont("cursive", "18px");
-        },
-        key: "cursive font",
-    },
-    {
-        exec: (c, p, f) => {
-            f.toggleItalic();
-        },
-        key: "italic",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setList();
-        },
-        key: "list ... 1.)",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setList(1);
-        },
-        key: "list ... \u2022",
-    },
-    {
-        exec: (c, p, f) => {
-            showCell(f.cursor.pos, f);
-        },
-        key: "cell info",
-    },
-    {
-        exec: (c, p, f) => {
-            showTable(f.cursor.pos, f);
-        },
-        key: "table info",
-    },
-    {
-        exec: (c, p, f) => {
-            f.tableSummary();
-        },
-        key: "table summary",
-    },
-    {
-        exec: (c, p, f) => {
-            f.updatePGInfo(f.cursor.pos - 1);
-            Table.createTable(f.cursor.pos, f.sharedString, f.runtime.clientId);
-            f.hostSearchMenu(f.cursor.pos);
-        },
-        key: "table test",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertList();
-        },
-        key: "insert list",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertColumn();
-        },
-        key: "insert column",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertRow();
-        },
-        key: "insert row",
-    },
-    {
-        exec: (c, p, f) => {
-            f.deleteRow();
-        },
-        key: "delete row",
-    },
-    {
-        exec: (c, p, f) => {
-            f.deleteColumn();
-        },
-        key: "delete column",
-    },
-    {
-        exec: (c, p, f) => {
-            f.toggleUnderline();
-        },
-        key: "underline",
-    },
-    {
-        exec: (c, p, f) => {
-            (navigator as any).clipboard.readText().then((text) => {
-                // TODO bring back paste support
-                console.log(`Inserting ${text}`);
-            });
-        },
-        key: "paste component",
-    },
-];
 
 function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
     if ((elmOff.elm !== span) && (elmOff.elm.parentElement !== span)) {
@@ -1138,10 +908,6 @@ function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
     return (y >= rect.y) && (y <= (rect.y + rect.height));
 }
 
-interface IListRefMarker extends MergeTree.Marker {
-    selectionListBox: SearchMenu.ISelectionListBox;
-}
-
 class Viewport {
     // Keep the line divs in order
     public lineDivs: ILineDiv[] = [];
@@ -1278,29 +1044,6 @@ class Viewport {
                     showVideo.muted = true;
                     showVideo.load();
                     this.inclusions.set(irdoc.referenceDocId, showVideo);
-                } else if (irdoc.type.name === "list") {
-                    const listRefMarker = marker as IListRefMarker;
-                    let selectionIndex = 0;
-                    const prevSelectionBox = listRefMarker.selectionListBox;
-                    if (prevSelectionBox) {
-                        selectionIndex = prevSelectionBox.getSelectionIndex();
-                    }
-                    const shapeRect = new ui.Rectangle(0, 0, exclu.width, exclu.height);
-                    listRefMarker.selectionListBox =
-                        SearchMenu.selectionListBoxCreate(shapeRect, false, innerDiv, 24, 2);
-
-                    // Allow the list box to receive DOM focus and subscribe its 'keydown' handler.
-                    allowDOMEvents(listRefMarker.selectionListBox.elm);
-                    listRefMarker.selectionListBox.elm.addEventListener("keydown",
-                        (e) => listRefMarker.selectionListBox.keydown(e));
-
-                    const listIrdoc =
-                        <IListReferenceDoc>listRefMarker.properties[Paragraph.referenceProperty];
-                    for (const item of listIrdoc.items) {
-                        item.div = undefined;
-                    }
-                    listRefMarker.selectionListBox.showSelectionList(listIrdoc.items);
-                    listRefMarker.selectionListBox.setSelectionIndex(selectionIndex);
                 }
             }
         }
@@ -1610,7 +1353,6 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
     //       of using 'services' to smuggle context to components.
     const itemsContext = {
         fontInfo: makeFontInfo(layoutContext.docContext),
-        services: layoutContext.flowView.services,
     } as Paragraph.IItemsContext;
     if (layoutContext.deferUntilHeight === undefined) {
         layoutContext.deferUntilHeight = 0;
@@ -1926,7 +1668,6 @@ function makeSegSpan(
                     textErrorRun.end += segText.length;
                 }
                 const textErrorInfo = textSegment.properties[key] as ITextErrorInfo;
-                let slb: SearchMenu.ISelectionListBox;
                 span.textErrorRun = textErrorRun;
                 if (textErrorInfo.color === "paul") {
                     span.style.background = underlinePaulStringURL;
@@ -1936,47 +1677,6 @@ function makeSegSpan(
                     span.style.background = underlinePaulGoldStringURL;
                 } else {
                     span.style.background = underlineStringURL;
-                }
-                if (textErrorInfo.alternates.length > 0) {
-                    span.onmousedown = (e) => {
-                        function cancelIntellisense(ev: MouseEvent) {
-                            if (slb) {
-                                document.body.removeChild(slb.elm);
-                                slb = undefined;
-                            }
-                        }
-                        function acceptIntellisense(ev: MouseEvent) {
-                            cancelIntellisense(ev);
-                            const itemElm = ev.target as HTMLElement;
-                            const text = itemElm.innerText.trim();
-                            context.sharedString.removeText(span.textErrorRun.start, span.textErrorRun.end);
-                            context.sharedString.insertText(span.textErrorRun.start, text);
-                            context.hostSearchMenu(span.textErrorRun.start);
-                        }
-                        function selectItem(ev: MouseEvent) {
-                            const itemElm = ev.target as HTMLElement;
-                            if (slb) {
-                                slb.selectItem(itemElm.innerText);
-                            }
-                        }
-                        console.log(`button ${e.button}`);
-                        if ((e.button === 2) || ((e.button === 0) && (e.ctrlKey))) {
-                            const spanBounds = ui.Rectangle.fromClientRect(span.getBoundingClientRect());
-                            spanBounds.width = Math.floor(window.innerWidth / 4);
-                            slb = SearchMenu.selectionListBoxCreate(spanBounds, true, document.body, 24, 0, 12);
-                            slb.showSelectionList(altsToItems(textErrorInfo.alternates));
-                            span.onmouseup = cancelIntellisense;
-                            document.body.onmouseup = cancelIntellisense;
-                            slb.elm.onmouseup = acceptIntellisense;
-                            slb.elm.onmousemove = selectItem;
-                        } else if (e.button === 0) {
-                            context.clickSpan(e.clientX, e.clientY, span);
-                        }
-                    };
-                }
-            } else if (key === "blink") {
-                if (textSegment.properties[key]) {
-                    span.classList.add("blinking");
                 }
             } else {
                 span.style[key] = textSegment.properties[key];
@@ -2322,14 +2022,8 @@ interface IReferenceDoc {
     layout?: IRefLayoutSpec;
 }
 
-interface IListReferenceDoc extends IReferenceDoc {
-    items: SearchMenu.ISearchMenuCommand[];
-    selectionIndex: number;
-}
-
-export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost {
+export class FlowView extends ui.Component {
     public static docStartPosition = 0;
-    public get ISearchMenuHost() { return this; }
     public timeToImpression: number;
     public timeToLoad: number;
     public timeToEdit: number;
@@ -2361,15 +2055,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public keypressHandler: (e: KeyboardEvent) => void;
     public keydownHandler: (e: KeyboardEvent) => void;
 
-    // TODO: 'services' is being used temporarily to smuggle context down to components.
-    //       Should be replaced w/component-standardized render context, layout context, etc.
-    public services = new Map<string, any>();
     public srcLanguage = "en";
 
     private lastVerticalX = -1;
     private pendingRender = false;
-    private activeSearchBox: SearchMenu.ISearchBox;
-    private readonly cmdTree: MergeTree.TST<IFlowViewCmd>;
+    private activeCommandBox: boolean;
     private formatRegister: MergeTree.PropertySet;
 
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
@@ -2378,6 +2068,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     private modifiedMarkers = [];
 
     private readonly undoRedoManager: UndoRedoStackManager;
+
+    private showCommandBox: () => void = () => {};
 
     constructor(
         element: HTMLDivElement,
@@ -2396,11 +2088,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         // Clip children of FlowView to the bounds of the FlowView's root div.
         this.element.style.overflow = "hidden";
-
-        this.cmdTree = new MergeTree.TST<IFlowViewCmd>();
-        for (const command of commands) {
-            this.cmdTree.put(command.key.toLowerCase(), command);
-        }
 
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
@@ -2437,18 +2124,199 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         this.cursor = new FlowCursor(this.viewportDiv);
 
-        // HACK: Expose "insertText" via window to Shared Browser Extension
-        //       for 2018/Oct demo.
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        window["insertText"] = (text: string) => {
-            this.sharedString.insertText(this.cursor.pos, text);
-        };
+        // Not great construction -- this slack wrapper div lets the command box use the flow-view div above act as
+        // its containing box while remaining out of the way for hit testing, etc.  Once FlowView is also React, it
+        // should be easier to coordinate the layout.
+        const commandBoxDiv = document.createElement("div");
+        commandBoxDiv.classList.add("command-box-wrapper");
+        this.element.appendChild(commandBoxDiv);
 
-        // Expose the ability to invalidate the current layout when a component's width/height changes.
-        this.services.set("invalidateLayout", () => {
-            console.log("Component invalidated layout");
-            this.hostSearchMenu(FlowView.docStartPosition);
-        });
+        const registerShowListener = (callback: () => void) => {
+            this.showCommandBox = callback;
+        };
+        const onCommandBoxDismiss = () => {
+            this.activeCommandBox = false;
+        };
+        const commandBoxCommands = [
+            {
+                friendlyName: "copy format",
+                exec: () => {
+                    this.copyFormat();
+                },
+            },
+            {
+                friendlyName: "paint format",
+                exec: () => {
+                    this.paintFormat();
+                },
+            },
+            {
+                friendlyName: "blockquote",
+                exec: () => {
+                    this.toggleBlockquote();
+                },
+            },
+            {
+                friendlyName: "bold",
+                exec: () => {
+                    this.toggleBold();
+                },
+            },
+            {
+                friendlyName: "red",
+                exec: () => {
+                    this.setColor("red");
+                },
+            },
+            {
+                friendlyName: "green",
+                exec: () => {
+                    this.setColor("green");
+                },
+            },
+            {
+                friendlyName: "gold",
+                exec: () => {
+                    this.setColor("gold");
+                },
+            },
+            {
+                friendlyName: "pink",
+                exec: () => {
+                    this.setColor("pink");
+                },
+            },
+            {
+                friendlyName: "Courier font",
+                exec: () => {
+                    this.setFont("courier new", "18px");
+                },
+            },
+            {
+                friendlyName: "Tahoma",
+                exec: () => {
+                    this.setFont("tahoma", "18px");
+                },
+            },
+            {
+                friendlyName: "Heading 2",
+                exec: () => {
+                    this.setPGProps({ header: true });
+                },
+            },
+            {
+                friendlyName: "Normal",
+                exec: () => {
+                    this.setPGProps({ header: null });
+                },
+            },
+            {
+                friendlyName: "Georgia font",
+                exec: () => {
+                    this.setFont("georgia", "18px");
+                },
+            },
+            {
+                friendlyName: "sans font",
+                exec: () => {
+                    this.setFont("sans-serif", "18px");
+                },
+            },
+            {
+                friendlyName: "cursive font",
+                exec: () => {
+                    this.setFont("cursive", "18px");
+                },
+            },
+            {
+                friendlyName: "italic",
+                exec: () => {
+                    this.toggleItalic();
+                },
+            },
+            {
+                friendlyName: "list ... 1.)",
+                exec: () => {
+                    this.setList();
+                },
+            },
+            {
+                friendlyName: "list ... \u2022",
+                exec: () => {
+                    this.setList(1);
+                },
+            },
+            {
+                friendlyName: "cell info",
+                exec: () => {
+                    showCell(this.cursor.pos, this);
+                },
+            },
+            {
+                friendlyName: "table info",
+                exec: () => {
+                    showTable(this.cursor.pos, this);
+                },
+            },
+            {
+                friendlyName: "table summary",
+                exec: () => {
+                    this.tableSummary();
+                },
+            },
+            {
+                friendlyName: "table test",
+                exec: () => {
+                    this.updatePGInfo(this.cursor.pos - 1);
+                    Table.createTable(this.cursor.pos, this.sharedString, this.runtime.clientId);
+                    this.hostSearchMenu(this.cursor.pos);
+                },
+            },
+            {
+                friendlyName: "insert column",
+                exec: () => {
+                    this.insertColumn();
+                },
+            },
+            {
+                friendlyName: "insert row",
+                exec: () => {
+                    this.insertRow();
+                },
+            },
+            {
+                friendlyName: "delete row",
+                exec: () => {
+                    this.deleteRow();
+                },
+            },
+            {
+                friendlyName: "delete column",
+                exec: () => {
+                    this.deleteColumn();
+                },
+            },
+            {
+                friendlyName: "underline",
+                exec: () => {
+                    this.toggleUnderline();
+                },
+            },
+        ];
+
+        const commandBoxElement = React.createElement(
+            CommandBox,
+            {
+                registerShowListener,
+                dismissCallback: onCommandBoxDismiss,
+                commands: commandBoxCommands,
+            },
+        );
+
+        ReactDOM.render(
+            commandBoxElement,
+            commandBoxDiv,
+        );
     }
 
     public updatePresenceCursors() {
@@ -2943,24 +2811,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public showSearchMenu(
-        cmdTree: MergeTree.TST<SearchMenu.ISearchMenuCommand>,
-        foldCase = true,
-        showAllInitially = false,
-        cmdParser?: (searchString: string, cmd?: SearchMenu.ISearchMenuCommand) => void) {
-        this.activeSearchBox =
-            SearchMenu.searchBoxCreate(this, this.viewportDiv, cmdTree, foldCase, cmdParser);
-        if (showAllInitially) {
-            this.activeSearchBox.showAllItems();
-        }
-        return true;
-    }
-
-    public cancelSearchMenu() {
-        this.activeSearchBox.dismiss();
-        this.activeSearchBox = undefined;
-    }
-
     public setEdit(docRoot: types.ISharedMap) {
         this.docRoot = docRoot;
 
@@ -3091,14 +2941,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const keydownHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keydownHandler(e);
-            } else if (this.activeSearchBox) {
-                if (e.keyCode === KeyCode.esc) {
-                    this.activeSearchBox.dismiss();
-                    this.activeSearchBox = undefined;
-                } else {
-                    this.activeSearchBox.keydown(e);
-                }
-            } else {
+            } else if (!this.activeCommandBox) {
                 const saveLastVertX = this.lastVerticalX;
                 let specialKey = true;
                 this.lastVerticalX = -1;
@@ -3227,12 +3070,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const keypressHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keypressHandler(e);
-            } else if (this.activeSearchBox) {
-                if (this.activeSearchBox.keypress(e)) {
-                    this.activeSearchBox.dismiss();
-                    this.activeSearchBox = undefined;
-                }
-            } else {
+            } else if (!this.activeCommandBox) {
                 const pos = this.cursor.pos;
                 const code = e.charCode;
                 if (code === CharacterCodes.cr) {
@@ -3397,7 +3235,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public setProps(props: MergeTree.PropertySet, updatePG = true) {
+    public setProps(props: MergeTree.PropertySet) {
         const sel = this.cursor.getSelection();
         this.undoRedoManager.closeCurrentOperation();
         if (sel) {
@@ -3423,11 +3261,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public setColor(color: string) {
-        this.setProps({ color }, false);
-    }
-
-    public makeBlink(color: string) {
-        this.setProps({ blink: true, color }, false);
+        this.setProps({ color });
     }
 
     public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
@@ -3485,22 +3319,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         const markerPos = this.cursor.pos;
         this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
-    }
-
-    public insertList() {
-        // eslint-disable-next-line max-len
-        const testList: SearchMenu.ISearchMenuCommand[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
-        const irdoc = <IListReferenceDoc>{
-            items: testList,
-            referenceDocId: "L",
-            selectionIndex: 0,
-            type: { name: "list" },
-            url: "",
-        };
-        const refProps = {
-            [Paragraph.referenceProperty]: irdoc,
-        };
-        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, refProps);
     }
 
     public deleteRow() {
@@ -3711,8 +3529,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 break;
             }
             case CharacterCodes.M: {
-                this.activeSearchBox = SearchMenu.searchBoxCreate(this, this.viewportDiv,
-                    this.cmdTree, true);
+                this.activeCommandBox = true;
+                this.showCommandBox();
                 break;
             }
             case CharacterCodes.L:

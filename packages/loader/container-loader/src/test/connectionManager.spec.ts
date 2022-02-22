@@ -17,40 +17,51 @@ import { IConnectionManagerFactoryArgs } from "../contracts";
 import { pkgVersion } from "../packageVersion";
 
 describe("connectionManager", () => {
-    it("reconnectOnError", async () => {
-        // Arrange
-        let nextClientId = 0;
-        let mockDeltaConnection: MockDocumentDeltaConnection | undefined;
-        const mockDocumentService = new MockDocumentService(
-            undefined /* deltaStorageFactory */,
-            () => {
-                mockDeltaConnection = new MockDocumentDeltaConnection(`mock_client_${nextClientId++}`);
-                return mockDeltaConnection;
-            },
-        );
-        const client: Partial<IClient> = {
-            details: { capabilities: { interactive: true } },
-            mode: "write",
-        };
-        let closed = false;
-        let connectionCount = 0;
-        let connectionDeferred: Deferred<number> = new Deferred();
-        let disconnectCount = 0;
-        const props: IConnectionManagerFactoryArgs = {
-            closeHandler: (_error) => { closed = true; },
-            connectHandler: () => {
-                connectionDeferred.resolve(++connectionCount);
-                connectionDeferred = new Deferred();
-            },
-            disconnectHandler: () => { ++disconnectCount; },
-            incomingOpHandler: () => {},
-            pongHandler: () => {},
-            readonlyChangeHandler: () => {},
-            reconnectionDelayHandler: () => {},
-            signalHandler: () => {},
-        };
+    let nextClientId = 0;
+    let _mockDeltaConnection: MockDocumentDeltaConnection | undefined;
+    const mockDocumentService = new MockDocumentService(
+        undefined /* deltaStorageFactory */,
+        () => { _mockDeltaConnection = new MockDocumentDeltaConnection(`mock_client_${nextClientId++}`); return _mockDeltaConnection },
+    );
+    const client: Partial<IClient> = {
+        details: { capabilities: { interactive: true } },
+        mode: "write",
+    };
+    let closed = false;
+    let connectionCount = 0;
+    let connectionDeferred = new Deferred<MockDocumentDeltaConnection>();
+    let disconnectCount = 0;
+    const props: IConnectionManagerFactoryArgs = {
+        closeHandler: (_error) => { closed = true; },
+        connectHandler: () => {
+            ++connectionCount;
+            assert(_mockDeltaConnection !== undefined, "When connectHandler is invoked, _mockDeltaConnection should have been set");
+            connectionDeferred.resolve(_mockDeltaConnection);
+            connectionDeferred = new Deferred();
+        },
+        disconnectHandler: () => { ++disconnectCount; },
+        incomingOpHandler: () => {},
+        pongHandler: () => {},
+        readonlyChangeHandler: () => {},
+        reconnectionDelayHandler: () => {},
+        signalHandler: () => {},
+    };
 
-        const mockLogger = new MockLogger();
+    const mockLogger = new MockLogger();
+    async function waitForConnection() {
+        return connectionDeferred.promise;
+    }
+    beforeEach(() => {
+        nextClientId = 0;
+        _mockDeltaConnection = undefined;
+        closed = false;
+        connectionCount = 0;
+        connectionDeferred = new Deferred<MockDocumentDeltaConnection>();
+        disconnectCount = 0;
+    });
+
+    it("reconnectOnError - exceptions invoke closeHandler", async () => {
+        // Arrange
         const connectionManager = new ConnectionManager(
             () => mockDocumentService,
             client as IClient,
@@ -58,25 +69,42 @@ describe("connectionManager", () => {
             mockLogger,
             props,
         );
-
-        async function waitForConnection(n: number) {
-            assert(await connectionDeferred.promise === n, `Test's connection state tracking is off [${n}]`);
-        }
-
         connectionManager.connect();
-        await waitForConnection(1);
-        assert(mockDeltaConnection !== undefined);
+        const connection = await waitForConnection();
+
+        // Monkey patch connection to be undefined to trigger assert in reconnectOnError
+        (connectionManager as any).connection = undefined;
+
+        // Act
+        connection.emitError({ errorType: DriverErrorType.genericError, message: "whatever", canRetry: true });
+        await Promise.resolve(); // So we get the promise rejection that calls closeHandler
+
+        // Assert
+        assert(closed, "ConnectionManager should close if reconnect throws an error, e.g. hits an assert");
+    });
+
+    it("reconnectOnError - error, disconnect, and nack handling", async () => {
+        // Arrange
+        const connectionManager = new ConnectionManager(
+            () => mockDocumentService,
+            client as IClient,
+            true /* reconnectAllowed */,
+            mockLogger,
+            props,
+        );
+        connectionManager.connect();
+        let connection = await waitForConnection();
 
         // Act I - retryableError
         const error: IAnyDriverError =
             new RetryableError("retryableError", undefined, DriverErrorType.genericError, { driverVersion: pkgVersion });
-        let oldDeltaConnection = mockDeltaConnection;
-        mockDeltaConnection.emitError(error);
-        await waitForConnection(2);
+        let oldConnection = connection;
+        connection.emitError(error);
+        connection = await waitForConnection();
 
         // Assert I
-        assert(oldDeltaConnection.disposed, "Old connection should be disposed after emitting an error");
-        assert.equal(mockDeltaConnection.clientId, `mock_client_${nextClientId - 1}`, "New connection should have expected id");
+        assert(oldConnection.disposed, "Old connection should be disposed after emitting an error");
+        assert.equal(connection.clientId, "mock_client_1", "New connection should have expected id");
         assert(!closed, "Don't expect closeHandler to be called when connection emits an error");
         assert.equal(disconnectCount, 1, "Expected 1 disconnect from emitting an error");
         assert.equal(connectionCount, 2, "Expected 2 connections after the first emitted an error");
@@ -84,29 +112,26 @@ describe("connectionManager", () => {
         // Act II - nonretryable disconnect
         const disconnectReason: IAnyDriverError =
             new NonRetryableError("fatalDisconnectReason", undefined, DriverErrorType.genericError, { driverVersion: pkgVersion });
-        oldDeltaConnection = mockDeltaConnection;
-        mockDeltaConnection.emitDisconnect(disconnectReason);
-        await waitForConnection(3);
+        oldConnection = connection;
+        connection.emitDisconnect(disconnectReason);
+        connection = await waitForConnection();
 
         // Assert II
-        assert(oldDeltaConnection.disposed, "Old connection should be disposed after emitting disconnect");
-        assert.equal(mockDeltaConnection.clientId, `mock_client_${nextClientId - 1}`, "New connection should have expected id");
-        mockLogger.assertMatchAny([{ eventName: "reconnectingDespiteFatalError", reconnectMode: "Enabled", error: "fatalDisconnectReason", canRetry: false }]);
+        assert(oldConnection.disposed, "Old connection should be disposed after emitting disconnect");
+        assert.equal(connection.clientId, "mock_client_2", "New connection should have expected id");
+        mockLogger.assertMatchAny([{ eventName: "reconnectingDespiteFatalError", reconnectMode: "Enabled", error: "fatalDisconnectReason", canRetry: false, }]);
         assert(!closed, "Don't expect closeHandler to be called even when connection emits a non-retryable disconnect");
         assert.equal(disconnectCount, 2, "Expected 2 disconnects from emitting an error and disconnect");
         assert.equal(connectionCount, 3, "Expected 3 connections after the two disconnects");
 
         // Act III - nonretryable nack
         const nack: Partial<INack> = { content: { code: 403, type: NackErrorType.BadRequestError, message: "fatalNack"} };
-        oldDeltaConnection = mockDeltaConnection;
-        mockDeltaConnection.emitNack("docId", [nack]);
+        oldConnection = connection;
+        connection.emitNack("docId", [nack]);
 
         // Assert III
-        assert(oldDeltaConnection.disposed, "Old connection should be disposed after emitting nack");
-        assert.equal(mockDeltaConnection.clientId, `mock_client_${nextClientId - 1}`, "New connection should have expected id");
-        mockLogger.assertMatchAny([{ eventName: "reconnectingDespiteFatalError", reconnectMode: "Enabled", statusCode: 403, canRetry: false }]);
         assert(closed, "closeHandler should be called in response to 403 nack");
-        assert.equal(disconnectCount, 3, "Expected 2 disconnects from emitting an error and disconnect");
-        assert.equal(connectionCount, 3, "Expected 3 connections after the two disconnects");
+        assert(!oldConnection.disposed, "connection shouldn't be disposed since mock closeHandler doesn't do it - don't expect it here after fatal nack");
+        mockLogger.assertMatch([], "Expected no logs sent, specifically not reconnectingDespiteFatalError event");
     });
 });

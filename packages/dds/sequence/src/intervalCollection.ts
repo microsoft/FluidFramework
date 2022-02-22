@@ -17,7 +17,6 @@ import {
     IntervalConflictResolver,
     IntervalNode,
     IntervalTree,
-    IntervalType,
     LocalReference,
     MergeTree,
     MergeTreeDeltaType,
@@ -34,6 +33,13 @@ import { v4 as uuid } from "uuid";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./mapKernelInterfaces";
 
 const reservedIntervalIdKey = "intervalId";
+
+export enum IntervalType {
+    Simple = 0x0,
+    Nest = 0x1,
+    SlideOnRemove = 0x2,
+    Transient = 0x4,
+}
 
 export interface ISerializedInterval {
     sequenceNumber: number;
@@ -414,7 +420,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         private readonly label: string,
         private readonly helpers: IIntervalHelpers<TInterval>) {
         this.endIntervalTree =
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
     }
 

@@ -55,7 +55,8 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 // @public
 export class DocumentService implements api.IDocumentService {
     // Warning: (ae-forgotten-export) The symbol "ICache" needs to be exported by the entry point index.d.ts
-    constructor(resolvedUrl: api.IResolvedUrl, ordererUrl: string, deltaStorageUrl: string, gitUrl: string, logger: ITelemetryLogger, tokenProvider: ITokenProvider, tenantId: string, documentId: string, driverPolicies: IRouterliciousDriverPolicies, blobCache: ICache<ArrayBufferLike>, snapshotTreeCache: ICache<ISnapshotTree>);
+    // Warning: (ae-forgotten-export) The symbol "ISnapshotTreeVersion" needs to be exported by the entry point index.d.ts
+    constructor(resolvedUrl: api.IResolvedUrl, ordererUrl: string, deltaStorageUrl: string, gitUrl: string, logger: ITelemetryLogger, tokenProvider: ITokenProvider, tenantId: string, documentId: string, driverPolicies: IRouterliciousDriverPolicies, blobCache: ICache<ArrayBufferLike>, snapshotTreeCache: ICache<ISnapshotTreeVersion>);
     connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection>;
     connectToStorage(): Promise<api.IDocumentStorageService>;
@@ -75,7 +76,7 @@ export class DocumentService implements api.IDocumentService {
 
 // @public (undocumented)
 export class DocumentStorageService extends DocumentStorageServiceProxy {
-    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies, blobCache?: ICache<ArrayBufferLike>, snapshotTreeCache?: ICache<ISnapshotTree>);
+    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies, blobCache?: ICache<ArrayBufferLike>, snapshotTreeCache?: ICache<ISnapshotTreeVersion>);
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)

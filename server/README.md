@@ -33,7 +33,18 @@ To get started with Routerlicious and the Fluid reference implementation, you mu
   "start:docker": "docker-compose -f server/docker-compose.yml up"
   ```
 
+### Developing the Reference Server
+
 For development, you'll also need to give docker access to your drive (Shared Drives). The instructions for local development are available in [Routerlicious](./routerlicious).
+
+To locally test changes across [GitRest](./gitrest), [Historian](./historian), and [Routerlicious](./routerlicious), run `docker compose -f docker-compose.dev.yml up` from `server/` instead of `server/routerlicious`. Then, when making a change, rebuild the relevant service and restart it. For example,
+
+```shell
+cd server/gitrest
+npm run build
+cd ..
+docker compose restart gitrest
+```
 
 ### Common Issues
 * Port already allocated

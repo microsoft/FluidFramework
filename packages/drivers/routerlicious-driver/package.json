@@ -67,7 +67,7 @@
     "@fluidframework/telemetry-utils": "^0.58.0",
     "json-stringify-safe": "5.0.1",
     "node-fetch": "^2.6.1",
-    "socket.io-client": "^2.4.0",
+    "socket.io-client": "^4.4.1",
     "url-parse": "^1.5.3",
     "uuid": "^8.3.1"
   },
