@@ -241,13 +241,16 @@ describe("Routerlicious", () => {
                         kafkaMessageFactory.sequenceMessage(messageFactory.createLeave(123), testId));
                     await quiesceWithNoClientsConnected();
 
+                    const leaveOp = testKafka.getLastMessage()
+                    assert.equal(leaveOp.operation.sequenceNumber, 3);
+
                     signalsSent = testSignalKafka.getRawMessages();
                     assert.equal(2, signalsSent.length);
 
                     const leaveSignal = signalsSent[1].value as ITicketedSignalMessage;
                     assert.equal(leaveSignal.operation.clientId, null);
                     assert.ok((leaveSignal.operation.content as string).includes("leave"));
-                    assert.equal((leaveSignal.operation as any).referenceSequenceNumber, 2);
+                    assert.equal((leaveSignal.operation as any).referenceSequenceNumber, leaveOp.operation.sequenceNumber - 1);
                     assert.equal((leaveSignal.operation as any).signalSequenceNumber, 2);
                 });
 
