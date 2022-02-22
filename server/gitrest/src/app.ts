@@ -9,7 +9,7 @@ import express, { Express } from "express";
 import morgan from "morgan";
 import nconf from "nconf";
 import split = require("split");
-import * as winston from "winston";
+import winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { IExternalStorageManager } from "./externalStorageManager";
 import * as routes from "./routes";
@@ -38,7 +38,7 @@ export function create(
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
                 responseTime: tokens["response-time"](req, res),
-                serviceName: "historian",
+                serviceName: "gitrest",
                 eventName: "http_requests",
              };
              winston.info("request log generated", { messageMetaData });
@@ -80,6 +80,7 @@ export function create(
     // will print stacktrace
     if (app.get("env") === "development") {
         app.use((err, req, res, next) => {
+            winston.error({ status: err.status, error: err, message: err.message });
             res.status(err.status || 500);
             res.json({
                 error: err,
@@ -91,6 +92,7 @@ export function create(
     // production error handler
     // no stacktraces leaked to user
     app.use((err, req, res, next) => {
+        winston.error({ status: err.status, error: err, message: err.message });
         res.status(err.status || 500);
         res.json({
             error: {},

@@ -30,6 +30,7 @@ import {
 } from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ICache, InMemoryCache } from "./cache";
+import { ISnapshotTreeVersion } from "./definitions";
 
 const latestSnapshotId: string = "latest";
 
@@ -47,13 +48,13 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         protected readonly logger: ITelemetryLogger,
         public readonly policies: IDocumentStorageServicePolicies = {},
         private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),
-        private readonly snapshotTreeCache: ICache<ISnapshotTree> = new InMemoryCache()) {
+        private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> = new InMemoryCache()) {
         this.summaryUploadManager = new WholeSummaryUploadManager(manager);
     }
 
     public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         if (versionId !== this.id && versionId !== null) {
-            // Blobs in this scenario will never have multiple versions, so return blobId as is
+            // Blobs/Trees in this scenario will never have multiple versions, so return versionId as is
             return [{
                 id: versionId,
                 treeId: undefined!,
@@ -63,9 +64,10 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         // Fetch latest summary, cache it, and return its id.
         if (this.firstVersionsCall && count === 1) {
             this.firstVersionsCall = false;
+            const { id, snapshotTree } = await this.fetchAndCacheSnapshotTree(latestSnapshotId);
             return [{
-                id: (await this.fetchAndCacheSnapshotTree(latestSnapshotId)).id,
-                treeId: undefined!,
+                id,
+                treeId: snapshotTree.id!,
             }];
         }
 
@@ -83,7 +85,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         return commits.map((commit) => ({
             date: commit.commit.author.date,
             id: commit.sha,
-            treeId: undefined!,
+            treeId: commit.commit.tree.sha,
         }));
     }
 
@@ -168,10 +170,10 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         );
     }
 
-    private async fetchAndCacheSnapshotTree(versionId: string): Promise<{ id: string, snapshotTree: ISnapshotTree }> {
-        const cachedSnapshotTree = await this.snapshotTreeCache.get(versionId);
-        if (cachedSnapshotTree !== undefined) {
-            return { id: cachedSnapshotTree.id!, snapshotTree: cachedSnapshotTree };
+    private async fetchAndCacheSnapshotTree(versionId: string): Promise<ISnapshotTreeVersion> {
+        const cachedSnapshotTreeVersion = await this.snapshotTreeCache.get(versionId);
+        if (cachedSnapshotTreeVersion !== undefined) {
+            return { id: cachedSnapshotTreeVersion.id, snapshotTree: cachedSnapshotTreeVersion.snapshotTree };
         }
 
         const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
@@ -189,30 +191,32 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             },
         );
         const normalizedWholeSummary = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
-        const snapshotId = normalizedWholeSummary.snapshotTree.id;
-        assert(snapshotId !== undefined, 0x275 /* "Root tree should contain the id" */);
+        const wholeFlatSummaryId: string = wholeFlatSummary.id;
+        const snapshotTreeId = normalizedWholeSummary.snapshotTree.id;
+        assert(snapshotTreeId !== undefined, 0x275 /* "Root tree should contain the id" */);
+        const snapshotTreeVersion = { id: wholeFlatSummaryId , snapshotTree: normalizedWholeSummary.snapshotTree };
 
         const cachePs: Promise<any>[] = [
             this.snapshotTreeCache.put(
-                snapshotId,
-                normalizedWholeSummary.snapshotTree,
+                snapshotTreeId,
+                snapshotTreeVersion,
             ),
             this.initBlobCache(normalizedWholeSummary.blobs),
         ];
-        if (snapshotId !== versionId) {
+        if (snapshotTreeId !== versionId) {
             // versionId could be "latest". When summarizer checks cache for "latest", we want it to be available.
             // TODO: For in-memory cache, <latest,snapshotTree> will be a shared pointer with <snapshotId,snapshotTree>,
             // However, for something like Redis, this will cache the same value twice. Alternatively, could we simply
             // cache with versionId?
             cachePs.push(this.snapshotTreeCache.put(
                 versionId,
-                normalizedWholeSummary.snapshotTree,
+                snapshotTreeVersion,
             ));
         }
 
         await Promise.all(cachePs);
 
-        return { id: snapshotId, snapshotTree: normalizedWholeSummary.snapshotTree};
+        return snapshotTreeVersion;
     }
 
     private async initBlobCache(blobs: Map<string, ArrayBuffer>): Promise<void> {

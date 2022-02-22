@@ -124,7 +124,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
             lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
             client.addLocalReference(lref1);
             client.addLocalReference(lref2);
-            bookmarks.push(new SharedString.SequenceInterval(lref1, lref2, MergeTree.IntervalType.Simple));
+            bookmarks.push(new SharedString.SequenceInterval(lref1, lref2, SharedString.IntervalType.Simple));
         } else {
             i--;
         }
@@ -597,7 +597,7 @@ export function TestPack(verbose = true) {
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             const lrefPos1 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             const lrefPos2 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkPosRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
+                            checkPosRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, SharedString.IntervalType.Simple);
                         } else {
                             i--;
                         }
@@ -615,7 +615,7 @@ export function TestPack(verbose = true) {
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             const lrefPos1 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             const lrefPos2 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkRangeRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
+                            checkRangeRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, SharedString.IntervalType.Simple);
                         } else {
                             i--;
                         }
@@ -1573,7 +1573,7 @@ export function intervalTest() {
             a = b;
             b = temp;
         }
-        arr.push(intervalIndex.addInterval(a, b, MergeTree.IntervalType.Simple, { id: i }));
+        arr.push(intervalIndex.addInterval(a, b, SharedString.IntervalType.Simple, { id: i }));
     }
     let dup = 0;
     for (let i = 0; i < intCount; i++) {

@@ -13,14 +13,13 @@ module.exports = {
     "rules": {
         "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/dot-notation": "off",
-        "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-unnecessary-type-assertion": "off",
-        "eqeqeq": "off",
+        "import/no-duplicates": "off",
         "max-len": "off",
-        "no-multi-spaces": "off",
+        "no-bitwise": "off",
         "no-var": "off",
         "prefer-const": "off",
         "unicorn/better-regex": "off",
-        "unicorn/filename-case": "off"
+        "unicorn/no-unsafe-regex": "off"
     }
 }

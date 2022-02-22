@@ -361,6 +361,7 @@ async function fetchSnapshotContentsCoreV1(
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
     const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, snapshotOptions);
+    headers.accept = "application/json";
     const fetchOptions = {
         body,
         headers,
