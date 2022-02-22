@@ -43,7 +43,7 @@
     "@fluidframework/server-services-telemetry": "^0.1034.0",
     "@fluidframework/server-services-utils": "^0.1034.0",
     "@fluidframework/server-test-utils": "^0.1034.0",
-    "axios": "^0.21.2",
+    "axios": "^0.26.0",
     "body-parser": "^1.17.1",
     "bytes": "^3.0.0",
     "charwise": "^3.0.1",
