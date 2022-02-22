@@ -152,9 +152,9 @@ export function createOdspNetworkError(
                 const responseError = parseResult.errorResponse.error;
                 const redirectLocation = responseError["@error.redirectLocation"];
                 if (redirectLocation !== undefined) {
-                    const propsWithRedirectLocation = { ...driverProps, newSiteUri: redirectLocation };
+                    const propsWithRedirectLocation = { ...driverProps, redirectLocation };
                     error = new NonRetryableError(
-                        fluidErrorCode, errorMessage, OdspErrorType.fileStorageDomainChange, propsWithRedirectLocation);
+                        fluidErrorCode, errorMessage, OdspErrorType.locationRedirection, propsWithRedirectLocation);
                     break;
                 }
             }

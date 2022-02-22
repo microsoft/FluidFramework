@@ -49,7 +49,7 @@ export enum OdspErrorType {
 
     // The location of file can move on Spo. So if the file location moves and we try to access the older location, then
     // this error is thrown by server to let the client know about the new redirect location.
-    fileStorageDomainChange = "fileStorageDomainChange",
+    locationRedirection = "locationRedirection",
 }
 
 /**

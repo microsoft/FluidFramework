@@ -270,7 +270,7 @@ describe("Odsp Error", () => {
     });
 
     it("Check odsp domain move error", async () => {
-        const newSiteLocation = "www.xxx.com";
+        const newSiteLocation = "www.fake.com";
         const responseText = {
             error: {
                 "@error.redirectLocation": newSiteLocation,
@@ -281,7 +281,7 @@ describe("Odsp Error", () => {
         };
         const error: any = createOdspNetworkErrorWithResponse(
             "The site has been moved to a new location.", 404, undefined, JSON.stringify(responseText));
-        assert.strictEqual(error.errorType, OdspErrorType.fileStorageDomainChange, "Error type should be fileStorageDomainChange");
+        assert.strictEqual(error.errorType, OdspErrorType.locationRedirection, "Error type should be locationRedirection");
         assert.strictEqual(error.newSiteUri, newSiteLocation, "Site location should match");
         assert.strictEqual(error.statusCode, 404, "Status code should match");
     });

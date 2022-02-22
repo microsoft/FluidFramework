@@ -360,9 +360,9 @@ async function fetchSnapshotContentsCoreV1(
 ): Promise<ISnapshotRequestAndResponseOptions> {
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
-    const otherFormOptions = {"prefer": "manualredirect"};
+    const header = {"prefer": "manualredirect"};
     const { body, headers } = getFormBodyAndHeaders(
-        odspResolvedUrl, storageToken, snapshotOptions, otherFormOptions);
+        odspResolvedUrl, storageToken, snapshotOptions, header);
     headers.accept = "application/json";
     const fetchOptions = {
         body,
@@ -425,7 +425,7 @@ function getFormBodyAndHeaders(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
     snapshotOptions: ISnapshotOptions | undefined,
-    otherFormOptions?: {[index: string]: string},
+    headers?: {[index: string]: string},
 ) {
     const formBoundary = uuid();
     const formParams: string[] = [];
@@ -439,8 +439,8 @@ function getFormBodyAndHeaders(
             }
         });
     }
-    if (otherFormOptions !== undefined) {
-        Object.entries(otherFormOptions).forEach(([key, value]) => {
+    if (headers !== undefined) {
+        Object.entries(headers).forEach(([key, value]) => {
             if (value !== undefined) {
                 formParams.push(`${key}: ${value}`);
             }
@@ -452,10 +452,10 @@ function getFormBodyAndHeaders(
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
     const postBody = formParams.join("\r\n");
-    const headers: {[index: string]: any} = {
+    const header: {[index: string]: any} = {
         "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
     };
-    return { body: postBody, headers };
+    return { body: postBody, headers: header };
 }
 
 function validateAndEvalBlobsAndTrees(snapshot: ISnapshotContents) {
