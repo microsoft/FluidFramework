@@ -89,7 +89,10 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
     registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]): void;
     // (undocumented)
     reportAndClearTrackedEvents(): {
-        expectedNotFound: (ITelemetryGenericEvent | undefined)[];
+        expectedNotFound: ({
+            index: number;
+            event: ITelemetryGenericEvent | undefined;
+        } | undefined)[];
         unexpectedErrors: ITelemetryBaseEvent[];
     };
     // (undocumented)
@@ -98,6 +101,9 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
 
 // @public (undocumented)
 export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
+
+// @public (undocumented)
+export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
 // @public (undocumented)
 export interface IOpProcessingController {
