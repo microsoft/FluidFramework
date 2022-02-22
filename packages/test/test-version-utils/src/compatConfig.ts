@@ -190,7 +190,7 @@ function createExpectsTest(orderedExpectedEvents: ITelemetryGenericEvent[], test
                 throw error;
             }
         }
-        const err = getUnexpectedLogErrorException(provider.logger, "Use itExpects to specify expected errors. ");
+        const err = getUnexpectedLogErrorException(provider.logger);
         if(err !== undefined){
             throw err;
         }

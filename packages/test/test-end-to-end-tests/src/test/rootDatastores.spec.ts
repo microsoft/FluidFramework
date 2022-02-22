@@ -40,19 +40,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const IdleDetectionTime = 100;
     const testContainerConfig: ITestContainerConfig = {
         fluidDataObjectType: DataObjectFactoryType.Test,
-        runtimeOptions: {
-            summaryOptions: {
-                generateSummaries: true,
-                initialSummarizerDelayMs: 10,
-                summaryConfigOverrides: {
-                    idleTime: IdleDetectionTime,
-                    maxTime: IdleDetectionTime * 12,
-                },
-            },
-            gcOptions: {
-                gcAllowed: true,
-            },
-        },
     };
 
     const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => {
@@ -375,6 +362,24 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         it("Assign multiple data stores to the same alias, first write wins, " +
         "different containers from snapshot", async () => {
+
+            await setupContainers({
+                ... testContainerConfig,
+                runtimeOptions: {
+                    summaryOptions: {
+                        generateSummaries: true,
+                        initialSummarizerDelayMs: 10,
+                        summaryConfigOverrides: {
+                            idleTime: IdleDetectionTime,
+                            maxTime: IdleDetectionTime * 12,
+                        },
+                    },
+                    gcOptions: {
+                        gcAllowed: true,
+                    },
+                },
+            });
+
             // andre4i: Move this into test utils or something. Same as for other
             // flavors of this function across the end to end tests
             const waitForSummary = async (
