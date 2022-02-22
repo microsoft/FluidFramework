@@ -459,19 +459,22 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IProvideRuntimeFactory": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntime": {
           "backCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IContainer": {
           "backCompat": false
         },
         "InterfaceDeclaration_IContainerContext": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IHostLoader": {
           "backCompat": false
@@ -484,6 +487,11 @@
         },
         "InterfaceDeclaration_IProxyLoaderFactory": {
           "backCompat": false
+        }
+      },
+      "0.46.0": {
+        "InterfaceDeclaration_IContainerContext": {
+          "forwardCompat": false
         }
       }
     }

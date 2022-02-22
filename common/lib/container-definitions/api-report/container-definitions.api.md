@@ -199,7 +199,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)
-    readonly taggedLogger?: ITelemetryBaseLogger;
+    readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)
     updateDirtyContainerState(dirty: boolean): void;
 }

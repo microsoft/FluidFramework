@@ -355,6 +355,7 @@ declare function get_old_InterfaceDeclaration_IContainerContext():
 declare function use_current_InterfaceDeclaration_IContainerContext(
     use: current.IContainerContext);
 use_current_InterfaceDeclaration_IContainerContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerContext());
 
 /*
