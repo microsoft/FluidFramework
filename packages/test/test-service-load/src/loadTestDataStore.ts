@@ -429,6 +429,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
+        // if signalToOpRatio is unspecified, take the default value as 0. Else, round it up
+        const signalsPerOp: number = (typeof config.testConfig.signalToOpRatio === 'undefined') ? 
+                                         0 : Math.ceil(config.testConfig.signalToOpRatio); 
         const opsGapMs = cycleMs / opsPerCycle;
         try {
             while (dataModel.counter.value < clientSendCount && !this.disposed) {
@@ -442,7 +445,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
                 if (dataModel.haveTaskLock()) {
                     dataModel.counter.increment(1);
-                    this.runtime.submitSignal("test-signal", true)
+                    for (let count = 0; count < signalsPerOp; count++)
+                    {
+                        this.runtime.submitSignal("generic-signal", true)
+                    }
                     if (dataModel.counter.value % opsPerCycle === 0) {
                         await dataModel.blobFinish();
                         dataModel.abandonTask();

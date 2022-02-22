@@ -382,8 +382,15 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
 
     let submittedSignals = 0;
     testRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-        if (message.type === "test-signal" && local === true) {
+        if (message.type === "generic-signal" && local === true) {
             submittedSignals += 1;
+        }
+    });
+
+    let receivedSignals = 0;
+    testRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        if (message.type === "generic-signal" && local === false) {
+            receivedSignals += 1;
         }
     });
 
@@ -419,10 +426,22 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
                 userName: getUserName(container),
             });
         }
+        if (receivedSignals > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Fluid Signals Received",
+                testHarnessEvent: true,
+                value: receivedSignals,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
+
 
         submitedOps = 0;
         receivedOps = 0;
         submittedSignals = 0;
+        receivedSignals = 0;
 
         t = setTimeout(sendMetrics, progressIntervalMs);
     };
