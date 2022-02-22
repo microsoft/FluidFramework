@@ -11,6 +11,7 @@ import {
     IPartitionLambda,
     IProducer,
     ISequencedOperationMessage,
+    ITicketedSignalMessage,
     LambdaCloseType,
     MongoManager,
     NackOperationType,
@@ -43,11 +44,14 @@ describe("Routerlicious", () => {
             let testKafka: TestKafka;
             let testForwardProducer: IProducer;
             let testReverseProducer: IProducer;
-            let testSignalKafka: TestKafka;
-            let testSignalProducer: IProducer;
             let testContext: TestContext;
             let factory: DeliLambdaFactory;
             let lambda: IPartitionLambda;
+
+            let testSignalKafka: TestKafka;
+            let testSignalProducer: IProducer;
+            let factoryWithSignals: DeliLambdaFactory;
+            let lambdaWithSignals: IPartitionLambda;
 
             let messageFactory: MessageFactory;
             let kafkaMessageFactory: KafkaMessageFactory;
@@ -93,13 +97,26 @@ describe("Routerlicious", () => {
                 testForwardProducer = testKafka.createProducer();
                 testReverseProducer = testKafka.createProducer();
 
-                testSignalKafka = new TestKafka();
-                testSignalProducer = testKafka.createProducer();
-
                 testTenantManager = new TestTenantManager();
                 messageFactory = new MessageFactory(testId, testClientId);
                 kafkaMessageFactory = new KafkaMessageFactory("test", 1, false);
+
+                testContext = new TestContext();
+
                 factory = new DeliLambdaFactory(
+                    mongoManager,
+                    testCollection,
+                    testTenantManager,
+                    testForwardProducer,
+                    undefined,
+                    testReverseProducer,
+                    DefaultServiceConfiguration);
+                lambda = await factory.create({ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 }, testContext);
+
+                testSignalKafka = new TestKafka();
+                testSignalProducer = testSignalKafka.createProducer();
+
+                factoryWithSignals = new DeliLambdaFactory(
                     mongoManager,
                     testCollection,
                     testTenantManager,
@@ -107,14 +124,13 @@ describe("Routerlicious", () => {
                     testSignalProducer,
                     testReverseProducer,
                     DefaultServiceConfiguration);
-
-                testContext = new TestContext();
-                lambda = await factory.create({ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 }, testContext);
+                lambdaWithSignals = await factoryWithSignals.create({ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 }, testContext);
             });
 
             afterEach(async () => {
                 lambda.close(LambdaCloseType.Stop);
-                await factory.dispose();
+                lambdaWithSignals.close(LambdaCloseType.Stop);
+                await Promise.all([factory.dispose(), factoryWithSignals.dispose()]);
             });
 
             describe(".handler", () => {
@@ -186,6 +202,53 @@ describe("Routerlicious", () => {
                         sequencedMessage.operation.clientSequenceNumber,
                         message.operation.clientSequenceNumber);
                     assert.equal(sequencedMessage.operation.sequenceNumber, 2);
+
+                    // ensure signals are not sent since deli is not configured to emit signals
+                    const signalsSent = testSignalKafka.getRawMessages();
+                    assert.equal(0, signalsSent.length);
+                });
+
+                it("Should be able to ticket an incoming message and queue signals", async () => {
+                    const join = messageFactory.createJoin();
+                    const message = messageFactory.create();
+                    await lambdaWithSignals.handler(kafkaMessageFactory.sequenceMessage(join, testId));
+                    await lambdaWithSignals.handler(kafkaMessageFactory.sequenceMessage(message, testId));
+                    await quiesceWithClientsConnected();
+
+                    const sent = testKafka.getRawMessages();
+                    assert.equal(2, sent.length);
+                    const sequencedMessage = sent[1].value as ISequencedOperationMessage;
+                    assert.equal(sequencedMessage.documentId, testId);
+                    assert.equal(sequencedMessage.type, SequencedOperationType);
+                    assert.equal(sequencedMessage.operation.clientId, testClientId);
+                    assert.equal(
+                        sequencedMessage.operation.clientSequenceNumber,
+                        message.operation.clientSequenceNumber);
+                    assert.equal(sequencedMessage.operation.sequenceNumber, 2);
+
+                    // 1 join signal is expected
+                    let signalsSent = testSignalKafka.getRawMessages();
+                    assert.equal(1, signalsSent.length);
+
+                    const joinSignal = signalsSent[0].value as ITicketedSignalMessage;
+                    assert.equal(joinSignal.operation.clientId, null);
+                    assert.ok((joinSignal.operation.content as string).includes("join"));
+                    assert.equal((joinSignal.operation as any).referenceSequenceNumber, 0);
+                    assert.equal((joinSignal.operation as any).signalSequenceNumber, 1);
+
+                    // process a leave message and expect a leave op and leave signal
+                    await lambdaWithSignals.handler(
+                        kafkaMessageFactory.sequenceMessage(messageFactory.createLeave(123), testId));
+                    await quiesceWithNoClientsConnected();
+
+                    signalsSent = testSignalKafka.getRawMessages();
+                    assert.equal(2, signalsSent.length);
+
+                    const leaveSignal = signalsSent[1].value as ITicketedSignalMessage;
+                    assert.equal(leaveSignal.operation.clientId, null);
+                    assert.ok((leaveSignal.operation.content as string).includes("leave"));
+                    assert.equal((leaveSignal.operation as any).referenceSequenceNumber, 2);
+                    assert.equal((leaveSignal.operation as any).signalSequenceNumber, 2);
                 });
 
                 it("Calcuation of rolling hash should match when caculated externally", async () => {
