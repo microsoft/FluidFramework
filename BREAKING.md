@@ -11,16 +11,11 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.58 Breaking changes
-- [Remove raiseContainerWarning property](#Remove-raiseContainerWarning-property)
+
 - [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
 
-### Remove raiseContainerWarning property
-
-`raiseContainerWarning` property is removed from the following interfaces in release 0.56: `IContainerRuntime`, `IFluidDataStoreRuntime`, `IFluidDataStoreContext`, `IContainerRuntime`, `IFluidDataStoreRuntime`. It was deprecated in `IContainerContext` and it usage would be completely removed. The advised migration step for partners is to generate their own telemetry/logging events.
-
-### Remove logger property from IContainerContext
-
-The `logger` property from `IContainerContext` is removed. The alternative is to use `taggedLogger` if possible. Loggers passed to `ContainerContext` will need to support tagged events.
+## Remove logger property from IContainerContext
+The logger property in IContainerContext was set as an optional parameter in [release 0.56](#Set-logger-property-as-optional-parameter-in-IContainerContext) and have now been removed.
 
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
@@ -121,6 +116,8 @@ When creating root datastores using `ContainerRuntime.createRootDataStore` or `C
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
 - [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
 - [Removed SharedObject.is](#Removed-SharedObject.is)
+- [Remove raiseContainerWarning property](#Remove-raiseContainerWarning-property)
+- [Set logger property as optional parameter in IContainerContext](#Set-logger-property-as-optional-parameter-in-IContainerContext)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -184,6 +181,14 @@ The `containerPath` property of `DriverPreCheckInfo` was deprecated and has now 
 
 ### Removed `SharedObject.is`
 The `is` method is removed from SharedObject. This was being used to detect SharedObjects stored inside other SharedObjects (and then binding them), which should not be happening anymore. Instead, use handles to SharedObjects.
+
+### Remove raiseContainerWarning property
+
+`raiseContainerWarning` property is removed from the following interfaces in release 0.56: `IContainerRuntime`, `IFluidDataStoreRuntime`, `IFluidDataStoreContext`, `IContainerRuntime`, `IFluidDataStoreRuntime`. It was deprecated in `IContainerContext` and it usage would be completely removed. The advised migration step for partners is to generate their own telemetry/logging events.
+
+### Set logger property as optional parameter in IContainerContext
+
+The `logger` property from `IContainerContext` is set as an optional paramter and would be removed in the next release. Use `taggedLogger` instead. Loggers passed to `ContainerContext` will need to support tagged events.
 
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)

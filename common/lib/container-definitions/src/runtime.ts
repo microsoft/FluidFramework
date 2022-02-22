@@ -137,7 +137,7 @@ export interface IContainerContext extends IDisposable {
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
     // The logger implementation, which would support tagged events, should be provided by the loader.
-    readonly taggedLogger?: ITelemetryBaseLogger;
+    readonly taggedLogger: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     pendingLocalState?: unknown;
 
