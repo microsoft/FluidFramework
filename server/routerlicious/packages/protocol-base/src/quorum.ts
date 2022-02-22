@@ -53,9 +53,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      */
     private snapshotCache: IQuorumSnapshot["members"] | undefined;
 
-    constructor(
-        members: IQuorumSnapshot["members"],
-    ) {
+    constructor(members: IQuorumSnapshot["members"]) {
         super();
 
         this.members = new Map(members);
@@ -63,7 +61,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
     }
 
     /**
-     * Snapshots the clients in the Quorum
+     * Snapshots the current state of the QuorumClients
      * @returns a snapshot of the clients in the quorum
      */
     public snapshot(): IQuorumSnapshot["members"] {
@@ -157,10 +155,10 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     }
 
     /**
-     * Snapshots quorum proposals
-     * @returns a deep cloned array of proposals
+     * Snapshots the current state of the QuorumProposals
+     * @returns deep cloned arrays of proposals and values
      */
-    public snapshotProposals(): IQuorumSnapshot["proposals"] {
+    public snapshot(): { proposals: IQuorumSnapshot["proposals"], values: IQuorumSnapshot["values"] } {
         this.proposalsSnapshotCache ??= Array.from(this.proposals).map(
             ([sequenceNumber, proposal]) => [
                 sequenceNumber,
@@ -168,18 +166,12 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
                 [], // rejections, which has been removed
             ],
         );
-
-        return this.proposalsSnapshotCache;
-    }
-
-    /**
-     * Snapshots quorum values
-     * @returns a deep cloned array of values
-     */
-    public snapshotValues(): IQuorumSnapshot["values"] {
         this.valuesSnapshotCache ??= cloneDeep(Array.from(this.values));
 
-        return this.valuesSnapshotCache;
+        return {
+            proposals: this.proposalsSnapshotCache,
+            values: this.valuesSnapshotCache,
+        };
     }
 
     /**
@@ -389,10 +381,12 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
      * @returns a quorum snapshot
      */
     public snapshot(): IQuorumSnapshot {
+        const members = this.quorumClients.snapshot();
+        const { proposals, values } = this.quorumProposals.snapshot();
         return {
-            members: this.quorumClients.snapshot(),
-            proposals: this.quorumProposals.snapshotProposals(),
-            values: this.quorumProposals.snapshotValues(),
+            members,
+            proposals,
+            values,
         };
     }
 
