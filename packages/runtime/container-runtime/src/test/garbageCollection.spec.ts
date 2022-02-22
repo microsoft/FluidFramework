@@ -54,7 +54,7 @@ describe("Garbage Collection Tests", () => {
         updateStateBeforeGC: async () => {},
         getGCData,
         updateUsedRoutes,
-        closeFn: () => {},
+        closeFn: () => { closeCalled = true; },
     };
 
     // The GC details in the summary blob of a node. This is used by the garbage collector to initialize GC state.
