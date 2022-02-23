@@ -137,7 +137,7 @@ export const isILoggingError: (x: any) => x is ILoggingError;
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType;
 
 // @public
-export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode">;
+export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode" | "errorInstanceId">;
 
 // @public (undocumented)
 export interface ITelemetryLoggerPropertyBag {
