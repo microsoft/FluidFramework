@@ -516,17 +516,18 @@ export class GarbageCollector implements IGarbageCollector {
         // used in the container.
         if (this.shouldRunGC) {
             this.initializeBaseStateP.catch((error) => {
-                throw new DataProcessingError(
-                    error?.message,
+                const dpe = DataProcessingError.wrapIfUnrecognized(
+                    error,
                     "FailedToInitializeGC",
-                    {
-                        gcEnabled: this.gcEnabled,
-                        runSweep: this.shouldRunSweep,
-                        writeAtRoot: this._writeDataAtRoot,
-                        testMode: this.testMode,
-                        sessionExpiry: this.sessionExpiryTimeoutMs,
-                    },
                 );
+                dpe.addTelemetryProperties({
+                    gcEnabled: this.gcEnabled,
+                    runSweep: this.shouldRunSweep,
+                    writeAtRoot: this._writeDataAtRoot,
+                    testMode: this.testMode,
+                    sessionExpiry: this.sessionExpiryTimeoutMs,
+                });
+                throw dpe;
             });
         }
     }

@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { CreateProcessingError, DataProcessingError, GenericError } from "../error";
+import { DataCorruptionError, DataProcessingError, GenericError } from "../error";
 
 // NOTE about this (temporary) alias:
 // CreateContainerError has been removed, with most call sites now using normalizeError.
@@ -96,21 +96,33 @@ describe("Errors", () => {
             assert.deepEqual(error2.message, err.message, "Message text should not be lost!!");
         });
     });
-    describe("DataProcessingError coercion via CreateProcessingError", () => {
+    describe("DataProcessingError.create", () => {
+        it("Should yield a DataProcessingError", () => {
+            const dpe = DataProcessingError.create("Some message", "someCodepath");
+            assert(dpe instanceof DataProcessingError);
+            assert(dpe.errorType === ContainerErrorType.dataProcessingError);
+            assert(dpe.fluidErrorCode === "");
+            assert(dpe.getTelemetryProperties().dataProcessingError === 1);
+            assert(dpe.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
+            assert(dpe.getTelemetryProperties().untrustedOrigin === 1);
+        });
+    });
+    describe("DataProcessingError coercion via DataProcessingError.wrapIfUnrecognized", () => {
         it("Should preserve the stack", () => {
             const originalError = new Error();
-            const testError = CreateProcessingError(originalError, "someCodepath", undefined);
+            const testError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
 
             assert((testError as any).stack === originalError.stack);
         });
         it("Should skip coercion for valid Fluid Error", () => {
-            const originalError = normalizeError("boo");
-            const coercedError = CreateProcessingError(originalError, "someCodepath", undefined);
+            const originalError = new DataCorruptionError("someErrorCode", {});
+            const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
 
             assert(coercedError as any === originalError);
-            assert(coercedError.errorType === "genericError");
-            assert(coercedError.fluidErrorCode === "");
+            assert(coercedError.errorType === ContainerErrorType.dataCorruptionError);
+            assert(coercedError.fluidErrorCode === "someErrorCode");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
+            assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
         });
         it("Should skip coercion for LoggingError with errorType", () => {
             const originalError = new LoggingError(
@@ -118,7 +130,7 @@ describe("Errors", () => {
                     errorType: "Some error type",
                     otherProperty: "Considered PII-free property",
                 });
-            const coercedError = CreateProcessingError(originalError, "someCodepath", undefined);
+            const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
 
             assert(coercedError as any === originalError);
             assert(coercedError.errorType === "Some error type");
@@ -126,11 +138,23 @@ describe("Errors", () => {
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
         });
+        it("Should coerce normalized external error", () => {
+            const originalError = normalizeError("boo");
+            const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
+
+            assert(coercedError as any !== originalError);
+            assert(coercedError instanceof DataProcessingError);
+            assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
+            assert(coercedError.fluidErrorCode === "");
+            assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
+            assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
+            assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
+        });
         it("Should coerce non-LoggingError object with errorType", () => {
             const originalError = {
                 errorType: "Some error type",
             };
-            const coercedError = CreateProcessingError(originalError, "someCodepath", undefined);
+            const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
 
             assert(coercedError as any !== originalError);
             assert(coercedError instanceof DataProcessingError);
@@ -146,7 +170,7 @@ describe("Errors", () => {
                 "Inherited error message", {
                     otherProperty: "Considered PII-free property",
                 });
-            const coercedError = CreateProcessingError(originalError, "someCodepath", undefined);
+            const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
 
             assert(coercedError as any !== originalError);
             assert(coercedError instanceof DataProcessingError);
@@ -172,7 +196,7 @@ describe("Errors", () => {
                 [1,2,3],
             ];
             const coercedErrors = originalMalformations.map((value) =>
-                CreateProcessingError(value, "someCodepath", undefined),
+                DataProcessingError.wrapIfUnrecognized(value, "someCodepath", undefined),
             );
 
             assert(
@@ -199,7 +223,7 @@ describe("Errors", () => {
 
         it("Should be coercible from a string message", () => {
             const originalMessage = "Example of some thrown string";
-            const coercedError = CreateProcessingError(originalMessage, "someCodepath", undefined);
+            const coercedError = DataProcessingError.wrapIfUnrecognized(originalMessage, "someCodepath", undefined);
 
             assert(coercedError.message === originalMessage);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
@@ -212,7 +236,7 @@ describe("Errors", () => {
             const originalError = {
                 message: "Inherited error message",
             };
-            const coercedError = CreateProcessingError(originalError, "someCodepath", undefined);
+            const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
 
             assert(coercedError.message === originalError.message);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
@@ -226,7 +250,7 @@ describe("Errors", () => {
                 message: "Inherited error message",
             };
             const op: ISequencedDocumentMessage = { sequenceNumber: 42 } as any;
-            const coercedError = CreateProcessingError(originalError, "someCodepath", op);
+            const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", op);
 
             assert(isILoggingError(coercedError));
             assert(coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber);
@@ -237,7 +261,7 @@ describe("Errors", () => {
                 errorType: "hello",
             };
             const op: ISequencedDocumentMessage = { sequenceNumber: 42 } as any;
-            const coercedError = CreateProcessingError(originalError, "someCodepath", op);
+            const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", op);
 
             assert(isILoggingError(coercedError));
             assert(coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber);

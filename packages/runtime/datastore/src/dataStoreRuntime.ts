@@ -17,7 +17,7 @@ import {
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { CreateProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import {
     assert,
     Deferred,
@@ -532,7 +532,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
             this.emit("op", message);
         } catch (error) {
-            throw CreateProcessingError(error, "fluidDataStoreRuntimeFailedToProcessMessage", message);
+            throw DataProcessingError.wrapIfUnrecognized(error, "fluidDataStoreRuntimeFailedToProcessMessage", message);
         }
     }
 
