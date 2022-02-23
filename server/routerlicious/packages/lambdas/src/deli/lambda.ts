@@ -163,7 +163,7 @@ export interface IDeliLambdaEvents extends IEvent {
 
 export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements IPartitionLambda {
     private sequenceNumber: number;
-    private signalSequenceNumber: number;
+    private signalClientConnectionNumber: number;
     private durableSequenceNumber: number;
 
     // 'epoch' and 'term' are readonly and should never change when lambda is running.
@@ -247,7 +247,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         // Initialize counting context
         this.sequenceNumber = lastCheckpoint.sequenceNumber;
-        this.signalSequenceNumber = lastCheckpoint.signalSequenceNumber ?? 0;
+        this.signalClientConnectionNumber = lastCheckpoint.signalClientConnectionNumber ?? 0;
         this.lastHash = lastCheckpoint.expHash1 ?? defaultHash;
         this.term = lastCheckpoint.term;
         this.epoch = lastCheckpoint.epoch;
@@ -1128,7 +1128,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         }
 
         (signalMessage as any).referenceSequenceNumber = sequenceNumber;
-        (signalMessage as any).signalSequenceNumber = ++this.signalSequenceNumber;
+        (signalMessage as any).clientConnectionNumber = ++this.signalClientConnectionNumber;
 
         return {
             ticketType: TicketType.Signal,
@@ -1222,7 +1222,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             expHash1: this.lastHash,
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
-            signalSequenceNumber: this.signalSequenceNumber,
+            signalClientConnectionNumber: this.signalClientConnectionNumber,
             term: this.term,
             lastSentMSN: this.lastSentMSN,
             nackMessages: this.nackMessages ? { ...this.nackMessages } : undefined,

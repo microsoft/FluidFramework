@@ -182,7 +182,7 @@ export interface ISignalMessage {
 
     content: any;
 
-    signalSequenceNumber?: number;
+    clientConnectionNumber?: number;
 
     referenceSequenceNumber?: number;
 }

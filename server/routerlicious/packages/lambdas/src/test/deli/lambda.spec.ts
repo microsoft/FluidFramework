@@ -234,7 +234,7 @@ describe("Routerlicious", () => {
                     assert.equal(joinSignal.operation.clientId, null);
                     assert.ok((joinSignal.operation.content as string).includes("join"));
                     assert.equal((joinSignal.operation as any).referenceSequenceNumber, 0);
-                    assert.equal((joinSignal.operation as any).signalSequenceNumber, 1);
+                    assert.equal((joinSignal.operation as any).clientConnectionNumber, 1);
 
                     // process a leave message and expect a leave op and leave signal
                     await lambdaWithSignals.handler(
@@ -251,7 +251,7 @@ describe("Routerlicious", () => {
                     assert.equal(leaveSignal.operation.clientId, null);
                     assert.ok((leaveSignal.operation.content as string).includes("leave"));
                     assert.equal((leaveSignal.operation as any).referenceSequenceNumber, leaveOp.operation.sequenceNumber - 1);
-                    assert.equal((leaveSignal.operation as any).signalSequenceNumber, 2);
+                    assert.equal((leaveSignal.operation as any).clientConnectionNumber, 2);
                 });
 
                 it("Calcuation of rolling hash should match when caculated externally", async () => {

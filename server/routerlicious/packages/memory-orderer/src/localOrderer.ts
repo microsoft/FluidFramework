@@ -63,7 +63,7 @@ const DefaultDeli: IDeliState = {
     expHash1: defaultHash,
     logOffset: -1,
     sequenceNumber: 0,
-    signalSequenceNumber: 0,
+    signalClientConnectionNumber: 0,
     term: 1,
     lastSentMSN: 0,
     nackMessages: undefined,
