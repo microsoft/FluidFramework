@@ -73,7 +73,7 @@ function createCompatDescribe(compatFilter?: CompatKind[]): DescribeCompat{
         (name, tests) => describe(name, createCompatSuite(tests, compatFilter));
     d.skip = (name, tests) => describe.skip(name, createCompatSuite(tests, compatFilter));
     d.only = (name, tests) => describe.only(name, createCompatSuite(tests, compatFilter));
-    d.noCompat = (name, tests) => describe.only(name, createCompatSuite(tests, [CompatKind.None]));
+    d.noCompat = (name, tests) => describe(name, createCompatSuite(tests, [CompatKind.None]));
     return d;
 }
 
