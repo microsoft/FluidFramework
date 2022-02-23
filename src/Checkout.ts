@@ -368,6 +368,12 @@ export abstract class Checkout<TChange, TChangeInternal, TFailure = unknown>
 	public abstract waitForPendingUpdates(): Promise<void>;
 
 	/**
+	 * @returns a Promise which completes after edits that were closed on this checkout (before calling this) have been
+	 * submitted to fluid. This does NOT wait for the fluid service to ack them
+	 */
+	public abstract waitForEditsToSubmit(): Promise<void>;
+
+	/**
 	 * release all unmanaged resources
 	 * e.g. unregister event listeners
 	 */

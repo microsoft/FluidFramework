@@ -373,6 +373,18 @@ export function checkoutTests<TChangeInternal>(
 			allowInvalid: true,
 		};
 
+		it('can wait on edits to be submitted', async () => {
+			const { checkout, testTree } = await setUpTestTreeCheckout();
+			let committedEditsCount = 0;
+			checkout.tree.on(SharedTreeEvent.EditCommitted, () => {
+				committedEditsCount += 1;
+			});
+			expect(committedEditsCount).equals(0);
+			checkout.tree.applyEdit(Delete.create(StableRange.only(testTree.left)));
+			await checkout.waitForEditsToSubmit();
+			expect(committedEditsCount).equals(1);
+		});
+
 		it('emits ViewChange events for remote edits', async () => {
 			const { containerRuntimeFactory, tree } = setUpTestSharedTree({ localMode: false });
 			const simpleTestTree = setUpTestTree(tree);

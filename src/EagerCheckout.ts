@@ -38,4 +38,8 @@ export class EagerCheckout<TChange, TChangeInternal, TFailure = unknown> extends
 	public async waitForPendingUpdates(): Promise<void> {
 		return Promise.resolve();
 	}
+
+	public async waitForEditsToSubmit(): Promise<void> {
+		return Promise.resolve();
+	}
 }
