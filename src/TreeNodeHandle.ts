@@ -4,9 +4,8 @@
  */
 
 import { Definition, NodeId } from './Identifiers';
-import { ChangeNode, Payload, TraitMap, TreeNode, TreeView, TreeViewNode } from './generic';
+import { Payload, TraitMap, TreeNode, TreeView, TreeViewNode } from './generic';
 import { fail, memoizeGetter } from './Common';
-import { getChangeNodeFromViewNode } from './SerializationUtilities';
 
 /**
  * A handle to a `TreeNode` that exists within a specific `TreeView`. This type provides a convenient
@@ -42,10 +41,10 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 		// Construct a new trait map that wraps each node in each trait in a handle
 		const traitMap: TraitMap<TreeNodeHandle> = {};
 		const { view } = this;
-		for (const [label, trait] of Object.entries(this.node.traits)) {
+		for (const [label, trait] of this.node.traits.entries()) {
 			Object.defineProperty(traitMap, label, {
 				get() {
-					const handleTrait = trait.map((node) => new TreeNodeHandle(view, node.identifier));
+					const handleTrait = trait.map((node) => new TreeNodeHandle(view, node));
 					return memoizeGetter(this as TraitMap<TreeNodeHandle>, label, handleTrait);
 				},
 				configurable: true,
@@ -57,21 +56,9 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
 	}
 
 	/**
-	 * Get a `ChangeNode` for the tree view node that this handle references
+	 * Get a `TreeViewNode` for the tree view node that this handle references
 	 */
-	public get node(): ChangeNode {
-		return memoizeGetter(this, 'node', getChangeNodeFromViewNode(this.view, this.viewNode.identifier, true));
-	}
-
-	/**
-	 * Generate a new `ChangeNode` for the tree view node that this handle references. The returned node will be fully
-	 * demanded, i.e. will contain no lazy/virtualized subtrees.
-	 */
-	public demandTree(): ChangeNode {
-		return getChangeNodeFromViewNode(this.view, this.viewNode.identifier, false);
-	}
-
-	public toString(): string {
-		return JSON.stringify(this.demandTree());
+	public get node(): TreeViewNode {
+		return memoizeGetter(this, 'node', this.viewNode);
 	}
 }

@@ -4,7 +4,8 @@
  */
 
 import { expect } from 'chai';
-import { compareForestNodes, Forest, ForestNode } from '../Forest';
+import { Forest, ForestNode } from '../Forest';
+import { compareForestNodes } from '../ForestUtilities';
 import { Payload } from '../generic';
 import { NodeId, TraitLabel } from '../Identifiers';
 import { makeEmptyNode } from './utilities/TestUtilities';

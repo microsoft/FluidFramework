@@ -50,14 +50,19 @@ export type DetachedSequenceId = number & { readonly DetachedSequenceId: 'f7d790
 export type CompressedId = FinalCompressedId | LocalCompressedId;
 
 /**
+ * A brand for identity types that are unique within a particular session (SharedTree instance).
+ */
+export interface SessionUnique {
+	readonly SessionUnique: 'cea55054-6b82-4cbf-ad19-1fa645ea3b3e';
+}
+
+/**
  * A compressed ID that has been normalized into "session space" (see `IdCompressor` for more).
  * Consumer-facing APIs and data structures should use session-space IDs as their lifetime and equality is stable and tied to the
  * compressor that produced them.
  * @internal
  */
-export type SessionSpaceCompressedId = CompressedId & {
-	readonly SessionNormalized: 'cea55054-6b82-4cbf-ad19-1fa645ea3b3e';
-};
+export type SessionSpaceCompressedId = CompressedId & SessionUnique;
 
 /**
  * A compressed ID that has been normalized into "op space" (see `IdCompressor` for more).
@@ -90,10 +95,7 @@ export type FinalCompressedId = number & {
  */
 export type LocalCompressedId = number & {
 	readonly LocalCompressedId: '6fccb42f-e2a4-4243-bd29-f13d12b9c6d1';
-
-	// Same brand as CompressedId, as local IDs are always locally normalized
-	readonly SessionNormalized: 'cea55054-6b82-4cbf-ad19-1fa645ea3b3e';
-};
+} & SessionUnique; // Same brand as CompressedId, as local IDs are always locally normalized
 
 /**
  * Node identifier.

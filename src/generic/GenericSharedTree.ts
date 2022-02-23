@@ -784,6 +784,13 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		// Do nothing
 	}
 
+	/**
+	 * Abstract helper that allows the concrete SharedTree type to perform pre-processing of an edit before it is added to the log.
+	 */
+	protected preprocessEdit(edit: Edit<TChangeInternal>, local: boolean): Edit<TChangeInternal> {
+		return edit;
+	}
+
 	private processSequencedEdit(edit: Edit<TChangeInternal>, message: ISequencedDocumentMessage): void {
 		const { id: editId } = edit;
 		const wasLocalEdit = this.editLog.isLocalEdit(editId);
@@ -908,14 +915,15 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		editInformation: { local: true; message?: never } | { local: false; message: ISequencedDocumentMessage }
 	): void {
 		const { local } = editInformation;
+		const processedEdit = this.preprocessEdit(edit, local);
 		if (local) {
-			this.editLog.addLocalEdit(edit);
+			this.editLog.addLocalEdit(processedEdit);
 		} else {
-			this.editLog.addSequencedEdit(edit, editInformation.message);
+			this.editLog.addSequencedEdit(processedEdit, editInformation.message);
 		}
 
 		const eventArguments: EditCommittedEventArguments<GenericSharedTree<TChange, TChangeInternal, TFailure>> = {
-			editId: edit.id,
+			editId: processedEdit.id,
 			local,
 			tree: this,
 		};

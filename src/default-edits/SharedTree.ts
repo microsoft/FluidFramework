@@ -9,6 +9,7 @@ import {
 	convertTreeNodes,
 	deepCloneStablePlace,
 	deepCloneStableRange,
+	Edit,
 	EditLogSummarizer,
 	GenericSharedTree,
 	RevisionView,
@@ -108,6 +109,15 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 			});
 			throw error;
 		}
+	}
+
+	/**
+	 * {@inheritDoc GenericSharedTree.preprocessEdit}
+	 * @internal
+	 */
+	protected preprocessEdit(edit: Edit<ChangeInternal>, _local: boolean): Edit<ChangeInternal> {
+		// TODO:#70358: Generate IDs for remote builds
+		return edit;
 	}
 
 	/**

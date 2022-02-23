@@ -1010,27 +1010,6 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				);
 				expect(leftHandle.traits.right).to.be.undefined;
 			});
-
-			it('can be fully demanded', () => {
-				const { sharedTree, testTree } = createSimpleTestTree();
-				const rootHandle = new TreeNodeHandle(sharedTree.currentView, testTree.identifier);
-				const rootNode = rootHandle.demandTree();
-				expect(areNodesEquivalent(testTree, rootNode)).to.be.true;
-				const printBeforeDemand = JSON.stringify(rootNode);
-				// Demand the tree by walking into its traits. If they were lazy, this would change the `rootNode` object.
-				expect(areNodesEquivalent(testTree.left, rootNode.traits.left[0])).to.be.true;
-				expect(areNodesEquivalent(testTree.right, rootNode.traits.right[0])).to.be.true;
-				// Ensure that they were _not_ lazy by comparing with the initial print of the tree
-				expect(JSON.stringify(rootNode)).equals(printBeforeDemand);
-			});
-
-			it('implement toString', () => {
-				const { sharedTree, testTree } = createSimpleTestTree();
-				const rootHandle = new TreeNodeHandle(sharedTree.currentView, testTree.identifier);
-				const print = `${rootHandle}`;
-				// Shouldn't print the default toString for objects
-				expect(print.startsWith('[object')).to.be.false;
-			});
 		});
 
 		describe('telemetry', () => {

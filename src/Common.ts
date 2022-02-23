@@ -501,3 +501,8 @@ export type With<T, K extends keyof never, V> = T & { [key in K]: V };
 export interface ClosedMap<K, V> extends Omit<Map<K, V>, 'delete' | 'clear'> {
 	get(key: K): V;
 }
+
+/**
+ * Change the given property Prop of type T to have a type of TPropNew
+ */
+export type ChangePropType<T, Prop extends keyof T, TPropNew> = Omit<T, Prop> & { [_ in Prop]: TPropNew };
