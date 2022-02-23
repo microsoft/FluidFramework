@@ -339,6 +339,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 
 // @public
 export interface IGarbageCollectionRuntime {
+    closeFn(error?: ICriticalContainerError): void;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     updateStateBeforeGC(): Promise<void>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
