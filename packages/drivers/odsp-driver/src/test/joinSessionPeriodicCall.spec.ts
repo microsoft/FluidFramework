@@ -24,7 +24,7 @@ describe("joinSessions Tests", () => {
     const resolver = new OdspDriverUrlResolver();
     const itemId = "itemId";
     let service: OdspDocumentService;
-    let client: IClient = {
+    const client: IClient = {
         mode: "read",
         details: {capabilities: {interactive: true}},
         permission: [],
@@ -65,7 +65,7 @@ describe("joinSessions Tests", () => {
 
     function addJoinSessionStub(time: number) {
         joinSessionResponse.refreshSessionDurationSeconds = time;
-        let joinSessionStub = stub(
+        const joinSessionStub = stub(
             joinSession, "fetchJoinSession").callsFake(
                 () => Promise.resolve(joinSessionResponse));
         return joinSessionStub;

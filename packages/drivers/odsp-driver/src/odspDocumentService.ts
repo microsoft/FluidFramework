@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { delay, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     loggerToMonitoringContext,
@@ -52,7 +52,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
  */
 export class OdspDocumentService implements IDocumentService {
     private _policies: IDocumentServicePolicies;
-    private isJoinSessionPeriodicallyRefreshing = false;
+    private joinSessionRefreshTimer: ReturnType<typeof setTimeout> | undefined;
     /**
      * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -237,7 +237,7 @@ export class OdspDocumentService implements IDocumentService {
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
 
-            const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options, false);
+            const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options, false, true);
 
             const [websocketEndpoint, websocketToken, io] =
                 await Promise.all([
@@ -247,10 +247,8 @@ export class OdspDocumentService implements IDocumentService {
                 ]);
 
             // Start refreshing join session periodically. 
-            if (!this.isJoinSessionPeriodicallyRefreshing) {
-                this.refreshSessionPeriodically(requestWebsocketTokenFromJoinSession, websocketEndpoint);
-                this.isJoinSessionPeriodicallyRefreshing = true;
-            }
+            this.refreshSessionPeriodically(requestWebsocketTokenFromJoinSession, websocketEndpoint)
+                .catch((error) => {});
 
             const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
             if (finalWebsocketToken === null) {
@@ -274,6 +272,8 @@ export class OdspDocumentService implements IDocumentService {
                 // On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
                 // get the auth error on reconnecting and face latency.
                 connection.on("disconnect", (error: any) => {
+                    // Clear the join session refresh timer so that it can be restarted on reconnection.
+                    this.clearJoinSessionTimer();
                     if (typeof error === "object" && error !== null
                         && error.errorType === DriverErrorType.authorizationError) {
                         this.cache.sessionJoinCache.remove(this.joinSessionKey);
@@ -291,6 +291,13 @@ export class OdspDocumentService implements IDocumentService {
         });
     }
 
+    private clearJoinSessionTimer() {
+        if (this.joinSessionRefreshTimer !== undefined) {
+            clearTimeout(this.joinSessionRefreshTimer);
+            this.joinSessionRefreshTimer = undefined;
+        }
+    }
+
     private async refreshSessionPeriodically(
         requestWebsocketTokenFromJoinSession: boolean,
         response: ISocketStorageDiscovery,
@@ -300,16 +307,17 @@ export class OdspDocumentService implements IDocumentService {
             if (refreshSessionDurationSeconds !== undefined) {
                 // 30 seconds is buffer time to refresh the session.
                 let retryAfter = (refreshSessionDurationSeconds * 1000) - 30000;
-                // If retryAfter is negative, try immediately.
+                // If retryAfter is negative, don't do anything and let the session disconnect.
                 if (retryAfter < 0) {
-                    retryAfter = 0;
+                    return;
                 }
-                await delay(retryAfter).then(async () => {
-                    await getWithRetryForTokenRefresh(async (options) => {
-                        response = await this.joinSession(requestWebsocketTokenFromJoinSession, options, true);
-                    }).catch((error) => {
-                        this.isJoinSessionPeriodicallyRefreshing = false;
-                    });
+                await new Promise<void>((resolve) => {
+                    this.joinSessionRefreshTimer = setTimeout(async () => {
+                        await getWithRetryForTokenRefresh(async (options) => {
+                            response = await this.joinSession(requestWebsocketTokenFromJoinSession, options, true, true);
+                            resolve();
+                        });
+                    }, retryAfter);
                 });
             } else {
                 break;
@@ -321,8 +329,9 @@ export class OdspDocumentService implements IDocumentService {
         requestSocketToken: boolean,
         options: TokenFetchOptionsEx,
         bypassCache: boolean,
+        supportJoinSessionRefresh: boolean,
     ) {
-        return this.joinSessionCore(requestSocketToken, options, bypassCache).catch((e) => {
+        return this.joinSessionCore(requestSocketToken, options, bypassCache, supportJoinSessionRefresh).catch((e) => {
             const likelyFacetCodes = e as IFacetCodes;
             if (Array.isArray(likelyFacetCodes.facetCodes)) {
                 for (const code of likelyFacetCodes.facetCodes) {
@@ -348,6 +357,7 @@ export class OdspDocumentService implements IDocumentService {
         requestSocketToken: boolean,
         options: TokenFetchOptionsEx,
         bypassCache: boolean,
+        supportJoinSessionRefresh,
     ): Promise<ISocketStorageDiscovery> {
         const executeFetch = async () =>
             fetchJoinSession(
@@ -360,6 +370,7 @@ export class OdspDocumentService implements IDocumentService {
                 requestSocketToken,
                 options,
                 this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
+                supportJoinSessionRefresh,
             );
 
         if (bypassCache) {

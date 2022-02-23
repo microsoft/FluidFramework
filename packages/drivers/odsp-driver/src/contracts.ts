@@ -36,7 +36,7 @@ export interface ISocketStorageDiscovery {
     socketToken?: string;
 
     /**
-     * This is the time within which client has to refresh the session on push.
+     * This is the time within which client has to refresh the session on (ODSP) relay service.
      */
     refreshSessionDurationSeconds?: number;
 }
