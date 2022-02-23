@@ -61,30 +61,30 @@ const maxSetTimeoutMs = 0x7FFFFFFF; // setTimeout limit is MAX_INT32=(2^31-1).
 
 /**
  * Sets timeouts like the setTimeout function allowing timeouts to exceed the setTimeout's max timeout limit.
- * The longer the timeout, the less accurate the timeout is exactly going to be
+ * Timeouts may not be exactly accurate due to browser implementations and the OS.
+ * https://stackoverflow.com/questions/21097421/what-is-the-reason-javascript-settimeout-is-so-inaccurate
  * @param timeoutFn - executed when the timeout expires
  * @param timeoutMs - duration of the timeout in milliseconds
- * @param setTimeoutFn - executed to update the timeout if multiple timeouts are required when timeoutMs > maxTimeout
+ * @param setTimeoutIdFn - executed to update the timeout if multiple timeouts are required when
+ *  timeoutMs greater than maxTimeout
  * @returns the initial timeout
  */
 export function setLongTimeout(
     timeoutFn: () => void,
     timeoutMs: number,
-    setTimeoutFn?: (timeout: ReturnType<typeof setTimeout>) => void,
+    setTimeoutIdFn?: (timeoutId: ReturnType<typeof setTimeout>) => void,
 ): ReturnType<typeof setTimeout> {
     // The setTimeout max is 24.8 days before looping occurs.
-    let timeout: ReturnType<typeof setTimeout>;
+    let timeoutId: ReturnType<typeof setTimeout>;
     if (timeoutMs > maxSetTimeoutMs) {
         const newTimeoutMs = timeoutMs - maxSetTimeoutMs;
-        timeout = setTimeout(() => setLongTimeout(timeoutFn, newTimeoutMs, setTimeoutFn), maxSetTimeoutMs);
+        timeoutId = setTimeout(() => setLongTimeout(timeoutFn, newTimeoutMs, setTimeoutIdFn), maxSetTimeoutMs);
     } else {
-        timeout = setTimeout(() => timeoutFn(), timeoutMs);
+        timeoutId = setTimeout(() => timeoutFn(), timeoutMs);
     }
 
-    if (setTimeoutFn !== undefined) {
-        setTimeoutFn(timeout);
-    }
-    return timeout;
+    setTimeoutIdFn?.(timeoutId);
+    return timeoutId;
 }
 
 /**
