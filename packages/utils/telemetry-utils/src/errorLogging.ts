@@ -89,6 +89,7 @@ function patchWithErrorCode(
 }
 
 // errorType "genericError" is used as a default value throughout the code.
+// Note that this matches ContainerErrorType/DriverErrorType's genericError
 const defaultErrorTypeForNormalize = "genericError";
 
 /**
@@ -242,7 +243,7 @@ function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
  * False for any error we created and raised within the FF codebase.
  */
 export function originatedAsExternalError(e: any): boolean {
-    return !isValidLegacyError(e) || (e?.getTelemetryProperties().untrustedOrigin === 1);
+    return !isValidLegacyError(e) || (e.getTelemetryProperties().untrustedOrigin === 1);
 }
 
 /**
@@ -250,8 +251,9 @@ export function originatedAsExternalError(e: any): boolean {
  * False for any error we created and raised within the FF codebase, or wrapped in a well-known error type
  */
 export function isExternalError(e: any): boolean {
-    const matchesNormalize = e?.errorType === defaultErrorTypeForNormalize;
-    return originatedAsExternalError(e) && matchesNormalize;
+    return !isValidLegacyError(e) ||
+        (e.getTelemetryProperties().untrustedOrigin === 1 &&
+         e.errorType === defaultErrorTypeForNormalize);
 }
 
 /**
