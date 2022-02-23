@@ -57,35 +57,41 @@ interface IRunningTimerState extends ITimeout {
     restart?: ITimeout;
 }
 
+const maxSetTimeoutMs = 0x7FFFFFFF; // setTimeout limit is MAX_INT32=(2^31-1).
+
 /**
+ * Sets timeouts like the setTimeout function allowing timeouts to exceed the setTimeout's max timeout limit.
  * The longer the timeout, the less accurate the timeout is exactly going to be
  * @param timeoutFn - executed when the timeout expires
  * @param timeoutMs - duration of the timeout in milliseconds
- * @param setTimerFn - executed to update the timeout if multiple timeouts are required when timeoutMs > maxTimeout
+ * @param setTimeoutFn - executed to update the timeout if multiple timeouts are required when timeoutMs > maxTimeout
  * @returns the initial timeout
  */
-function setLongTimeout(
+export function setLongTimeout(
     timeoutFn: () => void,
     timeoutMs: number,
-    setTimerFn: (timer: ReturnType<typeof setTimeout>) => void,
-): number {
+    setTimeoutFn?: (timeout: ReturnType<typeof setTimeout>) => void,
+): ReturnType<typeof setTimeout> {
     // The setTimeout max is 24.8 days before looping occurs.
-    const maxTimeout = 2147483647;
     let timeout: ReturnType<typeof setTimeout>;
-    if (timeoutMs > maxTimeout) {
-        const newTimeoutMs = timeoutMs - maxTimeout;
-        timeout = setTimeout(() => setLongTimeout(timeoutFn, newTimeoutMs, setTimerFn), maxTimeout);
+    if (timeoutMs > maxSetTimeoutMs) {
+        const newTimeoutMs = timeoutMs - maxSetTimeoutMs;
+        timeout = setTimeout(() => setLongTimeout(timeoutFn, newTimeoutMs, setTimeoutFn), maxSetTimeoutMs);
     } else {
         timeout = setTimeout(() => timeoutFn(), timeoutMs);
     }
-    setTimerFn(timeout);
+
+    if (setTimeoutFn !== undefined) {
+        setTimeoutFn(timeout);
+    }
     return timeout;
 }
 
 /**
  * This class is a thin wrapper over setTimeout and clearTimeout which
  * makes it simpler to keep track of recurring timeouts with the same
- * or similar handlers and timeouts.
+ * or similar handlers and timeouts. This class supports long timeouts
+ * or timeouts exceeding (2^31)-1 ms or approximately 24.8 days.
  */
 export class Timer implements ITimer {
     /**
