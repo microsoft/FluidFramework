@@ -34,10 +34,24 @@ class PendingProposal implements ISequencedProposal {
     }
 }
 
-export interface IQuorumSnapshot {
-    members: [string, ISequencedClient][];
+/**
+ * Snapshot format for a QuorumClients
+ */
+export type QuorumClientsSnapshot = [string, ISequencedClient][];
+/**
+ * Snapshot format for a QuorumProposals
+ */
+export type QuorumProposalsSnapshot = {
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];
+};
+/**
+ * Snapshot format for a Quorum
+ */
+export interface IQuorumSnapshot {
+    members: QuorumClientsSnapshot;
+    proposals: QuorumProposalsSnapshot["proposals"];
+    values: QuorumProposalsSnapshot["values"];
 }
 
 export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> implements IQuorumClients {
@@ -51,9 +65,9 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      * Depending on the op being processed, some or none of those properties may change.
      * Each property will be cached and the cache for each property will be cleared when an op causes a change.
      */
-    private snapshotCache: IQuorumSnapshot["members"] | undefined;
+    private snapshotCache: QuorumClientsSnapshot | undefined;
 
-    constructor(members: IQuorumSnapshot["members"]) {
+    constructor(members: QuorumClientsSnapshot) {
         super();
 
         this.members = new Map(members);
@@ -64,7 +78,7 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      * Snapshots the current state of the QuorumClients
      * @returns a snapshot of the clients in the quorum
      */
-    public snapshot(): IQuorumSnapshot["members"] {
+    public snapshot(): QuorumClientsSnapshot {
         this.snapshotCache ??= cloneDeep(Array.from(this.members));
 
         return this.snapshotCache;
@@ -128,12 +142,12 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
      * Depending on the op being processed, some or none of those properties may change.
      * Each property will be cached and the cache for each property will be cleared when an op causes a change.
      */
-    private proposalsSnapshotCache: IQuorumSnapshot["proposals"] | undefined;
-    private valuesSnapshotCache: IQuorumSnapshot["values"] | undefined;
+    private proposalsSnapshotCache: QuorumProposalsSnapshot["proposals"] | undefined;
+    private valuesSnapshotCache: QuorumProposalsSnapshot["values"] | undefined;
 
     constructor(
-        proposals: IQuorumSnapshot["proposals"],
-        values: IQuorumSnapshot["values"],
+        proposals: QuorumProposalsSnapshot["proposals"],
+        values: QuorumProposalsSnapshot["values"],
         private readonly sendProposal: (key: string, value: any) => number,
     ) {
         super();
@@ -158,7 +172,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
      * Snapshots the current state of the QuorumProposals
      * @returns deep cloned arrays of proposals and values
      */
-    public snapshot(): { proposals: IQuorumSnapshot["proposals"], values: IQuorumSnapshot["values"] } {
+    public snapshot(): QuorumProposalsSnapshot {
         this.proposalsSnapshotCache ??= Array.from(this.proposals).map(
             ([sequenceNumber, proposal]) => [
                 sequenceNumber,
@@ -210,7 +224,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
         const clientSequenceNumber = this.sendProposal(key, value);
         if (clientSequenceNumber < 0) {
             this.emit("error", { eventName: "ProposalInDisconnectedState", key });
-            throw new Error("Can't proposal in disconnected state");
+            throw new Error("Can't propose in disconnected state");
         }
 
         const deferred = new Deferred<void>();
@@ -345,9 +359,9 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     public get disposed() { return this.isDisposed; }
 
     constructor(
-        members: IQuorumSnapshot["members"],
-        proposals: [number, ISequencedProposal, string[]][],
-        values: [string, ICommittedProposal][],
+        members: QuorumClientsSnapshot,
+        proposals: QuorumProposalsSnapshot["proposals"],
+        values: QuorumProposalsSnapshot["values"],
         sendProposal: (key: string, value: any) => number,
     ) {
         super();
