@@ -79,12 +79,15 @@ export interface IFluidErrorAnnotations {
 }
 
 /** For backwards compatibility with pre-fluidErrorCode valid errors */
-function patchWithErrorCode(
-    legacyError: Omit<IFluidErrorBase, "fluidErrorCode">,
+function patchLegacyError(
+    legacyError: Omit<IFluidErrorBase, "fluidErrorCode" | "errorInstanceId">,
 ): asserts legacyError is IFluidErrorBase {
-    const patchMe: { -readonly [P in "fluidErrorCode"]?: IFluidErrorBase[P] } = legacyError as any;
+    const patchMe: { -readonly [P in "fluidErrorCode" | "errorInstanceId"]?: IFluidErrorBase[P] } = legacyError as any;
     if (patchMe.fluidErrorCode === undefined) {
         patchMe.fluidErrorCode = "<error predates fluidErrorCode>";
+    }
+    if (patchMe.errorInstanceId === undefined) {
+        patchMe.errorInstanceId = uuid();
     }
 }
 
@@ -104,7 +107,7 @@ export function normalizeError(
 ): IFluidErrorBase {
     // Back-compat, while IFluidErrorBase is rolled out
     if (isValidLegacyError(error)) {
-        patchWithErrorCode(error);
+        patchLegacyError(error);
     }
 
     if (isFluidError(error)) {
