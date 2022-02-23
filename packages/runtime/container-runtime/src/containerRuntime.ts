@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// See #9219
+/* eslint-disable max-lines */
 import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -337,6 +339,13 @@ interface OldContainerContextWithLogger extends IContainerContext {
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
+const disableChunkingKey = "Fluid.ContainerRuntime.DisableChunking";
+const maxOpSizeInBytesKey = "Fluid.ContainerRuntime.MaxOpSizeInBytes";
+
+// By default, we should reject any op larger than 768KB if chunking is disabled
+// in order to account for some extra overhead from serialization to not reach the
+// 1MB limits in socket.io and Kafka.
+const defaultMaxOpSizeInBytes = 768000;
 
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
@@ -892,6 +901,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
     private readonly _aliasingEnabled: boolean;
+    private readonly _chunkingDisabled: boolean;
+    private readonly _maxOpSizeInBytes: number;
 
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode;
@@ -1020,6 +1031,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._aliasingEnabled =
             (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
             (runtimeOptions.useDataStoreAliasing ?? false);
+
+        this._chunkingDisabled = (this.mc.config.getBoolean(disableChunkingKey) ?? false);
+        this._maxOpSizeInBytes = (this.mc.config.getNumber(maxOpSizeInBytesKey) ?? defaultMaxOpSizeInBytes);
 
         /**
          * Function that return the current server timestamp. This is used by the garbage collector to set the
@@ -2344,18 +2358,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
             }
 
-            // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
-            // there will be a lot of escape characters that can make it up to 2x bigger!
-            // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
-            if (!serializedContent || serializedContent.length <= maxOpSize) {
-                clientSequenceNumber = this.submitRuntimeMessage(
-                    type,
-                    content,
-                    /* batch: */ this._flushMode === FlushMode.TurnBased,
-                    opMetadataInternal);
-            } else {
-                clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
-            }
+            clientSequenceNumber = this.submitMaybeChunkedMessages(
+                type,
+                content,
+                serializedContent,
+                maxOpSize,
+                opMetadataInternal);
         }
 
         // Let the PendingStateManager know that a message was submitted.
@@ -2370,6 +2378,50 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
+    }
+
+    private submitMaybeChunkedMessages(
+        type: ContainerMessageType,
+        content: any,
+        serializedContent: string,
+        maxMessageSize: number,
+        opMetadataInternal: unknown = undefined,
+    ): number {
+        if (this._chunkingDisabled) {
+            if (!serializedContent || serializedContent.length <= this._maxOpSizeInBytes) {
+                return this.submitRuntimeMessage(
+                    type,
+                    content,
+                    /* batch: */ this._flushMode === FlushMode.TurnBased,
+                    opMetadataInternal);
+            }
+
+            this.closeFn(new GenericError(
+                "OpTooLarge",
+                /* error */ undefined,
+                {
+                    length: {
+                        value: serializedContent.length,
+                        tag: TelemetryDataTag.PackageData,
+                    },
+                    limit: {
+                        value: this._maxOpSizeInBytes,
+                        tag: TelemetryDataTag.PackageData,
+                    },
+                }));
+            return -1;
+        }
+
+        // Chunking enabled
+        if (!serializedContent || serializedContent.length <= maxMessageSize) {
+            return this.submitRuntimeMessage(
+                type,
+                content,
+                /* batch: */ this._flushMode === FlushMode.TurnBased,
+                opMetadataInternal);
+        }
+
+        return this.submitChunkedMessage(type, serializedContent, maxMessageSize);
     }
 
     private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {
