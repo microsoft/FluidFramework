@@ -58,17 +58,6 @@ export function isFluidError(e: any): e is IFluidErrorBase {
         hasTelemetryPropFunctions(e);
 }
 
-/**
- * True for any error object that is either external itself
- * or is a wrapped/normalized external error
- * False for any error we created and raised within the FF codebase.
- */
-export function originatedAsExternalError(e: any): boolean {
-    return !isFluidError(e) || (
-        (e?.errorType === "genericError" || e?.fluidErrorCode === "") &&
-        e?.getTelemetryProperties().untrustedOrigin === 1);
-}
-
 /** type guard for old standard of valid/known errors */
 export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode"> {
     return typeof e?.errorType === "string" &&

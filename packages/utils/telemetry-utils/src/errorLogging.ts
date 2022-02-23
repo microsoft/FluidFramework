@@ -14,7 +14,6 @@ import {
     hasErrorInstanceId,
     IFluidErrorBase,
     isFluidError,
-    originatedAsExternalError,
     isValidLegacyError,
 } from "./fluidErrorBase";
 
@@ -89,6 +88,9 @@ function patchWithErrorCode(
     }
 }
 
+// errorType "genericError" is used as a default value throughout the code.
+const defaultErrorTypeForNormalize = "genericError";
+
 /**
  * Normalize the given error yielding a valid Fluid Error
  * @returns A valid Fluid Error with any provided annotations applied
@@ -113,7 +115,7 @@ export function normalizeError(
     // We have to construct a new Fluid Error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
-        errorType: "genericError", // Match Container/Driver generic error type
+        errorType: defaultErrorTypeForNormalize,
         fluidErrorCode: "",
         message,
         stack,
@@ -178,14 +180,10 @@ export function wrapError<T extends LoggingError>(
 ): T {
     const {
         message,
-        errorType,
         stack,
     } = extractLogSafeErrorProperties(innerError, false /* sanitizeStack */);
 
-    const newMessage = errorType !== undefined
-        ? `[${errorType}] ${message}`
-        : message;
-    const newError = newErrorFn(newMessage);
+    const newError = newErrorFn(message);
 
     if (stack !== undefined) {
         overwriteStack(newError, stack);
@@ -237,6 +235,23 @@ function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
     } catch (errorSettingStack) {
         error.addTelemetryProperties({ stack2: stack });
     }
+}
+
+/**
+ * True for any error object that is either external itself or is a wrapped/normalized external error
+ * False for any error we created and raised within the FF codebase.
+ */
+export function originatedAsExternalError(e: any): boolean {
+    return !isValidLegacyError(e) || (e?.getTelemetryProperties().untrustedOrigin === 1);
+}
+
+/**
+ * True for any error object that is an (optionally normalized) external error
+ * False for any error we created and raised within the FF codebase, or wrapped in a well-known error type
+ */
+export function isExternalError(e: any): boolean {
+    const matchesNormalize = e?.errorType === defaultErrorTypeForNormalize;
+    return originatedAsExternalError(e) && matchesNormalize;
 }
 
 /**

@@ -14,7 +14,7 @@ import {
     isValidLegacyError,
     IFluidErrorBase,
     normalizeError,
-    originatedAsExternalError,
+    isExternalError,
     wrapError,
     wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
@@ -131,7 +131,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
      * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
      */
     static wrapIfUnrecognized(
-        originalError: any,
+        originalError: unknown,
         dataProcessingCodepath: string,
         message?: ISequencedDocumentMessage,
     ): IFluidErrorBase {

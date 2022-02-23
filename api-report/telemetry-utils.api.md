@@ -125,6 +125,9 @@ export interface IPerformanceEventMarkers {
 }
 
 // @public
+export function isExternalError(e: any): boolean;
+
+// @public
 export function isFluidError(e: any): e is IFluidErrorBase;
 
 // @public
@@ -203,7 +206,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 // @public
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
 
-// @public (undocumented)
+// @public
 export function originatedAsExternalError(e: any): boolean;
 
 // @public
