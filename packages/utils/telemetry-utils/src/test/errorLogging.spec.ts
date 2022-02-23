@@ -419,9 +419,7 @@ class TestFluidError implements IFluidErrorBase {
     }
 
     withoutProperty(propName: keyof IFluidErrorBase) {
-        const objectWithoutProp = {};
-        objectWithoutProp[propName] = undefined;
-        Object.assign(this, objectWithoutProp);
+        delete this[propName];
         return this;
     }
 
@@ -444,7 +442,9 @@ describe("normalizeError", () => {
                 // Arrange
                 const errorProps =
                     {errorType: "et1", message: "m1", fluidErrorCode: "toBeRemoved" };
-                const legacyError = new TestFluidError(errorProps).withoutProperty("fluidErrorCode");
+                const legacyError = new TestFluidError(errorProps)
+                    .withoutProperty("fluidErrorCode")
+                    .withoutProperty("errorInstanceId");
 
                 // Act
                 const normalizedError = normalizeError(legacyError, annotations);
@@ -454,6 +454,7 @@ describe("normalizeError", () => {
                 assert.equal(normalizedError.errorType, "et1", "errorType should be unchanged");
                 assert.equal(normalizedError.fluidErrorCode, "<error predates fluidErrorCode>", "errorCode should be patched properly");
                 assert.equal(normalizedError.message, "m1", "message should be unchanged");
+                assert.equal(normalizedError.errorInstanceId.length, 36, "should be guid-length");
                 if (annotations.props !== undefined) {
                     assert(legacyError.atpStub.calledWith(annotations.props), "addTelemetryProperties should have been called");
                 }
@@ -495,7 +496,7 @@ describe("normalizeError", () => {
             Object.freeze(legacyError);
 
             // Act/Assert
-            assert.throws(() => normalizeError(legacyError, {}), /Cannot assign to read only property/);
+            assert.throws(() => normalizeError(legacyError, {}), /Cannot add property fluidErrorCode, object is not extensible/);
         });
     });
     describe("Errors Needing Normalization", () => {
