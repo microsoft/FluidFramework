@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventAndErrorTrackingLogger, ITestObjectProvider, TestObjectProvider } from "@fluidframework/test-utils";
+import { getUnexpectedLogErrorException, ITestObjectProvider, TestObjectProvider } from "@fluidframework/test-utils";
 import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
@@ -19,7 +19,6 @@ import {
 } from "./compatOptions";
 import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import { Context } from "mocha";
-import { strict as assert } from "assert";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -173,23 +172,12 @@ if (compatKind !== undefined) {
     configList = configList.filter((value) => compatKind!.includes(value.kind));
 }
 
-function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger){
-    const results = logger.reportAndClearTrackedEvents();
-    if(results.unexpectedErrors.length > 0){
-        return new Error(
-            `Unexpected Errors in Logs. Use itExpects to specify expected errors:\n` +
-            `${ JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
-    }
-    if(results.expectedNotFound.length > 0){
-        return new Error(
-            `Expected Events not found:\n${ JSON.stringify(results.expectedNotFound, undefined, 2)}`);
-    }
-}
-
 function createExpectsTest(orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
     return async function (this:Context){
         const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
-        assert(provider !== undefined, "Expected __fluidTestProvider on this");
+        if(provider === undefined){
+            throw new Error("Expected __fluidTestProvider on this");
+        }
         try{
             provider.logger.registerExpectedEvent(... orderedExpectedEvents);
             await test.bind(this)();
@@ -271,7 +259,7 @@ function describeCompat(
                     return provider;
                 });
                 afterEach(function (done:Mocha.Done) {
-                    done(getUnexpectedLogErrorException(provider.logger));
+                    done(getUnexpectedLogErrorException(provider.logger, "Use itExpects to specify expected errors. "));
                     if (resetAfterEach) {
                         provider.reset();
                     }
