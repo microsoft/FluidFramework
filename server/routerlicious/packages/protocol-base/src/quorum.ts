@@ -67,11 +67,11 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
      */
     private snapshotCache: QuorumClientsSnapshot | undefined;
 
-    constructor(members: QuorumClientsSnapshot) {
+    constructor(snapshot: QuorumClientsSnapshot) {
         super();
 
-        this.members = new Map(members);
-        this.snapshotCache = members;
+        this.members = new Map(snapshot);
+        this.snapshotCache = snapshot;
     }
 
     /**
@@ -146,14 +146,13 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     private valuesSnapshotCache: QuorumProposalsSnapshot["values"] | undefined;
 
     constructor(
-        proposals: QuorumProposalsSnapshot["proposals"],
-        values: QuorumProposalsSnapshot["values"],
+        snapshot: QuorumProposalsSnapshot,
         private readonly sendProposal: (key: string, value: any) => number,
     ) {
         super();
 
         this.proposals = new Map(
-            proposals.map(([, proposal]) => {
+            snapshot.proposals.map(([, proposal]) => {
                 return [
                     proposal.sequenceNumber,
                     new PendingProposal(
@@ -163,9 +162,9 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
                     ),
                 ] as [number, PendingProposal];
             }));
-        this.values = new Map(values);
-        this.proposalsSnapshotCache = proposals;
-        this.valuesSnapshotCache = values;
+        this.values = new Map(snapshot.values);
+        this.proposalsSnapshotCache = snapshot.proposals;
+        this.valuesSnapshotCache = snapshot.values;
     }
 
     /**
@@ -374,7 +373,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
             this.emit("removeMember", clientId);
         });
 
-        this.quorumProposals = new QuorumProposals(proposals, values, sendProposal);
+        this.quorumProposals = new QuorumProposals({ proposals, values }, sendProposal);
         this.quorumProposals.on("addProposal", (proposal: IPendingProposal) => {
             this.emit("addProposal", proposal);
         });

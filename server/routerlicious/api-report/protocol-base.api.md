@@ -149,7 +149,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
 
 // @public (undocumented)
 export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> implements IQuorumClients {
-    constructor(members: QuorumClientsSnapshot);
+    constructor(snapshot: QuorumClientsSnapshot);
     addMember(clientId: string, details: ISequencedClient): void;
     // (undocumented)
     dispose(): void;
@@ -166,7 +166,7 @@ export type QuorumClientsSnapshot = [string, ISequencedClient][];
 
 // @public (undocumented)
 export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> implements IQuorumProposals {
-    constructor(proposals: QuorumProposalsSnapshot["proposals"], values: QuorumProposalsSnapshot["values"], sendProposal: (key: string, value: any) => number);
+    constructor(snapshot: QuorumProposalsSnapshot, sendProposal: (key: string, value: any) => number);
     addProposal(key: string, value: any, sequenceNumber: number, local: boolean, clientSequenceNumber: number): void;
     // (undocumented)
     dispose(): void;
