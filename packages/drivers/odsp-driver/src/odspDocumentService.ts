@@ -377,8 +377,7 @@ export class OdspDocumentService implements IDocumentService {
             // Remove the cached response and store the fresh one so as to extend the validity on spo.
             this.cache.sessionJoinCache.remove(this.joinSessionKey);
         }
-        // Note: The sessionCache is configured with a sliding expiry of 1 hour,
-        // so if we've fetched the join session within the last hour we won't run executeFetch again now.
+        // so if we've fetched the join session, we won't run executeFetch again now.
         return this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
     }
 

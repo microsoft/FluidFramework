@@ -113,9 +113,8 @@ export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string
 export interface INonPersistentCache {
     /**
      * Cache of joined/joining session info
-     * This cache will use a one hour sliding expiration window.
      */
-    readonly sessionJoinCache: PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>;
+    readonly sessionJoinCache: PromiseCache<string, ISocketStorageDiscovery>;
 
     /**
      * Cache of resolved/resolving file URLs
@@ -134,7 +133,7 @@ export interface IOdspCache extends INonPersistentCache {
 }
 
 export class NonPersistentCache implements INonPersistentCache {
-    public readonly sessionJoinCache = new PromiseCacheWithOneHourSlidingExpiry<ISocketStorageDiscovery>();
+    public readonly sessionJoinCache = new PromiseCache<string, ISocketStorageDiscovery>();
 
     public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 }
