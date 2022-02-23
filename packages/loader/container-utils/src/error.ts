@@ -130,7 +130,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
      * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
      */
     static wrapIfUnrecognized(
-        originalError: unknown,
+        originalError: any,
         dataProcessingCodepath: string,
         message?: ISequencedDocumentMessage,
     ): IFluidErrorBase {
