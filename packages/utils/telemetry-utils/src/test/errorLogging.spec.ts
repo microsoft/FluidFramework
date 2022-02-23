@@ -670,14 +670,33 @@ describe("wrapError", () => {
     it("Copy message and stack", () => {
         const innerError = new LoggingError("hello");
         innerError.stack = "extra special stack";
-        const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", errorType: "genericError" });
+        const newError = wrapError(innerError, (message) => new LoggingError(message));
         assert.equal(newError.message, innerError.message, "messages should match");
         assert.equal(newError.stack, innerError.stack, "stacks should match");
     });
-    it("Include innerErrorInstanceId in telemetry props", () => {
+    it("Include matching errorInstanceId and innerErrorInstanceId in telemetry props", () => {
         const innerError = new LoggingError("hello");
-        const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", errorType: "genericError" });
+        const newError = wrapError(innerError, (message) => new LoggingError(message));
+        assert(newError.errorInstanceId === innerError.errorInstanceId);
         assert(newError.getTelemetryProperties().innerErrorInstanceId === innerError.errorInstanceId);
+    });
+    it("Properly set untrustedOrigin", () => {
+        const untrustedError = new LoggingError("untrusted");
+
+        const singleWrapped = wrapError(untrustedError, (message) => new LoggingError(message));
+        assert(singleWrapped.getTelemetryProperties().untrustedOrigin === 1);
+
+        const doubleWrapped = wrapError(singleWrapped, (message) => new LoggingError(message));
+        assert(doubleWrapped.getTelemetryProperties().untrustedOrigin === 1);
+
+        const normalizedError = normalizeError(untrustedError);
+        const wrappedNormalized = wrapError(normalizedError, (message) => new LoggingError(message));
+        assert(wrappedNormalized.getTelemetryProperties().untrustedOrigin === 1);
+
+        const trustedError = new LoggingError("trusted");
+        Object.assign(trustedError, { untrustedOrigin: undefined, errorType: "someErrorType" });
+        const wrappedTrusted = wrapError(trustedError, (message) => new LoggingError(message));
+        assert(wrappedTrusted.getTelemetryProperties().untrustedOrigin === undefined);
     });
 });
 describe("wrapErrorAndLog", () => {
