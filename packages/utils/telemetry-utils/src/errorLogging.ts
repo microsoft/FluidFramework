@@ -342,8 +342,9 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     ) {
         super(message);
 
-        // Don't log this list itself either
+        // Don't log this list itself, or the private _errorInstanceId
         omitPropsFromLogging.add("omitPropsFromLogging");
+        omitPropsFromLogging.add("_errorInstanceId");
 
         if (props) {
             this.addTelemetryProperties(props);
@@ -362,11 +363,12 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
      */
     public getTelemetryProperties(): ITelemetryProperties {
         const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
-        // Include non-enumerable props inherited from Error that are not returned by getValidTelemetryProps
+        // Include non-enumerable props that are not returned by getValidTelemetryProps
         return {
             ...taggableProps,
             stack: this.stack,
             message: this.message,
+            errorInstanceId: this._errorInstanceId,
         };
     }
 }
