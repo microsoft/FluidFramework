@@ -953,8 +953,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * and is the single source of truth for this container.
      */
     public readonly disableIsolatedChannels: boolean;
-    /** The message in the metadata of the base summary this container is loaded from. */
-    private readonly baseSummaryMessage: ISummaryMetadataMessage | undefined;
+    /** The last message processed at the time of the last summary. */
+    private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
     private get summarizer(): Summarizer {
         assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
@@ -985,7 +985,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private _storage?: IDocumentStorageService,
     ) {
         super();
-        this.baseSummaryMessage = metadata?.message;
+
+        this.messageAtLastSummary = metadata?.message;
 
         // If this is an existing container, we get values from metadata.
         // otherwise, we initialize them.
@@ -1021,25 +1022,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
             (runtimeOptions.useDataStoreAliasing ?? false);
 
-        /**
-         * Function that return the current server timestamp. This is used by the garbage collector to set the
-         * time when a node becomes unreferenced.
-         * We use the timestamp of the last op for current timestamp. However, there can be cases where
-         * we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
-         * of this client's connection.
-         */
-         const getCurrentTimestamp = () => {
-            const client = this.clientId !== undefined ? this.getAudience().getMember(this.clientId) : undefined;
-            const timestamp = client?.timestamp;
-            return this.deltaManager.lastMessage?.timestamp ?? timestamp ?? Date.now();
-        };
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
             (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
             (nodePath: string) => this.dataStores.getNodePackagePath(nodePath),
-            getCurrentTimestamp,
-            this.closeFn,
+            /**
+             * Returns the timestamp of the last message seen by this client. This is used by garbage collector as
+             * the current reference timestamp for tracking unreferenced objects.
+             */
+            () => this.deltaManager.lastMessage?.timestamp ?? this.messageAtLastSummary?.timestamp,
+            () => this.messageAtLastSummary?.timestamp,
             context.baseSnapshot,
             async <T>(id: string) => readAndParse<T>(this.storage, id),
             this.mc.logger,
@@ -1091,8 +1084,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
-            (dataStorePath: string, packagePath?: readonly string[]) =>
-                this.garbageCollector.nodeUpdated(dataStorePath, "Changed", packagePath),
+            (path: string, timestampMs: number, packagePath?: readonly string[]) => this.garbageCollector.nodeUpdated(
+                path,
+                "Changed",
+                timestampMs,
+                packagePath,
+            ),
             new Map<string, string>(dataStoreAliasMap),
             this.garbageCollector.writeDataAtRoot,
         );
@@ -1395,9 +1392,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const dataStoreChannel = await dataStoreContext.realize();
-        // Let the garbage collector know that a data store was requested / loaded. Realize the data store first so
-        // that the package path is available.
-        this.garbageCollector.nodeUpdated(`/${id}`, "Loaded", dataStoreContext.packagePath, request?.headers);
+        this.garbageCollector.nodeUpdated(
+            `/${id}`,
+            "Loaded",
+            undefined /* timestampMs */,
+            dataStoreContext.packagePath,
+            request?.headers,
+        );
         return dataStoreChannel;
     }
 
@@ -1408,9 +1409,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             gcFeature: this.garbageCollector.gcSummaryFeatureVersion,
-            // The last message processed at the time of summary. If there are no messages, nothing has changed from
-            // the base summary we loaded from. So, use the message from its metadata blob.
-            message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
+            // The last message processed at the time of summary. If there are no new messages, use the message from the
+            // last summary.
+            message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.messageAtLastSummary,
             sessionExpiryTimeoutMs: this.garbageCollector.sessionExpiryTimeoutMs,
         };
     }
@@ -2137,6 +2138,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
             }
             const { summary: summaryTree, stats: partialStats } = summarizeResult;
+
+            // Now that we have generated the summary, update the message at last summary to the last message processed.
+            this.messageAtLastSummary = this.deltaManager.lastMessage;
 
             // Counting dataStores and handles
             // Because handles are unchanged dataStores in the current logic,

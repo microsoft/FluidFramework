@@ -54,6 +54,7 @@ describe("Garbage Collection Tests", () => {
         updateStateBeforeGC: async () => {},
         getGCData,
         updateUsedRoutes,
+        closeFn: () => { closeCalled = true; },
     };
 
     // The GC details in the summary blob of a node. This is used by the garbage collector to initialize GC state.
@@ -72,7 +73,7 @@ describe("Garbage Collection Tests", () => {
             (unusedRoutes: string[]) => {},
             (nodeId: string) => testPkgPath,
             () => Date.now(),
-            () => { closeCalled = true; },
+            () => Date.now(),
             baseSnapshot,
             async <T>(id: string) => getNodeGCDetails(id) as T,
             mockLogger,
@@ -139,8 +140,8 @@ describe("Garbage Collection Tests", () => {
         // Simulates node loaded and changed activity for all the nodes in the graph.
         function updateAllNodes(garbageCollector: IGarbageCollector) {
             nodes.forEach((nodeId) => {
-                garbageCollector.nodeUpdated(nodeId, "Changed", testPkgPath);
-                garbageCollector.nodeUpdated(nodeId, "Loaded", testPkgPath);
+                garbageCollector.nodeUpdated(nodeId, "Changed", Date.now(), testPkgPath);
+                garbageCollector.nodeUpdated(nodeId, "Loaded", Date.now(), testPkgPath);
             });
         }
 
@@ -293,8 +294,8 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({ runGC: true });
 
             // Update node 3. This should result in an inactiveObjectChanged/Loaded event since it should be inactive.
-            garbageCollector.nodeUpdated(nodes[3], "Changed", testPkgPath);
-            garbageCollector.nodeUpdated(nodes[3], "Loaded", testPkgPath);
+            garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
+            garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
             assert(
                 mockLogger.matchEvents([
                     { eventName: changedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
@@ -346,8 +347,8 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({ runGC: true });
 
             // Change node 3. This should result in an inactiveObjectChanged/Loaded event since it should be inactive.
-            garbageCollector.nodeUpdated(nodes[3], "Changed", testPkgPath);
-            garbageCollector.nodeUpdated(nodes[3], "Loaded", testPkgPath);
+            garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
+            garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
             assert(
                 mockLogger.matchEvents([
                     { eventName: changedEvent, timeout: deleteTimeoutMs, id: nodes[3], pkg: eventPkg },
@@ -414,9 +415,9 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({ runGC: true });
 
             // Update the nodes and validate that inactive events is correctly generated for each.
-            garbageCollector.nodeUpdated(nodes[1], "Changed", testPkgPath);
-            garbageCollector.nodeUpdated(nodes[2], "Changed", testPkgPath);
-            garbageCollector.nodeUpdated(nodes[3], "Loaded", testPkgPath);
+            garbageCollector.nodeUpdated(nodes[1], "Changed", Date.now(), testPkgPath);
+            garbageCollector.nodeUpdated(nodes[2], "Changed", Date.now(), testPkgPath);
+            garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
             assert(
                 mockLogger.matchEvents([
                     { eventName: changedEvent, timeout: deleteTimeoutMs, id: nodes[1], pkg: eventPkg },
