@@ -268,11 +268,8 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     /**
      * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal then it
      * becomes an approved value.
-     * Returns true if immediate no-op is required.
      */
-    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean {
-        let immediateNoOp = false;
-
+    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void {
         const msn = message.minimumSequenceNumber;
 
         // Accept proposals and reject proposals whose sequenceNumber is <= the minimumSequenceNumber
@@ -306,11 +303,6 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
             // clear the values cache
             this.valuesSnapshotCache = undefined;
 
-            // Send no-op on approval to expedite commit
-            // accept means that all clients have seen the proposal and nobody has rejected it
-            // commit means that all clients have seen that the proposal was accepted by everyone
-            immediateNoOp = true;
-
             this.emit(
                 "approveProposal",
                 committedProposal.sequenceNumber,
@@ -323,8 +315,6 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
             // clear the proposals cache
             this.proposalsSnapshotCache = undefined;
         }
-
-        return immediateNoOp;
     }
 
     public setConnectionState(connected: boolean) {
@@ -474,10 +464,9 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     /**
      * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal then it
      * becomes an approved value.
-     * Returns true if immediate no-op is required.
      */
-    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean {
-        return this.quorumProposals.updateMinimumSequenceNumber(message);
+    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void {
+        this.quorumProposals.updateMinimumSequenceNumber(message);
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {

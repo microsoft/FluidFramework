@@ -145,7 +145,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     snapshot(): IQuorumSnapshot;
-    updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean;
+    updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void;
 }
 
 // @public
@@ -181,7 +181,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     // (undocumented)
     setConnectionState(connected: boolean): void;
     snapshot(): QuorumProposalsSnapshot;
-    updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean;
+    updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void;
 }
 
 // @public
