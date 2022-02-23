@@ -123,8 +123,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         await setupContainers(testContainerConfig, {
             "Fluid.ContainerRuntime.MaxOpSizeInBytes": maxMessageSizeInBytes,
         });
+        // Server max op size should be at around 16000, therefore the runtime will chunk all ops.
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
-        const messageCount = 1;
+        const messageCount = 5;
         setMapKeys(dataObject1map1, messageCount, largeString);
         await provider.ensureSynchronized();
 

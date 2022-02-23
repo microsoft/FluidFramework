@@ -2384,7 +2384,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         content: any,
         serializedContent: string,
-        maxMessageSize: number,
+        serverMaxOpSize: number,
         opMetadataInternal: unknown = undefined,
     ): number {
         if (this._chunkingDisabled) {
@@ -2396,6 +2396,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     opMetadataInternal);
             }
 
+            // When chunking is disabled, we ignore the server max message size
+            // and if the content length is larger than the client configured message size
+            // instead of splitting the content, we will fail by explicitly close the container
             this.closeFn(new GenericError(
                 "OpTooLarge",
                 /* error */ undefined,
@@ -2412,8 +2415,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return -1;
         }
 
-        // Chunking enabled
-        if (!serializedContent || serializedContent.length <= maxMessageSize) {
+        // Chunking enabled, fallback on the server's max message size
+        // and split the content accordingly
+        if (!serializedContent || serializedContent.length <= serverMaxOpSize) {
             return this.submitRuntimeMessage(
                 type,
                 content,
@@ -2421,7 +2425,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 opMetadataInternal);
         }
 
-        return this.submitChunkedMessage(type, serializedContent, maxMessageSize);
+        return this.submitChunkedMessage(type, serializedContent, serverMaxOpSize);
     }
 
     private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {
