@@ -41,7 +41,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     Run the following command to install the libraries.
 
     ```dotnetcli
-    npm install @fluidframework/tinylicious-client fluid-framework readline-async
+    npm install @fluidframework/tinylicious-client fluid-framework readline-sync
     ```
 
 ## Code the project
@@ -51,7 +51,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
    ```js
    import { TinyliciousClient } from "@fluidframework/tinylicious-client";
    import { SharedMap } from "fluid-framework";
-   import readlineAsync from "readline-async";
+   import readlineSync from "readline-sync";
    ```
 
 ### Move Fluid data to the terminal
@@ -62,26 +62,22 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     // TODO 1: Configure the container
 
-    async function readInput() {
-      // TODO 2: Read the input container id
-    }
-
     function loadCli(map) {
-       // TODO 3: Set the value that will appear on the terminal
+       // TODO 2: Set the value that will appear on the terminal
 
-       // TODO 4: Register handlers
+       // TODO 3: Register handlers
    }
 
     async function createContainer() {
-      // TODO 5: Create the container
+      // TODO 4: Create the container
     }
 
     async function loadContainer(id) {
-      // TODO 6: Get the container from the Fluid service
+      // TODO 5: Get the container from the Fluid service
     }
 
     async function start() {
-        // TODO 7: Read container id from terminal and create/load container
+        // TODO 6: Read container id from terminal and create/load container
     }
 
    start().catch(console.error());
@@ -96,21 +92,9 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
       };
     ```
 
-1. Replace `TODO 2` with the following code. Note that `containerId` is taken as an input, and if there is no `containerId` we create a new container instead.
-
-    ```js
-    let containerId = "";
-    console.log("Type a Container ID or press Enter to continue: ");
-    await readlineAsync().then( line => {
-        console.log("You entered: " + line);
-        containerId = line;
-    });
-    return containerId;
-    ```
-
 1. To ensure that both local and remote changes to the random number are reflected in the terminal, we will use the `newRandomNumber()` function to store the local value and `updateConsole()` function to ensure that the console is updated whenever any client changes the value. This helps in keeping the client terminals synchronized with the Fluid data.
 
-   Replace `TODO 3` with the following code. It will set a timer to update the random number every one second.
+   Replace `TODO 2` with the following code. It will set a timer to update the random number every one second.
 
    ```js
    const newRandomNumber = () => {
@@ -119,7 +103,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
    setInterval(newRandomNumber, 1000);
    ```
 
-  Replace `TODO 4` with the following code. It will listen for updates and print changes to the random number.
+  Replace `TODO 3` with the following code. It will listen for updates and print changes to the random number.
 
    ```js
    const updateConsole = () => {
@@ -129,7 +113,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
    map.on("valueChanged", updateConsole);
    ```
 
-1. Replace `TODO 5` with the following code.
+1. Replace `TODO 4` with the following code.
 
     ```js
     const { container } = await client.createContainer(containerSchema);
@@ -140,7 +124,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     return id;
     ```
 
-1. Replace `TODO 6` with the following code.
+1. Replace `TODO 5` with the following code.
 
    ```js
    const { container } = await client.getContainer(id, containerSchema);
@@ -148,10 +132,10 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
    loadCli(container.initialObjects.map);
    ```
 
-2. Replace `TODO 7` with the following code. Note that, this code will first take the container id as the input. To create a new Fluid container, press Enter or type `undefined`. A new container will be initialized and the container id will be printed in the terminal. You can copy the container id, launch a new terminal window, and type/paste the initial container id to have multiple collaborative NodeJS clients.
+2. Replace `TODO 6` with the following code. Note that, this code will first take the container id as the input. To create a new Fluid container, press Enter or type `undefined`. A new container will be initialized and the container id will be printed in the terminal. You can copy the container id, launch a new terminal window, and type/paste the initial container id to have multiple collaborative NodeJS clients.
 
    ```js
-   const containerId = await readInput();
+   const containerId = readlineSync.question("Type a Container ID or press Enter to continue: ");
 
    if(containerId.length === 0 || containerId === 'undefined' || containerId === 'null') {
      await createContainer();
