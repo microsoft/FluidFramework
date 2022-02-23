@@ -10,8 +10,18 @@ import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations, wrapError, wrapErrorAndLog, extractLogSafeErrorProperties } from "../errorLogging";
-import { IFluidErrorBase } from "../fluidErrorBase";
+import {
+    LoggingError,
+    isTaggedTelemetryPropertyValue,
+    normalizeError,
+    IFluidErrorAnnotations,
+    wrapError,
+    wrapErrorAndLog,
+    extractLogSafeErrorProperties,
+    isExternalError,
+    originatedAsExternalError,
+} from "../errorLogging";
+import { IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase";
 import { MockLogger } from "../mockLogger";
 
 describe("Error Logging", () => {
@@ -708,4 +718,53 @@ describe("wrapErrorAndLog", () => {
         wrappedByErrorInstanceId: newError.errorInstanceId,
         error: "hello",
      }]), "Expected the 'WrapError' event to be logged");
+});
+
+describe.only("Error Discovery", () => {
+    const createTestError = (m) =>
+    Object.assign(new LoggingError(m), {
+        errorType: "someErrorType",
+        fluidErrorCode: "someErrorCode",
+    });
+    it("isExternalError", () => {
+        assert(isExternalError("some string"));
+        assert(isExternalError(new LoggingError("error message")));
+        assert(isExternalError(normalizeError("normalize me but I'm still external")));
+
+        assert(!isExternalError(createTestError("hello")));
+
+        const wrappedError = wrapError("wrap me", createTestError);
+        assert(!isExternalError(wrappedError));
+        assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
+    });
+    it("originatedAsExternalError", () => {
+        assert(originatedAsExternalError("some string"));
+        assert(originatedAsExternalError(new LoggingError("error message")));
+        assert(originatedAsExternalError(normalizeError("normalize me but I'm still external")));
+
+        assert(!originatedAsExternalError(createTestError("hello")));
+
+        const wrappedError = wrapError("wrap me", createTestError);
+        assert(originatedAsExternalError(wrappedError));
+    });
+    it("isValidLegacyError", () => {
+        assert(!isValidLegacyError(new LoggingError("hello")));
+        assert(isValidLegacyError(Object.assign(new LoggingError("hello"), { errorType: "someErrorType" })));
+    });
+    it("isFluidError", () => {
+        assert(!isFluidError(new Error("hello")));
+        assert(!isFluidError(new LoggingError("hello")));
+
+        const errorType = "someErrorType";
+        const fluidErrorCode = "someErrorCode";
+        assert(!isFluidError(Object.assign(new LoggingError("hello"),
+            { errorType })
+        ));
+        assert(!isFluidError(Object.assign(new LoggingError("hello"),
+            { errorType, fluidErrorCode, _errorInstanceId: undefined })
+        ));
+        assert(isFluidError(Object.assign(new LoggingError("hello"),
+            { errorType, fluidErrorCode })
+        ));
+    });
 });
