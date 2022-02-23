@@ -14,6 +14,7 @@ import {
     hasErrorInstanceId,
     IFluidErrorBase,
     isFluidError,
+    originatedAsExternalError,
     isValidLegacyError,
 } from "./fluidErrorBase";
 
@@ -171,22 +172,35 @@ export function generateStack(): string | undefined {
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
- export function wrapError<T extends IFluidErrorBase>(
+export function wrapError<T extends LoggingError>(
     innerError: unknown,
     newErrorFn: (message: string) => T,
 ): T {
     const {
         message,
+        errorType,
         stack,
     } = extractLogSafeErrorProperties(innerError, false /* sanitizeStack */);
 
-    const newError = newErrorFn(message);
+    const newMessage = errorType !== undefined
+        ? `[${errorType}] ${message}`
+        : message;
+    const newError = newErrorFn(newMessage);
 
     if (stack !== undefined) {
         overwriteStack(newError, stack);
     }
 
+    // Mark external errors with untrustedOrigin flag
+    if (originatedAsExternalError(innerError)) {
+        newError.addTelemetryProperties({ untrustedOrigin: 1 });
+    }
+
+    // Reuse errorInstanceId
     if (hasErrorInstanceId(innerError)) {
+        newError.overwriteErrorInstanceId(innerError.errorInstanceId);
+
+        // For "back-compat" in the logs
         newError.addTelemetryProperties({ innerErrorInstanceId: innerError.errorInstanceId });
     }
 
@@ -194,25 +208,29 @@ export function generateStack(): string | undefined {
 }
 
 /** The same as wrapError, but also logs the innerError, including the wrapping error's instance id */
-export function wrapErrorAndLog<T extends IFluidErrorBase>(
+export function wrapErrorAndLog<T extends LoggingError>(
     innerError: unknown,
     newErrorFn: (message: string) => T,
     logger: ITelemetryLogger,
 ) {
     const newError = wrapError(innerError, newErrorFn);
-    const wrappedByErrorInstanceId = hasErrorInstanceId(newError)
-        ? newError.errorInstanceId
-        : undefined;
+
+    // This will match innerError.errorInstanceId if present (see wrapError)
+    const errorInstanceId = newError.errorInstanceId;
+
+    // For "back-compat" in the logs
+    const wrappedByErrorInstanceId = errorInstanceId;
 
     logger.sendTelemetryEvent({
         eventName: "WrapError",
+        errorInstanceId,
         wrappedByErrorInstanceId,
     }, innerError);
 
     return newError;
 }
 
-function overwriteStack(error: IFluidErrorBase, stack: string) {
+function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
     // supposedly setting stack on an Error can throw.
     try {
         Object.assign(error, { stack });
@@ -287,7 +305,9 @@ export const getCircularReplacer = () => {
  * PLEASE take care to avoid setting sensitive data on this object without proper tagging!
  */
 export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
-    readonly errorInstanceId = uuid();
+    private _errorInstanceId = uuid();
+    get errorInstanceId() { return this._errorInstanceId; }
+    overwriteErrorInstanceId(id: string) { this._errorInstanceId = id; }
 
     /**
      * Create a new LoggingError

@@ -14,6 +14,7 @@ import {
     isValidLegacyError,
     IFluidErrorBase,
     normalizeError,
+    originatedAsExternalError,
     wrapError,
     wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";

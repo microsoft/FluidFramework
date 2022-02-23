@@ -158,9 +158,11 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
     addTelemetryProperties(props: ITelemetryProperties): void;
     // (undocumented)
-    readonly errorInstanceId: string;
+    get errorInstanceId(): string;
     getTelemetryProperties(): ITelemetryProperties;
-    }
+    // (undocumented)
+    overwriteErrorInstanceId(id: string): void;
+}
 
 // @public
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
@@ -200,6 +202,9 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 // @public
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
+
+// @public (undocumented)
+export function originatedAsExternalError(e: any): boolean;
 
 // @public
 export class PerformanceEvent {
@@ -300,10 +305,10 @@ export class ThresholdCounter {
     }
 
 // @public
-export function wrapError<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T): T;
+export function wrapError<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;
 
 // @public
-export function wrapErrorAndLog<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
+export function wrapErrorAndLog<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
 
 
 // (No @packageDocumentation comment for this package)
