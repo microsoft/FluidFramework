@@ -367,13 +367,13 @@ export interface ISignalClient {
 // @public (undocumented)
 export interface ISignalMessage {
     // (undocumented)
+    clientConnectionNumber?: number;
+    // (undocumented)
     clientId: string | null;
     // (undocumented)
     content: any;
     // (undocumented)
     referenceSequenceNumber?: number;
-    // (undocumented)
-    signalSequenceNumber?: number;
 }
 
 // @public (undocumented)
