@@ -116,6 +116,7 @@ export {
 	getUploadedEditChunkContents,
 	saveUploadedEditChunkContents,
 	PlaceholderTree,
+	NodeIdContext,
 	NodeIdGenerator,
 	NodeIdConverter,
 	NodeInTrait,
@@ -127,4 +128,5 @@ export {
 	TraitNodeIndex,
 	TreeViewPlace,
 	TreeViewRange,
+	TransactionFactory,
 } from './generic';

@@ -28,7 +28,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { assert } from '@fluidframework/common-utils';
 import type { IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails } from '@fluidframework/core-interfaces';
-import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
+import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
 import { assertNotUndefined, compareArrays, fail } from '../../Common';
 import { initialTree } from '../../InitialTree';
 import { SharedTree, Change, setTrait, SharedTreeFactory, StablePlace, ChangeInternal } from '../../default-edits';
@@ -40,7 +40,7 @@ import {
 	getUploadedEditChunkContents,
 	newEdit,
 	NodeData,
-	NodeIdGenerator,
+	NodeIdContext,
 	SharedTreeDiagnosticEvent,
 	SharedTreeSummaryWriteFormat,
 	StableTraitLocation,
@@ -818,11 +818,15 @@ export function refreshTestTree(
 	}, fn);
 }
 
-function makeTestNodeContext(idCompressor?: IdCompressor): NodeIdGenerator {
+function makeTestNodeContext(_idCompressor?: IdCompressor): NodeIdContext {
 	// TODO:#70358: Use IdCompressor
 	// const compressor = idCompressor ?? new IdCompressor(createSessionId(), reservedIdCount);
 	return {
-		generateNodeId: (override?: string) => v4() as NodeId,
+		generateNodeId: (_override?: string) => v4() as NodeId,
+		convertToNodeId: (id: StableNodeId) => id,
+		tryConvertToNodeId: (id: StableNodeId) => id,
+		convertToStableNodeId: (id: NodeId) => id,
+		tryConvertToStableNodeId: (id: NodeId) => id,
 	};
 }
 

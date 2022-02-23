@@ -5,8 +5,8 @@
 
 import { memoizeGetter, fail, setPropertyIfDefined } from '../../Common';
 import { BuildTreeNode } from '../../default-edits';
-import { NodeIdGenerator, TraitLocation, TraitMap, TreeNode, Payload, ChangeNode } from '../../generic';
-import { Definition, NodeId, TraitLabel } from '../../Identifiers';
+import { TraitLocation, TraitMap, TreeNode, Payload, ChangeNode, NodeIdContext } from '../../generic';
+import { Definition, NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
 import { initialTree } from '../../InitialTree';
 import { RevisionView } from '../../generic/TreeView';
 
@@ -30,7 +30,7 @@ export interface TestNode extends TreeNode<TestNode> {
 /**
  * A small tree of `TestNode`s consisting of a root/parent node, a "left" child and a "right" child.
  */
-export interface TestTree extends TestNode, NodeIdGenerator {
+export interface TestTree extends TestNode, NodeIdContext {
 	/** The left child node */
 	left: TestNode;
 	/** The right child node */
@@ -41,6 +41,12 @@ export interface TestTree extends TestNode, NodeIdGenerator {
 	buildLeaf(id: NodeId, payload?: Payload): LeafNode<ChangeNode>;
 	/** Create an arbitrary unparented node with a new unique ID and the given payload, if specified */
 	buildLeafWithId(payload?: Payload): LeafNode<ChangeNode>;
+	/**
+	 * Generates a leaf {@link ChangeNode}.
+	 * If no `id` is explicitly provided, one will be generated.
+	 * @param id - Explicit ID to use as the new node's identifier. If not provided, one will be generated.
+	 */
+	buildStableLeaf(id?: NodeId, payload?: Payload): LeafNode<ChangeNode>;
 }
 
 const testTraitLabel = 'e276f382-fa99-49a1-ae81-42001791c733' as TraitLabel;
@@ -60,7 +66,7 @@ export class SimpleTestTree implements TestTree {
 	public readonly right: TestNode;
 	public readonly expensiveValidation;
 
-	public constructor(private readonly nodeIdContext: NodeIdGenerator, expensiveValidation = true) {
+	public constructor(private readonly nodeIdContext: NodeIdContext, expensiveValidation = true) {
 		const leftIdentifier = nodeIdContext.generateNodeId();
 		const rightIdentifier = nodeIdContext.generateNodeId();
 		const rootIdentifier = nodeIdContext.generateNodeId();
@@ -150,8 +156,28 @@ export class SimpleTestTree implements TestTree {
 		return this.buildLeaf(this.generateNodeId(), payload);
 	}
 
+	public buildStableLeaf(id?: NodeId, payload?: Payload): LeafNode<ChangeNode> {
+		return buildStableLeaf(this, id, payload);
+	}
+
 	public generateNodeId(override?: string): NodeId {
 		return this.nodeIdContext.generateNodeId(override);
+	}
+
+	public convertToStableNodeId(id: NodeId): StableNodeId {
+		return this.nodeIdContext.convertToStableNodeId(id);
+	}
+
+	public tryConvertToStableNodeId(id: NodeId): StableNodeId | undefined {
+		return this.nodeIdContext.tryConvertToStableNodeId(id);
+	}
+
+	public convertToNodeId(id: StableNodeId): NodeId {
+		return this.nodeIdContext.convertToNodeId(id);
+	}
+
+	public tryConvertToNodeId(id: StableNodeId): NodeId | undefined {
+		return this.nodeIdContext.tryConvertToNodeId(id);
 	}
 }
 
@@ -222,9 +248,28 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 	public buildLeafWithId(payload?: Payload): LeafNode<ChangeNode> {
 		return this.testTree.buildLeafWithId(payload);
 	}
+	public buildStableLeaf(id?: NodeId, payload?: Payload): LeafNode<ChangeNode> {
+		return this.testTree.buildStableLeaf(id, payload);
+	}
 
 	public generateNodeId(override?: string): NodeId {
 		return this.testTree.generateNodeId(override);
+	}
+
+	convertToStableNodeId(id: NodeId): StableNodeId {
+		return this.testTree.convertToStableNodeId(id);
+	}
+
+	tryConvertToStableNodeId(id: NodeId): StableNodeId | undefined {
+		return this.testTree.convertToStableNodeId(id);
+	}
+
+	convertToNodeId(id: StableNodeId): NodeId {
+		return this.testTree.convertToNodeId(id);
+	}
+
+	tryConvertToNodeId(id: StableNodeId): NodeId | undefined {
+		return this.testTree.tryConvertToNodeId(id);
 	}
 }
 
@@ -241,4 +286,16 @@ export function buildLeaf(id?: NodeId, payload?: Payload): LeafNode<BuildTreeNod
 	setPropertyIfDefined(id, node, 'identifier');
 	setPropertyIfDefined(payload, node, 'payload');
 	return node;
+}
+
+/**
+ * Generates a leaf {@link ChangeNode}.
+ * If no `id` is explicitly provided, one will be generated.
+ * @param id - Explicit ID to use as the new node's identifier. If not provided, one will be generated.
+ */
+export function buildStableLeaf(nodeIdContext: NodeIdContext, id?: NodeId, payload?: Payload): LeafNode<ChangeNode> {
+	return {
+		...buildLeaf(undefined, payload),
+		identifier: nodeIdContext.convertToStableNodeId(id ?? nodeIdContext.generateNodeId()),
+	};
 }

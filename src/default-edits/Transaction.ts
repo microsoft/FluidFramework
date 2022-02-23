@@ -13,6 +13,7 @@ import {
 	SucceedingTransactionState,
 	RevisionView,
 	TreeViewNode,
+	NodeIdContext,
 } from '../generic';
 import { rangeFromStableRange } from '../TreeViewUtilities';
 import {
@@ -57,8 +58,11 @@ export namespace Transaction {
 	/**
 	 * Makes a new {@link GenericTransaction} that follows the {@link Transaction.Policy} policy.
 	 */
-	export function factory(view: RevisionView): GenericTransaction<ChangeInternal, Failure> {
-		return new GenericTransaction(view, new Policy());
+	export function factory(
+		view: RevisionView,
+		nodeIdContext: NodeIdContext
+	): GenericTransaction<ChangeInternal, Failure> {
+		return new GenericTransaction(view, new Policy(nodeIdContext));
 	}
 
 	type ValidState = SucceedingTransactionState<ChangeInternal>;
@@ -71,6 +75,11 @@ export namespace Transaction {
 		 * Maps detached sequences of nodes to their NodeIds
 		 */
 		protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]> = new Map();
+
+		/**
+		 * @param nodeIdManager - Used for node creation and identifier conversion
+		 */
+		public constructor(protected readonly nodeIdContext: NodeIdContext) {}
 
 		/**
 		 * Resolves change with Result.Ok

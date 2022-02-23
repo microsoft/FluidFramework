@@ -6,6 +6,12 @@
 import { NodeId, StableNodeId } from '../Identifiers';
 
 /**
+ * An object which can generate node IDs and convert node IDs between compressed and stable variants
+ * @public
+ */
+export interface NodeIdContext extends NodeIdGenerator, NodeIdConverter {}
+
+/**
  * An object which can generate node IDs
  * @public
  */

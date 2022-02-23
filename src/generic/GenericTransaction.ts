@@ -7,6 +7,16 @@ import { assert, fail, Result } from '../Common';
 import { ReconciliationChange, ReconciliationPath } from '../ReconciliationPath';
 import { RevisionView, TransactionView } from './TreeView';
 import { EditStatus } from './PersistedTypes';
+import { NodeIdContext } from './NodeIdUtilities';
+
+/**
+ * A function which can produce a Transaction from a RevisionView
+ * @public
+ */
+export type TransactionFactory<TChangeInternal, TFailure> = (
+	view: RevisionView,
+	nodeIdContext: NodeIdContext
+) => GenericTransaction<TChangeInternal, TFailure>;
 
 /**
  * Result of applying a transaction.

@@ -6,10 +6,9 @@
 import Denque from 'denque';
 import { assert, fail, noop } from './Common';
 import { EditLog, SequencedOrderedEditId } from './EditLog';
-import { Edit, EditStatus, EditingResult, GenericTransaction, RevisionView } from './generic';
+import { Edit, EditStatus, EditingResult, RevisionView, TransactionFactory, NodeIdContext } from './generic';
 import { EditId } from './Identifiers';
 import { RevisionValueCache } from './RevisionValueCache';
-import { initialTree } from './InitialTree';
 import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath';
 
 /**
@@ -241,8 +240,6 @@ export class CachingLogViewer<TChange, TFailure = unknown> implements LogViewer 
 	 */
 	private cachedEditResult?: { editId: EditId; result: EditingResult<TChange, TFailure> };
 
-	private readonly transactionFactory: (revisionView: RevisionView) => GenericTransaction<TChange, TFailure>;
-
 	/**
 	 * Cache entry for the highest revision.
 	 * `undefined` when not cached.
@@ -274,12 +271,13 @@ export class CachingLogViewer<TChange, TFailure = unknown> implements LogViewer 
 	 */
 	public constructor(
 		log: EditLog<TChange>,
-		baseView = RevisionView.fromTree(initialTree),
+		baseView: RevisionView,
+		private readonly nodeIdContext: NodeIdContext,
 		knownRevisions: [Revision, EditCacheEntry<TChange, TFailure>][] = [],
 		expensiveValidation = false,
 		processEditStatus: EditStatusCallback = noop,
 		processSequencedEditResult: SequencedEditResultCallback<TChange, TFailure> = noop,
-		transactionFactory: (view: RevisionView) => GenericTransaction<TChange, TFailure>,
+		private readonly transactionFactory: TransactionFactory<TChange, TFailure>,
 		minimumSequenceNumber = 0
 	) {
 		this.log = log;
@@ -464,7 +462,9 @@ export class CachingLogViewer<TChange, TFailure = unknown> implements LogViewer 
 			cached = true;
 		} else {
 			reconciliationPath = this.reconciliationPathFromEdit(edit.id);
-			editingResult = this.transactionFactory(prevView).applyChanges(edit.changes, reconciliationPath).close();
+			editingResult = this.transactionFactory(prevView, this.nodeIdContext)
+				.applyChanges(edit.changes, reconciliationPath)
+				.close();
 			cached = false;
 		}
 

@@ -167,7 +167,7 @@ export abstract class Checkout<TChange, TChangeInternal, TFailure = unknown>
 	 */
 	public openEdit(): void {
 		assert(this.currentEdit === undefined, 'An edit is already open.');
-		this.currentEdit = this.tree.transactionFactory(this.latestCommittedView);
+		this.currentEdit = this.tree.transactionFactory(this.latestCommittedView, this.tree);
 	}
 
 	/**
@@ -289,7 +289,9 @@ export abstract class Checkout<TChange, TChangeInternal, TFailure = unknown>
 		// When closed, the result might indicate Malformed due to unused detached entities.
 		// This is not an error, as the edit was still open and can still use those entities.
 		const priorResults = this.currentEdit.close();
-		const rebasedEdit = this.tree.transactionFactory(this.latestCommittedView).applyChanges(priorResults.changes);
+		const rebasedEdit = this.tree
+			.transactionFactory(this.latestCommittedView, this.tree)
+			.applyChanges(priorResults.changes);
 		assert(
 			rebasedEdit.status !== EditStatus.Malformed,
 			'Malformed changes should have been caught on original application.'

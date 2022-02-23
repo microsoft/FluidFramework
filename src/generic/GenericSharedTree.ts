@@ -46,10 +46,10 @@ import {
 	EditStatus,
 } from './PersistedTypes';
 import { serialize, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
-import { GenericTransaction } from './GenericTransaction';
 import { newEditId } from './GenericEditUtilities';
 import { NodeIdConverter, NodeIdGenerator } from './NodeIdUtilities';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
+import { TransactionFactory } from './GenericTransaction';
 
 /**
  * Filename where the snapshot is stored.
@@ -246,8 +246,6 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	protected readonly logger: ITelemetryLogger;
 	protected readonly sequencedEditAppliedLogger: ITelemetryLogger;
 
-	public readonly transactionFactory: (view: RevisionView) => GenericTransaction<TChangeInternal, TFailure>;
-
 	/** Indicates if the client is the oldest member of the quorum. */
 	private currentIsOldest: boolean;
 
@@ -287,7 +285,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
-		transactionFactory: (view: RevisionView) => GenericTransaction<TChangeInternal, TFailure>,
+		public readonly transactionFactory: TransactionFactory<TChangeInternal, TFailure>,
 		attributes: IChannelAttributes,
 		private readonly expensiveValidation = false,
 		protected readonly summarizeHistory = true,
@@ -296,7 +294,6 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	) {
 		super(id, runtime, attributes);
 		this.expensiveValidation = expensiveValidation;
-		this.transactionFactory = transactionFactory;
 
 		// This code is somewhat duplicated from OldestClientObserver because it currently depends on the container runtime
 		// which SharedTree does not have access to.
@@ -657,6 +654,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		const logViewer = new CachingLogViewer(
 			editLog,
 			RevisionView.fromTree(initialTree),
+			this,
 			knownRevisions,
 			this.expensiveValidation,
 			editStatusCallback,

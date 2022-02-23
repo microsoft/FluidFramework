@@ -4,8 +4,14 @@
  */
 
 import { Result } from '../../Common';
-import { ChangeResult, EditStatus, GenericTransaction, GenericTransactionPolicy } from '../../generic';
-import { RevisionView } from '../../generic/TreeView';
+import {
+	ChangeResult,
+	EditStatus,
+	GenericTransaction,
+	GenericTransactionPolicy,
+	NodeIdContext,
+	RevisionView,
+} from '../../generic';
 
 /**
  * @internal
@@ -26,6 +32,7 @@ export namespace MockTransaction {
 	 */
 	export function factory<TChange>(
 		view: RevisionView,
+		_nodeIdContext: NodeIdContext,
 		options: Options = defaultOptions
 	): GenericTransaction<TChange> {
 		return new GenericTransaction(view, new Policy<TChange>(options));
@@ -42,7 +49,7 @@ export namespace MockTransaction {
 			this.options = options;
 		}
 
-		public tryResolveChange(state, change: TChange): Result.Ok<TChange> {
+		public tryResolveChange(_state, change: TChange): Result.Ok<TChange> {
 			return Result.ok(change);
 		}
 

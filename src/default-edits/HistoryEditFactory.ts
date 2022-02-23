@@ -5,7 +5,7 @@
 
 import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
-import { RevisionView, Side, TreeNode, TreeView } from '../generic';
+import { NodeIdContext, RevisionView, Side, TreeNode, TreeView } from '../generic';
 import { getChangeNodeFromViewNode } from '../SerializationUtilities';
 import { rangeFromStableRange } from '../TreeViewUtilities';
 import { ChangeInternal, ChangeTypeInternal, DetachInternal, SetValueInternal, InsertInternal } from './PersistedTypes';
@@ -25,14 +25,18 @@ import { BuildNode, StablePlace, StableRange } from './ChangeTypes';
  * TODO:#68574: Pass a view that corresponds to the appropriate fluid reference sequence number rather than the view just before
  * @internal
  */
-export function revert(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined {
+export function revert(
+	changes: readonly ChangeInternal[],
+	before: RevisionView,
+	nodeIdContext: NodeIdContext
+): ChangeInternal[] | undefined {
 	const result: ChangeInternal[] = [];
 
 	const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
 	const detachedNodes = new Map<DetachedSequenceId, NodeId[]>();
 
 	// Open edit on revision to update it as changes are walked through
-	const editor = Transaction.factory(before);
+	const editor = Transaction.factory(before, nodeIdContext);
 	// Apply `edit`, generating an inverse as we go.
 	for (const change of changes) {
 		// Generate an inverse of each change

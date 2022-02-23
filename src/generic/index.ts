@@ -48,6 +48,7 @@ export {
 	NoTraits,
 } from './GenericEditUtilities';
 export {
+	TransactionFactory,
 	GenericTransaction,
 	GenericTransactionPolicy,
 	EditingResult,
@@ -81,7 +82,7 @@ export {
 	TreeViewPlace,
 	TreeViewRange,
 } from './TreeView';
-export { NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
+export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package
