@@ -2083,8 +2083,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (summaryRefSeqNum !== this.deltaManager.lastMessage?.sequenceNumber) {
                 summaryLogger.sendErrorEvent({
                     eventName: "LastSequenceMismatch",
-                    lastSequenceNumber: summaryRefSeqNum,
-                    lastMsgSequenceNumber: this.deltaManager.lastMessage?.sequenceNumber,
+                    message,
                 });
             }
 
@@ -2498,7 +2497,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             async () => this.fetchSnapshotFromStorage(ackHandle, summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",
                 ackHandle,
-                referenceSequenceNumber: summaryRefSeq,
+                summaryRefSeq,
                 fetchLatest: false,
             }),
             readAndParseBlob,

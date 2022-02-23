@@ -762,6 +762,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
+        this.lastProcessedMessage = message;
 
         // All non-system messages are coming from some client, and should have clientId
         // System messages may have no clientId (but some do, like propose, noop, summarize)
@@ -806,7 +807,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 clientId: this.connectionManager.clientId,
             });
         }
-        this.lastProcessedMessage = message;
         this.lastProcessedSequenceNumber = message.sequenceNumber;
 
         // a bunch of code assumes that this is true
