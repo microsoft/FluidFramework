@@ -73,7 +73,7 @@
     "eslint-plugin-unicorn": "~40.0.0",
     "lorem-ipsum": "^1.0.6",
     "mocha": "^8.4.0",
-    "moniker": "^0.1.2",
+    "sillyname": "^0.1.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.3",
     "supertest": "^3.4.2",

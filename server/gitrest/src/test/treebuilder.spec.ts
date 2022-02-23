@@ -4,7 +4,7 @@
  */
 
 import * as async from "async";
-import * as moniker from "moniker";
+import sillyname from "sillyname";
 import git from "nodegit";
 import * as testUtils from "./utils";
 
@@ -15,7 +15,7 @@ async function mockTree(repository: git.Repository, entries: number) {
     for (let i = 0; i < entries; i++) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         builder.insert(
-            moniker.choose(),
+            (sillyname() as string).toLowerCase().split(" ").join("-"),
             oid,
             parseInt("100644", 8));
     }

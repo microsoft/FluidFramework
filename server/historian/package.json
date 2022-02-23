@@ -70,7 +70,6 @@
     "eslint-plugin-unicorn": "~40.0.0",
     "lerna": "^4.0.0",
     "mocha": "^8.4.0",
-    "moniker": "^0.1.2",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.5",
