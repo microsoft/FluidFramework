@@ -15,6 +15,7 @@ import {
 	ZookeeperClientConstructor,
 } from "@fluidframework/server-services-core";
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	consumeTimeout: number;
@@ -367,6 +368,9 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	 */
 	private processMessage(message: kafkaTypes.Message) {
 		const partition = message.partition;
+        Lumberjack.info(
+            `Consumer processing message from kafka with size= ${message.size}`,
+        );
 
 		if (this.isRebalancing && this.assignedPartitions.has(partition)) {
 			/*

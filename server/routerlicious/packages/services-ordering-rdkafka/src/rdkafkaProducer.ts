@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/server-services-core";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	enableIdempotence: boolean;
@@ -270,6 +271,9 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 								this.handleError(err);
 							} else {
 								boxcar.deferred.resolve();
+                                Lumberjack.info(
+                                    `Producer sending msg to kafka with size= ${message.length}`,
+                                );
 								this.emit("produced", boxcarMessage, offset, message.length);
 							}
 						},
