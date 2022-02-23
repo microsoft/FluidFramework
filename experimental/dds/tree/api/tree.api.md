@@ -269,6 +269,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
     protected processCore(message: ISequencedDocumentMessage, local: boolean): void;
     // @internal
     processLocalEdit(edit: Edit<TChange>): void;
+    // (undocumented)
+    protected registerCore(): void;
     // @internal
     saveSerializedSummary(options?: {
         serializer?: IFluidSerializer;
@@ -277,7 +279,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
     // @internal
     saveSummary(): SharedTreeSummaryBase;
     // (undocumented)
-    summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats;
     // (undocumented)
     protected readonly summarizeHistory: boolean;
     // (undocumented)
