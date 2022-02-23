@@ -10,6 +10,16 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.58 Breaking changes
+- [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from merge-tree-to-sequence-package)
+
+### Move IntervalType from merge-tree to sequence package
+Move the type from the merge-tree package where it isn't used to the sequence package where it is used
+``` diff
+- import { IntervalType } from "@fluidframework/merge-tree";
++ import { IntervalType } from "@fluidframework/sequence";
+```
+
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
 - [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
@@ -109,6 +119,7 @@ When creating root datastores using `ContainerRuntime.createRootDataStore` or `C
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
 - [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
 - [Removed SharedObject.is](#Removed-SharedObject.is)
+- [Removed IContainerContext.id](#Removed-IContainerContext.id-and-ContainerContext.id)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -172,6 +183,10 @@ The `containerPath` property of `DriverPreCheckInfo` was deprecated and has now 
 
 ### Removed `SharedObject.is`
 The `is` method is removed from SharedObject. This was being used to detect SharedObjects stored inside other SharedObjects (and then binding them), which should not be happening anymore. Instead, use handles to SharedObjects.
+
+### Removed IContainerContext.id and ContainerContext.id
+The `id` property of IContainerContext was deprecated and now removed. The `id` property of ContainerContext was deprecated and now removed. id should not be exposed at
+runtime level anymore. Instead, get from container's resolvedURL if necessary.
 
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)

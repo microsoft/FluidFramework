@@ -82,8 +82,7 @@ describe("Quorum", () => {
             assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 2");
 
             // This message does nothing since the msn is higher than the sequence number of the proposal.
-            const immediateNoOp1 = quorum.updateMinimumSequenceNumber(tooEarlyMessage);
-            assert.strictEqual(immediateNoOp1, false, "Should not no-op if no proposal was completed");
+            quorum.updateMinimumSequenceNumber(tooEarlyMessage);
             assert.strictEqual(evented, false, "Should not have evented yet 1");
             assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 3");
 
@@ -96,12 +95,13 @@ describe("Quorum", () => {
             acceptanceState = "just right";
 
             // This message accepts the proposal since the msn is higher than the sequence number of the proposal.
-            const immediateNoOp2 = quorum.updateMinimumSequenceNumber(justRightMessage);
-            assert.strictEqual(immediateNoOp2, true, "Should no-op if proposal was completed");
+            quorum.updateMinimumSequenceNumber(justRightMessage);
             assert.strictEqual(evented, true, "Should have evented");
             assert.strictEqual(quorum.get(proposalKey), proposalValue, "Should have the proposal value");
 
             // Wait to see if the proposal promise resolved.
+            await Promise.resolve().then(() => {});
+            // Due to the composition of Quorum -> QuorumProposals, we require one more microtask deferral to resolve.
             await Promise.resolve().then(() => {});
 
             // Acceptance should have happened before the above await resolves.
@@ -162,8 +162,7 @@ describe("Quorum", () => {
             assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 1");
 
             // This message does nothing since the msn is higher than the sequence number of the proposal.
-            const immediateNoOp1 = quorum.updateMinimumSequenceNumber(tooEarlyMessage);
-            assert.strictEqual(immediateNoOp1, false, "Should not no-op if no proposal was completed");
+            quorum.updateMinimumSequenceNumber(tooEarlyMessage);
             assert.strictEqual(evented, false, "Should not have evented yet 1");
             assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 2");
 
@@ -174,8 +173,7 @@ describe("Quorum", () => {
             assert.strictEqual(quorum.get(proposalKey), undefined, "Should not have the proposal value yet 3");
 
             // This message accepts the proposal since the msn is higher than the sequence number of the proposal.
-            const immediateNoOp2 = quorum.updateMinimumSequenceNumber(justRightMessage);
-            assert.strictEqual(immediateNoOp2, true, "Should no-op if proposal was completed");
+            quorum.updateMinimumSequenceNumber(justRightMessage);
             assert.strictEqual(evented, true, "Should have evented");
             assert.strictEqual(quorum.get(proposalKey), proposalValue, "Should have the proposal value");
 

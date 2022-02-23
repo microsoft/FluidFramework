@@ -14,7 +14,7 @@ import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { TestDataObject } from "./mockSummarizerClient";
 
 /**
@@ -100,7 +100,11 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         summarizerRuntime = (await requestFluidObject<TestDataObject>(summarizerContainer, "/")).containerRuntime;
     });
 
-    it("can generate events when unreferenced data store is accessed after it's inactive", async () => {
+    itExpects("can generate events when unreferenced data store is accessed after it's inactive", [
+        {eventName: changedEvent, timeout: deleteTimeoutMs,},
+        {eventName: loadedEvent, timeout: deleteTimeoutMs,},
+        {eventName: revivedEvent, timeout: deleteTimeoutMs,},
+    ], async () => {
         const dataStore1 = await dataObjectFactory.createInstance(defaultDataStore.containerRuntime);
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
 

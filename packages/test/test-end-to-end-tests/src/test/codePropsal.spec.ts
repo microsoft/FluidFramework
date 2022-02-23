@@ -21,7 +21,7 @@ import {
 } from "@fluidframework/test-utils";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
     version: number,
@@ -146,7 +146,12 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         await testRoundTrip();
     });
 
-    it("Code Proposal", async () => {
+    itExpects("Code Proposal",
+    [
+        {eventName:"fluid:telemetry:Container:ContainerClose", error:"existingContextDoesNotSatisfyIncomingProposal"},
+        {eventName:"fluid:telemetry:Container:ContainerClose", error:"existingContextDoesNotSatisfyIncomingProposal"}
+    ],
+    async () => {
         const proposal: IFluidCodeDetails = { package: packageV2 };
         for (let i = 0; i < containers.length; i++) {
             containers[i].once("codeDetailsProposed", (c) => {

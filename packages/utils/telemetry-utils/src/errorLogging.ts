@@ -171,7 +171,7 @@ export function generateStack(): string | undefined {
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
- export function wrapError<T extends IFluidErrorBase>(
+export function wrapError<T extends IFluidErrorBase>(
     innerError: unknown,
     newErrorFn: (message: string) => T,
 ): T {

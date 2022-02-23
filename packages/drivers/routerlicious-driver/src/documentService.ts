@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
-import { IClient, ISnapshotTree} from "@fluidframework/protocol-definitions";
+import { IClient} from "@fluidframework/protocol-definitions";
 import { GitManager, Historian } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -18,6 +18,7 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
+import { ISnapshotTreeVersion } from "./definitions";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -35,7 +36,7 @@ export class DocumentService implements api.IDocumentService {
         protected documentId: string,
         private readonly driverPolicies: IRouterliciousDriverPolicies,
         private readonly blobCache: ICache<ArrayBufferLike>,
-        private readonly snapshotTreeCache: ICache<ISnapshotTree>,
+        private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
     ) {
     }
 
