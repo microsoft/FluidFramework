@@ -596,23 +596,6 @@ describe("normalizeError", () => {
                 expectedOutput: typicalOutput("1,2,3", "<<natural stack>>"),
             }),
         };
-        function assertMatchingMessageAndStack(
-            actual: IFluidErrorBase,
-            expected: TestFluidError,
-            inputStack: string | undefined,
-        ) {
-            assert.equal(actual.message, expected.message, "message should match");
-            const actualStack = actual.stack;
-            assert(actualStack !== undefined, "stack should be present as a string");
-            if (actualStack.indexOf("at Object.normalizeError") >= 0) { // This indicates the stack was populated naturally by new SimpleFluidError
-                assert.equal(expected.stack, "<<natural stack>>", "<<natural stack>> hint should be used if not overwritten");
-                expected.withExpectedTelemetryProps({ stack: actualStack });
-            } else {
-                assert.equal(actualStack, inputStack, "If stack wasn't generated, it should match input stack");
-                assert.equal(expected.stack, "<<stack from input>>", "<<stack from input>> hint should be used if using stack from input error object");
-                expected.withExpectedTelemetryProps({ stack: inputStack });
-            }
-        }
         function assertMatching(
             actual: IFluidErrorBase,
             expected: TestFluidError,
@@ -633,26 +616,28 @@ describe("normalizeError", () => {
             assert.equal(actual.errorInstanceId.length, 36, "should be guid-length");
             assert.deepStrictEqual(actual.getTelemetryProperties(), expected.expectedTelemetryProps, "telemetry props should match");
         }
+        function assertMatchingMessageAndStack(
+            actual: IFluidErrorBase,
+            expected: TestFluidError,
+            inputStack: string | undefined,
+        ) {
+            assert.equal(actual.message, expected.message, "message should match");
+            const actualStack = actual.stack;
+            assert(actualStack !== undefined, "stack should be present as a string");
+            if (actualStack.indexOf("at Object.normalizeError") >= 0) { // This indicates the stack was populated naturally by new SimpleFluidError
+                assert.equal(expected.stack, "<<natural stack>>", "<<natural stack>> hint should be used if not overwritten");
+                expected.withExpectedTelemetryProps({ stack: actualStack });
+            } else {
+                assert.equal(actualStack, inputStack, "If stack wasn't generated, it should match input stack");
+                assert.equal(expected.stack, "<<stack from input>>", "<<stack from input>> hint should be used if using stack from input error object");
+                expected.withExpectedTelemetryProps({ stack: inputStack });
+            }
+        }
         for (const annotationCase of Object.keys(annotationCases)) {
             const annotations = annotationCases[annotationCase];
             let doneOnceForThisAnnotationCase = false;
             for (const caseName of Object.keys(untrustedInputs)) {
                 const getTestCase = untrustedInputs[caseName];
-                it(`Normalize untrusted error message/stack: ${caseName} (${annotationCase})`, () => {
-                    // Arrange
-                    const { input, expectedOutput } = getTestCase();
-
-                    // Act
-                    const normalized = normalizeError(input, annotations);
-
-                    // Assert
-                    assert.notEqual(input, normalized, "input should have yielded a new error object");
-                    assertMatchingMessageAndStack(normalized, expectedOutput, input?.stack);
-
-                    // Bonus
-                    normalized.addTelemetryProperties({foo: "bar"});
-                    assert.equal(normalized.getTelemetryProperties().foo, "bar", "can add telemetry props after normalization");
-                });
                 if (!doneOnceForThisAnnotationCase) {
                     doneOnceForThisAnnotationCase = true;
                     // Each test case only differs by what stack/error are.  Test the rest only once per annotation case.
@@ -672,6 +657,21 @@ describe("normalizeError", () => {
                         assert.equal(normalized.getTelemetryProperties().foo, "bar", "can add telemetry props after normalization");
                     });
                 }
+                it(`Normalize untrusted error message/stack: ${caseName} (${annotationCase})`, () => {
+                    // Arrange
+                    const { input, expectedOutput } = getTestCase();
+
+                    // Act
+                    const normalized = normalizeError(input, annotations);
+
+                    // Assert
+                    assert.notEqual(input, normalized, "input should have yielded a new error object");
+                    assertMatchingMessageAndStack(normalized, expectedOutput, input?.stack);
+
+                    // Bonus
+                    normalized.addTelemetryProperties({foo: "bar"});
+                    assert.equal(normalized.getTelemetryProperties().foo, "bar", "can add telemetry props after normalization");
+                });
             }
         }
     });
@@ -717,16 +717,17 @@ describe("wrapErrorAndLog", () => {
     assert(mockLogger.matchEvents([{
         eventName: "WrapError",
         wrappedByErrorInstanceId: newError.errorInstanceId,
+        errorInstanceId: newError.errorInstanceId,
         error: "hello",
      }]), "Expected the 'WrapError' event to be logged");
 });
 
 describe.only("Error Discovery", () => {
     const createTestError = (m) =>
-    Object.assign(new LoggingError(m), {
-        errorType: "someErrorType",
-        fluidErrorCode: "someErrorCode",
-    });
+        Object.assign(new LoggingError(m), {
+            errorType: "someErrorType",
+            fluidErrorCode: "someErrorCode",
+        });
     it("isExternalError", () => {
         assert(isExternalError("some string"));
         assert(isExternalError(new LoggingError("error message")));
