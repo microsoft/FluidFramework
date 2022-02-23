@@ -130,6 +130,10 @@ export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> imple
     }
 }
 
+/**
+ * The QuorumProposals holds a key/value store.  Proposed values become finalized in the store once all connected
+ * clients have seen the proposal.
+ */
 export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> implements IQuorumProposals {
     private readonly proposals: Map<number, PendingProposal>;
     private readonly values: Map<string, ICommittedProposal>;
