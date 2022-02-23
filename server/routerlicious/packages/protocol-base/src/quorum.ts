@@ -38,6 +38,7 @@ class PendingProposal implements ISequencedProposal {
  * Snapshot format for a QuorumClients
  */
 export type QuorumClientsSnapshot = [string, ISequencedClient][];
+
 /**
  * Snapshot format for a QuorumProposals
  */
@@ -45,6 +46,7 @@ export type QuorumProposalsSnapshot = {
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];
 };
+
 /**
  * Snapshot format for a Quorum
  */
@@ -54,16 +56,17 @@ export interface IQuorumSnapshot {
     values: QuorumProposalsSnapshot["values"];
 }
 
+/**
+ * The QuorumClients is used to track members joining and leaving the collaboration session.
+ */
 export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> implements IQuorumClients {
     private readonly members: Map<string, ISequencedClient>;
     private isDisposed: boolean = false;
     public get disposed() { return this.isDisposed; }
 
     /**
-     * Cached snapshot state
-     * The quorum consists of 3 properties: members, values, and proposals.
-     * Depending on the op being processed, some or none of those properties may change.
-     * Each property will be cached and the cache for each property will be cleared when an op causes a change.
+     * Cached snapshot state, to avoid unnecessary deep clones on repeated snapshot calls.
+     * Cleared immediately (set to undefined) when the cache becomes invalid.
      */
     private snapshotCache: QuorumClientsSnapshot | undefined;
 
@@ -137,10 +140,8 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     private readonly localProposals = new Map<number, Deferred<void>>();
 
     /**
-     * Cached snapshot state
-     * The quorum consists of 3 properties: members, values, and proposals.
-     * Depending on the op being processed, some or none of those properties may change.
-     * Each property will be cached and the cache for each property will be cleared when an op causes a change.
+     * Cached snapshot state, to avoid unnecessary deep clones on repeated snapshot calls.
+     * Cleared immediately (set to undefined) when the cache becomes invalid.
      */
     private proposalsSnapshotCache: QuorumProposalsSnapshot["proposals"] | undefined;
     private valuesSnapshotCache: QuorumProposalsSnapshot["values"] | undefined;
@@ -207,6 +208,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
 
     /**
      * Returns additional data about the approved consensus value
+     * @deprecated Removed in recent protocol-definitions.  Use get() instead.
      */
     public getApprovalData(key: string): ICommittedProposal | undefined {
         const proposal = this.values.get(key);
@@ -215,9 +217,6 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
 
     /**
      * Proposes a new value. Returns a promise that will resolve when the proposal is either accepted or rejected.
-     *
-     * TODO: Right now we will only submit proposals for connected clients and not attempt to resubmit on any
-     * nack/disconnect. The correct answer for this should become more clear as we build scenarios on top of the loader.
      */
     public async propose(key: string, value: any): Promise<void> {
         const clientSequenceNumber = this.sendProposal(key, value);
@@ -267,9 +266,8 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     }
 
     /**
-     * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal without
-     * a rejection then it becomes an accepted consensus value.  If the MSN advances past the sequence number
-     * that the proposal was accepted, then it becomes a committed consensus value.
+     * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal then it
+     * becomes an approved value.
      * Returns true if immediate no-op is required.
      */
     public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean {
@@ -419,6 +417,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
 
     /**
      * Returns additional data about the approved consensus value
+     * @deprecated Removed in recent protocol-definitions.  Use get() instead.
      */
     public getApprovalData(key: string): ICommittedProposal | undefined {
         return this.quorumProposals.getApprovalData(key);
@@ -454,9 +453,6 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
 
     /**
      * Proposes a new value. Returns a promise that will resolve when the proposal is either accepted or rejected.
-     *
-     * TODO: Right now we will only submit proposals for connected clients and not attempt to resubmit on any
-     * nack/disconnect. The correct answer for this should become more clear as we build scenarios on top of the loader.
      */
     public async propose(key: string, value: any): Promise<void> {
         return this.quorumProposals.propose(key, value);
@@ -476,9 +472,8 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     }
 
     /**
-     * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal without
-     * a rejection then it becomes an accepted consensus value.  If the MSN advances past the sequence number
-     * that the proposal was accepted, then it becomes a committed consensus value.
+     * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal then it
+     * becomes an approved value.
      * Returns true if immediate no-op is required.
      */
     public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean {

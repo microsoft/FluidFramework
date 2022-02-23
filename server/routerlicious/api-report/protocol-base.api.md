@@ -135,6 +135,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     // (undocumented)
     get disposed(): boolean;
     get(key: string): any;
+    // @deprecated
     getApprovalData(key: string): ICommittedProposal | undefined;
     getMember(clientId: string): ISequencedClient | undefined;
     getMembers(): Map<string, ISequencedClient>;
@@ -147,7 +148,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean;
 }
 
-// @public (undocumented)
+// @public
 export class QuorumClients extends TypedEventEmitter<IQuorumClientsEvents> implements IQuorumClients {
     constructor(snapshot: QuorumClientsSnapshot);
     addMember(clientId: string, details: ISequencedClient): void;
@@ -173,6 +174,7 @@ export class QuorumProposals extends TypedEventEmitter<IQuorumProposalsEvents> i
     // (undocumented)
     get disposed(): boolean;
     get(key: string): any;
+    // @deprecated
     getApprovalData(key: string): ICommittedProposal | undefined;
     has(key: string): boolean;
     propose(key: string, value: any): Promise<void>;
