@@ -2079,6 +2079,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
             const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
+            // We should be here is we haven't processed be here. If we are of if the last message's sequence number
+            // doesn't match the last processed sequence number, log an error.
+            if (summaryRefSeqNum !== this.deltaManager.lastMessage?.sequenceNumber) {
+                summaryLogger.sendErrorEvent({
+                    eventName: "LastSequenceMismatch",
+                    message,
+                });
+            }
+
             this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
 
             // Helper function to check whether we should still continue between each async step.
@@ -2491,6 +2500,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryRefSeq,
             async () => this.fetchSnapshotFromStorage(ackHandle, summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",
+                ackHandle,
+                summaryRefSeq,
                 fetchLatest: false,
             }),
             readAndParseBlob,

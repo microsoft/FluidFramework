@@ -562,6 +562,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error: {
                     // load information to associate errors with the specific load point
                     dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
+                    dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
                     dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
                     containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
                     containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
