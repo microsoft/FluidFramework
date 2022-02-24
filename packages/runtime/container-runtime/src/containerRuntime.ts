@@ -1636,7 +1636,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (local) {
                 // If we have processed a local op, this means that the container is
                 // making progress and we can reset the counter for how many times
-                // we replay the pending states
+                // we have consecutively replayed the pending states
                 this.resetPendingStateReplayCount();
             }
         } catch (e) {
