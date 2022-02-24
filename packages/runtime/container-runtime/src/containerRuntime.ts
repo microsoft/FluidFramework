@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-lines */
 import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -337,6 +338,8 @@ interface OldContainerContextWithLogger extends IContainerContext {
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
+const stopPendingReplaysWithNoProgressKey = "Fluid.ContainerRuntime.StopPendingReplaysWithNoProgress";
+const maxConsecutiveReplaysKey = "Fluid.ContainerRuntime.MaxConsecutiveReplays";
 
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
@@ -902,6 +905,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private paused: boolean = false;
 
+    private lastPendingStateSequenceNumber = -1;
+    private consecutiveReplays = 0;
+    private stopPendingReplaysWithNoProgress: boolean;
+    private maxConsecutiveReplays: number;
+    private defaultMaxConsecutiveReplays = 30;
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -1021,6 +1030,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this._aliasingEnabled =
             (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
             (runtimeOptions.useDataStoreAliasing ?? false);
+
+        this.maxConsecutiveReplays =
+            this.mc.config.getNumber(maxConsecutiveReplaysKey) ?? this.defaultMaxConsecutiveReplays;
+        this.stopPendingReplaysWithNoProgress = this.mc.config.getBoolean(stopPendingReplaysWithNoProgressKey) ?? false;
 
         this.garbageCollector = GarbageCollector.create(
             this,
@@ -1449,9 +1462,35 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private arePendingStatesDrained(): boolean {
+        if (this.lastPendingStateSequenceNumber === this.deltaManager.lastSequenceNumber) {
+            this.consecutiveReplays++;
+        } else {
+            this.lastPendingStateSequenceNumber = this.deltaManager.lastSequenceNumber;
+            this.consecutiveReplays = 1;
+        }
+
+        return this.consecutiveReplays === this.maxConsecutiveReplays;
+    }
+
     private replayPendingStates() {
         // We need to be able to send ops to replay states
         if (!this.canSendOps()) { return; }
+
+        if (!this.arePendingStatesDrained()) {
+            this.mc.logger.sendErrorEvent({
+                eventName: "PendingReplaysWithNoProgress",
+                count: this.consecutiveReplays,
+            });
+
+            if (this.stopPendingReplaysWithNoProgress) {
+                this.closeFn(new GenericError(
+                    "PendingReplaysWithNoProgress",
+                    undefined, // error
+                    { count: this.consecutiveReplays }));
+                return;
+            }
+        }
 
         // We need to temporary clear the dirty flags and disable
         // dirty state change events to detect whether replaying ops
