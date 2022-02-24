@@ -22,7 +22,7 @@ Move the type from the merge-tree package where it isn't used to the sequence pa
 ```
 
 ## Remove logger property from IContainerContext
-The logger property in IContainerContext was set as an optional parameter in [release 0.56](#Set-logger-property-as-optional-parameter-in-IContainerContext) and have now been removed.
+The logger property in IContainerContext became an optional parameter in [release 0.56](#Set-logger-property-as-optional-parameter-in-IContainerContext). This property has now been removed.
 
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
@@ -196,11 +196,17 @@ runtime level anymore. Instead, get from container's resolvedURL if necessary.
 
 ### Remove raiseContainerWarning property
 
-`raiseContainerWarning` property is removed from the following interfaces in release 0.56: `IContainerRuntime`, `IFluidDataStoreRuntime`, `IFluidDataStoreContext`, `IContainerRuntime`, `IFluidDataStoreRuntime`. It was deprecated in `IContainerContext` and it usage would be completely removed. The advised migration step for partners is to generate their own telemetry/logging events.
+The `raiseContainerWarning` property is removed from the following interfaces in release 0.56:
+
+- `IContainerRuntime`
+- `IFluidDataStoreContext`
+- `IFluidDataStoreRuntime`
+
+This property was also deprecated in `IContainerContext` and will be removed in a future release. Application developers should generate their own telemetry/logging events.
 
 ### Set logger property as optional parameter in IContainerContext
 
-The `logger` property from `IContainerContext` is set as an optional paramter and would be removed in the next release. Use `taggedLogger` instead. Loggers passed to `ContainerContext` will need to support tagged events.
+The `logger` property from `IContainerContext` is now optional. It will be removed completely in a future release. Use `taggedLogger` instead. Loggers passed to `ContainerContext` will need to support tagged events.
 
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
