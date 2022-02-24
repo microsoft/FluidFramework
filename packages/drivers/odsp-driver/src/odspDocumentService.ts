@@ -303,10 +303,10 @@ export class OdspDocumentService implements IDocumentService {
         response: ISocketStorageDiscovery,
     ) {
         for (;;) {
-            let refreshSessionDurationSeconds = response.refreshSessionDurationSeconds;
+            const refreshSessionDurationSeconds = response.refreshSessionDurationSeconds;
             if (refreshSessionDurationSeconds !== undefined) {
                 // 30 seconds is buffer time to refresh the session.
-                let retryAfter = (refreshSessionDurationSeconds * 1000) - 30000;
+                const retryAfter = (refreshSessionDurationSeconds * 1000) - 30000;
                 // If retryAfter is negative, don't do anything and let the session disconnect.
                 if (retryAfter < 0) {
                     return;
@@ -314,7 +314,8 @@ export class OdspDocumentService implements IDocumentService {
                 await new Promise<void>((resolve) => {
                     this.joinSessionRefreshTimer = setTimeout(async () => {
                         await getWithRetryForTokenRefresh(async (options) => {
-                            response = await this.joinSession(requestWebsocketTokenFromJoinSession, options, true, true);
+                            response = await this.joinSession(
+                                requestWebsocketTokenFromJoinSession, options, true, true);
                             resolve();
                         });
                     }, retryAfter);
