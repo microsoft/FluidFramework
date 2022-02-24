@@ -17,7 +17,7 @@ import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
-describeNoCompat("Message size", (getTestObjectProvider) => {
+describeNoCompat("Payload size", (getTestObjectProvider) => {
     const mapId = "mapId";
     const registry: ChannelFactoryRegistry = [
         [mapId, SharedMap.getFactory()],
@@ -75,18 +75,13 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     const containerError = async (container: IContainer) =>
         new Promise<IErrorBase | undefined>((resolve) => container.once("closed", (error) => { resolve(error); }));
 
-    it("Can send 60 messages of 16k", async () => {
+    // This test should fail with ODSP
+    it.skip("Cannot send payloads larger than 1MB", async () => {
         await setupContainers(testContainerConfig, {});
         const errorEvent = containerError(container1);
-        // Total payload size: 16 * 1000 * 65 = 960000
+        // Total payload size: 16 * 1000 * 65 = 1040000
         const largeString = generateStringOfSize(16 * 1000);
         const messageCount = 65;
-        // The limit is from socket.io seems to be 1MB
-        // as experimentally, a payload of 979774 bytes pass, while a
-        // a payload of 996103 bytes does not. Which is also an argument
-        // that the message is stringified again. This will also explain
-        // why the size varies slightly based on the string content
-        // of the message.
         setMapKeys(dataObject1map1, messageCount, largeString);
 
         await errorEvent;

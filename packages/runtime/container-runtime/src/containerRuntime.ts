@@ -905,7 +905,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private paused: boolean = false;
 
-    private lastPendingStateSequenceNumber = -1;
     private consecutiveReplays = 0;
     private stopPendingReplaysWithNoProgress: boolean;
     private maxConsecutiveReplays: number;
@@ -1462,15 +1461,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    // Track how many times the container tries to replay its pending states.
+    // This happens when the connection state is changed.
+    // We reset the internal counter when we are able to process a local op.
+    // If this counter reaches a max, it's a good indicator that the container
+    // is not making progress and it is stuck in a retry loop.
     private arePendingStatesDrained(): boolean {
-        if (this.lastPendingStateSequenceNumber === this.deltaManager.lastSequenceNumber) {
-            this.consecutiveReplays++;
-        } else {
-            this.lastPendingStateSequenceNumber = this.deltaManager.lastSequenceNumber;
-            this.consecutiveReplays = 1;
-        }
+        return ++this.consecutiveReplays === this.maxConsecutiveReplays;
+    }
 
-        return this.consecutiveReplays === this.maxConsecutiveReplays;
+    private resetPendingStateReplayCount() {
+        this.consecutiveReplays = 0;
     }
 
     private replayPendingStates() {
@@ -1631,6 +1632,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             this.emit("op", message);
             this.scheduleManager.afterOpProcessing(undefined, message);
+
+            if (local) {
+                // If we have processed a local op, this means that the container is
+                // making progress and we can reset the counter for how many times
+                // we replay the pending states
+                this.resetPendingStateReplayCount();
+            }
         } catch (e) {
             this.scheduleManager.afterOpProcessing(e, message);
             throw e;
