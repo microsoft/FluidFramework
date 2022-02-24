@@ -2363,6 +2363,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 content,
                 serializedContent,
                 maxOpSize,
+                this._flushMode === FlushMode.TurnBased,
                 opMetadataInternal);
         }
 
@@ -2385,15 +2386,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         content: any,
         serializedContent: string,
         serverMaxOpSize: number,
+        batch: boolean,
         opMetadataInternal: unknown = undefined,
     ): number {
         if (this._chunkingDisabled) {
             if (!serializedContent || serializedContent.length <= this._maxOpSizeInBytes) {
-                return this.submitRuntimeMessage(
-                    type,
-                    content,
-                    /* batch: */ this._flushMode === FlushMode.TurnBased,
-                    opMetadataInternal);
+                return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
             }
 
             // When chunking is disabled, we ignore the server max message size
@@ -2418,11 +2416,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Chunking enabled, fallback on the server's max message size
         // and split the content accordingly
         if (!serializedContent || serializedContent.length <= serverMaxOpSize) {
-            return this.submitRuntimeMessage(
-                type,
-                content,
-                /* batch: */ this._flushMode === FlushMode.TurnBased,
-                opMetadataInternal);
+            return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
         }
 
         return this.submitChunkedMessage(type, serializedContent, serverMaxOpSize);
