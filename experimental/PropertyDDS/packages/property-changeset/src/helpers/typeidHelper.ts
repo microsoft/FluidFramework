@@ -207,9 +207,9 @@ export namespace TypeIdHelper {
      * @return referenced typeid or in_param if it is not a reference
      */
     export function extractTypeId(in_typeid): string {
-        const matches = in_typeid.match(/\<(.*?)\>/); // eslint-disable-line
+        const matches = in_typeid.match(/\<(.*?)\>/);
         if (matches !== null && matches.length > 0) {
-            return matches[0].replace(/[\<\>]/gi, ""); // eslint-disable-line
+            return matches[0].replace(/[\<\>]/gi, "");
         } else {
             return in_typeid;
         }
