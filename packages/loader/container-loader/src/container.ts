@@ -562,6 +562,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error: {
                     // load information to associate errors with the specific load point
                     dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
+                    dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
                     dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
                     containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
                     containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
@@ -588,7 +589,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.connectionStateHandler = new ConnectionStateHandler(
             {
-                protocolHandler: () => this._protocolHandler,
+                quorumClients: () => this._protocolHandler?.quorum,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),

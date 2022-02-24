@@ -182,13 +182,9 @@ export interface IDriverBasicError extends IDriverErrorBase {
 
 // @public
 export interface IDriverErrorBase {
-    // (undocumented)
     canRetry: boolean;
-    // (undocumented)
     readonly errorType: DriverErrorType;
-    // (undocumented)
     readonly message: string;
-    // (undocumented)
     online?: string;
 }
 
