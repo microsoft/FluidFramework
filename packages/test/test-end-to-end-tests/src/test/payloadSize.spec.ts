@@ -78,9 +78,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     it("Can send 60 messages of 16k", async () => {
         await setupContainers(testContainerConfig, {});
         const errorEvent = containerError(container1);
-        // Total payload size: 16 * 1000 * 60 = 960000
+        // Total payload size: 16 * 1000 * 65 = 960000
         const largeString = generateStringOfSize(16 * 1000);
-        const messageCount = 60;
+        const messageCount = 65;
         // The limit is from socket.io seems to be 1MB
         // as experimentally, a payload of 979774 bytes pass, while a
         // a payload of 996103 bytes does not. Which is also an argument
