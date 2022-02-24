@@ -5,7 +5,6 @@
 
 import { expect } from 'chai';
 import { assert } from '@fluidframework/common-utils';
-import { v4 } from 'uuid';
 import { Definition, NodeId } from '../Identifiers';
 import {
 	internalizeBuildNode,
@@ -14,7 +13,7 @@ import {
 	validateStablePlace,
 	validateStableRange,
 } from '../default-edits';
-import { convertTreeNodes } from '../generic/GenericEditUtilities';
+import { convertTreeNodes } from '../generic/EditUtilities';
 import { ChangeNode, Side } from '../generic';
 import {
 	simpleRevisionViewWithValidation,
@@ -25,6 +24,7 @@ import {
 	makeEmptyNode,
 	simpleTestTree,
 	deepCompareNodes,
+	refreshTestTree,
 } from './utilities/TestUtilities';
 
 describe('EditUtilities', () => {
@@ -139,8 +139,13 @@ describe('EditUtilities', () => {
 
 	describe('Tree node conversion', () => {
 		it('can clone a tree', () => {
-			const clone = convertTreeNodes<ChangeNode, ChangeNode>(simpleTestTree, identity);
+			const clone = convertTreeNodes<ChangeNode, ChangeNode>(simpleTestTree, (x) => x);
 			expect(deepCompareNodes(simpleTestTree, clone)).to.be.true;
+		});
+
+		it('returns undefined for node conversions that can return undefined', () => {
+			const clone = convertTreeNodes<ChangeNode, ChangeNode>(simpleTestTree, (_) => undefined);
+			expect(clone).to.be.undefined;
 		});
 
 		it('can clone a leaf', () => {
@@ -161,7 +166,7 @@ describe('EditUtilities', () => {
 		it('can clone a tree with a leaf', () => {
 			const leaf = makeEmptyNode();
 			const tree = { ...makeEmptyNode(), payload: 'payload', traits: { main: [leaf] } };
-			const clone = convertTreeNodes<ChangeNode, ChangeNode>(tree, identity);
+			const clone = convertTreeNodes<ChangeNode, ChangeNode>(tree, (x) => x);
 			assert(typeof clone !== 'number', '');
 			expect(clone.definition).to.equal(tree.definition);
 			expect(clone.identifier).to.equal(tree.identifier);
@@ -220,38 +225,28 @@ describe('EditUtilities', () => {
 	});
 
 	describe('Build tree internalization', () => {
+		const testTree = refreshTestTree(undefined, undefined, /* expensiveValidation: */ true);
+
 		it('does not copy extraneous properties from input tree', () => {
 			const node = {
-				...makeEmptyNode(),
+				...testTree.buildLeaf(testTree.generateNodeId()),
 				extra: 'This is extra data that should not be copied',
 			};
-			const converted = convertTreeNodes(
-				node,
-				(node) => internalizeBuildNode(node, { generateNodeId: () => v4() as NodeId }),
-				isNumber
-			);
+			const converted = convertTreeNodes(node, (node) => internalizeBuildNode(node, testTree), isNumber);
 			expect(converted).to.deep.equal({
 				definition: node.definition,
-				identifier: node.identifier,
+				identifier: testTree.convertToStableNodeId(node.identifier),
 				traits: node.traits,
 			});
 		});
 
 		it('does not add undefined payload field', () => {
-			const node = makeEmptyNode();
+			const node = testTree.buildLeaf(testTree.generateNodeId());
 			expect(Object.prototype.hasOwnProperty.call(node, 'payload')).to.be.false;
-			const converted = convertTreeNodes(
-				node,
-				(node) => internalizeBuildNode(node, { generateNodeId: () => v4() as NodeId }),
-				isNumber
-			);
+			const converted = convertTreeNodes(node, (node) => internalizeBuildNode(node, testTree), isNumber);
 			expect(Object.prototype.hasOwnProperty.call(converted, 'payload')).to.be.false;
 		});
 	});
-
-	function identity<T>(x: T): T {
-		return x;
-	}
 
 	function isNumber(node: number | unknown): node is number {
 		return typeof node === 'number';

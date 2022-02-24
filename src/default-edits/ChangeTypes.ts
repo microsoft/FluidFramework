@@ -5,8 +5,8 @@
 
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
 import { assert, assertNotUndefined } from '../Common';
-import { NodeData, Payload, Side, StableTraitLocation, TreeNode, TreeNodeSequence } from '../generic';
-import { ConstraintEffect, getNodeId } from './PersistedTypes';
+import { NodeData, Payload, Side, TraitLocation, TreeNode, TreeNodeSequence } from '../generic';
+import { ConstraintEffect } from './PersistedTypes';
 
 /**
  * The type of a Change
@@ -305,7 +305,7 @@ export interface StablePlace {
 	 * The trait to which this 'StablePlace' is anchored (by 'side').
 	 * If specified, referenceSibling must be unspecified.
 	 */
-	readonly referenceTrait?: StableTraitLocation;
+	readonly referenceTrait?: TraitLocation;
 }
 
 /**
@@ -351,11 +351,11 @@ export const StablePlace = {
 	/**
 	 * @returns The location at the start of `trait`.
 	 */
-	atStartOf: (trait: StableTraitLocation): StablePlace => ({ side: Side.After, referenceTrait: trait }),
+	atStartOf: (trait: TraitLocation): StablePlace => ({ side: Side.After, referenceTrait: trait }),
 	/**
 	 * @returns The location at the end of `trait`.
 	 */
-	atEndOf: (trait: StableTraitLocation): StablePlace => ({ side: Side.Before, referenceTrait: trait }),
+	atEndOf: (trait: TraitLocation): StablePlace => ({ side: Side.Before, referenceTrait: trait }),
 };
 
 // Note: Documentation of this constant is merged with documentation of the `StableRange` interface.
@@ -388,8 +388,26 @@ export const StableRange = {
 	 * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
 	 * it does not use sibling anchoring.
 	 */
-	all: (trait: StableTraitLocation): StableRange => ({
+	all: (trait: TraitLocation): StableRange => ({
 		start: StablePlace.atStartOf(trait),
 		end: StablePlace.atEndOf(trait),
 	}),
 };
+
+/**
+ * @returns True iff the given `node` is of type NodeData.
+ */
+function isNodeData(node: NodeData | NodeId): node is NodeData {
+	return (node as NodeData).definition !== undefined && (node as NodeData).identifier !== undefined;
+}
+
+/**
+ * @returns The NodeId for a given node or its id.
+ */
+export function getNodeId(node: NodeData | NodeId): NodeId {
+	if (isNodeData(node)) {
+		return node.identifier;
+	} else {
+		return node;
+	}
+}

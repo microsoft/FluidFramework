@@ -44,9 +44,10 @@ import {
 	EditWithoutId,
 	SharedTreeOp,
 	EditStatus,
+	SharedTreeSummaryWriteFormat,
 } from './PersistedTypes';
 import { serialize, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
-import { newEditId } from './GenericEditUtilities';
+import { newEditId } from './EditUtilities';
 import { NodeIdConverter, NodeIdGenerator } from './NodeIdUtilities';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
 import { TransactionFactory } from './GenericTransaction';
@@ -68,17 +69,6 @@ const initialSummary: SharedTreeSummary<unknown> = {
 /** The number of IDs that a SharedTree reserves for current or future internal use */
 // This value must never change
 export const reservedIdCount = 1024;
-
-/**
- * Format versions that SharedTree supports writing.
- * @public
- */
-export enum SharedTreeSummaryWriteFormat {
-	/** Stores all edits in their raw format. */
-	Format_0_0_2 = '0.0.2',
-	/** Supports history virtualization and makes currentView optional. */
-	Format_0_1_1 = '0.1.1',
-}
 
 /**
  * Used for version comparison.
@@ -645,15 +635,15 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 
 		let knownRevisions: [number, EditCacheEntry<TChangeInternal, TFailure>][] | undefined;
 		if (currentTree !== undefined) {
-			const currentView = RevisionView.fromTree(currentTree);
-
+			const currentView =
+				RevisionView.fromTree_0_0_2(currentTree, this) ?? fail('Failed to load summary currentView');
 			// TODO:#47830: Store multiple checkpoints in summary.
 			knownRevisions = [[editLog.length, { view: currentView }]];
 		}
 
 		const logViewer = new CachingLogViewer(
 			editLog,
-			RevisionView.fromTree(initialTree),
+			RevisionView.fromTree_0_0_2(initialTree, this) ?? fail('Failed to load summary currentView'),
 			this,
 			knownRevisions,
 			this.expensiveValidation,

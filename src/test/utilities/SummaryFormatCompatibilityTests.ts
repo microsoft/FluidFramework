@@ -198,6 +198,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						const newSummary = summarizer(
 							(useHandles = false) => editLog.getEditLogSummary(useHandles),
 							expectedTree.currentView,
+							expectedTree,
 							true
 						);
 						const { tree: tree2 } = setUpTestSharedTree();

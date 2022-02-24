@@ -14,15 +14,15 @@ import {
 	fullHistorySummarizer,
 	fullHistorySummarizer_0_1_1,
 	newEdit,
+	NodeIdConverter,
 	RevisionView,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
 	SharedTreeSummaryWriteFormat,
 } from '../generic';
-import { getChangeNodeFromView } from '../SerializationUtilities';
-import { ChangeInternal } from './PersistedTypes';
+import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
+import { ChangeInternal, StablePlace_0_0_2 } from './PersistedTypes';
 import { setTraitInternal } from './EditUtilities';
-import { StablePlace } from './ChangeTypes';
 
 const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
 
@@ -36,6 +36,7 @@ const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
 export type SharedTreeNoHistorySummarizer = (
 	summarizeLog: EditLogSummarizer,
 	currentView: RevisionView,
+	idConverter: NodeIdConverter,
 	stable: boolean
 ) => SharedTreeSummaryBase;
 
@@ -47,9 +48,10 @@ export type SharedTreeNoHistorySummarizer = (
 export function noHistorySummarizer(
 	_summarizeLog: EditLogSummarizer,
 	currentView: RevisionView,
+	idConverter: NodeIdConverter,
 	stable = false
 ): SharedTreeSummary_0_0_2<ChangeInternal> {
-	const currentTree = getChangeNodeFromView(currentView);
+	const currentTree = getChangeNode_0_0_2FromView(currentView, idConverter);
 	const rootId = currentTree.identifier;
 	const changes: ChangeInternal[] = [];
 	// Generate a set of changes to set the root node's children to that of the root in the currentTree
@@ -57,7 +59,7 @@ export function noHistorySummarizer(
 		const id = 0 as DetachedSequenceId;
 		changes.push(
 			ChangeInternal.build(children, id),
-			ChangeInternal.insert(id, StablePlace.atStartOf({ parent: rootId, label: label as TraitLabel }))
+			ChangeInternal.insert(id, StablePlace_0_0_2.atStartOf({ parent: rootId, label: label as TraitLabel }))
 		);
 	});
 	assert(currentTree.payload === undefined, 'setValue not yet supported.');
@@ -88,9 +90,10 @@ export function noHistorySummarizer(
 export function noHistorySummarizer_0_1_1(
 	_summarizeLog: EditLogSummarizer,
 	currentView: RevisionView,
+	idConverter: NodeIdConverter,
 	stable = false
 ): SharedTreeSummary<ChangeInternal> {
-	const currentTree = getChangeNodeFromView(currentView);
+	const currentTree = getChangeNode_0_0_2FromView(currentView, idConverter);
 	const rootId = currentTree.identifier;
 	const changes: ChangeInternal[] = [];
 	// Generate a set of changes to set the root node's children to that of the root in the currentTree
@@ -119,15 +122,16 @@ export function noHistorySummarizer_0_1_1(
 export function getSummaryByVersion(
 	summarizeLog: EditLogSummarizer,
 	currentView: RevisionView,
+	idConverter: NodeIdConverter,
 	summarizeHistory = true,
 	writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2
 ): SharedTreeSummaryBase {
 	if (summarizeHistory) {
 		switch (writeSummaryFormat) {
 			case SharedTreeSummaryWriteFormat.Format_0_0_2:
-				return fullHistorySummarizer(summarizeLog, currentView);
+				return fullHistorySummarizer(summarizeLog, currentView, idConverter);
 			case SharedTreeSummaryWriteFormat.Format_0_1_1:
-				return fullHistorySummarizer_0_1_1(summarizeLog, currentView);
+				return fullHistorySummarizer_0_1_1(summarizeLog, currentView, idConverter);
 			default:
 				throw new Error(`Summary format ${writeSummaryFormat} not supported.`);
 		}
@@ -135,9 +139,9 @@ export function getSummaryByVersion(
 
 	switch (writeSummaryFormat) {
 		case SharedTreeSummaryWriteFormat.Format_0_0_2:
-			return noHistorySummarizer(summarizeLog, currentView);
+			return noHistorySummarizer(summarizeLog, currentView, idConverter);
 		case SharedTreeSummaryWriteFormat.Format_0_1_1:
-			return noHistorySummarizer_0_1_1(summarizeLog, currentView);
+			return noHistorySummarizer_0_1_1(summarizeLog, currentView, idConverter);
 		default:
 			throw new Error(`Summary format ${writeSummaryFormat} not supported.`);
 	}

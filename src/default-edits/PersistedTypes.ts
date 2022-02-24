@@ -8,10 +8,16 @@
 // and thus have no impact on serialization as long as the primitive type they are an alias for does not change.
 // This does mean that the various UuidString types must remain strings, and must never change the format unless the process for changing
 // persisted types (as documented below) is followed.
-import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
-import { assertNotUndefined } from '../Common';
-import { NodeData, Payload, PlaceholderTree, TreeNodeSequence } from '../generic';
-import { StablePlace, StableRange } from './ChangeTypes';
+import { DetachedSequenceId, StableNodeId, TraitLabel, UuidString } from '../Identifiers';
+import { assert, assertNotUndefined } from '../Common';
+import {
+	NodeData_0_0_2,
+	Payload,
+	PlaceholderTree_0_0_2,
+	Side,
+	TraitLocation_0_0_2,
+	TreeNodeSequence,
+} from '../generic';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.
@@ -62,7 +68,7 @@ export type ChangeInternal = InsertInternal | DetachInternal | BuildInternal | S
  * {@inheritdoc BuildNode}
  * @public
  */
-export type BuildNodeInternal = PlaceholderTree<DetachedSequenceId>;
+export type BuildNodeInternal = PlaceholderTree_0_0_2<DetachedSequenceId>;
 
 /**
  * {@inheritdoc Build}
@@ -83,7 +89,7 @@ export interface BuildInternal {
  */
 export interface InsertInternal {
 	/** {@inheritdoc (Insert:interface).destination } */
-	readonly destination: StablePlace;
+	readonly destination: StablePlace_0_0_2;
 	/** {@inheritdoc (Insert:interface).source } */
 	readonly source: DetachedSequenceId;
 	/** {@inheritdoc (Insert:interface)."type" } */
@@ -98,7 +104,7 @@ export interface DetachInternal {
 	/** {@inheritdoc Detach.destination } */
 	readonly destination?: DetachedSequenceId;
 	/** {@inheritdoc Detach.source } */
-	readonly source: StableRange;
+	readonly source: StableRange_0_0_2;
 	/** {@inheritdoc Detach."type" } */
 	readonly type: typeof ChangeTypeInternal.Detach;
 }
@@ -109,7 +115,7 @@ export interface DetachInternal {
  */
 export interface SetValueInternal {
 	/** {@inheritdoc SetValue.nodeToModify } */
-	readonly nodeToModify: NodeId;
+	readonly nodeToModify: StableNodeId;
 	/** {@inheritdoc SetValue.payload } */
 	readonly payload: Payload | null;
 	/** {@inheritdoc SetValue."type" } */
@@ -145,7 +151,7 @@ export enum ConstraintEffect {
  */
 export interface ConstraintInternal {
 	/** {@inheritdoc Constraint.toConstrain } */
-	readonly toConstrain: StableRange;
+	readonly toConstrain: StableRange_0_0_2;
 	/** {@inheritdoc Constraint.identityHash } */
 	readonly identityHash?: UuidString;
 	/** {@inheritdoc Constraint.length } */
@@ -153,7 +159,7 @@ export interface ConstraintInternal {
 	/** {@inheritdoc Constraint.contentHash } */
 	readonly contentHash?: UuidString;
 	/** {@inheritdoc Constraint.parentNode } */
-	readonly parentNode?: NodeId;
+	readonly parentNode?: StableNodeId;
 	/** {@inheritdoc Constraint.label } */
 	readonly label?: TraitLabel;
 	/** {@inheritdoc Constraint.effect } */
@@ -173,26 +179,26 @@ export const ChangeInternal = {
 		type: ChangeTypeInternal.Build,
 	}),
 
-	insert: (source: DetachedSequenceId, destination: StablePlace): InsertInternal => ({
+	insert: (source: DetachedSequenceId, destination: StablePlace_0_0_2): InsertInternal => ({
 		destination,
 		source,
 		type: ChangeTypeInternal.Insert,
 	}),
 
-	detach: (source: StableRange, destination?: DetachedSequenceId): DetachInternal => ({
+	detach: (source: StableRange_0_0_2, destination?: DetachedSequenceId): DetachInternal => ({
 		destination,
 		source,
 		type: ChangeTypeInternal.Detach,
 	}),
 
-	setPayload: (nodeToModify: NodeData | NodeId, payload: Payload): SetValueInternal => ({
-		nodeToModify: getNodeId(nodeToModify),
+	setPayload: (nodeToModify: NodeData_0_0_2 | StableNodeId, payload: Payload): SetValueInternal => ({
+		nodeToModify: getStableNodeId(nodeToModify),
 		payload,
 		type: ChangeTypeInternal.SetValue,
 	}),
 
-	clearPayload: (nodeToModify: NodeData | NodeId): SetValueInternal => ({
-		nodeToModify: getNodeId(nodeToModify),
+	clearPayload: (nodeToModify: NodeData_0_0_2 | StableNodeId): SetValueInternal => ({
+		nodeToModify: getStableNodeId(nodeToModify),
 		// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface above.)
 		// eslint-disable-next-line no-null/no-null
 		payload: null,
@@ -200,12 +206,12 @@ export const ChangeInternal = {
 	}),
 
 	constraint: (
-		toConstrain: StableRange,
+		toConstrain: StableRange_0_0_2,
 		effect: ConstraintEffect,
 		identityHash?: UuidString,
 		length?: number,
 		contentHash?: UuidString,
-		parentNode?: NodeId,
+		parentNode?: StableNodeId,
 		label?: TraitLabel
 	): ConstraintInternal => ({
 		toConstrain,
@@ -225,7 +231,7 @@ export const ChangeInternal = {
  */
 export const DeleteInternal = {
 	/** {@inheritdoc Delete.create } */
-	create: (stableRange: StableRange): ChangeInternal => ChangeInternal.detach(stableRange),
+	create: (stableRange: StableRange_0_0_2): ChangeInternal => ChangeInternal.detach(stableRange),
 };
 
 /**
@@ -234,7 +240,7 @@ export const DeleteInternal = {
  */
 export const InsertInternal = {
 	/** {@inheritdoc (Insert:variable).create } */
-	create: (nodes: TreeNodeSequence<BuildNodeInternal>, destination: StablePlace): ChangeInternal[] => {
+	create: (nodes: TreeNodeSequence<BuildNodeInternal>, destination: StablePlace_0_0_2): ChangeInternal[] => {
 		const build = ChangeInternal.build(nodes, 0 as DetachedSequenceId);
 		return [build, ChangeInternal.insert(build.destination, destination)];
 	},
@@ -246,26 +252,129 @@ export const InsertInternal = {
  */
 export const MoveInternal = {
 	/** {@inheritdoc Move.create } */
-	create: (source: StableRange, destination: StablePlace): ChangeInternal[] => {
+	create: (source: StableRange_0_0_2, destination: StablePlace_0_0_2): ChangeInternal[] => {
 		const detach = ChangeInternal.detach(source, 0 as DetachedSequenceId);
 		return [detach, ChangeInternal.insert(assertNotUndefined(detach.destination), destination)];
 	},
 };
 
 /**
- * @returns True iff the given `node` is of type NodeData.
+ * {@inheritdoc (StablePlace:interface) }
+ * @public
+ */
+export interface StablePlace_0_0_2 {
+	/**
+	 * {@inheritdoc (StablePlace:interface).side }
+	 */
+	readonly side: Side;
+
+	/**
+	 * {@inheritdoc (StablePlace:interface).referenceSibling }
+	 */
+	readonly referenceSibling?: StableNodeId;
+
+	/**
+	 * {@inheritdoc (StablePlace:interface).referenceTrait }
+	 */
+	readonly referenceTrait?: TraitLocation_0_0_2;
+}
+
+/**
+ * {@inheritdoc (StableRange:interface) }
+ * @public
+ */
+export interface StableRange_0_0_2 {
+	/** {@inheritdoc (StableRange:interface).start } */
+	readonly start: StablePlace_0_0_2;
+	/** {@inheritdoc (StableRange:interface).end } */
+	readonly end: StablePlace_0_0_2;
+}
+
+/**
+ * The remainder of this file consists of factory methods duplicated with those for StableRange/StablePlace and are maintained while
+ * the new persisted version of SharedTree ops/summaries is rolled out.
+ */
+
+/**
+ * @public
+ */
+export const StablePlace_0_0_2 = {
+	/**
+	 * @returns The location directly before `node`.
+	 */
+	before: (node: NodeData_0_0_2 | StableNodeId): StablePlace_0_0_2 => ({
+		side: Side.Before,
+		referenceSibling: getStableNodeId(node),
+	}),
+	/**
+	 * @returns The location directly after `node`.
+	 */
+	after: (node: NodeData_0_0_2 | StableNodeId): StablePlace_0_0_2 => ({
+		side: Side.After,
+		referenceSibling: getStableNodeId(node),
+	}),
+	/**
+	 * @returns The location at the start of `trait`.
+	 */
+	atStartOf: (trait: TraitLocation_0_0_2): StablePlace_0_0_2 => ({ side: Side.After, referenceTrait: trait }),
+	/**
+	 * @returns The location at the end of `trait`.
+	 */
+	atEndOf: (trait: TraitLocation_0_0_2): StablePlace_0_0_2 => ({ side: Side.Before, referenceTrait: trait }),
+};
+
+/**
+ * @public
+ */
+export const StableRange_0_0_2 = {
+	/**
+	 * Factory for producing a `StableRange` from a start `StablePlace` to an end `StablePlace`.
+	 * @example
+	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
+	 */
+	from: (start: StablePlace_0_0_2): { to: (end: StablePlace_0_0_2) => StableRange_0_0_2 } => ({
+		to: (end: StablePlace_0_0_2): StableRange_0_0_2 => {
+			if (start.referenceTrait && end.referenceTrait) {
+				const message = 'StableRange must be constructed with endpoints from the same trait';
+				assert(start.referenceTrait.parent === end.referenceTrait.parent, message);
+				assert(start.referenceTrait.label === end.referenceTrait.label, message);
+			}
+			return { start, end };
+		},
+	}),
+	/**
+	 * @returns a `StableRange` which contains only the provided `node`.
+	 * Both the start and end `StablePlace` objects used to anchor this `StableRange` are in terms of the passed in node.
+	 */
+	only: (node: NodeData_0_0_2 | StableNodeId): StableRange_0_0_2 => ({
+		start: StablePlace_0_0_2.before(node),
+		end: StablePlace_0_0_2.after(node),
+	}),
+	/**
+	 * @returns a `StableRange` which contains everything in the trait.
+	 * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
+	 * it does not use sibling anchoring.
+	 */
+	all: (trait: TraitLocation_0_0_2): StableRange_0_0_2 => ({
+		start: StablePlace_0_0_2.atStartOf(trait),
+		end: StablePlace_0_0_2.atEndOf(trait),
+	}),
+};
+
+/**
+ * @returns True iff the given `node` is of type StableNodeData.
  * @internal
  */
-export function isNodeData(node: NodeData | NodeId): node is NodeData {
-	return (node as NodeData).definition !== undefined && (node as NodeData).identifier !== undefined;
+export function isNodeData_0_0_2(node: NodeData_0_0_2 | StableNodeId): node is NodeData_0_0_2 {
+	return (node as NodeData_0_0_2).definition !== undefined && (node as NodeData_0_0_2).identifier !== undefined;
 }
 
 /**
  * @returns The NodeId for a given node or its id.
  * @internal
  */
-export function getNodeId(node: NodeData | NodeId): NodeId {
-	if (isNodeData(node)) {
+export function getStableNodeId(node: NodeData_0_0_2 | StableNodeId): StableNodeId {
+	if (isNodeData_0_0_2(node)) {
 		return node.identifier;
 	} else {
 		return node;

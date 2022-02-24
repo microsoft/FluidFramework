@@ -18,7 +18,9 @@ export {
 	ConstraintEffect,
 	DeleteInternal,
 	MoveInternal,
-	getNodeId,
+	StablePlace_0_0_2,
+	StableRange_0_0_2,
+	getStableNodeId,
 } from './PersistedTypes';
 export * from './ChangeTypes';
 export * from './Factory';
@@ -32,3 +34,4 @@ export {
 	noHistorySummarizer_0_1_1,
 } from './Summary';
 export { SharedTreeUndoRedoHandler } from './UndoRedoHandler';
+export * from './Conversion002';

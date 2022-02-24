@@ -43,7 +43,7 @@ import {
 	NodeIdContext,
 	SharedTreeDiagnosticEvent,
 	SharedTreeSummaryWriteFormat,
-	StableTraitLocation,
+	TraitLocation,
 } from '../../generic';
 import { RevisionView, TreeView } from '../../generic/TreeView';
 import { EditLog } from '../../EditLog';
@@ -106,14 +106,6 @@ export interface SharedTreeTestingOptions {
 	 * Telemetry logger injected into the SharedTree.
 	 */
 	logger?: ITelemetryBaseLogger;
-}
-
-/**
- * Check if the given value is defined using mocha's `expect`. Return the defined value;
- */
-export function expectDefined<T>(value: T | undefined): T {
-	expect(value).to.be.not.undefined;
-	return value as T;
 }
 
 /**
@@ -207,8 +199,8 @@ export const simpleRevisionViewWithValidation = RevisionView.fromTree(simpleTest
  */
 export const initialRevisionViewWithValidation = RevisionView.fromTree(initialTree, true);
 
-export const testTraitLabel = 'e276f382-fa99-49a1-ae81-42001791c733' as TraitLabel;
-export function testTrait(view: TreeView): StableTraitLocation {
+export const testTraitLabel = SimpleTestTree.traitLabel;
+export function testTrait(view: TreeView): TraitLocation {
 	return {
 		label: testTraitLabel,
 		parent: view.root,

@@ -16,6 +16,7 @@ import {
 	PlaceValidationResult,
 	InsertInternal,
 	ConstraintEffect,
+	tryConvertToStableRange_0_0_2,
 } from '../default-edits';
 import { assert } from '../Common';
 import { initialTree } from '../InitialTree';
@@ -29,6 +30,7 @@ import {
 	testTraitLabel,
 } from './utilities/TestUtilities';
 import { SimpleTestTree } from './utilities/TestNode';
+import { expectDefined } from './utilities/TestCommon';
 
 describe('Transaction', () => {
 	const testTree = refreshTestTree();
@@ -485,16 +487,19 @@ describe('Transaction', () => {
 
 		it('can be malformed if the target range is malformed', () => {
 			const transaction = Transaction.factory(testTree.view, testTree);
-			const place = {
-				referenceTrait: testTree.left.traitLocation,
+			const referenceTrait = testTree.view.getTraitLocation(testTree.left.identifier);
+			const malformedPlace = {
+				// A place is malformed if it has both a reference trait and a reference sibling
+				referenceTrait,
 				referenceSibling: testTree.left.identifier,
 				side: Side.Before,
 			};
 			const range = {
-				start: place,
+				start: malformedPlace,
 				end: StablePlace.after(testTree.right),
 			};
-			const change = ChangeInternal.detach(range);
+			const stableRange = tryConvertToStableRange_0_0_2(range, testTree);
+			const change = ChangeInternal.detach(expectDefined(stableRange));
 			// Supplied StableRange is malformed
 			transaction.applyChange(change);
 			expect(transaction.status).equals(EditStatus.Malformed);
@@ -506,7 +511,7 @@ describe('Transaction', () => {
 				range,
 				rangeFailure: {
 					kind: RangeValidationResultKind.BadPlace,
-					place,
+					place: malformedPlace,
 					placeFailure: PlaceValidationResult.Malformed,
 				},
 			});

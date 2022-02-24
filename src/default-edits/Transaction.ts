@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, copyPropertyIfDefined, fail, Result } from '../Common';
-import { NodeId, DetachedSequenceId, TraitLabel } from '../Identifiers';
+import { assert, copyPropertyIfDefined, fail, Mutable, Result } from '../Common';
+import { NodeId, DetachedSequenceId, TraitLabel, StableNodeId } from '../Identifiers';
 import {
 	GenericTransaction,
 	EditStatus,
@@ -26,6 +26,8 @@ import {
 	DetachInternal,
 	InsertInternal,
 	SetValueInternal,
+	StablePlace_0_0_2,
+	StableRange_0_0_2,
 } from './PersistedTypes';
 import {
 	detachRange,
@@ -147,10 +149,11 @@ export namespace Transaction {
 				});
 			}
 
-			let idAlreadyPresent: NodeId | undefined;
-			let duplicateIdInBuild: NodeId | undefined;
+			let idAlreadyPresent: StableNodeId | undefined;
+			let duplicateIdInBuild: StableNodeId | undefined;
+			let invalidId: StableNodeId | undefined;
 			let detachedSequenceNotFound: DetachedSequenceId | undefined;
-			const map = new Map<NodeId, TreeViewNode>();
+			const map = new Map<StableNodeId, TreeViewNode>();
 			const newIds = this.createViewNodesForTree(
 				change.source,
 				(id, viewNode) => {
@@ -158,18 +161,39 @@ export namespace Transaction {
 						duplicateIdInBuild = id;
 						return true;
 					}
-					if (state.view.hasNode(id)) {
+					if (state.view.hasNode(viewNode.identifier)) {
 						idAlreadyPresent = id;
 						return true;
 					}
 					map.set(id, viewNode);
 					return false;
 				},
+				(stableId) => {
+					invalidId = stableId;
+				},
 				(detachedId) => {
 					detachedSequenceNotFound = detachedId;
 				}
 			);
 
+			if (idAlreadyPresent !== undefined) {
+				return Result.error({
+					status: EditStatus.Invalid,
+					failure: { kind: FailureKind.IdAlreadyInUse, change, id: idAlreadyPresent },
+				});
+			}
+			if (duplicateIdInBuild !== undefined) {
+				return Result.error({
+					status: EditStatus.Malformed,
+					failure: { kind: FailureKind.DuplicateIdInBuild, change, id: duplicateIdInBuild },
+				});
+			}
+			if (invalidId !== undefined) {
+				return Result.error({
+					status: EditStatus.Invalid,
+					failure: { kind: FailureKind.UnknownId, change, id: invalidId },
+				});
+			}
 			if (detachedSequenceNotFound !== undefined) {
 				return Result.error({
 					status: EditStatus.Malformed,
@@ -180,21 +204,12 @@ export namespace Transaction {
 					},
 				});
 			}
-			if (duplicateIdInBuild !== undefined) {
-				return Result.error({
-					status: EditStatus.Malformed,
-					failure: { kind: FailureKind.DuplicateIdInBuild, change, id: duplicateIdInBuild },
-				});
-			}
-			if (idAlreadyPresent !== undefined) {
-				return Result.error({
-					status: EditStatus.Invalid,
-					failure: { kind: FailureKind.IdAlreadyInUse, change, id: idAlreadyPresent },
-				});
-			}
 
 			const view = state.view.addNodes(map.values());
-			this.detached.set(change.destination, newIds ?? fail());
+			this.detached.set(
+				change.destination,
+				newIds ?? fail('Unhandled failure case in Transaction.createViewNodesForTree')
+			);
 			return Result.ok(view);
 		}
 
@@ -211,7 +226,8 @@ export namespace Transaction {
 				});
 			}
 
-			const destinationChangeResult = validateStablePlace(state.view, change.destination);
+			const { error, place } = this.convertPlace(change.destination);
+			const destinationChangeResult = error ?? validateStablePlace(state.view, place);
 			if (destinationChangeResult !== PlaceValidationResult.Valid) {
 				return Result.error({
 					status:
@@ -228,12 +244,13 @@ export namespace Transaction {
 			}
 
 			this.detached.delete(change.source);
-			const view = insertIntoTrait(state.view, source, change.destination);
+			const view = insertIntoTrait(state.view, source, place);
 			return Result.ok(view);
 		}
 
 		private applyDetach(state: ValidState, change: DetachInternal): ChangeResult<Failure> {
-			const sourceChangeResult = validateStableRange(state.view, change.source);
+			const { error, range } = this.convertRange(change.source);
+			const sourceChangeResult = error ?? validateStableRange(state.view, range);
 			if (sourceChangeResult !== RangeValidationResultKind.Valid) {
 				return Result.error({
 					status:
@@ -251,7 +268,7 @@ export namespace Transaction {
 				});
 			}
 
-			const result = detachRange(state.view, change.source);
+			const result = detachRange(state.view, range);
 			let modifiedView = result.view;
 			const { detached } = result;
 
@@ -279,7 +296,8 @@ export namespace Transaction {
 			assert(change.identityHash === undefined, 'identityHash constraint is not implemented');
 			assert(change.contentHash === undefined, 'contentHash constraint is not implemented');
 
-			const sourceChangeResult = validateStableRange(state.view, change.toConstrain);
+			const { error, range } = this.convertRange(change.toConstrain);
+			const sourceChangeResult = error ?? validateStableRange(state.view, range);
 			if (sourceChangeResult !== RangeValidationResultKind.Valid) {
 				return sourceChangeResult !== RangeValidationResultKind.PlacesInDifferentTraits &&
 					sourceChangeResult !== RangeValidationResultKind.Inverted &&
@@ -310,7 +328,7 @@ export namespace Transaction {
 					  });
 			}
 
-			const { start, end } = rangeFromStableRange(state.view, change.toConstrain);
+			const { start, end } = rangeFromStableRange(state.view, range);
 			const startIndex = state.view.findIndexWithinTrait(start);
 			const endIndex = state.view.findIndexWithinTrait(end);
 
@@ -328,7 +346,8 @@ export namespace Transaction {
 				});
 			}
 
-			if (change.parentNode !== undefined && change.parentNode !== end.trait.parent) {
+			const parentId = this.nodeIdContext.convertToStableNodeId(end.trait.parent);
+			if (change.parentNode !== undefined && change.parentNode !== parentId) {
 				return Result.error({
 					status: EditStatus.Invalid,
 					failure: {
@@ -336,7 +355,7 @@ export namespace Transaction {
 						constraint: change,
 						violation: {
 							kind: ConstraintViolationKind.BadParent,
-							actual: end.trait.parent,
+							actual: parentId,
 						},
 					},
 				});
@@ -360,14 +379,15 @@ export namespace Transaction {
 		}
 
 		private applySetValue(state: ValidState, change: SetValueInternal): ChangeResult<Failure> {
-			if (!state.view.hasNode(change.nodeToModify)) {
+			const nodeToModify = this.nodeIdContext.tryConvertToNodeId(change.nodeToModify);
+			if (nodeToModify === undefined || !state.view.hasNode(nodeToModify)) {
 				return Result.error({
 					status: EditStatus.Invalid,
 					failure: { kind: FailureKind.UnknownId, change, id: change.nodeToModify },
 				});
 			}
 
-			const newView = state.view.setNodeValue(change.nodeToModify, change.payload);
+			const newView = state.view.setNodeValue(nodeToModify, change.payload);
 			return Result.ok(newView);
 		}
 
@@ -379,7 +399,8 @@ export namespace Transaction {
 		 */
 		protected createViewNodesForTree(
 			sequence: Iterable<BuildNodeInternal>,
-			onCreateNode: (id: NodeId, node: TreeViewNode) => boolean,
+			onCreateNode: (stableId: StableNodeId, node: TreeViewNode) => boolean,
+			onInvalidId: (stableId: StableNodeId) => void,
 			onInvalidDetachedId: (sequenceId: DetachedSequenceId) => void
 		): NodeId[] | undefined {
 			const topLevelIds: NodeId[] = [];
@@ -393,7 +414,12 @@ export namespace Transaction {
 					topLevelIds.push(...detachedIds);
 				} else {
 					unprocessed.push(buildNode);
-					topLevelIds.push(buildNode.identifier);
+					const nodeId = this.nodeIdContext.tryConvertToNodeId(buildNode.identifier);
+					if (nodeId === undefined) {
+						onInvalidId(buildNode.identifier);
+						return undefined;
+					}
+					topLevelIds.push(nodeId);
 				}
 			}
 			while (unprocessed.length > 0) {
@@ -414,7 +440,12 @@ export namespace Transaction {
 									}
 									childIds.push(...detachedIds);
 								} else {
-									childIds.push(child.identifier);
+									const nodeId = this.nodeIdContext.tryConvertToNodeId(child.identifier);
+									if (nodeId === undefined) {
+										onInvalidId(child.identifier);
+										return undefined;
+									}
+									childIds.push(nodeId);
 									unprocessed.push(child);
 								}
 							}
@@ -422,13 +453,18 @@ export namespace Transaction {
 						}
 					}
 				}
+				const identifier = this.nodeIdContext.tryConvertToNodeId(node.identifier);
+				if (identifier === undefined) {
+					onInvalidId(node.identifier);
+					return undefined;
+				}
 				const newNode: TreeViewNode = {
-					identifier: node.identifier,
+					identifier,
 					definition: node.definition,
 					traits,
 				};
 				copyPropertyIfDefined(node, newNode, 'payload');
-				if (onCreateNode(newNode.identifier, newNode)) {
+				if (onCreateNode(node.identifier, newNode)) {
 					return undefined;
 				}
 			}
@@ -448,6 +484,67 @@ export namespace Transaction {
 			// Since we have retrieved the sequence, remove it from the void to prevent a second tree from multi-parenting it later
 			this.detached.delete(detachedId);
 			return detachedNodeIds;
+		}
+
+		private convertPlace(place_0_0_2: StablePlace_0_0_2): {
+			error?: PlaceValidationResult.MissingParent | PlaceValidationResult.MissingSibling;
+			place: StablePlace;
+		} {
+			let error: PlaceValidationResult.MissingParent | PlaceValidationResult.MissingSibling | undefined;
+			const place: Mutable<StablePlace> = {
+				side: place_0_0_2.side,
+			};
+			if (place_0_0_2.referenceSibling !== undefined) {
+				const nodeId = this.nodeIdContext.tryConvertToNodeId(place_0_0_2.referenceSibling);
+				if (nodeId === undefined) {
+					error = PlaceValidationResult.MissingSibling;
+				} else {
+					place.referenceSibling = nodeId;
+				}
+			}
+
+			if (place_0_0_2.referenceTrait !== undefined) {
+				const parent = this.nodeIdContext.tryConvertToNodeId(place_0_0_2.referenceTrait.parent);
+				if (parent === undefined) {
+					error = PlaceValidationResult.MissingParent;
+				} else {
+					place.referenceTrait = {
+						label: place_0_0_2.referenceTrait.label,
+						parent,
+					};
+				}
+			}
+
+			if (error !== undefined) {
+				return { error, place };
+			}
+			return { place };
+		}
+
+		private convertRange(range_0_0_2: StableRange_0_0_2): {
+			error?: {
+				kind: RangeValidationResultKind.BadPlace;
+				place: StablePlace;
+				placeFailure: BadPlaceValidationResult;
+			};
+			range: StableRange;
+		} {
+			const { error: startError, place: startPlace } = this.convertPlace(range_0_0_2.start);
+			const { error: endError, place: endPlace } = this.convertPlace(range_0_0_2.end);
+			const range = { start: startPlace, end: endPlace };
+			if (startError !== undefined) {
+				return {
+					error: { kind: RangeValidationResultKind.BadPlace, place: startPlace, placeFailure: startError },
+					range,
+				};
+			}
+			if (endError !== undefined) {
+				return {
+					error: { kind: RangeValidationResultKind.BadPlace, place: endPlace, placeFailure: endError },
+					range,
+				};
+			}
+			return { range };
 		}
 	}
 
@@ -572,7 +669,7 @@ export namespace Transaction {
 		/**
 		 * ID of duplicated node
 		 */
-		readonly id: NodeId;
+		readonly id: StableNodeId;
 	}
 
 	/**
@@ -590,7 +687,7 @@ export namespace Transaction {
 		/**
 		 * ID of already in use node
 		 */
-		readonly id: NodeId;
+		readonly id: StableNodeId;
 	}
 
 	/**
@@ -608,7 +705,7 @@ export namespace Transaction {
 		/**
 		 * The unknown ID
 		 */
-		readonly id: NodeId;
+		readonly id: StableNodeId;
 	}
 
 	/**
@@ -626,7 +723,7 @@ export namespace Transaction {
 		/**
 		 * The faulting place
 		 */
-		readonly place: StablePlace;
+		readonly place: StablePlace_0_0_2;
 		/**
 		 * The reason for the failure
 		 */
@@ -648,7 +745,7 @@ export namespace Transaction {
 		/**
 		 * Faulting range
 		 */
-		readonly range: StableRange;
+		readonly range: StableRange_0_0_2;
 		/**
 		 * The reason for the failure
 		 */
@@ -687,7 +784,7 @@ export namespace Transaction {
 		  }
 		| {
 				readonly kind: ConstraintViolationKind.BadParent;
-				readonly actual: NodeId;
+				readonly actual: StableNodeId;
 		  }
 		| {
 				readonly kind: ConstraintViolationKind.BadLabel;

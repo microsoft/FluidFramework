@@ -25,9 +25,10 @@ import { EditId } from '../Identifiers';
 import { assert, copyPropertyIfDefined } from '../Common';
 import { newEdit, Edit, EditStatus, ChangeNode, RevisionView, NodeIdContext } from '../generic';
 import { initialTree } from '../InitialTree';
-import { expectDefined, refreshTestTree, testTraitLabel } from './utilities/TestUtilities';
+import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities';
 import { MockTransaction } from './utilities/MockTransaction';
 import { buildStableLeaf, TestTree } from './utilities/TestNode';
+import { expectDefined } from './utilities/TestCommon';
 
 /**
  * Creates an {@link EditLog} and accompanying {@link RevisionView} with pre-existing edits.

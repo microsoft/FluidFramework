@@ -14,7 +14,6 @@ export {
 	ISharedTreeEvents,
 	GenericSharedTree,
 	SharedTreeFactoryOptions,
-	SharedTreeSummaryWriteFormat,
 	SharedTreeSummaryReadFormat,
 	SharedTreeChangeType,
 	SharedTreeFailureType,
@@ -28,25 +27,23 @@ export {
 	TraitMap,
 	TreeNodeSequence,
 	Payload,
+	NodeDataBase,
 	NodeData,
+	NodeData_0_0_2,
 	TreeNode,
+	TreeNode_0_0_2,
 	ChangeNode,
+	ChangeNode_0_0_2,
 	EditStatus,
 	TraitLocation,
-	StableTraitLocation,
+	TraitLocation_0_0_2,
 	SharedTreeOpType,
+	SharedTreeSummaryWriteFormat,
 	PlaceholderTree,
+	PlaceholderTree_0_0_2,
 	HasTraits,
 } from './PersistedTypes';
-export {
-	newEdit,
-	newEditId,
-	comparePayloads,
-	convertTreeNodes,
-	deepCloneStablePlace,
-	deepCloneStableRange,
-	NoTraits,
-} from './GenericEditUtilities';
+export { newEdit, newEditId, comparePayloads, convertTreeNodes, NoTraits } from './EditUtilities';
 export {
 	TransactionFactory,
 	GenericTransaction,
@@ -83,6 +80,7 @@ export {
 	TreeViewRange,
 } from './TreeView';
 export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
+export * from './Conversion002';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package

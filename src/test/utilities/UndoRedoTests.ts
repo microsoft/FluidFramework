@@ -10,8 +10,9 @@ import { Change, Delete, Insert, SharedTree, StablePlace, StableRange } from '..
 import { DetachedSequenceId, EditId } from '../../Identifiers';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { NodeData } from '../../generic';
-import { deepCompareNodes, expectDefined, setUpTestSharedTree, setUpTestTree } from './TestUtilities';
+import { deepCompareNodes, setUpTestSharedTree, setUpTestTree } from './TestUtilities';
 import { TestTree } from './TestNode';
+import { expectDefined } from './TestCommon';
 
 /** Options used to generate a SharedTree undo/redo test suite. */
 interface SharedTreeUndoRedoOptions {

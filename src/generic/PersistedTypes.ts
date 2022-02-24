@@ -9,8 +9,7 @@
 // This does mean that the various UuidString types must remain strings, and must never change the format unless the process for changing
 // persisted types (as documented below) is followed.
 import { Serializable } from '@fluidframework/datastore-definitions';
-import { Definition, EditId, NodeId, TraitLabel } from '../Identifiers';
-import { SharedTreeSummaryWriteFormat } from './GenericSharedTree';
+import { Definition, EditId, NodeId, StableNodeId, TraitLabel } from '../Identifiers';
 
 /**
  * Defines a place relative to sibling.
@@ -147,10 +146,13 @@ export type TreeNodeSequence<TChild> = readonly TChild[];
 export type Payload = Serializable;
 
 /**
- * The fields required by a node in a tree
+ * Contains properties common to all nodes
  * @public
  */
-export interface NodeData {
+export interface NodeDataBase {
+	/**
+	 * A payload of arbitrary serializable data
+	 */
 	readonly payload?: Payload;
 
 	/**
@@ -159,7 +161,13 @@ export interface NodeData {
 	 * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
 	 */
 	readonly definition: Definition;
+}
 
+/**
+ * The fields required by a node in a tree
+ * @public
+ */
+export interface NodeData extends NodeDataBase {
 	/**
 	 * Identifier which can be used to refer to this Node.
 	 */
@@ -178,12 +186,6 @@ export interface TreeNode<TChild> extends NodeData, HasTraits<TChild> {}
 export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
 /**
- * Specifies the location of a trait (a labeled sequence of nodes) within the tree. Safe to persist/serialize.
- * @public
- */
-export type StableTraitLocation = TraitLocation;
-
-/**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
  * @public
  */
@@ -196,7 +198,7 @@ export interface TraitLocation {
  * JSON-compatible Node type. Objects of this type will be persisted in internal change objects (under Edits) in the SharedTree history.
  * @public
  */
-export type ChangeNode = PlaceholderTree;
+export type ChangeNode = TreeNode<ChangeNode>;
 
 /**
  * The status code of an attempt to apply the changes in an Edit.
@@ -259,3 +261,57 @@ export interface SharedTreeHandleOp extends SharedTreeOp {
 	/** The index of the first edit in the chunk that corresponds to the handle. */
 	readonly startRevision: number;
 }
+
+/**
+ * Format versions that SharedTree supports writing.
+ * @public
+ */
+export enum SharedTreeSummaryWriteFormat {
+	/** Stores all edits in their raw format. */
+	Format_0_0_2 = '0.0.2',
+	/** Supports history virtualization and makes currentView optional. */
+	Format_0_1_1 = '0.1.1',
+}
+
+// #region 0_0_2
+
+/**
+ * The fields required by a node in a tree
+ * @public
+ */
+export interface NodeData_0_0_2 extends NodeDataBase {
+	/**
+	 * Identifier which can be used to refer to this Node.
+	 */
+	readonly identifier: StableNodeId;
+}
+
+/**
+ * Satisfies `NodeData_0_0_2` and may contain children under traits (which may or may not be `TreeNodes`)
+ * @public
+ */
+export interface TreeNode_0_0_2<TChild> extends NodeData_0_0_2, HasTraits<TChild> {}
+
+/**
+ * A tree whose nodes are either TreeNode_0_0_2s or a placeholder
+ * @public
+ */
+export type PlaceholderTree_0_0_2<TPlaceholder = never> =
+	| TreeNode_0_0_2<PlaceholderTree_0_0_2<TPlaceholder>>
+	| TPlaceholder;
+
+/**
+ * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
+ * @public
+ */
+export interface TraitLocation_0_0_2 extends Omit<TraitLocation, 'parent'> {
+	parent: StableNodeId;
+}
+
+/**
+ * JSON-compatible Node type. Objects of this type will be persisted in internal change objects (under Edits) in the SharedTree history.
+ * @public
+ */
+export type ChangeNode_0_0_2 = TreeNode_0_0_2<ChangeNode_0_0_2>;
+
+// #endregion

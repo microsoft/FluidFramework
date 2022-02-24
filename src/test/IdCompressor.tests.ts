@@ -35,7 +35,7 @@ import {
 	roundtrip,
 	sessionNumericUuids,
 } from './utilities/IdCompressorTestUtilities';
-import { expectDefined } from './utilities/TestUtilities';
+import { expectDefined } from './utilities/TestCommon';
 
 describe('IdCompressor', () => {
 	it('detects invalid cluster sizes', () => {

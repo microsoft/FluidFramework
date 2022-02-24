@@ -2,7 +2,8 @@ import { expect } from 'chai';
 import { ChangeInternal, DetachInternal, revert, StablePlace, StableRange } from '../default-edits';
 import { Side } from '../generic';
 import { DetachedSequenceId } from '../Identifiers';
-import { expectDefined, refreshTestTree } from './utilities/TestUtilities';
+import { expectDefined } from './utilities/TestCommon';
+import { refreshTestTree } from './utilities/TestUtilities';
 
 describe('revert', () => {
 	const testTree = refreshTestTree();

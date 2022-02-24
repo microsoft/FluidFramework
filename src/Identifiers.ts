@@ -91,7 +91,7 @@ export type FinalCompressedId = number & {
  * A compressed ID that is local to a session (can only be decompressed when paired with a SessionId).
  * It should not be persisted outside of the history as it can only be decompressed in the context of the originating session.
  * If external persistence is needed (e.g. by a client), a StableId should be used instead.
- * @internal
+ * @public
  */
 export type LocalCompressedId = number & {
 	readonly LocalCompressedId: '6fccb42f-e2a4-4243-bd29-f13d12b9c6d1';
@@ -110,7 +110,7 @@ export type NodeId = UuidString & { readonly NodeId: 'e53e7d6b-c8b9-431a-8805-48
  * @public
  */
 // TODO:#70358: Properly type StableNodeId:
-// string & { readonly StableNodeId: 'a0843b38-699d-4bb2-aa7a-16c502a71151' };
+// export type StableNodeId = string & { readonly StableNodeId: 'a0843b38-699d-4bb2-aa7a-16c502a71151' };
 export type StableNodeId = NodeId;
 
 /**

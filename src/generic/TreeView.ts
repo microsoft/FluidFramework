@@ -6,7 +6,9 @@
 import { assert, copyPropertyIfDefined, fail } from '../Common';
 import { NodeId, TraitLabel } from '../Identifiers';
 import { Delta, Forest } from '../Forest';
-import { ChangeNode, NodeData, Payload, Side, StableTraitLocation } from './PersistedTypes';
+import { ChangeNode, ChangeNode_0_0_2, NodeData, Payload, Side, TraitLocation } from './PersistedTypes';
+import { tryConvertToChangeNode } from './Conversion002';
+import { NodeIdConverter } from './NodeIdUtilities';
 
 /**
  * An immutable view of a distributed tree node.
@@ -42,7 +44,7 @@ export type TraitNodeIndex = number & { readonly TraitNodeIndex: unique symbol }
 export interface TreeViewPlace {
 	readonly sibling?: NodeId;
 	readonly side: Side;
-	readonly trait: StableTraitLocation;
+	readonly trait: TraitLocation;
 }
 
 /**
@@ -60,7 +62,7 @@ export interface TreeViewRange {
  * @public
  */
 export interface NodeInTrait {
-	readonly trait: StableTraitLocation;
+	readonly trait: TraitLocation;
 	readonly index: TraitNodeIndex;
 }
 
@@ -157,7 +159,7 @@ export abstract class TreeView {
 	 * @returns the trait location of the node with the given id. Fails if the node does not exist in this view or of it is the root
 	 * node
 	 */
-	public getTraitLocation(id: NodeId): StableTraitLocation {
+	public getTraitLocation(id: NodeId): TraitLocation {
 		const parentData = this.forest.getParent(id);
 		return {
 			parent: parentData.parentId,
@@ -169,7 +171,7 @@ export abstract class TreeView {
 	 * @returns the trait location of the node with the given id, or undefined if the node does not exist in this view or if it is the root
 	 * node
 	 */
-	public tryGetTraitLocation(id: NodeId): StableTraitLocation | undefined {
+	public tryGetTraitLocation(id: NodeId): TraitLocation | undefined {
 		const parentData = this.forest.tryGetParent(id);
 		if (parentData === undefined) {
 			return undefined;
@@ -233,7 +235,7 @@ export abstract class TreeView {
 	/**
 	 * @returns the trait at the given location. If no such trait exists, returns an empty trait.
 	 */
-	public getTrait(traitLocation: StableTraitLocation): readonly NodeId[] {
+	public getTrait(traitLocation: TraitLocation): readonly NodeId[] {
 		return this.getViewNode(traitLocation.parent).traits.get(traitLocation.label) ?? [];
 	}
 
@@ -272,7 +274,7 @@ export abstract class TreeView {
 		}
 	}
 
-	private getIndexOfSide(side: Side, traitLocation: StableTraitLocation): PlaceIndex {
+	private getIndexOfSide(side: Side, traitLocation: TraitLocation): PlaceIndex {
 		return side === Side.After ? (0 as PlaceIndex) : (this.getTrait(traitLocation).length as PlaceIndex);
 	}
 
@@ -293,6 +295,22 @@ export abstract class TreeView {
  * @public
  */
 export class RevisionView extends TreeView {
+	/**
+	 * Constructs a `RevisionView` using the supplied tree.
+	 * @param root - the root of the tree to use as the contents of the `RevisionView`
+	 */
+	public static fromTree_0_0_2(
+		root: ChangeNode_0_0_2,
+		idConverter: NodeIdConverter,
+		expensiveValidation = false
+	): RevisionView | undefined {
+		const tree = tryConvertToChangeNode(root, idConverter);
+		if (tree === undefined) {
+			return undefined;
+		}
+		return RevisionView.fromTree(tree, expensiveValidation);
+	}
+
 	/**
 	 * Constructs a `RevisionView` using the supplied tree.
 	 * @param root - the root of the tree to use as the contents of the `RevisionView`
