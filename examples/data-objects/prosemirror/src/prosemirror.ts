@@ -169,7 +169,7 @@ export class ProseMirror extends EventEmitter
     }
 }
 
-class ProseMirrorFactory implements IFluidDataStoreFactory {
+export class ProseMirrorFactory implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/prosemirror";
     public readonly type = ProseMirrorFactory.type;
 

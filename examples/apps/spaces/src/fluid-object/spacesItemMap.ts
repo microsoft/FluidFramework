@@ -15,7 +15,7 @@ import { CodeMirrorComponent, CodeMirrorView, SmdeFactory } from "@fluid-example
 import { CollaborativeText, CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
-import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
+import { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "@fluid-example/prosemirror";
 import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
@@ -23,6 +23,7 @@ import * as React from "react";
 import { Layout } from "react-grid-layout";
 
 const codeMirrorFactory = new SmdeFactory();
+const proseMirrorFactory = new ProseMirrorFactory();
 
 interface ISingleHandleItem {
     handle: IFluidHandle;
@@ -38,12 +39,6 @@ function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
         };
     };
 }
-
-const getAdaptedViewForSingleHandleItem = async (serializableObject: ISingleHandleItem) => {
-    const handle = serializableObject.handle;
-    const component = await handle.get();
-    return React.createElement(ReactViewAdapter, { view: component });
-};
 
 const getClickerView = async (serializableObject: ISingleHandleItem) => {
     const handle = serializableObject.handle as IFluidHandle<Clicker>;
@@ -64,6 +59,15 @@ const getCollaborativeTextView = async (serializableObject: ISingleHandleItem) =
     const handle = serializableObject.handle as IFluidHandle<CollaborativeText>;
     const collaborativeText = await handle.get();
     return React.createElement(CollaborativeTextView, { text: collaborativeText.text });
+};
+
+const getProseMirrorView = async (serializableObject: ISingleHandleItem) => {
+    const handle = serializableObject.handle as IFluidHandle<ProseMirror>;
+    const proseMirror = await handle.get();
+    return React.createElement(
+        ReactViewAdapter,
+        { view: new ProseMirrorView(proseMirror.collabManager) },
+    );
 };
 
 const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) => {
@@ -106,8 +110,8 @@ const textboxItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
 };
 
 const prosemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
-    create: createSingleHandleItem(pmfe),
-    getView: getAdaptedViewForSingleHandleItem,
+    create: createSingleHandleItem(proseMirrorFactory),
+    getView: getProseMirrorView,
     friendlyName: "Rich Text",
     fabricIconName: "FabricTextHighlight",
 };
@@ -132,7 +136,7 @@ export const spacesRegistryEntries: NamedFluidDataStoreRegistryEntries = new Map
     ClickerInstantiationFactory.registryEntry,
     [codeMirrorFactory.type, Promise.resolve(codeMirrorFactory)],
     [CollaborativeText.Name, Promise.resolve(CollaborativeText.getFactory())],
-    [pmfe.type, Promise.resolve(pmfe)],
+    [proseMirrorFactory.type, Promise.resolve(proseMirrorFactory)],
     Coordinate.getFactory().registryEntry,
 ]);
 

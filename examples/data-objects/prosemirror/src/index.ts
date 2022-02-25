@@ -13,6 +13,8 @@ import { requestFluidObject, RequestParser, RuntimeFactoryHelper } from "@fluidf
 import { MountableView } from "@fluidframework/view-adapters";
 import { fluidExport as smde, ProseMirror, ProseMirrorView } from "./prosemirror";
 
+export { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "./prosemirror";
+
 const defaultComponentId = "default";
 
 type ViewCallback<T> = (fluidModel: T) => any;
@@ -34,7 +36,7 @@ const makeViewRequestHandler = <T>(viewCallback: ViewCallback<T>): RuntimeReques
 
 const viewCallback = (proseMirror: ProseMirror) => new ProseMirrorView(proseMirror.collabManager);
 
-class ProseMirrorFactory extends RuntimeFactoryHelper {
+class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
         await runtime.createRootDataStore(smde.type, defaultComponentId);
     }
@@ -62,4 +64,4 @@ class ProseMirrorFactory extends RuntimeFactoryHelper {
     }
 }
 
-export const fluidExport = new ProseMirrorFactory();
+export const fluidExport = new ProseMirrorRuntimeFactory();
