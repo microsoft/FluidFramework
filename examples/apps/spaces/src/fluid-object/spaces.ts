@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import ReactDOM from "react-dom";
 import { Layout } from "react-grid-layout";
 import {
     DataObject,
@@ -16,11 +14,9 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { ISpacesStoredItem, SpacesStorage } from "./storage";
-import { SpacesView } from "./spacesView";
 import {
     spacesItemMap,
     spacesRegistryEntries,
@@ -50,7 +46,7 @@ export interface ISpacesItem {
 /**
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
-export class Spaces extends DataObject implements IFluidHTMLView {
+export class Spaces extends DataObject {
     private _storageComponent: SpacesStorage | undefined;
     public get storageComponent(): SpacesStorage {
         if (this._storageComponent === undefined) {
@@ -76,8 +72,6 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         return Spaces.factory;
     }
 
-    public get IFluidHTMLView() { return this; }
-
     // In order to handle direct links to items, we'll link to the Spaces component with a path of the itemId for the
     // specific item we want.  We route through Spaces because it's the one with the registry, and so it's the one
     // that knows how to getViewForItem().
@@ -102,16 +96,6 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     }
 
     public readonly getBaseUrl = async () => this.context.getAbsoluteUrl(this.handle.absolutePath);
-
-    /**
-     * Will return a new Spaces View
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <View model={this} />,
-            div,
-        );
-    }
 
     protected async initializingFirstTime() {
         const storageComponent = await SpacesStorage.getFactory().createChildInstance(this.context);
@@ -194,32 +178,3 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         return registryEntry.getView(item.serializableObject);
     };
 }
-
-interface ISpacesViewProps {
-    model: Spaces;
-}
-
-const View: React.FC<ISpacesViewProps> = (props: ISpacesViewProps) => {
-    const { model } = props;
-    const [baseUrl, setBaseUrl] = React.useState<string | undefined>("");
-    React.useEffect(() => {
-        const getBaseUrl = async () => {
-            setBaseUrl(await model.getBaseUrl());
-        };
-
-        getBaseUrl().catch((error) => {
-            console.error(error);
-        });
-    });
-    return (
-        <SpacesView
-            itemMap={spacesItemMap}
-            storage={model.storageComponent}
-            addItem={model.addItem}
-            templates={[...Object.keys(templateDefinitions)]}
-            applyTemplate={model.applyTemplate}
-            getViewForItem={model.getViewForItem}
-            getUrlForItem={(itemId: string) => `#${baseUrl}/${itemId}`}
-        />
-    );
-};
