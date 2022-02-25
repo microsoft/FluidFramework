@@ -12,11 +12,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
-import { CollaborativeText } from "@fluid-example/collaborative-textarea";
+import { CollaborativeText, CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
-import { ClickerInstantiationFactory } from "@fluid-example/clicker";
+import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import * as React from "react";
@@ -49,6 +49,18 @@ const getSliderCoordinateView = async (serializableObject: ISingleHandleItem) =>
     return React.createElement(SliderCoordinateView, { label: "Coordinate", model });
 };
 
+const getClickerView = async (serializableObject: ISingleHandleItem) => {
+    const handle = serializableObject.handle as IFluidHandle<Clicker>;
+    const clicker = await handle.get();
+    return React.createElement(ClickerReactView, { clicker });
+};
+
+const getCollaborativeTextView = async (serializableObject: ISingleHandleItem) => {
+    const handle = serializableObject.handle as IFluidHandle<CollaborativeText>;
+    const collaborativeText = await handle.get();
+    return React.createElement(CollaborativeTextView, { text: collaborativeText.text });
+};
+
 /**
  * A registry entry, with extra metadata.
  */
@@ -63,7 +75,7 @@ export interface ISpacesItemEntry<T = any> {
 
 const clickerItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(ClickerInstantiationFactory),
-    getView: getAdaptedViewForSingleHandleItem,
+    getView: getClickerView,
     friendlyName: "Clicker",
     fabricIconName: "Touch",
 };
@@ -77,7 +89,7 @@ const codemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
 
 const textboxItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
     create: createSingleHandleItem(CollaborativeText.getFactory()),
-    getView: getAdaptedViewForSingleHandleItem,
+    getView: getCollaborativeTextView,
     friendlyName: "Text Box",
     fabricIconName: "Edit",
 };
