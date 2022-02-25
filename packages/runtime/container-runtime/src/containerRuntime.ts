@@ -1464,8 +1464,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // If this counter reaches a max, it's a good indicator that the container
     // is not making progress and it is stuck in a retry loop.
     private arePendingStatesDrained(): boolean {
-        return this.maxConsecutiveReplays > 0
-            && ++this.consecutiveReplays < this.maxConsecutiveReplays;
+        if (this.maxConsecutiveReplays < 0) {
+            // Feature disabled, we assume we are always making progress
+            return true;
+        }
+
+        return !this.pendingStateManager.hasPendingMessages()
+            || ++this.consecutiveReplays < this.maxConsecutiveReplays;
     }
 
     private resetPendingStateReplayCount() {
@@ -1476,7 +1481,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // We need to be able to send ops to replay states
         if (!this.canSendOps()) { return; }
 
-        if (this.pendingStateManager.hasPendingMessages() && !this.arePendingStatesDrained()) {
+        if (!this.arePendingStatesDrained()) {
             this.closeFn(new GenericError(
                 "PendingReplaysWithNoProgress",
                 undefined, // error
