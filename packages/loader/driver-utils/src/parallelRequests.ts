@@ -402,8 +402,7 @@ async function getSingleOpBatch(
                 // ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get
                 // current as it can't get ops.
                 throw createGenericNetworkError(
-                    "failedToRetrieveOpsFromStorage:TooManyRetries",
-                    undefined,
+                    "failedToRetrieveOpsFromStorage:TooManyRetries", //* Format
                     { canRetry: false },
                     {
                         retry,
