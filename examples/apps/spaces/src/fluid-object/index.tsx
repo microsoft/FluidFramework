@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { ReactElement } from "react";
+import React from "react";
 import ReactDOM from "react-dom";
 import { Layout } from "react-grid-layout";
 import {
@@ -51,7 +51,7 @@ export interface ISpacesItem {
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
 export class Spaces extends DataObject implements IFluidHTMLView {
-    private storageComponent: SpacesStorage | undefined;
+    public storageComponent: SpacesStorage | undefined;
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
@@ -95,46 +95,14 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         return super.request(req);
     }
 
+    public readonly getBaseUrl = async () => this.context.getAbsoluteUrl(this.handle.absolutePath);
+
     /**
      * Will return a new Spaces View
      */
     public render(div: HTMLElement) {
-        const addItem = (type: string) => {
-            this.createAndStoreItem(type, { w: 20, h: 5, x: 0, y: 0 })
-                .catch((error) => {
-                    console.error(`Error while creating item: ${type}`, error);
-                });
-        };
-
-        const View: (props: any) => ReactElement = () => {
-            if (this.storageComponent === undefined) {
-                throw new Error("Spaces can't render, storage not found");
-            }
-            const [baseUrl, setBaseUrl] = React.useState<string | undefined>("");
-            React.useEffect(() => {
-                const getBaseUrl = async () => {
-                    setBaseUrl(await this.context.getAbsoluteUrl(this.handle.absolutePath));
-                };
-
-                getBaseUrl().catch((error) => {
-                    console.error(error);
-                });
-            });
-            return (
-                <SpacesView
-                    itemMap={spacesItemMap}
-                    storage={this.storageComponent}
-                    addItem={addItem}
-                    templates={[...Object.keys(templateDefinitions)]}
-                    applyTemplate={this.applyTemplate}
-                    getViewForItem={this.getViewForItem}
-                    getUrlForItem={(itemId: string) => `#${baseUrl}/${itemId}`}
-                />
-            );
-        };
-
         ReactDOM.render(
-            <View />,
+            <View model={this} />,
             div,
         );
     }
@@ -154,7 +122,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
             await this.root.get<IFluidHandle<SpacesStorage>>(SpacesStorageKey)?.get();
     }
 
-    private readonly applyTemplate = async (template: string) => {
+    public readonly applyTemplate = async (template: string) => {
         const itemPromises: Promise<string>[] = [];
         const templateDefinition = templateDefinitions[template];
         for (const [itemType, layouts] of Object.entries(templateDefinition)) {
@@ -184,6 +152,13 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         }
     }
 
+    public readonly addItem = (type: string) => {
+        this.createAndStoreItem(type, { w: 20, h: 5, x: 0, y: 0 })
+            .catch((error) => {
+                console.error(`Error while creating item: ${type}`, error);
+            });
+    };
+
     private async createAndStoreItem(type: string, layout: Layout): Promise<string> {
         if (this.storageComponent === undefined) {
             throw new Error("Can't add item, storage not found");
@@ -204,7 +179,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         );
     }
 
-    private readonly getViewForItem = async (item: ISpacesItem) => {
+    public readonly getViewForItem = async (item: ISpacesItem) => {
         const registryEntry = spacesItemMap.get(item.itemType);
 
         if (registryEntry === undefined) {
@@ -215,3 +190,35 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         return registryEntry.getView(item.serializableObject);
     };
 }
+
+interface ISpacesViewProps {
+    model: Spaces;
+}
+
+const View: React.FC<ISpacesViewProps> = (props: ISpacesViewProps) => {
+    const { model } = props;
+    if (model.storageComponent === undefined) {
+        throw new Error("Spaces can't render, storage not found");
+    }
+    const [baseUrl, setBaseUrl] = React.useState<string | undefined>("");
+    React.useEffect(() => {
+        const getBaseUrl = async () => {
+            setBaseUrl(await model.getBaseUrl());
+        };
+
+        getBaseUrl().catch((error) => {
+            console.error(error);
+        });
+    });
+    return (
+        <SpacesView
+            itemMap={spacesItemMap}
+            storage={model.storageComponent}
+            addItem={model.addItem}
+            templates={[...Object.keys(templateDefinitions)]}
+            applyTemplate={model.applyTemplate}
+            getViewForItem={model.getViewForItem}
+            getUrlForItem={(itemId: string) => `#${baseUrl}/${itemId}`}
+        />
+    );
+};
