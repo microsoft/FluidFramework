@@ -1,5 +1,47 @@
 # Change Log
 
+## 24.2.2
+
+* improvement: Use non-recursive function to produce TreeViewNodes
+  * Associated pull request: [38371](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38371)
+  * Commit: [6a0c4c045ae71fa0b0069661b2f00a11c3d4e93e](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/6a0c4c045ae71fa0b0069661b2f00a11c3d4e93e)
+* build: update package dependencies 2/23/2022
+  * Associated pull request: [38342](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38342)
+  * Commit: [ef72db80de550d2c1c49434c2d83aaedbe013789](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ef72db80de550d2c1c49434c2d83aaedbe013789)
+* improvement: BREAKING CHANGE: Add legacy 0_0_2 types
+  * Associated pull request: [38337](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38337)
+  * Commit: [2588dd8519a860125554004e81c29e800c73d1d2](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2588dd8519a860125554004e81c29e800c73d1d2)
+* feat: Adds WaitableDocument interface, exposes waitForUnsentLocalEdits on document
+  * Associated pull request: [38085](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38085)
+  * Commit: [ade1565bd30bf731a9a547ca9eb4d7b81acdf7d5](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ade1565bd30bf731a9a547ca9eb4d7b81acdf7d5)
+* improvement: BREAKING CHANGE: add nodeIdContext to Transaction
+  * Associated pull request: [38273](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38273)
+  * Commit: [2c88dfa04560f8bf803918309967c26e58434d44](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2c88dfa04560f8bf803918309967c26e58434d44)
+* improvement: BREAKING CHANGE: various refactors/cleanup for ID Compression
+  * Associated pull request: [38280](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38280)
+  * Commit: [044a3fa7edc0c5100dfab9150a92d5cecf0964fc](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/044a3fa7edc0c5100dfab9150a92d5cecf0964fc)
+* fix: BREAKING CHANGE: fix some circular dependencies
+  * Associated pull request: [38256](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38256)
+  * Commit: [8bfbdacc49a37ea4d44b7b0cc068de346b92084b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8bfbdacc49a37ea4d44b7b0cc068de346b92084b)
+* feat: Add NodeIdConverter interface
+  * Associated pull request: [38253](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38253)
+  * Commit: [7c7d8bb8f070eb2330575bc41b2024606b789cb7](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/7c7d8bb8f070eb2330575bc41b2024606b789cb7)
+* feat: BREAKING CHANGE: Make BuildNode identifier optional
+  * Associated pull request: [38232](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38232)
+  * Commit: [7672a617bedd0aa1f705bd75829b6e5b811692ab](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/7672a617bedd0aa1f705bd75829b6e5b811692ab)
+* docs: Mention reason for conditional captureStackTrace call
+  * Associated pull request: [38216](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38216)
+  * Commit: [d0671dfb7179f713f6a06bee199646fe615a3464](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d0671dfb7179f713f6a06bee199646fe615a3464)
+* tools: Update eslint configuration to protect against cyclic imports and self imports
+  * Associated pull request: [38091](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38091)
+  * Commit: [45417dff6625a3fb46c83ad51c861d5ff1a9773b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/45417dff6625a3fb46c83ad51c861d5ff1a9773b)
+* refactor: remove use of ChangeInternal in CheckoutTests
+  * Associated pull request: [38086](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38086)
+  * Commit: [30f801604546053da7e73cf5f4448773b25d5823](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/30f801604546053da7e73cf5f4448773b25d5823)
+* refactor: remove all imports of '.' and an import of '..' that was not in a test.
+  * Associated pull request: [38020](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38020)
+  * Commit: [0c9c4d01d1061ba028aa475f00f36df891efc8fe](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0c9c4d01d1061ba028aa475f00f36df891efc8fe)
+
 ## 20.5.0
 
 * feat: clarify compression API in IdCompressor
