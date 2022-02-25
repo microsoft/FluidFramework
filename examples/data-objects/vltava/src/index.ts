@@ -73,6 +73,10 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
     public getByFactory(factoryId: string): IInternalRegistryEntry<DefaultRegistryTypes> | undefined {
         return this.containerFluidObjectArray.find((entry) => entry.factory.type === factoryId);
     }
+
+    public getAll(): IInternalRegistryEntry<DefaultRegistryTypes>[] {
+        return this.containerFluidObjectArray;
+    }
 }
 
 export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultDataStore {

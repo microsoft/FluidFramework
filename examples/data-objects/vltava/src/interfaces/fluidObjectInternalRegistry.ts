@@ -23,6 +23,7 @@ export interface IFluidObjectInternalRegistry<T=DefaultRegistryTypes> extends IP
     getFromCapability(type: FluidObjectKeys<T>): IInternalRegistryEntry<T>[];
     hasCapability(type: string, capability: FluidObjectKeys<T>): boolean;
     getByFactory(factoryId: string): IInternalRegistryEntry | undefined;
+    getAll(): IInternalRegistryEntry<T>[];
 }
 
 /**

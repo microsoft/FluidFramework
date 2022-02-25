@@ -19,7 +19,6 @@ import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 import { v4 as uuid } from "uuid";
 
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { IFluidObjectInternalRegistry } from "../../interfaces";
 
 export interface ITabsTypes {
@@ -113,7 +112,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public getNewTabTypes(): ITabsTypes[] {
         const response: ITabsTypes[] = [];
-        this.internalRegistry.getFromCapability(IFluidHTMLView).forEach((e) => {
+        this.internalRegistry.getAll().forEach((e) => {
             response.push({
                 friendlyName: e.friendlyName,
                 fabricIconName: e.fabricIconName,
