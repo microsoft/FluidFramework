@@ -187,7 +187,6 @@ describe("Summarizer Client Election", () => {
         mockLogger.events = [];
         testQuorum.reset();
         summaryCollectionEmitter.removeAllListeners();
-        summaryManager.removeAllListeners();
         summarizer.removeAllListeners();
         election.removeAllListeners();
         currentSequenceNumber = 0;
@@ -213,7 +212,7 @@ describe("Summarizer Client Election", () => {
             assertState("a-summarizer", 679, "summarizer still elected while completing work");
             summarizer.runDeferred.resolve();
             await flushPromises();
-            assertState("b", 679, "revert to parent election");
+            assertState("a", 679, "revert to parent election");
         });
 
         it("Should automatically elect oldest eligible client on op when not found initial client", async () => {
@@ -235,7 +234,7 @@ describe("Summarizer Client Election", () => {
             assertState("a-summarizer", 679, "summarizer still elected while completing work");
             summarizer.runDeferred.resolve();
             await flushPromises();
-            assertState("b", 679, "revert to parent election");
+            assertState("a", 679, "revert to parent election");
         });
 
         it("Should already have elected next eligible client when ineligible initial client", () => {
@@ -317,7 +316,7 @@ describe("Summarizer Client Election", () => {
 
             // Should elect first client at this point
             defaultOp();
-            assertState("a", maxOps + 4801, "should reelect > max ops");
+            assertState("b-summarizer", 4800, "b's summarizer still working");
             summarizer.runDeferred.resolve();
             await flushPromises();
             assertState("a-summarizer", maxOps + 4801, "should elect a's summarizer");
@@ -326,7 +325,9 @@ describe("Summarizer Client Election", () => {
             defaultOp(maxOps);
             assertState("a-summarizer", maxOps + 4801, "should not reelect <= max ops since baseline");
             defaultOp();
-            assertState("b", 2 * maxOps + 4802, "should reelect again");
+            summarizer.runDeferred.resolve();
+            await flushPromises();
+            assertState("b-summarizer", 2 * maxOps + 4802, "should reelect again");
         });
 
         it("Should not reelect when summary ack is found", () => {

@@ -137,9 +137,15 @@ export class SummaryManager implements IDisposable {
         state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
 
     private getShouldSummarizeState(): ShouldSummarizeState {
+        // Note that if we're in the Running state, the electedClient may be a summarizer client, so we can't
+        // enforce connectedState.clientId === clientElection.electedClientId. But once we're Running, we should
+        // only transition to Stopping when the electedParentId changes. Stopping the summarizer without
+        // changing the electedParent will just cause us to transition to Starting again.
         if (!this.connectedState.connected) {
             return { shouldSummarize: false, stopReason: "parentNotConnected" };
-        } else if (this.connectedState.clientId !== this.clientElection.electedParentId) {
+        } else if (this.connectedState.clientId !== this.clientElection.electedParentId ||
+            (this.state !== SummaryManagerState.Running &&
+                this.connectedState.clientId !== this.clientElection.electedClientId)) {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
             assert(false, 0x260 /* "Disposed should mean disconnected!" */);
@@ -199,17 +205,22 @@ export class SummaryManager implements IDisposable {
                 return;
             }
 
+            // We transition to Running before requesting the summarizer, because after requesting we can't predict
+            // when the electedClient will be replaced with the new summarizer client.
+            // The alternative would be to let connectedState.clientId !== clientElection.electedClientId when
+            // state === Starting || state === Running.
+            assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
+            this.state = SummaryManagerState.Running;
+
             const summarizer = await this.requestSummarizerFn();
 
             // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
             const shouldSummarizeState = this.getShouldSummarizeState();
             if (shouldSummarizeState.shouldSummarize === false) {
+                this.state = SummaryManagerState.Starting;
                 summarizer.stop(shouldSummarizeState.stopReason);
                 return;
             }
-
-            assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
-            this.state = SummaryManagerState.Running;
 
             this.summarizer = summarizer;
 
