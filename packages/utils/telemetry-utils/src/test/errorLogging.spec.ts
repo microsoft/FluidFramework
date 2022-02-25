@@ -667,10 +667,6 @@ describe("normalizeError", () => {
                     // Assert
                     assert.notEqual(input, normalized, "input should have yielded a new error object");
                     assertMatchingMessageAndStack(normalized, expectedOutput, input?.stack);
-
-                    // Bonus
-                    normalized.addTelemetryProperties({foo: "bar"});
-                    assert.equal(normalized.getTelemetryProperties().foo, "bar", "can add telemetry props after normalization");
                 });
             }
         }
@@ -705,7 +701,7 @@ describe("wrapError", () => {
         assert(wrappedNormalized.getTelemetryProperties().untrustedOrigin === 1);
 
         const trustedError = new LoggingError("trusted");
-        Object.assign(trustedError, { untrustedOrigin: undefined, errorType: "someErrorType" });
+        Object.assign(trustedError, { errorType: "someErrorType" });
         const wrappedTrusted = wrapError(trustedError, (message) => new LoggingError(message));
         assert(wrappedTrusted.getTelemetryProperties().untrustedOrigin === undefined);
     });
