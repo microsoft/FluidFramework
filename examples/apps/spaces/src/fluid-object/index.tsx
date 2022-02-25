@@ -51,7 +51,13 @@ export interface ISpacesItem {
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
 export class Spaces extends DataObject implements IFluidHTMLView {
-    public storageComponent: SpacesStorage | undefined;
+    private _storageComponent: SpacesStorage | undefined;
+    public get storageComponent(): SpacesStorage {
+        if (this._storageComponent === undefined) {
+            throw new Error("Storage not initialized before use");
+        }
+        return this._storageComponent;
+    }
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
@@ -80,7 +86,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         // The only time we have a path will be direct links to items.
         if (requestParser.pathParts.length > 0) {
             const itemId = requestParser.pathParts[0];
-            const item = this.storageComponent?.itemList.get(itemId);
+            const item = this._storageComponent?.itemList.get(itemId);
             if (item !== undefined) {
                 const viewForItem = await this.getViewForItem(item.serializableItemData);
                 return {
@@ -118,7 +124,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        this.storageComponent =
+        this._storageComponent =
             await this.root.get<IFluidHandle<SpacesStorage>>(SpacesStorageKey)?.get();
     }
 
@@ -134,9 +140,6 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     };
 
     public saveLayout(): void {
-        if (this.storageComponent === undefined) {
-            throw new Error("Can't save layout, storage not found");
-        }
         localStorage.setItem("spacesTemplate", JSON.stringify([...this.storageComponent.itemList.values()]));
     }
 
@@ -160,7 +163,8 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     };
 
     private async createAndStoreItem(type: string, layout: Layout): Promise<string> {
-        if (this.storageComponent === undefined) {
+        // Checking storage existence early to avoid creating a component if the storage isn't there for it.
+        if (this._storageComponent === undefined) {
             throw new Error("Can't add item, storage not found");
         }
 
@@ -170,7 +174,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         }
 
         const serializableObject = await itemMapEntry.create(this.context);
-        return this.storageComponent.addItem(
+        return this._storageComponent.addItem(
             {
                 serializableObject,
                 itemType: type,
@@ -197,9 +201,6 @@ interface ISpacesViewProps {
 
 const View: React.FC<ISpacesViewProps> = (props: ISpacesViewProps) => {
     const { model } = props;
-    if (model.storageComponent === undefined) {
-        throw new Error("Spaces can't render, storage not found");
-    }
     const [baseUrl, setBaseUrl] = React.useState<string | undefined>("");
     React.useEffect(() => {
         const getBaseUrl = async () => {
