@@ -234,12 +234,12 @@ describe("client.applyMsg", () => {
         const remoteClient = new TestClient();
         remoteClient.insertTextLocal(0, client.getText());
         remoteClient.startOrUpdateCollaboration("remoteUser");
-        const logger = new TestClientLogger([client, remoteClient]);
-        logger.log();
+        const clients = [client, remoteClient]
+        const logger = new TestClientLogger(clients);
         let seq = 0;
         const initialMsg = client.makeOpMessage(client.insertTextLocal(0, "-"), ++seq);
 
-        logger.log(initialMsg, (c) => c.applyMsg(initialMsg));
+        clients.forEach((c)=>c.applyMsg(initialMsg));
         logger.validate();
 
         const messages = [
@@ -249,10 +249,9 @@ describe("client.applyMsg", () => {
             remoteClient.makeOpMessage(remoteClient.removeRangeLocal(1, 2), ++seq),
         ];
 
-        logger.log();
         while (messages.length > 0) {
             const msg = messages.shift();
-            logger.log(msg, (c) => c.applyMsg(msg));
+            clients.forEach((c)=>c.applyMsg(msg));
         }
 
         logger.validate();
@@ -278,12 +277,9 @@ describe("client.applyMsg", () => {
         ];
 
         const logger = new TestClientLogger(clients);
-        logger.log();
         while (messages.length > 0) {
             const msg = messages.shift();
-            logger.log(msg, (c) => {
-                c.applyMsg(msg);
-            });
+            clients.forEach((c)=>c.applyMsg(msg));
         }
 
         logger.validate();
@@ -310,12 +306,9 @@ describe("client.applyMsg", () => {
         ];
 
         const logger = new TestClientLogger(clients);
-        logger.log();
         while (messages.length > 0) {
             const msg = messages.shift();
-            logger.log(msg, (c) => {
-                c.applyMsg(msg);
-            });
+            clients.forEach((c)=>c.applyMsg(msg));
         }
 
         logger.validate();
@@ -340,12 +333,9 @@ describe("client.applyMsg", () => {
         ];
 
         const logger = new TestClientLogger(clients);
-        logger.log();
         while (messages.length > 0) {
             const msg = messages.shift();
-            logger.log(msg, (c) => {
-                c.applyMsg(msg);
-            });
+            clients.forEach((c)=>c.applyMsg(msg));
         }
 
         logger.validate();
@@ -368,12 +358,9 @@ describe("client.applyMsg", () => {
         ];
 
         const logger = new TestClientLogger(clients);
-        logger.log();
         while (messages.length > 0) {
             const msg = messages.shift();
-            logger.log(msg, (c) => {
-                c.applyMsg(msg);
-            });
+            clients.forEach((c)=>c.applyMsg(msg));
         }
 
         logger.validate();
@@ -402,7 +389,6 @@ describe("client.applyMsg", () => {
             });
         }
         const logger = new TestClientLogger(clients);
-        logger.log();
         logger.validate();
 
         messages.push(
@@ -412,11 +398,9 @@ describe("client.applyMsg", () => {
         );
         while (messages.length > 0) {
             const msg = messages.shift();
-            logger.log(msg, (c) => {
-                c.applyMsg(msg);
-            });
+            clients.forEach((c)=>c.applyMsg(msg));
+
         }
-        logger.log();
         logger.validate();
     });
 });

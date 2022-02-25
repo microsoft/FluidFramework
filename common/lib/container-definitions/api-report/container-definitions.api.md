@@ -22,13 +22,13 @@ import { IFluidPackage as IFluidPackage_2 } from '@fluidframework/core-interface
 import { IFluidPackageEnvironment as IFluidPackageEnvironment_2 } from '@fluidframework/core-interfaces';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IPendingProposal } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer as IProvideFluidCodeDetailsComparer_2 } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedProposal } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
@@ -181,8 +181,6 @@ export interface IContainerContext extends IDisposable {
     getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
     // (undocumented)
     readonly loader: ILoader;
-    // @deprecated (undocumented)
-    readonly logger?: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
     // (undocumented)
@@ -201,7 +199,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)
-    readonly taggedLogger?: ITelemetryBaseLogger;
+    readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)
     updateDirtyContainerState(dirty: boolean): void;
 }
@@ -213,7 +211,7 @@ export interface IContainerEvents extends IEvent {
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
     // (undocumented)
-    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails_2, proposal: IPendingProposal) => void): any;
+    (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails_2, proposal: ISequencedProposal) => void): any;
     // (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails_2) => void): any;
     // (undocumented)

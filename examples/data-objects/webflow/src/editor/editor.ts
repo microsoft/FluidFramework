@@ -7,7 +7,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
-import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode } from "../util";
+import { caretEnter, Direction, getDeltaX, getDeltaY, KeyCode } from "../util";
 import { ownsNode } from "../util/event";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
@@ -45,7 +45,7 @@ export class Editor {
             }).catch(console.error);
 
             scheduled = true;
-        }
+        };
         this.layout.on("render", this.caretSync);
 
         root.tabIndex = 0;
@@ -198,7 +198,7 @@ export class Editor {
             const { node } = this.layout.segmentAndOffsetToNodeAndOffset(segment, 0);
             const bounds = this.caret.bounds;
             debug("Entering inclusion: (dx=%d,dy=%d,bounds=%o)", getDeltaX(direction), getDeltaY(direction), bounds);
-            if (CaretUtil.caretEnter(node as Element, direction, bounds)) {
+            if (caretEnter(node as Element, direction, bounds)) {
                 this.consume(e);
             }
         }

@@ -339,15 +339,11 @@ export class PendingStateManager implements IDisposable {
         // The clientSequenceNumber of the incoming message must match that of the pending message.
         if (pendingState.clientSequenceNumber !== message.clientSequenceNumber) {
             // Close the container because this could indicate data corruption.
-            const error = new DataProcessingError(
+            const error = DataProcessingError.create(
+                "pending local message clientSequenceNumber mismatch",
                 "unexpectedAckReceived",
-                "unexpectedAckReceived",
-                {
-                    clientId: message.clientId,
-                    sequenceNumber: message.sequenceNumber,
-                    clientSequenceNumber: message.clientSequenceNumber,
-                    expectedClientSequenceNumber: pendingState.clientSequenceNumber,
-                },
+                message,
+                { expectedClientSequenceNumber: pendingState.clientSequenceNumber },
             );
 
             this.containerRuntime.closeFn(error);

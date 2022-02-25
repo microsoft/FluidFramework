@@ -5,6 +5,7 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -19,7 +20,7 @@ import {
     ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { CreateProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -31,7 +32,6 @@ import {
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
 import { ChannelStorageService } from "./channelStorageService";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 /**
  * Channel context for a locally created channel
@@ -190,7 +190,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         if (this.channel === undefined) {
             this.channel = await this.loadChannel()
                 .catch((err) => {
-                    throw CreateProcessingError(err, "rehydratedLocalChannelContextFailedToLoadChannel", undefined);
+                    throw DataProcessingError.wrapIfUnrecognized(
+                        err, "rehydratedLocalChannelContextFailedToLoadChannel", undefined);
                 });
         }
         return this.channel;

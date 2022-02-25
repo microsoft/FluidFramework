@@ -672,18 +672,6 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
 }
 
 // @public (undocumented)
-export enum IntervalType {
-    // (undocumented)
-    Nest = 1,
-    // (undocumented)
-    Simple = 0,
-    // (undocumented)
-    SlideOnRemove = 2,
-    // (undocumented)
-    Transient = 4
-}
-
-// @public (undocumented)
 export interface IRBAugmentation<TKey, TData> {
     // (undocumented)
     update(node: RBNode<TKey, TData>): void;
@@ -804,9 +792,6 @@ export class List<T> {
 
 // @public (undocumented)
 export function ListMakeHead<U>(): List<U>;
-
-// @public (undocumented)
-export function loadSegments(content: string, segLimit: number, markers?: boolean, withProps?: boolean): ISegment[];
 
 // @public (undocumented)
 export const LocalClientId = -1;

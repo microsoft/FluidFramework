@@ -63,7 +63,6 @@ import {
     ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
-    IPendingProposal,
     IProcessMessageResult,
     IQuorumClients,
     IQuorumProposals,
@@ -563,6 +562,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error: {
                     // load information to associate errors with the specific load point
                     dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
+                    dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
                     dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
                     containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
                     containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
@@ -589,7 +589,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.connectionStateHandler = new ConnectionStateHandler(
             {
-                protocolHandler: () => this._protocolHandler,
+                quorumClients: () => this._protocolHandler?.quorum,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
@@ -643,7 +643,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
-                    setTimeout(() => { this.lastVisible = undefined }, 0);
+                    setTimeout(() => { this.lastVisible = undefined; }, 0);
                 }
             };
             document.addEventListener("visibilitychange", this.visibilityEventHandler);
@@ -1322,7 +1322,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             proposals,
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-            (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
+            // Quorum proposal rejection removed, delete when protocol-base 0.1035 is integrated.
+            () => {});
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1339,7 +1340,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
         });
 
-        protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
+        protocol.quorum.on("addProposal", (proposal: ISequencedProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }

@@ -46,6 +46,7 @@ import {
     TaggedLoggerAdapter,
     MonitoringContext,
     loggerToMonitoringContext,
+    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
@@ -144,6 +145,14 @@ import {
     IGarbageCollector,
     IGCStats,
 } from "./garbageCollection";
+import {
+    AliasResult,
+    channelToDataStore,
+    IDataStore,
+    IDataStoreAliasMessage,
+    isDataStoreAliasMessage,
+} from "./dataStore";
+import { BindBatchTracker } from "./batchTracker";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -280,6 +289,12 @@ export interface IContainerRuntimeOptions {
      * 3. "bypass" will skip the check entirely. This is not recommended.
      */
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    /**
+     * Should the runtime use data store aliasing for creating root datastores.
+     * In case of aliasing conflicts, the runtime will raise an exception which does
+     * not effect the status of the container.
+     */
+    useDataStoreAliasing?: boolean;
 }
 
 type IRuntimeMessageMetadata = undefined | {
@@ -292,7 +307,22 @@ type IRuntimeMessageMetadata = undefined | {
 export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
     /** The garbage collection stats if GC ran, undefined otherwise. */
     gcStats?: IGCStats;
-};
+}
+
+/**
+ * Accepted header keys for requests coming to the runtime.
+ */
+export enum RuntimeHeaders {
+    /** True to wait for a data store to be created and loaded before returning it. */
+    wait = "wait",
+    /**
+     * True if the request is from an external app. Used for GC to handle scenarios where a data store
+     * is deleted and requested via an external app.
+     */
+    externalRequest = "externalRequest",
+    /** True if the request is coming from an IFluidHandle. */
+    viaHandle = "viaHandle",
+}
 
 /**
  * @deprecated
@@ -300,12 +330,14 @@ export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
  * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
  * its usage is removed from TaggedLoggerAdapter fallback.
  */
-interface OldContainerContextWithLogger extends IContainerContext {
+interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedLogger"> {
     logger: ITelemetryBaseLogger;
-};
+    taggedLogger: undefined;
+}
 
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
+const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
 
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
@@ -396,6 +428,11 @@ class ScheduleManagerCore {
         for (const pending of allPending) {
             this.trackPending(pending);
         }
+
+        // We are intentionally directly listening to the "op" to inspect system ops as well.
+        // If we do not observe system ops, we are likely to hit 0x296 assert when system ops
+        // precedes start of incomplete batch.
+        this.deltaManager.on("op", (message) => this.afterOpProcessing(message.sequenceNumber));
     }
 
     /**
@@ -541,8 +578,6 @@ export class ScheduleManager {
     private batchClientId: string | undefined;
     private hitError = false;
 
-    private readonly scheduler: ScheduleManagerCore;
-
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly emitter: EventEmitter,
@@ -552,7 +587,7 @@ export class ScheduleManager {
             this.deltaManager,
             ChildLogger.create(this.logger, "DeltaScheduler"),
         );
-        this.scheduler = new ScheduleManagerCore(deltaManager, logger);
+        void new ScheduleManagerCore(deltaManager, logger);
     }
 
     public beforeOpProcessing(message: ISequencedDocumentMessage) {
@@ -576,10 +611,6 @@ export class ScheduleManager {
     public afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage) {
         // If this is no longer true, we need to revisit what we do where we set this.hitError.
         assert(!this.hitError, 0x2a3 /* "container should be closed on any error" */);
-
-        // Let the scheduler know how far we progressed, to decide if op processing
-        // should be paused or not.
-        this.scheduler.afterOpProcessing(message.sequenceNumber);
 
         if (error) {
             // We assume here that loader will close container and stop processing all future ops.
@@ -657,8 +688,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
-        const passLogger = context.taggedLogger ?? new TaggedLoggerAdapter((context as
-            OldContainerContextWithLogger).logger);
+        const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
+        const passLogger = backCompatContext.taggedLogger ??
+            new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
         const logger = ChildLogger.create(passLogger, undefined, {
             all: {
                 runtimeVersion: pkgVersion,
@@ -669,6 +701,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryOptions = {},
             gcOptions = {},
             loadSequenceNumberVerification = "close",
+            useDataStoreAliasing = false,
         } = runtimeOptions;
 
         // We pack at data store level only. If isolated channels are disabled,
@@ -762,6 +795,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryOptions,
                 gcOptions,
                 loadSequenceNumberVerification,
+                useDataStoreAliasing,
             },
             containerScope,
             logger,
@@ -859,6 +893,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
+    private readonly _aliasingEnabled: boolean;
 
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode;
@@ -895,7 +930,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
 
-    private summarizerWarning = (warning: ContainerWarning) =>
+    private readonly summarizerWarning = (warning: ContainerWarning) =>
         this.mc.logger.sendTelemetryEvent({ eventName: "summarizerWarning" }, warning);
     /**
      * Summarizer is responsible for coordinating when to send generate and send summaries.
@@ -920,8 +955,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * and is the single source of truth for this container.
      */
     public readonly disableIsolatedChannels: boolean;
-    /** The message in the metadata of the base summary this container is loaded from. */
-    private readonly baseSummaryMessage: ISummaryMetadataMessage | undefined;
+    /** The last message processed at the time of the last summary. */
+    private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
     private get summarizer(): Summarizer {
         assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
@@ -952,7 +987,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private _storage?: IDocumentStorageService,
     ) {
         super();
-        this.baseSummaryMessage = metadata?.message;
+
+        this.messageAtLastSummary = metadata?.message;
 
         // If this is an existing container, we get values from metadata.
         // otherwise, we initialize them.
@@ -984,24 +1020,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.config.getBoolean(turnBasedFlushModeKey) ?? false
             ? FlushMode.TurnBased : FlushMode.Immediate;
 
-        /**
-         * Function that return the current server timestamp. This is used by the garbage collector to set the
-         * time when a node becomes unreferenced.
-         * We use the timestamp of the last op for current timestamp. However, there can be cases where
-         * we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
-         * of this client's connection.
-         */
-         const getCurrentTimestamp = () => {
-            const client = this.clientId !== undefined ? this.getAudience().getMember(this.clientId) : undefined;
-            const timestamp = client?.timestamp;
-            return this.deltaManager.lastMessage?.timestamp ?? timestamp ?? Date.now();
-        };
+        this._aliasingEnabled =
+            (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
+            (runtimeOptions.useDataStoreAliasing ?? false);
+
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
             (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
-            getCurrentTimestamp,
-            this.closeFn,
+            (nodePath: string) => this.dataStores.getNodePackagePath(nodePath),
+            /**
+             * Returns the timestamp of the last message seen by this client. This is used by garbage collector as
+             * the current reference timestamp for tracking unreferenced objects.
+             */
+            () => this.deltaManager.lastMessage?.timestamp ?? this.messageAtLastSummary?.timestamp,
+            () => this.messageAtLastSummary?.timestamp,
             context.baseSnapshot,
             async <T>(id: string) => readAndParse<T>(this.storage, id),
             this.mc.logger,
@@ -1053,7 +1086,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
-            (id: string) => this.garbageCollector.nodeChanged(id),
+            (path: string, timestampMs: number, packagePath?: readonly string[]) => this.garbageCollector.nodeUpdated(
+                path,
+                "Changed",
+                timestampMs,
+                packagePath,
+            ),
             new Map<string, string>(dataStoreAliasMap),
             this.garbageCollector.writeDataAtRoot,
         );
@@ -1225,6 +1263,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
+        BindBatchTracker(this, this.logger);
     }
 
     public dispose(error?: Error): void {
@@ -1316,18 +1355,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     return create404Response(request);
                 }
             } else if (requestParser.pathParts.length > 0) {
-                /**
-                 * If GC should run and this an external app request with "externalRequest" header, we need to return
-                 * an error if the data store being requested is marked as unreferenced as per the data store's initial
-                 * summary.
-                 *
-                 * This is a workaround to handle scenarios where a data store shared with an external app is deleted
-                 * and marked as unreferenced by GC. Returning an error will fail to load the data store for the app.
-                 */
-                const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
-                const dataStore = request.headers?.externalRequest && this.garbageCollector.shouldRunGC
-                    ? await this.getDataStoreIfInitiallyReferenced(id, wait)
-                    : await this.getDataStore(id, wait);
+                const dataStore = await this.getDataStoreFromRequest(id, request);
                 const subRequest = requestParser.createSubRequest(1);
                 // We always expect createSubRequest to include a leading slash, but asserting here to protect against
                 // unintentionally modifying the url if that changes.
@@ -1342,6 +1370,40 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
+        const wait = typeof request.headers?.[RuntimeHeaders.wait] === "boolean"
+            ? request.headers?.[RuntimeHeaders.wait]
+            : true;
+        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
+
+        /**
+         * If GC should run and this an external app request with "externalRequest" header, we need to return
+         * an error if the data store being requested is marked as unreferenced as per the data store's base
+         * GC data.
+         *
+         * This is a workaround to handle scenarios where a data store shared with an external app is deleted
+         * and marked as unreferenced by GC. Returning an error will fail to load the data store for the app.
+         */
+        if (request.headers?.[RuntimeHeaders.externalRequest] && this.garbageCollector.shouldRunGC) {
+            // The data store is referenced if used routes in the base summary has a route to self.
+            // Older documents may not have used routes in the summary. They are considered referenced.
+            const usedRoutes = (await dataStoreContext.getBaseGCDetails()).usedRoutes;
+            if (!(usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/"))) {
+                throw responseToException(create404Response(request), request);
+            }
+        }
+
+        const dataStoreChannel = await dataStoreContext.realize();
+        this.garbageCollector.nodeUpdated(
+            `/${id}`,
+            "Loaded",
+            undefined /* timestampMs */,
+            dataStoreContext.packagePath,
+            request?.headers,
+        );
+        return dataStoreChannel;
+    }
+
     private formMetadata(): IContainerRuntimeMetadata {
         return {
             ...this.createContainerMetadata,
@@ -1349,33 +1411,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             gcFeature: this.garbageCollector.gcSummaryFeatureVersion,
-            // The last message processed at the time of summary. If there are no messages, nothing has changed from
-            // the base summary we loaded from. So, use the message from its metadata blob.
-            message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
+            // The last message processed at the time of summary. If there are no new messages, use the message from the
+            // last summary.
+            message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.messageAtLastSummary,
             sessionExpiryTimeoutMs: this.garbageCollector.sessionExpiryTimeoutMs,
         };
-    }
-
-    /**
-     * Retrieves the runtime for a data store if it's referenced as per the initially summary that it is loaded with.
-     * This is a workaround to handle scenarios where a data store shared with an external app is deleted and marked
-     * as unreferenced by GC.
-     * @param id - Id supplied during creating the data store.
-     * @param wait - True if you want to wait for it.
-     * @returns the data store runtime if the data store exists and is initially referenced; undefined otherwise.
-     */
-    private async getDataStoreIfInitiallyReferenced(id: string, wait = true): Promise<IFluidRouter> {
-        const dataStoreContext = await this.dataStores.getDataStore(id, wait);
-        // The data store is referenced if used routes in the initial summary has a route to self.
-        // Older documents may not have used routes in the summary. They are considered referenced.
-        const usedRoutes = (await dataStoreContext.getBaseGCDetails()).usedRoutes;
-        if (usedRoutes === undefined || usedRoutes.includes("") || usedRoutes.includes("/")) {
-            return dataStoreContext.realize();
-        }
-
-        // The data store is unreferenced. Throw a 404 response exception.
-        const request = { url: id };
-        throw responseToException(create404Response(request), request);
     }
 
     private addContainerStateToSummary(summaryTree: ISummaryTreeWithStats) {
@@ -1591,10 +1631,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return context.realize();
     }
 
-    protected async getDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        return (await this.dataStores.getDataStore(id, wait)).realize();
-    }
-
     public setFlushMode(mode: FlushMode): void {
         if (mode === this._flushMode) {
             return;
@@ -1672,14 +1708,68 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public async createDataStore(pkg: string | string[]): Promise<IFluidRouter> {
-        return this._createDataStore(pkg, false /* isRoot */);
+    public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+        const internalId = uuid();
+        return channelToDataStore(
+            await this._createDataStore(pkg, false /* isRoot */, internalId),
+            internalId,
+            this,
+            this.dataStores,
+            this.mc.logger);
     }
 
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+    /**
+     * Creates a root datastore directly with a user generated id and attaches it to storage.
+     * It is vulnerable to name collisions and should not be used.
+     *
+     * This method will be removed. See #6465.
+     */
+    private async createRootDataStoreLegacy(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
         fluidDataStore.bindToContext();
         return fluidDataStore;
+    }
+
+    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
+        return this._aliasingEnabled === true ?
+            this.createAndAliasDataStore(pkg, rootDataStoreId) :
+            this.createRootDataStoreLegacy(pkg, rootDataStoreId);
+    }
+
+    /**
+     * Creates a data store then attempts to alias it.
+     * If aliasing fails, it will raise an exception.
+     *
+     * This method will be removed. See #6465.
+     *
+     * @param pkg - Package name of the data store
+     * @param alias - Alias to be assigned to the data store
+     * @param props - Properties for the data store
+     * @returns - An aliased data store which can can be found / loaded by alias.
+     */
+    private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IFluidRouter> {
+        const internalId = uuid();
+        const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
+        const aliasedDataStore = channelToDataStore(dataStore, internalId, this,this.dataStores, this.mc.logger);
+        const result = await aliasedDataStore.trySetAlias(alias);
+        if (result !== AliasResult.Success) {
+            throw new GenericError(
+                "dataStoreAliasFailure",
+                undefined /* error */,
+                {
+                    alias: {
+                        value: alias,
+                        tag: TelemetryDataTag.UserData,
+                    },
+                    internalId: {
+                        value: internalId,
+                        tag: TelemetryDataTag.PackageData,
+                    },
+                    aliasResult: result,
+                });
+        }
+
+        return aliasedDataStore;
     }
 
     public createDetachedRootDataStore(
@@ -1693,7 +1783,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores.createDetachedDataStoreCore(pkg, false);
     }
 
-    public async _createDataStoreWithProps(
+    /**
+     * Creates a possibly root datastore directly with a possibly user generated id and attaches it to storage.
+     * It is vulnerable to name collisions if both aforementioned conditions are true, and should not be used.
+     *
+     * This method will be removed. See #6465.
+     */
+    private async _createDataStoreWithPropsLegacy(
         pkg: string | string[],
         props?: any,
         id = uuid(),
@@ -1707,12 +1803,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return fluidDataStore;
     }
 
+    public async _createDataStoreWithProps(
+        pkg: string | string[],
+        props?: any,
+        id = uuid(),
+        isRoot = false,
+    ): Promise<IFluidRouter> {
+        return this._aliasingEnabled === true && isRoot ?
+            this.createAndAliasDataStore(pkg, id, props) :
+            this._createDataStoreWithPropsLegacy(pkg, props, id, isRoot);
+    }
+
     private async _createDataStore(
         pkg: string | string[],
         isRoot: boolean,
         id = uuid(),
+        props?: any,
     ): Promise<IFluidDataStoreChannel> {
-        return this.dataStores._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
+        return this.dataStores
+            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props)
+            .realize();
     }
 
     private canSendOps() {
@@ -1971,6 +2081,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
             const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
+            // We should be here is we haven't processed be here. If we are of if the last message's sequence number
+            // doesn't match the last processed sequence number, log an error.
+            if (summaryRefSeqNum !== this.deltaManager.lastMessage?.sequenceNumber) {
+                summaryLogger.sendErrorEvent({
+                    eventName: "LastSequenceMismatch",
+                    message,
+                });
+            }
+
             this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
 
             // Helper function to check whether we should still continue between each async step.
@@ -2030,6 +2149,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
             }
             const { summary: summaryTree, stats: partialStats } = summarizeResult;
+
+            // Now that we have generated the summary, update the message at last summary to the last message processed.
+            this.messageAtLastSummary = this.deltaManager.lastMessage;
 
             // Counting dataStores and handles
             // Because handles are unchanged dataStores in the current logic,
@@ -2182,6 +2304,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             contents,
         };
         this.submit(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
+    }
+
+    public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
+        const aliasMessage = contents as IDataStoreAliasMessage;
+        if (!isDataStoreAliasMessage(aliasMessage)) {
+            throw new UsageError("malformedDataStoreAliasMessage");
+        }
+
+        this.submit(ContainerMessageType.Alias, contents, localOpMetadata);
     }
 
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
@@ -2371,6 +2502,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryRefSeq,
             async () => this.fetchSnapshotFromStorage(ackHandle, summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",
+                ackHandle,
+                summaryRefSeq,
                 fetchLatest: false,
             }),
             readAndParseBlob,
