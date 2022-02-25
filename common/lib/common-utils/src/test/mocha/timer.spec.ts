@@ -64,6 +64,12 @@ describe("Timers", () => {
             testExactTimeout(defaultTimeout);
         });
 
+        it("Should timeout at extremely long time", () => {
+            const overrideTimeout = 365 * 24 * 60 * 60 * 1000; // 1 year
+            timer.start(overrideTimeout);
+            testExactTimeout(overrideTimeout);
+        });
+
         it("Should timeout at longer explicit time", () => {
             const overrideTimeout = defaultTimeout * 2;
             timer.start(overrideTimeout);

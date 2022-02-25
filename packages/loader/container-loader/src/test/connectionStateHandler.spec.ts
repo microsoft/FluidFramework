@@ -73,7 +73,7 @@ describe("ConnectionStateHandler Tests", () => {
             {
                 logConnectionStateChangeTelemetry: () => undefined,
                 maxClientLeaveWaitTime: expectedTimeout,
-                protocolHandler: () => protocolHandler,
+                quorumClients: () => protocolHandler.quorum,
                 shouldClientJoinWrite: () => shouldClientJoinWrite,
                 logConnectionIssue: (eventName: string) => { throw new Error("logConnectionIssue"); },
                 connectionStateChanged: () => {},
