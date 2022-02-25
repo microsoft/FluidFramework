@@ -8,9 +8,8 @@ import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { Spaces } from "./fluid-object";
+import { Spaces, SpacesView } from "./fluid-object";
 import { SpacesContainer } from "./container";
-import { AppView } from "./appView";
 
 // Re-export everything
 export { Spaces as SpacesExample, SpacesContainer };
@@ -38,7 +37,7 @@ async function start() {
     const contentDiv = document.getElementById("content");
     if (contentDiv !== null) {
         ReactDOM.render(
-            React.createElement(AppView, { model: defaultObject }),
+            React.createElement(SpacesView, { model: defaultObject }),
             contentDiv,
         );
     }
