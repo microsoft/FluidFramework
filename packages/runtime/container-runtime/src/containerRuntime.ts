@@ -338,7 +338,7 @@ interface OldContainerContextWithLogger extends IContainerContext {
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
-const maxConsecutiveReplaysKey = "Fluid.ContainerRuntime.MaxPendingStateReplays";
+const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
@@ -895,6 +895,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
     private readonly _aliasingEnabled: boolean;
 
+    private readonly maxConsecutiveReconnects: number;
+    private readonly defaultMaxConsecutiveReconnects = 15;
+
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode;
     private needsFlush = false;
@@ -904,9 +907,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private paused: boolean = false;
 
-    private consecutiveReplays = 0;
-    private maxConsecutiveReplays: number;
-    private defaultMaxConsecutiveReplays = 15;
+    private consecutiveReconnects = 0;
 
     public get connected(): boolean {
         return this._connected;
@@ -1028,8 +1029,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
             (runtimeOptions.useDataStoreAliasing ?? false);
 
-        this.maxConsecutiveReplays =
-            this.mc.config.getNumber(maxConsecutiveReplaysKey) ?? this.defaultMaxConsecutiveReplays;
+        this.maxConsecutiveReconnects =
+            this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
 
         this.garbageCollector = GarbageCollector.create(
             this,
@@ -1458,36 +1459,28 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    // Track how many times the container tries to replay its pending states.
-    // This happens when the connection state is changed.
-    // We reset the internal counter when we are able to process a local op.
+    // Track how many times the container tries to reconnect with pending messages.
+    // This happens when the connection state is changed and we reset the counter
+    // when we are able to process a local op.
     // If this counter reaches a max, it's a good indicator that the container
     // is not making progress and it is stuck in a retry loop.
-    private arePendingStatesDrained(): boolean {
-        if (this.maxConsecutiveReplays < 0) {
+    private shouldContinueReconnecting(): boolean {
+        if (this.maxConsecutiveReconnects < 0) {
             // Feature disabled, we assume we are always making progress
             return true;
         }
 
         return !this.pendingStateManager.hasPendingMessages()
-            || ++this.consecutiveReplays < this.maxConsecutiveReplays;
+            || ++this.consecutiveReconnects < this.maxConsecutiveReconnects;
     }
 
-    private resetPendingStateReplayCount() {
-        this.consecutiveReplays = 0;
+    private resetReconnectCount() {
+        this.consecutiveReconnects = 0;
     }
 
     private replayPendingStates() {
         // We need to be able to send ops to replay states
         if (!this.canSendOps()) { return; }
-
-        if (!this.arePendingStatesDrained()) {
-            this.closeFn(new GenericError(
-                "PendingReplaysWithNoProgress",
-                undefined, // error
-                { count: this.consecutiveReplays }));
-            return;
-        }
 
         // We need to temporary clear the dirty flags and disable
         // dirty state change events to detect whether replaying ops
@@ -1565,6 +1558,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (changeOfState) {
             this.deltaManager.off("op", this.onOp);
             this.context.pendingLocalState = undefined;
+            if (!this.shouldContinueReconnecting()) {
+                this.closeFn(new GenericError(
+                    "MaxReconnectsWithNoProgress",
+                    undefined, // error
+                    { count: this.consecutiveReconnects }));
+                return;
+            }
+
             this.replayPendingStates();
         }
 
@@ -1633,7 +1634,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // If we have processed a local op, this means that the container is
                 // making progress and we can reset the counter for how many times
                 // we have consecutively replayed the pending states
-                this.resetPendingStateReplayCount();
+                this.resetReconnectCount();
             }
         } catch (e) {
             this.scheduleManager.afterOpProcessing(e, message);

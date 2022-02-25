@@ -530,6 +530,8 @@ describe("Runtime", () => {
             });
         });
         describe("Pending state progress tracking", () => {
+            const maxReconnects = 15;
+
             let containerRuntime: ContainerRuntime;
             const containerErrors: ICriticalContainerError[] = [];
             const getMockContext = (): Partial<IContainerContext> => {
@@ -547,10 +549,9 @@ describe("Runtime", () => {
                     updateDirtyContainerState: (dirty: boolean) => { },
                 };
             };
-            let pendingStateReplayCount = 0;
             const getMockPendingStateManager = (hasPendingMessages: boolean): PendingStateManager => {
                 return {
-                    replayPendingStates: () => { pendingStateReplayCount++; },
+                    replayPendingStates: () => { },
                     hasPendingMessages: () => hasPendingMessages,
                     processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
                         return { localAck: false, localOpMetadata: undefined };
@@ -574,7 +575,6 @@ describe("Runtime", () => {
 
             beforeEach(async () => {
                 containerErrors.length = 0;
-                pendingStateReplayCount = 0;
                 containerRuntime = await ContainerRuntime.load(
                     getMockContext() as IContainerContext,
                     [],
@@ -589,64 +589,59 @@ describe("Runtime", () => {
 
             function patchRuntime(
                 pendingStateManager: PendingStateManager,
-                maxReplayCount: number | undefined = undefined
+                maxReconnects: number | undefined = undefined
             ) {
                 const runtime = containerRuntime as any;
                 runtime.pendingStateManager = pendingStateManager;
                 runtime.dataStores = getMockDataStores();
-                runtime.maxConsecutiveReplays = maxReplayCount ?? runtime.maxConsecutiveReplays;
+                runtime.maxConsecutiveReconnects = maxReconnects ?? runtime.maxConsecutiveReconnects;
                 return runtime as ContainerRuntime;
             }
 
-            it("No progress for 15 connection state changes and pending state will close the container", async () => {
-                patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
+            it(`No progress for ${maxReconnects} connection state changes and pending state will ` +
+                "close the container", async () => {
+                    patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
-                for (let i = 0; i < 15; i++) {
-                    containerRuntime.setConnectionState(false);
-                    containerRuntime.setConnectionState(true);
-                }
+                    for (let i = 0; i < maxReconnects; i++) {
+                        containerRuntime.setConnectionState(!containerRuntime.connected);
+                    }
 
-                assert.equal(pendingStateReplayCount, 14);
-                const error = getFirstContainerError();
-                assert.ok(error instanceof GenericError);
-                assert.strictEqual(error.fluidErrorCode, "PendingReplaysWithNoProgress");
-            });
+                    const error = getFirstContainerError();
+                    assert.ok(error instanceof GenericError);
+                    assert.strictEqual(error.fluidErrorCode, "MaxReconnectsWithNoProgress");
+                    assert.strictEqual(error.getTelemetryProperties().count, maxReconnects);
+                });
 
-            it("No progress for 15 connection state changes and pending state with feature disabled will " +
-                "not close the container", async () => {
+            it(`No progress for ${maxReconnects} connection state changes and pending state with` +
+                "feature disabled will not close the container", async () => {
                     patchRuntime(
                         getMockPendingStateManager(true /* always has pending messages */),
                         -1 /* maxConsecutiveReplays */);
 
-                    for (let i = 0; i < 15; i++) {
-                        containerRuntime.setConnectionState(false);
-                        containerRuntime.setConnectionState(true);
+                    for (let i = 0; i < maxReconnects; i++) {
+                        containerRuntime.setConnectionState(!containerRuntime.connected);
                     }
 
-                    assert.equal(pendingStateReplayCount, 15);
                     assert.equal(containerErrors.length, 0);
                 });
 
-            it("No progress for 15 connection state changes and no pending state will " +
+            it(`No progress for ${maxReconnects} connection state changes and no pending state will ` +
                 "not close the container", async () => {
                     patchRuntime(getMockPendingStateManager(false /* always has no pending messages */));
 
-                    for (let i = 0; i < 15; i++) {
-                        containerRuntime.setConnectionState(false);
-                        containerRuntime.setConnectionState(true);
+                    for (let i = 0; i < maxReconnects; i++) {
+                        containerRuntime.setConnectionState(!containerRuntime.connected);
                     }
 
-                    assert.equal(pendingStateReplayCount, 15);
                     assert.equal(containerErrors.length, 0);
                 });
 
-            it("No progress for 15 connection state changes and pending state but successfully " +
+            it(`No progress for ${maxReconnects} connection state changes and pending state but successfully ` +
                 "processing local op will not close the container", async () => {
                     patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
-                    for (let i = 0; i < 15; i++) {
-                        containerRuntime.setConnectionState(false);
-                        containerRuntime.setConnectionState(true);
+                    for (let i = 0; i < maxReconnects; i++) {
+                        containerRuntime.setConnectionState(!containerRuntime.connected);
                         containerRuntime.process({
                             type: "op",
                             clientId: "clientId",
@@ -657,15 +652,14 @@ describe("Runtime", () => {
                         } as any as ISequencedDocumentMessage, true /* local */);
                     }
 
-                    assert.equal(pendingStateReplayCount, 15);
                     assert.equal(containerErrors.length, 0);
                 });
 
-            it("No progress for 15 connection state changes and pending state but successfully " +
+            it(`No progress for ${maxReconnects} connection state changes and pending state but successfully ` +
                 "processing remote op will close the container", async () => {
                     patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
-                    for (let i = 0; i < 15; i++) {
+                    for (let i = 0; i < maxReconnects; i++) {
                         containerRuntime.setConnectionState(false);
                         containerRuntime.setConnectionState(true);
                         containerRuntime.process({
@@ -678,10 +672,10 @@ describe("Runtime", () => {
                         } as any as ISequencedDocumentMessage, false /* local */);
                     }
 
-                    assert.equal(pendingStateReplayCount, 14);
                     const error = getFirstContainerError();
                     assert.ok(error instanceof GenericError);
-                    assert.strictEqual(error.fluidErrorCode, "PendingReplaysWithNoProgress");
+                    assert.strictEqual(error.fluidErrorCode, "MaxReconnectsWithNoProgress");
+                    assert.strictEqual(error.getTelemetryProperties().count, maxReconnects);
                 });
         });
     });
