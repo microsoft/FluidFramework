@@ -16,6 +16,8 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
+import { PendingStateManager } from "../pendingStateManager";
+import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
@@ -35,7 +37,7 @@ describe("Runtime", () => {
                                     containerErrors.push(error);
                                 }
                             },
-                            updateDirtyContainerState: (dirty: boolean) => {},
+                            updateDirtyContainerState: (dirty: boolean) => { },
                         };
                     });
 
@@ -127,21 +129,21 @@ describe("Runtime", () => {
             const sandbox = createSandbox();
             const createMockContext =
                 (attachState: AttachState, addPendingMsg: boolean): Partial<IContainerContext> => {
-                const pendingMessage = {
-                    type: "message",
-                    content: {},
-                };
+                    const pendingMessage = {
+                        type: "message",
+                        content: {},
+                    };
 
-                return {
-                    deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorum(),
-                    logger: new MockLogger(),
-                    clientDetails: { capabilities: { interactive: true } },
-                    updateDirtyContainerState: (dirty: boolean) => {},
-                    attachState,
-                    pendingLocalState: addPendingMsg ? {pendingStates: [pendingMessage]} : undefined,
+                    return {
+                        deltaManager: new MockDeltaManager(),
+                        quorum: new MockQuorum(),
+                        logger: new MockLogger(),
+                        clientDetails: { capabilities: { interactive: true } },
+                        updateDirtyContainerState: (dirty: boolean) => { },
+                        attachState,
+                        pendingLocalState: addPendingMsg ? { pendingStates: [pendingMessage] } : undefined,
+                    };
                 };
-            };
 
             it("should NOT be set to dirty if context is attached with no pending ops", async () => {
                 const mockContext = createMockContext(AttachState.Attached, false);
@@ -526,6 +528,142 @@ describe("Runtime", () => {
 
                 testWrongBatches();
             });
+        });
+        describe("Pending state progress tracking", () => {
+            let containerRuntime: ContainerRuntime;
+            const containerErrors: ICriticalContainerError[] = [];
+            const getMockContext = (): Partial<IContainerContext> => {
+                return {
+                    clientId: "fakeClientId",
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorum(),
+                    logger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
+                    closeFn: (error?: ICriticalContainerError): void => {
+                        if (error !== undefined) {
+                            containerErrors.push(error);
+                        }
+                    },
+                    updateDirtyContainerState: (dirty: boolean) => { },
+                };
+            };
+            let pendingStateReplayCount = 0;
+            const getMockPendingStateManager = (hasPendingMessages: boolean): PendingStateManager => {
+                return {
+                    replayPendingStates: () => { pendingStateReplayCount++; },
+                    hasPendingMessages: () => hasPendingMessages,
+                    processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
+                        return { localAck: false, localOpMetadata: undefined };
+                    },
+                } as PendingStateManager;
+            }
+            const getMockDataStores = (): DataStores => {
+                return {
+                    processFluidDataStoreOp:
+                        (_message: ISequencedDocumentMessage,
+                            _local: boolean,
+                            _localMessageMetadata: unknown) => { },
+                    setConnectionState: (_connected: boolean, _clientId?: string) => { },
+                } as DataStores;
+            }
+
+            const getFirstContainerError = (): ICriticalContainerError => {
+                assert.ok(containerErrors.length > 0, "Container should have errors");
+                return containerErrors[0];
+            };
+
+            beforeEach(async () => {
+                containerErrors.length = 0;
+                pendingStateReplayCount = 0;
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext() as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {
+                        summaryOptions: {
+                            disableSummaries: true,
+                        },
+                    },
+                );
+            });
+
+            function patchRuntime(pendingStateManager: PendingStateManager) {
+                const runtime = containerRuntime as any;
+                runtime.pendingStateManager = pendingStateManager;
+                runtime.dataStores = getMockDataStores();
+                return runtime as ContainerRuntime;
+            }
+
+            it("No progress for 15 connection state changes and pending state will close the container", async () => {
+                patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
+
+                for (let i = 0; i < 15; i++) {
+                    containerRuntime.setConnectionState(false);
+                    containerRuntime.setConnectionState(true);
+                }
+
+                assert.equal(pendingStateReplayCount, 14);
+                const error = getFirstContainerError();
+                assert.ok(error instanceof GenericError);
+                assert.strictEqual(error.fluidErrorCode, "PendingReplaysWithNoProgress");
+            });
+
+            it("No progress for 15 connection state changes and no pending state will" +
+                "not close the container", async () => {
+                    patchRuntime(getMockPendingStateManager(false /* always has no pending messages */));
+
+                    for (let i = 0; i < 15; i++) {
+                        containerRuntime.setConnectionState(false);
+                        containerRuntime.setConnectionState(true);
+                    }
+
+                    assert.equal(pendingStateReplayCount, 15);
+                    assert.equal(containerErrors.length, 0);
+                });
+
+            it("No progress for 15 connection state changes and pending state but successfully" +
+                "processing local op will not close the container", async () => {
+                    patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
+
+                    for (let i = 0; i < 15; i++) {
+                        containerRuntime.setConnectionState(false);
+                        containerRuntime.setConnectionState(true);
+                        containerRuntime.process({
+                            type: "op",
+                            clientId: "clientId",
+                            sequenceNumber: 0,
+                            contents: {
+                                address: "address",
+                            },
+                        } as any as ISequencedDocumentMessage, true /* local */);
+                    }
+
+                    assert.equal(pendingStateReplayCount, 15);
+                    assert.equal(containerErrors.length, 0);
+                });
+
+            it("No progress for 15 connection state changes and pending state but successfully" +
+                "processing remote op will close the container", async () => {
+                    patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
+
+                    for (let i = 0; i < 15; i++) {
+                        containerRuntime.setConnectionState(false);
+                        containerRuntime.setConnectionState(true);
+                        containerRuntime.process({
+                            type: "op",
+                            clientId: "clientId",
+                            sequenceNumber: 0,
+                            contents: {
+                                address: "address",
+                            },
+                        } as any as ISequencedDocumentMessage, false /* local */);
+                    }
+
+                    assert.equal(pendingStateReplayCount, 14);
+                    const error = getFirstContainerError();
+                    assert.ok(error instanceof GenericError);
+                    assert.strictEqual(error.fluidErrorCode, "PendingReplaysWithNoProgress");
+                });
         });
     });
 });

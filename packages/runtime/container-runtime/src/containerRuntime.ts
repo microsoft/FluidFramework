@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+// See #9219
 /* eslint-disable max-lines */
 import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -338,7 +338,6 @@ interface OldContainerContextWithLogger extends IContainerContext {
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
-const stopPendingReplaysWithNoProgressKey = "Fluid.ContainerRuntime.StopPendingReplaysWithNoProgress";
 const maxConsecutiveReplaysKey = "Fluid.ContainerRuntime.MaxConsecutiveReplays";
 
 export enum RuntimeMessage {
@@ -906,9 +905,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private paused: boolean = false;
 
     private consecutiveReplays = 0;
-    private stopPendingReplaysWithNoProgress: boolean;
     private maxConsecutiveReplays: number;
-    private defaultMaxConsecutiveReplays = 30;
+    private defaultMaxConsecutiveReplays = 15;
 
     public get connected(): boolean {
         return this._connected;
@@ -1032,7 +1030,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.maxConsecutiveReplays =
             this.mc.config.getNumber(maxConsecutiveReplaysKey) ?? this.defaultMaxConsecutiveReplays;
-        this.stopPendingReplaysWithNoProgress = this.mc.config.getBoolean(stopPendingReplaysWithNoProgressKey) ?? false;
 
         this.garbageCollector = GarbageCollector.create(
             this,
@@ -1467,7 +1464,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // If this counter reaches a max, it's a good indicator that the container
     // is not making progress and it is stuck in a retry loop.
     private arePendingStatesDrained(): boolean {
-        return ++this.consecutiveReplays === this.maxConsecutiveReplays;
+        return this.maxConsecutiveReplays > 0
+            && ++this.consecutiveReplays < this.maxConsecutiveReplays;
     }
 
     private resetPendingStateReplayCount() {
@@ -1478,19 +1476,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // We need to be able to send ops to replay states
         if (!this.canSendOps()) { return; }
 
-        if (!this.arePendingStatesDrained()) {
-            this.mc.logger.sendErrorEvent({
-                eventName: "PendingReplaysWithNoProgress",
-                count: this.consecutiveReplays,
-            });
-
-            if (this.stopPendingReplaysWithNoProgress) {
-                this.closeFn(new GenericError(
-                    "PendingReplaysWithNoProgress",
-                    undefined, // error
-                    { count: this.consecutiveReplays }));
-                return;
-            }
+        if (this.pendingStateManager.hasPendingMessages() && !this.arePendingStatesDrained()) {
+            this.closeFn(new GenericError(
+                "PendingReplaysWithNoProgress",
+                undefined, // error
+                { count: this.consecutiveReplays }));
+            return;
         }
 
         // We need to temporary clear the dirty flags and disable

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -35,9 +34,7 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
 
     let container1: IContainer;
     let dataObject1: ITestFluidObject;
-    let dataObject2: ITestFluidObject;
     let dataObject1map1: SharedMap;
-    let dataObject2map1: SharedMap;
 
     const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
         getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -52,15 +49,9 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
             loaderProps: { configProvider: configProvider(featureGates) }
         };
 
-        // Create a Container for the first client.
         container1 = await provider.makeTestContainer(configWithFeatureGates);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(mapId);
-
-        // Load the Container that was created by the first client.
-        const container2 = await provider.loadTestContainer(testContainerConfig);
-        dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
         await provider.ensureSynchronized();
     };
@@ -75,22 +66,20 @@ describeNoCompat("Payload size", (getTestObjectProvider) => {
     const containerError = async (container: IContainer) =>
         new Promise<IErrorBase | undefined>((resolve) => container.once("closed", (error) => { resolve(error); }));
 
-    // This test should fail with ODSP
+    // In ODSP/t9s this test should catch the close event with error, as the retries would exhaust the retries.
+    // This cannot be enabled until #8888 is resolved, as locally, there are no payload limits. Note that the timeout
+    // must be increased for this test to more than 10 seconds, which makes enabling this test locally very problematic
+    // in terms of developer experience.
     it.skip("Cannot send payloads larger than 1MB", async () => {
         await setupContainers(testContainerConfig, {});
         const errorEvent = containerError(container1);
         // Total payload size: 16 * 1000 * 65 = 1040000
         const largeString = generateStringOfSize(16 * 1000);
         const messageCount = 65;
-        setMapKeys(dataObject1map1, messageCount, largeString);
+
+        dataObject1.context.containerRuntime
+            .orderSequentially(() => setMapKeys(dataObject1map1, messageCount, largeString));
 
         await errorEvent;
-        // Wait for the ops to get processed by both the containers.
-        await provider.ensureSynchronized();
-
-        for (let i = 0; i < messageCount; i++) {
-            const value = dataObject2map1.get(`key${i}`);
-            assert.strictEqual(value, largeString, `Wrong value for key${i}`);
-        }
     });
 });
