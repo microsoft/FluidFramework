@@ -72,7 +72,7 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
             context,
             registry,
             buildRuntimeRequestHandler(
-                mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)])
+                mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)]),
             ),
             undefined, // runtimeOptions
             undefined, // containerScope
