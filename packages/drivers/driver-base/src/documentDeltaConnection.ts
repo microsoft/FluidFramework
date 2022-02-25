@@ -320,7 +320,7 @@ export class DocumentDeltaConnection
         this.disposeCore(
             false, // socketProtocolError
             createGenericNetworkError(
-                "clientClosingConnection", undefined, { canRetry: true }, { driverVersion }));
+                "clientClosingConnection", { canRetry: true }, { driverVersion })); //* Format
     }
 
     protected disposeCore(socketProtocolError: boolean, err: IAnyDriverError) {
@@ -572,7 +572,8 @@ export class DocumentDeltaConnection
             message = `${message}: [object omitted]`;
         }
         const errorObj = createGenericNetworkError(
-            `socketError [${handler}]`,
+            // eslint-disable-next-line max-len
+            // `socketError [${handler}]`,  //* Add a new field with this courser grained value? Then consider swapping with message...
             message,
             { canRetry },
             { driverVersion },

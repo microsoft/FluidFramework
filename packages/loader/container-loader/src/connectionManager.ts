@@ -71,7 +71,7 @@ function getNackReconnectInfo(nackContent: INackContent) {
     const canRetry = nackContent.code !== 403;
     const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
     return createGenericNetworkError(
-        `nack [${nackContent.code}]`,
+        // `nack [${nackContent.code}]`,  //* Check telemetry for how useful this is (it's also in statusCode)
         message,
         { canRetry, retryAfterMs },
         { statusCode: nackContent.code, driverVersion: undefined });
