@@ -12,6 +12,7 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.58 Breaking changes
 - [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from merge-tree-to-sequence-package)
+- [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
 
 ### Move IntervalType from merge-tree to sequence package
 Move the type from the merge-tree package where it isn't used to the sequence package where it is used
@@ -19,6 +20,9 @@ Move the type from the merge-tree package where it isn't used to the sequence pa
 - import { IntervalType } from "@fluidframework/merge-tree";
 + import { IntervalType } from "@fluidframework/sequence";
 ```
+
+## Remove logger property from IContainerContext
+The logger property in IContainerContext became an optional parameter in [release 0.56](#Set-logger-property-as-optional-parameter-in-IContainerContext). This property has now been removed. The `taggedLogger` property is now set as a required parameter in `IContainerContext` interface.
 
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
@@ -120,6 +124,8 @@ When creating root datastores using `ContainerRuntime.createRootDataStore` or `C
 - [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
 - [Removed SharedObject.is](#Removed-SharedObject.is)
 - [Removed IContainerContext.id](#Removed-IContainerContext.id-and-ContainerContext.id)
+- [Remove raiseContainerWarning property](#Remove-raiseContainerWarning-property)
+- [Set logger property as optional parameter in IContainerContext](#Set-logger-property-as-optional-parameter-in-IContainerContext)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -187,6 +193,20 @@ The `is` method is removed from SharedObject. This was being used to detect Shar
 ### Removed IContainerContext.id and ContainerContext.id
 The `id` property of IContainerContext was deprecated and now removed. The `id` property of ContainerContext was deprecated and now removed. id should not be exposed at
 runtime level anymore. Instead, get from container's resolvedURL if necessary.
+
+### Remove raiseContainerWarning property
+
+The `raiseContainerWarning` property is removed from the following interfaces in release 0.56:
+
+- `IContainerRuntime`
+- `IFluidDataStoreContext`
+- `IFluidDataStoreRuntime`
+
+This property was also deprecated in `IContainerContext` and will be removed in a future release. Application developers should generate their own telemetry/logging events.
+
+### Set logger property as optional parameter in IContainerContext
+
+The `logger` property from `IContainerContext` is now optional. It will be removed completely in a future release. Use `taggedLogger` instead. Loggers passed to `ContainerContext` will need to support tagged events.
 
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)
