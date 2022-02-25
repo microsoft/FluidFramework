@@ -338,7 +338,7 @@ interface OldContainerContextWithLogger extends IContainerContext {
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
-const maxConsecutiveReplaysKey = "Fluid.ContainerRuntime.MaxConsecutiveReplays";
+const maxConsecutiveReplaysKey = "Fluid.ContainerRuntime.MaxPendingStateReplays";
 
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",

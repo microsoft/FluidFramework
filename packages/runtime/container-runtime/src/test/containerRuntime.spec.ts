@@ -587,10 +587,14 @@ describe("Runtime", () => {
                 );
             });
 
-            function patchRuntime(pendingStateManager: PendingStateManager) {
+            function patchRuntime(
+                pendingStateManager: PendingStateManager,
+                maxReplayCount: number | undefined = undefined
+            ) {
                 const runtime = containerRuntime as any;
                 runtime.pendingStateManager = pendingStateManager;
                 runtime.dataStores = getMockDataStores();
+                runtime.maxConsecutiveReplays = maxReplayCount ?? runtime.maxConsecutiveReplays;
                 return runtime as ContainerRuntime;
             }
 
@@ -608,7 +612,22 @@ describe("Runtime", () => {
                 assert.strictEqual(error.fluidErrorCode, "PendingReplaysWithNoProgress");
             });
 
-            it("No progress for 15 connection state changes and no pending state will" +
+            it("No progress for 15 connection state changes and pending state with feature disabled will " +
+                "not close the container", async () => {
+                    patchRuntime(
+                        getMockPendingStateManager(true /* always has pending messages */),
+                        -1 /* maxConsecutiveReplays */);
+
+                    for (let i = 0; i < 15; i++) {
+                        containerRuntime.setConnectionState(false);
+                        containerRuntime.setConnectionState(true);
+                    }
+
+                    assert.equal(pendingStateReplayCount, 15);
+                    assert.equal(containerErrors.length, 0);
+                });
+
+            it("No progress for 15 connection state changes and no pending state will " +
                 "not close the container", async () => {
                     patchRuntime(getMockPendingStateManager(false /* always has no pending messages */));
 
@@ -621,7 +640,7 @@ describe("Runtime", () => {
                     assert.equal(containerErrors.length, 0);
                 });
 
-            it("No progress for 15 connection state changes and pending state but successfully" +
+            it("No progress for 15 connection state changes and pending state but successfully " +
                 "processing local op will not close the container", async () => {
                     patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
@@ -642,7 +661,7 @@ describe("Runtime", () => {
                     assert.equal(containerErrors.length, 0);
                 });
 
-            it("No progress for 15 connection state changes and pending state but successfully" +
+            it("No progress for 15 connection state changes and pending state but successfully " +
                 "processing remote op will close the container", async () => {
                     patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
 
