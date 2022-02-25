@@ -29,12 +29,11 @@ import { assert } from '@fluidframework/common-utils';
 import type { IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
-import { assertNotUndefined, compareArrays, fail } from '../../Common';
+import { assertNotUndefined, fail } from '../../Common';
 import { initialTree } from '../../InitialTree';
 import { SharedTree, Change, setTrait, SharedTreeFactory, StablePlace, ChangeInternal } from '../../default-edits';
 import {
 	ChangeNode,
-	comparePayloads,
 	Edit,
 	GenericSharedTree,
 	getUploadedEditChunkContents,
@@ -541,55 +540,6 @@ export function areNodesEquivalent(...nodes: NodeData[]): boolean {
 		}
 
 		if (nodes[i].identifier !== nodes[0].identifier) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-/**
- * Check if two trees are equivalent, meaning they have the same descendants with the same properties.
- *
- * See {@link comparePayloads} for payload comparison semantics.
- */
-export function deepCompareNodes(a: ChangeNode, b: ChangeNode): boolean {
-	if (a.identifier !== b.identifier) {
-		return false;
-	}
-
-	if (a.definition !== b.definition) {
-		return false;
-	}
-
-	if (!comparePayloads(a.payload, b.payload)) {
-		return false;
-	}
-
-	const traitsA = Object.entries(a.traits);
-	const traitsB = Object.entries(b.traits);
-
-	if (traitsA.length !== traitsB.length) {
-		return false;
-	}
-
-	for (const [traitLabel, childrenA] of traitsA) {
-		const childrenB = b.traits[traitLabel];
-
-		if (childrenA.length !== childrenB.length) {
-			return false;
-		}
-
-		const traitsEqual = compareArrays(childrenA, childrenB, (childA, childB) => {
-			if (typeof childA === 'number' || typeof childB === 'number') {
-				// Check if children are DetachedSequenceIds
-				return childA === childB;
-			}
-
-			return deepCompareNodes(childA, childB);
-		});
-
-		if (!traitsEqual) {
 			return false;
 		}
 	}

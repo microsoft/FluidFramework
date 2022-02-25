@@ -5,7 +5,7 @@
 
 import { expect } from 'chai';
 import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
-import { ChangeNode, EditStatus, Side } from '../generic';
+import { ChangeNode, deepCompareNodes, EditStatus, Side } from '../generic';
 import {
 	Transaction,
 	ChangeInternal,
@@ -22,7 +22,6 @@ import { assert } from '../Common';
 import { initialTree } from '../InitialTree';
 import { getChangeNodeFromViewNode } from '../SerializationUtilities';
 import {
-	deepCompareNodes,
 	initialRevisionView,
 	initialRevisionViewWithValidation,
 	refreshTestTree,

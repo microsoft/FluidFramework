@@ -46,7 +46,7 @@ import {
 	SharedTreeSummaryWriteFormat,
 } from './PersistedTypes';
 import { serialize, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
-import { newEditId } from './EditUtilities';
+import { areRevisionViewsSemanticallyEqual, newEditId } from './EditUtilities';
 import { NodeIdConverter, NodeIdGenerator } from './NodeIdUtilities';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
 import { TransactionFactory } from './GenericTransaction';
@@ -677,9 +677,9 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	}
 
 	/**
-	 * Compares this shared tree to another for equality.
+	 * Compares this shared tree to another for equality. Should only be used for correctness testing.
 	 *
-	 * Equality means that the histories as captured by the EditLogs are equal.
+	 * Equality means that the histories as captured by the EditLogs are equivalent.
 	 *
 	 * Equality does not include:
 	 *   - if an edit is open
@@ -687,9 +687,11 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 *   - local vs sequenced status of edits
 	 *   - registered event listeners
 	 *   - state of caches
+	 *
+	 * @internal
 	 * */
 	public equals(sharedTree: GenericSharedTree<any, any, any>): boolean {
-		if (!this.currentView.equals(sharedTree.currentView)) {
+		if (!areRevisionViewsSemanticallyEqual(this.currentView, this, sharedTree.currentView, sharedTree)) {
 			return false;
 		}
 

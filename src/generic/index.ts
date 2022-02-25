@@ -43,7 +43,16 @@ export {
 	PlaceholderTree_0_0_2,
 	HasTraits,
 } from './PersistedTypes';
-export { newEdit, newEditId, comparePayloads, convertTreeNodes, NoTraits, iterateChildren } from './EditUtilities';
+export {
+	newEdit,
+	newEditId,
+	comparePayloads,
+	convertTreeNodes,
+	NoTraits,
+	iterateChildren,
+	compareNodes,
+	deepCompareNodes,
+} from './EditUtilities';
 export {
 	TransactionFactory,
 	GenericTransaction,

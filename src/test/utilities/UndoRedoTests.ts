@@ -9,8 +9,8 @@ import { noop } from '../../Common';
 import { Change, Delete, Insert, SharedTree, StablePlace, StableRange } from '../../default-edits';
 import { DetachedSequenceId, EditId } from '../../Identifiers';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
-import { NodeData } from '../../generic';
-import { deepCompareNodes, setUpTestSharedTree, setUpTestTree } from './TestUtilities';
+import { deepCompareNodes, NodeData } from '../../generic';
+import { setUpTestSharedTree, setUpTestTree } from './TestUtilities';
 import { TestTree } from './TestNode';
 import { expectDefined } from './TestCommon';
 

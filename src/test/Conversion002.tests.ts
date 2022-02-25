@@ -18,8 +18,9 @@ import {
 	tryConvertToNodeData,
 	tryConvertToNodeData_0_0_2,
 } from '../generic';
+import { deepCompareNodes } from '../generic/EditUtilities';
 import { expectDefined } from './utilities/TestCommon';
-import { refreshTestTree, deepCompareNodes, areNodesEquivalent } from './utilities/TestUtilities';
+import { refreshTestTree, areNodesEquivalent } from './utilities/TestUtilities';
 
 describe('0_0_2 type conversions', () => {
 	const testTree = refreshTestTree();

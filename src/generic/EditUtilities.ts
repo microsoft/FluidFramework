@@ -7,7 +7,21 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { compareArrays, fail, Mutable } from '../Common';
 import { EditId, TraitLabel } from '../Identifiers';
-import { Edit, HasTraits, Payload, TraitLocation, TraitLocation_0_0_2, TraitMap } from './PersistedTypes';
+import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
+import {
+	ChangeNode,
+	ChangeNode_0_0_2,
+	Edit,
+	HasTraits,
+	NodeData,
+	NodeData_0_0_2,
+	Payload,
+	TraitLocation,
+	TraitLocation_0_0_2,
+	TraitMap,
+} from './PersistedTypes';
+import { TreeView } from './TreeView';
+import { NodeIdConverter } from '.';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -337,4 +351,96 @@ export function* iterateChildren<T>(traits: Iterable<[string, readonly T[]]>): I
 // Useful for collapsing type checks in `convertTreeNodes` into a single line
 function isKnownType<T, Type extends T>(value: T, isType?: (value: T) => value is Type): value is Type {
 	return isType?.(value) ?? false;
+}
+
+/**
+ * Check if two trees are equivalent, meaning they have the same descendants with the same properties.
+ *
+ * See {@link comparePayloads} for payload comparison semantics.
+ */
+export function deepCompareNodes(
+	a: ChangeNode | ChangeNode_0_0_2,
+	b: ChangeNode | ChangeNode_0_0_2,
+	comparator: (a: NodeData | NodeData_0_0_2, b: NodeData | NodeData_0_0_2) => boolean = compareNodes
+): boolean {
+	if (a === b) {
+		return true;
+	}
+
+	if (!comparator(a, b)) {
+		return false;
+	}
+
+	const traitsA = Object.entries(a.traits);
+	const traitsB = Object.entries(b.traits);
+
+	if (traitsA.length !== traitsB.length) {
+		return false;
+	}
+
+	for (const [traitLabel, childrenA] of traitsA) {
+		const childrenB = b.traits[traitLabel];
+
+		if (childrenA.length !== childrenB.length) {
+			return false;
+		}
+
+		const traitsEqual = compareArrays<ChangeNode | ChangeNode_0_0_2>(childrenA, childrenB, (childA, childB) => {
+			if (typeof childA === 'number' || typeof childB === 'number') {
+				// Check if children are DetachedSequenceIds
+				return childA === childB;
+			}
+
+			return deepCompareNodes(childA, childB);
+		});
+
+		if (!traitsEqual) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/*
+ * Returns true if two nodes have equivalent data and payloads, otherwise false.
+ * Does not compare children
+ * @param nodes - two or more nodes to compare
+ */
+export function compareNodes(a: NodeData | NodeData_0_0_2, b: NodeData | NodeData_0_0_2): boolean {
+	if (a === b) {
+		return true;
+	}
+
+	if (a.identifier !== b.identifier) {
+		return false;
+	}
+
+	if (a.definition !== b.definition) {
+		return false;
+	}
+
+	if (!comparePayloads(a.payload, b.payload)) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Compare two views such that semantically equivalent node IDs are considered equal.
+ */
+export function areRevisionViewsSemanticallyEqual(
+	treeViewA: TreeView,
+	idConverterA: NodeIdConverter,
+	treeViewB: TreeView,
+	idConverterB: NodeIdConverter
+): boolean {
+	const treeA = getChangeNode_0_0_2FromView(treeViewA, idConverterA);
+	const treeB = getChangeNode_0_0_2FromView(treeViewB, idConverterB);
+	if (!deepCompareNodes(treeA, treeB)) {
+		return false;
+	}
+
+	return true;
 }

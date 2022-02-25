@@ -13,8 +13,7 @@ import {
 	validateStablePlace,
 	validateStableRange,
 } from '../default-edits';
-import { convertTreeNodes } from '../generic/EditUtilities';
-import { ChangeNode, Side } from '../generic';
+import { ChangeNode, convertTreeNodes, deepCompareNodes, Side } from '../generic';
 import {
 	simpleRevisionViewWithValidation,
 	left,
@@ -23,7 +22,6 @@ import {
 	rootNodeId,
 	makeEmptyNode,
 	simpleTestTree,
-	deepCompareNodes,
 	refreshTestTree,
 } from './utilities/TestUtilities';
 

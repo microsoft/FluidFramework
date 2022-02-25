@@ -17,6 +17,7 @@ import {
 	EditStatus,
 	EditCommittedEventArguments,
 	SequencedEditAppliedEventArguments,
+	deepCompareNodes,
 } from '../../generic';
 import {
 	Change,
@@ -39,7 +40,6 @@ import {
 	testTrait,
 	areNodesEquivalent,
 	assertNoDelta,
-	deepCompareNodes,
 	initialRevisionView,
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
