@@ -299,12 +299,17 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 						},
 					);
 				} else {
-					// we don't have a producer or we are not connected
+					// we don't have a producer or we are not connected.
 					// normally sendBoxcars would not be called in this scenario, but it could happen if
-					// the above this.producer.produce call errors out and calls this.handleError within this for loop
-					// when this happens, let's requeue the messages for later
-					void this.send(boxcar.messages, boxcar.tenantId, boxcar.documentId, boxcar.partitionId);
+					// the above this.producer.produce call errors out and calls this.handleError within this for loop.
+					// when this happens, let's requeue the messages for later.
+					// note: send will return a new deferred. we need to hook it into
+					// the existing boxcar deferred to ensure continuity
+					this.send(boxcar.messages, boxcar.tenantId, boxcar.documentId, boxcar.partitionId)
+						.then(boxcar.deferred.resolve)
+						.catch(boxcar.deferred.reject);
 				}
+
 			} catch (ex) {
 				// produce can throw if the outgoing message queue is full
 				boxcar.deferred.reject(ex);
