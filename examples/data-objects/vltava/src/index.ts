@@ -6,7 +6,7 @@
 import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
 import { CodeMirrorComponent, CodeMirrorView, SmdeFactory } from "@fluid-example/codemirror";
 import { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "@fluid-example/prosemirror";
-import { Spaces } from "@fluid-example/spaces";
+import { Spaces, SpacesView } from "@fluid-example/spaces";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObjectKeys, IFluidHandle } from "@fluidframework/core-interfaces";
@@ -118,6 +118,12 @@ const getClickerView = async (serializableObject: ISingleHandleItem) => {
     return React.createElement(ClickerReactView, { clicker });
 };
 
+const getSpacesView = async (serializableObject: ISingleHandleItem) => {
+    const handle = serializableObject.handle as IFluidHandle<Spaces>;
+    const spaces = await handle.get();
+    return React.createElement(SpacesView, { model: spaces });
+};
+
 const getCodeMirrorView = async (serializableObject: ISingleHandleItem) => {
     const handle = serializableObject.handle as IFluidHandle<CodeMirrorComponent>;
     const codeMirror = await handle.get();
@@ -157,7 +163,7 @@ const generateFactory = () => {
             capabilities: ["IFluidLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
-            getView: getAdaptedViewForSingleHandleItem
+            getView: getSpacesView,
         },
         {
             factory: codeMirrorFactory,
