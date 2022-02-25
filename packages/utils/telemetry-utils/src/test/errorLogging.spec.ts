@@ -419,7 +419,9 @@ class TestFluidError implements IFluidErrorBase {
     }
 
     withoutProperty(propName: keyof IFluidErrorBase) {
-        delete this[propName];
+        const objectWithoutProp = {};
+        objectWithoutProp[propName] = undefined;
+        Object.assign(this, objectWithoutProp);
         return this;
     }
 
@@ -496,7 +498,7 @@ describe("normalizeError", () => {
             Object.freeze(legacyError);
 
             // Act/Assert
-            assert.throws(() => normalizeError(legacyError, {}), /Cannot add property fluidErrorCode, object is not extensible/);
+            assert.throws(() => normalizeError(legacyError, {}), /Cannot assign to read only property/);
         });
     });
     describe("Errors Needing Normalization", () => {
