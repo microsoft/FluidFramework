@@ -7,7 +7,7 @@ import { ITelemetryProperties } from "@fluidframework/common-definitions";
 
 /**
  * All normalized errors flowing through the Fluid Framework adhere to this readonly interface.
- * It features errorType on top of Error's members as readonly,
+ * It features errorType and errorInstanceId on top of Error's members as readonly,
  * and a getter/setter for telemetry props to be included when the error is logged.
  */
 export interface IFluidErrorBase extends Error {
