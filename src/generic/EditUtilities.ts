@@ -326,7 +326,7 @@ export function walkTreeNodes<TIn extends HasTraits<TIn | TPlaceholder>, TPlaceh
 	}
 }
 
-function* iterateChildren<T>(traits: Iterable<[string, readonly T[]]>): Iterable<[TraitLabel, T]> {
+export function* iterateChildren<T>(traits: Iterable<[string, readonly T[]]>): Iterable<[TraitLabel, T]> {
 	for (const [label, trait] of traits) {
 		for (const child of trait) {
 			yield [label as TraitLabel, child];

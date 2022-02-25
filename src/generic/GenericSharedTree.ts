@@ -35,7 +35,6 @@ import {
 	readFormatVersion,
 } from '../SummaryBackCompatibility';
 import { ReconciliationPath } from '../ReconciliationPath';
-import { RevisionView } from './TreeView';
 import {
 	Edit,
 	SharedTreeOpType,
@@ -51,6 +50,7 @@ import { newEditId } from './EditUtilities';
 import { NodeIdConverter, NodeIdGenerator } from './NodeIdUtilities';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
 import { TransactionFactory } from './GenericTransaction';
+import { RevisionView } from './RevisionView';
 
 /**
  * Filename where the snapshot is stored.

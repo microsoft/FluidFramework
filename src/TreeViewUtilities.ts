@@ -8,7 +8,7 @@ import { StablePlace, StableRange } from './default-edits';
 import { TraitLocation, TreeView, TreeViewPlace, TreeViewRange } from './generic';
 
 /**
- * Express the given `StableRange` as a `Range`
+ * Express the given {@link (StableRange:interface)} as a {@link TreeViewRange}
  */
 export function rangeFromStableRange(view: TreeView, range: StableRange): TreeViewRange {
 	const location = getTraitLocationOfRange(view, range);
@@ -20,7 +20,7 @@ export function rangeFromStableRange(view: TreeView, range: StableRange): TreeVi
 }
 
 /**
- * Express the given `StablePlace` as a `Place`
+ * Express the given {@link (StablePlace:interface)} as a {@link TreeViewPlace}
  */
 export function placeFromStablePlace(view: TreeView, stablePlace: StablePlace): TreeViewPlace {
 	const { side } = stablePlace;
@@ -40,7 +40,7 @@ export function placeFromStablePlace(view: TreeView, stablePlace: StablePlace): 
 
 /**
  * Return the trait under which the given range resides
- * @param view - the `TreeView` within which to retrieve the trait location
+ * @param view - the {@link TreeView} within which to retrieve the trait location
  * @param range - must be well formed and valid
  */
 export function getTraitLocationOfRange(view: TreeView, range: StableRange): TraitLocation {
@@ -63,7 +63,7 @@ function sideOfRange(range: StableRange, sideOfRange: SideOfRange, trait: TraitL
 }
 
 /**
- * Describes the side of a range.
+ * Denotes either the start or end of a range
  */
 enum SideOfRange {
 	/**

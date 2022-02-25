@@ -41,11 +41,12 @@ import {
 	newEdit,
 	NodeData,
 	NodeIdContext,
+	RevisionView,
 	SharedTreeDiagnosticEvent,
 	SharedTreeSummaryWriteFormat,
 	TraitLocation,
+	TreeView,
 } from '../../generic';
-import { RevisionView, TreeView } from '../../generic/TreeView';
 import { EditLog } from '../../EditLog';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';

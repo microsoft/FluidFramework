@@ -5,11 +5,9 @@
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
-
 import { assert } from '../Common';
-import { RevisionView, TreeViewNode } from '../generic/TreeView';
 import { Definition, NodeId, TraitLabel } from '../Identifiers';
-import { ChangeNode, Side } from '../generic';
+import { ChangeNode, RevisionView, Side, TreeViewNode } from '../generic';
 import { Forest, ForestNode } from '../Forest';
 import { makeTestNode } from './utilities/TestUtilities';
 

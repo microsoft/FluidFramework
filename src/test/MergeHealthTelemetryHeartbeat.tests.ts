@@ -6,9 +6,8 @@
 import { expect } from 'chai';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
-import { RevisionView } from '../generic/TreeView';
 import { NodeId } from '../Identifiers';
-import { ChangeNode, EditStatus, SequencedEditAppliedEventArguments } from '../generic';
+import { ChangeNode, EditStatus, RevisionView, SequencedEditAppliedEventArguments } from '../generic';
 import {
 	Change,
 	ChangeType,

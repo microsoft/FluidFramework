@@ -43,7 +43,7 @@ export {
 	PlaceholderTree_0_0_2,
 	HasTraits,
 } from './PersistedTypes';
-export { newEdit, newEditId, comparePayloads, convertTreeNodes, NoTraits } from './EditUtilities';
+export { newEdit, newEditId, comparePayloads, convertTreeNodes, NoTraits, iterateChildren } from './EditUtilities';
 export {
 	TransactionFactory,
 	GenericTransaction,
@@ -73,12 +73,11 @@ export {
 	PlaceIndex,
 	TreeViewNode,
 	TreeView,
-	RevisionView,
-	TransactionView,
 	TraitNodeIndex,
 	TreeViewPlace,
 	TreeViewRange,
 } from './TreeView';
+export { RevisionView, TransactionView } from './RevisionView';
 export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
 export * from './Conversion002';
 

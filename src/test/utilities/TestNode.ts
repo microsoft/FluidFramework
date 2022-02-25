@@ -19,10 +19,10 @@ import {
 	tryConvertToTraitLocation_0_0_2,
 	convertTreeNodes,
 	tryConvertToNodeData_0_0_2,
+	RevisionView,
 } from '../../generic';
 import { Definition, NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
 import { initialTree } from '../../InitialTree';
-import { RevisionView } from '../../generic/TreeView';
 import { expectDefined } from './TestCommon';
 
 /** A legacy format of a `TestNode` */

@@ -9,7 +9,7 @@ import { assertNotUndefined } from '../Common';
 import { EditLogSummary } from '../EditLog';
 import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
-import { RevisionView } from './TreeView';
+import { RevisionView } from './RevisionView';
 import { ChangeNode_0_0_2, Edit } from './PersistedTypes';
 import { NodeIdConverter } from './NodeIdUtilities';
 
