@@ -11,6 +11,12 @@ import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { fluidExport as smde } from "./codemirror";
 
+export {
+    CodeMirrorComponent,
+    CodeMirrorView,
+    SmdeFactory,
+} from "./codemirror";
+
 const defaultComponentId = "default";
 
 class CodeMirrorFactory extends RuntimeFactoryHelper {

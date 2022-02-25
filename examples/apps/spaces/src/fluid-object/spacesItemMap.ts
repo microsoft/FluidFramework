@@ -11,7 +11,7 @@ import {
     IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import { ReactViewAdapter } from "@fluidframework/view-adapters";
-import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
+import { SmdeFactory } from "@fluid-example/codemirror";
 import { CollaborativeText, CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
@@ -21,6 +21,8 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import * as React from "react";
 import { Layout } from "react-grid-layout";
+
+const codeMirrorFactory = new SmdeFactory();
 
 interface ISingleHandleItem {
     handle: IFluidHandle;
@@ -81,7 +83,7 @@ const clickerItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
 };
 
 const codemirrorItemEntry: ISpacesItemEntry<ISingleHandleItem> = {
-    create: createSingleHandleItem(cmfe),
+    create: createSingleHandleItem(codeMirrorFactory),
     getView: getAdaptedViewForSingleHandleItem,
     friendlyName: "Code",
     fabricIconName: "Code",
@@ -119,7 +121,7 @@ export const spacesItemMap = new Map<string, ISpacesItemEntry>([
 // This can go away if the item entries have a way to bring their own subregistries.
 export const spacesRegistryEntries: NamedFluidDataStoreRegistryEntries = new Map([
     ClickerInstantiationFactory.registryEntry,
-    [cmfe.type, Promise.resolve(cmfe)],
+    [codeMirrorFactory.type, Promise.resolve(codeMirrorFactory)],
     [CollaborativeText.Name, Promise.resolve(CollaborativeText.getFactory())],
     [pmfe.type, Promise.resolve(pmfe)],
     Coordinate.getFactory().registryEntry,

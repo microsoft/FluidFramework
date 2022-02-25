@@ -40,7 +40,7 @@ import/no-internal-modules, import/no-unassigned-import */
 
 import { CodeMirrorPresenceManager } from "./presence";
 
-class CodemirrorView implements IFluidHTMLView {
+export class CodeMirrorView implements IFluidHTMLView {
     private textArea: HTMLTextAreaElement | undefined;
     private codeMirror: CodeMirror.EditorFromTextArea | undefined;
     private presenceManager: CodeMirrorPresenceManager | undefined;
@@ -217,7 +217,13 @@ export class CodeMirrorComponent
 
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    private text: SharedString | undefined;
+    private _text: SharedString | undefined;
+    public get text(): SharedString {
+        if (this._text === undefined) {
+            throw new Error("Text used before initialized");
+        }
+        return this._text;
+    }
     private root: ISharedMap | undefined;
     private readonly innerHandle: IFluidHandle<this>;
 
@@ -249,17 +255,17 @@ export class CodeMirrorComponent
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IFluidHandle<SharedString>>("text")?.get();
+        this._text = await this.root.get<IFluidHandle<SharedString>>("text")?.get();
     }
 
     public render(elm: HTMLElement): void {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const codemirrorView = new CodemirrorView(this.text!, this.runtime);
+        const codemirrorView = new CodeMirrorView(this._text!, this.runtime);
         codemirrorView.render(elm);
     }
 }
 
-class SmdeFactory implements IFluidDataStoreFactory {
+export class SmdeFactory implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/codemirror";
     public readonly type = SmdeFactory.type;
 
