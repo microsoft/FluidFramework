@@ -160,6 +160,8 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     addTelemetryProperties(props: ITelemetryProperties): void;
     // (undocumented)
     readonly errorInstanceId: string;
+    // (undocumented)
+    readonly fluidErrorCode: string;
     getTelemetryProperties(): ITelemetryProperties;
     }
 

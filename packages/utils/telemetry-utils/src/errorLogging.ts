@@ -113,7 +113,6 @@ export function normalizeError(
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
-        fluidErrorCode: "",
         message,
         stack,
     });
@@ -288,6 +287,7 @@ export const getCircularReplacer = () => {
  */
 export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
     readonly errorInstanceId = uuid();
+    readonly fluidErrorCode: string = "";
 
     /**
      * Create a new LoggingError
@@ -334,10 +334,10 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
 /** Simple implementation of IFluidErrorBase, extending LoggingError */
 class SimpleFluidError extends LoggingError implements IFluidErrorBase {
     readonly errorType: string;
-    readonly fluidErrorCode: string;
 
     constructor(
         errorProps: Omit<IFluidErrorBase,
+            | "fluidErrorCode"
             | "getTelemetryProperties"
             | "addTelemetryProperties"
             | "errorInstanceId"
@@ -345,7 +345,6 @@ class SimpleFluidError extends LoggingError implements IFluidErrorBase {
     ) {
         super(errorProps.message);
         this.errorType = errorProps.errorType;
-        this.fluidErrorCode = errorProps.fluidErrorCode;
         if (errorProps.stack !== undefined) {
             overwriteStack(this, errorProps.stack);
         }
