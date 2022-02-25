@@ -722,7 +722,7 @@ describe("wrapErrorAndLog", () => {
      }]), "Expected the 'WrapError' event to be logged");
 });
 
-describe.only("Error Discovery", () => {
+describe("Error Discovery", () => {
     const createTestError = (m) =>
         Object.assign(new LoggingError(m), {
             errorType: "someErrorType",
