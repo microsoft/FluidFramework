@@ -38,12 +38,12 @@ require("codemirror/mode/javascript/javascript.js");
 /* eslint-enable @typescript-eslint/no-require-imports,
 import/no-internal-modules, import/no-unassigned-import */
 
-import { CodeMirrorPresenceManager } from "./presence";
+import { CodeMirrorPresenceManager, PresenceManager } from "./presence";
 
 export class CodeMirrorView implements IFluidHTMLView {
     private textArea: HTMLTextAreaElement | undefined;
     private codeMirror: CodeMirror.EditorFromTextArea | undefined;
-    private presenceManager: CodeMirrorPresenceManager | undefined;
+    private codeMirrorPresenceManager: CodeMirrorPresenceManager | undefined;
 
     // TODO would be nice to be able to distinguish local edits across different uses of a sequence so that when
     // bridging to another model we know which one to update
@@ -54,7 +54,7 @@ export class CodeMirrorView implements IFluidHTMLView {
 
     public get IFluidHTMLView() { return this; }
 
-    constructor(private readonly text: SharedString, private readonly runtime: IFluidDataStoreRuntime) {
+    constructor(private readonly text: SharedString, private readonly presenceManager: PresenceManager) {
     }
 
     public remove(): void {
@@ -66,9 +66,9 @@ export class CodeMirrorView implements IFluidHTMLView {
             this.sequenceDeltaCb = undefined;
         }
 
-        if (this.presenceManager) {
-            this.presenceManager.removeAllListeners();
-            this.presenceManager = undefined;
+        if (this.codeMirrorPresenceManager) {
+            this.codeMirrorPresenceManager.removeAllListeners();
+            this.codeMirrorPresenceManager = undefined;
         }
     }
 
@@ -99,7 +99,7 @@ export class CodeMirrorView implements IFluidHTMLView {
                 viewportMargin: Infinity,
             });
 
-        this.presenceManager = new CodeMirrorPresenceManager(this.codeMirror, this.runtime);
+        this.codeMirrorPresenceManager = new CodeMirrorPresenceManager(this.codeMirror, this.presenceManager);
 
         const { parallelText } = this.text.getTextAndMarkers("pg");
         const text = parallelText.join("\n");
@@ -227,12 +227,15 @@ export class CodeMirrorComponent
     private root: ISharedMap | undefined;
     private readonly innerHandle: IFluidHandle<this>;
 
+    public readonly presenceManager: PresenceManager;
+
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         /* Private */ context: IFluidDataStoreContext,
     ) {
         super();
         this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
+        this.presenceManager = new PresenceManager(runtime);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -259,8 +262,7 @@ export class CodeMirrorComponent
     }
 
     public render(elm: HTMLElement): void {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const codemirrorView = new CodeMirrorView(this._text!, this.runtime);
+        const codemirrorView = new CodeMirrorView(this.text, this.presenceManager);
         codemirrorView.render(elm);
     }
 }
