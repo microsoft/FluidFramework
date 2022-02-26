@@ -38,6 +38,7 @@ describe("RedisThrottleStorageManager", () => {
             throttleStatus: false,
             throttleReason: "N/A",
             retryAfterInMs: 2500,
+            usageCount: {},
         };
 
         await throttleManager.setThrottlingMetric(id, throttlingMetric);
@@ -55,6 +56,7 @@ describe("RedisThrottleStorageManager", () => {
             throttleStatus: false,
             throttleReason: "N/A",
             retryAfterInMs: 0,
+            usageCount: {},
         };
 
         await throttleManager.setThrottlingMetric(id, originalThrottlingMetric);
@@ -67,6 +69,7 @@ describe("RedisThrottleStorageManager", () => {
             throttleStatus: true,
             throttleReason: "Exceeded token count: Wait 5 seconds",
             retryAfterInMs: 5000,
+            usageCount: {},
         };
         await throttleManager.setThrottlingMetric(id, updatedThrottlingMetric);
         const retrievedUpdatedThrottlingMetric = await throttleManager.getThrottlingMetric(id);
@@ -93,6 +96,7 @@ describe("RedisThrottleStorageManager", () => {
             throttleStatus: false,
             throttleReason: "N/A",
             retryAfterInMs: 0,
+            usageCount: {},
         };
         await throttleManager.setThrottlingMetric(id, originalThrottlingMetric);
 
@@ -118,6 +122,7 @@ describe("RedisThrottleStorageManager", () => {
             throttleStatus: false,
             throttleReason: "N/A",
             retryAfterInMs: 0,
+            usageCount: {},
         };
         await throttleManager.setThrottlingMetric(id, originalThrottlingMetric);
 

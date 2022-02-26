@@ -65,7 +65,7 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
             throttleStatus: throttlingMetric.throttleStatus === "true",
             throttleReason: throttlingMetric.throttleReason,
             retryAfterInMs: Number.parseInt(throttlingMetric.retryAfterInMs, 10),
-            usageCount: throttlingMetric.usageCount,
+            usageCount: JSON.parse(throttlingMetric.usageCount),
         };
     }
 
