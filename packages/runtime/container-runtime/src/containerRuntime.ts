@@ -339,7 +339,6 @@ interface OldContainerContextWithLogger extends IContainerContext {
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
-const disableChunkingKey = "Fluid.ContainerRuntime.DisableChunking";
 const maxOpSizeInBytesKey = "Fluid.ContainerRuntime.MaxOpSizeInBytes";
 
 // By default, we should reject any op larger than 768KB if chunking is disabled
@@ -901,7 +900,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
     private readonly _aliasingEnabled: boolean;
-    private readonly _chunkingDisabled: boolean;
     private readonly _maxOpSizeInBytes: number;
 
     private _orderSequentiallyCalls: number = 0;
@@ -1033,7 +1031,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
             (runtimeOptions.useDataStoreAliasing ?? false);
 
-        this._chunkingDisabled = (this.mc.config.getBoolean(disableChunkingKey) ?? false);
         this._maxOpSizeInBytes = (this.mc.config.getNumber(maxOpSizeInBytesKey) ?? defaultMaxOpSizeInBytes);
 
         this.garbageCollector = GarbageCollector.create(
@@ -2402,7 +2399,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         batch: boolean,
         opMetadataInternal: unknown = undefined,
     ): number {
-        if (this._chunkingDisabled) {
+        if (this._maxOpSizeInBytes >= 0) {
+            // Chunking disabled
             if (!serializedContent || serializedContent.length <= this._maxOpSizeInBytes) {
                 return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
             }

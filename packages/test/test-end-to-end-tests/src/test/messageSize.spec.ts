@@ -81,7 +81,6 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     ], async () => {
         const maxMessageSizeInBytes = 20000;
         await setupContainers(testContainerConfig, {
-            "Fluid.ContainerRuntime.DisableChunking": "true",
             "Fluid.ContainerRuntime.MaxOpSizeInBytes": maxMessageSizeInBytes,
         });
         const errorEvent = containerError(container1);
@@ -104,7 +103,6 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     it("Small ops will pass with chunking disabled", async () => {
         const maxMessageSizeInBytes = 20000;
         await setupContainers(testContainerConfig, {
-            "Fluid.ContainerRuntime.DisableChunking": "true",
             "Fluid.ContainerRuntime.MaxOpSizeInBytes": maxMessageSizeInBytes,
         });
         const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
@@ -118,10 +116,10 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         }
     });
 
-    it("Chunking disabled ignores the max message size from feature gate", async () => {
+    it("Large ops pass with chunking enabled", async () => {
         const maxMessageSizeInBytes = 20000;
         await setupContainers(testContainerConfig, {
-            "Fluid.ContainerRuntime.MaxOpSizeInBytes": maxMessageSizeInBytes,
+            "Fluid.ContainerRuntime.MaxOpSizeInBytes": -1,
         });
         // Server max op size should be at around 16000, therefore the runtime will chunk all ops.
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
