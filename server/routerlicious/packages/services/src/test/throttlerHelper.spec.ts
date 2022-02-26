@@ -149,6 +149,7 @@ describe("ThrottlerHelper", () => {
             retryAfterInMs: cooldownIntervalInMs,
             throttleStatus: true,
             throttleReason: "Exceeded count by 1",
+            usageCount: {},
         });
 
         response = await throttlerHelper.updateCount(id, weight);
