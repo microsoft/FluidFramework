@@ -78,6 +78,8 @@ const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocket
 
 const getSubmitOpThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitOp`;
 
+const getSubmitSignalThrottleId = (clientId: string, tenantId: string) => `${clientId}_${tenantId}_SubmitSignal`;
+
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
     // Trace sampling.
@@ -500,6 +502,20 @@ export function configureWebSocketServices(
                     const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                     socket.emit("nack", "", [nackMessage]);
                 } else {
+                    const throttleError = checkThrottle(
+                        submitOpThrottler,
+                        getSubmitSignalThrottleId(clientId, room.tenantId),
+                        room.tenantId,
+                        logger);
+                    if (throttleError) {
+                        const nackMessage = createNackMessage(
+                            throttleError.code,
+                            NackErrorType.ThrottlingError,
+                            throttleError.message,
+                            throttleError.retryAfter);
+                        socket.emit("nack", "", [nackMessage]);
+                        return;
+                    }
                     contentBatches.forEach((contentBatche) => {
                         const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
 

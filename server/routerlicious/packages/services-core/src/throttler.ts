@@ -5,32 +5,17 @@
 
 import { INackContent, NackErrorType } from "@fluidframework/protocol-definitions";
 
-export interface IUsageEmitter {
-    emit(usageData: UsageData): void;
-    getUsageCounts(): void;
- } 
- 
- export enum MeterType {
-     OpsIn,
-     OpsOut,
-     ClientConnectivityMinutes,
-     StorageSpaceUsedInGB
- }
-
- export interface UsageData {
-     type: MeterType,
-     value: number,
-     tenantId: string,
-     documentId: string
- }
-
 export interface IThrottlerResponse {
     throttleStatus: boolean;
     throttleReason: string;
     retryAfterInMs: number;
 }
 
-export interface IThrottlingMetrics extends IThrottlerResponse {
+export interface IUsageCount {
+    usageCount: {[key: string]: any};
+}
+
+export interface IThrottlingMetrics extends IThrottlerResponse, IUsageCount {
     count: number;
     lastCoolDownAt: number;
 }

@@ -36,8 +36,11 @@ export class ThrottlerHelper implements IThrottlerHelper {
                 throttleStatus: false,
                 throttleReason: undefined,
                 retryAfterInMs: 0,
+                usageCount: {},
             };
         }
+
+        throttlingMetric.usageCount[`${now.toString()}`] = count;
 
         // Exit early if already throttled and no chance of being unthrottled
         const retryAfterInMs = this.getRetryAfterInMs(throttlingMetric, now);
