@@ -103,7 +103,8 @@ export class RouterliciousRestWrapper extends RestWrapper {
         }
 
         throwR11sNetworkError(
-            "r11sFetchError",
+            // eslint-disable-next-line max-len
+            //"r11sFetchError",  //* Probably fine to just delete but will check with Zach about what he wants the error message to be here
             responseBody !== undefined
                 ? typeof responseBody === "string" ? responseBody : safeStringify(responseBody)
                 : response.statusText,
