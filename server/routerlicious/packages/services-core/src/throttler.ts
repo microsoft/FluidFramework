@@ -12,7 +12,7 @@ export interface IThrottlerResponse {
 }
 
 export interface IUsageCount {
-    usageCount: {[key: string]: any};
+    [key: string]: any;
 }
 
 export interface IThrottlingMetrics extends IThrottlerResponse, IUsageCount {
