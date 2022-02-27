@@ -37,7 +37,6 @@ export class TestThrottlerHelper implements IThrottlerHelper {
             throttleStatus: false,
             throttleReason: undefined,
             retryAfterInMs: 0,
-            usageCount: {},
         };
 
         // cooldown count

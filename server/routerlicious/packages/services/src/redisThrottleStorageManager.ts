@@ -53,20 +53,27 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
     }
 
     public async getThrottlingMetric(id: string): Promise<IThrottlingMetrics | undefined> {
-        const throttlingMetric = await this.client.hgetall(this.getKey(id));
-        if (Object.keys(throttlingMetric).length === 0) {
+        const throttlingMetricRedis = await this.client.hgetall(this.getKey(id));
+        if (Object.keys(throttlingMetricRedis).length === 0) {
             return undefined;
         }
 
         // All values retrieved from Redis are strings, so they must be parsed
-        return {
-            count: Number.parseInt(throttlingMetric.count, 10),
-            lastCoolDownAt: Number.parseInt(throttlingMetric.lastCoolDownAt, 10),
-            throttleStatus: throttlingMetric.throttleStatus === "true",
-            throttleReason: throttlingMetric.throttleReason,
-            retryAfterInMs: Number.parseInt(throttlingMetric.retryAfterInMs, 10),
-            usageCount: JSON.parse(throttlingMetric.usageCount),
+        let throttlingMetric = {
+            count: Number.parseInt(throttlingMetricRedis.count, 10),
+            lastCoolDownAt: Number.parseInt(throttlingMetricRedis.lastCoolDownAt, 10),
+            throttleStatus: throttlingMetricRedis.throttleStatus === "true",
+            throttleReason: throttlingMetricRedis.throttleReason,
+            retryAfterInMs: Number.parseInt(throttlingMetricRedis.retryAfterInMs, 10),
         };
+
+        for (const [key, value] of Object.entries(throttlingMetricRedis)) {
+            if (key.startsWith("usage_count_")) {
+                throttlingMetric[key] = Number.parseInt(value, 10)
+            }
+        }
+        
+        return throttlingMetric;
     }
 
     private getKey(id: string): string {
