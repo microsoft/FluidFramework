@@ -92,8 +92,8 @@ stages:
   displayName: 'Combine API Extractor JSON'
   pool: Small
   jobs:
-    - displayName: 'Upload combined api-extractor JSON'
-      deployment: upload_json
+    - deployment: upload_json
+      displayName: 'Upload combined api-extractor JSON'
       environment: 'fluid-docs-env'
       strategy:
         runOnce:
@@ -119,47 +119,47 @@ stages:
       - download: current
         artifact: api-extractor-combined
 
-      - displayName: 'Copy api-extractor JSON to staging folder'
-        task: CopyFiles@2
+      - task: CopyFiles@2
+        displayName: 'Copy api-extractor JSON to staging folder'
         inputs:
           contents: '$(Pipeline.Workspace)/api-extractor-combined/**'
           targetFolder: '$(Build.SourcesDirectory)/_api-extractor-temp'
 
-      - displayName: Use Node 14.x
-        task: UseNode@1
+      - task: UseNode@1
+        displayName: Use Node 14.x
         inputs:
           version: 14.x
 
-      - displayName: npm ci
-        task: Npm@1
+      - task: Npm@1
+        displayName: npm ci
         inputs:
           command: 'custom'
           workingDir: '$(Build.SourcesDirectory)/docs'
           customCommand: 'ci'
 
-      - displayName: npm run build
-        task: Npm@1
+      - task: Npm@1
+        displayName: npm run build
         inputs:
           command: 'custom'
           workingDir: '$(Build.SourcesDirectory)/docs'
           customCommand: 'run build'
 
-      - displayName: 'Generate SBOM'
-        task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
+      - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
+        displayName: 'Generate SBOM'
         inputs:
           BuildDropPath: '$(Build.SourcesDirectory)/docs/public'
           PackageName: 'fluidframework-docs'
           PackageVersion: '$(Build.BuildId)'
 
-      - displayName: 'Publish site build artifact'
-        task: PublishBuildArtifacts@1
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish site build artifact'
         inputs:
           PathtoPublish: '$(Build.SourcesDirectory)/docs/public'
           ArtifactName: 'fluidframework-docs'
           publishLocation: 'Container'
 
-      - displayName: ''
-        task: AzureStaticWebApp@0
+      - task: AzureStaticWebApp@0
+        displayName: 'Deploy site'
         inputs:
           skip_app_build: true # site was built in previous step
           app_location: '$(Build.SourcesDirectory)/docs/public'
