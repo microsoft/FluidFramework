@@ -8,9 +8,9 @@ import {
     Marker,
     MergeTree,
     reservedTileLabelsKey,
-} from "./mergeTree";
-import { ReferenceType } from "./ops";
-import { TextSegment } from "./textSegment";
+} from "../mergeTree";
+import { ReferenceType } from "../ops";
+import { TextSegment } from "../textSegment";
 
 export function loadSegments(content: string, segLimit: number, markers: boolean = false, withProps: boolean = true) {
     const BOMFreeContent = content.replace(/^\uFEFF/, "");

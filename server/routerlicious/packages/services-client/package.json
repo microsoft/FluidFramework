@@ -57,7 +57,7 @@
     "@fluidframework/gitresources": "^0.1035.0",
     "@fluidframework/protocol-base": "^0.1035.0",
     "@fluidframework/protocol-definitions": "^0.1026.0",
-    "axios": "^0.21.2",
+    "axios": "^0.26.0",
     "crc-32": "1.2.0",
     "debug": "^4.1.1",
     "json-stringify-safe": "^5.0.1",

@@ -331,8 +331,9 @@ export enum RuntimeHeaders {
  * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
  * its usage is removed from TaggedLoggerAdapter fallback.
  */
-interface OldContainerContextWithLogger extends IContainerContext {
+interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedLogger"> {
     logger: ITelemetryBaseLogger;
+    taggedLogger: undefined;
 }
 
 // Local storage key to set the default flush mode to TurnBased
@@ -689,8 +690,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
-        const passLogger = context.taggedLogger ?? new TaggedLoggerAdapter((context as
-            OldContainerContextWithLogger).logger);
+        const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
+        const passLogger = backCompatContext.taggedLogger ??
+            new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
         const logger = ChildLogger.create(passLogger, undefined, {
             all: {
                 runtimeVersion: pkgVersion,

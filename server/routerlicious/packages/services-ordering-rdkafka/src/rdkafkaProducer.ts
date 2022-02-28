@@ -11,7 +11,9 @@ import {
 	IProducer,
 	PendingBoxcar,
 	MaxBatchSize,
+	IContextErrorData,
 } from "@fluidframework/server-services-core";
+import { Deferred } from "@fluidframework/common-utils";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
@@ -28,6 +30,12 @@ export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	private readonly producerOptions: IKafkaProducerOptions;
 	private readonly messages = new Map<string, IPendingBoxcar[]>();
+
+	/**
+	 * Boxcar promises that have been queued into rdkafka and we are waiting for a response
+	 */
+	private readonly inflightPromises: Set<Deferred<void>> = new Set();
+
 	private producer?: kafkaTypes.Producer;
 	private sendPending?: NodeJS.Immediate;
 	private connecting = false;
@@ -41,14 +49,14 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		options?: Partial<IKafkaProducerOptions>) {
 		super(endpoints, clientId, topic, options);
 
-        this.defaultRestartOnKafkaErrorCodes = [
-            this.kafka.CODES.ERRORS.ERR__TRANSPORT,
-            this.kafka.CODES.ERRORS.ERR__UNKNOWN_PARTITION,
-            this.kafka.CODES.ERRORS.ERR__ALL_BROKERS_DOWN,
-            this.kafka.CODES.ERRORS.ERR__SSL,
-            this.kafka.CODES.ERRORS.ERR_UNKNOWN_TOPIC_OR_PART,
-            this.kafka.CODES.ERRORS.ERR_UNKNOWN_MEMBER_ID,
-        ];
+		this.defaultRestartOnKafkaErrorCodes = [
+			this.kafka.CODES.ERRORS.ERR__TRANSPORT,
+			this.kafka.CODES.ERRORS.ERR__UNKNOWN_PARTITION,
+			this.kafka.CODES.ERRORS.ERR__ALL_BROKERS_DOWN,
+			this.kafka.CODES.ERRORS.ERR__SSL,
+			this.kafka.CODES.ERRORS.ERR_UNKNOWN_TOPIC_OR_PART,
+			this.kafka.CODES.ERRORS.ERR_UNKNOWN_MEMBER_ID,
+		];
 
 		this.producerOptions = {
 			...options,
@@ -142,6 +150,13 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			clearImmediate(this.sendPending);
 			this.sendPending = undefined;
 		}
+
+		// reject any messages that are currently inflight
+		for (const promise of this.inflightPromises) {
+			promise.reject(new Error("Closed RdkafkaProducer"));
+		}
+
+		this.inflightPromises.clear();
 
 		await new Promise<void>((resolve) => {
 			const producer = this.producer;
@@ -256,6 +271,8 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 			try {
 				if (this.producer && this.connected) {
+					this.inflightPromises.add(boxcar.deferred);
+
 					this.producer.produce(
 						this.topic, // topic
 						boxcar.partitionId ?? null, // partition id or null for consistent random for keyed messages
@@ -263,11 +280,18 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 						boxcar.documentId, // key
 						undefined, // timestamp
 						(err: any, offset?: number) => {
+							this.inflightPromises.delete(boxcar.deferred);
+
 							if (err) {
 								boxcar.deferred.reject(err);
 
 								// eslint-disable-next-line @typescript-eslint/no-floating-promises
-								this.handleError(err);
+								this.handleError(err, {
+									restart: true,
+									tenantId: boxcar.tenantId,
+									documentId: boxcar.documentId,
+								});
+
 							} else {
 								boxcar.deferred.resolve();
 								this.emit("produced", boxcarMessage, offset, message.length);
@@ -275,18 +299,27 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 						},
 					);
 				} else {
-					// we don't have a producer or we are not connected
+					// we don't have a producer or we are not connected.
 					// normally sendBoxcars would not be called in this scenario, but it could happen if
-					// the above this.producer.produce call errors out and calls this.handleError within this for loop
-					// when this happens, let's requeue the messages for later
-					void this.send(boxcar.messages, boxcar.tenantId, boxcar.documentId, boxcar.partitionId);
+					// the above this.producer.produce call errors out and calls this.handleError within this for loop.
+					// when this happens, let's requeue the messages for later.
+					// note: send will return a new deferred. we need to hook it into
+					// the existing boxcar deferred to ensure continuity
+					this.send(boxcar.messages, boxcar.tenantId, boxcar.documentId, boxcar.partitionId)
+						.then(boxcar.deferred.resolve)
+						.catch(boxcar.deferred.reject);
 				}
+
 			} catch (ex) {
 				// produce can throw if the outgoing message queue is full
 				boxcar.deferred.reject(ex);
 
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				this.handleError(ex);
+				this.handleError(ex, {
+					restart: true,
+					tenantId: boxcar.tenantId,
+					documentId: boxcar.documentId,
+				});
 			}
 		}
 	}
@@ -294,10 +327,10 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	/**
 	 * Handles an error that requires a reconnect to Kafka
 	 */
-	private async handleError(error: any) {
+	private async handleError(error: any, errorData?: IContextErrorData) {
 		await this.close(true);
 
-		this.error(error);
+		this.error(error, errorData);
 
 		this.connect();
 	}

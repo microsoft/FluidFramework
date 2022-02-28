@@ -54,12 +54,12 @@ export function isFluidError(e: any): e is IFluidErrorBase {
     return typeof e?.errorType === "string" &&
         typeof e?.fluidErrorCode === "string" &&
         typeof e?.message === "string" &&
-        typeof e?.errorInstanceId === "string" &&
+        hasErrorInstanceId(e) &&
         hasTelemetryPropFunctions(e);
 }
 
 /** type guard for old standard of valid/known errors */
-export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode"> {
+export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode" | "errorInstanceId"> {
     return typeof e?.errorType === "string" &&
         typeof e?.message === "string" &&
         hasTelemetryPropFunctions(e);

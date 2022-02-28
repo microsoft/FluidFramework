@@ -794,9 +794,6 @@ export class List<T> {
 export function ListMakeHead<U>(): List<U>;
 
 // @public (undocumented)
-export function loadSegments(content: string, segLimit: number, markers?: boolean, withProps?: boolean): ISegment[];
-
-// @public (undocumented)
 export const LocalClientId = -1;
 
 // @public (undocumented)
