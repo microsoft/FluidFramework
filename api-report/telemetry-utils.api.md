@@ -107,8 +107,6 @@ export interface IFluidErrorBase extends Error {
     addTelemetryProperties: (props: ITelemetryProperties) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
-    // @deprecated (undocumented)
-    readonly fluidErrorCode: string;
     getTelemetryProperties(): ITelemetryProperties;
     readonly message: string;
     readonly name: string;
@@ -138,7 +136,7 @@ export const isILoggingError: (x: any) => x is ILoggingError;
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType;
 
 // @public
-export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode" | "errorInstanceId">;
+export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId">;
 
 // @public (undocumented)
 export interface ITelemetryLoggerPropertyBag {
@@ -163,8 +161,6 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     addTelemetryProperties(props: ITelemetryProperties): void;
     // (undocumented)
     get errorInstanceId(): string;
-    // (undocumented)
-    readonly fluidErrorCode: string;
     getTelemetryProperties(): ITelemetryProperties;
     // (undocumented)
     overwriteErrorInstanceId(id: string): void;

@@ -94,13 +94,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         new Promise<boolean>((resolve, reject) => {
             runtime.once("dispose", () => reject(new Error("Runtime disposed")));
             runtime.submitDataStoreAliasOp({ id: alias }, resolve);
-        }).catch((error) => new Error(error.fluidErrorCode));
+        }).catch((error) => new Error(error.message));
 
     const corruptedAliasOp = async (runtime: ContainerRuntime, alias: string): Promise<boolean | Error> =>
         new Promise<boolean>((resolve, reject) => {
             runtime.once("dispose", () => reject(new Error("Runtime disposed")));
             (runtime as any).submit(ContainerMessageType.Alias, { id: alias }, resolve);
-        }).catch((error) => new Error(error.fluidErrorCode));
+        }).catch((error) => new Error(error.message));
 
     describe("Name conflict expected failures", () => {
         beforeEach(async () => setupContainers(testContainerConfig));

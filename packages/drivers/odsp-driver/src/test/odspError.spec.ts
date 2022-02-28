@@ -32,14 +32,14 @@ describe("Odsp Error", () => {
     } as Response;
 
     function createOdspNetworkErrorWithResponse(
-        fluidErrorCode: string,
+        errorMessgae: string,
         statusCode: number,
         response?: Response,
         responseText?: string,
     ) {
         try {
             throwOdspNetworkError(
-                fluidErrorCode,
+                errorMessgae,
                 statusCode,
                 response ?? testResponse,
                 responseText,
@@ -52,7 +52,7 @@ describe("Odsp Error", () => {
 
     it("throwOdspNetworkError first-class properties", async () => {
         const networkError = createOdspNetworkErrorWithResponse(
-            "someErrorCode",
+            "some message",
             400,
         );
         if (networkError.errorType !== DriverErrorType.genericNetworkError) {
@@ -74,7 +74,7 @@ describe("Odsp Error", () => {
     });
 
     it("throwOdspNetworkError sprequestguid undefined", async () => {
-        const error1: any = createOdspNetworkError("someErrorCode", "Error", 400);
+        const error1: any = createOdspNetworkError("some message", 400);
         const errorBag = { ...error1.getTelemetryProperties() };
         assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
     });
@@ -141,7 +141,6 @@ describe("Odsp Error", () => {
                 return 1;
             } else {
                 throw new NonRetryableError(
-                    "code",
                     "some message",
                     DriverErrorType.incorrectServerResponse,
                     { driverVersion: pkgVersion });

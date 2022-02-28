@@ -44,7 +44,7 @@ describe("Runtime", () => {
                         return containerErrors[0];
                     };
 
-                    const expectedOrderSequentiallyErrorCode = "orderSequentiallyCallbackException";
+                    const expectedOrderSequentiallyErrorMessage = "orderSequentiallyCallbackException"; //* format
 
                     beforeEach(async () => {
                         containerRuntime = await ContainerRuntime.load(
@@ -66,7 +66,7 @@ describe("Runtime", () => {
 
                         const error = getFirstContainerError();
                         assert.ok(error instanceof GenericError);
-                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                        assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
                     });
 
                     it("Can't call flush() inside orderSequentially's callback when nested", () => {
@@ -77,7 +77,7 @@ describe("Runtime", () => {
 
                         const error = getFirstContainerError();
                         assert.ok(error instanceof GenericError);
-                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                        assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
                     });
 
                     it("Can't call flush() inside orderSequentially's callback when nested ignoring exceptions", () => {
@@ -91,7 +91,7 @@ describe("Runtime", () => {
 
                         const error = getFirstContainerError();
                         assert.ok(error instanceof GenericError);
-                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                        assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
                     });
 
                     it("Errors propagate to the container", () => {
@@ -103,7 +103,7 @@ describe("Runtime", () => {
 
                         const error = getFirstContainerError();
                         assert.ok(error instanceof GenericError);
-                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                        assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
                         assert.strictEqual(error.error.message, "Any");
                     });
 
@@ -117,7 +117,7 @@ describe("Runtime", () => {
 
                         const error = getFirstContainerError();
                         assert.ok(error instanceof GenericError);
-                        assert.strictEqual(error.fluidErrorCode, expectedOrderSequentiallyErrorCode);
+                        assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
                         assert.strictEqual(error.error.message, "Any");
                     });
                 });

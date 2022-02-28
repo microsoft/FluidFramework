@@ -150,12 +150,13 @@ export async function fetchHelper(
         // It could contain PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
         //
+        //* Use wrapError (maybe later PR)
         if (online === OnlineStatus.Offline) {
             throw new RetryableError(
-                `ODSP fetch failure (Offline): [${errorText}])`, DriverErrorType.offlineError, { driverVersion });
+                `ODSP fetch failure (Offline): ${errorText})`, DriverErrorType.offlineError, { driverVersion });
         } else {
             throw new RetryableError(
-                `ODSP fetch failure: [${errorText}]`, DriverErrorType.fetchFailure, { driverVersion });
+                `ODSP fetch failure: ${errorText}`, DriverErrorType.fetchFailure, { driverVersion });
         }
     });
 }
