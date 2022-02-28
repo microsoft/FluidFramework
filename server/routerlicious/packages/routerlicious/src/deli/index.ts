@@ -107,7 +107,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         collection,
         tenantManager,
         combinedProducer,
-        localProducer,
+        undefined,
         reverseProducer,
         core.DefaultServiceConfiguration,
         globalDbMongoManager);
