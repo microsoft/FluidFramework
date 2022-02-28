@@ -102,12 +102,11 @@ export class RouterliciousRestWrapper extends RestWrapper {
             }, responseBody.retryAfter * 1000));
         }
 
+        const responseSummary = responseBody !== undefined
+            ? typeof responseBody === "string" ? responseBody : safeStringify(responseBody)
+            : response.statusText;
         throwR11sNetworkError(
-            // eslint-disable-next-line max-len
-            //"r11sFetchError",  //* Probably fine to just delete but will check with Zach about what he wants the error message to be here
-            responseBody !== undefined
-                ? typeof responseBody === "string" ? responseBody : safeStringify(responseBody)
-                : response.statusText,
+            `R11s fetch error: ${responseSummary}`,
             response.status,
             responseBody?.retryAfter,
         );

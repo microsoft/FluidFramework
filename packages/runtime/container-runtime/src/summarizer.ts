@@ -51,14 +51,13 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
         super(errorMessage);
     }
 
-    static wrap(error: any, summarizerCodepath: string, logged: boolean = false, logger: ITelemetryLogger) {
-        //* Are we getting rid of this function anyway?  And think about use of colon here.  Probably not right.
-        const newErrorFn = (errMsg: string) => new SummarizingWarning(`${summarizerCodepath}: ${errMsg}`, logged);
+    static wrap(error: any, logged: boolean = false, logger: ITelemetryLogger) {
+        const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
         return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
     }
 }
 
-//* Update callsites to use sentence format?  (here and everywhere!)
+//* Format
 export const createSummarizingWarning =
     (errorCode: string, logged: boolean) => new SummarizingWarning(errorCode, logged);
 
@@ -145,7 +144,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             return await this.runCore(onBehalfOf, options);
         } catch (error) {
             this.stop("summarizerException");
-            throw SummarizingWarning.wrap(error, "summarizerRun", false /* logged */, this.logger);
+            throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
         } finally {
             this.dispose();
             this.runtime.closeFn();
@@ -357,7 +356,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             return builder.build();
         }
         catch (error) {
-            throw SummarizingWarning.wrap(error, "summarizerRun", false /* logged */, this.logger);
+            throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
         }
     };
 

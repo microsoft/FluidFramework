@@ -556,25 +556,25 @@ export class DocumentDeltaConnection
         // Note: we suspect the incoming error object is either:
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - an Error object thrown by socket.io engine. Be careful with not recording PII!
-        let message = `socket.io (${handler})`;
+        let message: string;
         if (typeof error !== "object") {
-            message = `${message}: ${error}`;
+            message = `${error}`;
         } else if (error?.type === "TransportError") {
             // JSON.stringify drops Error.message
-            if (error?.message !== undefined) {
-                message = `${message}: ${error.message}`;
-            }
+            const messagePrefix = (error?.message !== undefined)
+                ? `${error.message}: `
+                : "";
+
             // Websocket errors reported by engine.io-client.
             // They are Error objects with description containing WS error and description = "TransportError"
             // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
-            message = `${message}: ${JSON.stringify(error, getCircularReplacer())}`;
+            message = `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
         } else {
-            message = `${message}: [object omitted]`;
+            message = "[object omitted]";
         }
+        //* Wrap?
         const errorObj = createGenericNetworkError(
-            // eslint-disable-next-line max-len
-            // `socketError [${handler}]`,  //* This can go away since we can split on first :.  (for non-generic untrustedOrigins - i.e. wrapped errors - and update this code to use wrapError)
-            message,
+            `socket.io (${handler}): ${message}`,
             { canRetry },
             { driverVersion },
         );

@@ -394,7 +394,7 @@ export class SummaryGenerator {
                 const message = summaryNack?.message;
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
-                //* Wrap.  And at least do not LoggingError
+                //* Wrap?
                 const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });
                 logger.sendErrorEvent(
                     { eventName: "SummaryNack", ...summarizeTelemetryProps, retryAfterSeconds }, error);

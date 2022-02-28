@@ -98,7 +98,6 @@ export function throwR11sNetworkError(
 export function errorObjectFromSocketError(socketError: IR11sSocketError, handler: string): R11sError {
     const message = `R11sSocketError (${handler}): ${socketError.message}`;
     return createR11sNetworkError(
-        // "r11sSocketError",  //* Probably fine to just remove but consider symmetry with ODSP
         message,
         socketError.code,
         socketError.retryAfterMs,

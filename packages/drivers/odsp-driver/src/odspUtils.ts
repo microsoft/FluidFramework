@@ -150,10 +150,10 @@ export async function fetchHelper(
         // It could contain PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
         //
-        //* Use wrapError (maybe later PR)
+        //* Wrap
         if (online === OnlineStatus.Offline) {
             throw new RetryableError(
-                `ODSP fetch failure (Offline): ${errorText})`, DriverErrorType.offlineError, { driverVersion });
+                `ODSP fetch failure (Offline): ${errorText}`, DriverErrorType.offlineError, { driverVersion });
         } else {
             throw new RetryableError(
                 `ODSP fetch failure: ${errorText}`, DriverErrorType.fetchFailure, { driverVersion });
@@ -318,7 +318,7 @@ export function toInstrumentedOdspTokenFetcher(
                 const tokenError = wrapError(
                     error,
                     (errorMessage) => new NetworkErrorBasic(
-                        `Token fetcher failed: [${errorMessage}]`, //* Yes this will work!
+                        `The Host-provided token fetcher threw an error: ${errorMessage}`,
                         OdspErrorType.fetchTokenError,
                         typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
                         { method: name, driverVersion }));

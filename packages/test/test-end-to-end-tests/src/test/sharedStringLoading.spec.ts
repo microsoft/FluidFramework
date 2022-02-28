@@ -109,7 +109,6 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                             // throw when trying to load the header blob
                             if (blobObj.headerMetadata !== undefined) {
                                 throw new NonRetryableError(
-                                    "notFound",
                                     "Not Found",
                                     "someErrorType",
                                     { statusCode: 404, driverVersion: pkgVersion });

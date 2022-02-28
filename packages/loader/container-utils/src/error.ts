@@ -48,7 +48,7 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
     readonly errorType = ContainerErrorType.throttlingError;
 
-    constructor(
+    private constructor(
         message: string,
         readonly retryAfterSeconds: number,
         props?: ITelemetryProperties,
@@ -57,18 +57,16 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     }
 
     /**
-     * Wrap the given error as a ThrottlingWarning, preserving any safe properties for logging
-     * and prefixing the wrapped error message with messagePrefix.
+     * Wrap the given error as a ThrottlingWarning
+     * Only preserves the error message, and applies the given retry after to the new warning object
      */
     static wrap(
-        error: any,
-        errorCode: string, //* Incorporate this somehow or remove it (probably remove it)
+        error: unknown,
         retryAfterSeconds: number,
         logger: ITelemetryLogger,
     ): IThrottlingWarning {
         const newErrorFn =
             (errMsg: string) => new ThrottlingWarning(errMsg, retryAfterSeconds);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return wrapErrorAndLog(error, newErrorFn, logger);
     }
 }

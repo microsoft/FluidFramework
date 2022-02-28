@@ -607,7 +607,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
             const throttlingWarning: IThrottlingWarning = ThrottlingWarning.wrap(
                 error,
-                "deltaManagerEmitDelayInfo",
                 delayMs / 1000 /* retryAfterSeconds */,
                 this.logger,
             );

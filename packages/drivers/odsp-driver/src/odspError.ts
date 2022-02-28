@@ -10,9 +10,9 @@ import { IOdspSocketError } from "./contracts";
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
 export function errorObjectFromSocketError(socketError: IOdspSocketError, handler: string) {
+    //* Wrap?
     const message = `OdspSocketError (${handler}): ${socketError.message}`;
     const error = createOdspNetworkError(
-        //`odspSocketError [${handler}]`,  //* Deal with it -- Just delete it -- see comment in base DDC
         message,
         socketError.code,
         socketError.retryAfter);
