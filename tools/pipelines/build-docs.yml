@@ -90,7 +90,6 @@ stages:
 
 - stage: json
   displayName: 'Combine API Extractor JSON'
-  pool: Small
   jobs:
     - deployment: upload_json
       displayName: 'Upload combined api-extractor JSON'
