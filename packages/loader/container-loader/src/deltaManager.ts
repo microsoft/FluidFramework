@@ -776,15 +776,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.connectionManager.beforeProcessingIncomingOp(message);
 
-        // Add final ack trace.
-        if (message.traces !== undefined && message.traces.length > 0) {
-            message.traces.push({
-                action: "end",
-                service: "client",
-                timestamp: Date.now(),
-            });
-        }
-
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
             throw new DataCorruptionError("msnMovesBackwards", {
