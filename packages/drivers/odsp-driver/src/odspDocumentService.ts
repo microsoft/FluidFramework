@@ -52,7 +52,9 @@ import { pkgVersion as driverVersion } from "./packageVersion";
  */
 export class OdspDocumentService implements IDocumentService {
     private _policies: IDocumentServicePolicies;
+    // Timer which runs and executes the join session call after intervals.
     private joinSessionRefreshTimer: ReturnType<typeof setTimeout> | undefined;
+    // This is the time at which join session refresh should be executed.
     private joinSessionRefreshTime: number | undefined;
     /**
      * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
@@ -304,6 +306,7 @@ export class OdspDocumentService implements IDocumentService {
 
     private async refreshSessionPeriodically(requestWebsocketTokenFromJoinSession: boolean) {
         for (let i = 0;;i++) {
+            // If the refresh time is not defined, then let the session expire.
             if (this.joinSessionRefreshTime === undefined) {
                 break;
             }
@@ -367,6 +370,9 @@ export class OdspDocumentService implements IDocumentService {
 
         let response: ISocketStorageDiscovery;
         const currentTime = Date.now();
+        // If the join session refresh time is in future, that means we can reuse the cached response. Otherwise
+        // we need to clear the cache and execute the network call, so as to refresh the session on the relay
+        // ordering service.
         if (this.joinSessionRefreshTime === undefined || this.joinSessionRefreshTime <= currentTime) {
             this.cache.sessionJoinCache.remove(this.joinSessionKey);
             response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
