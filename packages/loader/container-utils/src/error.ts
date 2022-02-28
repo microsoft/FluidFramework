@@ -62,7 +62,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
      */
     static wrap(
         error: any,
-        errorCode: string, //* Incorporate this somehow or remove it
+        errorCode: string, //* Incorporate this somehow or remove it (probably remove it)
         retryAfterSeconds: number,
         logger: ITelemetryLogger,
     ): IThrottlingWarning {

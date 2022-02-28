@@ -317,7 +317,7 @@ export function toInstrumentedOdspTokenFetcher(
                 const tokenError = wrapError(
                     error,
                     (errorMessage) => new NetworkErrorBasic(
-                        `Token fetcher failed: [${errorMessage}]`, //*
+                        `Token fetcher failed: [${errorMessage}]`, //* Yes this will work!
                         OdspErrorType.fetchTokenError,
                         typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
                         { method: name, driverVersion }));

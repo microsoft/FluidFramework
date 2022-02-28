@@ -573,7 +573,7 @@ export class DocumentDeltaConnection
         }
         const errorObj = createGenericNetworkError(
             // eslint-disable-next-line max-len
-            // `socketError [${handler}]`,  //* Add a new field with this courser grained value? Then consider swapping with message...
+            // `socketError [${handler}]`,  //* This can go away since we can split on first :.  (for non-generic untrustedOrigins - i.e. wrapped errors - and update this code to use wrapError)
             message,
             { canRetry },
             { driverVersion },

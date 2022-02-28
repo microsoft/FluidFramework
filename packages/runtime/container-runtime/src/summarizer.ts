@@ -58,7 +58,7 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
     }
 }
 
-//* Update callsites to use sentence format?
+//* Update callsites to use sentence format?  (here and everywhere!)
 export const createSummarizingWarning =
     (errorCode: string, logged: boolean) => new SummarizingWarning(errorCode, logged);
 

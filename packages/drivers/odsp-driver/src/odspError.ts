@@ -12,7 +12,7 @@ import { IOdspSocketError } from "./contracts";
 export function errorObjectFromSocketError(socketError: IOdspSocketError, handler: string) {
     const message = `OdspSocketError (${handler}): ${socketError.message}`;
     const error = createOdspNetworkError(
-        //`odspSocketError [${handler}]`,  //* Deal with it
+        //`odspSocketError [${handler}]`,  //* Deal with it -- Just delete it -- see comment in base DDC
         message,
         socketError.code,
         socketError.retryAfter);
