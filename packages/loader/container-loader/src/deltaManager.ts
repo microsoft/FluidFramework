@@ -184,19 +184,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
-        // Start adding trace for the op.
-        const traces: ITrace[] = [
-            {
-                action: "start",
-                service: "client",
-                timestamp: Date.now(),
-            }];
 
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents: JSON.stringify(contents),
             metadata,
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
-            traces,
             type,
         };
 
