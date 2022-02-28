@@ -376,12 +376,17 @@ export class OdspDocumentService implements IDocumentService {
         if (this.joinSessionRefreshTime === undefined || this.joinSessionRefreshTime <= currentTime) {
             this.cache.sessionJoinCache.remove(this.joinSessionKey);
             response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
-            const refreshSessionDurationSeconds = response.refreshSessionDurationSeconds;
-            if (refreshSessionDurationSeconds !== undefined) {
-                // 30 seconds is buffer time to refresh the session.
-                const retryAfterMs = (refreshSessionDurationSeconds * 1000) - 30000;
-                // If retryAfter is negative, don't do anything and let the session disconnect.
-                this.joinSessionRefreshTime = retryAfterMs > 0 ? currentTime + retryAfterMs : undefined;
+            if (!refreshJoinSessionPolicy) {
+                // This is for the old flow. If the refresh policy is not set, then keep the response for 1 hour.
+                this.joinSessionRefreshTime = currentTime + 3600000;
+            } else {
+                const refreshSessionDurationSeconds = response.refreshSessionDurationSeconds;
+                if (refreshSessionDurationSeconds !== undefined) {
+                    // 30 seconds is buffer time to refresh the session.
+                    const retryAfterMs = (refreshSessionDurationSeconds * 1000) - 30000;
+                    // If retryAfter is negative, don't do anything and let the session disconnect.
+                    this.joinSessionRefreshTime = retryAfterMs > 0 ? currentTime + retryAfterMs : undefined;
+                }
             }
         } else {
             response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
