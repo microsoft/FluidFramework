@@ -339,11 +339,15 @@ interface OldContainerContextWithLogger extends IContainerContext {
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
+
+// Feature gate for the max op size. If the value is negative, chunking is enabled
+// and all ops over 16k would be chunked. If the value is positive, all ops with
+// a size strictly larger will be rejected and the container closed with an error.
 const maxOpSizeInBytesKey = "Fluid.ContainerRuntime.MaxOpSizeInBytes";
 
-// By default, we should reject any op larger than 768KB if chunking is disabled
-// in order to account for some extra overhead from serialization to not reach the
-// 1MB limits in socket.io and Kafka.
+// By default, we should reject any op larger than 768KB,
+// in order to account for some extra overhead from serialization
+// to not reach the 1MB limits in socket.io and Kafka.
 const defaultMaxOpSizeInBytes = 768000;
 
 export enum RuntimeMessage {
