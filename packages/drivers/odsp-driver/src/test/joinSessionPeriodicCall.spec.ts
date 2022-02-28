@@ -16,6 +16,7 @@ import { OdspDocumentService } from "../odspDocumentService";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ISocketStorageDiscovery } from "../contracts";
 import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 
 describe("joinSessions Tests", () => {
     let clock: SinonFakeTimers;
@@ -79,7 +80,12 @@ describe("joinSessions Tests", () => {
         const locator: OdspFluidDataStoreLocator = { driveId, itemId, siteUrl, dataStorePath: "/" };
         const request = createOdspUrl(locator);
         const resolvedUrl = await resolver.resolve({ url: request });
-        service = (await odspDocumentServiceFactory.createDocumentService(resolvedUrl) as OdspDocumentService);
+        const logger = new TelemetryUTLogger();
+        logger["config"] = {
+            getRawConfig: (name: string) => { return true },
+        };
+        logger["logger"] = {};
+        service = (await odspDocumentServiceFactory.createDocumentService(resolvedUrl, logger) as OdspDocumentService);
     });
 
     it("Check periodic join session call", async () => {
@@ -119,13 +125,20 @@ describe("joinSessions Tests", () => {
         joinSessionStub.restore();
 
         // Prepare third response.
-        joinSessionStub = addJoinSessionStub(80);
+        joinSessionStub = addJoinSessionStub(30);
         // Tick 60 seconds so as to get third response.
         await tickClock(50000);
         assert(joinSessionStub.notCalled, "Should not be called in 50 sec");
         await tickClock(10000);
         assert(joinSessionStub.calledOnce, "Should called once on third try");
         joinSessionStub.restore();
+
+        // Prepare fourth response.
+        joinSessionStub = addJoinSessionStub(40);
+        // Since last refresh seconds is less than 30 sec, we should not have
+        // scheduled the refresh.
+        await tickClock(100000);
+        assert(joinSessionStub.notCalled, "Should not be called ever");
     });
 
     afterEach(() => {

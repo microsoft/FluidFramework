@@ -29,10 +29,9 @@ interface IJoinSessionBody {
  * @param requestSocketToken - flag indicating whether joinSession is expected to return access token
  * which is used when establishing websocket connection with collab session backend service.
  * @param options - Options to fetch the token.
+ * @param refreshJoinSessionPolicy - Whether the caller supports refreshing join session periodically.
  * @param guestDisplayName - display name used to identify guest user joining a session.
  * This is optional and used only when collab session is being joined via invite.
- * @param supportJoinSessionRefresh - if the caller support the periodic join session refresh, we can let the server
- * know about the same using prefer header.
  */
 export async function fetchJoinSession(
     urlParts: IOdspUrlParts,
@@ -43,8 +42,8 @@ export async function fetchJoinSession(
     epochTracker: EpochTracker,
     requestSocketToken: boolean,
     options: TokenFetchOptionsEx,
+    refreshJoinSessionPolicy: boolean | undefined,
     guestDisplayName?: string,
-    supportJoinSessionRefresh?: boolean,
 ): Promise<ISocketStorageDiscovery> {
     const token = await getStorageToken(options, "JoinSession");
 
@@ -64,7 +63,7 @@ export async function fetchJoinSession(
             postBody += `Authorization: Bearer ${token}\r\n`;
             postBody += `X-HTTP-Method-Override: POST\r\n`;
             postBody += `Content-Type: application/json\r\n`;
-            if (supportJoinSessionRefresh) {
+            if (refreshJoinSessionPolicy) {
                 postBody += `prefer: FluidRemoveCheckAccess\r\n`;
             }
             postBody += `_post: 1\r\n`;
