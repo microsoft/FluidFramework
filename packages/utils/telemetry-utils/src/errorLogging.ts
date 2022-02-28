@@ -78,14 +78,11 @@ export interface IFluidErrorAnnotations {
     props?: ITelemetryProperties;
 }
 
-/** For backwards compatibility with pre-fluidErrorCode valid errors */
+/** For backwards compatibility with pre-errorInstanceId valid errors */
 function patchLegacyError(
     legacyError: Omit<IFluidErrorBase, "fluidErrorCode" | "errorInstanceId">,
 ): asserts legacyError is IFluidErrorBase {
-    const patchMe: { -readonly [P in "fluidErrorCode" | "errorInstanceId"]?: IFluidErrorBase[P] } = legacyError as any;
-    if (patchMe.fluidErrorCode === undefined) {
-        patchMe.fluidErrorCode = "<error predates fluidErrorCode>";
-    }
+    const patchMe: { -readonly [P in "errorInstanceId"]?: IFluidErrorBase[P] } = legacyError as any;
     if (patchMe.errorInstanceId === undefined) {
         patchMe.errorInstanceId = uuid();
     }
@@ -328,8 +325,8 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     get errorInstanceId() { return this._errorInstanceId; }
     overwriteErrorInstanceId(id: string) { this._errorInstanceId = id; }
 
-    //* Update type to ""?
-    readonly fluidErrorCode: string = "";
+    /** For back-compat with IFluidErrorBase */
+    readonly fluidErrorCode: "" = "";
 
     /**
      * Create a new LoggingError
@@ -380,12 +377,11 @@ class SimpleFluidError extends LoggingError implements IFluidErrorBase {
     readonly errorType: string;
 
     constructor(
-        errorProps: Omit<IFluidErrorBase,
-            | "fluidErrorCode"
-            | "getTelemetryProperties"
-            | "addTelemetryProperties"
-            | "errorInstanceId"
-            | "name">,
+        errorProps: Pick<IFluidErrorBase,
+            | "message"
+            | "stack"
+            | "errorType"
+        >,
     ) {
         super(errorProps.message);
         this.errorType = errorProps.errorType;

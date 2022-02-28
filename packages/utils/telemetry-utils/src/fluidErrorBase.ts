@@ -51,9 +51,8 @@ export const hasErrorInstanceId = (x: any): x is { errorInstanceId: string } =>
     typeof x?.errorInstanceId === "string";
 
 /** type guard for IFluidErrorBase interface */
-export function isFluidError(e: any): e is IFluidErrorBase {
+export function isFluidError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode"> {
     return typeof e?.errorType === "string" &&
-        typeof e?.fluidErrorCode === "string" &&
         typeof e?.message === "string" &&
         hasErrorInstanceId(e) &&
         hasTelemetryPropFunctions(e);
