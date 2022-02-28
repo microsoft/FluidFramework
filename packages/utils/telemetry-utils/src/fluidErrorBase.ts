@@ -14,9 +14,6 @@ export interface IFluidErrorBase extends Error {
     /** Classification of what type of error this is, used programmatically by consumers to interpret the error */
     readonly errorType: string;
 
-    /** @deprecated - Use message */
-    readonly fluidErrorCode: string;
-
     /**
      * Error's message property, made readonly.
      * Be specific, but also take care when including variable data to consider suitability for aggregation in telemetry
@@ -51,7 +48,7 @@ export const hasErrorInstanceId = (x: any): x is { errorInstanceId: string } =>
     typeof x?.errorInstanceId === "string";
 
 /** type guard for IFluidErrorBase interface */
-export function isFluidError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode"> {
+export function isFluidError(e: any): e is IFluidErrorBase {
     return typeof e?.errorType === "string" &&
         typeof e?.message === "string" &&
         hasErrorInstanceId(e) &&
@@ -59,7 +56,7 @@ export function isFluidError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode
 }
 
 /** type guard for old standard of valid/known errors */
-export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode" | "errorInstanceId"> {
+export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId"> {
     return typeof e?.errorType === "string" &&
         typeof e?.message === "string" &&
         hasTelemetryPropFunctions(e);

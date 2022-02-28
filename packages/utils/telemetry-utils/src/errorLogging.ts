@@ -80,7 +80,7 @@ export interface IFluidErrorAnnotations {
 
 /** For backwards compatibility with pre-errorInstanceId valid errors */
 function patchLegacyError(
-    legacyError: Omit<IFluidErrorBase, "fluidErrorCode" | "errorInstanceId">,
+    legacyError: Omit<IFluidErrorBase, "errorInstanceId">,
 ): asserts legacyError is IFluidErrorBase {
     const patchMe: { -readonly [P in "errorInstanceId"]?: IFluidErrorBase[P] } = legacyError as any;
     if (patchMe.errorInstanceId === undefined) {
@@ -324,9 +324,6 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     private _errorInstanceId = uuid();
     get errorInstanceId() { return this._errorInstanceId; }
     overwriteErrorInstanceId(id: string) { this._errorInstanceId = id; }
-
-    /** For back-compat with IFluidErrorBase */
-    readonly fluidErrorCode: "" = "";
 
     /**
      * Create a new LoggingError
