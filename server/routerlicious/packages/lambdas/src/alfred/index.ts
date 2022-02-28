@@ -128,6 +128,7 @@ function checkThrottle(
     }
 
     try {
+        logger?.info(`Invoking throttling on ${throttleId}...`);
         throttler.incrementCount(throttleId);
     } catch (error) {
         if (error instanceof core.ThrottlingError) {
