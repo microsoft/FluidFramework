@@ -307,7 +307,12 @@ export class OdspDocumentService implements IDocumentService {
     private async refreshSessionPeriodically(requestWebsocketTokenFromJoinSession: boolean) {
         for (let i = 0;;i++) {
             // If the refresh time is not defined, then let the session expire.
-            if (this.joinSessionRefreshTime === undefined) {
+            if (this.joinSessionRefreshTime === undefined || this.joinSessionRefreshTime <= 0) {
+                this.mc.logger.sendErrorEvent({
+                    eventName: "JoinSessionRefreshTimeNotSet",
+                    joinSessionRefreshTime: this.joinSessionRefreshTime,
+                    timerRunning: this.joinSessionRefreshTimer !== undefined,
+                });
                 break;
             }
             await new Promise<void>((resolve) => {
