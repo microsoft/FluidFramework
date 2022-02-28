@@ -5,7 +5,7 @@
 
 import * as querystring from "querystring";
 import safeStringify from "json-stringify-safe";
-import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
+import Axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
@@ -22,7 +22,7 @@ export abstract class RestWrapper {
     public async get<T>(
         url: string,
         queryString?: Record<string, unknown>,
-        headers?: Record<string, unknown>,
+        headers?: AxiosRequestHeaders,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -39,7 +39,7 @@ export abstract class RestWrapper {
         url: string,
         requestBody: any,
         queryString?: Record<string, unknown>,
-        headers?: Record<string, unknown>,
+        headers?: AxiosRequestHeaders,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -56,7 +56,7 @@ export abstract class RestWrapper {
     public async delete<T>(
         url: string,
         queryString?: Record<string, unknown>,
-        headers?: Record<string, unknown>,
+        headers?: AxiosRequestHeaders,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -73,7 +73,7 @@ export abstract class RestWrapper {
         url: string,
         requestBody: any,
         queryString?: Record<string, unknown>,
-        headers?: Record<string, unknown>,
+        headers?: AxiosRequestHeaders,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -109,10 +109,10 @@ export class BasicRestWrapper extends RestWrapper {
         defaultQueryString: Record<string, unknown> = {},
         maxBodyLength = 1000 * 1024 * 1024,
         maxContentLength = 1000 * 1024 * 1024,
-        private defaultHeaders: Record<string, unknown> = {},
+        private defaultHeaders: AxiosRequestHeaders = {},
         private readonly axios: AxiosInstance = Axios,
         private readonly refreshDefaultQueryString?: () => Record<string, unknown>,
-        private readonly refreshDefaultHeaders?: () => Record<string, unknown>,
+        private readonly refreshDefaultHeaders?: () => AxiosRequestHeaders,
         private readonly getCorrelationId?: () => string | undefined,
     ) {
         super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
@@ -149,7 +149,7 @@ export class BasicRestWrapper extends RestWrapper {
                     } else if (error?.response?.status === 401 && canRetry && this.refreshOnAuthError()) {
                         const retryConfig = { ...requestConfig };
                         retryConfig.headers = this.generateHeaders(
-                            retryConfig.headers, options.headers["x-correlation-id"]);
+                            retryConfig.headers, options.headers["x-correlation-id"] as string);
 
                         this.request<T>(retryConfig, statusCode, false)
                             .then(resolve)
@@ -182,9 +182,9 @@ export class BasicRestWrapper extends RestWrapper {
     }
 
     private generateHeaders(
-        headers?: Record<string, unknown>,
+        headers?: AxiosRequestHeaders,
         fallbackCorrelationId?: string,
-    ): Record<string, unknown> {
+    ): AxiosRequestHeaders {
         let result = headers ?? {};
         if (this.defaultHeaders) {
             result = { ...this.defaultHeaders, ...headers };
