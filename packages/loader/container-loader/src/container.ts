@@ -258,7 +258,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
-                    reject(err ?? new GenericError("containerClosedWithoutErrorDuringLoad"));
+                    reject(err ?? new GenericError("Container closed without error during load"));
                 };
                 container.on("closed", onClosed);
 

@@ -46,20 +46,21 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
 
     constructor(
         errorMessage: string,
-        readonly fluidErrorCode: string,
         readonly logged: boolean = false,
     ) {
         super(errorMessage);
     }
 
-    static wrap(error: any, errorCode: string, logged: boolean = false, logger: ITelemetryLogger) {
-        const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, errorCode, logged);
+    static wrap(error: any, summarizerCodepath: string, logged: boolean = false, logger: ITelemetryLogger) {
+        //* Are we getting rid of this function anyway?  And think about use of colon here.  Probably not right.
+        const newErrorFn = (errMsg: string) => new SummarizingWarning(`${summarizerCodepath}: ${errMsg}`, logged);
         return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
     }
 }
 
+//* Update callsites to use sentence format?
 export const createSummarizingWarning =
-    (errorCode: string, logged: boolean) => new SummarizingWarning(errorCode, errorCode, logged);
+    (errorCode: string, logged: boolean) => new SummarizingWarning(errorCode, logged);
 
 /**
  * Summarizer is responsible for coordinating when to generate and send summaries.
