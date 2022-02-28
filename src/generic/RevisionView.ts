@@ -6,10 +6,9 @@
 import { copyPropertyIfDefined, fail, Mutable, MutableMap } from '../Common';
 import { Forest } from '../Forest';
 import { NodeId, TraitLabel } from '../Identifiers';
-import { tryConvertToChangeNode } from './Conversion002';
 import { iterateChildren } from './EditUtilities';
 import { NodeIdConverter } from './NodeIdUtilities';
-import { ChangeNode, ChangeNode_0_0_2, HasTraits, Payload } from './PersistedTypes';
+import { HasTraits, Payload, TreeNode, TreeNode_0_0_2 } from './PersistedTypes';
 import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView';
 
 /**
@@ -17,40 +16,61 @@ import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView
  * @public
  */
 export class RevisionView extends TreeView {
-	/**
-	 * Constructs a `RevisionView` using the supplied tree.
-	 * @param root - the root of the tree to use as the contents of the `RevisionView`
-	 */
-	public static fromTree_0_0_2(
-		root: ChangeNode_0_0_2,
+	public static fromTree<T extends TreeNode<T>>(root: T, expensiveValidation?: boolean): RevisionView;
+	public static fromTree<T extends TreeNode_0_0_2<T>>(
+		root: T,
 		idConverter: NodeIdConverter,
-		expensiveValidation = false
-	): RevisionView | undefined {
-		const tree = tryConvertToChangeNode(root, idConverter);
-		if (tree === undefined) {
-			return undefined;
-		}
-		return RevisionView.fromTree(tree, expensiveValidation);
-	}
+		expensiveValidation?: boolean
+	): RevisionView | undefined;
 
 	/**
 	 * Constructs a `RevisionView` using the supplied tree.
 	 * @param root - the root of the tree to use as the contents of the `RevisionView`
 	 */
-	public static fromTree(root: ChangeNode, expensiveValidation = false): RevisionView {
-		return new RevisionView(
-			root.identifier,
-			Forest.create(expensiveValidation).add(
-				convertTreeNodesToViewNodes(root, (node) => {
-					const viewNode = {
-						definition: node.definition,
-						identifier: node.identifier,
-					};
-					copyPropertyIfDefined(node, viewNode, 'payload');
-					return viewNode;
-				})
-			)
-		);
+	public static fromTree<T extends TreeNode<T> | TreeNode_0_0_2<T>>(
+		root: T,
+		idConverterOrExpensiveValidation?: NodeIdConverter | boolean,
+		expensiveValidation = false
+	): RevisionView | undefined {
+		if (typeof idConverterOrExpensiveValidation === 'object') {
+			const rootId = idConverterOrExpensiveValidation.tryConvertToNodeId(root.identifier);
+			if (rootId === undefined) {
+				return undefined;
+			}
+
+			const treeViewNodes = convertTreeNodesToViewNodes(root, (node) => {
+				const identifier = idConverterOrExpensiveValidation.tryConvertToNodeId(node.identifier);
+				if (identifier === undefined) {
+					return undefined;
+				}
+				const viewNode = {
+					definition: node.definition,
+					identifier,
+				};
+				copyPropertyIfDefined(node, viewNode, 'payload');
+				return viewNode;
+			});
+
+			if (treeViewNodes === undefined) {
+				return undefined;
+			}
+
+			return new RevisionView(rootId, Forest.create(expensiveValidation).add(treeViewNodes));
+		} else {
+			return new RevisionView(
+				root.identifier,
+				Forest.create(expensiveValidation).add(
+					convertTreeNodesToViewNodes(root, (node) => {
+						const viewNode = {
+							definition: node.definition,
+							identifier: node.identifier,
+						};
+						copyPropertyIfDefined(node, viewNode, 'payload');
+						return viewNode;
+					})
+				)
+			);
+		}
 	}
 
 	/** Begin a transaction by generating a mutable `TransactionView` from this view */

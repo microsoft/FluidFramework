@@ -52,6 +52,7 @@ export {
 	iterateChildren,
 	compareNodes,
 	deepCompareNodes,
+	areRevisionViewsSemanticallyEqual,
 } from './EditUtilities';
 export {
 	TransactionFactory,

@@ -5,7 +5,10 @@
 
 import { expect } from 'chai';
 import { assert } from '@fluidframework/common-utils';
-import { Definition, NodeId } from '../Identifiers';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
+import { FluidSerializer } from '@fluidframework/runtime-utils';
+import { Definition } from '../Identifiers';
 import {
 	internalizeBuildNode,
 	PlaceValidationResult,
@@ -13,24 +16,19 @@ import {
 	validateStablePlace,
 	validateStableRange,
 } from '../default-edits';
-import { ChangeNode, convertTreeNodes, deepCompareNodes, Side } from '../generic';
-import {
-	simpleRevisionViewWithValidation,
-	left,
-	right,
-	leftTraitLocation,
-	rootNodeId,
-	makeEmptyNode,
-	simpleTestTree,
-	refreshTestTree,
-} from './utilities/TestUtilities';
+import { ChangeNode, comparePayloads, convertTreeNodes, deepCompareNodes, Payload, Side } from '../generic';
+import { getChangeNodeFromView } from '../SerializationUtilities';
+import { noop } from '../Common';
+import { refreshTestTree } from './utilities/TestUtilities';
 
 describe('EditUtilities', () => {
+	const testTree = refreshTestTree(undefined, undefined, /* expensiveValidation: */ true);
+
 	describe('validateStablePlace', () => {
 		it('accepts valid places', () => {
 			expect(
-				validateStablePlace(simpleRevisionViewWithValidation, {
-					referenceSibling: left.identifier,
+				validateStablePlace(testTree.view, {
+					referenceSibling: testTree.left.identifier,
 					side: Side.Before,
 				})
 			).equals(PlaceValidationResult.Valid);
@@ -38,9 +36,9 @@ describe('EditUtilities', () => {
 
 		it('detects malformed places', () => {
 			expect(
-				validateStablePlace(simpleRevisionViewWithValidation, {
-					referenceTrait: leftTraitLocation,
-					referenceSibling: left.identifier,
+				validateStablePlace(testTree.view, {
+					referenceTrait: testTree.left.traitLocation,
+					referenceSibling: testTree.left.identifier,
 					side: Side.Before,
 				})
 			).equals(PlaceValidationResult.Malformed);
@@ -48,8 +46,8 @@ describe('EditUtilities', () => {
 
 		it('detects missing siblings', () => {
 			expect(
-				validateStablePlace(simpleRevisionViewWithValidation, {
-					referenceSibling: '49a7e636-71ed-45f1-a1a8-2b8f2e7e84a3' as NodeId,
+				validateStablePlace(testTree.view, {
+					referenceSibling: testTree.generateNodeId(),
 					side: Side.Before,
 				})
 			).equals(PlaceValidationResult.MissingSibling);
@@ -57,10 +55,10 @@ describe('EditUtilities', () => {
 
 		it('detects missing parents', () => {
 			expect(
-				validateStablePlace(simpleRevisionViewWithValidation, {
+				validateStablePlace(testTree.view, {
 					referenceTrait: {
-						parent: '49a7e636-71ed-45f1-a1a8-2b8f2e7e84a3' as NodeId,
-						label: leftTraitLocation.label,
+						parent: testTree.generateNodeId(),
+						label: testTree.left.traitLabel,
 					},
 					side: Side.Before,
 				})
@@ -69,8 +67,8 @@ describe('EditUtilities', () => {
 
 		it('detects root places', () => {
 			expect(
-				validateStablePlace(simpleRevisionViewWithValidation, {
-					referenceSibling: rootNodeId,
+				validateStablePlace(testTree.view, {
+					referenceSibling: testTree.identifier,
 					side: Side.Before,
 				})
 			).equals(PlaceValidationResult.SiblingIsRootOrDetached);
@@ -80,38 +78,42 @@ describe('EditUtilities', () => {
 	describe('validateStableRange', () => {
 		it('accepts valid ranges', () => {
 			expect(
-				validateStableRange(simpleRevisionViewWithValidation, {
-					start: { referenceSibling: left.identifier, side: Side.Before },
-					end: { referenceSibling: left.identifier, side: Side.After },
+				validateStableRange(testTree.view, {
+					start: { referenceSibling: testTree.left.identifier, side: Side.Before },
+					end: { referenceSibling: testTree.left.identifier, side: Side.After },
 				})
 			).equals(RangeValidationResultKind.Valid);
 		});
 
 		it('detects inverted ranges', () => {
 			expect(
-				validateStableRange(simpleRevisionViewWithValidation, {
-					start: { referenceSibling: left.identifier, side: Side.After },
-					end: { referenceSibling: left.identifier, side: Side.Before },
+				validateStableRange(testTree.view, {
+					start: { referenceSibling: testTree.left.identifier, side: Side.After },
+					end: { referenceSibling: testTree.left.identifier, side: Side.Before },
 				})
 			).equals(RangeValidationResultKind.Inverted);
 		});
 
 		it('detects when place are in different traits', () => {
 			expect(
-				validateStableRange(simpleRevisionViewWithValidation, {
-					start: { referenceSibling: left.identifier, side: Side.Before },
-					end: { referenceSibling: right.identifier, side: Side.After },
+				validateStableRange(testTree.view, {
+					start: { referenceSibling: testTree.left.identifier, side: Side.Before },
+					end: { referenceSibling: testTree.right.identifier, side: Side.After },
 				})
 			).equals(RangeValidationResultKind.PlacesInDifferentTraits);
 		});
 
 		it('detects malformed places', () => {
-			const start = { referenceTrait: leftTraitLocation, referenceSibling: left.identifier, side: Side.Before };
+			const start = {
+				referenceTrait: testTree.left.traitLocation,
+				referenceSibling: testTree.left.identifier,
+				side: Side.Before,
+			};
 			expect(
-				validateStableRange(simpleRevisionViewWithValidation, {
+				validateStableRange(testTree.view, {
 					// trait and sibling should be mutually exclusive
 					start,
-					end: { referenceSibling: left.identifier, side: Side.After },
+					end: { referenceSibling: testTree.left.identifier, side: Side.After },
 				})
 			).deep.equals({
 				kind: RangeValidationResultKind.BadPlace,
@@ -121,11 +123,11 @@ describe('EditUtilities', () => {
 		});
 
 		it('detects invalid places', () => {
-			const start = { referenceSibling: '49a7e636-71ed-45f1-a1a8-2b8f2e7e84a3' as NodeId, side: Side.Before };
+			const start = { referenceSibling: testTree.generateNodeId(), side: Side.Before };
 			expect(
-				validateStableRange(simpleRevisionViewWithValidation, {
+				validateStableRange(testTree.view, {
 					start,
-					end: { referenceSibling: right.identifier, side: Side.After },
+					end: { referenceSibling: testTree.right.identifier, side: Side.After },
 				})
 			).deep.equals({
 				kind: RangeValidationResultKind.BadPlace,
@@ -137,13 +139,11 @@ describe('EditUtilities', () => {
 
 	describe('Tree node conversion', () => {
 		it('can clone a tree', () => {
-			const clone = convertTreeNodes<ChangeNode, ChangeNode>(simpleTestTree, (x) => x);
-			expect(deepCompareNodes(simpleTestTree, clone)).to.be.true;
-		});
-
-		it('returns undefined for node conversions that can return undefined', () => {
-			const clone = convertTreeNodes<ChangeNode, ChangeNode>(simpleTestTree, (_) => undefined);
-			expect(clone).to.be.undefined;
+			const clone = convertTreeNodes<ChangeNode, ChangeNode>(getChangeNodeFromView(testTree.view), (node) => ({
+				...node,
+			}));
+			expect(testTree).to.not.equal(clone);
+			expect(deepCompareNodes(testTree, clone)).to.be.true;
 		});
 
 		it('can clone a leaf', () => {
@@ -162,18 +162,23 @@ describe('EditUtilities', () => {
 		});
 
 		it('can clone a tree with a leaf', () => {
-			const leaf = makeEmptyNode();
-			const tree = { ...makeEmptyNode(), payload: 'payload', traits: { main: [leaf] } };
-			const clone = convertTreeNodes<ChangeNode, ChangeNode>(tree, (x) => x);
+			const leafTrait = 'main';
+			const leafId = testTree.generateNodeId();
+			const tree = {
+				...testTree.buildLeaf(testTree.generateNodeId()),
+				payload: 'payload',
+				traits: { [leafTrait]: [testTree.buildLeaf(leafId)] },
+			};
+			const clone = convertTreeNodes<ChangeNode, ChangeNode>(tree, (node) => ({ ...node }));
 			assert(typeof clone !== 'number', '');
 			expect(clone.definition).to.equal(tree.definition);
 			expect(clone.identifier).to.equal(tree.identifier);
 			expect(clone.payload).to.equal(tree.payload);
-			expect(clone.traits).to.deep.equal({ main: [leaf] });
+			expect(clone.traits[leafTrait][0].identifier).to.equal(leafId);
 		});
 
 		it('correctly invokes the convert function', () => {
-			const node = { ...makeEmptyNode(), payload: 'payload' };
+			const node = { ...testTree.buildLeaf(testTree.generateNodeId()), payload: 'payload' };
 			let converted = false;
 			convertTreeNodes(
 				node,
@@ -190,19 +195,20 @@ describe('EditUtilities', () => {
 		});
 
 		it('can convert a node', () => {
-			const node = { ...makeEmptyNode(), payload: 'payload' };
+			const node = { ...testTree.buildLeaf(testTree.generateNodeId()), payload: 'payload' };
+			const id = testTree.generateNodeId();
 			const converted = convertTreeNodes(
 				node,
-				(_) => ({ definition: '_def' as Definition, identifier: '_id' as NodeId, payload: 'payload2' }),
+				(_) => ({ definition: '_def' as Definition, identifier: id, payload: 'payload2' }),
 				isNumber
 			);
-			expect(converted).to.deep.equal({ definition: '_def', identifier: '_id', payload: 'payload2', traits: {} });
+			expect(converted).to.deep.equal({ definition: '_def', identifier: id, payload: 'payload2', traits: {} });
 		});
 
 		it('can convert a tree with children', () => {
-			const childA = { ...makeEmptyNode(), payload: 'a' };
-			const childB = { ...makeEmptyNode(), payload: 'b' };
-			const node = { ...makeEmptyNode(), traits: { main: [childA, childB] } };
+			const childA = { ...testTree.buildLeaf(testTree.generateNodeId()), payload: 'a' };
+			const childB = { ...testTree.buildLeaf(testTree.generateNodeId()), payload: 'b' };
+			const node = { ...testTree.buildLeaf(testTree.generateNodeId()), traits: { main: [childA, childB] } };
 			const converted = convertTreeNodes<ChangeNode, ChangeNode>(node, (node) => {
 				if (node.identifier === childB.identifier) {
 					return { definition: node.definition, identifier: node.identifier, payload: 'c' };
@@ -223,8 +229,6 @@ describe('EditUtilities', () => {
 	});
 
 	describe('Build tree internalization', () => {
-		const testTree = refreshTestTree(undefined, undefined, /* expensiveValidation: */ true);
-
 		it('does not copy extraneous properties from input tree', () => {
 			const node = {
 				...testTree.buildLeaf(testTree.generateNodeId()),
@@ -238,7 +242,7 @@ describe('EditUtilities', () => {
 			});
 		});
 
-		it('does not add undefined payload field', () => {
+		it('does not copy extraneous properties from converter', () => {
 			const node = testTree.buildLeaf(testTree.generateNodeId());
 			expect(Object.prototype.hasOwnProperty.call(node, 'payload')).to.be.false;
 			const converted = convertTreeNodes(node, (node) => internalizeBuildNode(node, testTree), isNumber);
@@ -249,4 +253,189 @@ describe('EditUtilities', () => {
 	function isNumber(node: number | unknown): node is number {
 		return typeof node === 'number';
 	}
+
+	describe('comparePayloads', () => {
+		const serializer: FluidSerializer = new MockFluidDataStoreRuntime().IFluidSerializer;
+		const binder: IFluidHandle = { bind: noop } as unknown as IFluidHandle;
+
+		enum Equality {
+			Equal,
+			Unequal,
+			Unspecified,
+		}
+
+		function checkEquality(equal: boolean, equality: Equality): void {
+			if (equality !== Equality.Unspecified) {
+				expect(equal).equals(equality === Equality.Equal);
+			}
+		}
+
+		function check(
+			a: Payload,
+			b: Payload,
+			flags: { initial: Equality; serialized: Equality; deserialized: Equality; roundtrip: Equality }
+		): void {
+			// Check reflexive
+			expect(comparePayloads(a, a)).equal(true);
+			expect(comparePayloads(b, b)).equal(true);
+
+			checkEquality(comparePayloads(a, b), flags.initial);
+			// Check commutative
+			checkEquality(comparePayloads(b, a), flags.initial);
+
+			const [aString, aDeserialized] = checkSerialization(a, flags.roundtrip);
+			const [bString, bDeserialized] = checkSerialization(b, flags.roundtrip);
+
+			checkEquality(aString === bString, flags.serialized);
+			checkEquality(comparePayloads(aDeserialized, bDeserialized), flags.deserialized);
+			// Check commutative
+			checkEquality(comparePayloads(bDeserialized, aDeserialized), flags.deserialized);
+		}
+
+		function checkSerialization(a: Payload, roundtrip: Equality): [string, Payload] {
+			const aString = serializer.stringify(a, binder);
+			const a2: Payload = serializer.parse(aString);
+			const aString2 = serializer.stringify(a2, binder);
+			expect(aString2).equal(aString);
+			checkEquality(comparePayloads(a, a2), roundtrip);
+
+			// Check second round trip, should always be equal
+			const a3: Payload = serializer.parse(aString2);
+			expect(comparePayloads(a3, a2)).true;
+
+			return [aString, a2];
+		}
+
+		const allEqual = {
+			initial: Equality.Equal,
+			serialized: Equality.Equal,
+			deserialized: Equality.Equal,
+			roundtrip: Equality.Equal,
+		};
+
+		// For when the inputs are logically equal, but may serialize differently due to field ordering.
+		const allEqualUnstable = {
+			initial: Equality.Equal,
+			serialized: Equality.Unspecified,
+			deserialized: Equality.Equal,
+			roundtrip: Equality.Equal,
+		};
+
+		const allUnequal = {
+			initial: Equality.Unequal,
+			serialized: Equality.Unequal,
+			deserialized: Equality.Unequal,
+			roundtrip: Equality.Equal,
+		};
+
+		it('compares numbers correctly', () => {
+			check(0, 0, allEqual);
+			check(1, 1, allEqual);
+			check(0, 1, allUnequal);
+			check(-1, 1, allUnequal);
+			check(5.2, 5.200000001, allUnequal);
+		});
+
+		it('compares strings', () => {
+			check('', '', allEqual);
+			check(' ', '', allUnequal);
+			check('1', '+1', allUnequal);
+			// This character makes sure multi-byte utf-8 and multi-word utf-16 at least somewhat work
+			// Cases like unicode normalization are not covered here here. Normalization or not will be considered ok.
+			check('𤭢', '𤭢', allEqual);
+			check('𤭢', '', allUnequal);
+			check('several characters', 'several characters', allEqual);
+			check('several characters', 'several_characters', allUnequal);
+		});
+
+		it('compares arrays', () => {
+			check([], [], allEqual);
+			check([1], [1], allEqual);
+			check([[1]], [[1]], allEqual);
+			check([[1]], [[2]], allUnequal);
+			check([], [1], allUnequal);
+			check([1, 2], [2, 1], allUnequal);
+		});
+
+		it('compares objects', () => {
+			check({ 1: 'x' }, { 1: 'x' }, allEqual);
+			check({ x: 'x' }, { y: 'x' }, allUnequal);
+			check({ x: 'x' }, { x: {} }, allUnequal);
+			check({ x: {} }, { x: {} }, allEqual);
+			check({ x: [1, 2, 3, 5] }, { x: [1, 2, 3, 4] }, allUnequal);
+			check({ 1: 'x' }, {}, allUnequal);
+			check({ x: 'x' }, { x: 'x', y: 'x' }, allUnequal);
+			check({ field: 'a' }, { field: 'b' }, allUnequal);
+
+			// Fluid Serialization arbitrarily orders fields.
+			// Thus any object with more than one field may have non-deterministic serialization.
+			// However objects have field order, and we need to check comparePayloads is not impacted by it.
+			check({ y: 'a', x: 'b' }, { x: 'b', y: 'a' }, allEqualUnstable);
+		});
+
+		it('compares mixed types', () => {
+			check({ 0: 1 }, [1], allUnequal);
+			// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
+			/* eslint-disable no-null/no-null */
+			check(null, 'null', allUnequal);
+			check(null, 'null', allUnequal);
+			check(1, '1', allUnequal);
+			check(null, 0, allUnequal);
+			/* eslint-enable no-null/no-null */
+			check('', 0, allUnequal);
+		});
+
+		const sameAfter = {
+			initial: Equality.Unspecified,
+			serialized: Equality.Unspecified,
+			deserialized: Equality.Equal,
+			roundtrip: Equality.Unspecified,
+		};
+		const differentAfter = {
+			initial: Equality.Unequal,
+			serialized: Equality.Unequal,
+			deserialized: Equality.Unequal,
+			roundtrip: Equality.Unspecified,
+		};
+
+		it('lossy cases', () => {
+			// Undefined fields are omitted in json, and thus lost on the round trip.
+			check({ x: undefined }, { y: undefined }, sameAfter);
+			check({ x: undefined }, {}, sameAfter);
+
+			// NaN and Infinity become null
+			check(NaN, NaN, sameAfter);
+			check(NaN, 7, differentAfter);
+			check(Infinity, Infinity, sameAfter);
+			check(-Infinity, Infinity, sameAfter);
+			check(NaN, 'NaN', differentAfter);
+
+			// json loses -0 on round trip
+			check(-0, -0, sameAfter);
+		});
+
+		it('compares handles', () => {
+			// This is used instead of MockHandle so equal handles compare deeply equal.
+			function makeMockHandle(data: string): IFluidHandle {
+				// `/` prefix is needed to prevent serializing from modifying handle.
+				const handleObject = { absolutePath: `/${data}`, IFluidHandle: undefined as unknown };
+				handleObject.IFluidHandle = handleObject;
+				return handleObject as IFluidHandle;
+			}
+			// Theoretically handles serialize as objects with 2 fields and thus serialization is allowed to be non-deterministic
+			// so use allEqualUnstable not allEqual.
+			check(makeMockHandle('x'), makeMockHandle('x'), allEqualUnstable);
+			check(makeMockHandle('x'), makeMockHandle('y'), allUnequal);
+			check({ x: makeMockHandle('x') }, makeMockHandle('x'), allUnequal);
+		});
+
+		// These are cases that are allowed by the type system and produce unexpected results due to Json serialization.
+		// Clear documentation and/or adjustments to equality, type checking or serialization would help with these cases.
+		it.skip('strange cases', () => {
+			// Top level undefined fails in JSON.parse.
+			// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface.)
+			// eslint-disable-next-line no-null/no-null
+			check(undefined, null, sameAfter);
+		});
+	});
 });

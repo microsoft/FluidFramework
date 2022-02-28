@@ -136,4 +136,5 @@ export {
 	TreeViewPlace,
 	TreeViewRange,
 	TransactionFactory,
+	areRevisionViewsSemanticallyEqual,
 } from './generic';

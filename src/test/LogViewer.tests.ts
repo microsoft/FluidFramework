@@ -10,9 +10,10 @@ import {
 	ChangeInternal,
 	ConstraintEffect,
 	InsertInternal,
-	StablePlace,
+	StablePlace_0_0_2,
 	StableRange,
 	Transaction,
+	tryConvertToStableRange_0_0_2,
 } from '../default-edits';
 import {
 	CachingLogViewer,
@@ -23,7 +24,15 @@ import {
 } from '../LogViewer';
 import { EditId } from '../Identifiers';
 import { assert, copyPropertyIfDefined } from '../Common';
-import { newEdit, Edit, EditStatus, ChangeNode, RevisionView, NodeIdContext } from '../generic';
+import {
+	newEdit,
+	Edit,
+	EditStatus,
+	ChangeNode,
+	RevisionView,
+	NodeIdContext,
+	areRevisionViewsSemanticallyEqual,
+} from '../generic';
 import { initialTree } from '../InitialTree';
 import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities';
 import { MockTransaction } from './utilities/MockTransaction';
@@ -43,7 +52,7 @@ function getTestTreeLog(testTree: TestTree): EditLog<ChangeInternal> {
 		newEdit(
 			InsertInternal.create(
 				[testTree.buildStableLeaf(testTree.left.identifier)],
-				StablePlace.atStartOf(testTree.left.traitLocation)
+				StablePlace_0_0_2.atStartOf(testTree.left.traitLocation.stable)
 			)
 		),
 		{ sequenceNumber: 1, referenceSequenceNumber: 0 }
@@ -52,7 +61,7 @@ function getTestTreeLog(testTree: TestTree): EditLog<ChangeInternal> {
 		newEdit(
 			InsertInternal.create(
 				[testTree.buildStableLeaf(testTree.right.identifier)],
-				StablePlace.atStartOf(testTree.right.traitLocation)
+				StablePlace_0_0_2.atStartOf(testTree.right.traitLocation.stable)
 			)
 		),
 		{ sequenceNumber: 2, referenceSequenceNumber: 1 }
@@ -61,14 +70,14 @@ function getTestTreeLog(testTree: TestTree): EditLog<ChangeInternal> {
 	return log;
 }
 
-function getLogWithNumEdits(nodeIdManager: NodeIdContext, numEdits: number): EditLog<ChangeInternal> {
+function getLogWithNumEdits(nodeIdContext: NodeIdContext, numEdits: number): EditLog<ChangeInternal> {
 	const log = new EditLog<ChangeInternal>();
 	for (let i = 0; i < numEdits; i++) {
 		log.addSequencedEdit(
 			newEdit(
 				InsertInternal.create(
-					[buildStableLeaf(nodeIdManager)],
-					StablePlace.atStartOf({ label: testTraitLabel, parent: initialTree.identifier })
+					[buildStableLeaf(nodeIdContext)],
+					StablePlace_0_0_2.atStartOf({ label: testTraitLabel, parent: initialTree.identifier })
 				)
 			),
 			{
@@ -96,13 +105,28 @@ function getSimpleLogBaseView(testTree: TestTree): RevisionView {
 function getSimpleLogWithLocalEdits(testTree: TestTree): EditLog<ChangeInternal> {
 	const logWithLocalEdits = getTestTreeLog(testTree);
 	logWithLocalEdits.addLocalEdit(
-		newEdit(InsertInternal.create([testTree.buildStableLeaf()], StablePlace.atEndOf(testTree.left.traitLocation)))
+		newEdit(
+			InsertInternal.create(
+				[testTree.buildStableLeaf()],
+				StablePlace_0_0_2.atEndOf(testTree.left.traitLocation.stable)
+			)
+		)
 	);
 	logWithLocalEdits.addLocalEdit(
-		newEdit(InsertInternal.create([testTree.buildStableLeaf()], StablePlace.atEndOf(testTree.right.traitLocation)))
+		newEdit(
+			InsertInternal.create(
+				[testTree.buildStableLeaf()],
+				StablePlace_0_0_2.atEndOf(testTree.right.traitLocation.stable)
+			)
+		)
 	);
 	logWithLocalEdits.addLocalEdit(
-		newEdit(InsertInternal.create([testTree.buildStableLeaf()], StablePlace.atEndOf(testTree.left.traitLocation)))
+		newEdit(
+			InsertInternal.create(
+				[testTree.buildStableLeaf()],
+				StablePlace_0_0_2.atEndOf(testTree.left.traitLocation.stable)
+			)
+		)
 	);
 	return logWithLocalEdits;
 }
@@ -141,17 +165,18 @@ function runLogViewerCorrectnessTests(
 		it('generates initialTree by default for the 0th revision', () => {
 			const viewer = viewerCreator(new EditLog(), simpleLogBaseView, testTree);
 			const headView = viewer.getRevisionViewInSession(0);
-			expect(headView.equals(RevisionView.fromTree(initialTree)));
+			expect(headView.equals(expectDefined(RevisionView.fromTree(initialTree, testTree))));
 		});
 
 		it('can be constructed from a non-empty EditLog', () => {
 			const viewer = viewerCreator(simpleLog, simpleLogBaseView, testTree);
 			const headView = viewer.getRevisionViewInSession(Number.POSITIVE_INFINITY);
+			expect(areRevisionViewsSemanticallyEqual(headView, testTree, simpleLogInitialView, testTree));
 			expect(headView.equals(simpleLogInitialView)).to.be.true;
 		});
 
 		it('can generate all revision views for an EditLog', () => {
-			const baseView = RevisionView.fromTree(initialTree);
+			const baseView = expectDefined(RevisionView.fromTree(initialTree, testTree));
 			const numNodes = 10;
 			const viewer = viewerCreator(getLogWithNumEdits(testTree, numNodes), baseView, testTree);
 			const initialRevision = viewer.getRevisionViewInSession(0);
@@ -219,7 +244,7 @@ function runLogViewerCorrectnessTests(
 					newEdit(
 						InsertInternal.create(
 							[testTree.buildStableLeaf()],
-							StablePlace.atStartOf(testTree.right.traitLocation)
+							StablePlace_0_0_2.atStartOf(testTree.right.traitLocation.stable)
 						)
 					),
 					{ sequenceNumber: seqNumber, referenceSequenceNumber: seqNumber - 1 }
@@ -255,7 +280,7 @@ describe('CachingLogViewer', () => {
 	function getCachingLogViewerAssumeAppliedEdits(
 		log: EditLog<ChangeInternal>,
 		baseView: RevisionView,
-		nodeIdManager: NodeIdContext,
+		nodeIdContext: NodeIdContext,
 		editStatusCallback?: EditStatusCallback,
 		sequencedEditResultCallback?: SequencedEditResultCallback<ChangeInternal, Transaction.Failure>,
 		knownRevisions?: [number, RevisionView][]
@@ -263,7 +288,7 @@ describe('CachingLogViewer', () => {
 		return new CachingLogViewer(
 			log,
 			baseView,
-			nodeIdManager,
+			nodeIdContext,
 			knownRevisions?.map((pair) => [pair[0], { view: pair[1], result: EditStatus.Applied }]),
 			/* expensiveValidation */ true,
 			editStatusCallback,
@@ -340,7 +365,7 @@ describe('CachingLogViewer', () => {
 		simpleLog.addSequencedEdit(
 			newEdit([
 				ChangeInternal.constraint(
-					expectDefined(StableRange.only(testTree.left)),
+					expectDefined(tryConvertToStableRange_0_0_2(StableRange.only(testTree.left), testTree)),
 					ConstraintEffect.InvalidAndDiscard,
 					undefined,
 					0
@@ -378,12 +403,18 @@ describe('CachingLogViewer', () => {
 		expect(viewer.highestRevisionCached()).to.be.true;
 		simpleLog.addLocalEdit(
 			newEdit(
-				InsertInternal.create([testTree.buildStableLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))
+				InsertInternal.create(
+					[testTree.buildStableLeaf()],
+					StablePlace_0_0_2.atEndOf(testTree.right.traitLocation.stable)
+				)
 			)
 		);
 		simpleLog.addSequencedEdit(
 			newEdit(
-				InsertInternal.create([testTree.buildStableLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))
+				InsertInternal.create(
+					[testTree.buildStableLeaf()],
+					StablePlace_0_0_2.atEndOf(testTree.right.traitLocation.stable)
+				)
 			),
 			{
 				sequenceNumber: 3,
@@ -399,7 +430,7 @@ describe('CachingLogViewer', () => {
 		const log = getLogWithNumEdits(testTree, CachingLogViewer.sequencedCacheSizeMax * 2);
 		const viewer = getCachingLogViewerAssumeAppliedEdits(
 			log,
-			RevisionView.fromTree(initialTree),
+			expectDefined(RevisionView.fromTree(initialTree, testTree)),
 			testTree,
 			() => editsProcessed++
 		);
@@ -423,7 +454,7 @@ describe('CachingLogViewer', () => {
 		const log = getLogWithNumEdits(testTree, CachingLogViewer.sequencedCacheSizeMax * 2);
 		const viewer = getCachingLogViewerAssumeAppliedEdits(
 			log,
-			RevisionView.fromTree(initialTree),
+			expectDefined(RevisionView.fromTree(initialTree, testTree)),
 			testTree,
 			() => editsProcessed++
 		);
@@ -471,7 +502,10 @@ describe('CachingLogViewer', () => {
 		editsProcessed = 0;
 		logWithLocalEdits.addLocalEdit(
 			newEdit(
-				InsertInternal.create([testTree.buildStableLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))
+				InsertInternal.create(
+					[testTree.buildStableLeaf()],
+					StablePlace_0_0_2.atEndOf(testTree.right.traitLocation.stable)
+				)
 			)
 		);
 		await requestAllRevisionViews(viewer, logWithLocalEdits);
@@ -510,7 +544,10 @@ describe('CachingLogViewer', () => {
 		editsProcessed = 0;
 		logWithLocalEdits.addSequencedEdit(
 			newEdit(
-				InsertInternal.create([testTree.buildStableLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))
+				InsertInternal.create(
+					[testTree.buildStableLeaf()],
+					StablePlace_0_0_2.atEndOf(testTree.right.traitLocation.stable)
+				)
 			),
 			{ sequenceNumber: 3, referenceSequenceNumber: 2, minimumSequenceNumber: 2 }
 		);
@@ -636,7 +673,7 @@ describe('CachingLogViewer', () => {
 				InsertInternal.create(
 					[testTree.buildStableLeaf()],
 					expectDefined(
-						StablePlace.atEndOf({
+						StablePlace_0_0_2.atEndOf({
 							label: testTraitLabel,
 							parent: testTree.convertToStableNodeId(testTree.generateNodeId()),
 						})
@@ -666,7 +703,10 @@ describe('CachingLogViewer', () => {
 			expect(events[0].reconciliationPath.length).equals(0);
 
 			const validEdit1 = newEdit(
-				InsertInternal.create([testTree.buildStableLeaf()], StablePlace.atStartOf(testTree.left.traitLocation))
+				InsertInternal.create(
+					[testTree.buildStableLeaf()],
+					StablePlace_0_0_2.atStartOf(testTree.left.traitLocation.stable)
+				)
 			);
 			log.addSequencedEdit(validEdit1, { sequenceNumber: 3, referenceSequenceNumber: 2 });
 			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
@@ -677,7 +717,10 @@ describe('CachingLogViewer', () => {
 			expect(events[1].reconciliationPath.length).equals(0);
 
 			const validEdit2 = newEdit(
-				InsertInternal.create([testTree.buildStableLeaf()], StablePlace.atStartOf(testTree.left.traitLocation))
+				InsertInternal.create(
+					[testTree.buildStableLeaf()],
+					StablePlace_0_0_2.atStartOf(testTree.left.traitLocation.stable)
+				)
 			);
 			log.addSequencedEdit(validEdit2, { sequenceNumber: 4, referenceSequenceNumber: 2 });
 			await viewer.getRevisionView(Number.POSITIVE_INFINITY);

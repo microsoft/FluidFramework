@@ -5,13 +5,17 @@
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
+
 import { assert } from '../Common';
 import { Definition, NodeId, TraitLabel } from '../Identifiers';
 import { ChangeNode, RevisionView, Side, TreeViewNode } from '../generic';
 import { Forest, ForestNode } from '../Forest';
-import { makeTestNode } from './utilities/TestUtilities';
+import { refreshTestTree } from './utilities/TestUtilities';
+import { TestTree } from './utilities/TestNode';
 
 describe('Forest Perf', () => {
+	const testTree = refreshTestTree();
+
 	for (const count of [100, 1_000, 10_000, 100_000]) {
 		// Pick a single representative size for the 'Measurement' suite to keep it small.
 		const type = count === 10_000 ? BenchmarkType.Measurement : BenchmarkType.Perspective;
@@ -20,7 +24,7 @@ describe('Forest Perf', () => {
 			type,
 			title: `${count} random inserts in TreeView`,
 			benchmarkFn: () => {
-				buildRandomTree(count);
+				buildRandomTree(testTree, count);
 			},
 		});
 
@@ -30,7 +34,7 @@ describe('Forest Perf', () => {
 			type,
 			title: `walk ${count} node TreeView`,
 			before: () => {
-				[built, rootId] = buildRandomTree(count);
+				[built, rootId] = buildRandomTree(testTree, count);
 			},
 			benchmarkFn: () => {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -52,7 +56,7 @@ describe('Forest Perf', () => {
 				forest = Forest.create(true);
 				nodes = [];
 				for (let i = 0; i < count; i++) {
-					nodes.push(makeTestForestNode());
+					nodes.push(makeTestForestNode(testTree));
 				}
 			},
 			benchmarkFn: () => {
@@ -74,13 +78,13 @@ describe('Forest Perf', () => {
 					otherForest = Forest.create(true);
 					nodes = [];
 					for (let i = 0; i < count; i++) {
-						nodes.push(makeTestForestNode());
+						nodes.push(makeTestForestNode(testTree));
 					}
 					forest = forest.add(nodes);
 
 					const otherNodes: ForestNode[] = [];
 					for (let i = 0; i < otherCount; i++) {
-						otherNodes.push(makeTestForestNode());
+						otherNodes.push(makeTestForestNode(testTree));
 					}
 					otherForest = otherForest.add(otherNodes);
 				},
@@ -108,9 +112,9 @@ function walk(s: RevisionView, id: NodeId): number {
 	return count;
 }
 
-function buildRandomTree(size: number): [RevisionView, NodeId] {
+function buildRandomTree(testTree: TestTree, size: number): [RevisionView, NodeId] {
 	function getId(): NodeId {
-		return v4() as NodeId;
+		return testTree.generateNodeId();
 	}
 
 	function getLabel(): TraitLabel {
@@ -141,6 +145,6 @@ function buildRandomTree(size: number): [RevisionView, NodeId] {
 	return [f.close(), rootId];
 }
 
-function makeTestForestNode(): ForestNode {
-	return { ...makeTestNode(v4() as NodeId), traits: new Map() };
+function makeTestForestNode(testTree: TestTree): ForestNode {
+	return { ...testTree.buildLeaf(testTree.generateNodeId()), traits: new Map() };
 }

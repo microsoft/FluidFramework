@@ -635,15 +635,14 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 
 		let knownRevisions: [number, EditCacheEntry<TChangeInternal, TFailure>][] | undefined;
 		if (currentTree !== undefined) {
-			const currentView =
-				RevisionView.fromTree_0_0_2(currentTree, this) ?? fail('Failed to load summary currentView');
+			const currentView = RevisionView.fromTree(currentTree, this) ?? fail('Failed to load summary currentView');
 			// TODO:#47830: Store multiple checkpoints in summary.
 			knownRevisions = [[editLog.length, { view: currentView }]];
 		}
 
 		const logViewer = new CachingLogViewer(
 			editLog,
-			RevisionView.fromTree_0_0_2(initialTree, this) ?? fail('Failed to load summary currentView'),
+			RevisionView.fromTree(initialTree, this) ?? fail('Failed to load summary currentView'),
 			this,
 			knownRevisions,
 			this.expensiveValidation,

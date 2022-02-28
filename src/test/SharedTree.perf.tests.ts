@@ -26,7 +26,7 @@ describe('SharedTree Perf', () => {
 			before: () => {
 				({ tree, containerRuntimeFactory } = setUpTestSharedTree({ initialTree: simpleTestTree }));
 
-				const edits = createStableEdits(count);
+				const edits = createStableEdits(count, tree);
 				for (let i = 0; i < count - 1; i++) {
 					tree.applyEdit(...edits[i].changes);
 				}

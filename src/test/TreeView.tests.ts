@@ -7,6 +7,7 @@ import { expect } from 'chai';
 import { Definition } from '../Identifiers';
 import { ChangeNode, RevisionView } from '../generic';
 import { refreshTestTree } from './utilities/TestUtilities';
+import { TestNode } from './utilities/TestNode';
 
 describe('TreeView', () => {
 	describe('can compute deltas', () => {
@@ -22,8 +23,8 @@ describe('TreeView', () => {
 		});
 
 		it('that have the same tree', () => {
-			const viewA = RevisionView.fromTree(testTree);
-			const viewB = RevisionView.fromTree(testTree);
+			const viewA = RevisionView.fromTree<TestNode>(testTree);
+			const viewB = RevisionView.fromTree<TestNode>(testTree);
 			expect(viewA.delta(viewB)).deep.equals({
 				changed: [],
 				added: [],

@@ -6,10 +6,11 @@
 import { expect } from 'chai';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { EditHandle, EditLog, separateEditAndId } from '../EditLog';
-import { Change } from '../default-edits';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
 import { newEdit, Edit, EditWithoutId } from '../generic';
+
+type DummyChange = never;
 
 /**
  * Creates an edit log with the specified number of chunks, stored as handles instead of edits.
@@ -22,11 +23,11 @@ function createEditLogWithHandles(
 	numberOfChunks = 2,
 	editsPerChunk = 5,
 	editsPerChunkOnEditLog = 100
-): EditLog<Change> {
+): EditLog<DummyChange> {
 	const editIds: EditId[] = [];
-	const editChunks: EditWithoutId<Change>[][] = [];
+	const editChunks: EditWithoutId<DummyChange>[][] = [];
 
-	let inProgessChunk: EditWithoutId<Change>[] = [];
+	let inProgessChunk: EditWithoutId<DummyChange>[] = [];
 	for (let i = 0; i < numberOfChunks * editsPerChunk; i++) {
 		const { id, editWithoutId } = separateEditAndId(newEdit([]));
 		editIds.push(id);
@@ -58,7 +59,7 @@ function createEditLogWithHandles(
 		return handle;
 	});
 
-	const editLog = new EditLog<Change>(
+	const editLog = new EditLog<DummyChange>(
 		{ editChunks: handlesWithKeys, editIds },
 		undefined,
 		undefined,
@@ -271,8 +272,8 @@ describe('EditLog', () => {
 	});
 
 	it('can correctly compare equality to other edit logs', () => {
-		const edit0Copy: Edit<Change> = { ...edit0 };
-		const edit1Copy: Edit<Change> = { ...edit1 };
+		const edit0Copy: Edit<DummyChange> = { ...edit0 };
+		const edit1Copy: Edit<DummyChange> = { ...edit1 };
 		const { editWithoutId: editWithoutId0Copy } = separateEditAndId(edit0Copy);
 		const { editWithoutId: editWithoutId1Copy } = separateEditAndId(edit1Copy);
 
@@ -285,7 +286,7 @@ describe('EditLog', () => {
 
 		expect(log0.equals(log1)).to.be.true;
 
-		const log2 = new EditLog<Change>({
+		const log2 = new EditLog<DummyChange>({
 			editChunks: [{ startRevision: 0, chunk: [editWithoutId0] }],
 			editIds: [id0],
 		});

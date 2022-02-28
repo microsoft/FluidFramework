@@ -12,7 +12,6 @@ import {
 	Move,
 	StableRange,
 	StablePlace,
-	Side,
 	EditValidationResult,
 	SharedTree,
 	SharedTreeEvent,
@@ -20,6 +19,9 @@ import {
 	CheckoutEvent,
 	Change,
 	Transaction,
+	ChangeInternal,
+	Side,
+	areRevisionViewsSemanticallyEqual,
 } from '../index';
 import { TestTree } from './utilities/TestNode';
 import { setUpTestSharedTree, SharedTreeTestingOptions, setUpTestTree } from './utilities/TestUtilities';
@@ -27,14 +29,14 @@ import { setUpTestSharedTree, SharedTreeTestingOptions, setUpTestTree } from './
 /**
  * Checkout test suite
  */
-export function checkoutTests<TChangeInternal>(
+export function checkoutTests(
 	checkoutName: string,
-	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change, TChangeInternal, Transaction.Failure>>,
+	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change, ChangeInternal, Transaction.Failure>>,
 	additionalTests?: () => void
 ): Mocha.Suite {
 	async function setUpTestCheckout(
 		options: SharedTreeTestingOptions = { localMode: true, noFailOnError: true }
-	): Promise<{ checkout: Checkout<Change, TChangeInternal, Transaction.Failure>; tree: SharedTree }> {
+	): Promise<{ checkout: Checkout<Change, ChangeInternal, Transaction.Failure>; tree: SharedTree }> {
 		const { tree } = setUpTestSharedTree(options);
 		return { checkout: await checkoutFactory(tree), tree };
 	}
@@ -47,7 +49,7 @@ export function checkoutTests<TChangeInternal>(
 	 */
 	async function countViewChange(
 		action: (
-			checkout: Checkout<Change, TChangeInternal, Transaction.Failure>,
+			checkout: Checkout<Change, ChangeInternal, Transaction.Failure>,
 			simpleTestTree: TestTree,
 			data: { changeCount: number }
 		) => void | Promise<void>,
@@ -76,7 +78,7 @@ export function checkoutTests<TChangeInternal>(
 	}
 
 	async function setUpTestTreeCheckout(): Promise<{
-		checkout: Checkout<Change, TChangeInternal, Transaction.Failure>;
+		checkout: Checkout<Change, ChangeInternal, Transaction.Failure>;
 		sharedTree: SharedTree;
 		testTree: TestTree;
 	}> {
@@ -402,7 +404,7 @@ export function checkoutTests<TChangeInternal>(
 				changeCount += 1;
 			});
 
-			secondTree.applyEdit(Delete.create(StableRange.only(simpleTestTree.left)));
+			secondTree.applyEdit(Delete.create(StableRange.only(simpleTestTree.left.translateId(secondTree))));
 			expect(changeCount).equals(0);
 			containerRuntimeFactory.processAllMessages();
 			// Wait for edit to be included in checkout.
@@ -471,13 +473,13 @@ export function checkoutTests<TChangeInternal>(
 			const checkout = await checkoutFactory(tree);
 			const secondCheckout = await checkoutFactory(secondTree);
 
-			const newLeftNode = simpleTestTree.buildLeafWithId();
+			const newLeftNode = simpleTestTree.buildLeaf(simpleTestTree.generateNodeId());
 			checkout.openEdit();
 			checkout.applyChanges(...setTrait(simpleTestTree.left.traitLocation, [newLeftNode]));
 
 			// Concurrently, the second client deletes the right node. This will not conflict with the operation performed
 			// on the left trait on the first client.
-			secondCheckout.applyEdit(Delete.create(StableRange.only(simpleTestTree.right)));
+			secondCheckout.applyEdit(Delete.create(StableRange.only(simpleTestTree.right.translateId(secondTree))));
 			await secondCheckout.waitForPendingUpdates();
 
 			// Deliver the remote change. Since there will not be any conflicts, the result should merge locally and both trait
@@ -493,9 +495,13 @@ export function checkoutTests<TChangeInternal>(
 			// The remote deletion of the right node, while delivered, will not be reflected in the view yet.
 			expect(rightTrait).deep.equals([simpleTestTree.right.identifier]);
 
-			const secondLeftTrait = secondCheckout.currentView.getTrait(simpleTestTree.left.traitLocation);
-			const secondRightTrait = secondCheckout.currentView.getTrait(simpleTestTree.right.traitLocation);
-			expect(secondLeftTrait).deep.equals([simpleTestTree.left.identifier]);
+			const secondLeftTrait = secondCheckout.currentView.getTrait(
+				simpleTestTree.left.traitLocation.translate(secondTree)
+			);
+			const secondRightTrait = secondCheckout.currentView.getTrait(
+				simpleTestTree.right.traitLocation.translate(secondTree)
+			);
+			expect(secondLeftTrait).deep.equals([simpleTestTree.left.translateId(secondTree)]);
 			expect(secondRightTrait.length).equals(0);
 
 			// Merge in the latest changes.
@@ -512,7 +518,6 @@ export function checkoutTests<TChangeInternal>(
 			await checkout.waitForPendingUpdates();
 			containerRuntimeFactory.processAllMessages();
 			await secondCheckout.waitForPendingUpdates();
-			expect(checkout.currentView.equals(secondCheckout.currentView));
 			expect(tree.equals(secondTree)).to.be.true;
 		});
 
@@ -534,7 +539,7 @@ export function checkoutTests<TChangeInternal>(
 			);
 
 			// Concurrently, the second client deletes the right node. This will conflict with the move operation by the first client.
-			secondCheckout.applyEdit(Delete.create(StableRange.only(simpleTestTree.right)));
+			secondCheckout.applyEdit(Delete.create(StableRange.only(simpleTestTree.right.translateId(secondTree))));
 			await secondCheckout.waitForPendingUpdates();
 
 			containerRuntimeFactory.processAllMessages();
@@ -550,7 +555,9 @@ export function checkoutTests<TChangeInternal>(
 			// Merge in the latest changes.
 			const rebaseResult = checkout.rebaseCurrentEdit();
 			expect(rebaseResult).equals(EditValidationResult.Invalid);
-			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
+			expect(
+				areRevisionViewsSemanticallyEqual(checkout.currentView, tree, secondCheckout.currentView, secondTree)
+			).to.be.true;
 		});
 
 		it('can dispose and remove listeners', async () => {
