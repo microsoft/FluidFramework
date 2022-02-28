@@ -45,6 +45,8 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
     ): Promise<void> {
         const key = this.getKey(id);
 
+        winston.info(`Writing throttling data to Redis: key - ${key},
+         expiryTimeSeconds: ${this.expireAfterSeconds}, ${JSON.stringify(throttlingMetric)}`);
         return executeRedisMultiWithHmsetExpire(
             this.client,
             key,
