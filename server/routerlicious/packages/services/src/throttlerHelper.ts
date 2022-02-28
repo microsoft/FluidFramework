@@ -42,7 +42,8 @@ export class ThrottlerHelper implements IThrottlerHelper {
 
         throttlingMetric[`usage_count_${now.toString()}`] = count;
 
-        winston.info(`Inside ThrottlerHelper.updateCount(). Writing throttlingMetric: ${JSON.stringify(throttlingMetric)} to Redis hash key: ${id}`);
+        winston.info(`Inside ThrottlerHelper.updateCount(). Writing throttlingMetric:
+         ${JSON.stringify(throttlingMetric)} to Redis hash key: ${id}`);
 
         // Exit early if already throttled and no chance of being unthrottled
         const retryAfterInMs = this.getRetryAfterInMs(throttlingMetric, now);
