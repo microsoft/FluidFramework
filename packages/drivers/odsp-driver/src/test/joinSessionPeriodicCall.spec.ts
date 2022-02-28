@@ -81,9 +81,11 @@ describe("joinSessions Tests", () => {
         const request = createOdspUrl(locator);
         const resolvedUrl = await resolver.resolve({ url: request });
         const logger = new TelemetryUTLogger();
+        // eslint-disable-next-line @typescript-eslint/dot-notation
         logger["config"] = {
             getRawConfig: (name: string) => { return true },
         };
+        // eslint-disable-next-line @typescript-eslint/dot-notation
         logger["logger"] = {};
         service = (await odspDocumentServiceFactory.createDocumentService(resolvedUrl, logger) as OdspDocumentService);
     });
