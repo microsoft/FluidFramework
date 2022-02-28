@@ -42,7 +42,7 @@ const resolveConnection = async(container: IContainer) => {
         } else {
             container.on("connected", () => resolve());
         }
-    })
+    });
 }
 
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
