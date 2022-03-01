@@ -37,7 +37,6 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     MessageType,
-    ITrace,
     ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -184,19 +183,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
-        // Start adding trace for the op.
-        const traces: ITrace[] = [
-            {
-                action: "start",
-                service: "client",
-                timestamp: Date.now(),
-            }];
 
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents: JSON.stringify(contents),
             metadata,
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
-            traces,
             type,
         };
 
@@ -781,15 +772,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         }
 
         this.connectionManager.beforeProcessingIncomingOp(message);
-
-        // Add final ack trace.
-        if (message.traces !== undefined && message.traces.length > 0) {
-            message.traces.push({
-                action: "end",
-                service: "client",
-                timestamp: Date.now(),
-            });
-        }
 
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
