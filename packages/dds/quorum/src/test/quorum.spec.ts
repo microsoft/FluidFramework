@@ -11,8 +11,8 @@ import {
     MockContainerRuntimeForReconnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { Quorum } from "../taskManager";
-import { QuorumFactory } from "../taskManagerFactory";
+import { Quorum } from "../quorum";
+import { QuorumFactory } from "../quorumFactory";
 import { IQuorum } from "../interfaces";
 
 function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {

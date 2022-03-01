@@ -9,7 +9,7 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { Quorum } from "./taskManager";
+import { Quorum } from "./quorum";
 import { IQuorum } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 

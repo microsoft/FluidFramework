@@ -16,7 +16,7 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-import { QuorumFactory } from "./taskManagerFactory";
+import { QuorumFactory } from "./quorumFactory";
 import { IQuorum, IQuorumEvents } from "./interfaces";
 
 /**
