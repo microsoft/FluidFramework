@@ -169,8 +169,8 @@ describe("ErrorUtils", () => {
         const handler = "test_handler";
         const message = "test error";
         const assertExpectedMessage = (actualMessage: string) => {
-            const expectedMessage = `R11sSocketError (${handler}): ${message}`;
-            assert.strictEqual(actualMessage, expectedMessage);
+            assert(actualMessage.includes(message), "R11s error should include socket error message");
+            assert(actualMessage.includes(handler), "R11s error should include handler name");
         };
         it("creates non-retriable authorization error on 401", () => {
             const error = errorObjectFromSocketError({
