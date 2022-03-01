@@ -1637,17 +1637,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Check and report if we're getting messages from a clientId that we previously
         // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
         if (message.clientId != null) {
-            let errorCode: string | undefined;
+            let errorMsg: string | undefined;
             const client: ILocalSequencedClient | undefined =
                 this.getQuorum().getMember(message.clientId);
             if (client === undefined && message.type !== MessageType.ClientJoin) {
-                errorCode = "messageClientIdMissingFromQuorum";
+                errorMsg = "Remote message's clientId is missing from the quorum";
             } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
-                errorCode = "messageClientIdShouldHaveLeft";
+                errorMsg = "Remote message's clientId already should have left";
             }
-            if (errorCode !== undefined) {
+            if (errorMsg !== undefined) {
                 const error = new DataCorruptionError(
-                    errorCode,
+                    errorMsg,
                     extractSafePropertiesFromMessage(message));
                 this.close(normalizeError(error));
             }

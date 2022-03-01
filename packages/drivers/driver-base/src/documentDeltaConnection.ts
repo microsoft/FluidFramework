@@ -320,7 +320,7 @@ export class DocumentDeltaConnection
         this.disposeCore(
             false, // socketProtocolError
             createGenericNetworkError(
-                "clientClosingConnection", { canRetry: true }, { driverVersion })); //* Format
+                "Client closing delta connection", { canRetry: true }, { driverVersion }));
     }
 
     protected disposeCore(socketProtocolError: boolean, err: IAnyDriverError) {

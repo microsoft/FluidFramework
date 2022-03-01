@@ -62,12 +62,11 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 
 // @public
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
-    constructor(message: string, retryAfterSeconds: number, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType = ContainerErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
-    static wrap(error: any, retryAfterSeconds: number, logger: ITelemetryLogger): IThrottlingWarning;
+    static wrap(error: unknown, retryAfterSeconds: number, logger: ITelemetryLogger): IThrottlingWarning;
 }
 
 // @public

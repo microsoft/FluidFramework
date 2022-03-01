@@ -57,9 +57,8 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
     }
 }
 
-//* Format
 export const createSummarizingWarning =
-    (errorCode: string, logged: boolean) => new SummarizingWarning(errorCode, logged);
+    (errorMessage: string, logged: boolean) => new SummarizingWarning(errorMessage, logged);
 
 /**
  * Summarizer is responsible for coordinating when to generate and send summaries.
@@ -257,9 +256,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     summaryTime: Date.now(),
                 } as const,
             ),
-            (errorCode: string) => {
+            (errorMessage: string) => {
                 if (!this._disposed) {
-                    this.emit("summarizingError", createSummarizingWarning(errorCode, true));
+                    this.emit("summarizingError", createSummarizingWarning(errorMessage, true));
                 }
             },
             this.summaryCollection,

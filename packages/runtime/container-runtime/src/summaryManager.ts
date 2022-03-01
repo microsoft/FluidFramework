@@ -299,7 +299,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         if (delayMs > 0 && delayMs > this.startThrottler.maxDelayMs) {
             this.emit(
                 "summarizerWarning",
-                createSummarizingWarning("summaryManagerCreateSummarizerMaxThrottleDelay", false),
+                createSummarizingWarning("CreateSummarizer max throttle delay exceeded", false),
             );
         }
 

@@ -730,7 +730,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                         // This looks like a data corruption but the culprit has been found instead
                         // to be the file being overwritten in storage.  See PR #5882.
                         const error = new NonRetryableError(
-                            "twoMessagesWithSameSeqNumAndDifferentPayload", //* Format
+                            "Found two messages with the same seqNum but different payload",
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connectionManager.clientId,
