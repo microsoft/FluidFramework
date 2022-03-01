@@ -7,10 +7,6 @@
 name: $(Build.BuildId)
 
 variables:
-  - name: skipComponentGovernanceDetection
-    value: true
-  - name: Packaging.EnableSBOMSigning
-    value: true
   - group: doc-versions
   - group: storage-vars
   - name: repoToTrigger
@@ -28,6 +24,8 @@ variables:
     value: ${{ eq(variables['Build.SourceBranchName'], variables['RELEASE_BRANCH']) }}
   - name: validRun
     value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
+  - name: Packaging.EnableSBOMSigning
+    value: true
 
 # no branch and PR triggers
 trigger:
