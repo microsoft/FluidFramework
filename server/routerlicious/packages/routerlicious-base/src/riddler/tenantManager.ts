@@ -71,21 +71,25 @@ export class TenantManager {
      */
     public async validateToken(tenantId: string, token: string, includeDisabledTenant = false): Promise<void> {
         const tenantKeys = await this.getTenantKeys(tenantId, includeDisabledTenant);
-
+        Lumberjack.info(
+            `keys exists=1=${tenantKeys.key1} 2=${tenantKeys.key2} ${token}`,
+            getLumberBaseProperties("", tenantId),
+        );
         return jwt.verify(token, tenantKeys.key1, (error1) => {
             if (!error1) {
                 return;
             }
 
+            Lumberjack.error(
+                `error1 token=${token}`,
+                getLumberBaseProperties("",
+                    tenantId),
+                error1,
+            );
+
             // if the tenant doesn't have key2, it will be empty string
             // we should fail token generated with empty string as key
             if (!tenantKeys.key2) {
-                Lumberjack.error(
-                    `error1 token=${token}`,
-                    getLumberBaseProperties("",
-                        tenantId),
-                    error1,
-                );
                 throw error1 instanceof jwt.TokenExpiredError
                     ? new NetworkError(401, "Token expired validated with key1.")
                     : new NetworkError(403, "Invalid token validated with key1.");
