@@ -7,7 +7,6 @@ import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidfra
 import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { createSummarizingWarning } from "./summarizer";
 import { ISummarizerClientElection } from "./summarizerClientElection";
 import { IThrottler } from "./throttler";
 import {
@@ -17,6 +16,7 @@ import {
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
+import { createSummarizingWarning } from "./summarizer";
 
 const defaultInitialDelayMs = 5000;
 const defaultOpsToBypassInitialDelay = 4000;
@@ -219,8 +219,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
             this.state = SummaryManagerState.Running;
 
-            summarizer.on("summarizingError",
-                (warning: ISummarizingWarning) => this.emit("summarizerWarning", warning));
+            this.logger.sendErrorEvent({ eventName: "summarizingError" },
+                (warning: string) => createSummarizingWarning(warning, true));
             this.summarizer = summarizer;
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -251,7 +251,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                         category,
                     },
                     error);
-                this.emit("summarizerWarning", error);
 
                 // Note that summarizer may keep going (like doing last summary).
                 // Ideally we await stopping process, but this code path is due to a bug
@@ -296,12 +295,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private async delayBeforeCreatingSummarizer(): Promise<boolean> {
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         let delayMs = this.startThrottler.getDelay();
-        if (delayMs > 0 && delayMs > this.startThrottler.maxDelayMs) {
-            this.emit(
-                "summarizerWarning",
-                createSummarizingWarning("summaryManagerCreateSummarizerMaxThrottleDelay", false),
-            );
-        }
 
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
@@ -309,6 +302,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             eventName: "CreatingSummarizer",
             throttlerDelay: delayMs,
             initialDelay: this.initialDelayMs,
+            delayMaxStartThrottler: delayMs > this.startThrottler.maxDelayMs,
             opsSinceLastAck: this.summaryCollection.opsSinceLastAck,
             opsToBypassInitialDelay: this.opsToBypassInitialDelay,
         });
