@@ -21,9 +21,9 @@ import {
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
-import { AliasResult } from "@fluidframework/container-runtime/dist/dataStore";
 import { Loader } from "@fluidframework/container-loader";
 import { GenericError } from "@fluidframework/container-utils";
+import { AliasResult } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;

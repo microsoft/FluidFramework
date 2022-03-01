@@ -87,6 +87,8 @@ import {
     SummarizeInternalFn,
     channelsTreeName,
     IAttachMessage,
+    IDataStore,
+    AliasResult,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -147,9 +149,7 @@ import {
     IGCStats,
 } from "./garbageCollection";
 import {
-    AliasResult,
     channelToDataStore,
-    IDataStore,
     IDataStoreAliasMessage,
     isDataStoreAliasMessage,
 } from "./dataStore";

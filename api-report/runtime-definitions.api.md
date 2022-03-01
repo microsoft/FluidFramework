@@ -29,6 +29,14 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
 
+// @public
+export enum AliasResult {
+    Aliasing = "Aliasing",
+    AlreadyAliased = "AlreadyAliased",
+    Conflict = "Conflict",
+    Success = "Success"
+}
+
 // @public (undocumented)
 export const channelsTreeName = ".channels";
 
@@ -79,7 +87,7 @@ export interface IAttachMessage {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents>, IProvideFluidHandleContext {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+    createDataStore(pkg: string | string[]): Promise<IDataStore>;
     // @internal @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidRouter>;
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
@@ -104,6 +112,11 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
+}
+
+// @public
+export interface IDataStore extends IFluidRouter {
+    trySetAlias(alias: string): Promise<AliasResult>;
 }
 
 // @public
@@ -369,7 +382,6 @@ export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRe
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
-
 
 // (No @packageDocumentation comment for this package)
 
