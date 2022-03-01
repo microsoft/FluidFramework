@@ -278,6 +278,12 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("successful map clear no resend", async function() {
+        // Github issue #9163
+        if ((provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") ||
+            provider.driver.type === "tinylicious") {
+            this.skip();
+        }
+
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
             map.clear();
         });
