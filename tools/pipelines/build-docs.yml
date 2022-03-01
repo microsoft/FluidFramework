@@ -125,7 +125,7 @@ stages:
   dependsOn: json
   jobs:
     - job: build_site
-      condition: in(stageDependencies.json.upload_json.result, 'Succeeded', 'SucceededWithIssues', 'Skipped')
+      condition: in(stageDependencies.json.upload_json.result, 'Succeeded', 'SucceededWithIssues')
       steps:
       - checkout: self
         submodules: false
