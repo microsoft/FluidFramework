@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+// See #9219
+/* eslint-disable max-lines */
 import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -301,6 +302,7 @@ interface OldContainerContextWithLogger extends IContainerContext {
 
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
+const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
@@ -854,6 +856,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
+    private readonly maxConsecutiveReconnects: number;
+    private readonly defaultMaxConsecutiveReconnects = 15;
+
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode;
     private needsFlush = false;
@@ -862,6 +867,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _connected: boolean;
 
     private paused: boolean = false;
+
+    private consecutiveReconnects = 0;
 
     public get connected(): boolean {
         return this._connected;
@@ -990,6 +997,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const timestamp = client?.timestamp;
             return this.deltaManager.lastMessage?.timestamp ?? timestamp ?? Date.now();
         };
+
+        this.maxConsecutiveReconnects =
+            this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
+
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
@@ -1415,6 +1426,42 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    // Track how many times the container tries to reconnect with pending messages.
+    // This happens when the connection state is changed and we reset the counter
+    // when we are able to process a local op or when there are no pending messages.
+    // If this counter reaches a max, it's a good indicator that the container
+    // is not making progress and it is stuck in a retry loop.
+    private shouldContinueReconnecting(): boolean {
+        if (this.maxConsecutiveReconnects <= 0) {
+            // Feature disabled, we never stop reconnecting
+            return true;
+        }
+
+        if (!this.pendingStateManager.hasPendingMessages()) {
+            // If there are no pending messages, we can always reconnect
+            this.resetReconnectCount();
+            return true;
+        }
+
+        this.consecutiveReconnects++;
+        if (this.consecutiveReconnects === Math.floor(this.maxConsecutiveReconnects / 2)) {
+            // If we're halfway through the max reconnects, send an event in order
+            // to better identify false positives, if any. If the rate of this event
+            // matches `MaxReconnectsWithNoProgress`, we can safely cut down
+            // maxConsecutiveReconnects to half.
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "ReconnectsWithNoProgress",
+                attempts: this.consecutiveReconnects,
+            });
+        }
+
+        return this.consecutiveReconnects < this.maxConsecutiveReconnects;
+    }
+
+    private resetReconnectCount() {
+        this.consecutiveReconnects = 0;
+    }
+
     private replayPendingStates() {
         // We need to be able to send ops to replay states
         if (!this.canSendOps()) { return; }
@@ -1495,6 +1542,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (changeOfState) {
             this.deltaManager.off("op", this.onOp);
             this.context.pendingLocalState = undefined;
+            if (!this.shouldContinueReconnecting()) {
+                this.closeFn(new GenericError(
+                    "MaxReconnectsWithNoProgress",
+                    undefined, // error
+                    { attempts: this.consecutiveReconnects }));
+                return;
+            }
+
             this.replayPendingStates();
         }
 
@@ -1558,6 +1613,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             this.emit("op", message);
             this.scheduleManager.afterOpProcessing(undefined, message);
+
+            if (local) {
+                // If we have processed a local op, this means that the container is
+                // making progress and we can reset the counter for how many times
+                // we have consecutively replayed the pending states
+                this.resetReconnectCount();
+            }
         } catch (e) {
             this.scheduleManager.afterOpProcessing(e, message);
             throw e;
