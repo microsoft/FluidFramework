@@ -1468,7 +1468,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // is not making progress and it is stuck in a retry loop.
     private shouldContinueReconnecting(): boolean {
         if (this.maxConsecutiveReconnects <= 0) {
-            // Feature disabled, we assume we are always making progress
+            // Feature disabled, we never stop reconnecting
             return true;
         }
 
