@@ -116,18 +116,13 @@ export abstract class RdkafkaBase extends EventEmitter {
         });
     }
 
-    protected error(error: any, forceRestartOnError: boolean = false) {
-        let restartKafkaBasedOnErrorCode = false;
+    protected error(error: any, errorData: IContextErrorData = { restart: false }) {
         const errorCodesToCauseRestart = this.options.restartOnKafkaErrorCodes ?? this.defaultRestartOnKafkaErrorCodes;
 
         if (RdkafkaBase.isObject(error)
             && errorCodesToCauseRestart.includes((error as kafkaTypes.LibrdKafkaError).code)) {
-                restartKafkaBasedOnErrorCode = true;
+            errorData.restart = true;
         }
-
-        const errorData: IContextErrorData = {
-            restart: forceRestartOnError || restartKafkaBasedOnErrorCode,
-        };
 
         this.emit("error", error, errorData);
     }

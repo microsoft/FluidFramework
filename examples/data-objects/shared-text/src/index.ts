@@ -3,47 +3,11 @@
  * Licensed under the MIT License.
  */
 
-// set the base path for all dynamic imports first
-// eslint-disable-next-line import/no-unassigned-import
-import "./publicpath";
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
+import { SharedTextDataObject } from "./dataObject";
+import { SharedTextView } from "./view";
 
-import { IContainerContext } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import {
-    rootDataStoreRequestHandler,
-    buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { SharedTextDataStoreFactory } from "./component";
 
-const DefaultComponentName = "text";
+const sharedTextViewCallback = (sharedTextDataObject: SharedTextDataObject) => new SharedTextView(sharedTextDataObject);
 
-class SharedTextContainerRuntimeFactory extends RuntimeFactoryHelper {
-    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-        await runtime.createRootDataStore(SharedTextDataStoreFactory.type, DefaultComponentName);
-    }
-
-    public async preInitialize(
-        context: IContainerContext,
-        existing: boolean,
-    ): Promise<ContainerRuntime> {
-        const runtime: ContainerRuntime = await ContainerRuntime.load(
-            context,
-            [
-                [SharedTextDataStoreFactory.type, Promise.resolve(new SharedTextDataStoreFactory())],
-            ],
-            buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(DefaultComponentName),
-                rootDataStoreRequestHandler,
-            ),
-            undefined, // runtimeOptions
-            undefined, // containerScope
-            existing,
-        );
-
-        return runtime;
-    }
-}
-
-export const fluidExport = new SharedTextContainerRuntimeFactory();
+export const fluidExport = new ContainerViewRuntimeFactory(SharedTextDataObject.factory, sharedTextViewCallback);

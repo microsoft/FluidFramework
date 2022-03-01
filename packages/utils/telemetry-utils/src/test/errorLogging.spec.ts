@@ -10,8 +10,18 @@ import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations, wrapError, wrapErrorAndLog, extractLogSafeErrorProperties } from "../errorLogging";
-import { IFluidErrorBase } from "../fluidErrorBase";
+import {
+    LoggingError,
+    isTaggedTelemetryPropertyValue,
+    normalizeError,
+    IFluidErrorAnnotations,
+    wrapError,
+    wrapErrorAndLog,
+    extractLogSafeErrorProperties,
+    isExternalError,
+    originatedAsExternalError,
+} from "../errorLogging";
+import { IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase";
 import { MockLogger } from "../mockLogger";
 
 describe("Error Logging", () => {
@@ -434,7 +444,9 @@ describe("normalizeError", () => {
                 // Arrange
                 const errorProps =
                     {errorType: "et1", message: "m1", fluidErrorCode: "toBeRemoved" };
-                const legacyError = new TestFluidError(errorProps).withoutProperty("fluidErrorCode");
+                const legacyError = new TestFluidError(errorProps)
+                    .withoutProperty("fluidErrorCode")
+                    .withoutProperty("errorInstanceId");
 
                 // Act
                 const normalizedError = normalizeError(legacyError, annotations);
@@ -444,6 +456,7 @@ describe("normalizeError", () => {
                 assert.equal(normalizedError.errorType, "et1", "errorType should be unchanged");
                 assert.equal(normalizedError.fluidErrorCode, "<error predates fluidErrorCode>", "errorCode should be patched properly");
                 assert.equal(normalizedError.message, "m1", "message should be unchanged");
+                assert.equal(normalizedError.errorInstanceId.length, 36, "should be guid-length");
                 if (annotations.props !== undefined) {
                     assert(legacyError.atpStub.calledWith(annotations.props), "addTelemetryProperties should have been called");
                 }
@@ -589,7 +602,7 @@ describe("normalizeError", () => {
             actual: IFluidErrorBase,
             expected: TestFluidError,
             annotations: IFluidErrorAnnotations = {},
-            inputStack: string,
+            inputStack: string | undefined,
         ) {
             expected.withExpectedTelemetryProps({
                 ...annotations.props,
@@ -597,13 +610,20 @@ describe("normalizeError", () => {
                 errorInstanceId: actual.errorInstanceId,
             });
 
+            assertMatchingMessageAndStack(actual, expected, inputStack);
+
             assert.equal(actual.errorType, expected.errorType, "errorType should match");
             assert.equal(actual.fluidErrorCode, expected.fluidErrorCode, "fluidErrorCode should match");
-            assert.equal(actual.message, expected.message, "message should match");
             assert.equal(actual.name, expected.name, "name should match");
-
             assert.equal(actual.errorInstanceId.length, 36, "should be guid-length");
-
+            assert.deepStrictEqual(actual.getTelemetryProperties(), expected.expectedTelemetryProps, "telemetry props should match");
+        }
+        function assertMatchingMessageAndStack(
+            actual: IFluidErrorBase,
+            expected: TestFluidError,
+            inputStack: string | undefined,
+        ) {
+            assert.equal(actual.message, expected.message, "message should match");
             const actualStack = actual.stack;
             assert(actualStack !== undefined, "stack should be present as a string");
             if (actualStack.indexOf("at Object.normalizeError") >= 0) { // This indicates the stack was populated naturally by new SimpleFluidError
@@ -614,14 +634,32 @@ describe("normalizeError", () => {
                 assert.equal(expected.stack, "<<stack from input>>", "<<stack from input>> hint should be used if using stack from input error object");
                 expected.withExpectedTelemetryProps({ stack: inputStack });
             }
-
-            assert.deepStrictEqual(actual.getTelemetryProperties(), expected.expectedTelemetryProps, "telemetry props should match");
         }
         for (const annotationCase of Object.keys(annotationCases)) {
             const annotations = annotationCases[annotationCase];
+            let doneOnceForThisAnnotationCase = false;
             for (const caseName of Object.keys(untrustedInputs)) {
                 const getTestCase = untrustedInputs[caseName];
-                it(`Normalize untrusted error: ${caseName} (${annotationCase})`, () => {
+                if (!doneOnceForThisAnnotationCase) {
+                    doneOnceForThisAnnotationCase = true;
+                    // Each test case only differs by what stack/error are.  Test the rest only once per annotation case.
+                    it(`Normalize untrusted error full validation: (${annotationCase})`, () => {
+                        // Arrange
+                        const { input, expectedOutput } = getTestCase();
+
+                        // Act
+                        const normalized = normalizeError(input, annotations);
+
+                        // Assert
+                        assert.notEqual(input, normalized, "input should have yielded a new error object");
+                        assertMatching(normalized, expectedOutput, annotations, input?.stack);
+
+                        // Bonus
+                        normalized.addTelemetryProperties({foo: "bar"});
+                        assert.equal(normalized.getTelemetryProperties().foo, "bar", "can add telemetry props after normalization");
+                    });
+                }
+                it(`Normalize untrusted error message/stack: ${caseName} (${annotationCase})`, () => {
                     // Arrange
                     const { input, expectedOutput } = getTestCase();
 
@@ -630,11 +668,7 @@ describe("normalizeError", () => {
 
                     // Assert
                     assert.notEqual(input, normalized, "input should have yielded a new error object");
-                    assertMatching(normalized, expectedOutput, annotations, input?.stack);
-
-                    // Bonus
-                    normalized.addTelemetryProperties({foo: "bar"});
-                    assert.equal(normalized.getTelemetryProperties().foo, "bar", "can add telemetry props after normalization");
+                    assertMatchingMessageAndStack(normalized, expectedOutput, input?.stack);
                 });
             }
         }
@@ -645,14 +679,33 @@ describe("wrapError", () => {
     it("Copy message and stack", () => {
         const innerError = new LoggingError("hello");
         innerError.stack = "extra special stack";
-        const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", errorType: "genericError" });
+        const newError = wrapError(innerError, (message) => new LoggingError(message));
         assert.equal(newError.message, innerError.message, "messages should match");
         assert.equal(newError.stack, innerError.stack, "stacks should match");
     });
-    it("Include innerErrorInstanceId in telemetry props", () => {
+    it("Include matching errorInstanceId and innerErrorInstanceId in telemetry props", () => {
         const innerError = new LoggingError("hello");
-        const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", errorType: "genericError" });
+        const newError = wrapError(innerError, (message) => new LoggingError(message));
+        assert(newError.errorInstanceId === innerError.errorInstanceId);
         assert(newError.getTelemetryProperties().innerErrorInstanceId === innerError.errorInstanceId);
+    });
+    it("Properly set untrustedOrigin", () => {
+        const untrustedError = new LoggingError("untrusted");
+
+        const singleWrapped = wrapError(untrustedError, (message) => new LoggingError(message));
+        assert(singleWrapped.getTelemetryProperties().untrustedOrigin === 1);
+
+        const doubleWrapped = wrapError(singleWrapped, (message) => new LoggingError(message));
+        assert(doubleWrapped.getTelemetryProperties().untrustedOrigin === 1);
+
+        const normalizedError = normalizeError(untrustedError);
+        const wrappedNormalized = wrapError(normalizedError, (message) => new LoggingError(message));
+        assert(wrappedNormalized.getTelemetryProperties().untrustedOrigin === 1);
+
+        const trustedError = new LoggingError("trusted");
+        Object.assign(trustedError, { errorType: "someErrorType" });
+        const wrappedTrusted = wrapError(trustedError, (message) => new LoggingError(message));
+        assert(wrappedTrusted.getTelemetryProperties().untrustedOrigin === undefined);
     });
 });
 describe("wrapErrorAndLog", () => {
@@ -662,6 +715,56 @@ describe("wrapErrorAndLog", () => {
     assert(mockLogger.matchEvents([{
         eventName: "WrapError",
         wrappedByErrorInstanceId: newError.errorInstanceId,
+        errorInstanceId: newError.errorInstanceId,
         error: "hello",
      }]), "Expected the 'WrapError' event to be logged");
+});
+
+describe("Error Discovery", () => {
+    const createTestError = (m) =>
+        Object.assign(new LoggingError(m), {
+            errorType: "someErrorType",
+            fluidErrorCode: "someErrorCode",
+        });
+    it("isExternalError", () => {
+        assert(isExternalError("some string"));
+        assert(isExternalError(new LoggingError("error message")));
+        assert(isExternalError(normalizeError("normalize me but I'm still external")));
+
+        assert(!isExternalError(createTestError("hello")));
+
+        const wrappedError = wrapError("wrap me", createTestError);
+        assert(!isExternalError(wrappedError));
+        assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
+    });
+    it("originatedAsExternalError", () => {
+        assert(originatedAsExternalError("some string"));
+        assert(originatedAsExternalError(new LoggingError("error message")));
+        assert(originatedAsExternalError(normalizeError("normalize me but I'm still external")));
+
+        assert(!originatedAsExternalError(createTestError("hello")));
+
+        const wrappedError = wrapError("wrap me", createTestError);
+        assert(originatedAsExternalError(wrappedError));
+    });
+    it("isValidLegacyError", () => {
+        assert(!isValidLegacyError(new LoggingError("hello")));
+        assert(isValidLegacyError(Object.assign(new LoggingError("hello"), { errorType: "someErrorType" })));
+    });
+    it("isFluidError", () => {
+        assert(!isFluidError(new Error("hello")));
+        assert(!isFluidError(new LoggingError("hello")));
+
+        const errorType = "someErrorType";
+        const fluidErrorCode = "someErrorCode";
+        assert(!isFluidError(Object.assign(new LoggingError("hello"),
+            { errorType })
+        ));
+        assert(!isFluidError(Object.assign(new LoggingError("hello"),
+            { errorType, fluidErrorCode, _errorInstanceId: undefined })
+        ));
+        assert(isFluidError(Object.assign(new LoggingError("hello"),
+            { errorType, fluidErrorCode })
+        ));
+    });
 });

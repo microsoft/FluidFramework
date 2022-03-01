@@ -45,9 +45,9 @@ import {
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
-    CreateProcessingError,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
+    DataProcessingError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {
@@ -298,7 +298,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateProcessingError(error, "deltaManagerInboundErrorHandler", this.lastMessage));
+            this.close(
+                DataProcessingError.wrapIfUnrecognized(error, "deltaManagerInboundErrorHandler", this.lastMessage));
         });
 
         // Inbound signal queue
@@ -732,6 +733,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                     const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
                     const message2 = this.comparableMessagePayload(message);
                     if (message1 !== message2) {
+                        // This looks like a data corruption but the culprit has been found instead
+                        // to be the file being overwritten in storage.  See PR #5882.
                         const error = new NonRetryableError(
                             "twoMessagesWithSameSeqNumAndDifferentPayload",
                             undefined,

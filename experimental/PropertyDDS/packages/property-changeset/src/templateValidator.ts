@@ -7,7 +7,6 @@
  * @description The TemplateValidator can examine consecutive versions of a given template to detect semantic
  * versioning (semver) errors and warn about incorrect versioning practices.
  */
-/* eslint-disable no-unused-lets */
 /* eslint-disable no-use-before-define */
 
 import Ajv from "ajv";

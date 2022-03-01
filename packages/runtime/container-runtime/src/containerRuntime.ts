@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+// See #9219
+/* eslint-disable max-lines */
 import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -152,6 +153,7 @@ import {
     IDataStoreAliasMessage,
     isDataStoreAliasMessage,
 } from "./dataStore";
+import { BindBatchTracker } from "./batchTracker";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -329,11 +331,23 @@ export enum RuntimeHeaders {
  * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
  * its usage is removed from TaggedLoggerAdapter fallback.
  */
-interface OldContainerContextWithLogger extends IContainerContext {
+interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedLogger"> {
     logger: ITelemetryBaseLogger;
+    taggedLogger: undefined;
 }
 
 const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
+const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
+
+// Feature gate for the max op size. If the value is negative, chunking is enabled
+// and all ops over 16k would be chunked. If the value is positive, all ops with
+// a size strictly larger will be rejected and the container closed with an error.
+const maxOpSizeInBytesKey = "Fluid.ContainerRuntime.MaxOpSizeInBytes";
+
+// By default, we should reject any op larger than 768KB,
+// in order to account for some extra overhead from serialization
+// to not reach the 1MB limits in socket.io and Kafka.
+const defaultMaxOpSizeInBytes = 768000;
 
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
@@ -684,8 +698,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
         // back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
-        const passLogger = context.taggedLogger ?? new TaggedLoggerAdapter((context as
-            OldContainerContextWithLogger).logger);
+        const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
+        const passLogger = backCompatContext.taggedLogger ??
+            new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
         const logger = ChildLogger.create(passLogger, undefined, {
             all: {
                 runtimeVersion: pkgVersion,
@@ -889,6 +904,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
     private readonly _aliasingEnabled: boolean;
+    private readonly _maxOpSizeInBytes: number;
+
+    private readonly maxConsecutiveReconnects: number;
+    private readonly defaultMaxConsecutiveReconnects = 15;
 
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode = FlushMode.TurnBased;
@@ -898,6 +917,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _connected: boolean;
 
     private paused: boolean = false;
+
+    private consecutiveReconnects = 0;
 
     public get connected(): boolean {
         return this._connected;
@@ -950,8 +971,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * and is the single source of truth for this container.
      */
     public readonly disableIsolatedChannels: boolean;
-    /** The message in the metadata of the base summary this container is loaded from. */
-    private readonly baseSummaryMessage: ISummaryMetadataMessage | undefined;
+    /** The last message processed at the time of the last summary. */
+    private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
     private get summarizer(): Summarizer {
         assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
@@ -982,7 +1003,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private _storage?: IDocumentStorageService,
     ) {
         super();
-        this.baseSummaryMessage = metadata?.message;
+
+        this.messageAtLastSummary = metadata?.message;
 
         // If this is an existing container, we get values from metadata.
         // otherwise, we initialize them.
@@ -1014,25 +1036,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
             (runtimeOptions.useDataStoreAliasing ?? false);
 
-        /**
-         * Function that return the current server timestamp. This is used by the garbage collector to set the
-         * time when a node becomes unreferenced.
-         * We use the timestamp of the last op for current timestamp. However, there can be cases where
-         * we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
-         * of this client's connection.
-         */
-         const getCurrentTimestamp = () => {
-            const client = this.clientId !== undefined ? this.getAudience().getMember(this.clientId) : undefined;
-            const timestamp = client?.timestamp;
-            return this.deltaManager.lastMessage?.timestamp ?? timestamp ?? Date.now();
-        };
+        this._maxOpSizeInBytes = (this.mc.config.getNumber(maxOpSizeInBytesKey) ?? defaultMaxOpSizeInBytes);
+        this.maxConsecutiveReconnects =
+            this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
+
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
             (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
             (nodePath: string) => this.dataStores.getNodePackagePath(nodePath),
-            getCurrentTimestamp,
-            this.closeFn,
+            /**
+             * Returns the timestamp of the last message seen by this client. This is used by garbage collector as
+             * the current reference timestamp for tracking unreferenced objects.
+             */
+            () => this.deltaManager.lastMessage?.timestamp ?? this.messageAtLastSummary?.timestamp,
+            () => this.messageAtLastSummary?.timestamp,
             context.baseSnapshot,
             async <T>(id: string) => readAndParse<T>(this.storage, id),
             this.mc.logger,
@@ -1084,8 +1102,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
             async () => this.garbageCollector.getDataStoreBaseGCDetails(),
-            (dataStorePath: string, packagePath?: readonly string[]) =>
-                this.garbageCollector.nodeUpdated(dataStorePath, "Changed", packagePath),
+            (path: string, timestampMs: number, packagePath?: readonly string[]) => this.garbageCollector.nodeUpdated(
+                path,
+                "Changed",
+                timestampMs,
+                packagePath,
+            ),
             new Map<string, string>(dataStoreAliasMap),
             this.garbageCollector.writeDataAtRoot,
         );
@@ -1257,6 +1279,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
+        BindBatchTracker(this, this.logger);
     }
 
     public dispose(error?: Error): void {
@@ -1387,9 +1410,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         const dataStoreChannel = await dataStoreContext.realize();
-        // Let the garbage collector know that a data store was requested / loaded. Realize the data store first so
-        // that the package path is available.
-        this.garbageCollector.nodeUpdated(`/${id}`, "Loaded", dataStoreContext.packagePath, request?.headers);
+        this.garbageCollector.nodeUpdated(
+            `/${id}`,
+            "Loaded",
+            undefined /* timestampMs */,
+            dataStoreContext.packagePath,
+            request?.headers,
+        );
         return dataStoreChannel;
     }
 
@@ -1400,9 +1427,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             gcFeature: this.garbageCollector.gcSummaryFeatureVersion,
-            // The last message processed at the time of summary. If there are no messages, nothing has changed from
-            // the base summary we loaded from. So, use the message from its metadata blob.
-            message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
+            // The last message processed at the time of summary. If there are no new messages, use the message from the
+            // last summary.
+            message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.messageAtLastSummary,
             sessionExpiryTimeoutMs: this.garbageCollector.sessionExpiryTimeoutMs,
         };
     }
@@ -1438,6 +1465,42 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
             }
         }
+    }
+
+    // Track how many times the container tries to reconnect with pending messages.
+    // This happens when the connection state is changed and we reset the counter
+    // when we are able to process a local op or when there are no pending messages.
+    // If this counter reaches a max, it's a good indicator that the container
+    // is not making progress and it is stuck in a retry loop.
+    private shouldContinueReconnecting(): boolean {
+        if (this.maxConsecutiveReconnects <= 0) {
+            // Feature disabled, we never stop reconnecting
+            return true;
+        }
+
+        if (!this.pendingStateManager.hasPendingMessages()) {
+            // If there are no pending messages, we can always reconnect
+            this.resetReconnectCount();
+            return true;
+        }
+
+        this.consecutiveReconnects++;
+        if (this.consecutiveReconnects === Math.floor(this.maxConsecutiveReconnects / 2)) {
+            // If we're halfway through the max reconnects, send an event in order
+            // to better identify false positives, if any. If the rate of this event
+            // matches `MaxReconnectsWithNoProgress`, we can safely cut down
+            // maxConsecutiveReconnects to half.
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "ReconnectsWithNoProgress",
+                attempts: this.consecutiveReconnects,
+            });
+        }
+
+        return this.consecutiveReconnects < this.maxConsecutiveReconnects;
+    }
+
+    private resetReconnectCount() {
+        this.consecutiveReconnects = 0;
     }
 
     private replayPendingStates() {
@@ -1520,6 +1583,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (changeOfState) {
             this.deltaManager.off("op", this.onOp);
             this.context.pendingLocalState = undefined;
+            if (!this.shouldContinueReconnecting()) {
+                this.closeFn(new GenericError(
+                    "MaxReconnectsWithNoProgress",
+                    undefined, // error
+                    { attempts: this.consecutiveReconnects }));
+                return;
+            }
+
             this.replayPendingStates();
         }
 
@@ -1583,6 +1654,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             this.emit("op", message);
             this.scheduleManager.afterOpProcessing(undefined, message);
+
+            if (local) {
+                // If we have processed a local op, this means that the container is
+                // making progress and we can reset the counter for how many times
+                // we have consecutively replayed the pending states
+                this.resetReconnectCount();
+            }
         } catch (e) {
             this.scheduleManager.afterOpProcessing(e, message);
             throw e;
@@ -2070,6 +2148,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
             const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
+            // We should be here is we haven't processed be here. If we are of if the last message's sequence number
+            // doesn't match the last processed sequence number, log an error.
+            if (summaryRefSeqNum !== this.deltaManager.lastMessage?.sequenceNumber) {
+                summaryLogger.sendErrorEvent({
+                    eventName: "LastSequenceMismatch",
+                    message,
+                });
+            }
+
             this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
 
             // Helper function to check whether we should still continue between each async step.
@@ -2129,6 +2216,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
             }
             const { summary: summaryTree, stats: partialStats } = summarizeResult;
+
+            // Now that we have generated the summary, update the message at last summary to the last message processed.
+            this.messageAtLastSummary = this.deltaManager.lastMessage;
 
             // Counting dataStores and handles
             // Because handles are unchanged dataStores in the current logic,
@@ -2336,18 +2426,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 }
             }
 
-            // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
-            // there will be a lot of escape characters that can make it up to 2x bigger!
-            // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
-            if (!serializedContent || serializedContent.length <= maxOpSize) {
-                clientSequenceNumber = this.submitRuntimeMessage(
-                    type,
-                    content,
-                    /* batch: */ this._flushMode === FlushMode.TurnBased,
-                    opMetadataInternal);
-            } else {
-                clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
-            }
+            clientSequenceNumber = this.submitMaybeChunkedMessages(
+                type,
+                content,
+                serializedContent,
+                maxOpSize,
+                this._flushMode === FlushMode.TurnBased,
+                opMetadataInternal);
         }
 
         // Let the PendingStateManager know that a message was submitted.
@@ -2362,6 +2447,48 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.isContainerMessageDirtyable(type, content)) {
             this.updateDocumentDirtyState(true);
         }
+    }
+
+    private submitMaybeChunkedMessages(
+        type: ContainerMessageType,
+        content: any,
+        serializedContent: string,
+        serverMaxOpSize: number,
+        batch: boolean,
+        opMetadataInternal: unknown = undefined,
+    ): number {
+        if (this._maxOpSizeInBytes >= 0) {
+            // Chunking disabled
+            if (!serializedContent || serializedContent.length <= this._maxOpSizeInBytes) {
+                return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
+            }
+
+            // When chunking is disabled, we ignore the server max message size
+            // and if the content length is larger than the client configured message size
+            // instead of splitting the content, we will fail by explicitly close the container
+            this.closeFn(new GenericError(
+                "OpTooLarge",
+                /* error */ undefined,
+                {
+                    length: {
+                        value: serializedContent.length,
+                        tag: TelemetryDataTag.PackageData,
+                    },
+                    limit: {
+                        value: this._maxOpSizeInBytes,
+                        tag: TelemetryDataTag.PackageData,
+                    },
+                }));
+            return -1;
+        }
+
+        // Chunking enabled, fallback on the server's max message size
+        // and split the content accordingly
+        if (!serializedContent || serializedContent.length <= serverMaxOpSize) {
+            return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
+        }
+
+        return this.submitChunkedMessage(type, serializedContent, serverMaxOpSize);
     }
 
     private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {
@@ -2479,6 +2606,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryRefSeq,
             async () => this.fetchSnapshotFromStorage(ackHandle, summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",
+                ackHandle,
+                summaryRefSeq,
                 fetchLatest: false,
             }),
             readAndParseBlob,

@@ -133,7 +133,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger{
         super();
     }
 
-    private readonly expectedEvents: (ITelemetryGenericEvent | undefined)[] = []
+    private readonly expectedEvents: ({index:number, event: ITelemetryGenericEvent | undefined} | undefined)[] = []
     private readonly unexpectedErrors: ITelemetryBaseEvent[] =[];
 
     public registerExpectedEvent(... orderedExpectedEvents: ITelemetryGenericEvent[]){
@@ -144,11 +144,11 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger{
                 "Expected events already registered.\n"
                 + "Call reportAndClearTrackedEvents to clear them before registering more")
         }
-        this.expectedEvents.push(... orderedExpectedEvents);
+        this.expectedEvents.push(... orderedExpectedEvents.map((event,index)=>({index, event})));
     }
 
     send(event: ITelemetryBaseEvent): void {
-        const ee = this.expectedEvents[0];
+        const ee = this.expectedEvents[0]?.event;
         if(ee?.eventName === event.eventName){
             let matches = true;
             for(const key of Object.keys(ee)){
@@ -376,6 +376,10 @@ export class TestObjectProvider implements ITestObjectProvider {
         this._documentServiceFactory = undefined;
         this._urlResolver = undefined;
         this._documentIdStrategy.reset();
+        const logError = getUnexpectedLogErrorException(this._logger);
+        if(logError) {
+            throw logError
+        };
         this._logger = undefined;
         this._documentCreated = false;
     }
@@ -386,5 +390,20 @@ export class TestObjectProvider implements ITestObjectProvider {
 
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
         this._documentIdStrategy.update(resolvedUrl);
+    }
+}
+
+export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string){
+    if(logger === undefined){
+        return;
+    }
+    const results = logger.reportAndClearTrackedEvents();
+    if(results.unexpectedErrors.length > 0){
+        return new Error(
+            `${prefix ?? ""}Unexpected Errors in Logs:\n${JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
+    }
+    if(results.expectedNotFound.length > 0){
+        return new Error(
+            `${prefix ?? ""}Expected Events not found:\n${JSON.stringify(results.expectedNotFound, undefined, 2)}`);
     }
 }
