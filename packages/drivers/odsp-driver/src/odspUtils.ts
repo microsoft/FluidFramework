@@ -305,7 +305,7 @@ export function toInstrumentedOdspTokenFetcher(
                 }
                 if (token === null && throwOnNullToken) {
                     throw new NonRetryableError(
-                        `Token is null for ${name} call`,
+                        `The Host-provided token fetcher for ${name} call returned null`,
                         OdspErrorType.fetchTokenError,
                         { method: name, driverVersion });
                 }
@@ -317,7 +317,7 @@ export function toInstrumentedOdspTokenFetcher(
                 const tokenError = wrapError(
                     error,
                     (errorMessage) => new NetworkErrorBasic(
-                        `The Host-provided token fetcher threw an error: ${errorMessage}`,
+                        `The Host-provided token fetcher for ${name} call threw an error: ${errorMessage}`,
                         OdspErrorType.fetchTokenError,
                         typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
                         { method: name, driverVersion }));

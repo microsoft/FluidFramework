@@ -480,7 +480,7 @@ function throwBufferParseException(
     message: string,
 ): never {
     throw new NonRetryableError(
-        `Buffer Parsing Exception [${message}]`,
+        `Buffer parsing exception: ${message}`,
         DriverErrorType.incorrectServerResponse,
         {
             nodeType: getNodeType(node),

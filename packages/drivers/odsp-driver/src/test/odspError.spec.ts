@@ -32,14 +32,14 @@ describe("Odsp Error", () => {
     } as Response;
 
     function createOdspNetworkErrorWithResponse(
-        errorMessgae: string,
+        errorMessage: string,
         statusCode: number,
         response?: Response,
         responseText?: string,
     ) {
         try {
             throwOdspNetworkError(
-                errorMessgae,
+                errorMessage,
                 statusCode,
                 response ?? testResponse,
                 responseText,

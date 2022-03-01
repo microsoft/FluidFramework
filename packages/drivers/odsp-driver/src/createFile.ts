@@ -154,7 +154,7 @@ export async function createNewEmptyFluidFile(
                 const content = fetchResponse.content;
                 if (!content || !content.id) {
                     throw new NonRetryableError(
-                        "ODSP CreateFile call returned no item ID",
+                        "ODSP CreateFile call returned no item ID (for empty file)",
                         DriverErrorType.incorrectServerResponse,
                         { driverVersion });
                 }
