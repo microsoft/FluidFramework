@@ -161,6 +161,7 @@ stages:
         displayName: 'Deploy site'
         inputs:
           skip_app_build: true # site was built in previous step
-          app_location: '$(Build.SourcesDirectory)/docs/public'
+          cwd: $(Build.SourcesDirectory)
+          app_location: 'docs/public'
           output_location: ''
           azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
