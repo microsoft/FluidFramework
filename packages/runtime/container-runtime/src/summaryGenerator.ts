@@ -394,8 +394,7 @@ export class SummaryGenerator {
                 const message = summaryNack?.message;
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
-                //* Wrap?
-                const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });
+                const error = new LoggingError(`Received summaryNack: ${message}`, { retryAfterSeconds });
                 logger.sendErrorEvent(
                     { eventName: "SummaryNack", ...summarizeTelemetryProps, retryAfterSeconds }, error);
 
