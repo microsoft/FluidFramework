@@ -398,7 +398,7 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                fail(true, this.createErrorObject("connectError", error));
+                fail(true, this.createErrorObject("connect_error", error));
             });
 
             this.addConnectionListener("reconnect_attempt", () => {
@@ -407,7 +407,7 @@ export class DocumentDeltaConnection
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                fail(true, this.createErrorObject("connectTimeout"));
+                fail(true, this.createErrorObject("connect_timeout"));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -427,7 +427,7 @@ export class DocumentDeltaConnection
                     // In this case we will get "read", even if we requested "write"
                     if (actualMode !== requestedMode) {
                         fail(false, this.createErrorObject(
-                            "connectDocumentSuccess",
+                            "connect_document_success",
                             "Connected in a different mode than was requested",
                             false,
                         ));
@@ -436,7 +436,7 @@ export class DocumentDeltaConnection
                 } else {
                     if (actualMode === "write") {
                         fail(false, this.createErrorObject(
-                            "connectDocumentSuccess",
+                            "connect_document_success",
                             "Connected in write mode without write permissions",
                             false,
                         ));
@@ -478,7 +478,7 @@ export class DocumentDeltaConnection
 
                 // This is not an socket.io error - it's Fluid protocol error.
                 // In this case fail connection and indicate that we were unable to create connection
-                fail(false, this.createErrorObject("connectDocumentError", error));
+                fail(false, this.createErrorObject("connect_document_error", error));
             }));
 
             this.socket.emit("connect_document", connectMessage);
