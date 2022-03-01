@@ -1482,7 +1482,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.consecutiveReconnects === Math.floor(this.maxConsecutiveReconnects / 2)) {
             // If we're halfway through the max reconnects, send an event in order
             // to better identify false positives, if any. If the rate of this event
-            // matches `MaxReconnectsWithNoProgress`, we can safely cut down
+            // matches Container Close count below, we can safely cut down
             // maxConsecutiveReconnects to half.
             this.mc.logger.sendTelemetryEvent({
                 eventName: "ReconnectsWithNoProgress",
@@ -1579,7 +1579,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.context.pendingLocalState = undefined;
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(new GenericError(
-                    "MaxReconnectsWithNoProgress",
+                    "Runtime detected too many reconnects with no progress syncing local ops",
                     undefined, // error
                     { attempts: this.consecutiveReconnects }));
                 return;
