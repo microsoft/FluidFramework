@@ -5,7 +5,7 @@
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
-export interface ITaskManagerEvents extends ISharedObjectEvents {
+export interface IQuorumEvents extends ISharedObjectEvents {
     /**
      * Notifies when the local client has reached or left the front of the queue.  Does not account for known pending
      * ops, but instead only reflects the current state.
@@ -17,7 +17,7 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
  * Task manager interface
  */
 
-export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
+export interface IQuorum extends ISharedObject<IQuorumEvents> {
     /**
      * Try to lock the task.  Promise resolves when the lock is acquired, or rejects if we are removed from the
      * queue without acquiring the lock for any reason.

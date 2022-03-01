@@ -16,8 +16,8 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-import { TaskManagerFactory } from "./taskManagerFactory";
-import { ITaskManager, ITaskManagerEvents } from "./interfaces";
+import { QuorumFactory } from "./taskManagerFactory";
+import { IQuorum, IQuorumEvents } from "./interfaces";
 
 /**
  * Description of a task manager operation
@@ -103,7 +103,7 @@ const snapshotFileName = "header";
  * These can be useful if the logic to volunteer for a task is separated from the logic to perform the task and it's
  * not convenient to pass the Promise around.
  */
-export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
+export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     /**
      * Create a new TaskManager
      *
@@ -112,7 +112,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @returns newly create task queue (but not attached yet)
      */
     public static create(runtime: IFluidDataStoreRuntime, id?: string) {
-        return runtime.createChannel(id, TaskManagerFactory.Type) as TaskManager;
+        return runtime.createChannel(id, QuorumFactory.Type) as Quorum;
     }
 
     /**
@@ -121,7 +121,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @returns a factory that creates and load TaskManager
      */
     public static getFactory(): IChannelFactory {
-        return new TaskManagerFactory();
+        return new QuorumFactory();
     }
 
     /**

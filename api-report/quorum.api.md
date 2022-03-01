@@ -16,7 +16,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
-export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
+export interface IQuorum extends ISharedObject<IQuorumEvents> {
     abandon(taskId: string): void;
     haveTaskLock(taskId: string): boolean;
     lockTask(taskId: string): Promise<void>;
@@ -24,18 +24,18 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 }
 
 // @public (undocumented)
-export interface ITaskManagerEvents extends ISharedObjectEvents {
+export interface IQuorumEvents extends ISharedObjectEvents {
     (event: "assigned" | "lost", listener: (taskId: string) => void): any;
 }
 
 // @public
-export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
+export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
     abandon(taskId: string): void;
     // (undocumented)
     applyStashedOp(): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): TaskManager;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): Quorum;
     static getFactory(): IChannelFactory;
     // (undocumented)
     _getTaskQueues(): Map<string, string[]>;

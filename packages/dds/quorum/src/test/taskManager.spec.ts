@@ -11,9 +11,9 @@ import {
     MockContainerRuntimeForReconnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { TaskManager } from "../taskManager";
-import { TaskManagerFactory } from "../taskManagerFactory";
-import { ITaskManager } from "../interfaces";
+import { Quorum } from "../taskManager";
+import { QuorumFactory } from "../taskManagerFactory";
+import { IQuorum } from "../interfaces";
 
 function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     // Create and connect a TaskManager.
@@ -24,17 +24,17 @@ function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRun
         objectStorage: new MockStorage(),
     };
 
-    const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
+    const taskManager = new Quorum(id, dataStoreRuntime, QuorumFactory.Attributes);
     taskManager.connect(services);
     return taskManager;
 }
 
 const createLocalTaskManager = (id: string) =>
-    new TaskManager(id, new MockFluidDataStoreRuntime(), TaskManagerFactory.Attributes);
+    new Quorum(id, new MockFluidDataStoreRuntime(), QuorumFactory.Attributes);
 
 describe("TaskManager", () => {
     describe("Local state", () => {
-        let taskManager: TaskManager;
+        let taskManager: Quorum;
 
         beforeEach(() => {
             taskManager = createLocalTaskManager("taskmanager");
@@ -48,8 +48,8 @@ describe("TaskManager", () => {
     });
 
     describe("Connected state", () => {
-        let taskManager1: ITaskManager;
-        let taskManager2: ITaskManager;
+        let taskManager1: IQuorum;
+        let taskManager2: IQuorum;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(() => {
@@ -227,8 +227,8 @@ describe("TaskManager", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
-        let taskManager1: TaskManager;
-        let taskManager2: TaskManager;
+        let taskManager1: Quorum;
+        let taskManager2: Quorum;
 
         beforeEach(async () => {
             containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
@@ -240,7 +240,7 @@ describe("TaskManager", () => {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            taskManager1 = new TaskManager("task-manager-1", dataStoreRuntime1, TaskManagerFactory.Attributes);
+            taskManager1 = new Quorum("task-manager-1", dataStoreRuntime1, QuorumFactory.Attributes);
             taskManager1.connect(services1);
 
             // Create the second TaskManager.
@@ -250,7 +250,7 @@ describe("TaskManager", () => {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            taskManager2 = new TaskManager("task-manager-2", dataStoreRuntime2, TaskManagerFactory.Attributes);
+            taskManager2 = new Quorum("task-manager-2", dataStoreRuntime2, QuorumFactory.Attributes);
             taskManager2.connect(services2);
         });
 
