@@ -6,9 +6,20 @@
 
 name: $(Build.BuildId)
 
+parameters:
+  - name: deployOverride
+    displayName: Deployment Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+
 variables:
   - group: doc-versions
   - group: storage-vars
+  - group: InfoSec-SecurityResults
   - name: repoToTrigger
     value: microsoft/FluidFramework
   - name: latestPipeline
@@ -26,8 +37,15 @@ variables:
     value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
   - name: Packaging.EnableSBOMSigning
     value: true
+  - name: isMain
+    value: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
+  - name: shouldDeploy
+    value: ${{ or(
+      eq(parameters.deployOverride, 'force'),
+      and(eq(variables.isMain, true), eq(parameters.deployOverride, 'default'))
+      )}}
 
-# no branch and PR triggers
+# no PR triggers
 trigger:
   branches:
     include:
@@ -123,7 +141,7 @@ stages:
           targetFolder: '$(Build.SourcesDirectory)/_api-extractor-temp'
 
       - task: UseNode@1
-        displayName: Use Node 14.x
+        displayName: 'Use Node 14.x'
         inputs:
           version: 14.x
 
@@ -155,11 +173,12 @@ stages:
           ArtifactName: 'fluidframework-docs'
           publishLocation: 'Container'
 
-      - task: AzureStaticWebApp@0
-        displayName: 'Deploy site'
-        inputs:
-          skip_app_build: true # site was built in previous step
-          cwd: $(Build.SourcesDirectory)
-          app_location: 'docs/public'
-          output_location: ''
-          azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
+      - ${{ if eq(variables.shouldDeploy, true) }}:
+        - task: AzureStaticWebApp@0
+          displayName: 'Deploy site'
+          inputs:
+            skip_app_build: true # site was built in previous step
+            cwd: $(Build.SourcesDirectory)
+            app_location: 'docs/public'
+            output_location: ''
+            azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
