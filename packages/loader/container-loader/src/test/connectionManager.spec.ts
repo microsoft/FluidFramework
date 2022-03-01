@@ -97,7 +97,7 @@ describe("connectionManager", () => {
 
         // Act I - retryableError
         const error: IAnyDriverError =
-            new RetryableError("retryableError", DriverErrorType.genericError, { driverVersion: pkgVersion }); //* Format
+            new RetryableError("Retryable error", DriverErrorType.genericError, { driverVersion: pkgVersion });
         let oldConnection = connection;
         connection.emitError(error);
         connection = await waitForConnection();
@@ -111,7 +111,7 @@ describe("connectionManager", () => {
 
         // Act II - nonretryable disconnect
         const disconnectReason: IAnyDriverError =
-            new NonRetryableError("fatalDisconnectReason", DriverErrorType.genericError, { driverVersion: pkgVersion }); //* Format
+            new NonRetryableError("Fatal disconnect reason", DriverErrorType.genericError, { driverVersion: pkgVersion });
         oldConnection = connection;
         connection.emitDisconnect(disconnectReason);
         connection = await waitForConnection();

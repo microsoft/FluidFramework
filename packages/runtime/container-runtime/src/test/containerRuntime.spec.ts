@@ -44,7 +44,7 @@ describe("Runtime", () => {
                         return containerErrors[0];
                     };
 
-                    const expectedOrderSequentiallyErrorMessage = "orderSequentiallyCallbackException"; //* format
+                    const expectedOrderSequentiallyErrorMessage = "orderSequentially callback exception";
 
                     beforeEach(async () => {
                         containerRuntime = await ContainerRuntime.load(

@@ -202,7 +202,7 @@ export async function fetchAndParseAsJSONHelper<T>(
         // succeeds on retry.
         // So do not log error object itself.
         throwOdspNetworkError(
-            "errorWhileParsingFetchResponse",
+            "Error while parsing fetch response",
             fetchIncorrectResponse,
             content, // response
             text,

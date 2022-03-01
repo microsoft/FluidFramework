@@ -793,7 +793,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
-            throw new DataCorruptionError("msnMovesBackwards", {
+            throw new DataCorruptionError("Found a lower minimumSequenceNumber (msn) than previously recorded", {
                 ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
             });
@@ -801,7 +801,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
-            throw new DataCorruptionError("nonSequentialSequenceNumber", {
+            throw new DataCorruptionError("Found a non-Sequential sequenceNumber", {
                 ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
             });

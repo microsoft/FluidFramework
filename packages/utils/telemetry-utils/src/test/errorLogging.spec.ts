@@ -490,7 +490,7 @@ describe("normalizeError", () => {
             // Arrange
             const errorProps =
                 {errorType: "et1", message: "m1" };
-            const legacyError = new TestFluidError(errorProps); //* Not legacy anymore
+            const legacyError = new TestFluidError(errorProps).withoutProperty("errorInstanceId");
             Object.freeze(legacyError);
 
             // Act/Assert
@@ -711,7 +711,6 @@ describe("wrapErrorAndLog", () => {
      }]), "Expected the 'WrapError' event to be logged");
 });
 
-//* Check these
 describe("Error Discovery", () => {
     const createTestError = (m) =>
         Object.assign(new LoggingError(m), {
@@ -747,14 +746,11 @@ describe("Error Discovery", () => {
         assert(!isFluidError(new LoggingError("hello")));
 
         const errorType = "someErrorType";
-        assert(!isFluidError(Object.assign(new LoggingError("hello"),
-            { errorType })
+        assert(!isFluidError(
+            Object.assign(new LoggingError("hello"), { errorType, _errorInstanceId: undefined })
         ));
-        assert(!isFluidError(Object.assign(new LoggingError("hello"),
-            { errorType, _errorInstanceId: undefined })
-        ));
-        assert(isFluidError(Object.assign(new LoggingError("hello"),
-            { errorType })
+        assert(isFluidError(
+            Object.assign(new LoggingError("hello"), { errorType })
         ));
     });
 });

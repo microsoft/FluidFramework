@@ -780,7 +780,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public async attach(request: IRequest): Promise<void> {
         await PerformanceEvent.timedExecAsync(this.mc.logger, { eventName: "Attach" }, async () => {
             if (this._lifecycleState !== "loaded") {
-                throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
+                throw new UsageError(`The Container is not in a valid state for attach [${this._lifecycleState}]`);
             }
 
             // If container is already attached or attach is in progress, throw an error.
@@ -1014,7 +1014,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
-        this.close(new GenericError("existingContextDoesNotSatisfyIncomingProposal"));
+        this.close(new GenericError("Existing context does not satisfy incoming proposal"));
     }
 
     private async getVersion(version: string | null): Promise<IVersion | undefined> {

@@ -772,7 +772,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
                 // "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber"
                 const error = new DataCorruptionError(
-                    "SummaryMetadataMismatch",
+                    "Summary metadata mismatch",
                     { runtimeSequenceNumber, protocolSequenceNumber },
                 );
 
