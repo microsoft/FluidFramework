@@ -58,17 +58,14 @@ describe("Odsp Error", () => {
         if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         } else {
-            assert.notEqual(-1, networkError.message.indexOf("someErrorCode"),
-                "message should contain original message");
-            assert.notEqual(-1, networkError.message.indexOf("testStatusText"),
-                "message should contain Response.statusText");
+            assert(networkError.message.includes("some message"), "message should contain original message");
             assert((networkError as any).responseType === "default", "message should contain Response.type");
             assert.equal(false, networkError.canRetry, "canRetry should be false");
         }
     });
 
     it("throwOdspNetworkError sprequestguid exists", async () => {
-        const error1: any = createOdspNetworkErrorWithResponse("someErrorCode", 400);
+        const error1: any = createOdspNetworkErrorWithResponse("some message", 400);
         const errorBag = { ...error1.getTelemetryProperties() };
         assert.equal("xxx-xxx", errorBag.sprequestguid, "sprequestguid should be 'xxx-xxx'");
     });
@@ -88,7 +85,8 @@ describe("Odsp Error", () => {
         if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         } else {
-            assert.equal(networkError.message, "OdspSocketError (disconnect): testMessage");
+            assert(networkError.message.includes("disconnect"), "error message should include handler name");
+            assert(networkError.message.includes("testMessage"), "error message should include socket error message");
             assert.equal(networkError.canRetry, false);
             assert.equal(networkError.statusCode, 400);
         }
@@ -103,7 +101,8 @@ describe("Odsp Error", () => {
         if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         } else {
-            assert.equal(networkError.message, "OdspSocketError (error): testMessage");
+            assert(networkError.message.includes("error"), "error message should include handler name");
+            assert(networkError.message.includes("testMessage"), "error message should include socket error message");
             assert.equal(networkError.canRetry, false);
             assert.equal(networkError.statusCode, 400);
         }
@@ -119,7 +118,8 @@ describe("Odsp Error", () => {
         if (networkError.errorType !== DriverErrorType.throttlingError) {
             assert.fail("networkError should be a throttlingError");
         } else {
-            assert.equal(networkError.message, "OdspSocketError (handler): testMessage");
+            assert(networkError.message.includes("handler"), "error message should include handler name");
+            assert(networkError.message.includes("testMessage"), "error message should include socket error message");
             assert.equal(networkError.retryAfterSeconds, 10);
         }
     });
@@ -188,8 +188,7 @@ describe("Odsp Error", () => {
             throwAuthorizationErrorWithInsufficientClaims("TestMessage");
         } catch (error) {
             assert.equal(error.errorType, DriverErrorType.authorizationError, "errorType should be authorizationError");
-            assert.notEqual(error.message.indexOf("TestMessage"), -1,
-                "message should contain original message");
+            assert(error.message.includes("TestMessage"), "message should contain original message");
             assert.equal(error.canRetry, false, "canRetry should be false");
             assert.equal(
                 error.claims,
@@ -241,7 +240,7 @@ describe("Odsp Error", () => {
             throwAuthorizationErrorWithRealm("TestMessage");
         } catch (error) {
             assert.strictEqual(error.errorType, DriverErrorType.authorizationError, "errorType should be authorizationError");
-            assert.notStrictEqual(error.message.indexOf("TestMessage"), -1, "message should contain original message");
+            assert(error.message.includes("TestMessage"), "message should contain original message");
             assert.strictEqual(error.canRetry, false, "canRetry should be false");
             assert.strictEqual(error.tenantId, "6c482541-f706-4168-9e58-8e35a9992f58", "realm should be extracted from response");
         }

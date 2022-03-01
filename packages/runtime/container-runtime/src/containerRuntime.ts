@@ -1701,7 +1701,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls++;
             callback();
         } catch (error) {
-            this.closeFn(new GenericError("orderSequentiallyCallbackException", error));
+            this.closeFn(new GenericError("orderSequentially callback exception", error));
             throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;

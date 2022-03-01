@@ -114,7 +114,7 @@ describe("Errors", () => {
             assert((testError as any).stack === originalError.stack);
         });
         it("Should skip coercion for valid Fluid Error", () => {
-            const originalError = new DataCorruptionError("someErrorCode", {});
+            const originalError = new DataCorruptionError("some message", {});
             const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
 
             assert(coercedError as any === originalError);
