@@ -1042,12 +1042,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
             (runtimeOptions.useDataStoreAliasing ?? false);
 
-<<<<<<< HEAD
         this._maxOpSizeInBytes = (this.mc.config.getNumber(maxOpSizeInBytesKey) ?? defaultMaxOpSizeInBytes);
-=======
         this.maxConsecutiveReconnects =
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
->>>>>>> main
 
         this.garbageCollector = GarbageCollector.create(
             this,
