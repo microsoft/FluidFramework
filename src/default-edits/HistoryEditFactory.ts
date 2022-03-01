@@ -20,7 +20,7 @@ import {
 import { Transaction } from './Transaction';
 import { isDetachedSequenceId, RangeValidationResultKind, validateStableRange } from './EditUtilities';
 import { StablePlace } from './ChangeTypes';
-import { tryConvertToStablePlace_0_0_2, tryConvertToStableRange } from './Conversion002';
+import { tryConvertToStablePlace_0_0_2 } from './Conversion002';
 
 /**
  * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes
@@ -193,18 +193,13 @@ function createInvertedDetach(
 	viewBeforeChange: TreeView,
 	idConverter: NodeIdConverter
 ): { invertedDetach: ChangeInternal[]; detachedNodeIds: StableNodeId[] } | undefined {
-	const { source } = detach;
-
-	const range = tryConvertToStableRange(source, idConverter);
-	if (range === undefined) {
-		return undefined;
-	}
-	if (validateStableRange(viewBeforeChange, range) !== RangeValidationResultKind.Valid) {
+	const validatedSource = validateStableRange(viewBeforeChange, detach.source, idConverter);
+	if (validatedSource.result !== RangeValidationResultKind.Valid) {
 		// TODO:#68574: having the reference view would potentially allow us to revert some detaches that currently conflict
 		return undefined;
 	}
 
-	const { start, end } = rangeFromStableRange(viewBeforeChange, range);
+	const { start, end } = rangeFromStableRange(viewBeforeChange, validatedSource);
 	const { trait: referenceTrait } = start;
 	const nodes = viewBeforeChange.getTrait(referenceTrait);
 

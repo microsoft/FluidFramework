@@ -27,112 +27,172 @@ describe('EditUtilities', () => {
 	describe('validateStablePlace', () => {
 		it('accepts valid places', () => {
 			expect(
-				validateStablePlace(testTree.view, {
-					referenceSibling: testTree.left.identifier,
-					side: Side.Before,
-				})
-			).equals(PlaceValidationResult.Valid);
+				validateStablePlace(
+					testTree.view,
+					{
+						referenceSibling: testTree.left.stable.identifier,
+						side: Side.Before,
+					},
+					testTree
+				)
+			).deep.equals({
+				result: PlaceValidationResult.Valid,
+				referenceSibling: testTree.left.stable.identifier,
+				side: Side.Before,
+			});
 		});
 
 		it('detects malformed places', () => {
 			expect(
-				validateStablePlace(testTree.view, {
-					referenceTrait: testTree.left.traitLocation,
-					referenceSibling: testTree.left.identifier,
-					side: Side.Before,
-				})
-			).equals(PlaceValidationResult.Malformed);
+				validateStablePlace(
+					testTree.view,
+					{
+						referenceTrait: testTree.left.traitLocation.stable,
+						referenceSibling: testTree.left.stable.identifier,
+						side: Side.Before,
+					},
+					testTree
+				)
+			).deep.equals({ result: PlaceValidationResult.Malformed });
 		});
 
 		it('detects missing siblings', () => {
 			expect(
-				validateStablePlace(testTree.view, {
-					referenceSibling: testTree.generateNodeId(),
-					side: Side.Before,
-				})
-			).equals(PlaceValidationResult.MissingSibling);
+				validateStablePlace(
+					testTree.view,
+					{
+						referenceSibling: testTree.convertToStableNodeId(testTree.generateNodeId()),
+						side: Side.Before,
+					},
+					testTree
+				)
+			).deep.equals({ result: PlaceValidationResult.MissingSibling });
 		});
 
 		it('detects missing parents', () => {
 			expect(
-				validateStablePlace(testTree.view, {
-					referenceTrait: {
-						parent: testTree.generateNodeId(),
-						label: testTree.left.traitLabel,
+				validateStablePlace(
+					testTree.view,
+					{
+						referenceTrait: {
+							parent: testTree.convertToStableNodeId(testTree.generateNodeId()),
+							label: testTree.left.traitLabel,
+						},
+						side: Side.Before,
 					},
-					side: Side.Before,
-				})
-			).equals(PlaceValidationResult.MissingParent);
+					testTree
+				)
+			).deep.equals({ result: PlaceValidationResult.MissingParent });
 		});
 
 		it('detects root places', () => {
 			expect(
-				validateStablePlace(testTree.view, {
-					referenceSibling: testTree.identifier,
-					side: Side.Before,
-				})
-			).equals(PlaceValidationResult.SiblingIsRootOrDetached);
+				validateStablePlace(
+					testTree.view,
+					{
+						referenceSibling: testTree.stable.identifier,
+						side: Side.Before,
+					},
+					testTree
+				)
+			).deep.equals({ result: PlaceValidationResult.SiblingIsRootOrDetached });
 		});
 	});
 
 	describe('validateStableRange', () => {
 		it('accepts valid ranges', () => {
-			expect(
-				validateStableRange(testTree.view, {
-					start: { referenceSibling: testTree.left.identifier, side: Side.Before },
-					end: { referenceSibling: testTree.left.identifier, side: Side.After },
-				})
-			).equals(RangeValidationResultKind.Valid);
+			const validatedRange = validateStableRange(
+				testTree.view,
+				{
+					start: { referenceSibling: testTree.left.stable.identifier, side: Side.Before },
+					end: { referenceSibling: testTree.left.stable.identifier, side: Side.After },
+				},
+				testTree
+			);
+			expect(validatedRange.result).to.equal(RangeValidationResultKind.Valid);
+			if (validatedRange.result === RangeValidationResultKind.Valid) {
+				expect(validatedRange.start.referenceSibling).to.equal(testTree.left.stable.identifier);
+				expect(validatedRange.start.referenceTrait).to.be.undefined;
+				expect(validatedRange.start.side).to.equal(Side.Before);
+				expect(validatedRange.end.referenceSibling).to.equal(testTree.left.stable.identifier);
+				expect(validatedRange.end.referenceTrait).to.be.undefined;
+				expect(validatedRange.end.side).to.equal(Side.After);
+			} else {
+				expect.fail();
+			}
 		});
 
 		it('detects inverted ranges', () => {
 			expect(
-				validateStableRange(testTree.view, {
-					start: { referenceSibling: testTree.left.identifier, side: Side.After },
-					end: { referenceSibling: testTree.left.identifier, side: Side.Before },
-				})
-			).equals(RangeValidationResultKind.Inverted);
+				validateStableRange(
+					testTree.view,
+					{
+						start: { referenceSibling: testTree.left.stable.identifier, side: Side.After },
+						end: { referenceSibling: testTree.left.stable.identifier, side: Side.Before },
+					},
+					testTree
+				)
+			).deep.equals({ result: RangeValidationResultKind.Inverted });
 		});
 
 		it('detects when place are in different traits', () => {
 			expect(
-				validateStableRange(testTree.view, {
-					start: { referenceSibling: testTree.left.identifier, side: Side.Before },
-					end: { referenceSibling: testTree.right.identifier, side: Side.After },
-				})
-			).equals(RangeValidationResultKind.PlacesInDifferentTraits);
+				validateStableRange(
+					testTree.view,
+					{
+						start: { referenceSibling: testTree.left.stable.identifier, side: Side.Before },
+						end: { referenceSibling: testTree.right.stable.identifier, side: Side.After },
+					},
+					testTree
+				)
+			).deep.equals({ result: RangeValidationResultKind.PlacesInDifferentTraits });
 		});
 
 		it('detects malformed places', () => {
 			const start = {
-				referenceTrait: testTree.left.traitLocation,
-				referenceSibling: testTree.left.identifier,
+				referenceTrait: testTree.left.traitLocation.stable,
+				referenceSibling: testTree.left.stable.identifier,
 				side: Side.Before,
 			};
 			expect(
-				validateStableRange(testTree.view, {
-					// trait and sibling should be mutually exclusive
-					start,
-					end: { referenceSibling: testTree.left.identifier, side: Side.After },
-				})
+				validateStableRange(
+					testTree.view,
+					{
+						// trait and sibling should be mutually exclusive
+						start,
+						end: { referenceSibling: testTree.left.stable.identifier, side: Side.After },
+					},
+					testTree
+				)
 			).deep.equals({
-				kind: RangeValidationResultKind.BadPlace,
-				place: start,
-				placeFailure: PlaceValidationResult.Malformed,
+				result: {
+					kind: RangeValidationResultKind.BadPlace,
+					place: start,
+					placeFailure: PlaceValidationResult.Malformed,
+				},
 			});
 		});
 
 		it('detects invalid places', () => {
-			const start = { referenceSibling: testTree.generateNodeId(), side: Side.Before };
+			const start = {
+				referenceSibling: testTree.convertToStableNodeId(testTree.generateNodeId()),
+				side: Side.Before,
+			};
 			expect(
-				validateStableRange(testTree.view, {
-					start,
-					end: { referenceSibling: testTree.right.identifier, side: Side.After },
-				})
+				validateStableRange(
+					testTree.view,
+					{
+						start,
+						end: { referenceSibling: testTree.right.stable.identifier, side: Side.After },
+					},
+					testTree
+				)
 			).deep.equals({
-				kind: RangeValidationResultKind.BadPlace,
-				place: start,
-				placeFailure: PlaceValidationResult.MissingSibling,
+				result: {
+					kind: RangeValidationResultKind.BadPlace,
+					place: start,
+					placeFailure: PlaceValidationResult.MissingSibling,
+				},
 			});
 		});
 	});

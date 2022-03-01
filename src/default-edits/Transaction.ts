@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, copyPropertyIfDefined, fail, Mutable, Result } from '../Common';
+import { assert, copyPropertyIfDefined, fail, Result } from '../Common';
 import { NodeId, DetachedSequenceId, TraitLabel, StableNodeId } from '../Identifiers';
 import {
 	GenericTransaction,
@@ -40,7 +40,6 @@ import {
 	PlaceValidationResult,
 	RangeValidationResultKind,
 } from './EditUtilities';
-import { StablePlace, StableRange } from './ChangeTypes';
 
 /**
  * A mutable transaction for applying sequences of changes to a TreeView.
@@ -226,49 +225,47 @@ export namespace Transaction {
 				});
 			}
 
-			const { error, place } = this.convertPlace(change.destination);
-			const destinationChangeResult = error ?? validateStablePlace(state.view, place);
-			if (destinationChangeResult !== PlaceValidationResult.Valid) {
+			const validatedDestination = validateStablePlace(state.view, change.destination, this.nodeIdContext);
+			if (validatedDestination.result !== PlaceValidationResult.Valid) {
 				return Result.error({
 					status:
-						destinationChangeResult === PlaceValidationResult.Malformed
+						validatedDestination.result === PlaceValidationResult.Malformed
 							? EditStatus.Malformed
 							: EditStatus.Invalid,
 					failure: {
 						kind: FailureKind.BadPlace,
 						change,
 						place: change.destination,
-						placeFailure: destinationChangeResult,
+						placeFailure: validatedDestination.result,
 					},
 				});
 			}
 
 			this.detached.delete(change.source);
-			const view = insertIntoTrait(state.view, source, place);
+			const view = insertIntoTrait(state.view, source, validatedDestination);
 			return Result.ok(view);
 		}
 
 		private applyDetach(state: ValidState, change: DetachInternal): ChangeResult<Failure> {
-			const { error, range } = this.convertRange(change.source);
-			const sourceChangeResult = error ?? validateStableRange(state.view, range);
-			if (sourceChangeResult !== RangeValidationResultKind.Valid) {
+			const validatedSource = validateStableRange(state.view, change.source, this.nodeIdContext);
+			if (validatedSource.result !== RangeValidationResultKind.Valid) {
 				return Result.error({
 					status:
-						sourceChangeResult === RangeValidationResultKind.PlacesInDifferentTraits ||
-						sourceChangeResult === RangeValidationResultKind.Inverted ||
-						sourceChangeResult.placeFailure !== PlaceValidationResult.Malformed
+						validatedSource.result === RangeValidationResultKind.PlacesInDifferentTraits ||
+						validatedSource.result === RangeValidationResultKind.Inverted ||
+						validatedSource.result.placeFailure !== PlaceValidationResult.Malformed
 							? EditStatus.Invalid
 							: EditStatus.Malformed,
 					failure: {
 						kind: FailureKind.BadRange,
 						change,
 						range: change.source,
-						rangeFailure: sourceChangeResult,
+						rangeFailure: validatedSource.result,
 					},
 				});
 			}
 
-			const result = detachRange(state.view, range);
+			const result = detachRange(state.view, validatedSource);
 			let modifiedView = result.view;
 			const { detached } = result;
 
@@ -296,12 +293,11 @@ export namespace Transaction {
 			assert(change.identityHash === undefined, 'identityHash constraint is not implemented');
 			assert(change.contentHash === undefined, 'contentHash constraint is not implemented');
 
-			const { error, range } = this.convertRange(change.toConstrain);
-			const sourceChangeResult = error ?? validateStableRange(state.view, range);
-			if (sourceChangeResult !== RangeValidationResultKind.Valid) {
-				return sourceChangeResult !== RangeValidationResultKind.PlacesInDifferentTraits &&
-					sourceChangeResult !== RangeValidationResultKind.Inverted &&
-					sourceChangeResult.placeFailure !== PlaceValidationResult.Malformed
+			const validatedChange = validateStableRange(state.view, change.toConstrain, this.nodeIdContext);
+			if (validatedChange.result !== RangeValidationResultKind.Valid) {
+				return validatedChange.result !== RangeValidationResultKind.PlacesInDifferentTraits &&
+					validatedChange.result !== RangeValidationResultKind.Inverted &&
+					validatedChange.result.placeFailure !== PlaceValidationResult.Malformed
 					? change.effect === ConstraintEffect.ValidRetry
 						? Result.ok(state.view)
 						: Result.error({
@@ -311,7 +307,7 @@ export namespace Transaction {
 									constraint: change,
 									violation: {
 										kind: ConstraintViolationKind.BadRange,
-										rangeFailure: sourceChangeResult,
+										rangeFailure: validatedChange.result,
 									},
 								},
 						  })
@@ -322,13 +318,13 @@ export namespace Transaction {
 								constraint: change,
 								violation: {
 									kind: ConstraintViolationKind.BadRange,
-									rangeFailure: sourceChangeResult,
+									rangeFailure: validatedChange.result,
 								},
 							},
 					  });
 			}
 
-			const { start, end } = rangeFromStableRange(state.view, range);
+			const { start, end } = rangeFromStableRange(state.view, validatedChange);
 			const startIndex = state.view.findIndexWithinTrait(start);
 			const endIndex = state.view.findIndexWithinTrait(end);
 
@@ -484,67 +480,6 @@ export namespace Transaction {
 			// Since we have retrieved the sequence, remove it from the void to prevent a second tree from multi-parenting it later
 			this.detached.delete(detachedId);
 			return detachedNodeIds;
-		}
-
-		private convertPlace(place_0_0_2: StablePlace_0_0_2): {
-			error?: PlaceValidationResult.MissingParent | PlaceValidationResult.MissingSibling;
-			place: StablePlace;
-		} {
-			let error: PlaceValidationResult.MissingParent | PlaceValidationResult.MissingSibling | undefined;
-			const place: Mutable<StablePlace> = {
-				side: place_0_0_2.side,
-			};
-			if (place_0_0_2.referenceSibling !== undefined) {
-				const nodeId = this.nodeIdContext.tryConvertToNodeId(place_0_0_2.referenceSibling);
-				if (nodeId === undefined) {
-					error = PlaceValidationResult.MissingSibling;
-				} else {
-					place.referenceSibling = nodeId;
-				}
-			}
-
-			if (place_0_0_2.referenceTrait !== undefined) {
-				const parent = this.nodeIdContext.tryConvertToNodeId(place_0_0_2.referenceTrait.parent);
-				if (parent === undefined) {
-					error = PlaceValidationResult.MissingParent;
-				} else {
-					place.referenceTrait = {
-						label: place_0_0_2.referenceTrait.label,
-						parent,
-					};
-				}
-			}
-
-			if (error !== undefined) {
-				return { error, place };
-			}
-			return { place };
-		}
-
-		private convertRange(range_0_0_2: StableRange_0_0_2): {
-			error?: {
-				kind: RangeValidationResultKind.BadPlace;
-				place: StablePlace;
-				placeFailure: BadPlaceValidationResult;
-			};
-			range: StableRange;
-		} {
-			const { error: startError, place: startPlace } = this.convertPlace(range_0_0_2.start);
-			const { error: endError, place: endPlace } = this.convertPlace(range_0_0_2.end);
-			const range = { start: startPlace, end: endPlace };
-			if (startError !== undefined) {
-				return {
-					error: { kind: RangeValidationResultKind.BadPlace, place: startPlace, placeFailure: startError },
-					range,
-				};
-			}
-			if (endError !== undefined) {
-				return {
-					error: { kind: RangeValidationResultKind.BadPlace, place: endPlace, placeFailure: endError },
-					range,
-				};
-			}
-			return { range };
 		}
 	}
 
