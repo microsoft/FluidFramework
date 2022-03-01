@@ -1463,17 +1463,34 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // Track how many times the container tries to reconnect with pending messages.
     // This happens when the connection state is changed and we reset the counter
-    // when we are able to process a local op.
+    // when we are able to process a local op or when there are no pending messages.
     // If this counter reaches a max, it's a good indicator that the container
     // is not making progress and it is stuck in a retry loop.
     private shouldContinueReconnecting(): boolean {
-        if (this.maxConsecutiveReconnects < 0) {
+        if (this.maxConsecutiveReconnects <= 0) {
             // Feature disabled, we assume we are always making progress
             return true;
         }
 
-        return !this.pendingStateManager.hasPendingMessages()
-            || ++this.consecutiveReconnects < this.maxConsecutiveReconnects;
+        if (!this.pendingStateManager.hasPendingMessages()) {
+            // If there are no pending messages, we can always reconnect
+            this.resetReconnectCount();
+            return true;
+        }
+
+        this.consecutiveReconnects++;
+        if (this.consecutiveReconnects === Math.floor(this.maxConsecutiveReconnects / 2)) {
+            // If we're halfway through the max reconnects, send an event in order
+            // to better identify false positives, if any. If the rate of this event
+            // matches `MaxReconnectsWithNoProgress`, we can safely cut down
+            // maxConsecutiveReconnects to half.
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "ReconnectsWithNoProgress",
+                count: this.consecutiveReconnects,
+            });
+        }
+
+        return this.consecutiveReconnects < this.maxConsecutiveReconnects;
     }
 
     private resetReconnectCount() {
