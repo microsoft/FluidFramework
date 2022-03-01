@@ -37,8 +37,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     let container1: IContainer;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
-    let dataObject1map1: SharedMap;
-    let dataObject2map1: SharedMap;
+    let dataObject1map: SharedMap;
+    let dataObject2map: SharedMap;
 
     const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
         getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -56,12 +56,12 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         // Create a Container for the first client.
         container1 = await provider.makeTestContainer(configWithFeatureGates);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-        dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(mapId);
+        dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
 
         // Load the Container that was created by the first client.
         const container2 = await provider.loadTestContainer(testContainerConfig);
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(mapId);
+        dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
 
         await provider.ensureSynchronized();
     };
@@ -72,6 +72,13 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
             map.set(`key${i}`, item);
         }
     };
+
+    const assertMapValues = (map: SharedMap, count: number, expected: string): void => {
+        for (let i = 0; i < count; i++) {
+            const value = dataObject2map.get(`key${i}`);
+            assert.strictEqual(value, expected, `Wrong value for key${i}`);
+        }
+    }
 
     const containerError = async (container: IContainer) =>
         new Promise<IErrorBase | undefined>((resolve) => container.once("closed", (error) => { resolve(error); }));
@@ -87,7 +94,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
         const messageCount = 1;
-        setMapKeys(dataObject1map1, messageCount, largeString);
+        setMapKeys(dataObject1map, messageCount, largeString);
 
         const error = await errorEvent;
         assert.ok(error instanceof GenericError);
@@ -107,13 +114,10 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         });
         const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
         const messageCount = 10;
-        setMapKeys(dataObject1map1, messageCount, largeString);
+        setMapKeys(dataObject1map, messageCount, largeString);
         await provider.ensureSynchronized();
 
-        for (let i = 0; i < messageCount; i++) {
-            const value = dataObject2map1.get(`key${i}`);
-            assert.strictEqual(value, largeString, `Wrong value for key${i}`);
-        }
+        assertMapValues(dataObject2map, messageCount, largeString);
     });
 
     it("Large ops pass with chunking enabled", async () => {
@@ -124,12 +128,20 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         // Server max op size should be at around 16000, therefore the runtime will chunk all ops.
         const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
         const messageCount = 5;
-        setMapKeys(dataObject1map1, messageCount, largeString);
+        setMapKeys(dataObject1map, messageCount, largeString);
         await provider.ensureSynchronized();
 
-        for (let i = 0; i < messageCount; i++) {
-            const value = dataObject2map1.get(`key${i}`);
-            assert.strictEqual(value, largeString, `Wrong value for key${i}`);
-        }
+        assertMapValues(dataObject2map, messageCount, largeString);
+    });
+
+    it("Large ops passes when smaller than the max op size", async () => {
+        await setupContainers(testContainerConfig, {});
+        // Max op size is 768000, round down to account for some overhead
+        const largeString = generateStringOfSize(750000);
+        const messageCount = 1;
+        setMapKeys(dataObject1map, messageCount, largeString);
+        await provider.ensureSynchronized();
+
+        assertMapValues(dataObject2map, messageCount, largeString);
     });
 });
