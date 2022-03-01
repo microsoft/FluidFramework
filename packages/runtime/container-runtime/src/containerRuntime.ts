@@ -1486,7 +1486,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // maxConsecutiveReconnects to half.
             this.mc.logger.sendTelemetryEvent({
                 eventName: "ReconnectsWithNoProgress",
-                count: this.consecutiveReconnects,
+                attempts: this.consecutiveReconnects,
             });
         }
 
@@ -1581,7 +1581,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.closeFn(new GenericError(
                     "MaxReconnectsWithNoProgress",
                     undefined, // error
-                    { count: this.consecutiveReconnects }));
+                    { attempts: this.consecutiveReconnects }));
                 return;
             }
 

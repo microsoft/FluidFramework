@@ -610,10 +610,10 @@ describe("Runtime", () => {
                     const error = getFirstContainerError();
                     assert.ok(error instanceof GenericError);
                     assert.strictEqual(error.fluidErrorCode, "MaxReconnectsWithNoProgress");
-                    assert.strictEqual(error.getTelemetryProperties().count, maxReconnects);
+                    assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
-                        count: 7,
+                        attempts: 7,
                     }]);
                 });
 
@@ -628,7 +628,7 @@ describe("Runtime", () => {
                     assert.equal(containerErrors.length, 0);
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
-                        count: 7,
+                        attempts: 7,
                     }]);
                 });
 
@@ -698,10 +698,10 @@ describe("Runtime", () => {
                     const error = getFirstContainerError();
                     assert.ok(error instanceof GenericError);
                     assert.strictEqual(error.fluidErrorCode, "MaxReconnectsWithNoProgress");
-                    assert.strictEqual(error.getTelemetryProperties().count, maxReconnects);
+                    assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
-                        count: 7,
+                        attempts: 7,
                     }]);
                 });
         });
