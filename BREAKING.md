@@ -26,7 +26,7 @@ Move the type from the merge-tree package where it isn't used to the sequence pa
 The logger property in IContainerContext became an optional parameter in [release 0.56](#Set-logger-property-as-optional-parameter-in-IContainerContext). This property has now been removed. The `taggedLogger` property is now set as a required parameter in `IContainerContext` interface.
 
 ## Set raiseContainerWarning property as optional parameter on IContainerContext
-`raiseContainerWarning` is set as an optional parameter on `IContainerContext` interface and would be removed from `IContainerContext` interface and `ContainerContext` class in the next release. Please see [#Set-raiseContainerWarning-property-as-optional-parameter-on-IContainerContext] for more details.
+`raiseContainerWarning` is set as an optional parameter on `IContainerContext` interface and would be removed from `IContainerContext` interface and `ContainerContext` class in the next release. Please see [#Remove-raiseContainerWarning-property] for more details.
 
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
