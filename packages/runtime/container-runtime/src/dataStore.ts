@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
@@ -35,42 +35,6 @@ export interface IDataStoreAliasMessage {
     return typeof maybeDataStoreAliasMessage?.internalId === "string"
         && typeof maybeDataStoreAliasMessage?.alias === "string";
 };
-
-/**
- * Encapsulates the return codes of the aliasing API
- */
-export enum AliasResult {
-    /**
-     * The datastore has been successfully aliased
-     */
-    Success = "Success",
-    /**
-     * There is already a datastore bound to the provided alias
-     */
-    Conflict = "Conflict",
-    /**
-     * The datastore is currently in the process of being aliased
-     */
-    Aliasing = "Aliasing",
-    /**
-     * The datastore has been attempted to be aliased before
-     */
-    AlreadyAliased = "AlreadyAliased",
-}
-
-/**
- * A fluid router with the capability of being assigned an alias
- */
- export interface IDataStore extends IFluidRouter {
-    /**
-     * Attempt to assign an alias to the datastore.
-     * If the operation succeeds, the datastore can be referenced
-     * by the supplied alias.
-     *
-     * @param alias - Given alias for this datastore.
-     */
-    trySetAlias(alias: string): Promise<AliasResult>;
-}
 
 export const channelToDataStore = (
     fluidDataStoreChannel: IFluidDataStoreChannel,

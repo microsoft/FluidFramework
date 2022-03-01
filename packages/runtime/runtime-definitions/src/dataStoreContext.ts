@@ -64,6 +64,42 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
 }
 
 /**
+ * Encapsulates the return codes of the aliasing API
+ */
+ export enum AliasResult {
+    /**
+     * The datastore has been successfully aliased
+     */
+    Success = "Success",
+    /**
+     * There is already a datastore bound to the provided alias
+     */
+    Conflict = "Conflict",
+    /**
+     * The datastore is currently in the process of being aliased
+     */
+    Aliasing = "Aliasing",
+    /**
+     * The datastore has been attempted to be aliased before
+     */
+    AlreadyAliased = "AlreadyAliased",
+}
+
+/**
+ * A fluid router with the capability of being assigned an alias
+ */
+ export interface IDataStore extends IFluidRouter {
+    /**
+     * Attempt to assign an alias to the datastore.
+     * If the operation succeeds, the datastore can be referenced
+     * by the supplied alias.
+     *
+     * @param alias - Given alias for this datastore.
+     */
+    trySetAlias(alias: string): Promise<AliasResult>;
+}
+
+/**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
@@ -115,7 +151,7 @@ export interface IContainerRuntimeBase extends
      * gets attached to storage) will result in this store being attached to storage.
      * @param pkg - Package name of the data store factory
      */
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+    createDataStore(pkg: string | string[]): Promise<IDataStore>;
 
     /**
      * Creates detached data store context. only after context.attachRuntime() is called,
