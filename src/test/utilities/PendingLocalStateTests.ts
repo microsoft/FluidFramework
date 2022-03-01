@@ -119,7 +119,7 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 			// Simulate reconnect of user 1; a new container will be created which passes the stashed local state in its
 			// load request.
 			const container3 = await loader.resolve({ url }, pendingLocalState);
-			const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, 'default');
+			const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, '/');
 			const tree3 = await dataObject3.getSharedObject<SharedTree>(documentId);
 			await testObjectProvider.ensureSynchronized();
 
@@ -177,7 +177,7 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 			const loader = testObjectProvider.makeTestLoader();
 
 			const container2 = await loader.resolve({ url }, pendingLocalState);
-			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, 'default');
+			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, '/');
 			const tree2 = await dataObject2.getSharedObject<SharedTree>(documentId);
 			await testObjectProvider.ensureSynchronized();
 

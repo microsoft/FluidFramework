@@ -385,7 +385,7 @@ export async function setUpLocalServerTestSharedTree(
 		)) as Container;
 	}
 
-	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
+	const dataObject = await requestFluidObject<ITestFluidObject>(container, '/');
 	const tree = await dataObject.getSharedObject<SharedTree>(treeId);
 
 	if (initialTree !== undefined && testObjectProvider === undefined) {

@@ -4,17 +4,24 @@
  */
 
 import { bufferToString, IsoBuffer } from '@fluidframework/common-utils';
-import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
-import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from '@fluidframework/protocol-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 	IChannelAttributes,
 } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
-import { ISharedObjectEvents, serializeHandles, SharedObject } from '@fluidframework/shared-object-base';
+import {
+	createSingleBlobSummary,
+	IFluidSerializer,
+	ISharedObjectEvents,
+	serializeHandles,
+	SharedObject,
+} from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { v4 } from 'uuid';
 import { assert, assertNotUndefined, fail } from '../Common';
 import { EditLog, EditLogSummary, OrderedEditSet } from '../EditLog';
@@ -470,34 +477,10 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
 	 */
-	public snapshotCore(serializer: IFluidSerializer): ITree {
-		const summaryCreationPerformanceEvent = PerformanceEvent.start(this.logger, { eventName: 'SummaryCreation' });
-
-		try {
-			const summary = this.saveSummary();
-
-			const tree: ITree = {
-				entries: [
-					{
-						mode: FileMode.File,
-						path: snapshotFileName,
-						type: TreeEntry[TreeEntry.Blob],
-						value: {
-							contents: serialize(summary, serializer, this.handle),
-							encoding: 'utf-8',
-						},
-					},
-				],
-			};
-
-			summaryCreationPerformanceEvent.end(getSummaryStatistics(summary));
-			return tree;
-		} catch (error) {
-			summaryCreationPerformanceEvent.cancel({ eventName: 'SummaryCreationFailure' }, error);
-			throw error;
-		}
+	public summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+		return createSingleBlobSummary(snapshotFileName, this.saveSerializedSummary({ serializer }));
 	}
 
 	/**
@@ -506,12 +489,17 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * @param options - Optional serializer and summarizer to use. If not passed in, SharedTree's serializer and summarizer are used.
 	 * @internal
 	 */
-	public saveSerializedSummary(summarizer?: SharedTreeSummarizer): string {
+	public saveSerializedSummary(options?: {
+		serializer?: IFluidSerializer;
+		summarizer?: SharedTreeSummarizer;
+	}): string {
+		const { serializer, summarizer } = options || {};
+
 		return serialize(
 			summarizer
 				? summarizer((useHandles = false) => this.editLog.getEditLogSummary(useHandles), this.currentView)
 				: this.saveSummary(),
-			this.serializer,
+			serializer ?? this.serializer,
 			this.handle
 		);
 	}
@@ -734,7 +722,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 				this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), startRevision);
 			} else if (type === SharedTreeOpType.Edit) {
 				const semiSerializedEdit = message.contents.edit;
-				// semiSerializedEdit may have handles which have been replaced by `serializer.replaceHandles`.
+				// semiSerializedEdit may have handles which have been replaced by `serializer.encode`.
 				// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
 				// Stringify using JSON, not IFluidSerializer since OPs use JSON directly.
 				// TODO:Performance:#48025: Avoid this serialization round trip.
@@ -958,8 +946,8 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 
 		// IFluidHandles are not allowed in Ops.
 		// Ops can contain Fluid's Serializable (for payloads) which allows IFluidHandles.
-		// So replace the handles before sending:
-		const semiSerialized = this.serializer.replaceHandles(editOp, this.handle);
+		// So replace the handles by encoding before sending:
+		const semiSerialized = this.serializer.encode(editOp, this.handle);
 
 		// TODO:44711: what should be passed in when unattached?
 		this.submitLocalMessage(semiSerialized);

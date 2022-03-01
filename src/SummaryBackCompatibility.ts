@@ -4,7 +4,7 @@
  */
 
 import type { ITelemetryProperties } from '@fluidframework/common-definitions';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import type { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { fail } from './Common';
 import { EditLog, getNumberOfHandlesFromEditLogSummary } from './EditLog';
 import { Edit, SharedTreeSummaryBase, SharedTreeSummary, ChangeNode_0_0_2 } from './generic';

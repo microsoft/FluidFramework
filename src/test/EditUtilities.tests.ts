@@ -7,7 +7,7 @@ import { expect } from 'chai';
 import { assert } from '@fluidframework/common-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
-import { FluidSerializer } from '@fluidframework/runtime-utils';
+import { FluidSerializer } from '@fluidframework/shared-object-base';
 import { Definition } from '../Identifiers';
 import {
 	internalizeBuildNode,
@@ -315,7 +315,10 @@ describe('EditUtilities', () => {
 	}
 
 	describe('comparePayloads', () => {
-		const serializer: FluidSerializer = new MockFluidDataStoreRuntime().IFluidSerializer;
+		const serializer: FluidSerializer = new FluidSerializer(
+			new MockFluidDataStoreRuntime().IFluidHandleContext,
+			() => {}
+		);
 		const binder: IFluidHandle = { bind: noop } as unknown as IFluidHandle;
 
 		enum Equality {
