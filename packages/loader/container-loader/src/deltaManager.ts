@@ -37,7 +37,6 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     MessageType,
-    ITrace,
     ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
