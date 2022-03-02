@@ -21,7 +21,7 @@ export function log(output: any) {
  * results of multiple checks together to get the largest breaking increment at the
  * end without needing to do any max(x,y) checks
  */
- export enum BreakingIncrement {
+export enum BreakingIncrement {
     none = 0,
     minor = 1,
     major = minor << 1 | minor,
