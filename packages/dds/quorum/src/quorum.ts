@@ -132,9 +132,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     private readonly taskQueues: Map<string, string[]> = new Map();
 
-    // queueWatcher emits an event whenever the consensus state of the task queues changes
-    // TODO currently could event even if the queue doesn't actually change
-    private readonly queueWatcher: EventEmitter = new EventEmitter();
     // disconnectWatcher emits an event whenever we get disconnected.
     private readonly disconnectWatcher: EventEmitter = new EventEmitter();
 
@@ -154,19 +151,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         super(id, runtime, attributes);
 
         this.values = new Map();
-
-        this.queueWatcher.on("queueChange", (taskId: string, oldLockHolder: string, newLockHolder: string) => {
-            // Exit early if we are still catching up on reconnect -- we can't be the leader yet anyway.
-            if (this.runtime.clientId === undefined) {
-                return;
-            }
-
-            if (oldLockHolder !== this.runtime.clientId && newLockHolder === this.runtime.clientId) {
-                this.emit("assigned", taskId);
-            } else if (oldLockHolder === this.runtime.clientId && newLockHolder !== this.runtime.clientId) {
-                this.emit("lost", taskId);
-            }
-        });
 
         this.disconnectWatcher.on("disconnect", () => {
             assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
