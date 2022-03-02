@@ -149,7 +149,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (baseGCDetails.gcData !== undefined) {
             this.gcData = cloneGCData(baseGCDetails.gcData);
         }
-        this.referenceUsedRoutes = baseGCDetails.usedRoutes;
+        // Sort the used routes because we compare them with the current used routes to check if they changed between
+        // summaries. Both are sorted so that the order of elements is the same.
+        this.referenceUsedRoutes = baseGCDetails.usedRoutes?.sort();
         this.unreferencedTimestampMs = baseGCDetails.unrefTimestamp;
     }
 

@@ -200,7 +200,7 @@ export class SharedPropertyTree extends SharedObject {
 
 		// if no override provided dont submit unless metadata are provided
 		if (submitEmptyChange === undefined) {
-			doSubmit =  metadata !== undefined;
+			doSubmit = metadata !== undefined;
 		}
 
 		if (doSubmit || !isEmpty(changes)) {
@@ -548,7 +548,6 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
-	protected registerCore() { }
 	protected onDisconnect() { }
 
 	private _applyLocalChangeSet(change: IPropertyTreeMessage) {
@@ -673,9 +672,6 @@ export class SharedPropertyTree extends SharedObject {
 		// Compute the delta between the old tip (including pending changes)
 		// and the new tip (not including the rebased pending changes)
 		deltaToTipCS.applyChangeSet(rebaseBaseChangeSet);
-		deltaToTipCS.applyChangeSet(pendingChanges, {
-			applyAfterMetaInformation: pendingChangesRebaseMetaInformation,
-		});
 
 		// Update the tip view
 		if (!this.tipView) {

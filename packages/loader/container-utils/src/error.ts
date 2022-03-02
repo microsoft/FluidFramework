@@ -11,11 +11,11 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     LoggingError,
-    isValidLegacyError,
     IFluidErrorBase,
     normalizeError,
     wrapError,
     wrapErrorAndLog,
+    isExternalError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -98,6 +98,10 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
     }
 }
 
+/**
+ * DataCorruptionError indicates that we encountered definitive evidence that the data at rest
+ * backing this container is corrupted, and this container would never be expected to load properly again
+ */
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
     readonly errorType = ContainerErrorType.dataCorruptionError;
     readonly canRetry = false;
@@ -110,51 +114,70 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
     }
 }
 
+/**
+ * DataProcessingError indicates we hit a fatal error while processing incoming data from the Fluid Service.
+ * The error will often originate in the dataStore or DDS implementation that is responding to incoming changes.
+ * This differs from DataCorruptionError in that this may be a transient error that will not repro in another
+ * client or session.
+ */
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
     readonly errorType = ContainerErrorType.dataProcessingError;
+    readonly fluidErrorCode = "";
     readonly canRetry = false;
 
-    constructor(
+    private constructor(errorMessage: string) {
+        super(errorMessage);
+    }
+
+    /** Create a new DataProcessingError detected and raised with the FF code */
+    static create(
         errorMessage: string,
-        readonly fluidErrorCode: string,
-        props?: ITelemetryProperties,
+        dataProcessingCodepath: string,
+        sequencedMessage?: ISequencedDocumentMessage,
+        props: ITelemetryProperties = {},
     ) {
-        super(errorMessage, props);
+        return DataProcessingError.wrapIfUnrecognized(
+            new LoggingError(errorMessage, props), // This will be considered an "unrecognized" error
+            dataProcessingCodepath,
+            sequencedMessage);
     }
 
     /**
-     * Conditionally coerce the throwable input into a DataProcessingError.
-     * @param originalError - Throwable input to be converted.
-     * @param message - Sequenced message (op) to include info about via telemetry props
-     * @param dataProcessingCodepath - which codepath failed while processing data.
+     * Wrap the given error in a DataProcessingError, unless the error is already of a known type.
+     * In either case, the error will have some relevant properties added for telemetry
+     * We wrap conditionally since known error types represent well-understood failure modes, and ideally
+     * one day we will move away from throwing these errors but rather we'll return them.
+     * But an unrecognized error needs to be classified as DataProcessingError.
+     * @param originalError - error to be converted
+     * @param dataProcessingCodepath - which codepath failed while processing data
+     * @param sequencedMessage - Sequenced message to include info about via telemetry props
      * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
      */
     static wrapIfUnrecognized(
         originalError: any,
         dataProcessingCodepath: string,
-        message?: ISequencedDocumentMessage,
+        sequencedMessage?: ISequencedDocumentMessage,
     ): IFluidErrorBase {
-        const newErrorFn = (errMsg: string) => {
-            const dpe = new DataProcessingError(errMsg, "" /* fluidErrorCode */);
-            dpe.addTelemetryProperties({ untrustedOrigin: 1}); // To match normalizeError
-            return dpe;
-        };
-
-        // Don't coerce if already has an errorType, to distinguish unknown errors from
-        // errors that we raised which we already can interpret apart from this classification
-        const error = isValidLegacyError(originalError) // also accepts valid Fluid Error
-            ? normalizeError(originalError)
-            : wrapError(originalError, newErrorFn);
-
-        error.addTelemetryProperties({
+        const props = {
             dataProcessingError: 1,
             dataProcessingCodepath,
-        });
-        if (message !== undefined) {
-            error.addTelemetryProperties(extractSafePropertiesFromMessage(message));
+            ...(sequencedMessage === undefined ? undefined : extractSafePropertiesFromMessage(sequencedMessage))
+        };
+
+        const normalizedError = normalizeError(originalError, { props });
+
+        if (!isExternalError(normalizedError)) {
+            return normalizedError;
         }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return error;
+
+        // Create a new DataProcessingError to wrap this external error
+        const dataProcessingError =
+            wrapError(normalizedError, (message: string) => new DataProcessingError(message));
+
+        // Copy over the props above and any others added to this error since first being normalized
+        dataProcessingError.addTelemetryProperties(normalizedError.getTelemetryProperties());
+
+        return dataProcessingError;
     }
 }
 
@@ -166,8 +189,3 @@ export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMess
     messageMinimumSequenceNumber: message.minimumSequenceNumber,
     messageTimestamp: message.timestamp,
 });
-
-/**
- * Conditionally coerce the throwable input into a DataProcessingError.
- */
- export const CreateProcessingError = DataProcessingError.wrapIfUnrecognized;

@@ -6,7 +6,6 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
-    IFluidConfiguration,
     IRequest,
     IResponse,
     IFluidCodeDetails,
@@ -39,13 +38,13 @@ import {
     ISignalMessage,
     ISnapshotTree,
     ISummaryTree,
-    ITree,
     IVersion,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
+import { isFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
@@ -92,17 +91,17 @@ export class ContainerContext implements IContainerContext {
 
     public readonly taggedLogger: ITelemetryLogger;
 
-    /**
-     * Subtlety: returns this.taggedLogger since vanilla this.logger is now deprecated. See IContainerContext for more
-     * details.
-    */
-    /** @deprecated See IContainerContext for more details. */
-    public get logger(): ITelemetryLogger {
-        return this.taggedLogger;
-    }
-
     public get clientId(): string | undefined {
         return this.container.clientId;
+    }
+
+    /** @deprecated Added back to unblock 0.56 integration */
+    public get id(): string {
+        const resolvedUrl = this.container.resolvedUrl;
+        if (isFluidResolvedUrl(resolvedUrl)) {
+            return resolvedUrl.id;
+        }
+        return "";
     }
 
     public get clientDetails(): IClientDetails {
@@ -127,16 +126,6 @@ export class ContainerContext implements IContainerContext {
 
     public get options(): ILoaderOptions {
         return this.container.options;
-    }
-
-    /**
-     * @deprecated 0.55 - Configuration is not recommended to be used and will be removed in an upcoming release.
-     */
-    public get configuration(): IFluidConfiguration {
-        const config: Partial<IFluidConfiguration> = {
-            scopes: this.container.scopes,
-        };
-        return config as IFluidConfiguration;
     }
 
     public get baseSnapshot() {
@@ -213,10 +202,6 @@ export class ContainerContext implements IContainerContext {
         this.runtime.dispose(error);
         this._quorum.dispose();
         this.deltaManager.dispose();
-    }
-
-    public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
-        return this.runtime.snapshot(tagMessage, fullTree);
     }
 
     public getLoadedFromVersion(): IVersion | undefined {

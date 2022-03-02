@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { OutgoingHttpHeaders } from "http";
-import Axios from "axios";
+import Axios, { AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
 import nconf from "nconf";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
@@ -27,7 +26,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
         this.endpoint = config.get("externalStorage:endpoint");
     }
 
-    private getCommonHeaders(): OutgoingHttpHeaders {
+    private getCommonHeaders(): AxiosRequestHeaders {
         return {
             "Accept": "application/json",
             "Content-Type": "application/json",

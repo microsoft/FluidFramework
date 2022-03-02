@@ -114,7 +114,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                     const props = {};
                     for (const key of Object.keys(r.propertyDeltas)) {
                         props[key] =
-                            // eslint-disable-next-line no-null/no-null
                             r.segment.properties[key] === undefined ? null : r.segment.properties[key];
                     }
                     if (lastAnnotate && lastAnnotate.pos2 === r.position &&
@@ -315,7 +314,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     /**
      * Resolves a remote client's position against the local sequence
      * and returns the remote client's position relative to the local
-     * sequence
+     * sequence. The client ref seq must be above the minimum sequence number
+     * or the return value will be undefined.
+     * Generally this method is used in conjunction with signals which provide
+     * point in time values for the below parameters, and is useful for things
+     * like displaying user position. It should not be used with persisted values
+     * as persisted values will quickly become invalid as the remoteClientRefSeq
+     * moves below the minimum sequence number
      * @param remoteClientPosition - The remote client's position to resolve
      * @param remoteClientRefSeq - The reference sequence number of the remote client
      * @param remoteClientId - The client id of the remote client
@@ -565,16 +570,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
-    protected registerCore() {
-        for (const value of this.intervalMapKernel.values()) {
-            if (SharedObject.is(value)) {
-                value.bindToContext();
-            }
-        }
-
-        this.client.startOrUpdateCollaboration(this.runtime.clientId);
-    }
-
     protected didAttach() {
         // If we are not local, and we've attached we need to start generating and sending ops
         // so start collaboration and provide a default client id incase we are not connected
@@ -595,7 +590,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
         this.processMinSequenceNumberChanged(minSeq);
 
-        this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
+        this.messagesSinceMSNChange.forEach((m) => { m.minimumSequenceNumber = minSeq; });
 
         return this.client.summarize(this.runtime, this.handle, serializer, this.messagesSinceMSNChange);
     }

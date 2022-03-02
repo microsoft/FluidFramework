@@ -6,6 +6,7 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
+import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
@@ -109,7 +110,8 @@ export class TableSlice extends DataObject<{InitialState: ITableSliceConfig}> im
 
         this.root.set(ConfigKey.docId, initialState.docId);
         this.root.set(ConfigKey.name, initialState.name);
-        this.maybeDoc = await this.requestFluidObject_UNSAFE(initialState.docId);
+        this.maybeDoc =
+            await handleFromLegacyUri<TableDocument>(`/${initialState.docId}`, this.context.containerRuntime).get();
         this.root.set(initialState.docId, this.maybeDoc.handle);
         await this.ensureDoc();
         this.createValuesRange(

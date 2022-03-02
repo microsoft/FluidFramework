@@ -95,7 +95,7 @@ export async function fetchSnapshotWithRedeem(
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
-        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+        odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
     return fetchLatestSnapshotCore(
@@ -119,8 +119,8 @@ export async function fetchSnapshotWithRedeem(
                 { ...odspResolvedUrl,
                     shareLinkInfo: {
                         ...odspResolvedUrl.shareLinkInfo,
-                        sharingLinkToRedeem: undefined
-                    }
+                        sharingLinkToRedeem: undefined,
+                    },
                 };
 
             return fetchLatestSnapshotCore(
@@ -201,6 +201,7 @@ async function fetchLatestSnapshotCore(
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
             shareLinkPresent: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
+            isSummarizer: odspResolvedUrl.summarizer,
             redeemFallbackEnabled: enableRedeemFallback,
         };
         if (snapshotOptions !== undefined) {
@@ -317,7 +318,7 @@ async function fetchLatestSnapshotCore(
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
                     sltelemetry: response.odspSnapshotResponse.headers.get("x-fluid-sltelemetry"),
-                    ...response.odspSnapshotResponse.commonSpoHeaders,
+                    ...response.odspSnapshotResponse.propsToLog,
                 });
                 return snapshot;
             },
@@ -359,7 +360,14 @@ async function fetchSnapshotContentsCoreV1(
 ): Promise<ISnapshotRequestAndResponseOptions> {
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
-    const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, snapshotOptions);
+    // The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
+    // Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
+    // This error thrown by server will contain the new redirect location. Look at the 404 error parsing
+    // for futher reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
+    const header = {"prefer": "manualredirect"};
+    const { body, headers } = getFormBodyAndHeaders(
+        odspResolvedUrl, storageToken, snapshotOptions, header);
+    headers.accept = "application/json";
     const fetchOptions = {
         body,
         headers,
@@ -370,7 +378,7 @@ async function fetchSnapshotContentsCoreV1(
         fetchAndParseAsJSONHelper<IOdspSnapshot>(url, fetchOptions));
     const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return  {
+    return {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: url,
@@ -410,7 +418,7 @@ async function fetchSnapshotContentsCoreV2(
     const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
         new ReadBuffer(new Uint8Array(response.content)));
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return  {
+    return {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: fullUrl,
@@ -421,6 +429,7 @@ function getFormBodyAndHeaders(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
     snapshotOptions: ISnapshotOptions | undefined,
+    headers?: {[index: string]: string},
 ) {
     const formBoundary = uuid();
     const formParams: string[] = [];
@@ -434,16 +443,23 @@ function getFormBodyAndHeaders(
             }
         });
     }
+    if (headers !== undefined) {
+        Object.entries(headers).forEach(([key, value]) => {
+            if (value !== undefined) {
+                formParams.push(`${key}: ${value}`);
+            }
+        });
+    }
     if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
         formParams.push(`sl: ${odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem}`);
     }
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
     const postBody = formParams.join("\r\n");
-    const headers: {[index: string]: any} = {
+    const header: {[index: string]: any} = {
         "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
     };
-    return { body: postBody, headers };
+    return { body: postBody, headers: header };
 }
 
 function validateAndEvalBlobsAndTrees(snapshot: ISnapshotContents) {
@@ -481,7 +497,7 @@ export async function downloadSnapshot(
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
-        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+        odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
     if (fetchBinarySnapshotFormat) {

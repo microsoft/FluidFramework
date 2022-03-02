@@ -6,7 +6,6 @@
 import { IEventProvider } from "@fluidframework/common-definitions";
 import {
     AttachState,
-    ContainerWarning,
     IDeltaManager,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -31,16 +30,6 @@ import {
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
  } from "@fluidframework/runtime-definitions";
-
-declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject {
-        /**
-         * @deprecated - use `FluidObject<IContainerRuntime>` instead
-         */
-        readonly IContainerRuntime?: IContainerRuntime;
-
-     }
-}
 
 /**
  * @deprecated - This will be removed in a later release.
@@ -115,12 +104,6 @@ export interface IContainerRuntime extends
      * @param rootDataStoreId - data store ID (unique name)
      */
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
-
-    /**
-     * Used to raise an unrecoverable error on the runtime.
-     * @deprecated Warnings are being deprecated
-     */
-    raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
      * Returns true of document is dirty, i.e. there are some pending local changes that

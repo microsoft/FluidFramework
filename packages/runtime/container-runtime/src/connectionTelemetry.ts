@@ -19,7 +19,7 @@ export const latencyThreshold = 5000;
 
 class OpPerfTelemetry {
     private pongCount: number = 0;
-    private socketLatency = 0;
+    private pingLatency: number | undefined;
 
     // Collab window tracking. This is timestamp of %1000 message.
     private opSendTimeForLatencyStatisticsForMsnStatistics: number | undefined;
@@ -61,6 +61,7 @@ class OpPerfTelemetry {
             }
         });
         this.deltaManager.on("disconnect", () => {
+            this.opSendTimeForLatencyStatisticsForMsnStatistics = undefined;
             this.clientSequenceNumberForLatencyStatistics = undefined;
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;
@@ -99,15 +100,14 @@ class OpPerfTelemetry {
 
     private recordPingTime(latency: number) {
         this.pongCount++;
-        this.socketLatency += latency;
-        const aggregateCount = 100;
-        if (this.pongCount === aggregateCount) {
+        this.pingLatency = latency;
+        // logging one in every 100 pongs
+        if (this.pongCount === 100) {
             this.logger.sendPerformanceEvent({
                 eventName: "DeltaLatency",
-                duration: this.socketLatency / aggregateCount,
+                duration: latency,
             });
             this.pongCount = 0;
-            this.socketLatency = 0;
         }
     }
 
@@ -161,6 +161,7 @@ class OpPerfTelemetry {
                 referenceSequenceNumber: message.referenceSequenceNumber,
                 duration,
                 category,
+                pingLatency: this.pingLatency,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
         }

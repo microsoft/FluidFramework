@@ -10,6 +10,7 @@ module.exports = {
         "node": true
     },
     "extends": [
+        "./eslint7",
         "@rushstack/eslint-config/profile/web-app",
         "plugin:eslint-comments/recommended",
         "plugin:import/errors",
@@ -30,7 +31,6 @@ module.exports = {
         "project": "./tsconfig.json",
     },
     "plugins": [
-        "no-null",
         "react",
         "unicorn",
     ],
@@ -73,6 +73,7 @@ module.exports = {
                 "code": 120
             }
         ],
+        "no-multi-spaces": ["error", {"ignoreEOLComments": true}],
         "unicorn/better-regex": "error",
         "unicorn/filename-case": [
             "error",
@@ -87,7 +88,6 @@ module.exports = {
         "unicorn/no-unsafe-regex": "error",
 
         // DISABLED INTENTIONALLY
-        "@rushstack/no-new-null": "off",
         "@rushstack/typedef-var": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/explicit-member-accessibility": "off",
@@ -100,7 +100,6 @@ module.exports = {
         "@typescript-eslint/typedef": "off",
         "func-call-spacing": "off", // Off because it conflicts with typescript-formatter
         "no-empty": "off",
-        "no-return-assign": "off",
         "no-void": "off",
         "require-atomic-updates": "off",
         "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation

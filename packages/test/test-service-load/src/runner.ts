@@ -71,14 +71,6 @@ async function main() {
     // will get its own set of randoms
     randEng.seedWithArray([seed, runId]);
 
-    const l = await loggerP;
-    process.on("unhandledRejection", (reason, promise) => {
-        try {
-            l.sendErrorEvent({ eventName: "UnhandledPromiseRejection" }, reason);
-        } catch (e) {
-            console.error("Error during logging unhandled promise rejection: ", e);
-        }
-    });
     const result = await runnerProcess(
         driver,
         {
@@ -157,6 +149,13 @@ async function runnerProcess(
                     driverEndpointName: testDriver.endpointName,
                 },
             });
+        process.on("unhandledRejection", (reason, promise) => {
+            try {
+                logger.sendErrorEvent({ eventName: "UnhandledPromiseRejection" }, reason);
+            } catch (e) {
+                console.error("Error during logging unhandled promise rejection: ", e);
+            }
+        });
 
         // Cycle between creating new factory vs. reusing factory.
         // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths

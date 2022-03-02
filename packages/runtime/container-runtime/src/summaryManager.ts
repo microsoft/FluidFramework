@@ -4,16 +4,14 @@
  */
 
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { createSummarizingWarning } from "./summarizer";
 import { ISummarizerClientElection } from "./summarizerClientElection";
 import { IThrottler } from "./throttler";
 import {
     ISummarizer,
     ISummarizerOptions,
-    ISummarizingWarning,
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
@@ -60,10 +58,6 @@ export interface IConnectedState extends IEventProvider<IConnectedEvents> {
     readonly clientId: string | undefined;
 }
 
-export interface ISummaryManagerEvents extends IEvent {
-    (event: "summarizerWarning", listener: (warning: ISummarizingWarning) => void);
-}
-
 export interface ISummaryManagerConfig {
     initialDelayMs: number;
     opsToBypassInitialDelay: number;
@@ -74,7 +68,7 @@ export interface ISummaryManagerConfig {
  * It observes changes in calculated summarizer and reacts to changes by either creating summarizer client or
  * stopping existing summarizer client.
  */
-export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> implements IDisposable {
+export class SummaryManager implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly opsToBypassInitialDelay: number;
     private readonly initialDelayMs: number;
@@ -105,7 +99,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }: Readonly<Partial<ISummaryManagerConfig>> = {},
         private readonly summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
     ) {
-        super();
 
         this.logger = ChildLogger.create(
             parentLogger,
@@ -219,8 +212,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
             this.state = SummaryManagerState.Running;
 
-            summarizer.on("summarizingError",
-                (warning: ISummarizingWarning) => this.emit("summarizerWarning", warning));
             this.summarizer = summarizer;
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -251,7 +242,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                         category,
                     },
                     error);
-                this.emit("summarizerWarning", error);
 
                 // Note that summarizer may keep going (like doing last summary).
                 // Ideally we await stopping process, but this code path is due to a bug
@@ -296,12 +286,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private async delayBeforeCreatingSummarizer(): Promise<boolean> {
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         let delayMs = this.startThrottler.getDelay();
-        if (delayMs > 0 && delayMs > this.startThrottler.maxDelayMs) {
-            this.emit(
-                "summarizerWarning",
-                createSummarizingWarning("summaryManagerCreateSummarizerMaxThrottleDelay", false),
-            );
-        }
 
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
@@ -309,6 +293,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             eventName: "CreatingSummarizer",
             throttlerDelay: delayMs,
             initialDelay: this.initialDelayMs,
+            startThrottlerMaxDelayMs: this.startThrottler.maxDelayMs,
             opsSinceLastAck: this.summaryCollection.opsSinceLastAck,
             opsToBypassInitialDelay: this.opsToBypassInitialDelay,
         });

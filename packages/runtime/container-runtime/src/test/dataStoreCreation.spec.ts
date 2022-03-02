@@ -90,7 +90,6 @@ describe("Data Store Creation Tests", () => {
                 get IFluidDataStoreRegistry() { return globalRegistry; },
                 get: async (pkg) => globalRegistryEntries.get(pkg),
             };
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IFluidDataStoreRegistry: globalRegistry,
                 on: (event, listener) => { },
@@ -112,18 +111,19 @@ describe("Data Store Creation Tests", () => {
             let success: boolean = true;
             const dataStoreId = "default-Id";
             // Create the default dataStore that is in the global registry.
-            const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                dataStoreId,
-                [defaultName],
-                containerRuntime,
+            const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
+                id: dataStoreId,
+                pkg: [defaultName],
+                runtime: containerRuntime,
                 storage,
                 scope,
-                getCreateSummarizerNodeFn(dataStoreId),
-                attachCb,
-                undefined,
-                false /* isRootDataStore */,
-                true /* writeGCDataAtRoot */,
-            );
+                createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+                bindChannelFn: attachCb,
+                snapshotTree: undefined,
+                isRootDataStore: false,
+                writeGCDataAtRoot: true,
+                disableIsolatedChannels: false,
+            });
 
             try {
                 await context.realize();
@@ -138,18 +138,19 @@ describe("Data Store Creation Tests", () => {
             let success: boolean = true;
             const dataStoreId = "A-Id";
             // Create dataStore A that is not in the global registry.
-            const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                dataStoreId,
-                [dataStoreAName],
-                containerRuntime,
+            const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
+                id: dataStoreId,
+                pkg: [dataStoreAName],
+                runtime: containerRuntime,
                 storage,
                 scope,
-                getCreateSummarizerNodeFn(dataStoreId),
-                attachCb,
-                undefined,
-                false /* isRootDataStore */,
-                true /* writeGCDataAtRoot */,
-            );
+                createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+                bindChannelFn: attachCb,
+                snapshotTree: undefined,
+                isRootDataStore: false,
+                writeGCDataAtRoot: true,
+                disableIsolatedChannels: false,
+            });
 
             try {
                 await context.realize();
@@ -164,18 +165,19 @@ describe("Data Store Creation Tests", () => {
             let success: boolean = true;
             const dataStoreId = "A-Id";
             // Create dataStore A that is in the registry of the default dataStore.
-            const contextA: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                dataStoreId,
-                [defaultName, dataStoreAName],
-                containerRuntime,
+            const contextA: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
+                id: dataStoreId,
+                pkg: [defaultName, dataStoreAName],
+                runtime: containerRuntime,
                 storage,
                 scope,
-                getCreateSummarizerNodeFn(dataStoreId),
-                attachCb,
-                undefined,
-                false /* isRootDataStore */,
-                true /* writeGCDataAtRoot */,
-            );
+                createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+                bindChannelFn: attachCb,
+                snapshotTree: undefined,
+                isRootDataStore: false,
+                writeGCDataAtRoot: true,
+                disableIsolatedChannels: false,
+            });
 
             try {
                 await contextA.realize();
@@ -190,18 +192,19 @@ describe("Data Store Creation Tests", () => {
             let success: boolean = true;
             const dataStoreId = "B-Id";
             // Create dataStore B that is in not the registry of the default dataStore.
-            const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                dataStoreId,
-                [defaultName, dataStoreBName],
-                containerRuntime,
+            const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
+                id: dataStoreId,
+                pkg: [defaultName, dataStoreBName],
+                runtime: containerRuntime,
                 storage,
                 scope,
-                getCreateSummarizerNodeFn(dataStoreId),
-                attachCb,
-                undefined,
-                false /* isRootDataStore */,
-                true /* writeGCDataAtRoot */,
-            );
+                createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+                bindChannelFn: attachCb,
+                snapshotTree: undefined,
+                isRootDataStore: false,
+                writeGCDataAtRoot: true,
+                disableIsolatedChannels: false,
+            });
 
             try {
                 await contextB.realize();
@@ -216,18 +219,19 @@ describe("Data Store Creation Tests", () => {
             let success: boolean = true;
             const dataStoreBId = "B-Id";
             // Create dataStore B that is in the registry of dataStore A (which is at depth 2).
-            const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                dataStoreBId,
-                [defaultName, dataStoreAName, dataStoreBName],
-                containerRuntime,
+            const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
+                id: dataStoreBId,
+                pkg: [defaultName, dataStoreAName, dataStoreBName],
+                runtime: containerRuntime,
                 storage,
                 scope,
-                getCreateSummarizerNodeFn(dataStoreBId),
-                attachCb,
-                undefined,
-                false /* isRootDataStore */,
-                true /* writeGCDataAtRoot */,
-            );
+                createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreBId),
+                bindChannelFn: attachCb,
+                snapshotTree: undefined,
+                isRootDataStore: false,
+                writeGCDataAtRoot: true,
+                disableIsolatedChannels: false,
+            });
 
             try {
                 await contextB.realize();
@@ -239,18 +243,19 @@ describe("Data Store Creation Tests", () => {
 
             const dataStoreCId = "C-Id";
             // Create dataStore C that is in the registry of dataStore A (which is at depth 2).
-            const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                dataStoreCId,
-                [defaultName, dataStoreAName, dataStoreCName],
-                containerRuntime,
+            const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
+                id: dataStoreCId,
+                pkg: [defaultName, dataStoreAName, dataStoreCName],
+                runtime: containerRuntime,
                 storage,
                 scope,
-                getCreateSummarizerNodeFn(dataStoreCId),
-                attachCb,
-                undefined,
-                false /* isRootDataStore */,
-                true /* writeGCDataAtRoot */,
-            );
+                createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreCId),
+                bindChannelFn: attachCb,
+                snapshotTree: undefined,
+                isRootDataStore: false,
+                writeGCDataAtRoot: true,
+                disableIsolatedChannels: false,
+            });
 
             try {
                 await contextC.realize();
@@ -265,18 +270,19 @@ describe("Data Store Creation Tests", () => {
             let success: boolean = true;
             const dataStoreId = "fake-Id";
             // Create a fake dataStore that is not in the registry of dataStore A (which is at depth 2).
-            const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                dataStoreId,
-                [defaultName, dataStoreAName, "fake"],
-                containerRuntime,
+            const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
+                id: dataStoreId,
+                pkg: [defaultName, dataStoreAName, "fake"],
+                runtime: containerRuntime,
                 storage,
                 scope,
-                getCreateSummarizerNodeFn(dataStoreId),
-                attachCb,
-                undefined,
-                false /* isRootDataStore */,
-                true /* writeGCDataAtRoot */,
-            );
+                createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+                bindChannelFn: attachCb,
+                snapshotTree: undefined,
+                isRootDataStore: false,
+                writeGCDataAtRoot: true,
+                disableIsolatedChannels: false,
+            });
 
             try {
                 await contextFake.realize();
@@ -291,18 +297,19 @@ describe("Data Store Creation Tests", () => {
             let success: boolean = true;
             const dataStoreId = "fake-Id";
             // Create a fake dataStore that is not in the registry of dataStore B (which is at depth 3).
-            const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                dataStoreId,
-                [defaultName, dataStoreAName, dataStoreBName, "fake"],
-                containerRuntime,
+            const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
+                id: dataStoreId,
+                pkg: [defaultName, dataStoreAName, "fake"],
+                runtime: containerRuntime,
                 storage,
                 scope,
-                getCreateSummarizerNodeFn(dataStoreId),
-                attachCb,
-                undefined,
-                false /* isRootDataStore */,
-                true /* writeGCDataAtRoot */,
-            );
+                createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+                bindChannelFn: attachCb,
+                snapshotTree: undefined,
+                isRootDataStore: false,
+                writeGCDataAtRoot: true,
+                disableIsolatedChannels: false,
+            });
 
             try {
                 await contextFake.realize();
@@ -317,18 +324,19 @@ describe("Data Store Creation Tests", () => {
             let success: boolean = true;
             const dataStoreId = "C-Id";
             // Create dataStore C that is in parent's registry but not in the registry of dataStore B.
-            const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext(
-                dataStoreId,
-                [defaultName, dataStoreAName, dataStoreBName, dataStoreCName],
-                containerRuntime,
+            const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
+                id: dataStoreId,
+                pkg: [defaultName, dataStoreAName, dataStoreBName, dataStoreCName],
+                runtime: containerRuntime,
                 storage,
                 scope,
-                getCreateSummarizerNodeFn(dataStoreId),
-                attachCb,
-                undefined,
-                false /* isRootDataStore */,
-                true /* writeGCDataAtRoot */,
-            );
+                createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
+                bindChannelFn: attachCb,
+                snapshotTree: undefined,
+                isRootDataStore: false,
+                writeGCDataAtRoot: true,
+                disableIsolatedChannels: false,
+            });
 
             try {
                 await contextC.realize();

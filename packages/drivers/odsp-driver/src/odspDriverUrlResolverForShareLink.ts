@@ -5,7 +5,11 @@
 
 import { PromiseCache } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+    IContainerPackageInfo,
+    IResolvedUrl,
+    IUrlResolver,
+} from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -28,6 +32,7 @@ import { createOdspUrl } from "./createOdspUrl";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
 import { getFileLink } from "./getFileLink";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.
@@ -165,7 +170,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                         throw new NonRetryableError(
                             "shareLinkTokenIsNull",
                             "Token callback returned null",
-                            OdspErrorType.fetchTokenError);
+                            OdspErrorType.fetchTokenError,
+                            { driverVersion });
                     }
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenResponse;
@@ -212,17 +218,22 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         dataStorePath: string,
-        codeDetails?: IFluidCodeDetails,
+        packageInfoSource?: IContainerPackageInfo | IFluidCodeDetails,
     ): Promise<string> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
-
         const shareLinkUrl = new URL(shareLink);
 
-        const containerPackageName =
-            isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
-            odspResolvedUrl.codeHint?.containerPackageName;
+        // back-compat: IFluidCodeDetails usage to be removed in 0.58.0
+        let containerPackageName;
+        if (packageInfoSource && "name" in packageInfoSource) {
+            containerPackageName = packageInfoSource.name
+        } else if (isFluidPackage(packageInfoSource?.package)) {
+            containerPackageName = packageInfoSource?.package.name
+        } else {
+            containerPackageName = packageInfoSource?.package
+        }
+        containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName
 
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,

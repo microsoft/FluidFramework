@@ -5,6 +5,7 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import cloneDeep from "lodash/cloneDeep";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -19,7 +20,7 @@ import {
     ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { CreateProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -153,6 +154,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         runtime: IFluidDataStoreRuntime,
         dataStoreContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
+        logger: ITelemetryLogger,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
@@ -176,6 +178,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
                 this.dirtyFn,
                 addedGCOutboundReferenceFn,
                 storageService,
+                logger,
                 clonedSnapshotTree,
                 blobMap,
             );
@@ -187,7 +190,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         if (this.channel === undefined) {
             this.channel = await this.loadChannel()
                 .catch((err) => {
-                    throw CreateProcessingError(err, "rehydratedLocalChannelContextFailedToLoadChannel", undefined);
+                    throw DataProcessingError.wrapIfUnrecognized(
+                        err, "rehydratedLocalChannelContextFailedToLoadChannel", undefined);
                 });
         }
         return this.channel;
@@ -269,6 +273,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
         runtime: IFluidDataStoreRuntime,
         dataStoreContext: IFluidDataStoreContext,
         storageService: IDocumentStorageService,
+        logger: ITelemetryLogger,
         submitFn: (content: any, localOpMetadata: unknown) => void,
         dirtyFn: (address: string) => void,
         addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
@@ -288,6 +293,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
                 this.dirtyFn,
                 addedGCOutboundReferenceFn,
                 storageService,
+                logger,
             );
         });
         this.dirtyFn = () => { dirtyFn(id); };

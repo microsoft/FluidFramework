@@ -43,6 +43,7 @@ import {
 import { defaultCacheExpiryTimeoutMs, EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 /* eslint-disable max-len */
 
@@ -270,7 +271,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     ));
                     event.end({
                         blobId: res.content.id,
-                        ...res.commonSpoHeaders,
+                        ...res.propsToLog,
                     });
                     return res;
                 },
@@ -309,7 +310,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         const res = await this.epochTracker.fetchArray(url, { headers }, "blob");
                         event.end({
                             waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
-                            ...res.commonSpoHeaders,
+                            ...res.propsToLog,
                             attempts: options.refresh ? 2 : 1,
                         });
                         const cacheControl = res.headers.get("cache-control");
@@ -318,7 +319,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                 eventName: "NonCacheableBlob",
                                 cacheControl,
                                 blobId,
-                                ...res.commonSpoHeaders,
+                                ...res.propsToLog,
                             });
                         }
                         return res.content;
@@ -530,13 +531,15 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 throw new NonRetryableError(
                     "getVersionsReturnedNoResponse",
                     "No response from /versions endpoint",
-                    DriverErrorType.genericNetworkError);
+                    DriverErrorType.genericNetworkError,
+                    { driverVersion });
             }
             if (!Array.isArray(versionsResponse.value)) {
                 throw new NonRetryableError(
                     "getVersionsReturnedNonArrayResponse",
                     "Incorrect response from /versions endpoint",
-                    DriverErrorType.genericNetworkError);
+                    DriverErrorType.genericNetworkError,
+                    { driverVersion });
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message
@@ -692,9 +695,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             }
         }
 
-        const id = await PerformanceEvent.timedExecAsync(this.logger,
-            { eventName: "uploadSummaryWithContext" },
-            async () => this.odspSummaryUploadManager.writeSummaryTree(summary, context));
+        const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
         return id;
     }
 
@@ -715,7 +716,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             throw new NonRetryableError(
                 "noSnapshotUrlProvided",
                 "Method failed because no snapshot url was available",
-                DriverErrorType.genericError);
+                DriverErrorType.genericError,
+                { driverVersion });
         }
     }
 
@@ -724,7 +726,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             throw new NonRetryableError(
                 "noAttachmentPOSTUrlProvided",
                 "Method failed because no attachment POST url was available",
-                DriverErrorType.genericError);
+                DriverErrorType.genericError,
+                { driverVersion });
         }
     }
 
@@ -733,7 +736,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             throw new NonRetryableError(
                 "noAttachmentGETUrlWasProvided",
                 "Method failed because no attachment GET url was available",
-                DriverErrorType.genericError);
+                DriverErrorType.genericError,
+                { driverVersion });
         }
     }
 

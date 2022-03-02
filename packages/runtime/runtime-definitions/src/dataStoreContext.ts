@@ -5,7 +5,6 @@
 
 import { ITelemetryBaseLogger, IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
-    IFluidObject,
     IFluidRouter,
     IProvideFluidHandleContext,
     IFluidHandle,
@@ -16,7 +15,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -63,6 +61,25 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
     (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+}
+
+/**
+ * Encapsulates the return codes of the aliasing API
+ */
+ export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
+
+/**
+ * A fluid router with the capability of being assigned an alias
+ */
+ export interface IDataStore extends IFluidRouter {
+    /**
+     * Attempt to assign an alias to the datastore.
+     * If the operation succeeds, the datastore can be referenced
+     * by the supplied alias.
+     *
+     * @param alias - Given alias for this datastore.
+     */
+    trySetAlias(alias: string): Promise<AliasResult>;
 }
 
 /**
@@ -117,7 +134,7 @@ export interface IContainerRuntimeBase extends
      * gets attached to storage) will result in this store being attached to storage.
      * @param pkg - Package name of the data store factory
      */
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+    createDataStore(pkg: string | string[]): Promise<IDataStore>;
 
     /**
      * Creates detached data store context. only after context.attachRuntime() is called,
@@ -287,7 +304,7 @@ export interface IFluidDataStoreContext extends
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
 
     /**
      * Returns the current quorum.
@@ -298,12 +315,6 @@ export interface IFluidDataStoreContext extends
      * Returns the current audience.
      */
     getAudience(): IAudience;
-
-    /**
-     * Report error that happened in the data store runtime layer to the container runtime layer
-     * @param err - the error object.
-     */
-    raiseContainerWarning(warning: ContainerWarning): void;
 
     /**
      * Submits the message to be sent to other clients.

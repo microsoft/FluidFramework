@@ -12,10 +12,11 @@ import {
     throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
-import { OdspError } from "@fluidframework/odsp-driver-definitions";
+import { OdspError, OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import { getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";
+import { pkgVersion } from "../packageVersion";
 
 describe("Odsp Error", () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -33,12 +34,15 @@ describe("Odsp Error", () => {
     function createOdspNetworkErrorWithResponse(
         fluidErrorCode: string,
         statusCode: number,
+        response?: Response,
+        responseText?: string,
     ) {
         try {
             throwOdspNetworkError(
                 fluidErrorCode,
                 statusCode,
-                testResponse,
+                response ?? testResponse,
+                responseText,
             );
             assert.fail("Not reached - throwOdspNetworkError should have thrown");
         } catch (error) {
@@ -139,7 +143,8 @@ describe("Odsp Error", () => {
                 throw new NonRetryableError(
                     "code",
                     "some message",
-                    DriverErrorType.incorrectServerResponse);
+                    DriverErrorType.incorrectServerResponse,
+                    { driverVersion: pkgVersion });
             }
         });
         assert.equal(res, 1, "did not successfully retried with new token");
@@ -262,5 +267,22 @@ describe("Odsp Error", () => {
         assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage, "Error type should be fileOverwrittenInStorage");
         const errorBag = { ...error.getTelemetryProperties() };
         assert.strictEqual(errorBag.errorType, DriverErrorType.fileOverwrittenInStorage, "Error type should exist in prop bag");
+    });
+
+    it("Check odsp domain move error", async () => {
+        const redirectLocation = "www.fake.com";
+        const responseText = {
+            error: {
+                "@error.redirectLocation": redirectLocation,
+                code: "itemNotFound",
+                message: "The site has been moved to a new location.",
+                innerError: {},
+            },
+        };
+        const error: any = createOdspNetworkErrorWithResponse(
+            "The site has been moved to a new location.", 404, undefined, JSON.stringify(responseText));
+        assert.strictEqual(error.errorType, OdspErrorType.locationRedirection, "Error type should be locationRedirection");
+        assert.strictEqual(error.redirectLocation, redirectLocation, "Site location should match");
+        assert.strictEqual(error.statusCode, 404, "Status code should match");
     });
 });

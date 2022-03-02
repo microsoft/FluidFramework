@@ -41,7 +41,6 @@ export enum ParagraphItemType {
     Block,
     Glue,
     Marker,
-    MathBlock,
     Penalty,
 }
 
@@ -63,14 +62,6 @@ export interface IPGBlock extends IParagraphItem {
     text: string;
 }
 
-export interface IPGMathBlock extends IParagraphItem {
-    type: ParagraphItemType.MathBlock;
-
-    // TODO: Only the string's length property appears to be used to determine how many
-    //       positions the block occupies.  Consider making this 'positionLength' or similar.
-    text: string;
-}
-
 export interface IPGMarker extends IParagraphItem {
     type: ParagraphItemType.Marker;
     segment: MergeTree.Marker;
@@ -78,10 +69,6 @@ export interface IPGMarker extends IParagraphItem {
 
 function makeIPGBlock(width: number, text: string, textSegment: MergeTree.TextSegment) {
     return <IPGBlock>{ type: ParagraphItemType.Block, width, text, segment: textSegment };
-}
-
-function makeIPGMathBlock(width: number, text: string) {
-    return <IPGMathBlock>{ type: ParagraphItemType.MathBlock, width, text };
 }
 
 function makeIPGMarker(marker: MergeTree.Marker) {
@@ -447,10 +434,6 @@ export interface IItemsContext {
     nextPGPos: number;
     itemInfo: IParagraphItemInfo;
     paragraphLexer: ParagraphLexer<IItemsContext>;
-
-    // TODO: Should lift into a component-standard layout/render context instead
-    //       of using a map to smuggle context to components.
-    services: Map<string, any>;
 }
 
 export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsContext) {

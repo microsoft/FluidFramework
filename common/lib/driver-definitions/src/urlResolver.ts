@@ -27,6 +27,16 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     endpoints: { [name: string]: string };
 }
 
+/**
+ * Container package info handed off to resolver.
+ */
+export interface IContainerPackageInfo {
+    /**
+     * Container package name.
+     */
+    name: string;
+}
+
 export interface IUrlResolver {
 
     // Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
@@ -38,7 +48,7 @@ export interface IUrlResolver {
     getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
-        codeDetails?: IFluidCodeDetails,
+        packageInfoSource?: IFluidCodeDetails | IContainerPackageInfo,
     ): Promise<string>;
 }
 
@@ -47,12 +57,6 @@ export interface IUrlResolver {
 * for driver compatibility and preload information.
 */
 export interface DriverPreCheckInfo {
-    /**
-     * @deprecated - only needed as long as long as Loader.request() does not work as intended. When
-     * Loader.request() caches and resolves pathing properly, this can be removed. #4489, #4491
-     */
-    containerPath: string;
-
     /**
      * A code details hint that can potentially be used to prefetch container code prior to having a snapshot.
      */

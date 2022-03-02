@@ -10,12 +10,14 @@ export {
     IGCRuntimeOptions,
     ISummaryRuntimeOptions,
     IContainerRuntimeOptions,
+    IRootSummaryTreeWithStats,
     isRuntimeMessage,
     RuntimeMessage,
     unpackRuntimeMessage,
     ScheduleManager,
     agentSchedulerId,
     ContainerRuntime,
+    RuntimeHeaders,
 } from "./containerRuntime";
 export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -24,7 +26,6 @@ export {
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGCStats,
-    IUsedStateStats,
 } from "./garbageCollection";
 export {
     IPendingFlush,
