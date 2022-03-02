@@ -196,7 +196,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         return this.acceptedValues.get(key);
     }
 
-    public async set(key: string, value: any): Promise<void> {
+    public async set(key: string, value: any): Promise<boolean> {
         // TODO: Handle detached scenario
 
         const setOp: IQuorumOperation = {
@@ -207,20 +207,20 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         }
         const setId = uuid();
 
-        const watchForAck = (localId: string, valueAccepted: boolean) => {
-            if (localId === setId) {
-                if (valueAccepted) {
-                    // Resolve promise w/ true
-                } else {
-                    // Resolve promise w/ false
+        const setPromise = new Promise<boolean>((resolve, reject) => {
+            // TODO reject in disposal scenarios?
+            const watchForAck = (localId: string, valueAccepted: boolean) => {
+                if (localId === setId) {
+                    resolve(valueAccepted);
+                    this.localOp.off("set", watchForAck);
                 }
-                this.incomingOp.off("set", watchForAck);
-            }
-        };
-        this.localOp.on("set", watchForAck);
+            };
+            this.localOp.on("set", watchForAck);
+        });
 
-        // TODO need to make a real promise and resolve appropriately on ack.
         this.submitLocalMessage(setOp, setId);
+
+        return setPromise;
     }
 
     private handleIncomingSet(key: string, value: any, refSeq: number, localId?: string) {

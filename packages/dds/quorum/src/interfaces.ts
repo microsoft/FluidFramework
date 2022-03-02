@@ -20,5 +20,5 @@ export interface IQuorumEvents extends ISharedObjectEvents {
 export interface IQuorum extends ISharedObject<IQuorumEvents> {
     has(key: string): boolean;
     get(key: string): any;
-    set(key: string, value: any): Promise<void>;
+    set(key: string, value: any): Promise<boolean>;
 }
