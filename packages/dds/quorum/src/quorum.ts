@@ -223,13 +223,13 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         return setPromise;
     }
 
-    private handleIncomingSet(key: string, value: any, refSeq: number, localId?: string) {
-        // TODO check consensus makes the set valid
-        const valueAccepted = true;
+    private handleIncomingSet(key: string, value: any, refSeq: number, setSequenceNumber: number, localId?: string) {
+        // To be accepted, the new value must have been set with awareness of the most recent value (first write wins)
+        const valueAccepted = refSeq > setSequenceNumber;
         if (valueAccepted) {
             const acceptedValue: IAcceptedValue = {
                 value,
-                sequenceNumber: refSeq,
+                sequenceNumber: setSequenceNumber,
             }
             this.acceptedValues.set(key, acceptedValue);
         }
@@ -298,7 +298,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
             switch (op.type) {
                 case "set":
-                    this.incomingOp.emit("set", op.key, op.value, op.refSeq, localOpMetadata);
+                    this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber, localOpMetadata);
                     break;
 
                 default:
