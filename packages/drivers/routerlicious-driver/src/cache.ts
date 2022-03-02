@@ -3,19 +3,58 @@
  * Licensed under the MIT License.
  */
 
-export interface ICache<T> {
-    get(key: string): Promise<T | undefined>;
-    put(key: string, value: T): Promise<void>;
+import { get, set, del } from "idb-keyval";
+
+export const isNode = () => typeof window === "undefined";
+
+export interface ICacheEntry<T> {
+    value: T;
+    expiration?: Date;
+}
+export interface ICache {
+    get<T>(key: string): Promise<T | undefined>;
+    put<T>(key: string, value: ICacheEntry<T>): Promise<void>;
 }
 
-export class InMemoryCache<T> implements ICache<T> {
-    private readonly cache: Map<string, T> = new Map();
+function isCacheEntryExpired(entry: ICacheEntry<any>): boolean {
+    return entry.expiration !== undefined && Date.now() > entry.expiration.getTime()
+}
 
-    public async get(key: string): Promise<T | undefined> {
-        return this.cache.get(key);
+export class InMemoryCache implements ICache {
+    private readonly cache: Map<string, ICacheEntry<any>> = new Map();
+
+    public async get<T>(key: string): Promise<T | undefined> {
+        const entry: ICacheEntry<T> | undefined = await this.cache.get(key);
+        if (entry === undefined) {
+            return undefined;
+        }
+        if (isCacheEntryExpired(entry)) {
+            this.cache.delete(key);
+            return undefined;
+        }
+        return entry.value;
     }
 
-    public async put(key: string, value: T): Promise<void> {
-        this.cache.set(key, value);
+    public async put<T>(key: string, entry: ICacheEntry<T>): Promise<void> {
+        this.cache.set(key, entry);
+    }
+}
+
+export class IndexedDBCache implements ICache {
+    public async get<T>(key: string): Promise<T | undefined> {
+        const entry: ICacheEntry<T> | undefined = await get(key);
+        if (entry === undefined) {
+            return undefined;
+        }
+        if (isCacheEntryExpired(entry)) {
+            // Ignore deletion errors; they are not critical.
+            del(key).catch(() => {});
+            return undefined;
+        }
+        return entry.value;
+    }
+
+    public async put<T>(key: string, value: ICacheEntry<T>): Promise<void> {
+        await set(key, value);
     }
 }

@@ -47,8 +47,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         protected readonly manager: GitManager,
         protected readonly logger: ITelemetryLogger,
         public readonly policies: IDocumentStorageServicePolicies = {},
-        private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),
-        private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> = new InMemoryCache()) {
+        private readonly cache: ICache = new InMemoryCache(),
+    ) {
         this.summaryUploadManager = new WholeSummaryUploadManager(manager);
     }
 
@@ -104,7 +104,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const cachedBlob = await this.blobCache.get(blobId);
+        const cachedBlob = await this.cache.get<ArrayBuffer>(this.getBlobCacheKey(blobId));
         if (cachedBlob !== undefined) {
             return cachedBlob;
         }
@@ -125,7 +125,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         );
         const bufferValue = stringToBuffer(blob.content, blob.encoding);
 
-        await this.blobCache.put(blob.sha, bufferValue);
+        await this.cache.put(this.getBlobCacheKey(blob.sha), { value: bufferValue });
 
         return bufferValue;
     }
@@ -171,9 +171,11 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     }
 
     private async fetchAndCacheSnapshotTree(versionId: string): Promise<ISnapshotTreeVersion> {
-        const cachedSnapshotTreeVersion = await this.snapshotTreeCache.get(versionId);
+        const cachedSnapshotTreeVersion = await this.cache.get<ISnapshotTreeVersion>(
+            this.getSnapshotTreeCacheKey(versionId),
+        );
         if (cachedSnapshotTreeVersion !== undefined) {
-            return { id: cachedSnapshotTreeVersion.id, snapshotTree: cachedSnapshotTreeVersion.snapshotTree };
+            return cachedSnapshotTreeVersion;
         }
 
         const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
@@ -194,23 +196,26 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         const wholeFlatSummaryId: string = wholeFlatSummary.id;
         const snapshotTreeId = normalizedWholeSummary.snapshotTree.id;
         assert(snapshotTreeId !== undefined, 0x275 /* "Root tree should contain the id" */);
-        const snapshotTreeVersion = { id: wholeFlatSummaryId , snapshotTree: normalizedWholeSummary.snapshotTree };
+        const snapshotTreeVersion: ISnapshotTreeVersion = {
+            id: wholeFlatSummaryId ,
+            snapshotTree: normalizedWholeSummary.snapshotTree,
+        };
 
         const cachePs: Promise<any>[] = [
-            this.snapshotTreeCache.put(
-                snapshotTreeId,
-                snapshotTreeVersion,
+            this.cache.put(
+                this.getSnapshotTreeCacheKey(wholeFlatSummaryId),
+                { value: snapshotTreeVersion },
             ),
             this.initBlobCache(normalizedWholeSummary.blobs),
         ];
-        if (snapshotTreeId !== versionId) {
+        if (wholeFlatSummaryId !== versionId) {
             // versionId could be "latest". When summarizer checks cache for "latest", we want it to be available.
             // TODO: For in-memory cache, <latest,snapshotTree> will be a shared pointer with <snapshotId,snapshotTree>,
             // However, for something like Redis, this will cache the same value twice. Alternatively, could we simply
             // cache with versionId?
-            cachePs.push(this.snapshotTreeCache.put(
-                versionId,
-                snapshotTreeVersion,
+            cachePs.push(this.cache.put(
+                this.getSnapshotTreeCacheKey(versionId),
+                { value: snapshotTreeVersion },
             ));
         }
 
@@ -222,8 +227,16 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     private async initBlobCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
         const blobCachePutPs: Promise<void>[] = [];
         blobs.forEach((value, id) => {
-            blobCachePutPs.push(this.blobCache.put(id, value));
+            blobCachePutPs.push(this.cache.put(this.getBlobCacheKey(id), { value }));
         });
         await Promise.all(blobCachePutPs);
+    }
+
+    private getBlobCacheKey(blobId: string): string {
+        return `${this.id}:blob:${blobId}`
+    }
+
+    private getSnapshotTreeCacheKey(treeId: string): string {
+        return `${this.id}:snapshotTree:${treeId}`
     }
 }

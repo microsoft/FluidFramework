@@ -17,14 +17,14 @@ import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
-import { ICache } from "./cache";
-import { ISnapshotTreeVersion } from "./definitions";
+import { ICache, isNode } from "./cache";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
 export class DocumentService implements api.IDocumentService {
+    private readonly shouldCacheHTTPRequests: boolean;
     constructor(
         public readonly resolvedUrl: api.IResolvedUrl,
         protected ordererUrl: string,
@@ -35,9 +35,13 @@ export class DocumentService implements api.IDocumentService {
         protected tenantId: string,
         protected documentId: string,
         private readonly driverPolicies: IRouterliciousDriverPolicies,
-        private readonly blobCache: ICache<ArrayBufferLike>,
-        private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
+        private readonly cache: ICache,
     ) {
+        // Node.js does not have built-in HTTP request caching.
+        // RestLess is not compatible with browsers' built-in HTTP request caching.
+        // WholeSummaries are not cached by URL.
+        this.shouldCacheHTTPRequests = (isNode() || driverPolicies.enableRestLess)
+            && !driverPolicies.enableWholeSummaryUpload;
     }
 
     private documentStorageService: DocumentStorageService | undefined;
@@ -66,6 +70,7 @@ export class DocumentService implements api.IDocumentService {
             this.logger,
             rateLimiter,
             this.driverPolicies.enableRestLess,
+            this.shouldCacheHTTPRequests ? this.cache : undefined,
             this.gitUrl,
         );
         const historian = new Historian(
@@ -87,8 +92,7 @@ export class DocumentService implements api.IDocumentService {
             this.logger,
             documentStorageServicePolicies,
             this.driverPolicies,
-            this.blobCache,
-            this.snapshotTreeCache);
+            this.cache);
         return this.documentStorageService;
     }
 
@@ -109,6 +113,7 @@ export class DocumentService implements api.IDocumentService {
             this.logger,
             rateLimiter,
             this.driverPolicies.enableRestLess,
+            this.shouldCacheHTTPRequests ? this.cache : undefined,
         );
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, ordererRestWrapper, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
@@ -142,7 +147,7 @@ export class DocumentService implements api.IDocumentService {
         try {
             const connection = await connect();
             return connection;
-        } catch (error) {
+        } catch (error: any) {
             if (error?.statusCode === 401) {
                 // Fetch new token and retry once,
                 // otherwise 401 will be bubbled up as non-retriable AuthorizationError.

@@ -21,6 +21,7 @@ import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
 import { throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider } from "./tokens";
+import { ICache } from "./cache";
 
 type AuthorizationHeaderGetter = (refresh?: boolean) => Promise<string | undefined>;
 
@@ -43,15 +44,22 @@ const axiosRequestConfigToFetchRequestConfig = (requestConfig: AxiosRequestConfi
     return [requestInfo, requestInit];
 };
 
+const urlFromFetchRequestConfig = (requestConfig: [RequestInfo, RequestInit]): string => {
+    return typeof requestConfig[0] === "string"
+        ? requestConfig[0]
+        : requestConfig[0].url;
+}
+
 export class RouterliciousRestWrapper extends RestWrapper {
     private authorizationHeader: string | undefined;
     private readonly restLess = new RestLessClient();
 
     constructor(
-        logger: ITelemetryLogger,
+        private readonly logger: ITelemetryLogger,
         private readonly rateLimiter: RateLimiter,
         private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
         private readonly useRestLess: boolean,
+        private readonly requestCache?: ICache,
         baseurl?: string,
         defaultQueryString: querystring.ParsedUrlQueryInput = {},
     ) {
@@ -68,8 +76,26 @@ export class RouterliciousRestWrapper extends RestWrapper {
             headers: this.generateHeaders(requestConfig.headers),
         };
 
-        const translatedConfig = this.useRestLess ? this.restLess.translate(config) : config;
-        const fetchRequestConfig = axiosRequestConfigToFetchRequestConfig(translatedConfig);
+        let fetchRequestConfig: [RequestInfo, RequestInit];
+        if (this.useRestLess) {
+            const translatedConfig = this.restLess.translate(config);
+            fetchRequestConfig = axiosRequestConfigToFetchRequestConfig(translatedConfig);
+            // RestLess prevents browser caching from working, so we manually manage request cache.
+            if (this.requestCache) {
+                const url = urlFromFetchRequestConfig(fetchRequestConfig);
+                try {
+                    const cachedResponse: T | undefined = await this.requestCache.get(url);
+                    if (cachedResponse !== undefined) {
+                        return cachedResponse;
+                    }
+                } catch (error: any) {
+                    // Do not fail on cache read errors.
+                    this.logger.sendErrorEvent({ eventName: "R11sDriverRequestCacheReadFailure", error });
+                }
+            }           
+        } else {
+            fetchRequestConfig = axiosRequestConfigToFetchRequestConfig(config);
+        }
 
         const response: Response = await this.rateLimiter.schedule(async () => fetch(...fetchRequestConfig)
             .catch(async (error) => {
@@ -85,6 +111,14 @@ export class RouterliciousRestWrapper extends RestWrapper {
         // Success
         if (response.ok || response.status === statusCode) {
             const result: T = responseBody;
+            if (this.requestCache && this.useRestLess) {
+                // RestLess prevents browser caching from working, so we manually manage request cache.
+                const url = urlFromFetchRequestConfig(fetchRequestConfig);
+                // Do not fail on cache write errors.
+                this.requestCache.put(url, { value: result }).catch((error) => {
+                    this.logger.sendErrorEvent({ eventName: "R11sDriverRequestCacheWriteFailure", error });
+                });
+            }
             return result;
         }
         // Failure
@@ -129,10 +163,11 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         rateLimiter: RateLimiter,
         getAuthorizationHeader: AuthorizationHeaderGetter,
         useRestLess: boolean,
+        requestCache?: ICache,
         baseurl?: string,
         defaultQueryString: querystring.ParsedUrlQueryInput = {},
     ) {
-        super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
+        super(logger, rateLimiter, getAuthorizationHeader, useRestLess, requestCache, baseurl, defaultQueryString);
     }
 
     public static async load(
@@ -142,6 +177,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         logger: ITelemetryLogger,
         rateLimiter: RateLimiter,
         useRestLess: boolean,
+        requestCache?: ICache,
         baseurl?: string,
     ): Promise<RouterliciousStorageRestWrapper> {
         const defaultQueryString = {
@@ -162,7 +198,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         };
 
         const restWrapper = new RouterliciousStorageRestWrapper(
-            logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
+            logger, rateLimiter, getAuthorizationHeader, useRestLess, requestCache, baseurl, defaultQueryString);
         try {
             await restWrapper.load();
         } catch (e) {
@@ -181,10 +217,11 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         rateLimiter: RateLimiter,
         getAuthorizationHeader: AuthorizationHeaderGetter,
         useRestLess: boolean,
+        requestCache?: ICache,
         baseurl?: string,
         defaultQueryString: querystring.ParsedUrlQueryInput = {},
     ) {
-        super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
+        super(logger, rateLimiter, getAuthorizationHeader, useRestLess, requestCache, baseurl, defaultQueryString);
     }
 
     public static async load(
@@ -194,6 +231,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         logger: ITelemetryLogger,
         rateLimiter: RateLimiter,
         useRestLess: boolean,
+        requestCache?: ICache,
         baseurl?: string,
     ): Promise<RouterliciousOrdererRestWrapper> {
         const getAuthorizationHeader: AuthorizationHeaderGetter = async (refresh?: boolean): Promise<string> => {
@@ -206,7 +244,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         };
 
         const restWrapper = new RouterliciousOrdererRestWrapper(
-            logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl);
+            logger, rateLimiter, getAuthorizationHeader, useRestLess, requestCache, baseurl);
         try {
             await restWrapper.load();
         } catch (e) {

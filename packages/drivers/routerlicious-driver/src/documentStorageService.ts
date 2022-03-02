@@ -21,7 +21,6 @@ import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
-import { ISnapshotTreeVersion } from "./definitions";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
     private _logTailSha: string | undefined = undefined;
@@ -36,25 +35,21 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         logger: ITelemetryLogger,
         policies: IDocumentStorageServicePolicies,
         driverPolicies?: IRouterliciousDriverPolicies,
-        blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTreeVersion>): IDocumentStorageService {
+        cache?: ICache,    
+    ): IDocumentStorageService {
         const storageService = driverPolicies?.enableWholeSummaryUpload ?
             new WholeSummaryDocumentStorageService(
                 id,
                 manager,
                 logger,
                 policies,
-                blobCache,
-                snapshotTreeCache,
+                cache
             ) :
             new ShreddedSummaryDocumentStorageService(
                 id,
                 manager,
                 logger,
                 policies,
-                driverPolicies,
-                blobCache,
-                snapshotTreeCache,
             );
         // TODO: worth prefetching latest summary making version + snapshot call with WholeSummary storage?
         if (!driverPolicies?.enableWholeSummaryUpload && policies.caching === LoaderCachingPolicy.Prefetch) {
@@ -69,16 +64,15 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         logger: ITelemetryLogger,
         policies: IDocumentStorageServicePolicies = {},
         driverPolicies?: IRouterliciousDriverPolicies,
-        blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTreeVersion>) {
+        cache?: ICache,
+    ) {
         super(DocumentStorageService.loadInternalDocumentStorageService(
             id,
             manager,
             logger,
             policies,
             driverPolicies,
-            blobCache,
-            snapshotTreeCache,
+            cache,
         ));
     }
 

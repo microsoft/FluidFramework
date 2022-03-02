@@ -24,9 +24,8 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
-import { InMemoryCache } from "./cache";
+import { ICache, IndexedDBCache, InMemoryCache, isNode } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { ISnapshotTreeVersion } from "./definitions";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -44,8 +43,8 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
     private readonly driverPolicies: IRouterliciousDriverPolicies;
-    private readonly blobCache = new InMemoryCache<ArrayBufferLike>();
-    private readonly snapshotTreeCache = new InMemoryCache<ISnapshotTreeVersion>();
+    // TODO: just replace these with one "persistedCache"
+    private readonly persistedCache: ICache;
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
@@ -55,6 +54,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             ...defaultRouterliciousDriverPolicies,
             ...driverPolicies,
         };
+        // Node.js runtime does not have access to IndexedDB.
+        this.persistedCache = isNode() ? new InMemoryCache() : new IndexedDBCache();
     }
 
     public async createContainer(
@@ -88,9 +89,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             logger2,
             rateLimiter,
             this.driverPolicies.enableRestLess,
+            undefined, /* requestCache: not needed, this restWrapper is only used once for a POST */
             resolvedUrl.endpoints.ordererUrl,
         );
-        // the backend responds with the actual document ID associated with the new container.
+        // The service responds with the actual document ID associated with the new container.
         const documentId = await ordererRestWrapper.post<string>(
             `/documents/${tenantId}`,
             {
@@ -161,7 +163,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             tenantId,
             documentId,
             this.driverPolicies,
-            this.blobCache,
-            this.snapshotTreeCache);
+            this.persistedCache);
     }
 }
