@@ -88,7 +88,6 @@ import {
     channelsTreeName,
     IAttachMessage,
     IDataStore,
-    AliasResult,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -1825,7 +1824,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
         const aliasedDataStore = channelToDataStore(dataStore, internalId, this,this.dataStores, this.mc.logger);
         const result = await aliasedDataStore.trySetAlias(alias);
-        if (result !== AliasResult.Success) {
+        if (result !== "Success") {
             throw new GenericError(
                 "dataStoreAliasFailure",
                 undefined /* error */,

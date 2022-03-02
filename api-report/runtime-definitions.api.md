@@ -30,12 +30,7 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
 
 // @public
-export enum AliasResult {
-    Aliasing = "Aliasing",
-    AlreadyAliased = "AlreadyAliased",
-    Conflict = "Conflict",
-    Success = "Success"
-}
+export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
 
 // @public (undocumented)
 export const channelsTreeName = ".channels";
@@ -382,6 +377,7 @@ export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRe
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
+
 
 // (No @packageDocumentation comment for this package)
 

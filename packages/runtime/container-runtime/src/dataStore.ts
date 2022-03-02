@@ -58,11 +58,11 @@ class DataStore implements IDataStore {
         switch (this.aliasState) {
             // If we're already aliasing, throw an exception
             case AliasState.Aliasing:
-                return AliasResult.Aliasing;
+                return "Aliasing";
             // If this datastore is already aliased, return true only if this
             // is a repeated call for the same alias
             case AliasState.Aliased:
-                return this.alias === alias ? AliasResult.Success : AliasResult.AlreadyAliased;
+                return this.alias === alias ? "Success" : "AlreadyAliased";
             // There is no current or past alias operation for this datastore,
             // it is safe to continue execution
             case AliasState.None: break;
@@ -82,7 +82,7 @@ class DataStore implements IDataStore {
             // Explicitly Lock-out future attempts of aliasing,
             // regardless of result
             this.aliasState = AliasState.Aliased;
-            return localResult ? AliasResult.Success : AliasResult.Conflict;
+            return localResult ? "Success" : "Conflict";
         }
 
         const aliased = await this.ackBasedPromise<boolean>((resolve) => {
@@ -112,7 +112,7 @@ class DataStore implements IDataStore {
             return false;
         });
 
-        return aliased ? AliasResult.Success : AliasResult.Conflict;
+        return aliased ? "Success" : "Conflict";
     }
 
     async request(request: IRequest): Promise<IResponse> {

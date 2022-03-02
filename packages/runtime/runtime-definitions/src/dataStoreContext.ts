@@ -66,24 +66,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
 /**
  * Encapsulates the return codes of the aliasing API
  */
- export enum AliasResult {
-    /**
-     * The datastore has been successfully aliased
-     */
-    Success = "Success",
-    /**
-     * There is already a datastore bound to the provided alias
-     */
-    Conflict = "Conflict",
-    /**
-     * The datastore is currently in the process of being aliased
-     */
-    Aliasing = "Aliasing",
-    /**
-     * The datastore has been attempted to be aliased before
-     */
-    AlreadyAliased = "AlreadyAliased",
-}
+ export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
 
 /**
  * A fluid router with the capability of being assigned an alias
