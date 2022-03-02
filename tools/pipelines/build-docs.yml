@@ -44,6 +44,10 @@ variables:
       eq(parameters.deployOverride, 'force'),
       and(eq(variables.isMain, true), eq(parameters.deployOverride, 'default'))
       )}}
+  - name: GDN_VERSION
+    value: 0.113.1-linux
+  - name: GDNP_VERSION
+    value: 1.61.0-linux
 
 # no PR triggers
 trigger:
@@ -144,6 +148,43 @@ stages:
         displayName: 'Use Node 14.x'
         inputs:
           version: 14.x
+
+      # Secure development requirements
+      - task: UseDotNet@2
+        displayName: 'Use .NET Core 3.x'
+        condition: succeededOrFailed()
+        inputs:
+          packageType: sdk
+          version: 3.x
+
+      - task: securedevelopmentteam.vss-secure-development-tools.build-task-eslint.ESLint@1
+        condition: succeededOrFailed()
+        displayName: 'Run ESLint'
+
+      - task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@3
+        displayName: 'Publish Guardian Artifacts - All Tools'
+        inputs:
+          ArtifactType: M365
+        condition: succeededOrFailed()
+
+      # - task: AssetRetention@3
+      #   inputs:
+      #     ArrowServiceConnection: '<ARROW_SERVICE_CONNECTION_NAME>' # TODO
+      #     AssetGroupName: '$(System.TeamProject)_$(Build.DefinitionName)'
+      #     AssetNumber: '$(Build.BuildId)'
+      #     IsShipped: false
+      #     DropsToRetain: 'CodeAnalysisLogs'
+      #   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+
+      - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
+        condition: succeededOrFailed()
+        displayName: 'Guardian Break'
+        inputs:
+          GdnBreakPolicyMinSev: Warning
+          GdnBreakAllTools: true
+          GdnBreakGdnToolESLint: true
+          GdnBreakGdnToolESLintSeverity: Warning
+          GdnBreakPolicy: M365
 
       - task: Npm@1
         displayName: npm ci
