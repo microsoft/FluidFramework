@@ -325,6 +325,9 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     get errorInstanceId() { return this._errorInstanceId; }
     overwriteErrorInstanceId(id: string) { this._errorInstanceId = id; }
 
+    /** Back-compat to appease isFluidError typeguard in old code that may handle this error */
+    private fluidErrorCode: "-" = "-";
+
     /**
      * Create a new LoggingError
      * @param message - Error message to use for Error base class

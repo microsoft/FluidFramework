@@ -125,7 +125,7 @@ export async function getChildrenByDriveItem(
     do {
         const response = await getAsync(url, authRequestInfo);
         if (response.status !== 200) {
-            throwOdspNetworkError("Unable to get children", response.status, response);
+            throwOdspNetworkError("Unable to get driveItem children", response.status, response);
         }
         const getChildrenResult = await response.json();
         children = children.concat(getChildrenResult.value);
@@ -155,7 +155,7 @@ async function getDriveItem(
 
         response = await getAsync(getDriveItemUrl, authRequestInfo);
         if (response.status !== 200) {
-            throwOdspNetworkError("Unable to get drive/item id from path", response.status, response);
+            throwOdspNetworkError("Unable to get drive/item id from path after creating", response.status, response);
         }
     }
     const getDriveItemResult = await response.json();
