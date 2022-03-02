@@ -81,8 +81,8 @@
     "@fluidframework/web-code-loader": "^0.58.0",
     "axios": "^0.21.2",
     "express": "^4.16.3",
-    "moniker": "^0.1.2",
     "nconf": "^0.11.0",
+    "sillyname": "^0.1.0",
     "uuid": "^8.3.1",
     "webpack-dev-server": "^3.8.0"
   },

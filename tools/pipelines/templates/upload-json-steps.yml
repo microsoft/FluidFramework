@@ -47,6 +47,13 @@ steps:
     flattenFolders: true
     CleanTargetFolder: true
 
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish api-extractor JSON'
+  inputs:
+    PathtoPublish: '$(Build.SourcesDirectory)/_api-extractor-temp'
+    ArtifactName: 'api-extractor-combined'
+    publishLocation: 'Container'
+
 - task: ArchiveFiles@2
   inputs:
     rootFolderOrFile: '$(Build.SourcesDirectory)/_api-extractor-temp'
