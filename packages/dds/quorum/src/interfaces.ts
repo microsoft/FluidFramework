@@ -18,30 +18,7 @@ export interface IQuorumEvents extends ISharedObjectEvents {
  */
 
 export interface IQuorum extends ISharedObject<IQuorumEvents> {
-    /**
-     * Try to lock the task.  Promise resolves when the lock is acquired, or rejects if we are removed from the
-     * queue without acquiring the lock for any reason.
-     * @param taskId - Identifier for the task
-     */
-    lockTask(taskId: string): Promise<void>;
-
-    /**
-     * Exit the queue, releasing the task if currently locked.
-     * @param taskId - Identifier for the task
-     */
-    abandon(taskId: string): void;
-
-    /**
-     * Check whether this client is the current assignee for the task and there is no outstanding abandon op that
-     * would release the lock.
-     * @param taskId - Identifier for the task
-     */
-    haveTaskLock(taskId: string): boolean;
-
-    /**
-     * Check whether this client is either the current assignee for the task or is waiting in line or we expect they
-     * will be in line after outstanding ops have been ack'd.
-     * @param taskId - Identifier for the task
-     */
-    queued(taskId: string): boolean;
+    has(key: string): boolean;
+    get(key: string): any;
+    set(key: string, value: any): Promise<void>;
 }

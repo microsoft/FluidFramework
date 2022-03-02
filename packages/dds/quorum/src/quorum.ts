@@ -39,6 +39,21 @@ interface IPendingOp {
     messageId: number;
 }
 
+/**
+ * Quorum operation format
+ */
+interface IQuorumOperation {
+    type: "set";
+    key: string;
+    value: any;
+
+    // Message can be delivered with delay - resubmitted on reconnect.
+    // As such, refSeq needs to reference seq # at the time op was created,
+    // not when op was actually sent over wire (ISequencedDocumentMessage.referenceSequenceNumber),
+    // as client can ingest ops in between.
+    refSeq: number;
+}
+
 const snapshotFileName = "header";
 
 /**
@@ -124,6 +139,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         return new QuorumFactory();
     }
 
+    private readonly values: Map<string, any>;
+
     /**
      * Mapping of taskId to a queue of clientIds that are waiting on the task.  Maintains the consensus state of the
      * queue, even if we know we've submitted an op that should eventually modify the queue.
@@ -135,12 +152,9 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     // queueWatcher emits an event whenever the consensus state of the task queues changes
     // TODO currently could event even if the queue doesn't actually change
     private readonly queueWatcher: EventEmitter = new EventEmitter();
-    // abandonWatcher emits an event whenever the local client calls abandon() on a task.
-    private readonly abandonWatcher: EventEmitter = new EventEmitter();
     // disconnectWatcher emits an event whenever we get disconnected.
     private readonly disconnectWatcher: EventEmitter = new EventEmitter();
 
-    private messageId: number = -1;
     /**
      * Tracks the most recent pending op for a given task
      */
@@ -155,6 +169,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
+
+        this.values = new Map();
 
         this.opWatcher.on("volunteer", (taskId: string, clientId: string, local: boolean, messageId: number) => {
             if (local) {
@@ -221,140 +237,23 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         });
     }
 
-    // TODO Remove or hide from interface, this is just for debugging
-    public _getTaskQueues() {
-        return this.taskQueues;
+    public has(key: string): boolean {
+        return this.values.has(key);
     }
 
-    private submitVolunteerOp(taskId: string) {
-        const op: ITaskManagerVolunteerOperation = {
-            type: "volunteer",
-            taskId,
-        };
-        const pendingOp: IPendingOp = {
-            type: "volunteer",
-            messageId: ++this.messageId,
-        };
-        this.submitLocalMessage(op, pendingOp.messageId);
-        this.latestPendingOps.set(taskId, pendingOp);
+    public get(key: string): any {
+        return this.values.get(key);
     }
 
-    private submitAbandonOp(taskId: string) {
-        const op: ITaskManagerAbandonOperation = {
-            type: "abandon",
-            taskId,
-        };
-        const pendingOp: IPendingOp = {
-            type: "abandon",
-            messageId: ++this.messageId,
-        };
-        this.submitLocalMessage(op, pendingOp.messageId);
-        this.latestPendingOps.set(taskId, pendingOp);
-    }
-
-    public async lockTask(taskId: string) {
-        // If we have the lock, resolve immediately
-        if (this.haveTaskLock(taskId)) {
-            return;
+    public async set(key: string, value: any): Promise<void> {
+        const setOp: IQuorumOperation = {
+            type: "set",
+            key,
+            value,
+            refSeq: this.runtime.deltaManager.lastSequenceNumber,
         }
-
-        if (!this.connected) {
-            throw new Error(`Attempted to lock in disconnected state: ${taskId}`);
-        }
-
-        // This promise works even if we already have an outstanding volunteer op.
-        const lockAcquireP = new Promise<void>((resolve, reject) => {
-            const checkIfAcquiredLock = (eventTaskId: string) => {
-                if (eventTaskId !== taskId) {
-                    return;
-                }
-
-                // Also check pending ops here because it's possible we are currently in the queue from a previous
-                // lock attempt, but have an outstanding abandon AND the outstanding volunteer for this lock attempt.
-                // If we reach the head of the queue based on the previous lock attempt, we don't want to resolve.
-                if (this.haveTaskLock(taskId) && !this.latestPendingOps.has(taskId)) {
-                    this.queueWatcher.off("queueChange", checkIfAcquiredLock);
-                    this.abandonWatcher.off("abandon", checkIfAbandoned);
-                    this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                    resolve();
-                }
-            };
-
-            const checkIfAbandoned = (eventTaskId: string) => {
-                if (eventTaskId !== taskId) {
-                    return;
-                }
-
-                this.queueWatcher.off("queueChange", checkIfAcquiredLock);
-                this.abandonWatcher.off("abandon", checkIfAbandoned);
-                this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                reject(new Error(`Abandoned before acquiring lock: ${taskId}`));
-            };
-
-            const rejectOnDisconnect = () => {
-                this.queueWatcher.off("queueChange", checkIfAcquiredLock);
-                this.abandonWatcher.off("abandon", checkIfAbandoned);
-                this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                reject(new Error(`Disconnected before acquiring lock: ${taskId}`));
-            };
-
-            this.queueWatcher.on("queueChange", checkIfAcquiredLock);
-            this.abandonWatcher.on("abandon", checkIfAbandoned);
-            this.disconnectWatcher.on("disconnect", rejectOnDisconnect);
-        });
-
-        if (!this.queued(taskId)) {
-            // TODO simulate auto-ack in detached scenario
-            this.submitVolunteerOp(taskId);
-        }
-        return lockAcquireP;
-    }
-
-    public abandon(taskId: string) {
-        if (!this.connected) {
-            throw new Error(`Attempted to abandon in disconnected state: ${taskId}`);
-        }
-
-        // Nothing to do if we're not at least trying to get the lock.
-        if (!this.queued(taskId)) {
-            return;
-        }
-        // TODO simulate auto-ack in detached scenario
-        if (!this.isAttached()) {
-            return;
-        }
-
-        this.submitAbandonOp(taskId);
-        this.abandonWatcher.emit("abandon", taskId);
-    }
-
-    public haveTaskLock(taskId: string) {
-        if (!this.connected) {
-            return false;
-        }
-
-        const currentAssignee = this.taskQueues.get(taskId)?.[0];
-        return currentAssignee !== undefined
-            && currentAssignee === this.runtime.clientId
-            && !this.latestPendingOps.has(taskId);
-    }
-
-    public queued(taskId: string) {
-        if (!this.connected) {
-            return false;
-        }
-
-        assert(this.runtime.clientId !== undefined,
-            0x07f /* "clientId undefined" */); // TODO, handle disconnected/detached case
-
-        const clientQueue = this.taskQueues.get(taskId);
-        // If we have no queue for the taskId, then no one has signed up for it.
-        return (
-            clientQueue !== undefined
-            && clientQueue.includes(this.runtime.clientId)
-            && !this.latestPendingOps.has(taskId)
-        )
-            || this.latestPendingOps.get(taskId)?.type === "volunteer";
+        // TODO need to make a real promise and resolve appropriately on ack.
+        this.submitLocalMessage(setOp);
     }
 
     /**

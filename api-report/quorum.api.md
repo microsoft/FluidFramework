@@ -17,10 +17,12 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
 export interface IQuorum extends ISharedObject<IQuorumEvents> {
-    abandon(taskId: string): void;
-    haveTaskLock(taskId: string): boolean;
-    lockTask(taskId: string): Promise<void>;
-    queued(taskId: string): boolean;
+    // (undocumented)
+    get(key: string): any;
+    // (undocumented)
+    has(key: string): boolean;
+    // (undocumented)
+    set(key: string, value: any): Promise<void>;
 }
 
 // @public (undocumented)
@@ -32,29 +34,25 @@ export interface IQuorumEvents extends ISharedObjectEvents {
 export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
-    abandon(taskId: string): void;
-    // (undocumented)
     applyStashedOp(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): Quorum;
+    // (undocumented)
+    get(key: string): any;
     static getFactory(): IChannelFactory;
     // (undocumented)
-    _getTaskQueues(): Map<string, string[]>;
-    // (undocumented)
-    haveTaskLock(taskId: string): boolean;
+    has(key: string): boolean;
     // @internal (undocumented)
     protected initializeLocalCore(): void;
     // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    lockTask(taskId: string): Promise<void>;
     // @internal (undocumented)
     protected onDisconnect(): void;
     // @internal
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
-    queued(taskId: string): boolean;
     // @internal
     protected reSubmitCore(): void;
+    // (undocumented)
+    set(key: string, value: any): Promise<void>;
     // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     }
