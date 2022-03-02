@@ -983,12 +983,6 @@ export class MergeTree {
     // (undocumented)
     readonly collabWindow: CollaborationWindow;
     // (undocumented)
-    findHistorialPosition(pos: number, fromSeq: number, toSeq: number, clientId: number): number;
-    // (undocumented)
-    findHistorialRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number): IIntegerRange[];
-    // (undocumented)
-    findHistorialRangeFromClient(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number): IIntegerRange[];
-    // (undocumented)
     findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
         tile: ReferencePosition;
         pos: number;
