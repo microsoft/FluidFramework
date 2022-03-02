@@ -55,7 +55,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             ...driverPolicies,
         };
         // Node.js runtime does not have access to IndexedDB.
-        this.persistedCache = isNode() ? new InMemoryCache() : new IndexedDBCache();
+        // TODO: We cannot store WholeSummaries across browser tabs (yet).
+        this.persistedCache = (isNode() || this.driverPolicies.enableWholeSummaryUpload)
+            ? new InMemoryCache()
+            : new IndexedDBCache();
     }
 
     public async createContainer(
