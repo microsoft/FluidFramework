@@ -16,6 +16,7 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { v4 as uuid } from "uuid";
 import { QuorumFactory } from "./quorumFactory";
 import { IQuorum, IQuorumEvents } from "./interfaces";
 
@@ -148,6 +149,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     private readonly disconnectWatcher: EventEmitter = new EventEmitter();
 
     private readonly incomingOp: EventEmitter = new EventEmitter();
+    private readonly localOp: EventEmitter = new EventEmitter();
 
     /**
      * Tracks the most recent pending op for a given task
@@ -165,6 +167,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         super(id, runtime, attributes);
 
         this.acceptedValues = new Map();
+
+        this.incomingOp.on("set", this.handleIncomingSet);
 
         this.disconnectWatcher.on("disconnect", () => {
             assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
@@ -193,26 +197,47 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     }
 
     public async set(key: string, value: any): Promise<void> {
+        // TODO: Handle detached scenario
+
         const setOp: IQuorumOperation = {
             type: "set",
             key,
             value,
             refSeq: this.runtime.deltaManager.lastSequenceNumber,
         }
+        const setId = uuid();
 
-        const watchForAck = (key: string, value: any, refSeq: number) => {
-            if (true) {
-                const acceptedValue: IAcceptedValue = {
-                    value,
-                    sequenceNumber: refSeq,
+        const watchForAck = (localId: string, valueAccepted: boolean) => {
+            if (localId === setId) {
+                if (valueAccepted) {
+                    // Resolve promise w/ true
+                } else {
+                    // Resolve promise w/ false
                 }
-                this.acceptedValues.set(key, acceptedValue);
                 this.incomingOp.off("set", watchForAck);
             }
         };
-        this.incomingOp.on("set", watchForAck);
+        this.localOp.on("set", watchForAck);
+
         // TODO need to make a real promise and resolve appropriately on ack.
-        this.submitLocalMessage(setOp);
+        this.submitLocalMessage(setOp, setId);
+    }
+
+    private handleIncomingSet(key: string, value: any, refSeq: number, localId?: string) {
+        // TODO check consensus makes the set valid
+        const valueAccepted = true;
+        if (valueAccepted) {
+            const acceptedValue: IAcceptedValue = {
+                value,
+                sequenceNumber: refSeq,
+            }
+            this.acceptedValues.set(key, acceptedValue);
+        }
+
+        // Emit for local ops, so we can resolve outstanding promises
+        if (localId !== undefined) {
+            this.localOp.emit("set", localId, valueAccepted);
+        }
     }
 
     /**
@@ -273,8 +298,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
             switch (op.type) {
                 case "set":
-                    // TODO: need to include local, or maybe some metadata for matching up in disconnect cases?
-                    this.incomingOp.emit("set", op.key, op.value, op.refSeq);
+                    this.incomingOp.emit("set", op.key, op.value, op.refSeq, localOpMetadata);
                     break;
 
                 default:
