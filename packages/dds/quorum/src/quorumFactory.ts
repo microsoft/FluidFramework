@@ -14,10 +14,10 @@ import { IQuorum } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
 /**
- * The factory that defines the task queue
+ * The factory that produces the Quorum
  */
 export class QuorumFactory implements IChannelFactory {
-    public static readonly Type = "https://graph.microsoft.com/types/task-manager";
+    public static readonly Type = "https://graph.microsoft.com/types/quorum";
 
     public static readonly Attributes: IChannelAttributes = {
         type: QuorumFactory.Type,
@@ -41,14 +41,14 @@ export class QuorumFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         attributes: IChannelAttributes): Promise<IQuorum> {
-        const taskQueue = new Quorum(id, runtime, attributes);
-        await taskQueue.load(services);
-        return taskQueue;
+        const quorum = new Quorum(id, runtime, attributes);
+        await quorum.load(services);
+        return quorum;
     }
 
     public create(document: IFluidDataStoreRuntime, id: string): IQuorum {
-        const taskQueue = new Quorum(id, document, this.attributes);
-        taskQueue.initializeLocal();
-        return taskQueue;
+        const quorum = new Quorum(id, document, this.attributes);
+        quorum.initializeLocal();
+        return quorum;
     }
 }

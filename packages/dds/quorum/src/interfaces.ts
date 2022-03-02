@@ -7,10 +7,9 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
 
 export interface IQuorumEvents extends ISharedObjectEvents {
     /**
-     * Notifies when the local client has reached or left the front of the queue.  Does not account for known pending
-     * ops, but instead only reflects the current state.
+     * Notifies when a new value has been accepted.
      */
-    (event: "assigned" | "lost", listener: (taskId: string) => void);
+    (event: "accept", listener: (taskId: string) => void);
 }
 
 /**
