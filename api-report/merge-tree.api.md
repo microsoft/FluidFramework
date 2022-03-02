@@ -11,7 +11,6 @@ import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { Trace } from '@fluidframework/common-utils';
 
 // @public (undocumented)
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
@@ -179,8 +178,6 @@ export class Client {
     // (undocumented)
     get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback | undefined;
     set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
-    // (undocumented)
-    noVerboseRemoteAnnotate: boolean;
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
@@ -202,8 +199,6 @@ export class Client {
     // (undocumented)
     updateSeqNumbers(min: number, seq: number): void;
     // (undocumented)
-    verboseOps: boolean;
-    // (undocumented)
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
     // (undocumented)
     walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
@@ -219,9 +214,6 @@ export interface ClientSeq {
 
 // @public (undocumented)
 export const clientSeqComparer: Comparer<ClientSeq>;
-
-// @public (undocumented)
-export function clock(): Trace;
 
 // @public (undocumented)
 export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefined;
@@ -286,8 +278,6 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
 // @public (undocumented)
 export interface Dictionary<TKey, TData> {
     // (undocumented)
-    diag(): void;
-    // (undocumented)
     get(key: TKey): Property<TKey, TData> | undefined;
     // (undocumented)
     map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum): void;
@@ -296,9 +286,6 @@ export interface Dictionary<TKey, TData> {
     // (undocumented)
     remove(key: TKey): void;
 }
-
-// @public (undocumented)
-export function elapsedMicroseconds(trace: Trace): number;
 
 // @public (undocumented)
 export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, combiningOp?: ICombiningOp, seq?: number): MapLike<T>;
@@ -983,7 +970,7 @@ export class MergeNode implements IMergeNodeCommon {
 // @public (undocumented)
 export class MergeTree {
     constructor(options?: PropertySet | undefined);
-    ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs, verboseOps?: boolean): void;
+    ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs): void;
     // (undocumented)
     addLocalReference(lref: LocalReference): void;
     // (undocumented)
@@ -995,14 +982,6 @@ export class MergeTree {
     clone(): void;
     // (undocumented)
     readonly collabWindow: CollaborationWindow;
-    // (undocumented)
-    static readonly diagOverlappingRemove = false;
-    // (undocumented)
-    findHistorialPosition(pos: number, fromSeq: number, toSeq: number, clientId: number): number;
-    // (undocumented)
-    findHistorialRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number): IIntegerRange[];
-    // (undocumented)
-    findHistorialRangeFromClient(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number): IIntegerRange[];
     // (undocumented)
     findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
         tile: ReferencePosition;
@@ -1056,8 +1035,6 @@ export class MergeTree {
     static readonly options: {
         incrementalUpdate: boolean;
         insertAfterRemovedSegs: boolean;
-        measureOrdinalTime: boolean;
-        measureWindowTime: boolean;
         zamboniSegments: boolean;
     };
     // (undocumented)
@@ -1078,8 +1055,6 @@ export class MergeTree {
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
     // (undocumented)
     toString(): string;
-    // (undocumented)
-    static readonly traceGatherText = false;
     // (undocumented)
     walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
     }
@@ -1266,8 +1241,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     constructor(compareKeys: KeyComparer<TKey>, aug?: IRBAugmentation<TKey, TData> | undefined);
     // (undocumented)
     ceil(key: TKey): RBNode<TKey, TData> | undefined;
-    // (undocumented)
-    diag(): void;
     // (undocumented)
     floor(key: TKey): RBNode<TKey, TData> | undefined;
     // (undocumented)

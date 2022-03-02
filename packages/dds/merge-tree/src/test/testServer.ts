@@ -17,7 +17,6 @@ import {
     IncrementalExecOp,
     IncrementalMapState,
     ISegment,
-    MergeTree,
 } from "../mergeTree";
 import { PropertySet } from "../properties";
 import { MergeTreeTextHelper, TextSegment } from "../textSegment";
@@ -82,7 +81,6 @@ export class TestServer extends TestClient {
         msg.sequenceNumber = -1;
     }
     copyMsg(msg: ISequencedDocumentMessage) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         return {
             clientId: msg.clientId,
             clientSequenceNumber: msg.clientSequenceNumber,
@@ -172,11 +170,6 @@ export class TestServer extends TestClient {
 
 function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
     if (TextSegment.is(segment)) {
-        if (MergeTree.traceGatherText) {
-            console.log(
-                `@cli ${state.clientId ? state.clientId : -1} ` +
-                `gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
-        }
         if ((state.start <= 0) && (state.end >= segment.text.length)) {
             state.context.text += segment.text;
         } else {

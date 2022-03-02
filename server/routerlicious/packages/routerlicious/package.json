@@ -55,7 +55,6 @@
     "commander": "^2.17.1",
     "express": "^4.16.3",
     "ioredis": "^4.24.2",
-    "moniker": "^0.1.2",
     "nconf": "^0.11.0",
     "request": "^2.88.0",
     "winston": "^3.3.3"
