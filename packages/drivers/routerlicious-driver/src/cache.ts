@@ -9,7 +9,10 @@ export const isNode = () => typeof window === "undefined";
 
 export interface ICacheEntry<T> {
     value: T;
-    expiration?: Date;
+    /**
+     * Milliseconds since UNIX Epoch.
+     */
+    expiration?: number;
 }
 export interface ICache {
     get<T>(key: string): Promise<T | undefined>;
@@ -17,7 +20,7 @@ export interface ICache {
 }
 
 function isCacheEntryExpired(entry: ICacheEntry<any>): boolean {
-    return entry.expiration !== undefined && Date.now() > entry.expiration.getTime()
+    return entry.expiration !== undefined && Date.now() > entry.expiration
 }
 
 export class InMemoryCache implements ICache {

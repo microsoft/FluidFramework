@@ -18,6 +18,7 @@ import {
 } from "node-fetch";
 import type { AxiosRequestConfig } from "axios";
 import safeStringify from "json-stringify-safe";
+import parseCacheControl from "parse-cache-control";
 import { v4 as uuid } from "uuid";
 import { throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider } from "./tokens";
@@ -114,10 +115,21 @@ export class RouterliciousRestWrapper extends RestWrapper {
             if (this.requestCache && this.useRestLess) {
                 // RestLess prevents browser caching from working, so we manually manage request cache.
                 const url = urlFromFetchRequestConfig(fetchRequestConfig);
-                // Do not fail on cache write errors.
-                this.requestCache.put(url, { value: result }).catch((error) => {
-                    this.logger.sendErrorEvent({ eventName: "R11sDriverRequestCacheWriteFailure", error });
-                });
+                const cacheControlHeader = response.headers.get("cache-control");
+                const cacheControl = cacheControlHeader ? parseCacheControl(cacheControlHeader) : null;
+                // The only cache-control directives used by R11s are public/private, max-age, no-store.
+                // We can ignore the other directives for simplicity.
+                const shouldCache = cacheControl?.private !== undefined && (cacheControl?.["no-store"] !== true);
+                if (shouldCache) {
+                    const cacheExpiration = cacheControl?.["max-age"]
+                        ? Date.now() + cacheControl["max-age"] * 1000
+                        : undefined;
+                    this.requestCache.put(url, { value: result, expiration: cacheExpiration })
+                        .catch((error) => {
+                            // Do not fail on cache write errors.
+                            this.logger.sendErrorEvent({ eventName: "R11sDriverRequestCacheWriteFailure", error });
+                        });
+                }
             }
             return result;
         }
