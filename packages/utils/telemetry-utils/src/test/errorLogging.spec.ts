@@ -309,6 +309,7 @@ describe("Error Logging", () => {
             const propsWillBeIgnored = { message: "surprise1", stack: "surprise2" };
             loggingError.addTelemetryProperties(propsWillBeIgnored);
             const props = loggingError.getTelemetryProperties();
+            delete props.fluidErrorCode; // It's on there for back compat, not trying to test it here
             const { message, stack, errorInstanceId } = loggingError;
             assert.deepStrictEqual(props, { message, stack, errorInstanceId }, "addTelemetryProperties should not overwrite existing props");
         });
@@ -320,6 +321,7 @@ describe("Error Logging", () => {
             };
             loggingError.addTelemetryProperties(propsWillBeIgnored);
             const props = loggingError.getTelemetryProperties();
+            delete props.fluidErrorCode; // It's on there for back compat, not trying to test it here
             const { message, stack, errorInstanceId } = loggingError;
             assert.deepStrictEqual(props, { message, stack, errorInstanceId }, "addTelemetryProperties should not overwrite existing props");
         });
@@ -600,6 +602,7 @@ describe("normalizeError", () => {
             expected.withExpectedTelemetryProps({
                 ...annotations.props,
                 errorInstanceId: actual.errorInstanceId,
+                fluidErrorCode: "-", // Present for back-compat
             });
 
             assertMatchingMessageAndStack(actual, expected, inputStack);
