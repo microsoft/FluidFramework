@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/server-services-client";
 import * as async from "async";
 import lorem from "lorem-ipsum";
-import * as moniker from "moniker";
+import sillyname from "sillyname";
 import request from "supertest";
 import * as app from "../app";
 import { ExternalStorageManager } from "../externalStorageManager";
@@ -443,7 +443,7 @@ describe("GitRest", () => {
                     const files = blobs.map((blob) => {
                         return {
                             mode: "100644",
-                            path: `${moniker.choose()}.txt`,
+                            path: `${(sillyname() as string).toLowerCase().split(" ").join("-")}.txt`,
                             sha: blob.sha,
                             type: "blob",
                         };
