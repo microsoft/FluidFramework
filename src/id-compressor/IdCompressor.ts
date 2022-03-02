@@ -886,6 +886,8 @@ export class IdCompressor {
 		inversionKey: InversionKey
 	): SessionSpaceCompressedId | [LocalCompressedId, FinalCompressedId] | undefined {
 		const closestMatch = this.clustersAndOverridesInversion.getPairOrNextLower(inversionKey, reusedArray);
+		let numericOverride: NumericUuid | undefined;
+		let stableOverride: StableId | undefined;
 		if (closestMatch !== undefined) {
 			const [key, compressionMapping] = closestMatch;
 			if (!IdCompressor.isClusterInfo(compressionMapping)) {
@@ -900,19 +902,27 @@ export class IdCompressor {
 					? [finalizedOverride.associatedLocalId, finalizedOverride.originalOverridingFinal]
 					: (finalizedOverride.originalOverridingFinal as SessionSpaceCompressedId);
 			} else if (IdCompressor.isStableInversionKey(inversionKey)) {
-				const stableOverride = inversionKey;
+				stableOverride = inversionKey;
 				const cluster = compressionMapping.cluster;
 				if (!IdCompressor.uuidsMightCollide(inversionKey, stableOverride, cluster.capacity)) {
 					return undefined;
 				}
-				const numericOverride = numericUuidFromStableId(stableOverride);
+				numericOverride = numericUuidFromStableId(stableOverride);
 				const delta = getPositiveDelta(numericOverride, cluster.baseUuid, cluster.capacity - 1);
-				if (delta === undefined) {
-					return undefined;
+				if (delta !== undefined) {
+					IdCompressor.failWithCollidingOverride(inversionKey);
 				}
-				IdCompressor.failWithCollidingOverride(inversionKey);
 			}
 		}
+
+		const override = numericOverride ?? stableOverride;
+		if (override !== undefined) {
+			const localId = this.getLocalIdForStableId(override);
+			if (localId !== undefined) {
+				return localId;
+			}
+		}
+
 		return undefined;
 	}
 
@@ -1041,14 +1051,14 @@ export class IdCompressor {
 	 * @returns the `CompressedId` associated with `uncompressed` or undefined if it has not been previously compressed by this compressor.
 	 */
 	public tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined {
-		return this.compressInternal(uncompressed);
+		return this.recompressInternal(uncompressed);
 	}
 
 	/**
 	 * Helper to compress an uncompressed UUID. It can optionally be supplied with the numeric form of `uncompressedUuid` as a
 	 * performance optimization.
 	 */
-	private compressInternal(
+	private recompressInternal(
 		uncompressed: string,
 		uncompressedUuidNumeric?: NumericUuid
 	): SessionSpaceCompressedId | undefined {
@@ -1100,10 +1110,9 @@ export class IdCompressor {
 
 		if (isStable) {
 			// May have already computed the numeric UUID, so avoid recomputing if possible
-			numericUuid ??= numericUuidFromStableId(inversionKey);
-			const offset = getPositiveDelta(numericUuid, this.localSession.sessionUuid, this.localIdCount - 1);
-			if (offset !== undefined) {
-				return (-offset - 1) as LocalCompressedId;
+			const localId = this.getLocalIdForStableId(numericUuid ?? inversionKey);
+			if (localId !== undefined) {
+				return localId;
 			}
 		}
 		return undefined;
@@ -1212,11 +1221,21 @@ export class IdCompressor {
 	 */
 	private compressNumericUuid(numericUuid: NumericUuid): SessionSpaceCompressedId | undefined {
 		const stableId = stableIdFromNumericUuid(numericUuid);
-		const sessionSpaceId = this.compressInternal(stableId, numericUuid);
+		const sessionSpaceId = this.recompressInternal(stableId, numericUuid);
 		if (sessionSpaceId === undefined) {
 			return undefined;
 		}
 		return sessionSpaceId;
+	}
+
+	private getLocalIdForStableId(stableId: StableId | NumericUuid): LocalCompressedId | undefined {
+		const numericUuid = typeof stableId === 'string' ? numericUuidFromStableId(stableId) : stableId;
+		const offset = getPositiveDelta(numericUuid, this.localSession.sessionUuid, this.localIdCount - 1);
+		if (offset === undefined) {
+			return undefined;
+		}
+
+		return (-offset - 1) as LocalCompressedId;
 	}
 
 	private getClusterForFinalId(

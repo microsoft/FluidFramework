@@ -106,8 +106,21 @@ describe('IdCompressor', () => {
 			// Client1 compresses a uuid
 			const localId1 = compressor.generateCompressedId(override);
 			const localId2 = compressor.generateCompressedId(override);
-			expect(localId1).to.equal(localId2, 'only one local ID should be allocated for the same uuid');
-			expect(compressor.decompress(localId1)).to.equal(override, 'uuid incorrectly associated with local ID');
+			expect(localId1).to.equal(localId2, 'only one local ID should be allocated for the same override');
+			expect(compressor.decompress(localId1)).to.equal(override, 'override incorrectly associated with local ID');
+		});
+
+		it('unifies overrides with sequential local IDs', () => {
+			const compressor = createCompressor(Client.Client1, 3);
+
+			// Client1 compresses a uuid
+			compressor.generateCompressedId();
+			const localId2 = compressor.generateCompressedId();
+			const stableId2 = stableIdFromNumericUuid(
+				numericUuidFromStableId(assertIsStableId(compressor.decompress(localId2)))
+			);
+			const localId3 = compressor.generateCompressedId(stableId2);
+			expect(localId3).to.equal(localId2, 'only one local ID should be allocated for the same sequential uuid');
 		});
 
 		it('cannot create negative amounts of implicit IDs', () => {
@@ -536,7 +549,7 @@ describe('IdCompressor', () => {
 
 	// No validation, as these leave the network in a broken state
 	describeNetworkNoValidation('detects UUID collision', (itNetwork) => {
-		itNetwork('when an override collides with a sequentially-allocated UUID', 2, (network) => {
+		itNetwork('when an override collides with a finalized sequentially-allocated UUID', 2, (network) => {
 			network.allocateAndSendIds(Client.Client1, 1);
 			network.deliverOperations(Client.Client1);
 			const compressor1 = network.getCompressor(Client.Client1);
@@ -545,6 +558,19 @@ describe('IdCompressor', () => {
 			expect(() => network.allocateAndSendIds(Client.Client1, 1, { 0: uuid })).to.throw(
 				`Override '${uuid}' collides with another allocated UUID.`
 			);
+		});
+
+		itNetwork('when an override collides with a local sequentially-allocated UUID', 3, (network) => {
+			const compressor2 = network.getCompressor(Client.Client2);
+			const range1 = network.allocateAndSendIds(Client.Client1, 2);
+			network.deliverOperations(DestinationClient.All);
+			const localId2_2 = compressor2.getImplicitIdsFromRange(range1).get(1);
+			const uuid = assertIsStableId(compressor2.decompress(localId2_2));
+			expect(() => {
+				network.allocateAndSendIds(Client.Client2, 1, {
+					0: stableIdFromNumericUuid(numericUuidFromStableId(uuid)),
+				});
+			}).to.throw(`Override '${uuid}' collides with another allocated UUID.`);
 		});
 
 		itNetwork(
