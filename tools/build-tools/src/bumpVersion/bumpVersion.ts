@@ -111,7 +111,8 @@ function translateVirtualVersion(
         fatal("unable to deconstruct package version for virtual patch");
     }
     virtualVersion.patch += versionBump === "minor" ? 1000 : 1;
-    console.log(`    Translated ${pkgOrMonoRepoName} from ${versionBump} to ${virtualVersion}`);
+    virtualVersion.format(); // semver must be reformated after edits
+    console.log(`    Translated ${pkgOrMonoRepoName} from ${versionString} to ${virtualVersion} for virtual patch`);
     return virtualVersion;
 }
 /**
