@@ -28,5 +28,11 @@ export enum BreakingIncrement {
 };
 
 export interface IValidator {
+    /**
+     * Validate the internal state.  May mutate state and is only valid to call once
+     * @param project - The Project which may be used to run a ts compilation task
+     * @param pkgDir - The dir for the Project which may be used to create temporary
+     *      source files
+     */
     validate(project: Project, pkgDir: string) : BreakingIncrement;
 }

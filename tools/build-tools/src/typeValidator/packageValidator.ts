@@ -7,7 +7,7 @@ import fs from "fs";
 import { Node, TypeChecker } from "ts-morph";
 import { PackageDetails } from "./packageJson";
 import { ClassValidator } from "./classDecomposition";
-// import { EnumValidator } from "./enumValidator";
+import { EnumValidator } from "./enumValidator";
 import {
     generateTypeDataForProject,
     getFullTypeName,
@@ -114,12 +114,11 @@ export function createSpecificValidator(
         const validator = new ClassValidator();
         validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
         return validator;
+    } else if (Node.isEnumDeclaration(oldNode) && Node.isEnumDeclaration(newNode)) {
+        const validator = new EnumValidator();
+        validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
+        return validator;
     }
-    // else if (Node.isEnumDeclaration(oldNode) && Node.isEnumDeclaration(newNode)) {
-    //     const validator = new EnumValidator();
-    //     validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
-    //     return validator;
-    // }
 
     // We don't need to report if the declaration types have changed because that
     // should be detected earlier as a removal/addition pair (major increment)
