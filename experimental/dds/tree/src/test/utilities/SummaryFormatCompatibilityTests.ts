@@ -195,8 +195,8 @@ export function runSummaryTests<TSharedTree extends SharedTree | SharedTreeWithA
 
 			it('can be read and written with large history', async () => {
 				testObjectProvider.logger.registerExpectedEvent(
-					{ 'eventName': 'fluid:telemetry:Batching:LengthTooBig' },
-					{ 'eventName': 'fluid:telemetry:Batching:LengthTooBig' },
+					{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
+					{ eventName: 'fluid:telemetry:Batching:LengthTooBig' }
 				);
 				// Process an arbitrarily large number of stable edits
 				createStableEdits(251).forEach((edit) => {
