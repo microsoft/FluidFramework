@@ -24,6 +24,18 @@ interface IPendingOp {
     messageId: number;
 }
 
+interface IAcceptedValue {
+    /**
+     * The value that was accepted.
+     */
+    value: any;
+
+    /**
+     * The sequence number when the value was accepted.
+     */
+    sequenceNumber: number;
+}
+
 /**
  * Quorum operation format
  */
@@ -124,7 +136,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         return new QuorumFactory();
     }
 
-    private readonly values: Map<string, any>;
+    private readonly acceptedValues: Map<string, IAcceptedValue>;
 
     /**
      * Mapping of taskId to a queue of clientIds that are waiting on the task.  Maintains the consensus state of the
@@ -134,6 +146,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
     // disconnectWatcher emits an event whenever we get disconnected.
     private readonly disconnectWatcher: EventEmitter = new EventEmitter();
+
+    private readonly incomingOp: EventEmitter = new EventEmitter();
 
     /**
      * Tracks the most recent pending op for a given task
@@ -150,7 +164,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
-        this.values = new Map();
+        this.acceptedValues = new Map();
 
         this.disconnectWatcher.on("disconnect", () => {
             assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
@@ -171,11 +185,11 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     }
 
     public has(key: string): boolean {
-        return this.values.has(key);
+        return this.acceptedValues.has(key);
     }
 
     public get(key: string): any {
-        return this.values.get(key);
+        return this.acceptedValues.get(key);
     }
 
     public async set(key: string, value: any): Promise<void> {
@@ -185,6 +199,18 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
             value,
             refSeq: this.runtime.deltaManager.lastSequenceNumber,
         }
+
+        const watchForAck = (key: string, value: any, refSeq: number) => {
+            if (true) {
+                const acceptedValue: IAcceptedValue = {
+                    value,
+                    sequenceNumber: refSeq,
+                }
+                this.acceptedValues.set(key, acceptedValue);
+                this.incomingOp.off("set", watchForAck);
+            }
+        };
+        this.incomingOp.on("set", watchForAck);
         // TODO need to make a real promise and resolve appropriately on ack.
         this.submitLocalMessage(setOp);
     }
@@ -247,7 +273,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
             switch (op.type) {
                 case "set":
-                    // TODO: do something
+                    // TODO: need to include local, or maybe some metadata for matching up in disconnect cases?
+                    this.incomingOp.emit("set", op.key, op.value, op.refSeq);
                     break;
 
                 default:
