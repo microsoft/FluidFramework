@@ -44,6 +44,7 @@ import {
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
+import { isFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
@@ -96,7 +97,11 @@ export class ContainerContext implements IContainerContext {
 
     /** @deprecated Added back to unblock 0.56 integration */
     public get id(): string {
-        return this.container.resolvedUrl?.id;
+        const resolvedUrl = this.container.resolvedUrl;
+        if (isFluidResolvedUrl(resolvedUrl)) {
+            return resolvedUrl.id;
+        }
+        return "";
     }
 
     public get clientDetails(): IClientDetails {
