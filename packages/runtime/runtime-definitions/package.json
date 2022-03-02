@@ -291,6 +291,20 @@
           "backCompat": false,
           "forwardCompat": false
         }
+      },
+      "0.56.0": {
+        "InterfaceDeclaration_IContainerRuntimeBase": {
+          "backCompat": true,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreContext": {
+          "backCompat": true,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreContextDetached": {
+          "backCompat": true,
+          "forwardCompat": false
+        }
       }
     }
   }
