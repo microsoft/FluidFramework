@@ -1,5 +1,23 @@
 # Change Log
 
+## 25.2.1
+
+* build: Update FluidFramework packages to 0.55.x
+  * Associated pull request: [38476](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38476)
+  * Commit: [c1dc20b78a671a040bc5df27bae1a53bd142498f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c1dc20b78a671a040bc5df27bae1a53bd142498f)
+* improvement: BREAKING CHANGE: convert node IDs in `validateStablePlace` and `validateStableRange`
+  * Associated pull request: [38454](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38454)
+  * Commit: [4cd14ff42af13e59b02527e13c10c1d46bca88c8](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4cd14ff42af13e59b02527e13c10c1d46bca88c8)
+* improvement: migrate more tests to use TestTree
+  * Associated pull request: [38419](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38419)
+  * Commit: [0f1c0ac035cdd7ed10353ac4218999367cc4bfa9](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0f1c0ac035cdd7ed10353ac4218999367cc4bfa9)
+* merge: `releases/2022.02.4` into `master`
+  * Associated pull request: [38409](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38409)
+  * Commit: [6dc88e51544d3049a2cb4f1efaeb51aa00b64ad2](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/6dc88e51544d3049a2cb4f1efaeb51aa00b64ad2)
+* improvement: compare shared trees semantically
+  * Associated pull request: [38391](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38391)
+  * Commit: [a54983c82825d3b462f046f9ae76039ebffeeebd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a54983c82825d3b462f046f9ae76039ebffeeebd)
+
 ## 24.2.2
 
 * improvement: Use non-recursive function to produce TreeViewNodes
