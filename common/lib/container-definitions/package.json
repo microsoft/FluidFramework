@@ -491,6 +491,27 @@
       },
       "0.46.0": {
         "InterfaceDeclaration_IContainerContext": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ICodeDetailsLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ICodeLoader": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModule": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModuleWithDetails": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
+          "backCompat": false,
           "forwardCompat": false
         }
       }

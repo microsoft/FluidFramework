@@ -149,7 +149,7 @@ export interface IContainerContext extends IDisposable {
     /**
      * @deprecated 0.56, will be removed in the next release
      */
-    raiseContainerWarning(warning: ContainerWarning): void;
+    raiseContainerWarning?(warning: ContainerWarning): void;
 
     /**
      * Get an absolute url for a provided container-relative request.
