@@ -61,7 +61,7 @@ function createTreeMarkerOps(
     ];
 }
 
-class ProseMirrorView implements IFluidHTMLView {
+export class ProseMirrorView implements IFluidHTMLView {
     private content: HTMLDivElement | undefined;
     private editorView: EditorView | undefined;
     private textArea: HTMLDivElement | undefined;
@@ -103,7 +103,7 @@ class ProseMirrorView implements IFluidHTMLView {
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
 export class ProseMirror extends EventEmitter
-    implements IFluidLoadable, IFluidRouter, IFluidHTMLView, IProvideRichTextEditor {
+    implements IFluidLoadable, IFluidRouter, IProvideRichTextEditor {
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
         const collection = new ProseMirror(runtime, context);
         await collection.initialize(existing);
@@ -115,13 +115,17 @@ export class ProseMirror extends EventEmitter
 
     public get IFluidLoadable() { return this; }
     public get IFluidRouter() { return this; }
-    public get IFluidHTMLView() { return this; }
-    public get IRichTextEditor() { return this.collabManager!; }
+    public get IRichTextEditor() { return this._collabManager!; }
 
     public text: SharedString | undefined;
     private root: ISharedMap | undefined;
-    private collabManager: FluidCollabManager | undefined;
-    private view: ProseMirrorView | undefined;
+    private _collabManager: FluidCollabManager | undefined;
+    public get collabManager(): FluidCollabManager {
+        if (this._collabManager === undefined) {
+            throw new Error("Collab manager used before initialized");
+        }
+        return this._collabManager;
+    }
     private readonly innerHandle: IFluidHandle<this>;
 
     constructor(
@@ -157,22 +161,15 @@ export class ProseMirror extends EventEmitter
         if (scope.ILoader === undefined) {
             throw new Error("scope must include ILoader");
         }
-        this.collabManager = new FluidCollabManager(this.text, scope.ILoader);
+        this._collabManager = new FluidCollabManager(this.text, scope.ILoader);
 
         // Access for debugging
         // eslint-disable-next-line @typescript-eslint/dot-notation
         window["easyComponent"] = this;
     }
-
-    public render(elm: HTMLElement): void {
-        if (!this.view) {
-            this.view = new ProseMirrorView(this.collabManager!);
-        }
-        this.view.render(elm);
-    }
 }
 
-class ProseMirrorFactory implements IFluidDataStoreFactory {
+export class ProseMirrorFactory implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/prosemirror";
     public readonly type = ProseMirrorFactory.type;
 

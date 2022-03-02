@@ -4,7 +4,7 @@
  */
 
 import { IIntegerRange } from "./base";
-import { BaseSegment, glc, ISegment, Marker, MergeTree } from "./mergeTree";
+import { BaseSegment, ISegment, Marker, MergeTree } from "./mergeTree";
 import { IJSONSegment } from "./ops";
 import { PropertySet } from "./properties";
 import { LocalReferenceCollection } from "./localReference";
@@ -154,11 +154,6 @@ export class MergeTreeTextHelper {
             textSegment: new TextSegment(""),
         };
 
-        if (MergeTree.traceGatherText) {
-            console.log(
-                `get text on cli ${glc(this.mergeTree, this.mergeTree.collabWindow.clientId)} ` +
-                `ref cli ${glc(this.mergeTree, clientId)} refSeq ${refSeq}`);
-        }
         this.mergeTree.mapRange<ITextAndMarkerAccumulator>(
             { leaf: this.gatherText },
             refSeq,
@@ -175,11 +170,6 @@ export class MergeTreeTextHelper {
 
         const accum: ITextAccumulator = { textSegment: new TextSegment(""), placeholder };
 
-        if (MergeTree.traceGatherText) {
-            console.log(
-                `get text on cli ${glc(this.mergeTree, this.mergeTree.collabWindow.clientId)} ` +
-                `ref cli ${glc(this.mergeTree, clientId)} refSeq ${refSeq}`);
-        }
         this.mergeTree.mapRange<ITextAccumulator>(
             { leaf: this.gatherText },
             refSeq,
@@ -207,12 +197,7 @@ export class MergeTreeTextHelper {
         end: number, accumText: ITextAccumulatorType) => {
         let _start = start;
         if (TextSegment.is(segment)) {
-            if (MergeTree.traceGatherText) {
-                console.log(
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    `@cli ${this.mergeTree.getLongClientId!(this.mergeTree.collabWindow.clientId)} ` +
-                    `gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
-            }
+
             let beginTags = "";
             let endTags = "";
             if (isTextAndMarkerAccumulator(accumText)) {

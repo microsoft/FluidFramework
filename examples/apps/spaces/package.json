@@ -49,7 +49,6 @@
     "@fluidframework/runtime-definitions": "^0.58.0",
     "@fluidframework/runtime-utils": "^0.58.0",
     "@fluidframework/view-adapters": "^0.58.0",
-    "@fluidframework/view-interfaces": "^0.58.0",
     "office-ui-fabric-react": "^7.28.1",
     "prop-types": "^15.7.2",
     "react": "^16.10.2",

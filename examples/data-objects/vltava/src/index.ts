@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
-import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
-import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { Spaces } from "@fluid-example/spaces";
+import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
+import { CodeMirrorComponent, CodeMirrorView, SmdeFactory } from "@fluid-example/codemirror";
+import { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "@fluid-example/prosemirror";
+import { Spaces, SpacesView } from "@fluid-example/spaces";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { FluidObjectKeys } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { FluidObjectKeys, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     setupLastEditedTrackerForContainer,
     IFluidLastEditedTracker,
@@ -21,6 +21,8 @@ import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ReactViewAdapter } from "@fluidframework/view-adapters";
+import React from "react";
 
 import {
     Anchor,
@@ -31,6 +33,9 @@ import {
     IFluidObjectInternalRegistry,
     IInternalRegistryEntry,
 } from "./interfaces";
+
+const codeMirrorFactory = new SmdeFactory();
+const proseMirrorFactory = new ProseMirrorFactory();
 
 export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectInternalRegistry {
     public get IFluidDataStoreRegistry() { return this; }
@@ -64,6 +69,14 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
         );
         return index >= 0 && this.containerFluidObjectArray[index].capabilities.includes(capability);
     }
+
+    public getByFactory(factoryId: string): IInternalRegistryEntry<DefaultRegistryTypes> | undefined {
+        return this.containerFluidObjectArray.find((entry) => entry.factory.type === factoryId);
+    }
+
+    public getAll(): IInternalRegistryEntry<DefaultRegistryTypes>[] {
+        return this.containerFluidObjectArray;
+    }
 }
 
 export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultDataStore {
@@ -88,37 +101,83 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultData
     }
 }
 
+
+interface ISingleHandleItem {
+    handle: IFluidHandle;
+}
+
+const getAdaptedViewForSingleHandleItem = async (serializableObject: ISingleHandleItem) => {
+    const handle = serializableObject.handle;
+    const component = await handle.get();
+    return React.createElement(ReactViewAdapter, { view: component });
+};
+
+const getClickerView = async (serializableObject: ISingleHandleItem) => {
+    const handle = serializableObject.handle as IFluidHandle<Clicker>;
+    const clicker = await handle.get();
+    return React.createElement(ClickerReactView, { clicker });
+};
+
+const getSpacesView = async (serializableObject: ISingleHandleItem) => {
+    const handle = serializableObject.handle as IFluidHandle<Spaces>;
+    const spaces = await handle.get();
+    return React.createElement(SpacesView, { model: spaces });
+};
+
+const getCodeMirrorView = async (serializableObject: ISingleHandleItem) => {
+    const handle = serializableObject.handle as IFluidHandle<CodeMirrorComponent>;
+    const codeMirror = await handle.get();
+    return React.createElement(
+        ReactViewAdapter,
+        { view: new CodeMirrorView(codeMirror.text, codeMirror.presenceManager) },
+    );
+};
+
+const getProseMirrorView = async (serializableObject: ISingleHandleItem) => {
+    const handle = serializableObject.handle as IFluidHandle<ProseMirror>;
+    const proseMirror = await handle.get();
+    return React.createElement(
+        ReactViewAdapter,
+        { view: new ProseMirrorView(proseMirror.collabManager) },
+    );
+};
+
 const generateFactory = () => {
     const containerFluidObjectsDefinition: IInternalRegistryEntry[] = [
         {
             factory: ClickerInstantiationFactory,
-            capabilities: ["IFluidHTMLView", "IFluidLoadable"],
+            capabilities: ["IFluidLoadable"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
+            getView: getClickerView,
         },
         {
             factory: TabsFluidObject.getFactory(),
-            capabilities: ["IFluidHTMLView", "IFluidLoadable"],
+            capabilities: ["IFluidLoadable"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
+            getView: getAdaptedViewForSingleHandleItem,
         },
         {
             factory: Spaces.getFactory(),
-            capabilities: ["IFluidHTMLView", "IFluidLoadable"],
+            capabilities: ["IFluidLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
+            getView: getSpacesView,
         },
         {
-            factory: cmfe,
-            capabilities: ["IFluidHTMLView", "IFluidLoadable"],
+            factory: codeMirrorFactory,
+            capabilities: ["IFluidLoadable"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
+            getView: getCodeMirrorView,
         },
         {
-            factory: pmfe,
-            capabilities: ["IFluidHTMLView", "IFluidLoadable"],
+            factory: proseMirrorFactory,
+            capabilities: ["IFluidLoadable"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
+            getView: getProseMirrorView,
         },
     ];
 

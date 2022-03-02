@@ -59,7 +59,6 @@
     "formidable": "2.0.0-canary.20200504.1",
     "ioredis": "^4.24.2",
     "lodash": "^4.17.21",
-    "moniker": "^0.1.2",
     "nconf": "^0.11.0",
     "notepack.io": "^2.3.0",
     "socket.io": "^4.1.2",

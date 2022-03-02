@@ -258,7 +258,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             ),
             (errorMessage: string) => {
                 if (!this._disposed) {
-                    this.emit("summarizingError", createSummarizingWarning(errorMessage, true));
+                    this.logger.sendErrorEvent({ eventName: "SummarizingError" },
+                        createSummarizingWarning(errorMessage, true));
                 }
             },
             this.summaryCollection,

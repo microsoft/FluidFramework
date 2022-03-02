@@ -22,7 +22,6 @@ import {
     IDeltaManager,
     IDeltaSender,
     IRuntime,
-    ContainerWarning,
     ICriticalContainerError,
     AttachState,
     ILoaderOptions,
@@ -948,8 +947,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private dirtyContainer: boolean;
     private emitDirtyDocumentEvent = true;
 
-    private readonly summarizerWarning = (warning: ContainerWarning) =>
-        this.mc.logger.sendTelemetryEvent({ eventName: "summarizerWarning" }, warning);
     /**
      * Summarizer is responsible for coordinating when to send generate and send summaries.
      * It is the main entry point for summary work.
@@ -1235,7 +1232,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     },
                     this.runtimeOptions.summaryOptions.summarizerOptions,
                 );
-                this.summaryManager.on("summarizerWarning", this.summarizerWarning);
                 this.summaryManager.start();
             }
         }
@@ -1302,7 +1298,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }, error);
 
         if (this.summaryManager !== undefined) {
-            this.summaryManager.off("summarizerWarning", this.summarizerWarning);
             this.summaryManager.dispose();
         }
         this.garbageCollector.dispose();
