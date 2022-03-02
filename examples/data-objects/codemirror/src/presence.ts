@@ -27,7 +27,7 @@ interface IColor {
  * This should be super generic and only do really generic things.
  * This will only take a dependency on the runtime.
  */
-class PresenceManager extends EventEmitter {
+export class PresenceManager extends EventEmitter {
     private readonly presenceKey: string;
     private readonly presenceMap: Map<string, IPresenceInfo> = new Map();
 
@@ -130,16 +130,17 @@ interface ICodeMirrorPresenceInfo {
  * This will be the codemirror specific implementation
  */
 export class CodeMirrorPresenceManager extends EventEmitter {
-    private readonly presenceManager: PresenceManager;
     private readonly presenceMap: Map<string, ICodeMirrorPresenceInfo> = new Map();
 
     private get doc(): CodeMirror.Doc {
         return this.codeMirror.getDoc();
     }
 
-    public constructor(private readonly codeMirror: CodeMirror.EditorFromTextArea, runtime: IFluidDataStoreRuntime) {
+    public constructor(
+        private readonly codeMirror: CodeMirror.EditorFromTextArea,
+        private readonly presenceManager: PresenceManager,
+    ) {
         super();
-        this.presenceManager = new PresenceManager(runtime);
 
         this.codeMirror.on("cursorActivity", () => {
             const selection = this.doc.listSelections();

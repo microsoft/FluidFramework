@@ -3,4 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./fluid-object";
+export * from "./spaces";
+export * from "./spacesItemMap";
+export * from "./spacesView";
+export * from "./storage";
