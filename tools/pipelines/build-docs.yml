@@ -6,11 +6,20 @@
 
 name: $(Build.BuildId)
 
+parameters:
+  - name: deployOverride
+    displayName: Deployment Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+
 variables:
-  - name: skipComponentGovernanceDetection
-    value: true
   - group: doc-versions
   - group: storage-vars
+  - group: InfoSec-SecurityResults
   - name: repoToTrigger
     value: microsoft/FluidFramework
   - name: latestPipeline
@@ -26,12 +35,20 @@ variables:
     value: ${{ eq(variables['Build.SourceBranchName'], variables['RELEASE_BRANCH']) }}
   - name: validRun
     value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
+  - name: Packaging.EnableSBOMSigning
+    value: true
+  - name: isMain
+    value: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
+  - name: shouldDeploy
+    value: ${{ or(
+      eq(parameters.deployOverride, 'force'),
+      and(eq(variables.isMain, true), eq(parameters.deployOverride, 'default'))
+      )}}
 
-# no branch and PR triggers
+# no PR triggers
 trigger:
   branches:
     include:
-    - master
     - release/*
     - main
 pr: none
@@ -56,8 +73,7 @@ resources:
       branches:
         include:
         - main
-        - docs/hugo
-        - pl-test
+        - docs/**
   - pipeline: server
     source: server-routerlicious
 
@@ -89,11 +105,10 @@ stages:
         alertWarningLevel: High
 
 - stage: json
-  displayName: 'API Extractor'
-  pool: Small
+  displayName: 'Combine API Extractor JSON'
   jobs:
     - deployment: upload_json
-      displayName: 'Upload JSON'
+      displayName: 'Upload combined api-extractor JSON'
       environment: 'fluid-docs-env'
       strategy:
         runOnce:
@@ -105,22 +120,65 @@ stages:
                 STORAGE_KEY: $(STORAGE_KEY)
                 uploadAsLatest: true
 
-- stage: github_actions
-  displayName: GitHub Action
-  pool: server
+- stage: site_build
+  displayName: 'Build website'
   dependsOn: json
   jobs:
-    - job: trigger_github_action
-      displayName: 'Trigger repository_dispatch'
+    - job: build_site
+      condition: in(stageDependencies.json.upload_json.result, 'Succeeded', 'SucceededWithIssues')
       steps:
-      - task: InvokeRESTAPI@1
+      - checkout: self
+        submodules: false
+        clean: true
+
+      - download: current
+        artifact: api-extractor-combined
+
+      - task: CopyFiles@2
+        displayName: 'Copy api-extractor JSON to staging folder'
         inputs:
-          connectionType: 'connectedServiceName' # Options: connectedServiceName, connectedServiceNameARM
-          serviceConnection: 'GitHub Actions' # Required when connectionType == ConnectedServiceName
-          #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
-          method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
-          headers: '{"Accept": "application/vnd.github.v3+json"}'
-          body: '{"event_type": "Docs build for SHA $(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
-          urlSuffix: 'repos/$(repoToTrigger)/dispatches' # Optional
-          waitForCompletion: 'false' # Options: true, false
-          #successCriteria: # Optional
+          contents: '$(Pipeline.Workspace)/api-extractor-combined/**'
+          targetFolder: '$(Build.SourcesDirectory)/_api-extractor-temp'
+
+      - task: UseNode@1
+        displayName: 'Use Node 14.x'
+        inputs:
+          version: 14.x
+
+      - task: Npm@1
+        displayName: npm ci
+        inputs:
+          command: 'custom'
+          workingDir: '$(Build.SourcesDirectory)/docs'
+          customCommand: 'ci'
+
+      - task: Npm@1
+        displayName: npm run build
+        inputs:
+          command: 'custom'
+          workingDir: '$(Build.SourcesDirectory)/docs'
+          customCommand: 'run build'
+
+      - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
+        displayName: 'Generate SBOM'
+        inputs:
+          BuildDropPath: '$(Build.SourcesDirectory)/docs/public'
+          PackageName: 'fluidframework-docs'
+          PackageVersion: '$(Build.BuildId)'
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish site build artifact'
+        inputs:
+          PathtoPublish: '$(Build.SourcesDirectory)/docs/public'
+          ArtifactName: 'fluidframework-docs'
+          publishLocation: 'Container'
+
+      - ${{ if eq(variables.shouldDeploy, true) }}:
+        - task: AzureStaticWebApp@0
+          displayName: 'Deploy site'
+          inputs:
+            skip_app_build: true # site was built in previous step
+            cwd: $(Build.SourcesDirectory)
+            app_location: 'docs/public'
+            output_location: ''
+            azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
