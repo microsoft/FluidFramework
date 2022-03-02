@@ -9,9 +9,8 @@ import { bumpVersionCommand } from "../bumpVersion/bumpVersion";
 import { Context, VersionChangeType } from "../bumpVersion/context";
 import { GitRepo } from "../bumpVersion/utils";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { BreakingIncrement } from "./packageValidator";
 import { validateRepo } from "./repoValidator";
-import { enableLogging } from "./validatorUtils";
+import { BreakingIncrement, enableLogging } from "./validatorUtils";
 
 function incrementToVersionChangeType(increment: BreakingIncrement): VersionChangeType | undefined {
     switch (increment) {
