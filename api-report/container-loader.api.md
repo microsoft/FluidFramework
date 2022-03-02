@@ -82,7 +82,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
-    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: unknown): Promise<Container>;
+    // Warning: (ae-forgotten-export) The symbol "IPendingContainerState" needs to be exported by the entry point index.d.ts
+    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
     // (undocumented)
@@ -126,6 +127,7 @@ export interface IContainerConfig {
     clientDetailsOverride?: IClientDetails;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
+    serializedClientId?: string;
 }
 
 // @public (undocumented)

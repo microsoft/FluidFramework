@@ -435,7 +435,7 @@ export class Loader implements IHostLoader {
                 await this.loadContainer(
                     request,
                     resolvedAsFluid,
-                    pendingLocalState?.pendingRuntimeState);
+                    pendingLocalState);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
@@ -486,7 +486,7 @@ export class Loader implements IHostLoader {
     private async loadContainer(
         request: IRequest,
         resolved: IFluidResolvedUrl,
-        pendingLocalState?: unknown,
+        pendingLocalState?: IPendingLocalState,
     ): Promise<Container> {
         return Container.load(
             this,

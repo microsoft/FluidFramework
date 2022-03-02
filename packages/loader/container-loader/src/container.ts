@@ -27,7 +27,6 @@ import {
     ContainerWarning,
     AttachState,
     IThrottlingWarning,
-    IPendingLocalState,
     ReadOnlyInfo,
     IContainerLoadMode,
 } from "@fluidframework/container-definitions";
@@ -138,6 +137,10 @@ export interface IContainerConfig {
      * Client details provided in the override will be merged over the default client.
      */
     clientDetailsOverride?: IClientDetails;
+    /**
+     * clientId from previously serialized container
+     */
+    serializedClientId?: string;
 }
 
 export enum ConnectionState {
@@ -224,6 +227,12 @@ const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
+export interface IPendingContainerState {
+    pendingRuntimeState: unknown;
+    url: string;
+    clientId?: string;
+}
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -233,7 +242,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async load(
         loader: Loader,
         loadOptions: IContainerLoadOptions,
-        pendingLocalState?: unknown,
+        pendingLocalState?: IPendingContainerState,
     ): Promise<Container> {
         const container = new Container(
             loader,
@@ -241,6 +250,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
+                serializedClientId: pendingLocalState?.clientId,
             });
 
         return PerformanceEvent.timedExecAsync(
@@ -609,6 +619,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
             },
             this.mc.logger,
+            config.serializedClientId,
         );
 
         this.on(savedContainerEvent, () => {
@@ -750,9 +761,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
-        const pendingState: IPendingLocalState = {
+        const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
+            clientId: this.clientId,
         };
 
         this.close();
@@ -1049,7 +1061,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async load(
         specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
-        pendingLocalState?: unknown,
+        pendingLocalState?: IPendingContainerState,
     ) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
@@ -1112,7 +1124,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             true, // existing
             codeDetails,
             snapshot,
-            pendingLocalState,
+            pendingLocalState?.pendingRuntimeState,
         );
 
         // Propagate current connection state through the system.

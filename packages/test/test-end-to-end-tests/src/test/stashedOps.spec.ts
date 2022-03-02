@@ -17,7 +17,8 @@ import {
     ITestObjectProvider,
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { ConnectionState } from "@fluidframework/container-loader";
 
 const mapId = "map";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -352,5 +353,55 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         const container2 = await loader.resolve({ url }, pendingOps);
         await ensureContainerConnected(container2);
+    });
+
+    itExpects("waits for previous container's leave message", [
+        { "eventName": "fluid:telemetry:Container:connectedStateRejected" },
+        { "eventName": "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
+    ], async () => {
+        const container = await provider.loadTestContainer(testContainerConfig);
+        await new Promise<void>((resolve) => {
+            if ((container as any).connected) {
+                resolve();
+            } else {
+                container.on("connected", () => resolve());
+            }
+        });
+        const serializedClientId = container.clientId;
+        assert.ok(serializedClientId);
+        const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+
+        await provider.ensureSynchronized();
+        await provider.opProcessingController.pauseProcessing(container);
+        assert(dataStore.runtime.deltaManager.outbound.paused);
+
+        [...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
+
+        const pendingRuntimeState = (container as any).context.runtime.getPendingLocalState();
+        assert(pendingRuntimeState.clientId !== undefined, "no clientId for stashed ops");
+        assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
+        const pendingState = JSON.stringify({
+            url: container.resolvedUrl.url,
+            clientId: serializedClientId,
+            pendingRuntimeState,
+        });
+
+        const container2 = await loader.resolve({ url }, pendingState);
+
+        const connectP = new Promise<void>((resolve, reject) => {
+            container2.on("connected", () => {
+                container2.getQuorum().getMember(serializedClientId) === undefined
+                ? resolve()
+                : reject(new Error("connected while previous client in quorum"));
+            });
+        });
+
+        // wait for the join message so we see connectedStateRejected
+        if (container2.connectionState !== ConnectionState.Connecting) {
+            await new Promise((resolve) => container2.deltaManager.on("connect", resolve));
+        }
+
+        container.close();
+        await connectP;
     });
 });

@@ -472,8 +472,3 @@ declare module "@fluidframework/core-interfaces" {
         readonly ILoader?: ILoader;
     }
 }
-
-export interface IPendingLocalState {
-    url: string;
-    pendingRuntimeState: unknown;
-}

@@ -22,6 +22,7 @@ export interface IConnectionStateHandler {
 
 export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
+    serialized?: boolean;
 }
 
 const JoinOpTimer = 45000;
@@ -54,6 +55,7 @@ export class ConnectionStateHandler {
     constructor(
         private readonly handler: IConnectionStateHandler,
         private readonly logger: ITelemetryLogger,
+        private readonly serializedClientId?: string,
     ) {
         this.prevClientLeftTimer = new Timer(
             // Default is 5 min for which we are going to wait for its own "leave" message. This is same as
@@ -65,6 +67,10 @@ export class ConnectionStateHandler {
                 this.applyForConnectedState("timeout");
             },
         );
+        // if we have a serialized clientId we will need to wait unless we see its "leave" op
+        if (serializedClientId !== undefined) {
+            this.prevClientLeftTimer.restart();
+        }
 
         // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
         // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
@@ -130,6 +136,12 @@ export class ConnectionStateHandler {
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved") {
         const quorumClients = this.handler.quorumClients();
         assert(quorumClients !== undefined, 0x236 /* "In all cases it should be already installed" */);
+
+        assert(this.prevClientLeftTimer.hasTimer === false ||
+            (this.serializedClientId !== undefined && quorumClients.getMember(this.serializedClientId) !== undefined) ||
+            (this.clientId !== undefined && quorumClients.getMember(this.clientId) !== undefined),
+            "waiting for clientId not present in quorum");
+
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
         // or timeout has occured while doing so.
@@ -157,7 +169,7 @@ export class ConnectionStateHandler {
 
     public receivedRemoveMemberEvent(clientId: string) {
         // If the client which has left was us, then finish the timer.
-        if (this.clientId === clientId) {
+        if (this.clientId === clientId || this.serializedClientId === clientId) {
             this.prevClientLeftTimer.clear();
             this.applyForConnectedState("removeMemberEvent");
         }
@@ -217,6 +229,15 @@ export class ConnectionStateHandler {
         this._connectionState = value;
         const quorumClients = this.handler.quorumClients();
         let client: ILocalSequencedClient | undefined;
+
+        // look for previous clientIds in the quorum, including from a previously closed and serialized container
+        if (this.serializedClientId !== undefined) {
+            client = quorumClients?.getMember(this.serializedClientId);
+            if (client !== undefined) {
+                client.serialized = true;
+                assert(this._clientId === undefined, "serialized clientId in quorum after connection");
+            }
+        }
         if (this._clientId !== undefined) {
             client = quorumClients?.getMember(this._clientId);
         }
