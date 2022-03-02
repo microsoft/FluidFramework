@@ -19,21 +19,6 @@ import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidf
 import { QuorumFactory } from "./quorumFactory";
 import { IQuorum, IQuorumEvents } from "./interfaces";
 
-/**
- * Description of a task manager operation
- */
-type ITaskManagerOperation = ITaskManagerVolunteerOperation | ITaskManagerAbandonOperation;
-
-interface ITaskManagerVolunteerOperation {
-    type: "volunteer";
-    taskId: string;
-}
-
-interface ITaskManagerAbandonOperation {
-    type: "abandon";
-    taskId: string;
-}
-
 interface IPendingOp {
     type: "volunteer" | "abandon";
     messageId: number;
@@ -147,8 +132,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     private readonly taskQueues: Map<string, string[]> = new Map();
 
-    // opWatcher emits for every op on this data store.  This is just a repackaging of processCore into events.
-    private readonly opWatcher: EventEmitter = new EventEmitter();
     // queueWatcher emits an event whenever the consensus state of the task queues changes
     // TODO currently could event even if the queue doesn't actually change
     private readonly queueWatcher: EventEmitter = new EventEmitter();
@@ -171,40 +154,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         super(id, runtime, attributes);
 
         this.values = new Map();
-
-        this.opWatcher.on("volunteer", (taskId: string, clientId: string, local: boolean, messageId: number) => {
-            if (local) {
-                const pendingOp = this.latestPendingOps.get(taskId);
-                assert(pendingOp !== undefined, 0x07b /* "Unexpected op" */);
-                // Need to check the id, since it's possible to volunteer and abandon multiple times before the acks
-                if (messageId === pendingOp.messageId) {
-                    assert(pendingOp.type === "volunteer", 0x07c /* "Unexpected op type" */);
-                    // Delete the pending, because we no longer have an outstanding op
-                    this.latestPendingOps.delete(taskId);
-                }
-            }
-
-            this.addClientToQueue(taskId, clientId);
-        });
-
-        this.opWatcher.on("abandon", (taskId: string, clientId: string, local: boolean, messageId: number) => {
-            if (local) {
-                const pendingOp = this.latestPendingOps.get(taskId);
-                assert(pendingOp !== undefined, 0x07d /* "Unexpected op" */);
-                // Need to check the id, since it's possible to abandon and volunteer multiple times before the acks
-                if (messageId === pendingOp.messageId) {
-                    assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
-                    // Delete the pending, because we no longer have an outstanding op
-                    this.latestPendingOps.delete(taskId);
-                }
-            }
-
-            this.removeClientFromQueue(taskId, clientId);
-        });
-
-        runtime.getQuorum().on("removeMember", (clientId: string) => {
-            this.removeClientFromAllQueues(clientId);
-        });
 
         this.queueWatcher.on("queueChange", (taskId: string, oldLockHolder: string, newLockHolder: string) => {
             // Exit early if we are still catching up on reconnect -- we can't be the leader yet anyway.
@@ -277,7 +226,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         content.forEach(([taskId, clientIdQueue]) => {
             this.taskQueues.set(taskId, clientIdQueue);
         });
-        this.scrubClientsNotInQuorum();
     }
 
     /**
@@ -311,86 +259,15 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            const op = message.contents as ITaskManagerOperation;
-            const messageId = localOpMetadata as number;
+            const op = message.contents as IQuorumOperation;
 
             switch (op.type) {
-                case "volunteer":
-                    this.opWatcher.emit("volunteer", op.taskId, message.clientId, local, messageId);
-                    break;
-
-                case "abandon":
-                    this.opWatcher.emit("abandon", op.taskId, message.clientId, local, messageId);
+                case "set":
+                    // TODO: do something
                     break;
 
                 default:
                     throw new Error("Unknown operation");
-            }
-        }
-    }
-
-    private addClientToQueue(taskId: string, clientId: string) {
-        if (this.runtime.getQuorum().getMembers().has(clientId)) {
-            // Create the queue if it doesn't exist, and push the client on the back.
-            let clientQueue = this.taskQueues.get(taskId);
-            if (clientQueue === undefined) {
-                clientQueue = [];
-                this.taskQueues.set(taskId, clientQueue);
-            }
-
-            const oldLockHolder = clientQueue[0];
-            clientQueue.push(clientId);
-            const newLockHolder = clientQueue[0];
-            this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
-
-            // TODO remove, just for debugging
-            this.emit("changed");
-        }
-    }
-
-    private removeClientFromQueue(taskId: string, clientId: string) {
-        const clientQueue = this.taskQueues.get(taskId);
-        if (clientQueue === undefined) {
-            return;
-        }
-
-        const oldLockHolder = clientQueue[0];
-        const clientIdIndex = clientQueue.indexOf(clientId);
-        if (clientIdIndex !== -1) {
-            clientQueue.splice(clientIdIndex, 1);
-            // Clean up the queue if there are no more clients in it.
-            if (clientQueue.length === 0) {
-                this.taskQueues.delete(taskId);
-            }
-        }
-        const newLockHolder = clientQueue[0];
-        this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
-
-        // TODO remove, just for debugging
-        this.emit("changed");
-    }
-
-    private removeClientFromAllQueues(clientId: string) {
-        for (const taskId of this.taskQueues.keys()) {
-            this.removeClientFromQueue(taskId, clientId);
-        }
-    }
-
-    // This seems like it should be unnecessary if we can trust to receive the join/leave messages and
-    // also have an accurate snapshot.
-    private scrubClientsNotInQuorum() {
-        const quorum = this.runtime.getQuorum();
-        for (const [taskId, clientQueue] of this.taskQueues) {
-            const filteredClientQueue = clientQueue.filter((clientId) => quorum.getMember(clientId) !== undefined);
-            if (clientQueue.length !== filteredClientQueue.length) {
-                if (filteredClientQueue.length === 0) {
-                    this.taskQueues.delete(taskId);
-                } else {
-                    this.taskQueues.set(taskId, filteredClientQueue);
-                }
-                // TODO remove, just for debugging
-                this.emit("changed");
-                this.queueWatcher.emit("queueChange", taskId);
             }
         }
     }
