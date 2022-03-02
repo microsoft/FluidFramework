@@ -24,6 +24,7 @@ import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframew
 import { Loader } from "@fluidframework/container-loader";
 import { GenericError } from "@fluidframework/container-utils";
 import { AliasResult } from "@fluidframework/runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -78,8 +79,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
         })))).then((all)=>!all.includes(false));
 
-    const runtimeOf = (dataObject: ITestFluidObject): ContainerRuntime =>
-        dataObject.context.containerRuntime as ContainerRuntime;
+    const runtimeOf = (dataObject: ITestFluidObject): IContainerRuntime =>
+        dataObject.context.containerRuntime as IContainerRuntime;
 
     const createRootDataStore = async (dataObject: ITestFluidObject, id: string) =>
         runtimeOf(dataObject).createRootDataStore(packageName, id);
@@ -90,13 +91,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const getRootDataStore = async (dataObject: ITestFluidObject, id: string) =>
         runtimeOf(dataObject).getRootDataStore(id);
 
-    const corruptedAPIAliasOp = async (runtime: ContainerRuntime, alias: string): Promise<boolean | Error> =>
+    const corruptedAPIAliasOp = async (runtime: IContainerRuntime, alias: string): Promise<boolean | Error> =>
         new Promise<boolean>((resolve, reject) => {
             runtime.once("dispose", () => reject(new Error("Runtime disposed")));
-            runtime.submitDataStoreAliasOp({ id: alias }, resolve);
+            (runtime as ContainerRuntime).submitDataStoreAliasOp({ id: alias }, resolve);
         }).catch((error) => new Error(error.fluidErrorCode));
 
-    const corruptedAliasOp = async (runtime: ContainerRuntime, alias: string): Promise<boolean | Error> =>
+    const corruptedAliasOp = async (runtime: IContainerRuntime, alias: string): Promise<boolean | Error> =>
         new Promise<boolean>((resolve, reject) => {
             runtime.once("dispose", () => reject(new Error("Runtime disposed")));
             (runtime as any).submit(ContainerMessageType.Alias, { id: alias }, resolve);
