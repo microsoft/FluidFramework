@@ -174,14 +174,14 @@ stages:
           ArtifactType: M365
         condition: succeededOrFailed()
 
-      # - task: AssetRetention@3
-      #   inputs:
-      #     ArrowServiceConnection: '<ARROW_SERVICE_CONNECTION_NAME>' # TODO
-      #     AssetGroupName: '$(System.TeamProject)_$(Build.DefinitionName)'
-      #     AssetNumber: '$(Build.BuildId)'
-      #     IsShipped: false
-      #     DropsToRetain: 'CodeAnalysisLogs'
-      #   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+      - task: AssetRetention@3
+        inputs:
+          ArrowServiceConnection: 'Arrow_FluidFramework_internal'
+          AssetGroupName: '$(System.TeamProject)_$(Build.DefinitionName)'
+          AssetNumber: '$(Build.BuildId)'
+          IsShipped: false
+          DropsToRetain: 'CodeAnalysisLogs'
+        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
 
       - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
         condition: succeededOrFailed()
