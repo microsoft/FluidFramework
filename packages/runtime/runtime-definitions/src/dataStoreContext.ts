@@ -125,7 +125,7 @@ export interface IContainerRuntimeBase extends
         props?: any,
         id?: string,
         isRoot?: boolean,
-    ): Promise<IFluidRouter>;
+    ): Promise<IDataStore>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,

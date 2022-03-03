@@ -212,6 +212,27 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, "2"));
         });
 
+        it("Root datastore creation with aliasing turned on and legacy API returns already aliased datastore", async () => {
+            // Containers need to be recreated in order for the settings to be picked up
+            await reset();
+            await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.UseDataStoreAliasing": "true" });
+
+            const ds1 = await createDataStoreWithProps(dataObject1, "1", true /* root */);
+            const aliasResult1 = await ds1.trySetAlias("2");
+            assert.equal(aliasResult1, "AlreadyAliased");
+
+            const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const aliasResult2 = await ds2.trySetAlias("1");
+            assert.equal(aliasResult2, "Conflict");
+        });
+
+        it("Datastore creation with aliasing turned off and legacy API returns datastore which can be aliased ", async () => {
+            await createDataStoreWithProps(dataObject1, "1", false /* root */);
+            const ds = await runtimeOf(dataObject1).createDataStore(packageName);
+            const aliasResult = await ds.trySetAlias("2");
+            assert.equal(aliasResult, "Success");
+        });
+
         it("Root datastore creation fails when already attached - same container", async () => {
             let error: Error | undefined;
             try {
