@@ -64,6 +64,25 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
 }
 
 /**
+ * Encapsulates the return codes of the aliasing API
+ */
+ export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
+
+/**
+ * A fluid router with the capability of being assigned an alias
+ */
+ export interface IDataStore extends IFluidRouter {
+    /**
+     * Attempt to assign an alias to the datastore.
+     * If the operation succeeds, the datastore can be referenced
+     * by the supplied alias.
+     *
+     * @param alias - Given alias for this datastore.
+     */
+    trySetAlias(alias: string): Promise<AliasResult>;
+}
+
+/**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  */
@@ -106,7 +125,7 @@ export interface IContainerRuntimeBase extends
         props?: any,
         id?: string,
         isRoot?: boolean,
-    ): Promise<IFluidRouter>;
+    ): Promise<IDataStore>;
 
     /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
@@ -115,7 +134,7 @@ export interface IContainerRuntimeBase extends
      * gets attached to storage) will result in this store being attached to storage.
      * @param pkg - Package name of the data store factory
      */
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+    createDataStore(pkg: string | string[]): Promise<IDataStore>;
 
     /**
      * Creates detached data store context. only after context.attachRuntime() is called,
