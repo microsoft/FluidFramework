@@ -217,10 +217,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             await reset();
             await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.UseDataStoreAliasing": "true" });
 
-            await createDataStoreWithProps(dataObject1, "1", true /* root */);
-            const ds = await runtimeOf(dataObject1).createDataStore(packageName);
-            const aliasResult = await ds.trySetAlias("1");
-            assert.equal(aliasResult, "Conflict");
+            const ds1 = await createDataStoreWithProps(dataObject1, "1", true /* root */);
+            const aliasResult1 = await ds1.trySetAlias("2");
+            assert.equal(aliasResult1, "AlreadyAliased");
+
+            const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const aliasResult2 = await ds2.trySetAlias("1");
+            assert.equal(aliasResult2, "Conflict");
         });
 
         it("Datastore creation with aliasing turned off and legacy API returns datastore which can be aliased ", async () => {
