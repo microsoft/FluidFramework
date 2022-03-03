@@ -53,6 +53,7 @@ import {
     IConnectionManagerFactoryArgs,
     IConnectionManager,
  } from "./contracts";
+import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;
@@ -575,9 +576,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // DeltaManager overall policy - drop all ops on disconnection and rely on
             // container runtime to deal with resubmitting any ops that did not make it through.
             // So drop them, but also raise error event to look into details.
-            this.logger.sendErrorEvent({
+            this.logger.sendTelemetryEvent({
                 eventName: "OpenBatchOnDisconnect",
                 length: this.messageBuffer.length,
+                reason: {
+                    value: reason,
+                    tag: TelemetryDataTag.PackageData,
+                }
             });
             this.messageBuffer.length = 0;
         }
