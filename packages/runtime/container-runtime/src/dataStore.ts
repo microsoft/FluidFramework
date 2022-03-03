@@ -13,13 +13,6 @@ import { ContainerRuntime } from "./containerRuntime";
 import { DataStores } from "./dataStores";
 
 /**
- * @deprecated - This will be removed once https://github.com/microsoft/FluidFramework/issues/9127 is fixed.
- */
-export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
-    bindToContext(): void;
-}
-
-/**
  * Interface for an op to be used for assigning an
  * alias to a datastore
  */
@@ -134,13 +127,6 @@ class DataStore implements IDataStore {
         private readonly logger: ITelemetryLogger,
     ) { }
     public get IFluidRouter() { return this.fluidDataStoreChannel; }
-
-    /**
-     * @deprecated - This will be removed once https://github.com/microsoft/FluidFramework/issues/9127 is fixed.
-     */
-    public bindToContext() {
-        this.fluidDataStoreChannel.bindToContext();
-    }
 
     private async ackBasedPromise<T>(
         executor: (resolve: (value: T | PromiseLike<T>) => void,
