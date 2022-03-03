@@ -188,7 +188,7 @@ stages:
           GdnBreakGdnToolESLintSeverity: Warning
           GdnBreakPolicy: M365
           GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)\'
-          continueOnError: true
+        continueOnError: true
 
       - task: PublishPipelineArtifact@1
         displayName: 'Publish Baselines'
