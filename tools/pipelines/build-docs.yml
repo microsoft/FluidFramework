@@ -196,8 +196,8 @@ stages:
           DropsToRetain: 'CodeAnalysisLogs'
 
       - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
-        condition: succeededOrFailed()
         displayName: 'Guardian Break'
+        condition: succeededOrFailed()
         inputs:
           GdnBreakPolicyMinSev: Warning
           GdnBreakAllTools: true
