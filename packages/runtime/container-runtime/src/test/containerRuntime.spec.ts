@@ -537,10 +537,10 @@ describe("Runtime", () => {
                     assert.ok(error instanceof GenericError);
                     assert.strictEqual(error.fluidErrorCode, "MaxReconnectsWithNoProgress");
                     assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
-                    mockLogger.assertMatchAny([{
+                    assert.ok(mockLogger.matchAnyEvent([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
                         attempts: 7,
-                    }]);
+                    }]));
                 });
 
             it(`No progress for ${maxReconnects} / 2 connection state changes and pending state will ` +
@@ -552,10 +552,10 @@ describe("Runtime", () => {
                     }
 
                     assert.equal(containerErrors.length, 0);
-                    mockLogger.assertMatchAny([{
+                    assert.ok(mockLogger.matchAnyEvent([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
                         attempts: 7,
-                    }]);
+                    }]));
                 });
 
             it(`No progress for ${maxReconnects} connection state changes and pending state with` +
@@ -569,7 +569,7 @@ describe("Runtime", () => {
                     }
 
                     assert.equal(containerErrors.length, 0);
-                    mockLogger.assertMatch([]);
+                    mockLogger.matchEvents([]);
                 });
 
             it(`No progress for ${maxReconnects} connection state changes and no pending state will ` +
@@ -581,7 +581,7 @@ describe("Runtime", () => {
                     }
 
                     assert.equal(containerErrors.length, 0);
-                    mockLogger.assertMatch([]);
+                    mockLogger.matchEvents([]);
                 });
 
             it(`No progress for ${maxReconnects} connection state changes and pending state but successfully ` +
@@ -601,7 +601,7 @@ describe("Runtime", () => {
                     }
 
                     assert.equal(containerErrors.length, 0);
-                    mockLogger.assertMatch([]);
+                    mockLogger.matchEvents([]);
                 });
 
             it(`No progress for ${maxReconnects} connection state changes and pending state but successfully ` +
@@ -625,10 +625,10 @@ describe("Runtime", () => {
                     assert.ok(error instanceof GenericError);
                     assert.strictEqual(error.fluidErrorCode, "MaxReconnectsWithNoProgress");
                     assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
-                    mockLogger.assertMatchAny([{
+                    assert.ok(mockLogger.matchAnyEvent([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
                         attempts: 7,
-                    }]);
+                    }]));
                 });
         });
     });
