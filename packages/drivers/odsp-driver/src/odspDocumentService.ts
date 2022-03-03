@@ -387,6 +387,14 @@ export class OdspDocumentService implements IDocumentService {
                             error,
                         )
                     });;
+            } else {
+                // Logging just for informational purposes to help with debugging as this is a new feature.
+                this.mc.logger.sendErrorEvent({
+                    eventName: "JoinSessionRefreshNotScheduled",
+                    refreshAfterDeltaMs,
+                    refreshSessionDurationSeconds,
+                    entryTime: response.entryTime,
+                });
             }
         }
         return response.joinSessionResponse;
