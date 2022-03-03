@@ -106,11 +106,6 @@ export function createAttributesBlob(
 
 interface ISnapshotDetails {
     pkg: readonly string[];
-    /**
-     * This tells whether a data store is root. Root data stores are never collected.
-     * Non-root data stores may be collected if they are not used.
-     */
-    isRootDataStore: boolean;
     snapshot?: ISnapshotTree;
 }
 
@@ -212,7 +207,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public async isRoot(): Promise<boolean> {
-        return (await this.getInitialSnapshotDetails()).isRootDataStore;
+        // This call updates this.isRootDataStore if it has not yet been updated
+        // The initial value is stored in the initial snapshot of the data store
+        await this.getInitialSnapshotDetails();
+        return this.isRootDataStore;
     }
 
     protected registry: IFluidDataStoreRegistry | undefined;
@@ -225,6 +223,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected channelDeferred: Deferred<IFluidDataStoreChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
+    protected isRootDataStore: boolean = false;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
@@ -450,8 +449,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
 
         // Add data store's attributes to the summary.
-        const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
-        const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
+        const { pkg } = await this.getInitialSnapshotDetails();
+        const attributes = createAttributes(pkg, this.isRootDataStore, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC data to the summary if it's not written at the root.
@@ -729,7 +728,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 }
 
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
-    private isRootDataStore: boolean | undefined;
     private readonly initSnapshotValue: ISnapshotTree | string | undefined;
     private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
@@ -804,11 +802,12 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
             }
         }
 
+        this.isRootDataStore = isRootDataStore;
+
         return {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             pkg: this.pkg!,
             snapshot: tree,
-            isRootDataStore,
         };
     });
 
@@ -846,7 +845,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
  */
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     private readonly snapshotTree: ISnapshotTree | undefined;
-    protected isRootDataStore: boolean | undefined;
     /**
      * @deprecated 0.16 Issue #1635, #3631
      */
@@ -862,7 +860,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         );
 
         this.snapshotTree = props.snapshotTree;
-        this.isRootDataStore = props.isRootDataStore;
+        this.isRootDataStore = props.isRootDataStore ?? false;
         this.createProps = props.createProps;
         this.attachListeners();
     }
@@ -938,7 +936,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         return {
             pkg: this.pkg,
             snapshot,
-            isRootDataStore: this.isRootDataStore,
         };
     }
 
