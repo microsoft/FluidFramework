@@ -10,7 +10,6 @@
 /.devcontainer/                                                           @microsoft/fluid-cr-infra
 /.github/                                                                 @microsoft/fluid-cr-infra
 /.github/ISSUE_TEMPLATE/                                                  @microsoft/fluid-cr-docs
-/.github/workflows/azure-static-web-apps-agreeable-hill-0eeff5b10.yml     @microsoft/fluid-cr-docs
 /.md-magic-templates/                                                     @microsoft/fluid-cr-docs
 /.vscode/                                                                 @microsoft/fluid-cr-infra
 
