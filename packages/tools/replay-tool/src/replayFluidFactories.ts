@@ -33,13 +33,13 @@ import {
     SparseMatrix,
 } from "@fluidframework/sequence";
 
-async function runtimeRequestHandler(request: IRequest, runtime: IContainerRuntime){
+async function runtimeRequestHandler(request: IRequest, runtime: IContainerRuntime) {
     if (request.url === "/containerRuntime") {
         return { mimeType: "fluid/object", status: 200, value: runtime };
     } else {
         return create404Response(request);
     }
-};
+}
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {

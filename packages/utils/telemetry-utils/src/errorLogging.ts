@@ -78,15 +78,19 @@ export interface IFluidErrorAnnotations {
     props?: ITelemetryProperties;
 }
 
-/** For backwards compatibility with pre-fluidErrorCode valid errors */
-function patchWithErrorCode(
-    legacyError: Omit<IFluidErrorBase, "fluidErrorCode">,
+/** For backwards compatibility with pre-errorInstanceId valid errors */
+function patchLegacyError(
+    legacyError: Omit<IFluidErrorBase, "errorInstanceId">,
 ): asserts legacyError is IFluidErrorBase {
-    const patchMe: { -readonly [P in "fluidErrorCode"]?: IFluidErrorBase[P] } = legacyError as any;
-    if (patchMe.fluidErrorCode === undefined) {
-        patchMe.fluidErrorCode = "<error predates fluidErrorCode>";
+    const patchMe: { -readonly [P in "errorInstanceId"]?: IFluidErrorBase[P] } = legacyError as any;
+    if (patchMe.errorInstanceId === undefined) {
+        patchMe.errorInstanceId = uuid();
     }
 }
+
+// errorType "genericError" is used as a default value throughout the code.
+// Note that this matches ContainerErrorType/DriverErrorType's genericError
+const defaultErrorTypeForNormalize = "genericError";
 
 /**
  * Normalize the given error yielding a valid Fluid Error
@@ -100,7 +104,7 @@ export function normalizeError(
 ): IFluidErrorBase {
     // Back-compat, while IFluidErrorBase is rolled out
     if (isValidLegacyError(error)) {
-        patchWithErrorCode(error);
+        patchLegacyError(error);
     }
 
     if (isFluidError(error)) {
@@ -112,8 +116,7 @@ export function normalizeError(
     // We have to construct a new Fluid Error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
-        errorType: "genericError", // Match Container/Driver generic error type
-        fluidErrorCode: "",
+        errorType: defaultErrorTypeForNormalize,
         message,
         stack,
     });
@@ -171,7 +174,7 @@ export function generateStack(): string | undefined {
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
- export function wrapError<T extends IFluidErrorBase>(
+export function wrapError<T extends LoggingError>(
     innerError: unknown,
     newErrorFn: (message: string) => T,
 ): T {
@@ -186,7 +189,16 @@ export function generateStack(): string | undefined {
         overwriteStack(newError, stack);
     }
 
+    // Mark external errors with untrustedOrigin flag
+    if (originatedAsExternalError(innerError)) {
+        newError.addTelemetryProperties({ untrustedOrigin: 1 });
+    }
+
+    // Reuse errorInstanceId
     if (hasErrorInstanceId(innerError)) {
+        newError.overwriteErrorInstanceId(innerError.errorInstanceId);
+
+        // For "back-compat" in the logs
         newError.addTelemetryProperties({ innerErrorInstanceId: innerError.errorInstanceId });
     }
 
@@ -194,31 +206,53 @@ export function generateStack(): string | undefined {
 }
 
 /** The same as wrapError, but also logs the innerError, including the wrapping error's instance id */
-export function wrapErrorAndLog<T extends IFluidErrorBase>(
+export function wrapErrorAndLog<T extends LoggingError>(
     innerError: unknown,
     newErrorFn: (message: string) => T,
     logger: ITelemetryLogger,
 ) {
     const newError = wrapError(innerError, newErrorFn);
-    const wrappedByErrorInstanceId = hasErrorInstanceId(newError)
-        ? newError.errorInstanceId
-        : undefined;
+
+    // This will match innerError.errorInstanceId if present (see wrapError)
+    const errorInstanceId = newError.errorInstanceId;
+
+    // For "back-compat" in the logs
+    const wrappedByErrorInstanceId = errorInstanceId;
 
     logger.sendTelemetryEvent({
         eventName: "WrapError",
+        errorInstanceId,
         wrappedByErrorInstanceId,
     }, innerError);
 
     return newError;
 }
 
-function overwriteStack(error: IFluidErrorBase, stack: string) {
+function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
     // supposedly setting stack on an Error can throw.
     try {
         Object.assign(error, { stack });
     } catch (errorSettingStack) {
         error.addTelemetryProperties({ stack2: stack });
     }
+}
+
+/**
+ * True for any error object that is either external itself or is a wrapped/normalized external error
+ * False for any error we created and raised within the FF codebase.
+ */
+export function originatedAsExternalError(e: any): boolean {
+    return !isValidLegacyError(e) || (e.getTelemetryProperties().untrustedOrigin === 1);
+}
+
+/**
+ * True for any error object that is an (optionally normalized) external error
+ * False for any error we created and raised within the FF codebase, or wrapped in a well-known error type
+ */
+export function isExternalError(e: any): boolean {
+    return !isValidLegacyError(e) ||
+        (e.getTelemetryProperties().untrustedOrigin === 1 &&
+         e.errorType === defaultErrorTypeForNormalize);
 }
 
 /**
@@ -287,7 +321,13 @@ export const getCircularReplacer = () => {
  * PLEASE take care to avoid setting sensitive data on this object without proper tagging!
  */
 export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
-    readonly errorInstanceId = uuid();
+    private _errorInstanceId = uuid();
+    get errorInstanceId() { return this._errorInstanceId; }
+    overwriteErrorInstanceId(id: string) { this._errorInstanceId = id; }
+
+    /** Back-compat to appease isFluidError typeguard in old code that may handle this error */
+    // @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
+    private fluidErrorCode: "-" = "-";
 
     /**
      * Create a new LoggingError
@@ -302,8 +342,9 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     ) {
         super(message);
 
-        // Don't log this list itself either
+        // Don't log this list itself, or the private _errorInstanceId
         omitPropsFromLogging.add("omitPropsFromLogging");
+        omitPropsFromLogging.add("_errorInstanceId");
 
         if (props) {
             this.addTelemetryProperties(props);
@@ -322,11 +363,12 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
      */
     public getTelemetryProperties(): ITelemetryProperties {
         const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
-        // Include non-enumerable props inherited from Error that are not returned by getValidTelemetryProps
+        // Include non-enumerable props that are not returned by getValidTelemetryProps
         return {
             ...taggableProps,
             stack: this.stack,
             message: this.message,
+            errorInstanceId: this._errorInstanceId,
         };
     }
 }
@@ -334,18 +376,16 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
 /** Simple implementation of IFluidErrorBase, extending LoggingError */
 class SimpleFluidError extends LoggingError implements IFluidErrorBase {
     readonly errorType: string;
-    readonly fluidErrorCode: string;
 
     constructor(
-        errorProps: Omit<IFluidErrorBase,
-            | "getTelemetryProperties"
-            | "addTelemetryProperties"
-            | "errorInstanceId"
-            | "name">,
+        errorProps: Pick<IFluidErrorBase,
+            | "message"
+            | "stack"
+            | "errorType"
+        >,
     ) {
         super(errorProps.message);
         this.errorType = errorProps.errorType;
-        this.fluidErrorCode = errorProps.fluidErrorCode;
         if (errorProps.stack !== undefined) {
             overwriteStack(this, errorProps.stack);
         }

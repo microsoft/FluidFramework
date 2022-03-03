@@ -169,7 +169,6 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             defaultDataStore._root.set("nonRootDS", dataStore.handle);
             await validateDataStoreReferenceState(dataStore.id, true /* referenced */);
 
-
             // Remove its handle and verify its marked as unreferenced.
             defaultDataStore._root.delete("nonRootDS");
             await validateDataStoreReferenceState(dataStore.id, false /* referenced */);

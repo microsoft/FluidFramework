@@ -136,15 +136,8 @@ export interface IContainerContext extends IDisposable {
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
-    /** @deprecated - Use `taggedLogger` if present. Otherwise, be sure to handle tagged data
-     * before sending events to this logger. In time we will assume the presence of `taggedLogger`,
-     * but in the meantime, current and older loader versions buttress loggers that do not support tags.
-     * IContainerContext will retain both options, but hosts must now support tags as the loader
-     * will soon plumb taggedLogger's events (potentially tagged) to the host's logger.
-     */
-    readonly logger?: ITelemetryBaseLogger;
     // The logger implementation, which would support tagged events, should be provided by the loader.
-    readonly taggedLogger?: ITelemetryBaseLogger;
+    readonly taggedLogger: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     pendingLocalState?: unknown;
 
@@ -156,7 +149,7 @@ export interface IContainerContext extends IDisposable {
     /**
      * @deprecated 0.56, will be removed in the next release
      */
-    raiseContainerWarning(warning: ContainerWarning): void;
+    raiseContainerWarning?(warning: ContainerWarning): void;
 
     /**
      * Get an absolute url for a provided container-relative request.

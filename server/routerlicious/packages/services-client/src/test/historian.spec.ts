@@ -115,7 +115,7 @@ describe("Historian", () => {
         }
     };
     const mockReplyWithAuth = (validCredentials: ICredentials, successResponseData?: any) => (req: AxiosRequestConfig): any[] => {
-        const decodedCredentials = decodeHistorianCredentials(req.headers?.Authorization);
+        const decodedCredentials = decodeHistorianCredentials(req.headers?.Authorization as string);
         if (!decodedCredentials || decodedCredentials.password !== validCredentials.password) {
             return [401, successResponseData];
         }

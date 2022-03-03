@@ -27,6 +27,16 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     endpoints: { [name: string]: string };
 }
 
+/**
+ * Container package info handed off to resolver.
+ */
+export interface IContainerPackageInfo {
+    /**
+     * Container package name.
+     */
+    name: string;
+}
+
 export interface IUrlResolver {
 
     // Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
@@ -38,7 +48,7 @@ export interface IUrlResolver {
     getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
-        codeDetails?: IFluidCodeDetails,
+        packageInfoSource?: IFluidCodeDetails | IContainerPackageInfo,
     ): Promise<string>;
 }
 
@@ -75,5 +85,6 @@ export interface IDriverHeader {
 }
 
 declare module "@fluidframework/core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IRequestHeader extends Partial<IDriverHeader> { }
 }

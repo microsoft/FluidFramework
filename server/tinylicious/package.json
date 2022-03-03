@@ -43,7 +43,7 @@
     "@fluidframework/server-services-telemetry": "^0.1034.0",
     "@fluidframework/server-services-utils": "^0.1034.0",
     "@fluidframework/server-test-utils": "^0.1034.0",
-    "axios": "^0.21.2",
+    "axios": "^0.26.0",
     "body-parser": "^1.17.1",
     "bytes": "^3.0.0",
     "charwise": "^3.0.1",
@@ -68,7 +68,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.25.0",
+    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
     "@fluidframework/mocha-test-setup": "^0.27.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",

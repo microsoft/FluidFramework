@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IDocumentMessage, IDocumentSystemMessage, IProtocolState } from "@fluidframework/protocol-definitions";
 import { IProducer, IRawOperationMessage, RawOperationType } from "@fluidframework/server-services-core";
@@ -20,7 +18,6 @@ export const initializeProtocol = (
     protocolState.proposals,
     protocolState.values,
     () => -1,
-    () => { return; },
 );
 
 // eslint-disable-next-line @typescript-eslint/promise-function-async

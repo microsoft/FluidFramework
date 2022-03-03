@@ -5,9 +5,7 @@
 
 import { Router } from "express";
 import nconf from "nconf";
-import { IExternalStorageManager } from "../externalStorageManager";
-import * as utils from "../utils";
-/* eslint-disable import/no-internal-modules */
+import { IRepositoryManagerFactory } from "../utils";
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
 import * as refs from "./git/refs";
@@ -17,7 +15,6 @@ import * as trees from "./git/trees";
 import * as repositoryCommits from "./repository/commits";
 import * as contents from "./repository/contents";
 import * as summaries from "./summaries";
-/* eslint-enable import/no-internal-modules */
 
 export interface IRoutes {
     git: {
@@ -37,22 +34,21 @@ export interface IRoutes {
 
 export function create(
     store: nconf.Provider,
-    repoManager: utils.RepositoryManager,
-    externalStorageManager: IExternalStorageManager,
+    repoManagerFactory: IRepositoryManagerFactory,
 ): IRoutes {
     return {
         git: {
-            blobs: blobs.create(store, repoManager),
-            commits: commits.create(store, repoManager),
-            refs: refs.create(store, repoManager, externalStorageManager),
-            repos: repos.create(store, repoManager),
-            tags: tags.create(store, repoManager),
-            trees: trees.create(store, repoManager),
+            blobs: blobs.create(store, repoManagerFactory),
+            commits: commits.create(store, repoManagerFactory),
+            refs: refs.create(store, repoManagerFactory),
+            repos: repos.create(store, repoManagerFactory),
+            tags: tags.create(store, repoManagerFactory),
+            trees: trees.create(store, repoManagerFactory),
         },
         repository: {
-            commits: repositoryCommits.create(store, repoManager, externalStorageManager),
-            contents: contents.create(store, repoManager),
+            commits: repositoryCommits.create(store, repoManagerFactory),
+            contents: contents.create(store, repoManagerFactory),
         },
-        summaries: summaries.create(store, repoManager, externalStorageManager),
+        summaries: summaries.create(store, repoManagerFactory),
     };
 }

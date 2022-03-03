@@ -34,11 +34,14 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { ISharedMap } from '@fluidframework/map';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { Loader } from '@fluidframework/container-loader';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
+import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
@@ -79,8 +82,28 @@ export enum DataObjectFactoryType {
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
 
+// @public
+export class EventAndErrorTrackingLogger extends TelemetryLogger {
+    constructor(baseLogger: ITelemetryBaseLogger);
+    // (undocumented)
+    registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]): void;
+    // (undocumented)
+    reportAndClearTrackedEvents(): {
+        expectedNotFound: ({
+            index: number;
+            event: ITelemetryGenericEvent | undefined;
+        } | undefined)[];
+        unexpectedErrors: ITelemetryBaseEvent[];
+    };
+    // (undocumented)
+    send(event: ITelemetryBaseEvent): void;
+    }
+
 // @public (undocumented)
 export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
+
+// @public (undocumented)
+export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
 // @public (undocumented)
 export interface IOpProcessingController {
@@ -176,6 +199,9 @@ export class LocalCodeLoader implements ICodeLoader {
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
 
+// @public
+export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
+
 // @public (undocumented)
 export type SupportedExportInterfaces = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IProvideFluidDataStoreRegistry & IProvideFluidCodeDetailsComparer>;
 
@@ -253,7 +279,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     readonly LoaderConstructor: typeof Loader;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
-    get logger(): ITelemetryBaseLogger;
+    get logger(): EventAndErrorTrackingLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
     // (undocumented)

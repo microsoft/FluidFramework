@@ -30,7 +30,6 @@ import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeOp } from '@fluidframework/merge-tree';
 import { IMergeTreeRemoveMsg } from '@fluidframework/merge-tree';
 import { IntervalConflictResolver } from '@fluidframework/merge-tree';
-import { IntervalType } from '@fluidframework/merge-tree';
 import { IRelativePosition } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISegmentAction } from '@fluidframework/merge-tree';
@@ -181,6 +180,18 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
         done: boolean;
     };
     }
+
+// @public (undocumented)
+export enum IntervalType {
+    // (undocumented)
+    Nest = 1,
+    // (undocumented)
+    Simple = 0,
+    // (undocumented)
+    SlideOnRemove = 2,
+    // (undocumented)
+    Transient = 4
+}
 
 // @public
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {

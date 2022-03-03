@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-shadow, eqeqeq, max-len, no-bitwise */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise */
 
 import { strict as assert } from "assert";
 import fs from "fs";
@@ -56,9 +56,6 @@ import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testU
 function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData> {
     const props: Property<TKey, TData>[] = [];
     const compareProps = (a: Property<TKey, TData>, b: Property<TKey, TData>) => compareKeys(a.key, b.key);
-    function diag() {
-        console.log(`size is ${props.length}`);
-    }
     function mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
         let _start = start;
         let _end = end;
@@ -103,7 +100,7 @@ function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDi
 
     function get(key: TKey) {
         for (let i = 0, len = props.length; i < len; i++) {
-            if (props[i].key == key) {
+            if (props[i].key === key) {
                 return props[i];
             }
         }
@@ -123,7 +120,7 @@ function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDi
     function remove(key: TKey) {
         if (key !== undefined) {
             for (let i = 0, len = props.length; i < len; i++) {
-                if (props[i].key == key) {
+                if (props[i].key === key) {
                     props[i] = props[len - 1];
                     props.length--;
                     props.sort(compareProps);
@@ -140,7 +137,6 @@ function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDi
         remove,
         get,
         put,
-        diag,
     };
 }
 
@@ -235,7 +231,6 @@ export function integerTest1() {
     }
     const getdur = took("get all keys", start);
     log(`cost per get is ${(1000.0 * getdur / intCount).toFixed(3)} us`);
-    beast.diag();
     log(`duplicates ${conflictCount}, errors ${errorCount}`);
     return errorCount;
 }
@@ -257,7 +252,7 @@ export function fileTest1() {
                 linearBeast.put(a[i], i);
             }
         }
-        if (k == 0) {
+        if (k === 0) {
             beast.map(printStringNumProperty);
             log("BTREE...");
         }
@@ -276,7 +271,7 @@ export function fileTest1() {
                 // log(`Trying key ${animal}`);
                 if (prop) {
                     // printStringNumProperty(prop);
-                    if ((linProp === undefined) || (prop.key != linProp.key) || (prop.data != linProp.data)) {
+                    if ((linProp === undefined) || (prop.key !== linProp.key) || (prop.data !== linProp.data)) {
                         log(`Linear BST does not match RB BST at key ${animal}`);
                     }
                 }
@@ -285,8 +280,6 @@ export function fileTest1() {
                 }
             }
         }
-        beast.diag();
-        linearBeast.diag();
     }
 }
 
@@ -321,7 +314,7 @@ function checkInsertMergeTree(
         textSegment.text, undefined, undefined);
     accumTime += elapsedMicroseconds(clockStart);
     const updatedText = new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
-    const result = (checkText == updatedText);
+    const result = (checkText === updatedText);
     if ((!result) && verbose) {
         log(`mismatch(o): ${checkText}`);
         log(`mismatch(u): ${updatedText}`);
@@ -337,7 +330,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree, start: number, end: numb
     mergeTree.markRangeRemoved(start, end, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined);
     accumTime += elapsedMicroseconds(clockStart);
     const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
-    const result = (checkText == updatedText);
+    const result = (checkText === updatedText);
     if ((!result) && verbose) {
         log(`mismatch(o): ${origText}`);
         log(`mismatch(c): ${checkText}`);
@@ -395,7 +388,7 @@ export function mergeTreeLargeTest() {
         insertText(mergeTree, pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber,
             s, undefined, undefined);
         accumTime += elapsedMicroseconds(clockStart);
-        if ((i > 0) && (0 == (i % 50000))) {
+        if ((i > 0) && (0 === (i % 50000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -416,7 +409,7 @@ export function mergeTreeLargeTest() {
         mergeTree.markRangeRemoved(pos, pos + dlen, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined);
         accumTime += elapsedMicroseconds(clockStart);
 
-        if ((i > 0) && (0 == (i % 50000))) {
+        if ((i > 0) && (0 === (i % 50000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -462,7 +455,7 @@ export function mergeTreeCheckedTest() {
             errorCount++;
             break;
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -483,7 +476,7 @@ export function mergeTreeCheckedTest() {
             log(mergeTree.toString());
             break;
         }
-        if ((i > 0) && (0 == (i % 10))) {
+        if ((i > 0) && (0 === (i % 10))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -515,7 +508,7 @@ export function mergeTreeCheckedTest() {
                 break;
             }
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -537,7 +530,7 @@ export function mergeTreeCheckedTest() {
             errorCount++;
             break;
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -569,7 +562,7 @@ export function mergeTreeCheckedTest() {
                 break;
             }
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -706,13 +699,13 @@ export function TestPack(verbose = true) {
                 const serverIncrText = server.incrementalGetText();
                 incrGetTextTime += elapsedMicroseconds(clockStart);
                 incrGetTextCalls++;
-                if (serverIncrText != serverText) {
+                if (serverIncrText !== serverText) {
                     log("incr get text mismatch");
                 }
             }
             for (const client of clients) {
                 const cliText = client.getText();
-                if (cliText != serverText) {
+                if (cliText !== serverText) {
                     log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
                     // log(serverText);
                     // log(cliText);
@@ -820,11 +813,11 @@ export function TestPack(verbose = true) {
         let errorCount = 0;
 
         // function asyncRoundStep(asyncInfo: AsyncRoundInfo, roundCount: number) {
-        //     if (asyncInfo.state == AsyncRoundState.Insert) {
+        //     if (asyncInfo.state === AsyncRoundState.Insert) {
         //         if (!asyncInfo.insertSegmentCount) {
         //             asyncInfo.insertSegmentCount = randSmallSegmentCount();
         //         }
-        //         if (asyncInfo.clientIndex == clients.length) {
+        //         if (asyncInfo.clientIndex === clients.length) {
         //             asyncInfo.state = AsyncRoundState.Remove;
         //             asyncInfo.iterIndex = 0;
         //         }
@@ -837,21 +830,21 @@ export function TestPack(verbose = true) {
         //                 randomSpateOfInserts(client, asyncInfo.iterIndex);
         //             }
         //             asyncInfo.iterIndex++;
-        //             if (asyncInfo.iterIndex == asyncInfo.insertSegmentCount) {
+        //             if (asyncInfo.iterIndex === asyncInfo.insertSegmentCount) {
         //                 asyncInfo.clientIndex++;
         //                 asyncInfo.insertSegmentCount = undefined;
         //                 asyncInfo.iterIndex = 0;
         //             }
         //         }
         //     }
-        //     if (asyncInfo.state == AsyncRoundState.Remove) {
+        //     if (asyncInfo.state === AsyncRoundState.Remove) {
         //         if (!asyncInfo.removeSegmentCount) {
         //             asyncInfo.removeSegmentCount = Math.floor(3 * asyncInfo.insertSegmentCount / 4);
         //             if (asyncInfo.removeSegmentCount < 1) {
         //                 asyncInfo.removeSegmentCount = 1;
         //             }
         //         }
-        //         if (asyncInfo.clientIndex == clients.length) {
+        //         if (asyncInfo.clientIndex === clients.length) {
         //             asyncInfo.state = AsyncRoundState.Tail;
         //         }
         //         else {
@@ -863,14 +856,14 @@ export function TestPack(verbose = true) {
         //                 randomSpateOfInserts(client, asyncInfo.iterIndex);
         //             }
         //             asyncInfo.iterIndex++;
-        //             if (asyncInfo.iterIndex == asyncInfo.removeSegmentCount) {
+        //             if (asyncInfo.iterIndex === asyncInfo.removeSegmentCount) {
         //                 asyncInfo.clientIndex++;
         //                 asyncInfo.removeSegmentCount = undefined;
         //                 asyncInfo.iterIndex = 0;
         //             }
         //         }
         //     }
-        //     if (asyncInfo.state == AsyncRoundState.Tail) {
+        //     if (asyncInfo.state === AsyncRoundState.Tail) {
         //         finishRound(roundCount);
         //     }
         //     else {
@@ -907,7 +900,7 @@ export function TestPack(verbose = true) {
             // log(server.getText());
             // log(server.mergeTree.toString());
             // log(server.mergeTree.getStats());
-            if (0 == (roundCount % 100)) {
+            if (0 === (roundCount % 100)) {
                 const clockStart = clock();
                 if (checkTextMatch()) {
                     log(`round: ${roundCount} BREAK`);
@@ -1031,17 +1024,17 @@ export function TestPack(verbose = true) {
         cliB.startOrUpdateCollaboration("FredB");
         function checkTextMatch(checkSeq: number) {
             let error = false;
-            if (cliA.getCurrentSeq() != checkSeq) {
+            if (cliA.getCurrentSeq() !== checkSeq) {
                 log(`client A has seq number ${cliA.getCurrentSeq()} mismatch with ${checkSeq}`);
                 error = true;
             }
-            if (cliB.getCurrentSeq() != checkSeq) {
+            if (cliB.getCurrentSeq() !== checkSeq) {
                 log(`client B has seq number ${cliB.getCurrentSeq()} mismatch with ${checkSeq}`);
                 error = true;
             }
             const aText = cliA.getText();
             const bText = cliB.getText();
-            if (aText != bText) {
+            if (aText !== bText) {
                 log(`mismatch @${checkSeq}:`);
                 log(aText);
                 log(bText);
@@ -1291,22 +1284,6 @@ export function TestPack(verbose = true) {
         if (verbose) {
             log(cli.mergeTree.toString());
         }
-        let fwdRanges = cli.mergeTree.findHistorialRange(0, 5, 1, 2, cli.getClientId());
-        if (verbose) {
-            log(`fwd range 0 5 on 1 => 2`);
-            for (const r of fwdRanges) {
-                log(`fwd range (${r.start}, ${r.end})`);
-            }
-        }
-        const fwdPos = cli.mergeTree.findHistorialPosition(2, 1, 2, cli.getClientId());
-        if (verbose) {
-            log(`fwd pos 2 on 1 => 2 is ${fwdPos}`);
-            for (let clientId = 0; clientId < 4; clientId++) {
-                for (let refSeq = 0; refSeq < 3; refSeq++) {
-                    log(cli.relText(clientId, refSeq));
-                }
-            }
-        }
         cli.insertTextRemote(9, " chaser", undefined, 3, 2, "3");
         cli.removeRangeLocal(12, 14);
         cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTreeDeltaType.REMOVE, 4));
@@ -1348,14 +1325,6 @@ export function TestPack(verbose = true) {
             }
         }
         const removeOp = cli.removeRangeLocal(3, 5);
-        fwdRanges = cli.mergeTree.findHistorialRangeFromClient(3, 6, 9, 10, 2);
-        if (verbose) {
-            log(cli.mergeTree.toString());
-            log(`fwd range 3 6 on cli 2 refseq 9 => cli 0 local`);
-            for (const r of fwdRanges) {
-                log(`fwd range (${r.start}, ${r.end})`);
-            }
-        }
         cli.applyMsg(cli.makeOpMessage(createRemoveRangeOp(3, 6), 10, 9, "2"));
         cli.applyMsg(cli.makeOpMessage(removeOp, 11));
         if (verbose) {
@@ -1548,7 +1517,7 @@ export class DocumentTree {
                 );
                 this.pos++;
             } else {
-                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+
                 const trid = docNode.name + this.ids[docNode.name].toString();
                 docNode.id = trid;
                 id = this.ids[docNode.name]++;
@@ -1591,7 +1560,7 @@ export class DocumentTree {
         };
 
         function printStack(stack: Stack<string>) {
-            // eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in, no-restricted-syntax
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in
             for (const item in stack.items) {
                 log(item);
             }
@@ -1774,7 +1743,7 @@ function findReplacePerf(filename: string) {
 
         const curSeg = curSegOff.segment;
         const textSeg = <TextSegment>curSeg;
-        if (textSeg != null) {
+        if (textSeg !== null) {
             const text = textSeg.text;
             const i = text.indexOf("the");
             if (i >= 0) {
@@ -1826,7 +1795,7 @@ describe("Routerlicious", () => {
         });
 
         it("hierarchy", () => {
-            assert(DocumentTree.test1() == 0, logLines.join("\n"));
+            assert(DocumentTree.test1() === 0, logLines.join("\n"));
         }).timeout(testTimeout);
 
         it("randolicious", () => {

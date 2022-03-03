@@ -7,7 +7,7 @@ import { commonOptionString, parseOption } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { MonoRepoKind } from "../common/monoRepo";
 import { GitRepo, fatal } from "./utils";
-import { Context, VersionBumpType, VersionChangeType } from "./context";
+import { Context, isVersionBumpType, VersionBumpType, VersionChangeType } from "./context";
 import { bumpVersionCommand } from "./bumpVersion";
 import { createReleaseBranch } from "./createBranch";
 import { releaseVersion } from "./releaseVersion";
@@ -26,6 +26,7 @@ Options:
   -r --release [<pkg>[=<type>]]  Release and bump version of specified package or monorepo and dependencies (default: client)
   -u --update                    Update prerelease dependencies for released packages
      --version [<pkg>[=<type>]]  Collect and show version of specified package or monorepo and dependencies (default: client)
+     --virtualPatch              Use a virtual patch number for beta versioning (0.<major>.<minor>00<patch>)
 ${commonOptionString}
 `);
 }
@@ -42,6 +43,7 @@ let paramVersion: semver.SemVer | undefined;
 let paramBumpName: string | undefined;
 let paramBumpVersion: VersionChangeType | undefined;
 let paramUpdate = false;
+let paramVirtualPatch = false;
 
 function parseNameVersion(arg: string | undefined) {
     let name = arg;
@@ -65,8 +67,8 @@ function parseNameVersion(arg: string | undefined) {
 
     let version: VersionChangeType | undefined;
     if (v !== undefined) {
-        if (["major", "minor", "patch"].includes(v)) {
-            version = v as VersionBumpType;
+        if (isVersionBumpType(v)) {
+            version = v;
         } else {
             const parsedVersion = semver.parse(v);
             if (!parsedVersion) {
@@ -195,6 +197,12 @@ function parseOptions(argv: string[]) {
             paramUpdate = true;
             continue;
         }
+
+        if (arg === "--virtualPatch") {
+            paramVirtualPatch = true;
+            continue;
+        }
+
         console.error(`ERROR: Invalid arguments ${arg}`);
         error = true;
         break;
@@ -267,20 +275,20 @@ async function main() {
 
         switch (command) {
             case "branch":
-                await createReleaseBranch(context);
+                await createReleaseBranch(context, paramVirtualPatch);
                 break;
             case "dep":
                 console.log("Bumping dependencies");
                 await bumpDependencies(context, "Bump dependencies version", paramBumpDepPackages, paramLocal, paramCommit);
                 break;
             case "release":
-                await releaseVersion(context, paramReleaseName!, paramLocal, paramReleaseVersion);
+                await releaseVersion(context, paramReleaseName!, paramLocal, paramVirtualPatch, paramReleaseVersion);
                 break;
             case "version":
                 await showVersions(context, paramVersionName!, paramVersion);
                 break;
             case "bump":
-                await bumpVersionCommand(context, paramBumpName!, paramBumpVersion ?? "patch", paramCommit);
+                await bumpVersionCommand(context, paramBumpName!, paramBumpVersion ?? "patch", paramCommit, paramVirtualPatch);
                 break;
             case "update":
                 await cleanPrereleaseDependencies(context, paramLocal, paramCommit);
