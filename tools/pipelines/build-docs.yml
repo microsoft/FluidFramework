@@ -61,6 +61,8 @@ variables:
       eq(parameters.guardianAssetRetentionOverride, 'force'),
       and(eq(variables.isMain, true), eq(parameters.guardianAssetRetentionOverride, 'default'))
       )}}
+  - name: arrow.releasedtoproduction
+    value: eq(variables.shouldDeploy, true)
 
 # no PR triggers
 trigger:
@@ -190,7 +192,7 @@ stages:
           ArrowServiceConnection: 'Arrow_FluidFramework_internal'
           AssetGroupName: 'fluidframework_$(System.TeamProject)_$(Build.DefinitionName)'
           AssetNumber: '$(Build.BuildId)'
-          IsShipped: false
+          IsShipped: false # based on value of arrow.releasedtoproduction variable
           DropsToRetain: 'CodeAnalysisLogs'
 
       - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
