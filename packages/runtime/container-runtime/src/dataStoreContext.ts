@@ -106,11 +106,6 @@ export function createAttributesBlob(
 
 interface ISnapshotDetails {
     pkg: readonly string[];
-    /**
-     * This tells whether a data store is root. Root data stores are never collected.
-     * Non-root data stores may be collected if they are not used.
-     */
-    isRootDataStore: boolean;
     snapshot?: ISnapshotTree;
 }
 
@@ -813,7 +808,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             pkg: this.pkg!,
             snapshot: tree,
-            isRootDataStore,
         };
     });
 
@@ -942,7 +936,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         return {
             pkg: this.pkg,
             snapshot,
-            isRootDataStore: this.isRootDataStore,
         };
     }
 

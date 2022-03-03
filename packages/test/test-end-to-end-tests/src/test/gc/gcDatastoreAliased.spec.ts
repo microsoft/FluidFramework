@@ -12,7 +12,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeFullCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import {
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
@@ -85,16 +85,13 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
 
     // TODO: fully validate that GC is notified. Currently this tests the race condition
     // where a remote datastore is summarized before the alias op arrives when trySetAlias is called.
-    itExpects("GC is notified when datastores are aliased.", [], async () => {
+    it("GC is notified when datastores are aliased.", async () => {
         await summarizeOnContainer(container2);
         const containerRuntime1 = mainDataStore1.containerRuntime;
         const aliasableDataStore1 = await containerRuntime1.createDataStore("TestDataObject");
 
         (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
         await provider.ensureSynchronized();
-
-        // Summarize before aliasing
-        const containerRuntime2 = mainDataStore2.containerRuntime;
 
         // We run the summary so await this.getInitialSnapshotDetails() is called before the datastore is aliased
         // and after the datastore is attached. This sets the isRootDataStore. This should be passing as there is 
@@ -108,6 +105,7 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
         
         // Should be able to retrieve root datastore from remote
+        const containerRuntime2 = mainDataStore2.containerRuntime;
         const aliasableDataStore2 = await containerRuntime2.getRootDataStore(alias);
         const aliasedDataStoreResponse2 = await aliasableDataStore2.request({url:"/"});
         const aliasedDataStore2 = aliasedDataStoreResponse2.value as TestDataObject;

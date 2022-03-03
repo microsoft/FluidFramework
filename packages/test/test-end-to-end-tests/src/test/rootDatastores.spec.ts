@@ -421,8 +421,14 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject3, alias));
         });
 
-        itExpects("Aliasing datastores summarized before the alias op is sent and after the attach op is sent " +
-        "does not cause a datastore corruption issue, and remote aliased datastores are referenced", [], async () => {
+        /**
+         * Aliasing datastores summarized before the alias op is sent and after the attach op is sent
+         * does not cause a datastore corruption issue
+         * 
+         * This test validates a bug where the rootiness of a datastore was not set to true in the
+         * above scenario.
+         */
+        it("Aliasing a bound datastore marks it as root correctly", async () => {
             await setupContainers({
                 ... testContainerConfig,
                 runtimeOptions: {
@@ -437,16 +443,24 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             const containerRuntime1 = runtimeOf(dataObject1);
             const aliasableDataStore1 = await containerRuntime1.createDataStore(packageName);
-    
+            const aliasedDataStoreResponse1 = await aliasableDataStore1.request({url:"/"});
+            const aliasedDataStore1 = aliasedDataStoreResponse1.value as ITestFluidObject;
+            // Casting any to repro a race condition where bindToContext is called before summarization,
+            // but aliasing happens afterwards
             (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
             await provider.ensureSynchronized();
-    
-            // Summarize before aliasing
+            
             const containerRuntime2 = runtimeOf(dataObject2) as ContainerRuntime;
-    
-            // This executes getInitialSnapshotDetails, a LazyPromise, before the alias op is sent
-            await (dataObject2.context as any).getInitialSnapshotDetails();
-    
+            let callFailed = false;
+            try{
+                // This executes getInitialSnapshotDetails, a LazyPromise, before the alias op is sent to update
+                // the isRootDataStore property in the dataStoreContext
+                await containerRuntime2.getRootDataStore(aliasedDataStore1.runtime.id);
+            }catch(e){
+                callFailed = true;
+            }
+            assert(callFailed, "Expected getRootDataStore to fail as the datastore is not yet a root datastore");
+            
             // Alias a datastore
             const alias = "alias";
             const aliasResult1 = await aliasableDataStore1.trySetAlias(alias);
@@ -454,10 +468,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             await provider.ensureSynchronized();
             
             // Should be able to retrieve root datastore from remote
-            const aliasableDataStore2 = await containerRuntime2.getRootDataStore(alias);
-            const aliasedDataStoreResponse2 = await aliasableDataStore2.request({url:"/"});
-            const aliasedDataStore2 = aliasedDataStoreResponse2.value as ITestFluidObject;
-            assert(aliasedDataStore2.context.baseSnapshot?.unreferenced !== true, "Datastore should be referenced");
+            assert.doesNotThrow(async () => 
+                await containerRuntime2.getRootDataStore(alias), "An aliased datastore should be a root datastore");
         });
     });
 });
