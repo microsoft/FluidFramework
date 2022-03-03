@@ -16,7 +16,7 @@ parameters:
       - skip
       - force
   - name: publishGuardianBaselines
-    displayName: Pusblish Guardian baseline files
+    displayName: Publish Guardian baseline files
     type: boolean
     default: false
 
