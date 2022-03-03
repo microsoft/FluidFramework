@@ -151,7 +151,7 @@ stages:
         inputs:
           version: 14.x
 
-      # Secure development requirements
+      # BEGIN Secure development requirements
       - task: UseDotNet@2
         displayName: 'Use .NET Core 3.x'
         condition: succeededOrFailed()
@@ -187,6 +187,21 @@ stages:
           GdnBreakGdnToolESLint: true
           GdnBreakGdnToolESLintSeverity: Warning
           GdnBreakPolicy: M365
+
+      - task: ms-secdevops-test.vss-secure-development-tools-test.build-task-postanalysis.PostAnalysis@2
+        displayName: 'Guardian Break'
+        inputs:
+          GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)\'
+          GdnBreakPolicy: M365
+          continueOnError: true
+
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish Baselines'
+        inputs:
+          targetPath: '$(Pipeline.Workspace)\.gdnbaselines'
+          artifact: .gdn
+          
+      # END Secure development requirements
 
       - task: Npm@1
         displayName: npm ci
