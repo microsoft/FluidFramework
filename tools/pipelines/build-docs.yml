@@ -110,6 +110,7 @@ stages:
 
 - stage: json
   displayName: 'Combine API Extractor JSON'
+  dependsOn: [] # run in parallel
   jobs:
     - deployment: upload_json
       displayName: 'Upload combined api-extractor JSON'
