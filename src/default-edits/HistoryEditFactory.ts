@@ -5,7 +5,7 @@
 
 import { DetachedSequenceId, NodeId, StableNodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
-import { NodeIdContext, NodeIdConverter, RevisionView, Side, TreeNode_0_0_2, TreeView } from '../generic';
+import { NodeIdConverter, RevisionView, Side, TreeNode_0_0_2, TreeView } from '../generic';
 import { getChangeNode_0_0_2FromViewNode } from '../SerializationUtilities';
 import { rangeFromStableRange } from '../TreeViewUtilities';
 import {
@@ -37,7 +37,7 @@ import { tryConvertToStablePlace_0_0_2 } from './Conversion002';
 export function revert(
 	changes: readonly ChangeInternal[],
 	before: RevisionView,
-	nodeIdContext: NodeIdContext
+	nodeIdConverter: NodeIdConverter
 ): ChangeInternal[] | undefined {
 	const result: ChangeInternal[] = [];
 
@@ -45,7 +45,7 @@ export function revert(
 	const detachedNodes = new Map<DetachedSequenceId, StableNodeId[]>();
 
 	// Open edit on revision to update it as changes are walked through
-	const editor = Transaction.factory(before, nodeIdContext);
+	const editor = Transaction.factory(before, nodeIdConverter);
 	// Apply `edit`, generating an inverse as we go.
 	for (const change of changes) {
 		// Generate an inverse of each change
@@ -91,7 +91,7 @@ export function revert(
 			}
 			case ChangeTypeInternal.Detach: {
 				const { destination } = change;
-				const invert = createInvertedDetach(change, editor.view, nodeIdContext);
+				const invert = createInvertedDetach(change, editor.view, nodeIdConverter);
 				if (invert === undefined) {
 					// Cannot revert a detach whose source does not exist in the tree
 					// TODO:68574: May not be possible once associated todo in `createInvertedDetach` is addressed
@@ -111,7 +111,7 @@ export function revert(
 				break;
 			}
 			case ChangeTypeInternal.SetValue: {
-				const invert = createInvertedSetValue(change, editor.view, nodeIdContext);
+				const invert = createInvertedSetValue(change, editor.view, nodeIdConverter);
 				if (invert === undefined) {
 					// Cannot revert a set for a node that does not exist in the tree
 					// TODO:68574: May not be possible once associated todo in `createInvertedSetValue` is addressed

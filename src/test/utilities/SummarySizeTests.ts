@@ -24,7 +24,7 @@ import { Definition, EditId, TraitLabel } from '../../Identifiers';
 import {
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
-	refreshTestTree,
+	setUpTestTree,
 } from './TestUtilities';
 import { TestTree } from './TestNode';
 
@@ -121,20 +121,19 @@ export function runSummarySizeTests<TSharedTree extends SharedTree>(
 	) => Promise<LocalServerSharedTreeTestingComponents<TSharedTree>>
 ) {
 	describe(title, () => {
-		const testTree = refreshTestTree();
-
 		const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
 		let tree: TSharedTree;
+		let testTree: TestTree;
 		let testObjectProvider: TestObjectProvider;
 
 		// Resets the tree before each test
 		beforeEach(async () => {
 			const testingComponents = await setUpLocalServerTestSharedTree({
 				setupEditId,
-				initialTree: testTree,
 			});
 			tree = testingComponents.tree;
+			testTree = setUpTestTree(tree);
 			testObjectProvider = testingComponents.testObjectProvider;
 		});
 

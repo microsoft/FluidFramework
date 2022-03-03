@@ -5,7 +5,7 @@
 
 import * as fs from 'fs';
 import { resolve, join } from 'path';
-import { v4 as uuidv4, v4, v5 as uuidv5 } from 'uuid';
+import { v4, v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
@@ -28,20 +28,18 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { assert } from '@fluidframework/common-utils';
 import type { IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails } from '@fluidframework/core-interfaces';
-import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
-import { assertNotUndefined, fail } from '../../Common';
-import { initialTree } from '../../InitialTree';
+import { DetachedSequenceId, EditId, NodeId, StableNodeId } from '../../Identifiers';
+import { assertNotUndefined, fail, identity } from '../../Common';
 import { SharedTree, Change, setTrait, ChangeInternal, StablePlace, getNodeId } from '../../default-edits';
 import {
 	ChangeNode,
 	Edit,
-	GenericSharedTree,
 	getUploadedEditChunkContents,
 	newEdit,
 	NodeData,
 	NodeIdContext,
 	NodeIdConverter,
-	RevisionView,
+	Payload,
 	SharedTreeDiagnosticEvent,
 	SharedTreeSummaryWriteFormat,
 	TraitLocation,
@@ -50,8 +48,9 @@ import {
 import { EditLog } from '../../EditLog';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
-import { reservedIdCount } from '../../generic/GenericSharedTree';
+import { GenericSharedTree, reservedIdCount } from '../../generic/GenericSharedTree';
 import { getChangeNodeFromView, getChangeNodeFromViewNode } from '../../SerializationUtilities';
+import { initialTree } from '../../InitialTree';
 import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
@@ -108,97 +107,6 @@ export interface SharedTreeTestingOptions {
 	 */
 	logger?: ITelemetryBaseLogger;
 }
-
-/**
- * Left node of {@link simpleTestTree}
- *
- * @deprecated Use {@link SimpleTestTree.left} instead.
- */
-export const left: ChangeNode = makeEmptyNode('a083857d-a8e1-447a-ba7c-92fd0be9db2b' as NodeId);
-
-/**
- * Right node of {@link simpleTestTree}
- *
- * @deprecated Use {@link SimpleTestTree.right} instead.
- */
-export const right: ChangeNode = makeEmptyNode('78849e85-cb7f-4b93-9fdc-18439c60fe30' as NodeId);
-
-/**
- * Label for the 'left' trait in {@link simpleTestTree}
- *
- * @deprecated Use {@link SimpleTestTree.left}'s {@link TestNode.traitLabel} instead.
- */
-export const leftTraitLabel = 'left' as TraitLabel;
-
-/**
- * Label for the 'right' trait in {@link simpleTestTree}
- *
- * @deprecated Use {@link SimpleTestTree.right}'s {@link TestNode.traitLabel} instead.
- */
-export const rightTraitLabel = 'right' as TraitLabel;
-
-/**
- * NodeId for the root node of {@link simpleTestTree}
- *
- * @deprecated Use {@link SimpleTestTree} instead.
- */
-export const rootNodeId = '25de3875-9537-47ec-8699-8a85e772a509' as NodeId;
-
-/**
- * A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait.
- *
- * @deprecated Use {@link SimpleTestTree} instead.
- */
-export const simpleTestTree: ChangeNode = {
-	...makeEmptyNode(rootNodeId),
-	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
-};
-
-/**
- * Convenient pre-made TraitLocation for the left trait of 'simpleTestTree'.
- *
- * @deprecated Use {@link SimpleTestTree.left}'s {@link TestNode.traitLocation} instead.
- */
-export const leftTraitLocation = {
-	parent: simpleTestTree.identifier,
-	label: leftTraitLabel,
-};
-
-/**
- * Convenient pre-made TraitLocation for the right trait of 'simpleTestTree'.
- *
- * @deprecated Use {@link SimpleTestTree.right}'s {@link TestNode.traitLocation} instead.
- */
-export const rightTraitLocation = {
-	parent: simpleTestTree.identifier,
-	label: rightTraitLabel,
-};
-
-/**
- * Convenient pre-made RevisionView for 'simpleTestTree'.
- *
- * @deprecated Use {@link SimpleTestTree.view} instead.
- */
-export const simpleRevisionView = RevisionView.fromTree(simpleTestTree);
-
-/**
- * Convenient pre-made RevisionView for 'initialTree'.
- */
-export const initialRevisionView = RevisionView.fromTree(initialTree);
-
-/**
- * Convenient pre-made RevisionView for 'simpleTestTree'.
- * Expensive validation is turned on for this view, and it should not be used for performance testing.
- *
- * @deprecated Construct a {@link RevisionView} from a non-static tree.
- */
-export const simpleRevisionViewWithValidation = RevisionView.fromTree(simpleTestTree, true);
-
-/**
- * Convenient pre-made RevisionView for 'initialTree'.
- * Expensive validation is turned on for this view, and it should not be used for performance testing.
- */
-export const initialRevisionViewWithValidation = RevisionView.fromTree(initialTree, true);
 
 export const testTraitLabel = SimpleTestTree.traitLabel;
 export function testTrait(view: TreeView): TraitLocation {
@@ -397,48 +305,23 @@ export async function setUpLocalServerTestSharedTree(
 
 /** Sets testTrait to contain `node`. */
 function setTestTree(tree: SharedTree, node: ChangeNode, overrideId?: EditId): EditId {
+	const trait = testTrait(tree.currentView);
 	if (overrideId === undefined) {
-		return tree.applyEdit(...setTrait(testTrait(tree.currentView), [node])).id;
+		return tree.applyEdit(...setTrait(trait, [node])).id;
 	} else {
-		const changes = setTrait(testTrait(tree.currentView), [node]).map((c) => tree.internalizeChange(c));
+		const changes = setTrait(trait, [node]).map((c) => tree.internalizeChange(c));
 		return tree.applyEditInternal({ changes, id: overrideId }).id;
 	}
 }
 
 /**
- * Creates an empty node for testing purposes.
- *
- * @deprecated Use {@link SimpleTestTree.buildLeaf} instead.
- */
-export function makeEmptyNode(
-	identifier: NodeId = uuidv4() as NodeId
-): Omit<ChangeNode, 'traits'> & { traits: Record<string, never> } {
-	const definition = 'node' as Definition;
-	return { definition, identifier, traits: {} };
-}
-
-/** Creates a node with two children, one under a 'left' trait and one under a 'right' trait */
-export function makeTestNode(identifier: NodeId = uuidv4() as NodeId): ChangeNode {
-	const definition = 'node' as Definition;
-	const left: ChangeNode = makeEmptyNode('c4acaed2-afac-417e-a3d7-07ea73c0330a' as NodeId);
-	const right: ChangeNode = makeEmptyNode('452c618a-ba0c-4d9b-89f3-2248d27f8c7f' as NodeId);
-	const leftTraitLabel = 'left' as TraitLabel;
-	const rightTraitLabel = 'right' as TraitLabel;
-	return {
-		definition,
-		identifier,
-		traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
-	};
-}
-
-/**
  * Creates a list of edits with stable IDs that can be processed by a SharedTree.
- * @param numberOfEdits - the number of edits to create
  * @returns the list of created edits
  */
 export function createStableEdits(
 	numberOfEdits: number,
-	idContext: NodeIdContext = makeTestNodeContext()
+	idContext: NodeIdContext = makeTestNodeContext(),
+	payload: (i: number) => Payload = identity
 ): Edit<Change>[] {
 	if (numberOfEdits === 0) {
 		return [];
@@ -459,7 +342,7 @@ export function createStableEdits(
 
 	// Every subsequent edit is a set payload
 	for (let i = 1; i < numberOfEdits; i++) {
-		const edit = newEdit([Change.setPayload(nodeId, i)]);
+		const edit = newEdit([Change.setPayload(nodeId, payload(i))]);
 		edits.push({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 	}
 

@@ -25,7 +25,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { v4 } from 'uuid';
 import { assert, assertNotUndefined, fail } from '../Common';
 import { EditLog, EditLogSummary, OrderedEditSet } from '../EditLog';
-import { EditId, NodeId, StableNodeId, UuidString } from '../Identifiers';
+import { EditId, NodeId, StableNodeId } from '../Identifiers';
 import { initialTree } from '../InitialTree';
 import {
 	CachingLogViewer,
@@ -54,7 +54,7 @@ import {
 } from './PersistedTypes';
 import { serialize, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
 import { areRevisionViewsSemanticallyEqual, newEditId } from './EditUtilities';
-import { NodeIdConverter, NodeIdGenerator } from './NodeIdUtilities';
+import { NodeIdContext } from './NodeIdUtilities';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
 import { TransactionFactory } from './GenericTransaction';
 import { RevisionView } from './RevisionView';
@@ -219,7 +219,7 @@ export interface SharedTreeFactoryOptions {
  */
 export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unknown>
 	extends SharedObject<ISharedTreeEvents<GenericSharedTree<TChange, TChangeInternal, TFailure>>>
-	implements NodeIdGenerator, NodeIdConverter
+	implements NodeIdContext
 {
 	/**
 	 * The log of completed edits for this SharedTree.
@@ -381,7 +381,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * {@inheritdoc NodeIdGenerator.generateNodeId}
 	 * @public
 	 */
-	public generateNodeId(override?: UuidString): NodeId {
+	public generateNodeId(override?: string): NodeId {
 		// TODO:#70358: Re-implement this method to return compressed ids created by an IdCompressor
 		if (override !== undefined) {
 			return override as NodeId;
@@ -763,8 +763,10 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 
 	/**
 	 * Abstract helper that allows the concrete SharedTree type to perform pre-processing of an edit before it is added to the log.
+	 * @param edit - The edit to preprocess
+	 * @param wasCreatedLocally - whether or not the edit was created by this shared tree instance
 	 */
-	protected preprocessEdit(edit: Edit<TChangeInternal>, local: boolean): Edit<TChangeInternal> {
+	protected preprocessEdit(edit: Edit<TChangeInternal>, wasCreatedLocally: boolean): Edit<TChangeInternal> {
 		return edit;
 	}
 
@@ -805,7 +807,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 				}
 			}
 		} else {
-			this.applyEditLocally(edit, { local: false, message });
+			this.applyEditLocally(edit, { isSequenced: true, wasCreatedLocally: false, message });
 		}
 	}
 
@@ -861,7 +863,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 			changes: changes.map((c) => this.internalizeChange(c)),
 		};
 		this.submitEditOp(internalEdit);
-		this.applyEditLocally(internalEdit, { local: true });
+		this.applyEditLocally(internalEdit, { isSequenced: false, wasCreatedLocally: true });
 		return internalEdit;
 	}
 
@@ -877,7 +879,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 			edit = editOrChanges as Edit<TChangeInternal>;
 		}
 		this.submitEditOp(edit);
-		this.applyEditLocally(edit, { local: true });
+		this.applyEditLocally(edit, { isSequenced: false, wasCreatedLocally: true });
 		return edit;
 	}
 
@@ -889,19 +891,22 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 
 	private applyEditLocally(
 		edit: Edit<TChangeInternal>,
-		editInformation: { local: true; message?: never } | { local: false; message: ISequencedDocumentMessage }
+		editInformation: (
+			| { isSequenced: false; message?: never }
+			| { isSequenced: true; message: ISequencedDocumentMessage }
+		) & { wasCreatedLocally: boolean }
 	): void {
-		const { local } = editInformation;
-		const processedEdit = this.preprocessEdit(edit, local);
-		if (local) {
-			this.editLog.addLocalEdit(processedEdit);
-		} else {
+		const { isSequenced, wasCreatedLocally } = editInformation;
+		const processedEdit = this.preprocessEdit(edit, wasCreatedLocally);
+		if (isSequenced) {
 			this.editLog.addSequencedEdit(processedEdit, editInformation.message);
+		} else {
+			this.editLog.addLocalEdit(processedEdit);
 		}
 
 		const eventArguments: EditCommittedEventArguments<GenericSharedTree<TChange, TChangeInternal, TFailure>> = {
 			editId: processedEdit.id,
-			local,
+			local: !isSequenced,
 			tree: this,
 		};
 		this.emit(SharedTreeEvent.EditCommitted, eventArguments);
@@ -973,7 +978,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		switch (op.type) {
 			case SharedTreeOpType.Edit: {
 				const { edit } = op as SharedTreeEditOp<TChangeInternal>;
-				this.applyEditLocally(edit, { local: true });
+				this.applyEditLocally(edit, { isSequenced: false, wasCreatedLocally: false });
 				break;
 			}
 			// Handle and update ops are only acknowledged by the client that generated them upon sequencing--no local changes necessary.

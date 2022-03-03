@@ -9,7 +9,7 @@ import {
 	EditStatus,
 	GenericTransaction,
 	GenericTransactionPolicy,
-	NodeIdContext,
+	NodeIdConverter,
 	RevisionView,
 } from '../../generic';
 
@@ -32,7 +32,7 @@ export namespace MockTransaction {
 	 */
 	export function factory<TChange>(
 		view: RevisionView,
-		_nodeIdContext: NodeIdContext,
+		_idConverter: NodeIdConverter,
 		options: Options = defaultOptions
 	): GenericTransaction<TChange> {
 		return new GenericTransaction(view, new Policy<TChange>(options));

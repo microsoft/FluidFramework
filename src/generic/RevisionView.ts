@@ -16,17 +16,24 @@ import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView
  * @public
  */
 export class RevisionView extends TreeView {
+	/**
+	 * Constructs a {@link RevisionView} using the supplied tree.
+	 * @param root - the root of the tree to use as the contents of the {@link RevisionView}
+	 * @param expensiveValidation - whether or not to perform additional validation, e.g. to catch errors when testing
+	 */
 	public static fromTree<T extends TreeNode<T>>(root: T, expensiveValidation?: boolean): RevisionView;
+	/**
+	 * Constructs a {@link RevisionView} using the supplied tree.
+	 * @param root - the root of the tree to use as the contents of the `RevisionView`
+	 * @param idConverter - the {@link NodeIdConverter} that will recompress the IDs the in the tree
+	 * @param expensiveValidation - whether or not to perform additional validation, e.g. to catch errors when testing
+	 */
 	public static fromTree<T extends TreeNode_0_0_2<T>>(
 		root: T,
 		idConverter: NodeIdConverter,
 		expensiveValidation?: boolean
 	): RevisionView | undefined;
 
-	/**
-	 * Constructs a `RevisionView` using the supplied tree.
-	 * @param root - the root of the tree to use as the contents of the `RevisionView`
-	 */
 	public static fromTree<T extends TreeNode<T> | TreeNode_0_0_2<T>>(
 		root: T,
 		idConverterOrExpensiveValidation?: NodeIdConverter | boolean,

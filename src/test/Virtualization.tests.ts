@@ -273,8 +273,11 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('does not upload blobs larger than 4MB', async () => {
-		const numberOfEdits = 50000;
-		const edits = createStableEdits(numberOfEdits);
+		const numberOfEdits = 1000;
+		expect(numberOfEdits).to.be.greaterThanOrEqual(1000); // Blobbing is hardcoded to 1000 edits
+		const fourMegas = 2 ** 22;
+		const bigPayload = 'a'.repeat(fourMegas / numberOfEdits);
+		const edits = createStableEdits(numberOfEdits, undefined, () => bigPayload);
 
 		const fakeSummary: SharedTreeSummary<Change> = {
 			version: '0.1.1',

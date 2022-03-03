@@ -7,7 +7,7 @@ import { assert, fail, Result } from '../Common';
 import { ReconciliationChange, ReconciliationPath } from '../ReconciliationPath';
 import { RevisionView, TransactionView } from './RevisionView';
 import { EditStatus } from './PersistedTypes';
-import { NodeIdContext } from './NodeIdUtilities';
+import { NodeIdConverter } from './NodeIdUtilities';
 
 /**
  * A function which can produce a Transaction from a RevisionView
@@ -15,7 +15,7 @@ import { NodeIdContext } from './NodeIdUtilities';
  */
 export type TransactionFactory<TChangeInternal, TFailure> = (
 	view: RevisionView,
-	nodeIdContext: NodeIdContext
+	nodeIdConverter: NodeIdConverter
 ) => GenericTransaction<TChangeInternal, TFailure>;
 
 /**

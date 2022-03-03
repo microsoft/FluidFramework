@@ -45,7 +45,7 @@ export type DetachedSequenceId = number & { readonly DetachedSequenceId: 'f7d790
 
 /**
  * An identifier (UUID) that has been shortened by a distributed compression algorithm.
- * @internal
+ * @public
  */
 export type CompressedId = FinalCompressedId | LocalCompressedId;
 
@@ -60,7 +60,7 @@ export interface SessionUnique {
  * A compressed ID that has been normalized into "session space" (see `IdCompressor` for more).
  * Consumer-facing APIs and data structures should use session-space IDs as their lifetime and equality is stable and tied to the
  * compressor that produced them.
- * @internal
+ * @public
  */
 export type SessionSpaceCompressedId = CompressedId & SessionUnique;
 
@@ -78,7 +78,7 @@ export type OpSpaceCompressedId = CompressedId & {
  * A compressed ID that is local to a document. Stable across all revisions of a document starting from the one in which it was created.
  * It should not be persisted outside of the history as it can only be decompressed in the context of the originating document.
  * If external persistence is needed (e.g. by a client), a StableId should be used instead.
- * @internal
+ * @public
  */
 export type FinalCompressedId = number & {
 	readonly FinalCompressedId: '5d83d1e2-98b7-4e4e-a889-54c855cfa73d';

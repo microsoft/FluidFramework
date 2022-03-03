@@ -7,17 +7,19 @@ import { expect } from 'chai';
 import { Delete, StableRange } from '../default-edits';
 import { EagerCheckout } from '../EagerCheckout';
 import { checkoutTests } from './Checkout.tests';
-import { left, setUpTestSharedTree, simpleTestTree } from './utilities/TestUtilities';
+import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
 
 checkoutTests(
 	'EagerCheckout',
 	async (tree) => Promise.resolve(new EagerCheckout(tree)),
 	() => {
 		it('updates eagerly', () => {
-			const { tree } = setUpTestSharedTree({ initialTree: simpleTestTree });
+			const { tree } = setUpTestSharedTree();
+			const testTree = setUpTestTree(tree);
 			const checkout = new EagerCheckout(tree);
+
 			expect(tree.currentView.equals(checkout.currentView)).to.be.true;
-			tree.applyEdit(Delete.create(StableRange.only(left)));
+			tree.applyEdit(Delete.create(StableRange.only(testTree.left)));
 			expect(tree.currentView.equals(checkout.currentView)).to.be.true;
 		});
 	}

@@ -13,7 +13,7 @@ import {
 	SucceedingTransactionState,
 	RevisionView,
 	TreeViewNode,
-	NodeIdContext,
+	NodeIdConverter,
 } from '../generic';
 import { rangeFromStableRange } from '../TreeViewUtilities';
 import {
@@ -61,9 +61,9 @@ export namespace Transaction {
 	 */
 	export function factory(
 		view: RevisionView,
-		nodeIdContext: NodeIdContext
+		nodeIdConverter: NodeIdConverter
 	): GenericTransaction<ChangeInternal, Failure> {
-		return new GenericTransaction(view, new Policy(nodeIdContext));
+		return new GenericTransaction(view, new Policy(nodeIdConverter));
 	}
 
 	type ValidState = SucceedingTransactionState<ChangeInternal>;
@@ -80,7 +80,7 @@ export namespace Transaction {
 		/**
 		 * @param nodeIdManager - Used for node creation and identifier conversion
 		 */
-		public constructor(protected readonly nodeIdContext: NodeIdContext) {}
+		public constructor(protected readonly nodeIdConverter: NodeIdConverter) {}
 
 		/**
 		 * Resolves change with Result.Ok
@@ -225,7 +225,7 @@ export namespace Transaction {
 				});
 			}
 
-			const validatedDestination = validateStablePlace(state.view, change.destination, this.nodeIdContext);
+			const validatedDestination = validateStablePlace(state.view, change.destination, this.nodeIdConverter);
 			if (validatedDestination.result !== PlaceValidationResult.Valid) {
 				return Result.error({
 					status:
@@ -247,7 +247,7 @@ export namespace Transaction {
 		}
 
 		private applyDetach(state: ValidState, change: DetachInternal): ChangeResult<Failure> {
-			const validatedSource = validateStableRange(state.view, change.source, this.nodeIdContext);
+			const validatedSource = validateStableRange(state.view, change.source, this.nodeIdConverter);
 			if (validatedSource.result !== RangeValidationResultKind.Valid) {
 				return Result.error({
 					status:
@@ -293,7 +293,7 @@ export namespace Transaction {
 			assert(change.identityHash === undefined, 'identityHash constraint is not implemented');
 			assert(change.contentHash === undefined, 'contentHash constraint is not implemented');
 
-			const validatedChange = validateStableRange(state.view, change.toConstrain, this.nodeIdContext);
+			const validatedChange = validateStableRange(state.view, change.toConstrain, this.nodeIdConverter);
 			if (validatedChange.result !== RangeValidationResultKind.Valid) {
 				return validatedChange.result !== RangeValidationResultKind.PlacesInDifferentTraits &&
 					validatedChange.result !== RangeValidationResultKind.Inverted &&
@@ -342,7 +342,7 @@ export namespace Transaction {
 				});
 			}
 
-			const parentId = this.nodeIdContext.convertToStableNodeId(end.trait.parent);
+			const parentId = this.nodeIdConverter.convertToStableNodeId(end.trait.parent);
 			if (change.parentNode !== undefined && change.parentNode !== parentId) {
 				return Result.error({
 					status: EditStatus.Invalid,
@@ -351,7 +351,7 @@ export namespace Transaction {
 						constraint: change,
 						violation: {
 							kind: ConstraintViolationKind.BadParent,
-							actual: parentId,
+							actual: change.parentNode,
 						},
 					},
 				});
@@ -375,7 +375,7 @@ export namespace Transaction {
 		}
 
 		private applySetValue(state: ValidState, change: SetValueInternal): ChangeResult<Failure> {
-			const nodeToModify = this.nodeIdContext.tryConvertToNodeId(change.nodeToModify);
+			const nodeToModify = this.nodeIdConverter.tryConvertToNodeId(change.nodeToModify);
 			if (nodeToModify === undefined || !state.view.hasNode(nodeToModify)) {
 				return Result.error({
 					status: EditStatus.Invalid,
@@ -410,7 +410,7 @@ export namespace Transaction {
 					topLevelIds.push(...detachedIds);
 				} else {
 					unprocessed.push(buildNode);
-					const nodeId = this.nodeIdContext.tryConvertToNodeId(buildNode.identifier);
+					const nodeId = this.nodeIdConverter.tryConvertToNodeId(buildNode.identifier);
 					if (nodeId === undefined) {
 						onInvalidId(buildNode.identifier);
 						return undefined;
@@ -436,7 +436,7 @@ export namespace Transaction {
 									}
 									childIds.push(...detachedIds);
 								} else {
-									const nodeId = this.nodeIdContext.tryConvertToNodeId(child.identifier);
+									const nodeId = this.nodeIdConverter.tryConvertToNodeId(child.identifier);
 									if (nodeId === undefined) {
 										onInvalidId(child.identifier);
 										return undefined;
@@ -449,7 +449,7 @@ export namespace Transaction {
 						}
 					}
 				}
-				const identifier = this.nodeIdContext.tryConvertToNodeId(node.identifier);
+				const identifier = this.nodeIdConverter.tryConvertToNodeId(node.identifier);
 				if (identifier === undefined) {
 					onInvalidId(node.identifier);
 					return undefined;

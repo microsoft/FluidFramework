@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { compareArrays, fail, Mutable } from '../Common';
 import { EditId, TraitLabel } from '../Identifiers';
 import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
+import { NodeIdConverter } from './NodeIdUtilities';
 import {
 	ChangeNode,
 	ChangeNode_0_0_2,
@@ -21,7 +22,6 @@ import {
 	TraitMap,
 } from './PersistedTypes';
 import { TreeView } from './TreeView';
-import { NodeIdConverter } from '.';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -314,13 +314,35 @@ export function convertTreeNodes<
  * @param tree - the input tree
  * @param visitor - callback invoked for each node in the tree.
  */
+export function walkTreeNodes<TIn extends HasTraits<TIn>>(tree: TIn, visitor: (node: TIn) => void): void;
+
+/**
+ * Visits an input tree containing placeholders in a depth-first pre-order traversal.
+ * @param tree - the input tree
+ * @param visitor - callback invoked for each node in the tree. Must return true if the given node is a TPlaceholder.
+ */
 export function walkTreeNodes<TIn extends HasTraits<TIn | TPlaceholder>, TPlaceholder = never>(
 	tree: TIn | TPlaceholder,
-	visitor: (node: TIn | TPlaceholder) => node is TPlaceholder
+	visitors:
+		| ((node: TIn) => void)
+		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
+	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder
+): void;
+
+export function walkTreeNodes<TIn extends HasTraits<TIn | TPlaceholder>, TPlaceholder = never>(
+	tree: TIn | TPlaceholder,
+	visitors:
+		| ((node: TIn) => void)
+		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
+	isPlaceholder?: (node: TIn | TPlaceholder) => node is TPlaceholder
 ): void {
-	if (visitor(tree)) {
+	const nodeVisitor = typeof visitors === 'function' ? visitors : visitors.nodeVisitor;
+	const placeholderVisitor = typeof visitors === 'object' ? visitors.placeholderVisitor : undefined;
+	if (isKnownType(tree, isPlaceholder)) {
+		placeholderVisitor?.(tree);
 		return;
 	}
+	nodeVisitor?.(tree);
 
 	const childIterators: Iterator<[TraitLabel, TIn | TPlaceholder]>[] = [
 		iterateChildren(Object.entries(tree.traits))[Symbol.iterator](),
@@ -333,7 +355,10 @@ export function walkTreeNodes<TIn extends HasTraits<TIn | TPlaceholder>, TPlaceh
 			childIterators.pop();
 		} else {
 			const [_, child] = value as [TraitLabel, TIn | TPlaceholder];
-			if (!visitor(child)) {
+			if (isKnownType(child, isPlaceholder)) {
+				placeholderVisitor?.(child);
+			} else {
+				nodeVisitor?.(child);
 				childIterators.push(iterateChildren(Object.entries(child.traits))[Symbol.iterator]());
 			}
 		}

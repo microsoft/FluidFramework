@@ -9,12 +9,7 @@ import { assert } from '../Common';
 import { SharedTree } from '../default-edits';
 import { EditLog } from '../EditLog';
 import { runSummaryLoadPerfTests } from './utilities/SummaryLoadPerfTests';
-import {
-	createStableEdits,
-	setUpLocalServerTestSharedTree,
-	setUpTestSharedTree,
-	simpleTestTree,
-} from './utilities/TestUtilities';
+import { createStableEdits, setUpLocalServerTestSharedTree, setUpTestSharedTree } from './utilities/TestUtilities';
 
 describe('SharedTree Perf', () => {
 	let tree: SharedTree | undefined;
@@ -24,10 +19,10 @@ describe('SharedTree Perf', () => {
 			type: BenchmarkType.Measurement,
 			title: `get currentView with ${count} sequenced edit(s)`,
 			before: () => {
-				({ tree, containerRuntimeFactory } = setUpTestSharedTree({ initialTree: simpleTestTree }));
+				({ tree, containerRuntimeFactory } = setUpTestSharedTree({ localMode: false }));
 
 				const edits = createStableEdits(count, tree);
-				for (let i = 0; i < count - 1; i++) {
+				for (let i = 0; i < count; i++) {
 					tree.applyEdit(...edits[i].changes);
 				}
 

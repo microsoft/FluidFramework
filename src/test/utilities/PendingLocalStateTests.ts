@@ -97,7 +97,6 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 		});
 
 		it('is applied to all connected containers', async () => {
-			// Setup
 			const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 				id: documentId,
 			});
@@ -106,14 +105,13 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 			const url = (await container.getAbsoluteUrl('/')) ?? fail('Container unable to resolve "/".');
 			await testObjectProvider.ensureSynchronized();
 
-			// Act
 			const { pendingLocalState, actionReturn: edit } = await withContainerOffline(
 				testObjectProvider,
 				container,
 				() => tree.applyEdit(...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.left)))
 			);
 			await testObjectProvider.ensureSynchronized();
-			const leftTraitAfterOfflineClose = tree2.currentView.getTrait(testTree.left.traitLocation);
+			const leftTraitAfterOfflineClose = tree2.currentView.getTrait(testTree.left.traitLocation.translate(tree2));
 			const loader = testObjectProvider.makeTestLoader();
 
 			// Simulate reconnect of user 1; a new container will be created which passes the stashed local state in its
@@ -123,16 +121,15 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 			const tree3 = await dataObject3.getSharedObject<SharedTree>(documentId);
 			await testObjectProvider.ensureSynchronized();
 
-			// Assert
 			expect(leftTraitAfterOfflineClose.length).to.equal(
 				1,
 				'Second tree should not receive edits made by first tree after it went offline.'
 			);
-			expect(tree3.currentView.getTrait(testTree.left.traitLocation).length).to.equal(
+			expect(tree3.currentView.getTrait(testTree.left.traitLocation.translate(tree3)).length).to.equal(
 				2,
 				'Tree which loaded with stashed pending edits should apply them.'
 			);
-			expect(tree2.currentView.getTrait(testTree.left.traitLocation).length).to.equal(
+			expect(tree2.currentView.getTrait(testTree.left.traitLocation.translate(tree2)).length).to.equal(
 				2,
 				'Tree collaborating with a client that applies stashed pending edits should see them.'
 			);

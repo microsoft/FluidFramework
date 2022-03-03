@@ -37,7 +37,7 @@ describe('EditUtilities', () => {
 				)
 			).deep.equals({
 				result: PlaceValidationResult.Valid,
-				referenceSibling: testTree.left.stable.identifier,
+				referenceSibling: testTree.left.identifier,
 				side: Side.Before,
 			});
 		});
@@ -111,10 +111,10 @@ describe('EditUtilities', () => {
 			);
 			expect(validatedRange.result).to.equal(RangeValidationResultKind.Valid);
 			if (validatedRange.result === RangeValidationResultKind.Valid) {
-				expect(validatedRange.start.referenceSibling).to.equal(testTree.left.stable.identifier);
+				expect(validatedRange.start.referenceSibling).to.equal(testTree.left.identifier);
 				expect(validatedRange.start.referenceTrait).to.be.undefined;
 				expect(validatedRange.start.side).to.equal(Side.Before);
-				expect(validatedRange.end.referenceSibling).to.equal(testTree.left.stable.identifier);
+				expect(validatedRange.end.referenceSibling).to.equal(testTree.left.identifier);
 				expect(validatedRange.end.referenceTrait).to.be.undefined;
 				expect(validatedRange.end.side).to.equal(Side.After);
 			} else {

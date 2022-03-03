@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { EditStatus } from '../generic';
 import { ReconciliationEdit } from '../ReconciliationPath';
-import { initialRevisionViewWithValidation, refreshTestTree } from './utilities/TestUtilities';
+import { refreshTestTree } from './utilities/TestUtilities';
 import { MockTransaction } from './utilities/MockTransaction';
 
 describe('GenericTransaction', () => {
@@ -18,13 +18,13 @@ describe('GenericTransaction', () => {
 				return target[prop];
 			},
 		});
-		const transaction = MockTransaction.factory<unknown>(initialRevisionViewWithValidation, testTree);
+		const transaction = MockTransaction.factory<unknown>(testTree.view, testTree);
 		transaction.applyChanges([{}, {}], trappedPath);
 		expect(transaction.status).equals(EditStatus.Applied);
 	});
 
 	it('reflects failure status when validateOnClose is not successful', () => {
-		const transaction = MockTransaction.factory<unknown>(initialRevisionViewWithValidation, testTree, {
+		const transaction = MockTransaction.factory<unknown>(testTree.view, testTree, {
 			statusOnClose: EditStatus.Invalid,
 		});
 		const result = transaction.close();
