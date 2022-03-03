@@ -127,7 +127,7 @@ stages:
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 STORAGE_KEY: $(STORAGE_KEY)
-                uploadAsLatest: true
+                uploadAsLatest: ${{ variables.isMain }}
 
 - stage: site_build
   displayName: 'Build website'
