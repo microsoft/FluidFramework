@@ -26,7 +26,7 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
-import { ILoader, ILoaderOptions } from "./loader";
+import { IContainerCloseProps, ILoader, ILoaderOptions } from "./loader";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
@@ -123,7 +123,7 @@ export interface IContainerContext extends IDisposable {
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
-    readonly closeFn: (error?: ICriticalContainerError) => void;
+    readonly closeFn: (error?: ICriticalContainerError | IContainerCloseProps) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly quorum: IQuorumClients;
     /**

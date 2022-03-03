@@ -109,6 +109,14 @@ export interface ICodeAllowList {
 }
 
 /**
+ * Properties describing why the container is closing
+ */
+export interface IContainerCloseProps {
+    reason: string;
+    error?: ICriticalContainerError & Error;
+}
+
+/**
  * Events emitted by the Container "upwards" to the Loader and Host
  */
 export interface IContainerEvents extends IEvent {
@@ -117,7 +125,7 @@ export interface IContainerEvents extends IEvent {
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: ISequencedProposal) => void);
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
     (event: "disconnected" | "attached", listener: () => void);
-    (event: "closed", listener: (error?: ICriticalContainerError) => void);
+    (event: "closed", listener: (props?: ICriticalContainerError & IContainerCloseProps) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
     (event: "dirty" | "saved", listener: (dirty: boolean) => void);
@@ -201,8 +209,9 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
     /**
      * Closes the container
+     * Please use IContainerCloseProps for props, ICriticalContainerError is present only for back-compat
      */
-    close(error?: ICriticalContainerError): void;
+    close(props?: ICriticalContainerError | IContainerCloseProps): void;
 
     /**
      * Closes the container and returns serialized local state intended to be
