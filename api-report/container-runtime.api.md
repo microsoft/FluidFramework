@@ -16,6 +16,7 @@ import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
+import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -53,14 +54,6 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export const agentSchedulerId = "_scheduler";
-
-// @public
-export enum AliasResult {
-    Aliasing = "Aliasing",
-    AlreadyAliased = "AlreadyAliased",
-    Conflict = "Conflict",
-    Success = "Success"
-}
 
 // @public (undocumented)
 export enum ContainerMessageType {
@@ -324,11 +317,6 @@ export interface IContainerRuntimeOptions {
     // (undocumented)
     summaryOptions?: ISummaryRuntimeOptions;
     useDataStoreAliasing?: boolean;
-}
-
-// @public
-export interface IDataStore extends IFluidRouter {
-    trySetAlias(alias: string): Promise<AliasResult>;
 }
 
 // @public

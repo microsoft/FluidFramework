@@ -9,7 +9,6 @@
 /* eslint-disable no-bitwise */
 
 import { assert } from "@fluidframework/common-utils";
-import { IIntegerRange } from "./base";
 import {
     Comparer,
     Heap,
@@ -1417,65 +1416,6 @@ export class MergeTree {
         return rootStats;
     }
 
-    public findHistorialPosition(pos: number, fromSeq: number, toSeq: number, clientId: number) {
-        return this.findHistorialPositionFromClient(pos, fromSeq, toSeq, clientId);
-    }
-
-    private findHistorialPositionFromClient(pos: number, fromSeq: number, toSeq: number, clientId: number) {
-        assert(fromSeq < toSeq, 0x04a /* "Invalid range for historical position search!" */);
-        if (pos < this.getLength(fromSeq, clientId)) {
-            assert(toSeq <= this.collabWindow.currentSeq,
-                0x04b /* "Out-of-bounds end sequence number for historical position search!" */);
-            const segoff = this.getContainingSegment(pos, fromSeq, clientId);
-            assert(segoff.segment !== undefined,
-                0x04c /* "Containing segment for historical position search is undefined!" */);
-            const toPos = this.getPosition(segoff.segment, toSeq, clientId);
-            const ret = toPos + segoff.offset!;
-            assert(ret !== undefined,
-                0x04d /* "Return value for historical position search is undefined!" */);
-            return ret;
-        } else {
-            return pos;
-        }
-    }
-
-    public findHistorialRangeFromClient(
-        rangeStart: number,
-        rangeEnd: number,
-        fromSeq: number,
-        toSeq: number,
-        clientId: number,
-    ) {
-        const ranges: IIntegerRange[] = [];
-        const recordRange = (
-            segment: ISegment,
-            pos: number,
-            refSeq: number,
-            clientId: number,
-            segStart: number,
-            segEnd: number) => {
-            let _segStart = segStart;
-            let _segEnd = segEnd;
-            if ((this.nodeLength(segment, toSeq, clientId) ?? 0) > 0) {
-                const position = this.getPosition(segment, toSeq, clientId);
-                if (_segStart < 0) {
-                    _segStart = 0;
-                }
-                if (_segEnd > segment.cachedLength) {
-                    _segEnd = segment.cachedLength;
-                }
-                ranges.push({ start: position + _segStart, end: position + _segEnd });
-            }
-            return true;
-        };
-        this.mapRange({ leaf: recordRange }, fromSeq, clientId, undefined, rangeStart, rangeEnd);
-        return ranges;
-    }
-
-    public findHistorialRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number) {
-        return this.findHistorialRangeFromClient(rangeStart, rangeEnd, fromSeq, toSeq, clientId);
-    }
-
     public getLength(refSeq: number, clientId: number) {
         return this.blockLength(this.root, refSeq, clientId);
     }
@@ -2009,7 +1949,13 @@ export class MergeTree {
     /**
      * Resolves a remote client's position against the local sequence
      * and returns the remote client's position relative to the local
-     * sequence
+     * sequence. The client ref seq must be above the minimum sequence number
+     * or the return value will be undefined.
+     * Generally this method is used in conjunction with signals which provide
+     * point in time values for the below parameters, and is useful for things
+     * like displaying user position. It should not be used with persisted values
+     * as persisted values will quickly become invalid as the remoteClientRefSeq
+     * moves below the minimum sequence number
      * @param remoteClientPosition - The remote client's position to resolve
      * @param remoteClientRefSeq - The reference sequence number of the remote client
      * @param remoteClientId - The client id of the remote client
@@ -2018,6 +1964,11 @@ export class MergeTree {
         remoteClientPosition: number,
         remoteClientRefSeq: number,
         remoteClientId: number): number | undefined {
+
+        if(remoteClientRefSeq < this.collabWindow.minSeq){
+            return undefined;
+        }
+
         const segmentInfo = this.getContainingSegment(
             remoteClientPosition,
             remoteClientRefSeq,
