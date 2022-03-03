@@ -53,6 +53,7 @@ import {
     TelemetryLogger,
     normalizeError,
 } from "@fluidframework/telemetry-utils";
+import { IContainerCloseProps } from "./container";
 import {
     ReconnectMode,
     IConnectionManager,
@@ -309,11 +310,13 @@ export class ConnectionManager implements IConnectionManager {
         });
     }
 
-    public dispose(error?: ICriticalContainerError) {
+    public dispose(props?: ICriticalContainerError | IContainerCloseProps) {
         if (this.closed) {
             return;
         }
         this.closed = true;
+
+        //* TODO - Do the same thing as Container.close
 
         this.pendingConnection = false;
 

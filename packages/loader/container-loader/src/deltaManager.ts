@@ -53,6 +53,7 @@ import {
     IConnectionManagerFactoryArgs,
     IConnectionManager,
  } from "./contracts";
+import { IContainerCloseProps } from "./container";
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;
@@ -66,7 +67,7 @@ export interface IConnectionArgs {
  */
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
-    (event: "closed", listener: (error?: ICriticalContainerError) => void);
+    (event: "closed", listener: (props?: ICriticalContainerError & IContainerCloseProps) => void);
 }
 
 /**
@@ -533,13 +534,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: ICriticalContainerError): void {
+    public close(props?: ICriticalContainerError | IContainerCloseProps): void {
         if (this.closed) {
             return;
         }
         this.closed = true;
 
-        this.connectionManager.dispose(error);
+        //* Do the same thing as Container.close
+
+        this.connectionManager.dispose(props);
 
         this.closeAbortController.abort();
 
@@ -557,7 +560,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // This needs to be the last thing we do (before removing listeners), as it causes
         // Container to dispose context and break ability of data stores / runtime to "hear"
         // from delta manager, including notification (above) about readonly state.
-        this.emit("closed", error);
+        this.emit("closed", props);
 
         this.removeAllListeners();
     }

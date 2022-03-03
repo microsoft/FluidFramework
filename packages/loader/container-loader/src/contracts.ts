@@ -20,6 +20,7 @@ import {
     IClientDetails,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
+import { IContainerCloseProps } from "./container";
 
 export enum ReconnectMode {
     Never = "Never",
@@ -97,7 +98,7 @@ export interface IConnectionManager {
     /**
      * Disposed connection manager
      */
-    dispose(error?: ICriticalContainerError): void;
+    dispose(props?: ICriticalContainerError | IContainerCloseProps): void;
 }
 
 /**

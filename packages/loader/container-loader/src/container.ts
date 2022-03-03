@@ -7,7 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    IDisposable,
+    IDisposable, ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -224,6 +224,61 @@ const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
+type ICriticalContainerError2 = ICriticalContainerError & Error;
+
+// Copied from container-definitions for Proof-Of-Concept
+export interface IContainerCloseProps {
+    readonly reason: string;
+    readonly error?: ICriticalContainerError2;
+}
+
+function isContainerClosePropsEnvelope(
+    propsOrError?: ICriticalContainerError | IContainerCloseProps,
+): propsOrError is IContainerCloseProps {
+    if (propsOrError === undefined) {
+        return false;
+    }
+    const maybeError = propsOrError as Partial<ICriticalContainerError>;
+    if (maybeError.errorType !== undefined) {
+        return false;
+    }
+
+    return true;
+}
+
+class ContainerCloseProperties implements IContainerCloseProps, ICriticalContainerError {
+    // These implement ICriticalContainerError directly by proxying to this.error, for back-compat
+    readonly errorType: string = this.originalError.errorType;
+    readonly message: string = this.originalError.message;
+    readonly name?: string = this.originalError.name;
+    readonly stack?: string = this.originalError.stack;
+    readonly getTelemetryProperties?: () => ITelemetryProperties = this.originalError.getTelemetryProperties;
+
+    readonly error?: ICriticalContainerError2;
+
+    private constructor(
+        readonly reason: string,
+        private readonly originalError: ICriticalContainerError
+    ) {
+        this.error =
+            originalError.name !== undefined
+                ? originalError as ICriticalContainerError2
+                : {
+                    ...originalError,
+                    message: originalError.message, // Error proptotype has message as non-enumerable
+                    stack: originalError.stack, // Error proptotype has stack as non-enumerable
+                    name: "Error", // Patch in the standard name from Error prototype as default
+                };
+    }
+
+    static createIfErrorIsDefined(reason: string, error?: ICriticalContainerError) {
+        if (error !== undefined) {
+            return new ContainerCloseProperties(reason, error);
+        }
+        return undefined;
+    }
+}
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -257,8 +312,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     0x1e1 /* "pending state requires immediate connection!" */);
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
-                const onClosed = (err?: ICriticalContainerError) => {
-                    reject(err ?? new GenericError("Container closed without error during load"));
+                const onClosed = (props?: ICriticalContainerError & IContainerCloseProps) => {
+                    reject(props?.error ?? new GenericError("Container closed without error during load"));
                 };
                 container.on("closed", onClosed);
 
@@ -276,7 +331,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         // and continuously retrying (consider offline mode)
                         // Host has no container to close, so it's prudent to do it here
                         container.close(err);
-                        onClosed(err);
+                        onClosed(ContainerCloseProperties.createIfErrorIsDefined(
+                            "Error thrown during container.load",
+                            err,
+                        ));
                     });
             }),
             { start: true, end: true, cancel: "generic" },
@@ -692,17 +750,26 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.protocolHandler.quorum;
     }
 
-    public close(error?: ICriticalContainerError) {
+    public close(propsOrError?: ICriticalContainerError | IContainerCloseProps) {
         if (this.closed) {
             return;
         }
+
+        const error: ICriticalContainerError | undefined =
+            isContainerClosePropsEnvelope(propsOrError)
+                ? propsOrError.error
+                : propsOrError;
+        const closeReason: string =
+            isContainerClosePropsEnvelope(propsOrError)
+                ? propsOrError.reason
+                : "unknown"
 
         try {
             this._lifecycleState = "closing";
 
             // Ensure that we raise all key events even if one of these throws
             try {
-                this._deltaManager.close(error);
+                this._deltaManager.close(propsOrError);
 
                 this._protocolHandler?.close();
 
@@ -731,7 +798,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error,
             );
 
-            this.emit("closed", error);
+            // eslint-disable-next-line max-len
+            this.emit("closed", ContainerCloseProperties.createIfErrorIsDefined(closeReason, error));
 
             this.removeAllListeners();
             if (this.visibilityEventHandler !== undefined) {

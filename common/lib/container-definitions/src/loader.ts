@@ -112,8 +112,8 @@ export interface ICodeAllowList {
  * Properties describing why the container is closing
  */
 export interface IContainerCloseProps {
-    reason: string;
-    error?: ICriticalContainerError & Error;
+    readonly reason: string;
+    readonly error?: ICriticalContainerError & Error;
 }
 
 /**
