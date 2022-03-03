@@ -15,8 +15,16 @@ parameters:
       - default
       - skip
       - force
+  - name: guardianAssetRetentionOverride
+    displayName: Guardian Asset Retention Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
   - name: publishGuardianBaselines
-    displayName: Publish Guardian baseline files
+    displayName: Publish Guardian Baseline Files
     type: boolean
     default: false
 
@@ -48,10 +56,11 @@ variables:
       eq(parameters.deployOverride, 'force'),
       and(eq(variables.isMain, true), eq(parameters.deployOverride, 'default'))
       )}}
-  # - name: GDN_VERSION
-  #   value: 0.113.1-linux
-  # - name: GDNP_VERSION
-  #   value: 1.61.0-linux
+  - name: shouldRetainGuardianAssets
+    value: ${{ or(
+      eq(parameters.guardianAssetRetentionOverride, 'force'),
+      and(eq(variables.isMain, true), eq(parameters.guardianAssetRetentionOverride, 'default'))
+      )}}
 
 # no PR triggers
 trigger:
@@ -156,7 +165,7 @@ stages:
         inputs:
           version: 14.x
 
-      # BEGIN Secure development requirements
+      # BEGIN Secure development tasks
       - task: UseDotNet@2
         displayName: 'Use .NET Core 3.x'
         condition: succeededOrFailed()
@@ -175,13 +184,14 @@ stages:
         condition: succeededOrFailed()
 
       - task: AssetRetention@3
+        displayName: Guardian Asset Retention
+        condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
         inputs:
           ArrowServiceConnection: 'Arrow_FluidFramework_internal'
           AssetGroupName: '$(System.TeamProject)_$(Build.DefinitionName)'
           AssetNumber: '$(Build.BuildId)'
           IsShipped: false
           DropsToRetain: 'CodeAnalysisLogs'
-        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
 
       - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
         condition: succeededOrFailed()
@@ -196,14 +206,14 @@ stages:
           GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)\'
         continueOnError: true
 
-      - ${{ if eq(parameters.publishGuardianBaselines, true) }}:
-        - task: PublishPipelineArtifact@1
-          displayName: 'Publish Baselines'
-          inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
-            artifact: .gdn
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish Baselines'
+        condition: eq(parameters.publishGuardianBaselines, true)
+        inputs:
+          targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
+          artifact: .gdn
 
-      # END Secure development requirements
+      # END Secure development tasks
 
       - task: Npm@1
         displayName: npm ci
@@ -233,12 +243,12 @@ stages:
           ArtifactName: 'fluidframework-docs'
           publishLocation: 'Container'
 
-      - ${{ if eq(variables.shouldDeploy, true) }}:
-        - task: AzureStaticWebApp@0
-          displayName: 'Deploy site'
-          inputs:
-            skip_app_build: true # site was built in previous step
-            cwd: $(Build.SourcesDirectory)
-            app_location: 'docs/public'
-            output_location: ''
-            azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
+      - task: AzureStaticWebApp@0
+        displayName: 'Deploy site'
+        condition: eq(variables.shouldDeploy, true)
+        inputs:
+          skip_app_build: true # site was built in previous step
+          cwd: $(Build.SourcesDirectory)
+          app_location: 'docs/public'
+          output_location: ''
+          azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
