@@ -181,9 +181,9 @@ stages:
 
       - task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@3
         displayName: 'Publish Guardian Artifacts - All Tools'
+        condition: succeededOrFailed()
         inputs:
           ArtifactType: M365
-        condition: succeededOrFailed()
 
       - task: AssetRetention@3
         displayName: Guardian Asset Retention
