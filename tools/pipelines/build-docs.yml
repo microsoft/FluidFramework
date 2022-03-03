@@ -208,7 +208,7 @@ stages:
 
       - task: PublishPipelineArtifact@1
         displayName: 'Publish Baselines'
-        condition: eq(parameters.publishGuardianBaselines, true)
+        condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
         inputs:
           targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
           artifact: .gdn
