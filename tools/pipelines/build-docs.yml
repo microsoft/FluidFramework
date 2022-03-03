@@ -187,12 +187,7 @@ stages:
           GdnBreakGdnToolESLint: true
           GdnBreakGdnToolESLintSeverity: Warning
           GdnBreakPolicy: M365
-
-      - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
-        displayName: 'Guardian Break'
-        inputs:
           GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)\'
-          GdnBreakPolicy: M365
           continueOnError: true
 
       - task: PublishPipelineArtifact@1
