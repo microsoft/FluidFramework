@@ -189,6 +189,7 @@ stages:
         inputs:
           GdnBreakPolicyMinSev: Warning
           GdnBreakAllTools: true
+          GdnBreakBaselineFiles: '$(Build.SourcesDirectory)/docs/.gdnbaselines'
           GdnBreakGdnToolESLint: true
           GdnBreakGdnToolESLintSeverity: Warning
           GdnBreakPolicy: M365
