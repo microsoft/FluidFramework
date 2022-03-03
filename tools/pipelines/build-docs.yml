@@ -15,6 +15,10 @@ parameters:
       - default
       - skip
       - force
+  - name: publishGuardianBaselines
+    displayName: Pusblish Guardian baseline files
+    type: boolean
+    default: false
 
 variables:
   - group: doc-versions
@@ -191,11 +195,12 @@ stages:
           GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)\'
         continueOnError: true
 
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish Baselines'
-        inputs:
-          targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
-          artifact: .gdn
+      - ${{ if eq(parameters.publishGuardianBaselines, true) }}:
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Baselines'
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
+            artifact: .gdn
 
       # END Secure development requirements
 
