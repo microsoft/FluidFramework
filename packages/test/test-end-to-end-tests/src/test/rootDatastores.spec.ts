@@ -420,5 +420,44 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.equal(aliasResult3, "Conflict");
             assert.ok(await getRootDataStore(dataObject3, alias));
         });
+
+        itExpects("Aliasing datastores summarized before the alias op is sent and after the attach op is sent " +
+        "does not cause a datastore corruption issue, and remote aliased datastores are referenced", [], async () => {
+            await setupContainers({
+                ... testContainerConfig,
+                runtimeOptions: {
+                    summaryOptions: {
+                        disableSummaries: true,
+                    },
+                    gcOptions: {
+                        gcAllowed: true,
+                    },
+                },
+            });
+
+            const containerRuntime1 = runtimeOf(dataObject1);
+            const aliasableDataStore1 = await containerRuntime1.createDataStore(packageName);
+    
+            (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
+            await provider.ensureSynchronized();
+    
+            // Summarize before aliasing
+            const containerRuntime2 = runtimeOf(dataObject2) as ContainerRuntime;
+    
+            // This executes getInitialSnapshotDetails, a LazyPromise, before the alias op is sent
+            await (dataObject2.context as any).getInitialSnapshotDetails();
+    
+            // Alias a datastore
+            const alias = "alias";
+            const aliasResult1 = await aliasableDataStore1.trySetAlias(alias);
+            assert(aliasResult1 === "Success", `Expected an successful aliasing. Got: ${aliasResult1}`);
+            await provider.ensureSynchronized();
+            
+            // Should be able to retrieve root datastore from remote
+            const aliasableDataStore2 = await containerRuntime2.getRootDataStore(alias);
+            const aliasedDataStoreResponse2 = await aliasableDataStore2.request({url:"/"});
+            const aliasedDataStore2 = aliasedDataStoreResponse2.value as ITestFluidObject;
+            assert(aliasedDataStore2.context.baseSnapshot?.unreferenced !== true, "Datastore should be referenced");
+        });
     });
 });

@@ -83,6 +83,8 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
     });
 
+    // TODO: fully validate that GC is notified. Currently this tests the race condition
+    // where a remote datastore is summarized before the alias op arrives when trySetAlias is called.
     itExpects("GC is notified when datastores are aliased.", [], async () => {
         await summarizeOnContainer(container2);
         const containerRuntime1 = mainDataStore1.containerRuntime;
@@ -111,7 +113,7 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         const aliasedDataStore2 = aliasedDataStoreResponse2.value as TestDataObject;
         assert(aliasedDataStore2._context.baseSnapshot?.unreferenced !== true, "datastore should be referenced");
         
-        // await summarizeOnContainer(container2);
-        // Check GC is notified
+        await summarizeOnContainer(container2);
+        // TODO: Check GC is notified
     });
 }); 

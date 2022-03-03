@@ -212,7 +212,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public async isRoot(): Promise<boolean> {
-        return this.isRootDataStore || (await this.getInitialSnapshotDetails()).isRootDataStore;
+        // This call updates this.isRootDataStore if it has not yet been updated
+        // The initial value is stored in the initial snapshot of the data store
+        await this.getInitialSnapshotDetails();
+        return this.isRootDataStore;
     }
 
     protected registry: IFluidDataStoreRegistry | undefined;
@@ -863,7 +866,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         );
 
         this.snapshotTree = props.snapshotTree;
-        this.isRootDataStore = props.isRootDataStore ? props.isRootDataStore : false;
+        this.isRootDataStore = props.isRootDataStore ?? false;
         this.createProps = props.createProps;
         this.attachListeners();
     }
