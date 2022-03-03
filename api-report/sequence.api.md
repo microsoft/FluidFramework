@@ -242,6 +242,8 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
 // @public
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     // (undocumented)
+    (event: "createIntervalCollection", listener: (label: string) => void): any;
+    // (undocumented)
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
     (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void): any;
@@ -540,6 +542,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     getCurrentSeq(): number;
     // (undocumented)
     getIntervalCollection(label: string): IntervalCollection<SequenceInterval>;
+    // (undocumented)
+    getIntervalCollectionKeys(): IterableIterator<string>;
     getLength(): number;
     getPosition(segment: ISegment): number;
     // (undocumented)
