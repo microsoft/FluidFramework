@@ -176,8 +176,8 @@ stages:
           version: 3.x
 
       - task: securedevelopmentteam.vss-secure-development-tools.build-task-eslint.ESLint@1
-        condition: succeededOrFailed()
         displayName: 'Run ESLint'
+        condition: succeededOrFailed()
 
       - task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@3
         displayName: 'Publish Guardian Artifacts - All Tools'
