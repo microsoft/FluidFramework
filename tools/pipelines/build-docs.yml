@@ -44,10 +44,10 @@ variables:
       eq(parameters.deployOverride, 'force'),
       and(eq(variables.isMain, true), eq(parameters.deployOverride, 'default'))
       )}}
-  - name: GDN_VERSION
-    value: 0.113.1-linux
-  - name: GDNP_VERSION
-    value: 1.61.0-linux
+  # - name: GDN_VERSION
+  #   value: 0.113.1-linux
+  # - name: GDNP_VERSION
+  #   value: 1.61.0-linux
 
 # no PR triggers
 trigger:
@@ -130,6 +130,8 @@ stages:
   jobs:
     - job: build_site
       condition: in(stageDependencies.json.upload_json.result, 'Succeeded', 'SucceededWithIssues')
+      pool:
+        vmImage: windows-latest
       steps:
       - checkout: self
         submodules: false
