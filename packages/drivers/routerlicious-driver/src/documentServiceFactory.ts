@@ -92,7 +92,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             resolvedUrl.endpoints.ordererUrl,
         );
         // the backend responds with the actual document ID associated with the new container.
-        const documentId = await ordererRestWrapper.post<string>(
+        const { id: documentId, token } = await ordererRestWrapper.post<{id: string, token: string}>(
             `/documents/${tenantId}`,
             {
                 summary: convertSummaryToCreateNewSummary(appSummary),
@@ -100,6 +100,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 values: quorumValues,
             },
         );
+         if (this.tokenProvider.documentPostCreateCallback !== undefined) {
+            try {
+                await this.tokenProvider.documentPostCreateCallback(documentId, token);
+            } catch (e) {
+                // TODO: logging to console for now
+                console.error(e);
+            }
+        }
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
         const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
         if (!deltaStorageUrl) {

@@ -44,6 +44,24 @@ export function validateTokenClaims(
     return claims;
 }
 
+export function getCreationToken(token: string, key: string, documentId: string) {
+ // Current time in seconds
+ const now = Math.round((new Date()).getTime() / 1000);
+ const tokenClaims = jwt.decode(token) as ITokenClaims;
+
+ const claims: ITokenClaims = {
+     documentId,
+     tenantId: tokenClaims.tenantId,
+     user: tokenClaims.user,
+     scopes: [],
+     iat: now,
+     exp: now + 5 * 60,
+     ver: "1.0",
+ };
+
+ return jwt.sign(claims, key, { jwtid: uuid()});
+}
+
 /**
  * Generates a JWT token to authorize routerlicious. This function uses a large auth library (jsonwebtoken)
  * and should only be used in server context.

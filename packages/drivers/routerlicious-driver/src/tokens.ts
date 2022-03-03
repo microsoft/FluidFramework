@@ -44,4 +44,13 @@ export interface ITokenProvider {
      * whether token came from cache.
      */
     fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
+
+
+    /**
+     * A callback triggered directly after creating the document.
+     * @param documentId - Document ID.
+     * @param creationToken - A special token that doesn't provide any kind of access, but it has the user's payload
+     * and document id. It can be used to validate the identity of the document creator.
+     */
+    documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;
 }
