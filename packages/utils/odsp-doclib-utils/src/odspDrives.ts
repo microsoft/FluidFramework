@@ -213,7 +213,7 @@ async function getDriveResponse(
     const response = await getAsync(getDriveUrl, authRequestInfo);
     if (response.status !== 200) {
         throwOdspNetworkError(
-            `Failed to get ${routeTail}.`,
+            `Failed to get response from /${routeTail} endpoint`,
             response.status,
             response,
             undefined,

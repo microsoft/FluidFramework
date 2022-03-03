@@ -21,7 +21,7 @@ import {
     isExternalError,
     originatedAsExternalError,
 } from "../errorLogging";
-import { IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase";
+import { hasErrorInstanceId, IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase";
 import { MockLogger } from "../mockLogger";
 
 describe("Error Logging", () => {
@@ -753,6 +753,31 @@ describe("Error Discovery", () => {
             Object.assign(new LoggingError("hello"), { errorType, _errorInstanceId: undefined })
         ));
         assert(isFluidError(
+            Object.assign(new LoggingError("hello"), { errorType })
+        ));
+    });
+    // I copied the old version of isFluidError here, it depends on fluidErrorCode.
+    // I want to make sure that an error built on LoggingError that otherwise matches isFluidError
+    // will match isFluidError in old code (e.g. when an error flows across layers)
+    function isFluidError_old(e: any): e is IFluidErrorBase {
+        const hasTelemetryPropFunctions = (x: any): boolean =>
+            typeof x?.getTelemetryProperties === "function" &&
+            typeof x?.addTelemetryProperties === "function";
+        return typeof e?.errorType === "string" &&
+            typeof e?.fluidErrorCode === "string" &&
+            typeof e?.message === "string" &&
+            hasErrorInstanceId(e) &&
+            hasTelemetryPropFunctions(e);
+    }
+    it("isFluidError (old implementation)", () => {
+        assert(!isFluidError_old(new Error("hello")));
+        assert(!isFluidError_old(new LoggingError("hello")));
+
+        const errorType = "someErrorType";
+        assert(!isFluidError_old(
+            Object.assign(new LoggingError("hello"), { errorType, _errorInstanceId: undefined })
+        ));
+        assert(isFluidError_old(
             Object.assign(new LoggingError("hello"), { errorType })
         ));
     });
