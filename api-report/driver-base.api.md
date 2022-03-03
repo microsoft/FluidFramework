@@ -6,7 +6,7 @@
 
 import { BatchManager } from '@fluidframework/common-utils';
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
-import { DriverError } from '@fluidframework/driver-definitions';
+import { IAnyDriverError } from '@fluidframework/driver-utils';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnect } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
@@ -23,19 +23,19 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
-    protected constructor(socket: SocketIOClient.Socket, documentId: string, logger: ITelemetryLogger);
+    protected constructor(socket: SocketIOClient.Socket, documentId: string, logger: ITelemetryLogger, enableLongPollingDowngrades?: boolean);
     // (undocumented)
     protected addTrackedListener(event: string, listener: (...args: any[]) => void): void;
     checkpointSequenceNumber: number | undefined;
     get claims(): ITokenClaims;
     get clientId(): string;
-    protected createErrorObject(handler: string, error?: any, canRetry?: boolean): DriverError;
+    protected createErrorObject(handler: string, error?: any, canRetry?: boolean): IAnyDriverError;
     // (undocumented)
     get details(): IConnected;
-    protected disconnect(socketProtocolError: boolean, reason: any): void;
+    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError): void;
     dispose(): void;
     // (undocumented)
-    protected disposeCore(socketProtocolError: boolean, err: any): void;
+    protected disposeCore(socketProtocolError: boolean, err: IAnyDriverError): void;
     // (undocumented)
     get disposed(): boolean;
     protected _disposed: boolean;

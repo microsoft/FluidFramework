@@ -21,7 +21,6 @@ export class GitrestRunner implements IRunner {
         private readonly externalStorageManager: IExternalStorageManager) {
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
         // Create the gitrest app
@@ -39,7 +38,6 @@ export class GitrestRunner implements IRunner {
         return this.runningDeferred.promise;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
         this.server.close().then(

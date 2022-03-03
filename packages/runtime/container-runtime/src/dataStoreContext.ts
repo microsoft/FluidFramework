@@ -66,7 +66,7 @@ import {
     TelemetryDataTag,
     ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
-import { CreateProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -311,7 +311,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
-                const errorWrapped = CreateProcessingError(error, "realizeFluidDataStoreContext");
+                const errorWrapped = DataProcessingError.wrapIfUnrecognized(error, "realizeFluidDataStoreContext");
                 errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData"} });
                 this.channelDeferred?.reject(errorWrapped);
                 this.logger.sendErrorEvent({ eventName: "RealizeError"}, errorWrapped);
@@ -847,6 +847,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     private readonly snapshotTree: ISnapshotTree | undefined;
     protected isRootDataStore: boolean | undefined;
+    /**
+     * @deprecated 0.16 Issue #1635, #3631
+     */
+    public readonly createProps?: any;
 
     constructor(props: ILocalFluidDataStoreContextProps) {
         super(
@@ -859,6 +863,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         this.snapshotTree = props.snapshotTree;
         this.isRootDataStore = props.isRootDataStore;
+        this.createProps = props.createProps;
         this.attachListeners();
     }
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as moniker from "moniker";
+import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { assert, BaseTelemetryNullLogger, Deferred } from "@fluidframework/common-utils";
@@ -106,8 +106,8 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
         );
         return {
             fluidExport: {
-                IRuntimeFactory: runtimeFactory
-            }
+                IRuntimeFactory: runtimeFactory,
+            },
         };
     }
     return fluidModule;
@@ -227,7 +227,7 @@ export async function start(
     const manualAttach: boolean = id === "manualAttach";
     const testOrderer = id === "testorderer";
     if (autoAttach || manualAttach) {
-        documentId = moniker.choose();
+        documentId = (sillyname() as string).toLowerCase().split(" ").join("-");
         url = url.replace(id, `doc/${documentId}`);
     }
 

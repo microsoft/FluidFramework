@@ -92,7 +92,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 
     private checkStorageDisposed() {
         if (this._disposed) {
-            throw new LoggingError("storageServiceDisposedCannotRetry", { canRetry: false });
+            throw new LoggingError("Storage Service is disposed. Cannot retry", { canRetry: false });
         }
     }
 

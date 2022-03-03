@@ -198,8 +198,6 @@ export class PartialSequenceLengths {
             }
         }
         // TODO: incremental zamboni during build
-        // console.log(combinedPartialLengths.toString());
-        // console.log(`ZZZ...(min ${segmentWindow.minSeq})`);
         if (PartialSequenceLengths.options.zamboni) {
             combinedPartialLengths.zamboni(collabWindow);
         }
@@ -208,7 +206,6 @@ export class PartialSequenceLengths {
             combinedPartialLengths.verify();
         }
 
-        // console.log(combinedPartialLengths.toString());
         return combinedPartialLengths;
     }
 
@@ -227,9 +224,6 @@ export class PartialSequenceLengths {
             if (child.isLeaf()) {
                 // Leaf segment
                 const segment = child;
-                // eslint-disable-next-line max-len
-                // console.log(`seg br ${segBranchId} cli ${glc(mergeTree, segment.clientId)} me ${glc(mergeTree, mergeTree.collabWindow.clientId)}`);
-
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 if (seqLTE(segment.seq!, collabWindow.minSeq)) {
                     combinedPartialLengths.minLength += segment.cachedLength;
@@ -448,15 +442,12 @@ export class PartialSequenceLengths {
             this.clientSeqNumbers[clientId] = [];
         }
         PartialSequenceLengths.addSeq(this.clientSeqNumbers[clientId], seq, seqSeglen);
-        //    console.log(this.toString());
         if (PartialSequenceLengths.options.zamboni) {
             this.zamboni(collabWindow);
         }
         if (PartialSequenceLengths.options.verify) {
             this.verify();
         }
-        //   console.log('ZZZ');
-        //   console.log(this.toString());
     }
 
     public getPartialLength(refSeq: number, clientId: number) {
@@ -522,7 +513,6 @@ export class PartialSequenceLengths {
         function copyDown(partialLengths: PartialSequenceLength[]) {
             const mindex = latestLEQ(partialLengths, segmentWindow.minSeq);
             let minLength = 0;
-            // console.log(`mindex ${mindex}`);
             if (mindex >= 0) {
                 minLength = partialLengths[mindex].len;
                 const seqCount = partialLengths.length;

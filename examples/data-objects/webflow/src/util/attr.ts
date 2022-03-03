@@ -4,8 +4,8 @@
  */
 
 import { ISegment } from "@fluidframework/merge-tree";
-import { emptyObject } from "./";
 import { areStringsEquivalent } from "./string";
+import { emptyObject } from "./";
 
 export interface IHTMLAttributes {
     src?: string;

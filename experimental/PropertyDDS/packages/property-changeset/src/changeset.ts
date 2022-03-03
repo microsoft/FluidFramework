@@ -699,7 +699,6 @@ export class ChangeSet {
      * or updates the former state of a reversible changeset
      * @param in_context the traversal context
      */
-    // eslint-disable-next-line complexity
     private _recursivelyBuildReversibleChangeSet(in_context: Utils.TraversalContext) {
         const opType = in_context.getOperationType();
         if (opType === "modify") {
@@ -933,7 +932,6 @@ export class ChangeSet {
      * @param in_withoutRoot - Bypass a fix where the root of a changeset is cleaned
      */
     public _stripReversibleChangeSet(in_withoutRoot: boolean) {
-        // eslint-disable-next-line complexity
         const callback = function(in_context) {
             const opType = in_context.getOperationType();
             if (opType === "remove" || opType === "modify") {

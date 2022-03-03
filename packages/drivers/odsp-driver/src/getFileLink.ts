@@ -118,14 +118,13 @@ async function getFileLinkCore(
                     },
                 };
                 const response = await fetchHelper(url, requestInit);
-                additionalProps = response.commonSpoHeaders;
+                additionalProps = response.propsToLog;
 
                 const sharingInfo = await response.content.json();
                 const directUrl = sharingInfo?.d?.directUrl;
                 if (typeof directUrl !== "string") {
                     // This will retry once in getWithRetryForTokenRefresh
                     throw new NonRetryableError(
-                        "getFileLinkCoreMalformedResponse",
                         "Malformed GetSharingInformation response",
                         DriverErrorType.incorrectServerResponse,
                         { driverVersion });
@@ -176,13 +175,12 @@ async function getFileItemLite(
                 );
                 const requestInit = { method: "GET", headers };
                 const response = await fetchHelper(url, requestInit);
-                additionalProps = response.commonSpoHeaders;
+                additionalProps = response.propsToLog;
 
                 const responseJson = await response.content.json();
                 if (!isFileItemLite(responseJson)) {
                     // This will retry once in getWithRetryForTokenRefresh
                     throw new NonRetryableError(
-                        "getFileItemLiteMalformedResponse",
                         "Malformed getFileItemLite response",
                         DriverErrorType.incorrectServerResponse,
                         { driverVersion });

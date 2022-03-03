@@ -26,7 +26,6 @@ describe('Test EnumProperty', function () {
 
         // the following templates are copies from the specification
         // disableling the single quote rule to keep exact copies
-        /* eslint-disable quotes*/
         TestEnumTemplate = {
             typeid: "autodesk.core:UnitsEnum-1.0.0",
             inherits: "Enum",

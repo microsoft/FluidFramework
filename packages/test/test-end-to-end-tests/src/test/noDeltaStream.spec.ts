@@ -10,6 +10,7 @@ import {
     createLoader,
     ITestContainerConfig,
     ITestFluidObject,
+    ITestObjectProvider,
     timeoutPromise,
 } from "@fluidframework/test-utils";
 import { Container } from "@fluidframework/container-loader";
@@ -45,10 +46,19 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
-    for(const testConfig of testConfigs) {
-        it.skip(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
-            const provider = getTestObjectProvider();
-            let containerUrl: IResolvedUrl | undefined;
+    const scenarioToContainerUrl = new Map<string, string>();
+    before(()=>{
+        // clear first, so each version combination gets a new container
+        scenarioToContainerUrl.clear();
+    });
+    async function getContainerUrl(
+        provider: ITestObjectProvider,
+        waitForSummary: boolean,
+        timeout: number,
+    ) {
+        const scenario = JSON.stringify(waitForSummary ?? "undefined");
+        if(!scenarioToContainerUrl.has(scenario)) {
+            let containerResolvedUrl: IResolvedUrl | undefined;
             // initialize the container and its data
             {
                 const initLoader = createLoader(
@@ -59,7 +69,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 
                 const initContainer = await initLoader.createDetachedContainer(provider.defaultCodeDetails);
                 await initContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
-                containerUrl = initContainer.resolvedUrl;
+                containerResolvedUrl = initContainer.resolvedUrl;
 
                 const initDataObject = await requestFluidObject<ITestFluidObject>(initContainer, "default");
                 for(let i = 0; i < maxOps; i++) {
@@ -68,14 +78,16 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                 if(initContainer.isDirty) {
                     await timeoutPromise(
                         (res)=>initContainer.once("saved", ()=>res()),
-                        {durationMs: this.timeout() / 2,errorMsg:"Not saved before timeout"});
+                        {durationMs: timeout / 2,errorMsg:"Not saved before timeout"});
                 }
                 initContainer.close();
             }
+            const containerUrl = await provider.driver.createContainerUrl(provider.documentId, containerResolvedUrl);
+            scenarioToContainerUrl.set(scenario, containerUrl);
 
             // if we want there to be a summary before we load the storage only container
             // wait for it here
-            if(testConfig.waitForSummary) {
+            if(waitForSummary) {
                 const summaryLoader = createLoader(
                     [[provider.defaultCodeDetails, provider.createFluidEntryPoint({
                         ...testContainerConfig,
@@ -91,7 +103,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                     provider.urlResolver,
                 );
                 const summaryContainer = await summaryLoader.resolve({
-                    url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
+                    url: containerUrl,
                 });
 
                 const summaryCollection =
@@ -99,9 +111,25 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 
                 await timeoutPromise(
                     (res)=>summaryCollection.once("summaryAck", ()=>res()),
-                    {durationMs: this.timeout() / 2,errorMsg:"Not summary acked before timeout"});
+                    {durationMs: timeout / 2,errorMsg:"Not summary acked before timeout"});
                 summaryContainer.close();
             }
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return scenarioToContainerUrl.get(scenario)!;
+    }
+
+    for(const testConfig of testConfigs) {
+        it(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
+            const provider = getTestObjectProvider();
+            switch(provider.driver.type) {
+                case "local":
+                case "tinylicious":
+                    break;
+                default:
+                    this.skip();
+            }
+            const containerUrl = await getContainerUrl(provider, testConfig.waitForSummary, this.timeout());
 
             // spin up a validation (normal) and a storage only client, and check that they see the same things
             {
@@ -111,7 +139,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                     provider.urlResolver,
                 );
                 const validationContainer = await validationLoader.resolve({
-                    url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
+                    url: containerUrl,
                 });
                 const validationDataObject = await requestFluidObject<ITestFluidObject>(validationContainer, "default");
 
@@ -130,7 +158,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                                         };
                                         return policies;
                                     }
-                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
                                     return Reflect.get(target, prop,r);
                                 },
                             }),
@@ -143,7 +171,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                 );
 
                 const storageOnlyContainer = await storageOnlyLoader.resolve({
-                    url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
+                    url: containerUrl,
                     headers: {[LoaderHeader.loadMode]: testConfig.loadOptions},
                 }) as Container;
 
@@ -160,7 +188,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                 for(const key of validationDataObject.root.keys()) {
                     assert.strictEqual(
                         storageOnlyDataObject.root.get(key),
-                        validationDataObject.root.get(key));
+                        storageOnlyDataObject.root.get(key),
+                        `${storageOnlyDataObject.root.get(key)} !== ${storageOnlyDataObject.root.get(key)}`);
                 }
             }
         });

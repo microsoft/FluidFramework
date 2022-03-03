@@ -136,8 +136,12 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
  * only relevant at the root of the tree.
  */
 export interface IGeneratedSummaryStats extends ISummaryStats {
+    /** The total number of data stores in the container. */
     readonly dataStoreCount: number;
+    /** The number of data stores that were summarized in this summary. */
     readonly summarizedDataStoreCount: number;
+    /** The number of data stores whose GC reference state was updated in this summary. */
+    readonly gcStateUpdatedDataStoreCount?: number;
 }
 
 /** Base results for all submitSummary attempts. */

@@ -63,7 +63,6 @@ import {
     ICommittedProposal,
     IDocumentAttributes,
     IDocumentMessage,
-    IPendingProposal,
     IProcessMessageResult,
     IQuorumClients,
     IQuorumProposals,
@@ -259,7 +258,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
-                    reject(err ?? new GenericError("containerClosedWithoutErrorDuringLoad"));
+                    reject(err ?? new GenericError("Container closed without error during load"));
                 };
                 container.on("closed", onClosed);
 
@@ -563,6 +562,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error: {
                     // load information to associate errors with the specific load point
                     dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
+                    dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
                     dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
                     containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
                     containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
@@ -589,7 +589,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.connectionStateHandler = new ConnectionStateHandler(
             {
-                protocolHandler: () => this._protocolHandler,
+                quorumClients: () => this._protocolHandler?.quorum,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
@@ -643,7 +643,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.lastVisible = performance.now();
                 } else {
                     // settimeout so this will hopefully fire after disconnect event if being hidden caused it
-                    setTimeout(() => { this.lastVisible = undefined }, 0);
+                    setTimeout(() => { this.lastVisible = undefined; }, 0);
                 }
             };
             document.addEventListener("visibilitychange", this.visibilityEventHandler);
@@ -780,7 +780,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public async attach(request: IRequest): Promise<void> {
         await PerformanceEvent.timedExecAsync(this.mc.logger, { eventName: "Attach" }, async () => {
             if (this._lifecycleState !== "loaded") {
-                throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
+                throw new UsageError(`The Container is not in a valid state for attach [${this._lifecycleState}]`);
             }
 
             // If container is already attached or attach is in progress, throw an error.
@@ -1014,7 +1014,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
-        this.close(new GenericError("existingContextDoesNotSatisfyIncomingProposal"));
+        this.close(new GenericError("Existing context does not satisfy incoming proposal"));
     }
 
     private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -1322,7 +1322,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             proposals,
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-            (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
+            // Quorum proposal rejection removed, delete when protocol-base 0.1035 is integrated.
+            () => {});
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1339,7 +1340,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
         });
 
-        protocol.quorum.on("addProposal", (proposal: IPendingProposal) => {
+        protocol.quorum.on("addProposal", (proposal: ISequencedProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
                 this.emit("codeDetailsProposed", proposal.value, proposal);
             }
@@ -1636,17 +1637,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Check and report if we're getting messages from a clientId that we previously
         // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
         if (message.clientId != null) {
-            let errorCode: string | undefined;
+            let errorMsg: string | undefined;
             const client: ILocalSequencedClient | undefined =
                 this.getQuorum().getMember(message.clientId);
             if (client === undefined && message.type !== MessageType.ClientJoin) {
-                errorCode = "messageClientIdMissingFromQuorum";
+                errorMsg = "Remote message's clientId is missing from the quorum";
             } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
-                errorCode = "messageClientIdShouldHaveLeft";
+                errorMsg = "Remote message's clientId already should have left";
             }
-            if (errorCode !== undefined) {
+            if (errorMsg !== undefined) {
                 const error = new DataCorruptionError(
-                    errorCode,
+                    errorMsg,
                     extractSafePropertiesFromMessage(message));
                 this.close(normalizeError(error));
             }
