@@ -15,6 +15,18 @@ parameters:
       - default
       - skip
       - force
+  - name: guardianAssetRetentionOverride
+    displayName: Guardian Asset Retention Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+  - name: publishGuardianBaselines
+    displayName: Publish Guardian Baseline Files
+    type: boolean
+    default: false
 
 variables:
   - group: doc-versions
@@ -44,6 +56,13 @@ variables:
       eq(parameters.deployOverride, 'force'),
       and(eq(variables.isMain, true), eq(parameters.deployOverride, 'default'))
       )}}
+  - name: shouldRetainGuardianAssets
+    value: ${{ or(
+      eq(parameters.guardianAssetRetentionOverride, 'force'),
+      and(eq(variables.isMain, true), eq(parameters.guardianAssetRetentionOverride, 'default'))
+      )}}
+  - name: arrow.releasedtoproduction
+    value: eq(variables.shouldDeploy, true)
 
 # no PR triggers
 trigger:
@@ -106,6 +125,7 @@ stages:
 
 - stage: json
   displayName: 'Combine API Extractor JSON'
+  dependsOn: [] # run in parallel
   jobs:
     - deployment: upload_json
       displayName: 'Upload combined api-extractor JSON'
@@ -118,7 +138,7 @@ stages:
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 STORAGE_KEY: $(STORAGE_KEY)
-                uploadAsLatest: true
+                uploadAsLatest: ${{ variables.isMain }}
 
 - stage: site_build
   displayName: 'Build website'
@@ -126,6 +146,8 @@ stages:
   jobs:
     - job: build_site
       condition: in(stageDependencies.json.upload_json.result, 'Succeeded', 'SucceededWithIssues')
+      pool:
+        vmImage: windows-latest
       steps:
       - checkout: self
         submodules: false
@@ -144,6 +166,56 @@ stages:
         displayName: 'Use Node 14.x'
         inputs:
           version: 14.x
+
+      # BEGIN Secure development tasks
+      - task: UseDotNet@2
+        displayName: 'Use .NET Core 3.x'
+        condition: succeededOrFailed()
+        inputs:
+          packageType: sdk
+          version: 3.x
+
+      - task: securedevelopmentteam.vss-secure-development-tools.build-task-eslint.ESLint@1
+        displayName: 'Run ESLint'
+        condition: succeededOrFailed()
+
+      - task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@3
+        displayName: 'Publish Guardian Artifacts - All Tools'
+        condition: succeededOrFailed()
+        inputs:
+          ArtifactType: M365
+
+      - task: AssetRetention@3
+        displayName: Guardian Asset Retention
+        condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
+        inputs:
+          ArrowServiceConnection: 'Arrow_FluidFramework_internal'
+          AssetGroupName: 'fluidframework_$(System.TeamProject)_$(Build.DefinitionName)'
+          AssetNumber: '$(Build.BuildId)'
+          IsShipped: false # based on value of arrow.releasedtoproduction variable
+          DropsToRetain: 'CodeAnalysisLogs'
+
+      - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
+        displayName: 'Guardian Break'
+        condition: succeededOrFailed()
+        inputs:
+          GdnBreakPolicyMinSev: Warning
+          GdnBreakAllTools: true
+          GdnBreakBaselineFiles: '$(Build.SourcesDirectory)/docs/.gdnbaselines'
+          GdnBreakGdnToolESLint: true
+          GdnBreakGdnToolESLintSeverity: Warning
+          GdnBreakPolicy: M365
+          GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)\'
+        continueOnError: true
+
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish Baselines'
+        condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
+        inputs:
+          targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
+          artifact: .gdn
+
+      # END Secure development tasks
 
       - task: Npm@1
         displayName: npm ci
@@ -173,12 +245,12 @@ stages:
           ArtifactName: 'fluidframework-docs'
           publishLocation: 'Container'
 
-      - ${{ if eq(variables.shouldDeploy, true) }}:
-        - task: AzureStaticWebApp@0
-          displayName: 'Deploy site'
-          inputs:
-            skip_app_build: true # site was built in previous step
-            cwd: $(Build.SourcesDirectory)
-            app_location: 'docs/public'
-            output_location: ''
-            azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
+      - task: AzureStaticWebApp@0
+        displayName: 'Deploy site'
+        condition: eq(variables.shouldDeploy, true)
+        inputs:
+          skip_app_build: true # site was built in previous step
+          cwd: $(Build.SourcesDirectory)
+          app_location: 'docs/public'
+          output_location: ''
+          azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
