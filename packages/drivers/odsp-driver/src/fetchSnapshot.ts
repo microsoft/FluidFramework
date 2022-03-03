@@ -232,11 +232,15 @@ async function fetchLatestSnapshotCore(
                 // secureConnectionStart: immediately before the browser starts the handshake process to secure the
                 //              current connection. If a secure connection is not used, this property returns zero.
                 // startTime: Time when the resource fetch started. This value is equivalent to fetchStart.
-                let dnstime: number | undefined; // domainLookupEnd - domainLookupStart
-                let redirectTime: number | undefined; // redirectEnd -redirectStart
+                // domainLookupStart: immediately before the browser starts the domain name lookup for the resource.
+                // domainLookupEnd: immediately after the browser finishes the domain name lookup for the resource.
+                // redirectStart: start time of the fetch which that initiates the redirect.
+                // redirectEnd: immediately after receiving the last byte of the response of the last redirect.
+                let dnsLookupTime: number | undefined; // domainLookupEnd - domainLookupStart
+                let redirectTime: number | undefined; // redirectEnd - redirectStart
                 let tcpHandshakeTime: number | undefined; // connectEnd  - connectStart
-                let secureConntime: number | undefined; // connectEnd  - secureConnectionStart
-                let responseTime: number | undefined; // responsEnd - responseStart
+                let secureConnectionTime: number | undefined; // connectEnd  - secureConnectionStart
+                let responseNetworkTime: number | undefined; // responsEnd - responseStart
                 let fetchStartToResponseEndTime: number | undefined; // responseEnd  - fetchStart
                 let reqStartToResponseEndTime: number | undefined; // responseEnd - requestStart
                 let networkTime: number | undefined; // responseEnd - startTime
@@ -252,11 +256,11 @@ async function fetchLatestSnapshotCore(
                     if ((resource_initiatortype.localeCompare("fetch") === 0)
                         && (resource_name.localeCompare(response.requestUrl) === 0)) {
                         redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
-                        dnstime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
+                        dnsLookupTime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
                         tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
-                        secureConntime = (indResTime.secureConnectionStart > 0) ?
+                        secureConnectionTime = (indResTime.secureConnectionStart > 0) ?
                             (indResTime.connectEnd - indResTime.secureConnectionStart) : undefined;
-                        responseTime = (indResTime.responseStart > 0) ?
+                        responseNetworkTime = (indResTime.responseStart > 0) ?
                             (indResTime.responseEnd - indResTime.responseStart) : undefined;
                         fetchStartToResponseEndTime = (indResTime.fetchStart > 0) ?
                             (indResTime.responseEnd - indResTime.fetchStart) : undefined;
@@ -264,7 +268,7 @@ async function fetchLatestSnapshotCore(
                             (indResTime.responseEnd - indResTime.requestStart) : undefined;
                         networkTime = (indResTime.startTime > 0) ?
                             (indResTime.responseEnd - indResTime.fetchStart) : undefined;
-                        if (spReqDuration && networkTime) {
+                        if (spReqDuration !== undefined && networkTime !== undefined) {
                             networkTime = networkTime - parseInt(spReqDuration, 10);
                         }
                         break;
@@ -310,14 +314,23 @@ async function fetchLatestSnapshotCore(
                     sequenceNumber,
                     ops: snapshot.ops?.length ?? 0,
                     headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
-                    redirectTime: redirectTime,
-                    dnsLookupTime: dnstime,
-                    responseNetworkTime: responseTime,
-                    tcpHandshakeTime: tcpHandshakeTime,
-                    secureConnectionTime: secureConntime,
-                    fetchStartToResponseEndTime: fetchStartToResponseEndTime,
-                    reqStartToResponseEndTime: reqStartToResponseEndTime,
-                    networkTime: networkTime,
+                    // Interval between the first fetch until the last byte of the last redirect.
+                    redirectTime,
+                    // Interval between start and finish of the domain name lookup for the resource.
+                    dnsLookupTime,
+                    // Interval to receive all (first to last) bytes form the server.
+                    responseNetworkTime,
+                    // Time to establish the connection to the server to retrieve the resource.
+                    tcpHandshakeTime,
+                    // Time from the end of the connection until the inital handshake process to secure the connection.
+                    secureConnectionTime,
+                    // Interval between the initial fetch until the last byte is received.
+                    fetchStartToResponseEndTime,
+                    // Interval between starting the request for the resource until receiving the last byte.
+                    reqStartToResponseEndTime,
+                    // Interval between starting the request for the resource until receiving the last byte but
+                    // excluding the Snaphot request duration indicated on the snapshot response header.
+                    networkTime,
                     // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
                     // Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
