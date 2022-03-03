@@ -36,7 +36,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/protocol-definitions": "^0.1026.0"
+    "@fluidframework/protocol-definitions": "^0.1027.0-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -107,6 +107,9 @@
         },
         "InterfaceDeclaration_DriverPreCheckInfo": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentStorageService": {
+          "backCompat": false
         }
       },
       "0.40.0": {
@@ -123,6 +126,9 @@
           "backCompat": false
         },
         "InterfaceDeclaration_DriverPreCheckInfo": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentStorageService": {
           "backCompat": false
         }
       },
@@ -141,6 +147,9 @@
         },
         "InterfaceDeclaration_DriverPreCheckInfo": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentStorageService": {
+          "backCompat": false
         }
       },
       "0.42.0": {
@@ -155,14 +164,36 @@
         },
         "InterfaceDeclaration_DriverPreCheckInfo": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentStorageService": {
+          "backCompat": false
         }
       },
       "0.43.0": {
         "InterfaceDeclaration_DriverPreCheckInfo": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentService": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentServiceFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentStorageService": {
+          "backCompat": false
         }
       },
-      "0.44.0": {}
+      "0.44.0": {
+        "InterfaceDeclaration_IDocumentService": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentServiceFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentStorageService": {
+          "backCompat": false
+        }
+      }
     }
   }
 }
