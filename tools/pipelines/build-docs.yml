@@ -194,7 +194,7 @@ stages:
       - task: PublishPipelineArtifact@1
         displayName: 'Publish Baselines'
         inputs:
-          targetPath: '$(Pipeline.Workspace)\.gdnbaselines'
+          targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
           artifact: .gdn
 
       # END Secure development requirements
