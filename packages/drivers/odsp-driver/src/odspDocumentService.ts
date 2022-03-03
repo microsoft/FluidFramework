@@ -365,13 +365,15 @@ export class OdspDocumentService implements IDocumentService {
                 response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
             }
         } else {
-            let refreshAfterDeltaMs = this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
+            let refreshAfterDeltaMs =
+                this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
             if (refreshAfterDeltaMs <= 0) {
                 this.cache.sessionJoinCache.remove(this.joinSessionKey);
                 response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
                 refreshSessionDurationSeconds = response.joinSessionResponse.refreshSessionDurationSeconds;
                 if (refreshSessionDurationSeconds !== undefined) {
-                    refreshAfterDeltaMs = this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
+                    refreshAfterDeltaMs =
+                        this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
                 }
             }
             if (refreshAfterDeltaMs > 0) {
