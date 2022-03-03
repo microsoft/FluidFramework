@@ -93,6 +93,7 @@ const contentPath = "content";
  * - `target` - The sequence itself.
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
+    (event: "createIntervalCollection", listener: (label: string, target: IEventThisPlaceHolder) => void);
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void);
     (event: "maintenance",
         listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void);
@@ -427,6 +428,18 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return sharedCollection;
     }
 
+    /**
+     * @returns an iterable object that enumerates the IntervalCollection labels
+     * Usage:
+     * const iter = this.getIntervalCollectionKeys();
+     * for (key of iter)
+     *     const collection = this.getIntervalCollection(key);
+     *     ...
+    */
+    public getIntervalCollectionLabels(): IterableIterator<string> {
+        return this.intervalMapKernel.keys();
+    }
+
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const builder = new SummaryTreeBuilder();
 
@@ -680,10 +693,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
     private initializeIntervalCollections() {
         // Listen and initialize new SharedIntervalCollections
-        this.intervalMapKernel.eventEmitter.on("valueChanged", (ev: IValueChanged) => {
+        this.intervalMapKernel.eventEmitter.on("create", (ev: IValueChanged) => {
             const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(ev.key);
             if (!intervalCollection.attached) {
                 intervalCollection.attachGraph(this.client, ev.key);
+            }
+            if (ev.previousValue === undefined) {
+                // undefined previousValue indicates creation of a new collection
+                this.emit("createIntervalCollection", ev.key, this);
             }
         });
 
