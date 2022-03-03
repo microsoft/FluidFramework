@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     loggerToMonitoringContext,
@@ -54,8 +54,6 @@ export class OdspDocumentService implements IDocumentService {
     private _policies: IDocumentServicePolicies;
     // Timer which runs and executes the join session call after intervals.
     private joinSessionRefreshTimer: ReturnType<typeof setTimeout> | undefined;
-    // This is the time at which join session refresh should be executed.
-    private joinSessionRefreshTime: number | undefined;
     /**
      * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -240,21 +238,13 @@ export class OdspDocumentService implements IDocumentService {
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
 
-            const refreshJoinSessionPolicy = this.mc.config.getBoolean("Fluid.Driver.Odsp.refreshJoinSession");
-            const joinSessionPromise = this.joinSession(
-                requestWebsocketTokenFromJoinSession, options, refreshJoinSessionPolicy);
-
+            const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options);
             const [websocketEndpoint, websocketToken, io] =
                 await Promise.all([
                     joinSessionPromise,
                     websocketTokenPromise,
                     this.socketIoClientFactory(),
                 ]);
-
-            // Start refreshing join session periodically.
-            if (refreshJoinSessionPolicy) {
-                this.refreshSessionPeriodically(requestWebsocketTokenFromJoinSession).catch((error) => {});
-            }
 
             const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
             if (finalWebsocketToken === null) {
@@ -304,35 +294,22 @@ export class OdspDocumentService implements IDocumentService {
         }
     }
 
-    private async refreshSessionPeriodically(requestWebsocketTokenFromJoinSession: boolean) {
-        for (let i = 0;;i++) {
-            // If the refresh time is not defined, then let the session expire.
-            if (this.joinSessionRefreshTime === undefined || this.joinSessionRefreshTime <= 0) {
-                this.mc.logger.sendErrorEvent({
-                    eventName: "JoinSessionRefreshTimeNotSet",
-                    joinSessionRefreshTime: this.joinSessionRefreshTime,
-                    timerRunning: this.joinSessionRefreshTimer !== undefined,
+    private async scheduleJoinSessionRefresh(delta: number) {
+        await new Promise<void>((resolve) => {
+            this.joinSessionRefreshTimer = setTimeout(async () => {
+                await getWithRetryForTokenRefresh(async (options) => {
+                    await this.joinSession(false, options);
+                    resolve();
                 });
-                break;
-            }
-            await new Promise<void>((resolve) => {
-                assert(this.joinSessionRefreshTime !== undefined, "Join session Refresh time should be defined");
-                this.joinSessionRefreshTimer = setTimeout(async () => {
-                    await getWithRetryForTokenRefresh(async (options) => {
-                        await this.joinSession(requestWebsocketTokenFromJoinSession, options, true);
-                        resolve();
-                    });
-                }, this.joinSessionRefreshTime - Date.now());
-            });
-        }
+            }, delta);
+        });
     }
 
     private async joinSession(
         requestSocketToken: boolean,
         options: TokenFetchOptionsEx,
-        refreshJoinSessionPolicy: boolean | undefined,
     ) {
-        return this.joinSessionCore(requestSocketToken, options, refreshJoinSessionPolicy).catch((e) => {
+        return this.joinSessionCore(requestSocketToken, options).catch((e) => {
             const likelyFacetCodes = e as IFacetCodes;
             if (Array.isArray(likelyFacetCodes.facetCodes)) {
                 for (const code of likelyFacetCodes.facetCodes) {
@@ -357,46 +334,67 @@ export class OdspDocumentService implements IDocumentService {
     private async joinSessionCore(
         requestSocketToken: boolean,
         options: TokenFetchOptionsEx,
-        refreshJoinSessionPolicy: boolean | undefined,
     ): Promise<ISocketStorageDiscovery> {
-        const executeFetch = async () =>
-            fetchJoinSession(
-                this.odspResolvedUrl,
-                "opStream/joinSession",
-                "POST",
-                this.mc.logger,
-                this.getStorageToken,
-                this.epochTracker,
-                requestSocketToken,
-                options,
-                refreshJoinSessionPolicy,
-                this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
-            );
+        const disableJoinSessionRefresh = this.mc.config.getBoolean("Fluid.Driver.Odsp.disableJoinSessionRefresh");
+        const executeFetch = async () => {
+            return {
+                    entryTime: Date.now(),
+                    joinSessionResponse: await fetchJoinSession(
+                        this.odspResolvedUrl,
+                        "opStream/joinSession",
+                        "POST",
+                        this.mc.logger,
+                        this.getStorageToken,
+                        this.epochTracker,
+                        requestSocketToken,
+                        options,
+                        disableJoinSessionRefresh,
+                        this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
+                    )
+            };
+        };
 
-        let response: ISocketStorageDiscovery;
-        const currentTime = Date.now();
-        // If the join session refresh time is in future, that means we can reuse the cached response. Otherwise
-        // we need to clear the cache and execute the network call, so as to refresh the session on the relay
-        // ordering service.
-        if (this.joinSessionRefreshTime === undefined || this.joinSessionRefreshTime <= currentTime) {
-            this.cache.sessionJoinCache.remove(this.joinSessionKey);
-            response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
-            if (!refreshJoinSessionPolicy) {
-                // This is for the old flow. If the refresh policy is not set, then keep the response for 1 hour.
-                this.joinSessionRefreshTime = currentTime + 3600000;
-            } else {
-                const refreshSessionDurationSeconds = response.refreshSessionDurationSeconds;
-                if (refreshSessionDurationSeconds !== undefined) {
-                    // 30 seconds is buffer time to refresh the session.
-                    const retryAfterMs = (refreshSessionDurationSeconds * 1000) - 30000;
-                    // If retryAfter is negative, don't do anything and let the session disconnect.
-                    this.joinSessionRefreshTime = retryAfterMs > 0 ? currentTime + retryAfterMs : undefined;
-                }
+        let response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+        // If the response does not contain refreshSessionDurationSeconds, then treat it as old flow and let the
+        // cache entry to be treated as expired after 1 hour.
+        let refreshSessionDurationSeconds: number | undefined =
+            response.joinSessionResponse.refreshSessionDurationSeconds ?? 3600;
+        if (disableJoinSessionRefresh) {
+            const expiryTime = response.entryTime + refreshSessionDurationSeconds * 1000;
+            if (expiryTime <= Date.now()) {
+                this.cache.sessionJoinCache.remove(this.joinSessionKey);
+                response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
             }
         } else {
-            response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+            let refreshAfterDeltaMs = this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
+            if (refreshAfterDeltaMs <= 0) {
+                this.cache.sessionJoinCache.remove(this.joinSessionKey);
+                response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+                refreshSessionDurationSeconds = response.joinSessionResponse.refreshSessionDurationSeconds;
+                if (refreshSessionDurationSeconds !== undefined) {
+                    refreshAfterDeltaMs = this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
+                }
+            }
+            if (refreshAfterDeltaMs > 0) {
+                this.scheduleJoinSessionRefresh(refreshAfterDeltaMs)
+                    .catch((error) => {
+                        this.mc.logger.sendErrorEvent({
+                                eventName: "JoinSessionRefreshError",
+                                entryTime: response.entryTime,
+                                refreshSessionDurationSeconds,
+                                refreshAfterDeltaMs,
+                            },
+                            error,
+                        )
+                    });;
+            }
         }
-        return response;
+        return response.joinSessionResponse;
+    }
+
+    private calculateJoinSessionRefreshDelta(responseFetchTime: number, refreshSessionDurationSeconds: number) {
+        // 30 seconds is buffer time to refresh the session.
+        return responseFetchTime + ((refreshSessionDurationSeconds * 1000) - 30000) - Date.now();
     }
 
     /**

@@ -16,7 +16,6 @@ import { OdspDocumentService } from "../odspDocumentService";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ISocketStorageDiscovery } from "../contracts";
 import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection";
-import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 
 describe("joinSessions Tests", () => {
     let clock: SinonFakeTimers;
@@ -80,14 +79,7 @@ describe("joinSessions Tests", () => {
         const locator: OdspFluidDataStoreLocator = { driveId, itemId, siteUrl, dataStorePath: "/" };
         const request = createOdspUrl(locator);
         const resolvedUrl = await resolver.resolve({ url: request });
-        const logger = new TelemetryUTLogger();
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        logger["config"] = {
-            getRawConfig: (name: string) => { return true },
-        };
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        logger["logger"] = {};
-        service = (await odspDocumentServiceFactory.createDocumentService(resolvedUrl, logger) as OdspDocumentService);
+        service = (await odspDocumentServiceFactory.createDocumentService(resolvedUrl) as OdspDocumentService);
     });
 
     it("Check periodic join session call", async () => {
