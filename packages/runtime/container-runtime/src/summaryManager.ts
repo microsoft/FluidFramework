@@ -229,8 +229,8 @@ export class SummaryManager implements IDisposable {
             // we ignore blindly, so try to narrow signature we are looking for - skip logging
             // error only if this client should no longer be a summarizer (which in practice
             // means it also lost connection), and error happened on load (we do not have summarizer).
-            // We could add error.fluidErrorCode !== "containerClosedWithoutErrorDuringLoad" check to narrow it down,
-            // but that does not seem to be necessary.
+            // We could annotate the error raised in Container.load where the container closed during load with no error
+            // and check for that case here, but that does not seem to be necessary.
             if (this.getShouldSummarizeState().shouldSummarize || this.summarizer !== undefined) {
                 // Report any failure as an error unless it was due to cancellation (like "disconnected" error)
                 // If failure happened on container load, we may not yet realized that socket disconnected, so check

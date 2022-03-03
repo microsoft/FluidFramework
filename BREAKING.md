@@ -14,6 +14,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from-merge-tree-to-sequence-package)
 - [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
 - [Set raiseContainerWarning property as optional parameter on IContainerContext](#Set-raiseContainerWarning-property-as-optional-parameter-on-IContainerContext)
+- [Consolidate fluidErrorCode and message on FF Errors](#Consolidate-fluidErrorCode-and-message-on-FF-Errors)
 
 ### Move IntervalType from merge-tree to sequence package
 Move the type from the merge-tree package where it isn't used to the sequence package where it is used
@@ -27,6 +28,13 @@ The logger property in IContainerContext became an optional parameter in [releas
 
 ## Set raiseContainerWarning property as optional parameter on IContainerContext
 `raiseContainerWarning` is set as an optional parameter on `IContainerContext` interface and would be removed from `IContainerContext` interface and `ContainerContext` class in the next release. Please see [#Remove-raiseContainerWarning-property] for more details.
+
+### Consolidate fluidErrorCode and message on FF Errors
+Errors raised by the Fluid Framework will no longer contain the property `fluidErrorCode`.
+This was present in many error constructors, and exposed in the type `IFluidErrorBase`, but has now been removed.
+Previously, the fluidErrorCode value (a pascaleCased term) was often used as the error message itself.
+Now all error messages can be expected to be easily-read sentences,
+sometimes followed by a colon and an inner error message when applicable.
 
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)

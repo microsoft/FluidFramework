@@ -21,7 +21,7 @@ import {
     isExternalError,
     originatedAsExternalError,
 } from "../errorLogging";
-import { IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase";
+import { hasErrorInstanceId, IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase";
 import { MockLogger } from "../mockLogger";
 
 describe("Error Logging", () => {
@@ -309,6 +309,7 @@ describe("Error Logging", () => {
             const propsWillBeIgnored = { message: "surprise1", stack: "surprise2" };
             loggingError.addTelemetryProperties(propsWillBeIgnored);
             const props = loggingError.getTelemetryProperties();
+            delete props.fluidErrorCode; // It's on there for back compat, not trying to test it here
             const { message, stack, errorInstanceId } = loggingError;
             assert.deepStrictEqual(props, { message, stack, errorInstanceId }, "addTelemetryProperties should not overwrite existing props");
         });
@@ -320,6 +321,7 @@ describe("Error Logging", () => {
             };
             loggingError.addTelemetryProperties(propsWillBeIgnored);
             const props = loggingError.getTelemetryProperties();
+            delete props.fluidErrorCode; // It's on there for back compat, not trying to test it here
             const { message, stack, errorInstanceId } = loggingError;
             assert.deepStrictEqual(props, { message, stack, errorInstanceId }, "addTelemetryProperties should not overwrite existing props");
         });
@@ -393,7 +395,6 @@ class TestFluidError implements IFluidErrorBase {
     expectedTelemetryProps: ITelemetryProperties;
 
     readonly errorType: string;
-    readonly fluidErrorCode: string;
     readonly message: string;
     readonly stack?: string;
     readonly name: string = "Error";
@@ -401,7 +402,6 @@ class TestFluidError implements IFluidErrorBase {
 
     constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties" | "errorInstanceId" | "name">) {
         this.errorType = errorProps.errorType;
-        this.fluidErrorCode = errorProps.fluidErrorCode;
         this.message = errorProps.message;
         this.stack = errorProps.stack;
         this.errorInstanceId = uuid();
@@ -443,9 +443,8 @@ describe("normalizeError", () => {
             it(`Valid legacy error - Patch and return (annotations: ${annotationCase})`, () => {
                 // Arrange
                 const errorProps =
-                    {errorType: "et1", message: "m1", fluidErrorCode: "toBeRemoved" };
+                    {errorType: "et1", message: "m1" };
                 const legacyError = new TestFluidError(errorProps)
-                    .withoutProperty("fluidErrorCode")
                     .withoutProperty("errorInstanceId");
 
                 // Act
@@ -454,7 +453,6 @@ describe("normalizeError", () => {
                 // Assert
                 assert.equal(normalizedError, legacyError, "normalize should yield the same error as passed in");
                 assert.equal(normalizedError.errorType, "et1", "errorType should be unchanged");
-                assert.equal(normalizedError.fluidErrorCode, "<error predates fluidErrorCode>", "errorCode should be patched properly");
                 assert.equal(normalizedError.message, "m1", "message should be unchanged");
                 assert.equal(normalizedError.errorInstanceId.length, 36, "should be guid-length");
                 if (annotations.props !== undefined) {
@@ -463,7 +461,7 @@ describe("normalizeError", () => {
             });
             it(`Valid Fluid Error - untouched (annotations: ${annotationCase})`, () => {
                 // Arrange
-                const fluidError = new TestFluidError({errorType: "et1", fluidErrorCode: "ec1", message: "m1" });
+                const fluidError = new TestFluidError({errorType: "et1", message: "m1" });
                 // We don't expect legacyError to be modified itself at all
                 Object.freeze(fluidError);
 
@@ -479,7 +477,7 @@ describe("normalizeError", () => {
         }
         it("Valid Fluid Error - stack not added if missing", () => {
             // Arrange
-            const fluidError = new TestFluidError({errorType: "et1", fluidErrorCode: "ec1", message: "m1" }).withoutProperty("stack");
+            const fluidError = new TestFluidError({errorType: "et1", message: "m1" }).withoutProperty("stack");
             // We don't expect legacyError to be modified itself at all
             Object.freeze(fluidError);
 
@@ -493,8 +491,8 @@ describe("normalizeError", () => {
         it("Frozen legacy error - Throws", () => {
             // Arrange
             const errorProps =
-                {errorType: "et1", message: "m1", fluidErrorCode: "toBeRemoved" };
-            const legacyError = new TestFluidError(errorProps).withoutProperty("fluidErrorCode");
+                {errorType: "et1", message: "m1" };
+            const legacyError = new TestFluidError(errorProps).withoutProperty("errorInstanceId");
             Object.freeze(legacyError);
 
             // Act/Assert
@@ -505,13 +503,11 @@ describe("normalizeError", () => {
         class NamedError extends Error { name = "CoolErrorName"; }
         const sampleFluidError = () => new TestFluidError({
             errorType: "someType",
-            fluidErrorCode: "someCode",
             message: "Hello",
             stack: "cool stack trace",
         });
         const typicalOutput = (message: string, stackHint: "<<natural stack>>" | "<<stack from input>>") => new TestFluidError({
             errorType: "genericError",
-            fluidErrorCode: "",
             message,
             stack: stackHint,
         }).withExpectedTelemetryProps({ untrustedOrigin: 1 });
@@ -520,7 +516,6 @@ describe("normalizeError", () => {
                 input: sampleFluidError().withoutProperty("errorType"),
                 expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
             }),
-//          "Fluid Error minus fluidErrorCode": This is a Valid Legacy Error, tested elsewhere in this file
             "Fluid Error minus message": () => ({
                 input: sampleFluidError().withoutProperty("message"),
                 expectedOutput: typicalOutput("[object Object]", "<<stack from input>>"),
@@ -606,14 +601,13 @@ describe("normalizeError", () => {
         ) {
             expected.withExpectedTelemetryProps({
                 ...annotations.props,
-                fluidErrorCode: expected.fluidErrorCode,
                 errorInstanceId: actual.errorInstanceId,
+                fluidErrorCode: "-", // Present for back-compat
             });
 
             assertMatchingMessageAndStack(actual, expected, inputStack);
 
             assert.equal(actual.errorType, expected.errorType, "errorType should match");
-            assert.equal(actual.fluidErrorCode, expected.fluidErrorCode, "fluidErrorCode should match");
             assert.equal(actual.name, expected.name, "name should match");
             assert.equal(actual.errorInstanceId.length, 36, "should be guid-length");
             assert.deepStrictEqual(actual.getTelemetryProperties(), expected.expectedTelemetryProps, "telemetry props should match");
@@ -711,7 +705,7 @@ describe("wrapError", () => {
 describe("wrapErrorAndLog", () => {
     const mockLogger = new MockLogger();
     const innerError = new LoggingError("hello");
-    const newError = wrapErrorAndLog(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", errorType: "genericError" }, mockLogger);
+    const newError = wrapErrorAndLog(innerError, (message) => new LoggingError(message), mockLogger);
     assert(mockLogger.matchEvents([{
         eventName: "WrapError",
         wrappedByErrorInstanceId: newError.errorInstanceId,
@@ -724,7 +718,6 @@ describe("Error Discovery", () => {
     const createTestError = (m) =>
         Object.assign(new LoggingError(m), {
             errorType: "someErrorType",
-            fluidErrorCode: "someErrorCode",
         });
     it("isExternalError", () => {
         assert(isExternalError("some string"));
@@ -756,15 +749,36 @@ describe("Error Discovery", () => {
         assert(!isFluidError(new LoggingError("hello")));
 
         const errorType = "someErrorType";
-        const fluidErrorCode = "someErrorCode";
-        assert(!isFluidError(Object.assign(new LoggingError("hello"),
-            { errorType })
+        assert(!isFluidError(
+            Object.assign(new LoggingError("hello"), { errorType, _errorInstanceId: undefined })
         ));
-        assert(!isFluidError(Object.assign(new LoggingError("hello"),
-            { errorType, fluidErrorCode, _errorInstanceId: undefined })
+        assert(isFluidError(
+            Object.assign(new LoggingError("hello"), { errorType })
         ));
-        assert(isFluidError(Object.assign(new LoggingError("hello"),
-            { errorType, fluidErrorCode })
+    });
+    // I copied the old version of isFluidError here, it depends on fluidErrorCode.
+    // I want to make sure that an error built on LoggingError that otherwise matches isFluidError
+    // will match isFluidError in old code (e.g. when an error flows across layers)
+    function isFluidError_old(e: any): e is IFluidErrorBase {
+        const hasTelemetryPropFunctions = (x: any): boolean =>
+            typeof x?.getTelemetryProperties === "function" &&
+            typeof x?.addTelemetryProperties === "function";
+        return typeof e?.errorType === "string" &&
+            typeof e?.fluidErrorCode === "string" &&
+            typeof e?.message === "string" &&
+            hasErrorInstanceId(e) &&
+            hasTelemetryPropFunctions(e);
+    }
+    it("isFluidError (old implementation)", () => {
+        assert(!isFluidError_old(new Error("hello")));
+        assert(!isFluidError_old(new LoggingError("hello")));
+
+        const errorType = "someErrorType";
+        assert(!isFluidError_old(
+            Object.assign(new LoggingError("hello"), { errorType, _errorInstanceId: undefined })
+        ));
+        assert(isFluidError_old(
+            Object.assign(new LoggingError("hello"), { errorType })
         ));
     });
 });

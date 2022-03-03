@@ -125,7 +125,7 @@ export async function getChildrenByDriveItem(
     do {
         const response = await getAsync(url, authRequestInfo);
         if (response.status !== 200) {
-            throwOdspNetworkError("unableToGetChildren", response.status, response);
+            throwOdspNetworkError("Unable to get driveItem children", response.status, response);
         }
         const getChildrenResult = await response.json();
         children = children.concat(getChildrenResult.value);
@@ -143,19 +143,19 @@ async function getDriveItem(
     let response = await getAsync(getDriveItemUrl, authRequestInfo);
     if (response.status !== 200) {
         if (!create) {
-            throwOdspNetworkError("unableToGetDriveItemIdFromPath", response.status, response);
+            throwOdspNetworkError("Unable to get drive/item id from path", response.status, response);
         }
 
         // Try creating the file
         const contentUri = `${getDriveItemUrl}/content`;
         const createResultResponse = await putAsync(contentUri, authRequestInfo);
         if (createResultResponse.status !== 201) {
-            throwOdspNetworkError("failedToCreateFile", createResultResponse.status, createResultResponse);
+            throwOdspNetworkError("Failed to create file", createResultResponse.status, createResultResponse);
         }
 
         response = await getAsync(getDriveItemUrl, authRequestInfo);
         if (response.status !== 200) {
-            throwOdspNetworkError("unableToGetDriveItemIdFromPath", response.status, response);
+            throwOdspNetworkError("Unable to get drive/item id from path after creating", response.status, response);
         }
     }
     const getDriveItemResult = await response.json();
@@ -212,7 +212,13 @@ async function getDriveResponse(
     const getDriveUrl = `${getSiteUrl(server)}${accountPath}/_api/v2.1/${routeTail}`;
     const response = await getAsync(getDriveUrl, authRequestInfo);
     if (response.status !== 200) {
-        throwOdspNetworkError("failedToGetDriveResponse", response.status, response, undefined, { route: routeTail });
+        throwOdspNetworkError(
+            `Failed to get response from /${routeTail} endpoint`,
+            response.status,
+            response,
+            undefined,
+            { route: routeTail },
+        );
     }
     return response;
 }
