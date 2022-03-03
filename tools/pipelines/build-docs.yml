@@ -188,7 +188,7 @@ stages:
         condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
         inputs:
           ArrowServiceConnection: 'Arrow_FluidFramework_internal'
-          AssetGroupName: '$(System.TeamProject)_$(Build.DefinitionName)'
+          AssetGroupName: 'fluidframework_$(System.TeamProject)_$(Build.DefinitionName)'
           AssetNumber: '$(Build.BuildId)'
           IsShipped: false
           DropsToRetain: 'CodeAnalysisLogs'
