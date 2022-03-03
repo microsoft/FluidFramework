@@ -268,7 +268,6 @@ export class OdspDocumentService implements IDocumentService {
             const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
             if (finalWebsocketToken === null) {
                 throw new NonRetryableError(
-                    "pushTokenIsNull",
                     "Websocket token is null",
                     OdspErrorType.fetchTokenError,
                     { driverVersion });

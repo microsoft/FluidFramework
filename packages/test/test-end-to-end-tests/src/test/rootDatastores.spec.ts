@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -94,20 +96,20 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         new Promise<boolean>((resolve, reject) => {
             runtime.once("dispose", () => reject(new Error("Runtime disposed")));
             (runtime as ContainerRuntime).submitDataStoreAliasOp({ id: alias }, resolve);
-        }).catch((error) => new Error(error.fluidErrorCode));
+        }).catch((error) => new Error(error.message));
 
     const corruptedAliasOp = async (runtime: IContainerRuntime, alias: string): Promise<boolean | Error> =>
         new Promise<boolean>((resolve, reject) => {
             runtime.once("dispose", () => reject(new Error("Runtime disposed")));
             (runtime as any).submit(ContainerMessageType.Alias, { id: alias }, resolve);
-        }).catch((error) => new Error(error.fluidErrorCode));
+        }).catch((error) => new Error(error.message));
 
     describe("Name conflict expected failures", () => {
         beforeEach(async () => setupContainers(testContainerConfig));
         afterEach(async () => reset());
 
         itExpects("Root datastore creation fails at attach op", [
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"}
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             // Isolate inbound communication
@@ -125,7 +127,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         itExpects("Root datastore creation with props fails at attach op",[
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"}
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             // Isolate inbound communication
@@ -143,7 +145,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         itExpects("Root datastore creation with the same id breaks container",[
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"}
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             await createRootDataStore(dataObject1, "2");
@@ -153,7 +155,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         itExpects("Root datastore creation with the same id and legacy API breaks container",[
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"}
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             await createRootDataStore(dataObject1, "2");
@@ -306,8 +308,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         itExpects("Creating a root data store with an existing alias as an id breaks the container",[
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"},
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "duplicateDataStoreCreatedWithExistingId"},
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"},
+            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"},
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);

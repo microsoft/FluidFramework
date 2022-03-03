@@ -782,7 +782,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
                 // "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber"
                 const error = new DataCorruptionError(
-                    "SummaryMetadataMismatch",
+                    "Summary metadata mismatch",
                     { runtimeSequenceNumber, protocolSequenceNumber },
                 );
 
@@ -1488,7 +1488,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.consecutiveReconnects === Math.floor(this.maxConsecutiveReconnects / 2)) {
             // If we're halfway through the max reconnects, send an event in order
             // to better identify false positives, if any. If the rate of this event
-            // matches `MaxReconnectsWithNoProgress`, we can safely cut down
+            // matches Container Close count below, we can safely cut down
             // maxConsecutiveReconnects to half.
             this.mc.logger.sendTelemetryEvent({
                 eventName: "ReconnectsWithNoProgress",
@@ -1585,7 +1585,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.context.pendingLocalState = undefined;
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(new GenericError(
-                    "MaxReconnectsWithNoProgress",
+                    "Runtime detected too many reconnects with no progress syncing local ops",
                     undefined, // error
                     { attempts: this.consecutiveReconnects }));
                 return;
@@ -1768,7 +1768,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls++;
             callback();
         } catch (error) {
-            this.closeFn(new GenericError("orderSequentiallyCallbackException", error));
+            this.closeFn(new GenericError("orderSequentially callback exception", error));
             throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
