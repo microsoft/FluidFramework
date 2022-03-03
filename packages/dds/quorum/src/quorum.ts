@@ -149,7 +149,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     private readonly disconnectWatcher: EventEmitter = new EventEmitter();
 
     private readonly incomingOp: EventEmitter = new EventEmitter();
-    private readonly localOp: EventEmitter = new EventEmitter();
+    private readonly localAcceptance: EventEmitter = new EventEmitter();
 
     /**
      * Tracks the most recent pending op for a given task
@@ -209,13 +209,13 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         const setPromise = new Promise<boolean>((resolve, reject) => {
             // TODO reject in disposal scenarios?
-            const watchForAck = (localId: string, valueAccepted: boolean) => {
+            const watchForAccept = (localId: string, valueAccepted: boolean) => {
                 if (localId === setId) {
                     resolve(valueAccepted);
-                    this.localOp.off("set", watchForAck);
+                    this.localAcceptance.off("acceptFinalized", watchForAccept);
                 }
             };
-            this.localOp.on("set", watchForAck);
+            this.localAcceptance.on("acceptFinalized", watchForAccept);
         });
 
         this.submitLocalMessage(setOp, setId);
@@ -225,18 +225,22 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
     private handleIncomingSet(key: string, value: any, refSeq: number, setSequenceNumber: number, localId?: string) {
         // To be accepted, the new value must have been set with awareness of the most recent value (first write wins)
-        const valueAccepted = refSeq > setSequenceNumber;
-        if (valueAccepted) {
-            const acceptedValue: IAcceptedValue = {
+        // TODO this shouldn't accept yet -- instead it should just start waiting for MSN
+        const proposalValid = refSeq > setSequenceNumber;
+
+        if (proposalValid) {
+            const pendingProposal: IAcceptedValue = {
                 value,
+                // TODO And this should be the sequence number at which the MSN advances past the setSequenceNumber
                 sequenceNumber: setSequenceNumber,
             }
-            this.acceptedValues.set(key, acceptedValue);
+            this.acceptedValues.set(key, pendingProposal);
         }
 
+        const valueAccepted = true;
         // Emit for local ops, so we can resolve outstanding promises
         if (localId !== undefined) {
-            this.localOp.emit("set", localId, valueAccepted);
+            this.localAcceptance.emit("acceptFinalized", localId, valueAccepted);
         }
     }
 
