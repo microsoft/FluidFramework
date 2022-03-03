@@ -29,7 +29,7 @@ import {
     IContainerRuntimeBaseEvents,
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
- } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions";
 
 /**
  * @deprecated - This will be removed in a later release.
