@@ -88,7 +88,7 @@ export function runMergeTreeOperationRunner(
     apply = applyMessages) {
     let seq = startingSeq;
     const results: ReplayGroup[] = [];
-    // eslint-disable-next-line @typescript-eslint/unbound-method
+
     doOverRange(config.opsPerRoundRange, config.growthFunc, (opsPerRound) => {
         if (config.incrementalLog) {
             console.log(`MinLength: ${minLength} Clients: ${clients.length} Ops: ${opsPerRound} Seq: ${seq}`);
@@ -164,7 +164,7 @@ export function generateOperationMessagesForClients(
             }
         }
         if (op !== undefined) {
-            // Precheck to avoid logger.toString() in the string template
+            // Pre-check to avoid logger.toString() in the string template
             if (sg === client.mergeTree.pendingSegments.last()) {
                 assert.notEqual(
                     sg,
@@ -192,7 +192,6 @@ export function generateClientNames(): string[] {
     addClientNames("A", 26);
     addClientNames("a", 26);
     addClientNames("0", 17);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return clientNames;
 }
 
