@@ -97,44 +97,39 @@ resources:
     source: server-routerlicious
 
 stages:
-- stage: check
-  displayName: Checks
-  pool: Small
-  jobs:
-  - job: debug_variables
-    displayName: Component Detection
-    dependsOn: [] # run in parallel
-    steps:
-      - script: |
-          echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
-          echo BASE_URL: $(BASE_URL)
-          echo RELEASE_VERSION: $(RELEASE_VERSION)
-          echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
-          echo N1_VERSION: $(N1_VERSION)
-          echo releasePipeline ${{ variables.releasePipeline }}
-          echo latestPipeline ${{ variables.latestPipeline }}
-          echo n1Pipeline ${{ variables.n1Pipeline }}
-          echo repoToTrigger ${{ variables.repoToTrigger }}
-        displayName: 'Show Variables'
-
-  - job: component_detection
-    displayName: Component Detection
-    dependsOn: [] # run in parallel
-    steps:
-      - task: ComponentGovernanceComponentDetection@0
-        displayName: Component Detection
-        inputs:
-          sourceScanPath: docs
-          verbosity: Verbose
-          scanType: Register
-          alertWarningLevel: High
-
 - stage: build
   displayName: 'Build website'
-  dependsOn: check
   jobs:
+    - job: debug_variables
+      displayName: Show Variables
+      dependsOn: [] # run in parallel
+      steps:
+        - script: |
+            echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
+            echo BASE_URL: $(BASE_URL)
+            echo RELEASE_VERSION: $(RELEASE_VERSION)
+            echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
+            echo N1_VERSION: $(N1_VERSION)
+            echo releasePipeline ${{ variables.releasePipeline }}
+            echo latestPipeline ${{ variables.latestPipeline }}
+            echo n1Pipeline ${{ variables.n1Pipeline }}
+            echo repoToTrigger ${{ variables.repoToTrigger }}
+
+    - job: component_detection
+      displayName: Component Detection
+      dependsOn: [] # run in parallel
+      steps:
+        - task: ComponentGovernanceComponentDetection@0
+          displayName: Component Detection
+          inputs:
+            sourceScanPath: docs
+            verbosity: Verbose
+            scanType: Register
+            alertWarningLevel: High
+
     - deployment: upload_json
       displayName: 'Combine api-extractor JSON'
+      dependsOn: [] # run in parallel
       environment: 'fluid-docs-env'
       strategy:
         runOnce:
@@ -145,6 +140,7 @@ stages:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 STORAGE_KEY: $(STORAGE_KEY)
                 uploadAsLatest: ${{ variables.isMain }}
+
     - job: build_site
       displayName: 'Build site'
       dependsOn: upload_json
