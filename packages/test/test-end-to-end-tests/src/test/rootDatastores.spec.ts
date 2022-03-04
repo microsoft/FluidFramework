@@ -278,10 +278,10 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const aliasedDataStore1 = aliasedDataStoreResponse1.value as ITestFluidObject;
             // Casting any to repro a race condition where bindToContext is called before summarization,
             // but aliasing happens afterwards
-            (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
+            (aliasableDataStore1 as IFluidDataStoreChannel).bindToContext();
             await provider.ensureSynchronized();
             
-            const containerRuntime2 = runtimeOf(dataObject2) as ContainerRuntime;
+            const containerRuntime2 = runtimeOf(dataObject2);
             let callFailed = false;
             try{
                 // This executes getInitialSnapshotDetails, a LazyPromise, before the alias op is sent to update
@@ -294,8 +294,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             
             // Alias a datastore
             const alias = "alias";
-            const aliasResult1 = await aliasableDataStore1.trySetAlias(alias);
-            assert(aliasResult1 === "Success", `Expected an successful aliasing. Got: ${aliasResult1}`);
+            const aliasResult1 = await trySetAlias(runtimeOf(dataObject1), aliasableDataStore1, alias);
+            assert(aliasResult1 === true, `Expected an successful aliasing. Got: ${aliasResult1}`);
             await provider.ensureSynchronized();
             
             // Should be able to retrieve root datastore from remote
