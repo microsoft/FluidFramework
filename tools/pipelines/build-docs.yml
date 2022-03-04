@@ -155,6 +155,7 @@ stages:
 
         - download: current
           artifact: api-extractor-combined
+          path: '$(Pipeline.Workspace)'
 
         - task: CopyFiles@2
           displayName: 'Copy api-extractor JSON to staging folder'
@@ -212,6 +213,7 @@ stages:
 
         - download: current
           artifact: fluidframework-docs
+          path: '$(Pipeline.Workspace)'
 
         - task: CopyFiles@2
           displayName: 'Copy fluidframework-docs to public folder'
@@ -286,6 +288,7 @@ stages:
 
         - download: current
           artifact: fluidframework-docs
+          path: '$(Pipeline.Workspace)'
 
         - task: CopyFiles@2
           displayName: 'Copy fluidframework-docs to public folder'
