@@ -271,6 +271,10 @@
             "request": "launch",
             "name": "Debug Current Test (JS)",
             // "env": { "FLUID_TEST_VERBOSE": "1" },
+            "env": {
+                "fluid__test__driver": "tinylicious", //values: local, tinylicious, routerlicious, odsp,
+                "FLUID_TEST_VERBOSE": "1"
+            },
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "stopOnEntry": false,
             "sourceMaps": true,
