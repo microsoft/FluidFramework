@@ -362,12 +362,10 @@ export class OdspDocumentService implements IDocumentService {
             // cache entry to be treated as expired after 1 hour.
             response.joinSessionResponse.refreshSessionDurationSeconds =
                 response.joinSessionResponse.refreshSessionDurationSeconds ?? 3600;
-            let refreshSessionDurationSeconds: number | undefined =
-                response.joinSessionResponse.refreshSessionDurationSeconds;
             return {
                 ...response,
-                refreshAfterDeltaMs:
-                    this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds),
+                refreshAfterDeltaMs: this.calculateJoinSessionRefreshDelta(
+                    response.entryTime, response.joinSessionResponse.refreshSessionDurationSeconds),
             }
         };
         let response = await getResponseAndRefreshAfterDeltaMs();
