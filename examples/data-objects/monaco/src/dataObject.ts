@@ -51,25 +51,8 @@ const defaultCompilerOptions = {
     allowNonTsExtensions: true,
 };
 
-/**
- * Component for using the Monaco text editor.
- */
-export class MonacoRunner extends DataObject implements IFluidHTMLView {
+export class MonacoRunnerView implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
-    public get IFluidLoadable() { return this; }
-
-    /**
-     * The chart probably has a preferred aspect ratio - but it can also fill any bounds
-     */
-    public aspectRatio?: number;
-    public minimumWidth?: number;
-    public minimumHeight?: number;
-    public readonly canInline = true;
-
-    /**
-     * Not used
-     */
-    public readonly preferInline = false;
 
     /**
      * Root HTML element of the component.
@@ -86,13 +69,7 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
      */
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
 
-    private _text: SharedString | undefined;
-    public get text(): SharedString {
-        if(this._text === undefined) {
-            throw new Error("Text not loaded");
-        }
-        return this._text;
-    }
+    public constructor(private readonly monacoRunner: MonacoRunner) { }
 
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         if (!this.mapHost) {
@@ -105,24 +82,6 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
                 elm.appendChild(this.mapHost);
             }
         }
-    }
-
-    /**
-     * Creates the SharedString and inserts some sample text. create() is called only once
-     * per component.
-     */
-    protected async initializingFirstTime() {
-        const codeString = SharedString.create(this.runtime);
-        codeString.insertText(0, 'console.log("Hello, world!");');
-        this.root.set("text", codeString.handle);
-    }
-
-    protected async hasInitialized(): Promise<void> {
-        const textHandle = this.root.get<IFluidHandle<SharedString>>("text");
-        if (textHandle === undefined) {
-            throw new Error("Text improperly initialized");
-        }
-        this._text = await textHandle.get();
     }
 
     /**
@@ -155,7 +114,7 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
                 });
         }
 
-        this.codeModel = monaco.editor.createModel(this.text.getText(), "typescript");
+        this.codeModel = monaco.editor.createModel(this.monacoRunner.text.getText(), "typescript");
         const outputModel = monaco.editor.createModel("", "javascript");
 
         this.codeEditor = monaco.editor.create(
@@ -194,17 +153,21 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
             for (const change of e.changes) {
                 if (change.text) {
                     if (change.rangeLength === 0) {
-                        this.text.insertText(change.rangeOffset, change.text);
+                        this.monacoRunner.text.insertText(change.rangeOffset, change.text);
                     } else {
-                        this.text.replaceText(change.rangeOffset, change.rangeOffset + change.rangeLength, change.text);
+                        this.monacoRunner.text.replaceText(
+                            change.rangeOffset,
+                            change.rangeOffset + change.rangeLength,
+                            change.text,
+                        );
                     }
                 } else {
-                    this.text.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
+                    this.monacoRunner.text.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
                 }
             }
         });
 
-        this.text.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
+        this.monacoRunner.text.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
             if (ev.isLocal) {
                 return;
             }
@@ -278,5 +241,47 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
     private async exec(/* host: any, */ code: string) {
         // eslint-disable-next-line no-eval
         eval(code);
+    }
+}
+
+/**
+ * Component for using the Monaco text editor.
+ */
+export class MonacoRunner extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
+
+    private _text: SharedString | undefined;
+    public get text(): SharedString {
+        if(this._text === undefined) {
+            throw new Error("Text not loaded");
+        }
+        return this._text;
+    }
+
+    private view: MonacoRunnerView | undefined;
+
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
+        if (this.view === undefined) {
+            this.view = new MonacoRunnerView(this);
+        }
+        this.view.render(elm, options);
+    }
+
+    /**
+     * Creates the SharedString and inserts some sample text. create() is called only once
+     * per component.
+     */
+    protected async initializingFirstTime() {
+        const codeString = SharedString.create(this.runtime);
+        codeString.insertText(0, 'console.log("Hello, world!");');
+        this.root.set("text", codeString.handle);
+    }
+
+    protected async hasInitialized(): Promise<void> {
+        const textHandle = this.root.get<IFluidHandle<SharedString>>("text");
+        if (textHandle === undefined) {
+            throw new Error("Text improperly initialized");
+        }
+        this._text = await textHandle.get();
     }
 }
