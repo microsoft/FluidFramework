@@ -55,7 +55,7 @@ export async function createGitService(
     const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant);
     const customData: ITenantCustomDataExternal = details.customData;
     const writeToExternalStorage = !!customData.externalStorageData;
-    const storageName = customData.storageName;
+    const storageName = customData?.storageName;
     const decoded = jwt.decode(token) as ITokenClaims;
      const service = new RestGitService(
          details.storage,
