@@ -7,10 +7,8 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IProvideRuntimeFactory } from "@fluidframework/container-definitions";
-import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
-import { MonacoRunner } from "./chaincode";
+import { MonacoRunner } from "./dataObject";
 
 const monacoName = "@fluid-example/monaco";
 
@@ -23,14 +21,9 @@ const componentFactory = new DataObjectFactory(
     {},
 );
 
-const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     componentFactory,
     new Map([
         [monacoName, Promise.resolve(componentFactory)],
     ]),
 );
-
-export const fluidExport: IProvideFluidDataStoreFactory & IProvideRuntimeFactory = {
-    IFluidDataStoreFactory: componentFactory,
-    IRuntimeFactory: runtimeFactory,
-};
