@@ -338,54 +338,58 @@ export class OdspDocumentService implements IDocumentService {
     ): Promise<ISocketStorageDiscovery> {
         const disableJoinSessionRefresh = this.mc.config.getBoolean("Fluid.Driver.Odsp.disableJoinSessionRefresh");
         const executeFetch = async () => {
+            const joinSessionResponse = await fetchJoinSession(
+                this.odspResolvedUrl,
+                "opStream/joinSession",
+                "POST",
+                this.mc.logger,
+                this.getStorageToken,
+                this.epochTracker,
+                requestSocketToken,
+                options,
+                disableJoinSessionRefresh,
+                this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
+            );
             return {
-                    entryTime: Date.now(),
-                    joinSessionResponse: await fetchJoinSession(
-                        this.odspResolvedUrl,
-                        "opStream/joinSession",
-                        "POST",
-                        this.mc.logger,
-                        this.getStorageToken,
-                        this.epochTracker,
-                        requestSocketToken,
-                        options,
-                        disableJoinSessionRefresh,
-                        this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
-                    )
+                entryTime: Date.now(),
+                joinSessionResponse,
             };
         };
 
-        let response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
-        // If the response does not contain refreshSessionDurationSeconds, then treat it as old flow and let the
-        // cache entry to be treated as expired after 1 hour.
-        response.joinSessionResponse.refreshSessionDurationSeconds =
-            response.joinSessionResponse.refreshSessionDurationSeconds ?? 3600;
-        let refreshSessionDurationSeconds: number | undefined =
-            response.joinSessionResponse.refreshSessionDurationSeconds;
-        let refreshAfterDeltaMs =
-            this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
-        // This means that the cached entry has expired(This should not be possible if the response is fetched
-        // from the network call). In this case we remove the cached entry and fetch the new response.
-        if (refreshAfterDeltaMs <= 0) {
-            this.cache.sessionJoinCache.remove(this.joinSessionKey);
-            response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+        const getResponseAndRefreshAfterDeltaMs = async () => {
+            let response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+            // If the response does not contain refreshSessionDurationSeconds, then treat it as old flow and let the
+            // cache entry to be treated as expired after 1 hour.
             response.joinSessionResponse.refreshSessionDurationSeconds =
                 response.joinSessionResponse.refreshSessionDurationSeconds ?? 3600;
-            refreshSessionDurationSeconds = response.joinSessionResponse.refreshSessionDurationSeconds;
-            if (refreshSessionDurationSeconds !== undefined) {
-                refreshAfterDeltaMs =
-                    this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
+            let refreshSessionDurationSeconds: number | undefined =
+                response.joinSessionResponse.refreshSessionDurationSeconds;
+            return {
+                ...response,
+                refreshAfterDeltaMs:
+                    this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds),
             }
+        };
+        let response = await getResponseAndRefreshAfterDeltaMs();
+        // This means that the cached entry has expired(This should not be possible if the response is fetched
+        // from the network call). In this case we remove the cached entry and fetch the new response.
+        if (response.refreshAfterDeltaMs <= 0) {
+            this.cache.sessionJoinCache.remove(this.joinSessionKey);
+            response = await getResponseAndRefreshAfterDeltaMs();
         }
         if (!disableJoinSessionRefresh) {
-            if (refreshAfterDeltaMs > 0) {
-                this.scheduleJoinSessionRefresh(refreshAfterDeltaMs)
+            const props = {
+                entryTime: response.entryTime,
+                refreshSessionDurationSeconds:
+                    response.joinSessionResponse.refreshSessionDurationSeconds,
+                refreshAfterDeltaMs: response.refreshAfterDeltaMs,
+            };
+            if (response.refreshAfterDeltaMs > 0) {
+                this.scheduleJoinSessionRefresh(response.refreshAfterDeltaMs)
                     .catch((error) => {
                         this.mc.logger.sendErrorEvent({
                                 eventName: "JoinSessionRefreshError",
-                                entryTime: response.entryTime,
-                                refreshSessionDurationSeconds,
-                                refreshAfterDeltaMs,
+                                ...props,
                             },
                             error,
                         )
@@ -394,9 +398,7 @@ export class OdspDocumentService implements IDocumentService {
                 // Logging just for informational purposes to help with debugging as this is a new feature.
                 this.mc.logger.sendErrorEvent({
                     eventName: "JoinSessionRefreshNotScheduled",
-                    refreshAfterDeltaMs,
-                    refreshSessionDurationSeconds,
-                    entryTime: response.entryTime,
+                    ...props,
                 });
             }
         }
