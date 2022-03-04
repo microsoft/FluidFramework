@@ -106,8 +106,6 @@ export class SummaryWriter implements ISummaryWriter {
                     return {
                         message: {
                             message: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
-                            // errorMessage in ISummaryNack will be deprecated soon
-                            errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
                             summaryProposal: {
                                 summarySequenceNumber: op.sequenceNumber,
                             },
@@ -120,8 +118,6 @@ export class SummaryWriter implements ISummaryWriter {
                 return {
                     message: {
                         message: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef.object.sha}".`,
-                        // errorMessage in ISummaryNack will be deprecated soon
-                        errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef.object.sha}".`,
                         summaryProposal: {
                             summarySequenceNumber: op.sequenceNumber,
                         },
@@ -142,8 +138,6 @@ export class SummaryWriter implements ISummaryWriter {
                     return {
                         message: {
                             message: "One or more parent summaries are invalid",
-                            // errorMessage in ISummaryNack will be deprecated soon
-                            errorMessage: "One or more parent summaries are invalid",
                             summaryProposal: {
                                 summarySequenceNumber: op.sequenceNumber,
                             },
@@ -159,8 +153,6 @@ export class SummaryWriter implements ISummaryWriter {
                 return {
                     message: {
                         message: `Proposed summary reference sequence number ${op.referenceSequenceNumber} is less than current sequence number ${checkpoint.protocolState.sequenceNumber}`,
-                        // errorMessage in ISummaryNack will be deprecated soon
-                        errorMessage: `Proposed summary reference sequence number ${op.referenceSequenceNumber} is less than current sequence number ${checkpoint.protocolState.sequenceNumber}`,
                         summaryProposal: {
                             summarySequenceNumber: op.sequenceNumber,
                         },
@@ -291,8 +283,6 @@ export class SummaryWriter implements ISummaryWriter {
                     return {
                         message: {
                             message: `A non-fatal error happened when trying to write client summary. Error: ${safeStringify(networkError.details)}`,
-                            // errorMessage in ISummaryNack will be deprecated soon
-                            errorMessage: `A non-fatal error happened when trying to write client summary. Error: ${safeStringify(networkError.details)}`,
                             summaryProposal: {
                                 summarySequenceNumber: op.sequenceNumber,
                             },
