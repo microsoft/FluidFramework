@@ -294,11 +294,13 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     private async scheduleJoinSessionRefresh(delta: number) {
-        await new Promise<void>((resolve) => {
-            this.joinSessionRefreshTimer = setTimeout(async () => {
-                await getWithRetryForTokenRefresh(async (options) => {
+        await new Promise<void>((resolve, reject) => {
+            this.joinSessionRefreshTimer = setTimeout(() => {
+                getWithRetryForTokenRefresh(async (options) => {
                     await this.joinSession(false, options);
                     resolve();
+                }).catch((error) => {
+                    reject(error);
                 });
             }, delta);
         });
