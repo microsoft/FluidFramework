@@ -145,7 +145,7 @@ stages:
                 uploadAsLatest: ${{ variables.isMain }}
 
     - job: build_site
-      displayName: 'Build site'
+      displayName: 'Build website'
       dependsOn: upload_json
       pool: Large
       steps:
