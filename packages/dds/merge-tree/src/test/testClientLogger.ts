@@ -54,6 +54,16 @@ export function createClientsAtInitialState<TClients extends ClientMap>(
     return {...clients, all};
 }
 export class TestClientLogger {
+
+    public static toString(clients: readonly TestClient[]){
+
+        return clients.map((c)=>this.getSegString(c)).reduce<[string,string]>((pv,cv)=>{
+            pv[0]+=`|${cv.acked.padEnd(cv.local.length,"")}`;
+            pv[1]+=`|${cv.local.padEnd(cv.acked.length,"")}`;
+            return pv;
+        },["",""]).join("\n");
+    }
+
     private readonly incrementalLog = false;
 
     private readonly paddings: number[] = [];
@@ -80,7 +90,7 @@ export class TestClientLogger {
                 const clientLogIndex = i*2
 
                 this.ackedLine[clientLogIndex]=getOpString(op.sequencedMessage ?? c.makeOpMessage(op.op))
-                const segStrings = this.getSegString(c);
+                const segStrings = TestClientLogger.getSegString(c);
                 this.ackedLine[clientLogIndex + 1] = segStrings.acked;
                 this.localLine[clientLogIndex +1] = segStrings.local;
 
@@ -109,14 +119,18 @@ export class TestClientLogger {
     }
 
     private addNewLogLine() {
-        if (this.incrementalLog) {
-            console.log(this.ackedLine.map((v, i) => v.padEnd(this.paddings[i])).join(" | "));
-            console.log(this.ackedLine.map((v, i) => v.padEnd(this.paddings[i])).join(" | "));
+        if(this.incrementalLog){
+            while(this.roundLogLines.length > 0){
+                const logLine = this.roundLogLines.shift();
+                if(logLine.some((c)=>c.trim().length >0)){
+                    console.log(logLine.map((v, i) => v.padEnd(this.paddings[i])).join(" | "));
+                }
+            }
         }
         this.ackedLine = [];
         this.localLine = [];
         this.clients.forEach((cc, clientLogIndex)=>{
-            const segStrings = this.getSegString(cc);
+            const segStrings = TestClientLogger.getSegString(cc);
             this.ackedLine.push("", segStrings.acked);
             this.localLine.push("", segStrings.local);
 
@@ -153,17 +167,21 @@ export class TestClientLogger {
         return baseText;
     }
 
-    public toString() {
-        let str =
-            `_: Local State\n`
-            + `-: Deleted\n`
-            + `*: Unacked Insert and Delete\n`
-            + `${this.clients[0].getCollabWindow().minSeq}: msn/offset\n`
-            + `Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>\n`
-            + `sequence number represented as offset from msn. L means local.\n`
-            + `op types: 0) insert 1) remove 2) annotate\n`;
-        if (this.title) {
-            str += `${this.title}\n`;
+    public toString(excludeHeader: boolean = false) {
+        let str = "";
+        if(!excludeHeader){
+            str +=
+                `_: Local State\n`
+                + `-: Deleted\n`
+                + `*: Unacked Insert and Delete\n`
+                + `${this.clients[0].getCollabWindow().minSeq}: msn/offset\n`
+                + `Op format <seq>:<ref>:<client><type>@<pos1>,<pos2>\n`
+                + `sequence number represented as offset from msn. L means local.\n`
+                + `op types: 0) insert 1) remove 2) annotate\n`;
+
+            if (this.title) {
+                str += `${this.title}\n`;
+            }
         }
         str += this.roundLogLines
             .filter((line)=>line.some((c)=>c.trim().length >0))
@@ -172,7 +190,7 @@ export class TestClientLogger {
         return str;
     }
 
-    private getSegString(client: TestClient): { acked: string, local: string } {
+    private static getSegString(client: TestClient): { acked: string, local: string } {
         let acked: string = "";
         let local: string = "";
         const nodes = [...client.mergeTree.root.children];
