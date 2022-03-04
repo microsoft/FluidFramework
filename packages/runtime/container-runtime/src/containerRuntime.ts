@@ -334,8 +334,6 @@ interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedL
     taggedLogger: undefined;
 }
 
-// Local storage key to set the default flush mode to TurnBased
-const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
@@ -910,7 +908,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly defaultMaxConsecutiveReconnects = 15;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode: FlushMode;
+    private _flushMode: FlushMode = FlushMode.TurnBased;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -1029,10 +1027,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
-
-        this._flushMode =
-            this.mc.config.getBoolean(turnBasedFlushModeKey) ?? false
-            ? FlushMode.TurnBased : FlushMode.Immediate;
 
         this._aliasingEnabled =
             (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
