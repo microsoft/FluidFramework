@@ -156,16 +156,13 @@
       },
       "0.57.0": {
         "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
-          "backCompat": true,
-          "forwardCompat": false
+          "backCompat": true
         },
         "InterfaceDeclaration_IProvideContainerRuntime": {
-          "backCompat": true,
-          "forwardCompat": false
+          "backCompat": true
         },
         "InterfaceDeclaration_IContainerRuntime": {
-          "backCompat": true,
-          "forwardCompat": false
+          "backCompat": true
         }
       }
     }
