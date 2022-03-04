@@ -203,6 +203,7 @@ stages:
     vmImage: windows-latest
   jobs:
     - job: guardian_tasks
+      displayName: Guardian tasks
       condition: in(stageDependencies.build.build_site.result, 'Succeeded', 'SucceededWithIssues')
       steps:
         - checkout: self
