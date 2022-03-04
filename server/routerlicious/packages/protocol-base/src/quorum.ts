@@ -9,7 +9,6 @@ import cloneDeep from "lodash/cloneDeep";
 import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ICommittedProposal,
-    IPendingProposal,
     IQuorum,
     IQuorumClients,
     IQuorumClientsEvents,
@@ -366,7 +365,7 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         });
 
         this.quorumProposals = new QuorumProposals({ proposals, values }, sendProposal);
-        this.quorumProposals.on("addProposal", (proposal: IPendingProposal) => {
+        this.quorumProposals.on("addProposal", (proposal: ISequencedProposal) => {
             this.emit("addProposal", proposal);
         });
         this.quorumProposals.on(
