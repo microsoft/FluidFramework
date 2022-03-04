@@ -295,29 +295,85 @@
       },
       "0.56.0": {
         "InterfaceDeclaration_IContainerRuntimeBase": {
-          "backCompat": true,
+          "backCompat": false,
           "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidDataStoreContext": {
-          "backCompat": true,
+          "backCompat": false,
           "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidDataStoreContextDetached": {
-          "backCompat": true,
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_FluidDataStoreRegistryEntry": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreRegistry": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideFluidDataStoreFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideFluidDataStoreRegistry": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
+          "backCompat": false,
           "forwardCompat": false
         }
       },
       "0.57.0": {
         "InterfaceDeclaration_IContainerRuntimeBase": {
-          "backCompat": true,
+          "backCompat": false,
           "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidDataStoreContext": {
-          "backCompat": true,
+          "backCompat": false,
           "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidDataStoreContextDetached": {
-          "backCompat": true,
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_FluidDataStoreRegistryEntry": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreRegistry": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideFluidDataStoreFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideFluidDataStoreRegistry": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
+          "backCompat": false,
           "forwardCompat": false
         }
       }

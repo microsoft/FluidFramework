@@ -13,7 +13,7 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
+import { DebugLogger, MockLogger, TaggedLoggerAdapter } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
@@ -30,7 +30,7 @@ describe("Runtime", () => {
                         return {
                             deltaManager: new MockDeltaManager(),
                             quorum: new MockQuorum(),
-                            logger: new MockLogger(),
+                            taggedLogger: new TaggedLoggerAdapter(new MockLogger()),
                             clientDetails: { capabilities: { interactive: true } },
                             closeFn: (error?: ICriticalContainerError): void => {
                                 if (error !== undefined) {
@@ -137,7 +137,7 @@ describe("Runtime", () => {
                     return {
                         deltaManager: new MockDeltaManager(),
                         quorum: new MockQuorum(),
-                        logger: new MockLogger(),
+                        taggedLogger: new TaggedLoggerAdapter(new MockLogger()),
                         clientDetails: { capabilities: { interactive: true } },
                         updateDirtyContainerState: (dirty: boolean) => { },
                         attachState,
@@ -540,7 +540,7 @@ describe("Runtime", () => {
                     clientId: "fakeClientId",
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorum(),
-                    logger: mockLogger,
+                    taggedLogger: new TaggedLoggerAdapter(mockLogger),
                     clientDetails: { capabilities: { interactive: true } },
                     closeFn: (error?: ICriticalContainerError): void => {
                         if (error !== undefined) {

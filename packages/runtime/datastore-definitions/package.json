@@ -155,6 +155,16 @@
           "backCompat": false,
           "forwardCompat": false
         }
+      },
+      "0.56.0": {
+        "InterfaceDeclaration_IChannelFactory": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreRuntime": {
+          "backCompat": false,
+          "forwardCompat": false
+        }
       }
     }
   }

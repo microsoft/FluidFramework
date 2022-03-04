@@ -7,7 +7,7 @@ import assert from "assert";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, TaggedLoggerAdapter } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime";
 
 function setNavigator(navigator: Partial<Navigator & {deviceMemory?: number}> | undefined | null) {
@@ -19,7 +19,7 @@ describe("Hardware Stats", () => {
     let mockContext: Partial<IContainerContext> = {
         deltaManager: new MockDeltaManager(),
         quorum: new MockQuorum(),
-        logger: mockLogger,
+        taggedLogger: new TaggedLoggerAdapter(mockLogger),
         clientDetails: { capabilities: { interactive: true } },
         updateDirtyContainerState: (dirty: boolean) => {},
     };
@@ -43,7 +43,7 @@ describe("Hardware Stats", () => {
         mockContext = {
             deltaManager: new MockDeltaManager(),
             quorum: new MockQuorum(),
-            logger: mockLogger,
+            taggedLogger: new TaggedLoggerAdapter(mockLogger),
             clientDetails: { capabilities: { interactive: true } },
             updateDirtyContainerState: (dirty: boolean) => {},
         };
