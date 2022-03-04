@@ -69,9 +69,9 @@ export class MonacoRunnerView implements IFluidHTMLView {
      */
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
 
-    public constructor(private readonly monacoRunner: MonacoRunner) { }
+    public constructor(private readonly sharedString: SharedString) { }
 
-    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
+    public render(elm: HTMLElement): void {
         if (!this.mapHost) {
             this.mapHost = document.createElement("div");
             elm.appendChild(this.mapHost);
@@ -114,7 +114,7 @@ export class MonacoRunnerView implements IFluidHTMLView {
                 });
         }
 
-        this.codeModel = monaco.editor.createModel(this.monacoRunner.text.getText(), "typescript");
+        this.codeModel = monaco.editor.createModel(this.sharedString.getText(), "typescript");
         const outputModel = monaco.editor.createModel("", "javascript");
 
         this.codeEditor = monaco.editor.create(
@@ -153,21 +153,21 @@ export class MonacoRunnerView implements IFluidHTMLView {
             for (const change of e.changes) {
                 if (change.text) {
                     if (change.rangeLength === 0) {
-                        this.monacoRunner.text.insertText(change.rangeOffset, change.text);
+                        this.sharedString.insertText(change.rangeOffset, change.text);
                     } else {
-                        this.monacoRunner.text.replaceText(
+                        this.sharedString.replaceText(
                             change.rangeOffset,
                             change.rangeOffset + change.rangeLength,
                             change.text,
                         );
                     }
                 } else {
-                    this.monacoRunner.text.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
+                    this.sharedString.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
                 }
             }
         });
 
-        this.monacoRunner.text.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
+        this.sharedString.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
             if (ev.isLocal) {
                 return;
             }
@@ -262,9 +262,9 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
 
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         if (this.view === undefined) {
-            this.view = new MonacoRunnerView(this);
+            this.view = new MonacoRunnerView(this.text);
         }
-        this.view.render(elm, options);
+        this.view.render(elm);
     }
 
     /**
