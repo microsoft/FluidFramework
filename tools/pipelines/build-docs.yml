@@ -268,11 +268,11 @@ stages:
 # END Secure development tasks
 
 - stage: deploy
-  displayName: 'Deploy website'
+  displayName: 'Deploy site'
   dependsOn: build
   jobs:
     - job: deploy_site
-      displayName: 'Build site'
+      displayName: 'Deploy site'
       steps:
         - checkout: self
           submodules: false
