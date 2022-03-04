@@ -356,47 +356,42 @@ export class OdspDocumentService implements IDocumentService {
         let response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
         // If the response does not contain refreshSessionDurationSeconds, then treat it as old flow and let the
         // cache entry to be treated as expired after 1 hour.
-        let refreshSessionDurationSeconds: number | undefined =
+        response.joinSessionResponse.refreshSessionDurationSeconds =
             response.joinSessionResponse.refreshSessionDurationSeconds ?? 3600;
-        if (disableJoinSessionRefresh) {
-            const expiryTime = response.entryTime + refreshSessionDurationSeconds * 1000;
-            if (expiryTime <= Date.now()) {
-                this.cache.sessionJoinCache.remove(this.joinSessionKey);
-                response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+        let refreshSessionDurationSeconds: number | undefined =
+            response.joinSessionResponse.refreshSessionDurationSeconds;
+        let refreshAfterDeltaMs =
+            this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
+        if (refreshAfterDeltaMs <= 0) {
+            this.cache.sessionJoinCache.remove(this.joinSessionKey);
+            response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+            refreshSessionDurationSeconds = response.joinSessionResponse.refreshSessionDurationSeconds;
+            if (refreshSessionDurationSeconds !== undefined) {
+                refreshAfterDeltaMs =
+                    this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
             }
+        }
+        if (!disableJoinSessionRefresh && refreshAfterDeltaMs > 0) {
+            this.scheduleJoinSessionRefresh(refreshAfterDeltaMs)
+                .catch((error) => {
+                    this.mc.logger.sendErrorEvent({
+                            eventName: "JoinSessionRefreshError",
+                            entryTime: response.entryTime,
+                            refreshSessionDurationSeconds,
+                            refreshAfterDeltaMs,
+                        },
+                        error,
+                    )
+                });;
         } else {
-            let refreshAfterDeltaMs =
-                this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
-            if (refreshAfterDeltaMs <= 0) {
-                this.cache.sessionJoinCache.remove(this.joinSessionKey);
-                response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
-                refreshSessionDurationSeconds = response.joinSessionResponse.refreshSessionDurationSeconds;
-                if (refreshSessionDurationSeconds !== undefined) {
-                    refreshAfterDeltaMs =
-                        this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
-                }
-            }
-            if (refreshAfterDeltaMs > 0) {
-                this.scheduleJoinSessionRefresh(refreshAfterDeltaMs)
-                    .catch((error) => {
-                        this.mc.logger.sendErrorEvent({
-                                eventName: "JoinSessionRefreshError",
-                                entryTime: response.entryTime,
-                                refreshSessionDurationSeconds,
-                                refreshAfterDeltaMs,
-                            },
-                            error,
-                        )
-                    });;
-            } else {
-                // Logging just for informational purposes to help with debugging as this is a new feature.
-                this.mc.logger.sendErrorEvent({
-                    eventName: "JoinSessionRefreshNotScheduled",
-                    refreshAfterDeltaMs,
-                    refreshSessionDurationSeconds,
-                    entryTime: response.entryTime,
-                });
-            }
+            // Logging just for informational purposes to help with debugging as this is a new feature.
+            this.mc.logger.sendErrorEvent({
+                eventName: "JoinSessionRefreshNotScheduled",
+                refreshAfterDeltaMs,
+                refreshSessionDurationSeconds,
+                entryTime: response.entryTime,
+                disableJoinSessionRefresh,
+            });
         }
         return response.joinSessionResponse;
     }
