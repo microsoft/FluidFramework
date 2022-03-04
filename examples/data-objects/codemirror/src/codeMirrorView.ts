@@ -3,20 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import {
-    IFluidLoadable,
-    IFluidRouter,
-    IRequest,
-    IResponse,
-    IFluidHandle,
-} from "@fluidframework/core-interfaces";
-import {
-    FluidObjectHandle,
-    mixinRequestHandler,
-} from "@fluidframework/datastore";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     MergeTreeDeltaType,
     TextSegment,
@@ -24,8 +10,6 @@ import {
     reservedTileLabelsKey,
     Marker,
 } from "@fluidframework/merge-tree";
-import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import CodeMirror from "codemirror";
@@ -38,12 +22,12 @@ require("codemirror/mode/javascript/javascript.js");
 /* eslint-enable @typescript-eslint/no-require-imports,
 import/no-internal-modules, import/no-unassigned-import */
 
-import { CodeMirrorPresenceManager } from "./presence";
+import { CodeMirrorPresenceManager, PresenceManager } from "./presence";
 
-class CodemirrorView implements IFluidHTMLView {
+export class CodeMirrorView implements IFluidHTMLView {
     private textArea: HTMLTextAreaElement | undefined;
     private codeMirror: CodeMirror.EditorFromTextArea | undefined;
-    private presenceManager: CodeMirrorPresenceManager | undefined;
+    private codeMirrorPresenceManager: CodeMirrorPresenceManager | undefined;
 
     // TODO would be nice to be able to distinguish local edits across different uses of a sequence so that when
     // bridging to another model we know which one to update
@@ -54,7 +38,7 @@ class CodemirrorView implements IFluidHTMLView {
 
     public get IFluidHTMLView() { return this; }
 
-    constructor(private readonly text: SharedString, private readonly runtime: IFluidDataStoreRuntime) {
+    constructor(private readonly text: SharedString, private readonly presenceManager: PresenceManager) {
     }
 
     public remove(): void {
@@ -66,9 +50,9 @@ class CodemirrorView implements IFluidHTMLView {
             this.sequenceDeltaCb = undefined;
         }
 
-        if (this.presenceManager) {
-            this.presenceManager.removeAllListeners();
-            this.presenceManager = undefined;
+        if (this.codeMirrorPresenceManager) {
+            this.codeMirrorPresenceManager.removeAllListeners();
+            this.codeMirrorPresenceManager = undefined;
         }
     }
 
@@ -99,7 +83,7 @@ class CodemirrorView implements IFluidHTMLView {
                 viewportMargin: Infinity,
             });
 
-        this.presenceManager = new CodeMirrorPresenceManager(this.codeMirror, this.runtime);
+        this.codeMirrorPresenceManager = new CodeMirrorPresenceManager(this.codeMirror, this.presenceManager);
 
         const { parallelText } = this.text.getTextAndMarkers("pg");
         const text = parallelText.join("\n");
@@ -195,94 +179,3 @@ class CodemirrorView implements IFluidHTMLView {
         this.text.on("sequenceDelta", this.sequenceDeltaCb);
     }
 }
-
-/**
- * CodeMirrorComponent builds a Fluid collaborative code editor on top of the open source code editor CodeMirror.
- * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
- * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
- */
-export class CodeMirrorComponent
-    extends EventEmitter
-    implements IFluidLoadable, IFluidRouter, IFluidHTMLView {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
-        const collection = new CodeMirrorComponent(runtime, context);
-        await collection.initialize(existing);
-
-        return collection;
-    }
-
-    public get IFluidLoadable() { return this; }
-    public get IFluidRouter() { return this; }
-    public get IFluidHTMLView() { return this; }
-
-    public get handle(): IFluidHandle<this> { return this.innerHandle; }
-
-    private text: SharedString | undefined;
-    private root: ISharedMap | undefined;
-    private readonly innerHandle: IFluidHandle<this>;
-
-    constructor(
-        private readonly runtime: IFluidDataStoreRuntime,
-        /* Private */ context: IFluidDataStoreContext,
-    ) {
-        super();
-        this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
-    }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        return defaultFluidObjectRequestHandler(this, request);
-    }
-
-    private async initialize(existing: boolean) {
-        if (!existing) {
-            this.root = SharedMap.create(this.runtime, "root");
-            const text = SharedString.create(this.runtime);
-
-            // Initial paragraph marker
-            text.insertMarker(
-                0,
-                ReferenceType.Tile,
-                { [reservedTileLabelsKey]: ["pg"] });
-
-            this.root.set("text", text.handle);
-            this.root.bindToContext();
-        }
-
-        this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IFluidHandle<SharedString>>("text")?.get();
-    }
-
-    public render(elm: HTMLElement): void {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const codemirrorView = new CodemirrorView(this.text!, this.runtime);
-        codemirrorView.render(elm);
-    }
-}
-
-class SmdeFactory implements IFluidDataStoreFactory {
-    public static readonly type = "@fluid-example/codemirror";
-    public readonly type = SmdeFactory.type;
-
-    public get IFluidDataStoreFactory() { return this; }
-
-    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-        const runtimeClass = mixinRequestHandler(
-            async (request: IRequest) => {
-                const router = await routerP;
-                return router.request(request);
-            });
-
-        const runtime = new runtimeClass(
-            context,
-            new Map([
-                SharedMap.getFactory(),
-                SharedString.getFactory(),
-            ].map((factory) => [factory.type, factory])),
-            existing,
-        );
-        const routerP = CodeMirrorComponent.load(runtime, context, existing);
-        return runtime;
-    }
-}
-
-export const fluidExport = new SmdeFactory();

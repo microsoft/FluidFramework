@@ -108,7 +108,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 
     private checkStorageDisposed() {
         if (this._disposed) {
-            throw new GenericError("storageServiceDisposedCannotRetry", { canRetry: false });
+            throw new GenericError("Storage Service is disposed. Cannot retry", { canRetry: false });
         }
         return undefined;
     }

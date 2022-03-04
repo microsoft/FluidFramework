@@ -125,7 +125,6 @@ async function getFileLinkCore(
                 if (typeof directUrl !== "string") {
                     // This will retry once in getWithRetryForTokenRefresh
                     throw new NonRetryableError(
-                        "getFileLinkCoreMalformedResponse",
                         "Malformed GetSharingInformation response",
                         DriverErrorType.incorrectServerResponse,
                         { driverVersion });
@@ -182,7 +181,6 @@ async function getFileItemLite(
                 if (!isFileItemLite(responseJson)) {
                     // This will retry once in getWithRetryForTokenRefresh
                     throw new NonRetryableError(
-                        "getFileItemLiteMalformedResponse",
                         "Malformed getFileItemLite response",
                         DriverErrorType.incorrectServerResponse,
                         { driverVersion });

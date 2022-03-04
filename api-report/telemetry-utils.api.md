@@ -107,7 +107,6 @@ export interface IFluidErrorBase extends Error {
     addTelemetryProperties: (props: ITelemetryProperties) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
-    readonly fluidErrorCode: string;
     getTelemetryProperties(): ITelemetryProperties;
     readonly message: string;
     readonly name: string;
@@ -125,6 +124,9 @@ export interface IPerformanceEventMarkers {
 }
 
 // @public
+export function isExternalError(e: any): boolean;
+
+// @public
 export function isFluidError(e: any): e is IFluidErrorBase;
 
 // @public
@@ -134,7 +136,7 @@ export const isILoggingError: (x: any) => x is ILoggingError;
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType;
 
 // @public
-export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode">;
+export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId">;
 
 // @public (undocumented)
 export interface ITelemetryLoggerPropertyBag {
@@ -158,9 +160,11 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
     addTelemetryProperties(props: ITelemetryProperties): void;
     // (undocumented)
-    readonly errorInstanceId: string;
+    get errorInstanceId(): string;
     getTelemetryProperties(): ITelemetryProperties;
-    }
+    // (undocumented)
+    overwriteErrorInstanceId(id: string): void;
+}
 
 // @public
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
@@ -200,6 +204,9 @@ export class MultiSinkLogger extends TelemetryLogger {
 
 // @public
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
+
+// @public
+export function originatedAsExternalError(e: any): boolean;
 
 // @public
 export class PerformanceEvent {
@@ -300,10 +307,10 @@ export class ThresholdCounter {
     }
 
 // @public
-export function wrapError<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T): T;
+export function wrapError<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;
 
 // @public
-export function wrapErrorAndLog<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
+export function wrapErrorAndLog<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
 
 
 // (No @packageDocumentation comment for this package)

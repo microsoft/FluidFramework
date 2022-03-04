@@ -5,6 +5,7 @@
 
 import assert from "assert";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -35,16 +36,17 @@ const testValue = "test value";
 
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
 
+
+async function ensureContainerConnected(container: Container): Promise<void> {
+    if (!container.connected) {
+        return new Promise((resolve) => container.once("connected", () => resolve()));
+    }
+}
+
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
 const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
     const container = await args.loadTestContainer(testContainerConfig);
-    await new Promise<void>((resolve) => {
-        if ((container as any).connected) {
-            resolve();
-        } else {
-            container.on("connected", () => resolve());
-        }
-    });
+    await ensureContainerConnected(container as Container);
     const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
     const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
@@ -98,7 +100,7 @@ describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
 
             // Wait for the ops to get processed which should mark the document clean after processing
             await provider.ensureSynchronized();
-            assert.strictEqual(container.isDirty, false, "Container should not be dirty");
+            assert.strictEqual(container.isDirty, false, "Container should not be dirty, after sync");
         };
 
         beforeEach(async () => {
@@ -121,6 +123,7 @@ describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
 
             // load container with pending ops, which should resend the ops not sent by previous container
             const container2 = await loader.resolve({ url }, pendingOps);
+            await ensureContainerConnected(container2 as Container);
             await provider.ensureSynchronized();
 
             await verifyDirtyStateTransitions(container2);
@@ -137,6 +140,7 @@ describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
 
             // load container with pending ops, which should not resend the ops sent by previous container
             const container2 = await loader.resolve({ url }, pendingOps);
+            await ensureContainerConnected(container2 as Container);
             await provider.ensureSynchronized();
 
             await verifyDirtyStateTransitions(container2);
