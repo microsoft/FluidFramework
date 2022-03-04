@@ -362,9 +362,13 @@ export class OdspDocumentService implements IDocumentService {
             response.joinSessionResponse.refreshSessionDurationSeconds;
         let refreshAfterDeltaMs =
             this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
+        // This means that the cached entry has expired(This should not be possible if the response is fetched
+        // from the network call). In this case we remove the cached entry and fetch the new response.
         if (refreshAfterDeltaMs <= 0) {
             this.cache.sessionJoinCache.remove(this.joinSessionKey);
             response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+            response.joinSessionResponse.refreshSessionDurationSeconds =
+                response.joinSessionResponse.refreshSessionDurationSeconds ?? 3600;
             refreshSessionDurationSeconds = response.joinSessionResponse.refreshSessionDurationSeconds;
             if (refreshSessionDurationSeconds !== undefined) {
                 refreshAfterDeltaMs =
