@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/iframe-driver";
-export const pkgVersion = "0.56.8";
+export const pkgVersion = "0.56.9";
