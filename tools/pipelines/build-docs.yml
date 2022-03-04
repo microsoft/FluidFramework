@@ -153,15 +153,12 @@ stages:
           submodules: false
           clean: true
 
-        - download: current
-          artifact: api-extractor-combined
-          path: '$(Pipeline.Workspace)'
-
-        - task: CopyFiles@2
+        - task: DownloadPipelineArtifact@2
           displayName: 'Copy api-extractor JSON to staging folder'
           inputs:
-            contents: '$(Pipeline.Workspace)/api-extractor-combined/**'
-            targetFolder: '$(Build.SourcesDirectory)/_api-extractor-temp'
+            source: current
+            artifact: api-extractor-combined
+            path: '$(Build.SourcesDirectory)/_api-extractor-temp'
 
         - task: UseNode@1
           displayName: 'Use Node 14.x'
@@ -211,15 +208,12 @@ stages:
           submodules: false
           clean: true
 
-        - download: current
-          artifact: fluidframework-docs
-          path: '$(Pipeline.Workspace)'
-
-        - task: CopyFiles@2
+        - task: DownloadPipelineArtifact@2
           displayName: 'Copy fluidframework-docs to public folder'
           inputs:
-            contents: '$(Pipeline.Workspace)/fluidframework-docs/**'
-            targetFolder: '$(Build.SourcesDirectory)/docs/public'
+            source: current
+            artifact: fluidframework-docs
+            path: '$(Build.SourcesDirectory)/docs/public'
 
         - task: UseNode@1
           displayName: 'Use Node 14.x'
