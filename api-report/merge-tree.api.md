@@ -111,7 +111,7 @@ export class Client {
     cloneFromSegments(): Client;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
-    findReconnectionPostition(segment: ISegment, localSeq: number): number;
+    protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
     // (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
@@ -292,9 +292,6 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
-
-// @public (undocumented)
-export function glc(mergeTree: MergeTree, id: number): string;
 
 // @public (undocumented)
 export class Heap<T> {
@@ -1028,8 +1025,6 @@ export class MergeTree {
     // (undocumented)
     mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
     // (undocumented)
-    nodeToString(block: IMergeBlock, strbuf: string, indentCount?: number): string;
-    // (undocumented)
     options?: PropertySet | undefined;
     // (undocumented)
     static readonly options: {
@@ -1053,8 +1048,6 @@ export class MergeTree {
     setMinSeq(minSeq: number): void;
     // (undocumented)
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
-    // (undocumented)
-    toString(): string;
     // (undocumented)
     walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
     }

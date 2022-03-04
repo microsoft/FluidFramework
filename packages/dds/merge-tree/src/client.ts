@@ -126,7 +126,7 @@ export class Client {
     }
 
     /**
-     * Annotate a maker and call the callback on concensus.
+     * Annotate a marker and call the callback on consensus.
      * @param marker - The marker to annotate
      * @param props - The properties to annotate the marker with
      * @param consensusCallback - The callback called when consensus is reached
@@ -285,7 +285,7 @@ export class Client {
     }
 
     /**
-     * Serializes the data required for garbage collection. The IFluidHandles stored in all segements that haven't
+     * Serializes the data required for garbage collection. The IFluidHandles stored in all segments that haven't
      * been removed represent routes to other objects. We serialize the data in these segments using the passed in
      * serializer which keeps track of all serialized handles.
      */
@@ -647,7 +647,7 @@ export class Client {
      * @param segment - The segment to find the position for
      * @param localSeq - The localSeq to find the position of the segment at
      */
-    public findReconnectionPostition(segment: ISegment, localSeq: number) {
+    protected findReconnectionPosition(segment: ISegment, localSeq: number) {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
         let segmentPosition = 0;
         /*
@@ -694,12 +694,12 @@ export class Client {
         // The reason they need them sorted, as they have the same local sequence number and which means
         // farther segments will  take into account nearer segments when calculating their position.
         // By sorting we ensure the nearer segment will be applied and sequenced before the father segments
-        // so their recalulated positions will be correct.
+        // so their recalculated positions will be correct.
         for (const segment of segmentGroup.segments.sort((a, b) => a.ordinal < b.ordinal ? -1 : 1)) {
             const segmentSegGroup = segment.segmentGroups.dequeue();
             assert(segmentGroup === segmentSegGroup,
                 0x035 /* "Segment group not at head of segment pending queue" */);
-            const segmentPosition = this.findReconnectionPostition(segment, segmentGroup.localSeq);
+            const segmentPosition = this.findReconnectionPosition(segment, segmentGroup.localSeq);
             let newOp: IMergeTreeDeltaOp | undefined;
             switch (resetOp.type) {
                 case MergeTreeDeltaType.ANNOTATE:
