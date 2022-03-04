@@ -111,6 +111,7 @@ export class Client {
     cloneFromSegments(): Client;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
+    protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
     // (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
@@ -291,9 +292,6 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
-
-// @public (undocumented)
-export function glc(mergeTree: MergeTree, id: number): string;
 
 // @public (undocumented)
 export class Heap<T> {
