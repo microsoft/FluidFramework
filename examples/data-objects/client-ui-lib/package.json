@@ -62,8 +62,6 @@
     "@fluidframework/runtime-utils": "^0.58.0",
     "@fluidframework/sequence": "^0.58.0",
     "@fluidframework/undo-redo": "^0.58.0",
-    "@fluidframework/view-adapters": "^0.58.0",
-    "@fluidframework/view-interfaces": "^0.58.0",
     "debug": "^4.1.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
