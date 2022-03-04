@@ -33,7 +33,7 @@ export class BatchTracker {
         this.batchEventEmitter.on("batchEnd", (error: any | undefined, message: ISequencedDocumentMessage) => {
             assert(
                 this.startBatchSequenceNumber !== undefined && this.batchProcessingStartTimeStamp !== undefined,
-                "batchBegin must fire before batchEnd");
+                0x2ba /* "batchBegin must fire before batchEnd" */);
 
             const length = message.sequenceNumber - this.startBatchSequenceNumber + 1;
             if (length >= batchLengthThreshold) {

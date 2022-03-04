@@ -126,7 +126,7 @@ export class Client {
     }
 
     /**
-     * Annotate a maker and call the callback on consensus.
+     * Annotate a marker and call the callback on consensus.
      * @param marker - The marker to annotate
      * @param props - The properties to annotate the marker with
      * @param consensusCallback - The callback called when consensus is reached

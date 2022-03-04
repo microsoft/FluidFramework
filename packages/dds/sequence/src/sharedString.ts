@@ -28,7 +28,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
      * Inserts the text at the position.
      * @param pos - The position to insert the text at
      * @param text - The text to insert
-     * @param props - The properties of tex
+     * @param props - The properties of the text
      */
     insertText(pos: number, text: string, props?: PropertySet): void;
 
