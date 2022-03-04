@@ -2382,8 +2382,8 @@ export class MergeTree {
                 if (existingRemovalInfo.removedSeq === UnassignedSequenceNumber) {
                     // we removed this locally, but someone else removed it first
                     // so put them at the head of the list
-                    // the list isn't ordered, but we try
-                    // to keep the first removal at the head.
+                    // the list isn't ordered, but we
+                    // keep first removal at the head.
                     existingRemovalInfo.removedClientIds.unshift(clientId);
                     existingRemovalInfo.removedSeq = seq;
                     segment.localRemovedSeq = undefined;

@@ -302,6 +302,9 @@ export class PartialSequenceLengths {
         if (removalInfo) {
             seq = removalInfo.removedSeq;
             segmentLen = -segmentLen;
+            // this code still assume removed client id and
+            // overlap clients are separate. so we need to pull
+            // then apart first.
             clientId = removalInfo.removedClientIds[0];
             removeClientOverlap = removalInfo.removedClientIds.length > 1
                 ? removalInfo.removedClientIds.slice(1)
