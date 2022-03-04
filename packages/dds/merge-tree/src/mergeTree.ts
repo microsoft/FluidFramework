@@ -1051,8 +1051,6 @@ export class MergeTree {
     // if we need to have pointers to non-markers, we can change to point at local refs
     private readonly idToSegment = new Map<string, ISegment>();
     private minSeqListeners: Heap<MinListener> | undefined;
-    // For diagnostics
-    public getLongClientId?: (id: number) => string;
     public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
     public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
