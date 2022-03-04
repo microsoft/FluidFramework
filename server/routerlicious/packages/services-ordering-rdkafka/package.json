@@ -27,7 +27,6 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/server-services-core": "^0.1035.0",
     "@fluidframework/server-services-telemetry": "^0.1034.0",
-    "moniker": "^0.1.2",
     "nconf": "^0.11.0",
     "node-rdkafka": "^2.11.0",
     "sillyname": "^0.1.0"
