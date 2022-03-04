@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React, { ReactElement } from "react";
-import ReactDOM from "react-dom";
 import { Layout } from "react-grid-layout";
 import {
     DataObject,
@@ -16,11 +14,9 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { ISpacesStoredItem, SpacesStorage } from "./storage";
-import { SpacesView } from "./spacesView";
 import {
     spacesItemMap,
     spacesRegistryEntries,
@@ -50,8 +46,14 @@ export interface ISpacesItem {
 /**
  * Spaces is the main component, which composes a SpacesToolbar with a SpacesStorage.
  */
-export class Spaces extends DataObject implements IFluidHTMLView {
-    private storageComponent: SpacesStorage | undefined;
+export class Spaces extends DataObject {
+    private _storageComponent: SpacesStorage | undefined;
+    public get storageComponent(): SpacesStorage {
+        if (this._storageComponent === undefined) {
+            throw new Error("Storage not initialized before use");
+        }
+        return this._storageComponent;
+    }
 
     public static get ComponentName() { return "@fluid-example/spaces"; }
 
@@ -70,8 +72,6 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         return Spaces.factory;
     }
 
-    public get IFluidHTMLView() { return this; }
-
     // In order to handle direct links to items, we'll link to the Spaces component with a path of the itemId for the
     // specific item we want.  We route through Spaces because it's the one with the registry, and so it's the one
     // that knows how to getViewForItem().
@@ -80,7 +80,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         // The only time we have a path will be direct links to items.
         if (requestParser.pathParts.length > 0) {
             const itemId = requestParser.pathParts[0];
-            const item = this.storageComponent?.itemList.get(itemId);
+            const item = this._storageComponent?.itemList.get(itemId);
             if (item !== undefined) {
                 const viewForItem = await this.getViewForItem(item.serializableItemData);
                 return {
@@ -95,49 +95,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         return super.request(req);
     }
 
-    /**
-     * Will return a new Spaces View
-     */
-    public render(div: HTMLElement) {
-        const addItem = (type: string) => {
-            this.createAndStoreItem(type, { w: 20, h: 5, x: 0, y: 0 })
-                .catch((error) => {
-                    console.error(`Error while creating item: ${type}`, error);
-                });
-        };
-
-        const View: (props: any) => ReactElement = () => {
-            if (this.storageComponent === undefined) {
-                throw new Error("Spaces can't render, storage not found");
-            }
-            const [baseUrl, setBaseUrl] = React.useState<string | undefined>("");
-            React.useEffect(() => {
-                const getBaseUrl = async () => {
-                    setBaseUrl(await this.context.getAbsoluteUrl(this.handle.absolutePath));
-                };
-
-                getBaseUrl().catch((error) => {
-                    console.error(error);
-                });
-            });
-            return (
-                <SpacesView
-                    itemMap={spacesItemMap}
-                    storage={this.storageComponent}
-                    addItem={addItem}
-                    templates={[...Object.keys(templateDefinitions)]}
-                    applyTemplate={this.applyTemplate}
-                    getViewForItem={this.getViewForItem}
-                    getUrlForItem={(itemId: string) => `#${baseUrl}/${itemId}`}
-                />
-            );
-        };
-
-        ReactDOM.render(
-            <View />,
-            div,
-        );
-    }
+    public readonly getBaseUrl = async () => this.context.getAbsoluteUrl(this.handle.absolutePath);
 
     protected async initializingFirstTime() {
         const storageComponent = await SpacesStorage.getFactory().createChildInstance(this.context);
@@ -150,11 +108,11 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        this.storageComponent =
+        this._storageComponent =
             await this.root.get<IFluidHandle<SpacesStorage>>(SpacesStorageKey)?.get();
     }
 
-    private readonly applyTemplate = async (template: string) => {
+    public readonly applyTemplate = async (template: string) => {
         const itemPromises: Promise<string>[] = [];
         const templateDefinition = templateDefinitions[template];
         for (const [itemType, layouts] of Object.entries(templateDefinition)) {
@@ -166,9 +124,6 @@ export class Spaces extends DataObject implements IFluidHTMLView {
     };
 
     public saveLayout(): void {
-        if (this.storageComponent === undefined) {
-            throw new Error("Can't save layout, storage not found");
-        }
         localStorage.setItem("spacesTemplate", JSON.stringify([...this.storageComponent.itemList.values()]));
     }
 
@@ -184,8 +139,16 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         }
     }
 
+    public readonly addItem = (type: string) => {
+        this.createAndStoreItem(type, { w: 20, h: 5, x: 0, y: 0 })
+            .catch((error) => {
+                console.error(`Error while creating item: ${type}`, error);
+            });
+    };
+
     private async createAndStoreItem(type: string, layout: Layout): Promise<string> {
-        if (this.storageComponent === undefined) {
+        // Checking storage existence early to avoid creating a component if the storage isn't there for it.
+        if (this._storageComponent === undefined) {
             throw new Error("Can't add item, storage not found");
         }
 
@@ -195,7 +158,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         }
 
         const serializableObject = await itemMapEntry.create(this.context);
-        return this.storageComponent.addItem(
+        return this._storageComponent.addItem(
             {
                 serializableObject,
                 itemType: type,
@@ -204,7 +167,7 @@ export class Spaces extends DataObject implements IFluidHTMLView {
         );
     }
 
-    private readonly getViewForItem = async (item: ISpacesItem) => {
+    public readonly getViewForItem = async (item: ISpacesItem) => {
         const registryEntry = spacesItemMap.get(item.itemType);
 
         if (registryEntry === undefined) {

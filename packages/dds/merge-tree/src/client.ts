@@ -20,7 +20,6 @@ import { LocalReference } from "./localReference";
 import {
     CollaborationWindow,
     compareStrings,
-    elapsedMicroseconds,
     IConsensusInfo,
     ISegment,
     ISegmentAction,
@@ -61,9 +60,11 @@ import {
     ReferencePosition,
 } from "./index";
 
+function elapsedMicroseconds(trace: Trace) {
+    return trace.trace().duration * 1000;
+}
+
 export class Client {
-    public verboseOps = false;
-    public noVerboseRemoteAnnotate = false;
     public measureOps = false;
     public accumTime = 0;
     public localTime = 0;
@@ -478,13 +479,6 @@ export class Client {
                 this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
             }
         }
-        if (this.verboseOps && (!opArgs.sequencedMessage || !this.noVerboseRemoteAnnotate)) {
-            console.log(
-                `@cli ${this.getLongClientId(this.getCollabWindow().clientId)} ` +
-                `seq ${clientArgs.sequenceNumber} ${opArgs.op.type} local ${!opArgs.sequencedMessage} ` +
-                `start ${range.start} end ${range.end} refseq ${clientArgs.referenceSequenceNumber} ` +
-                `cli ${clientArgs.clientId}`);
-        }
     }
 
     /**
@@ -552,7 +546,6 @@ export class Client {
             }
         }
 
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         return { start, end } as IIntegerRange;
     }
 
@@ -587,7 +580,7 @@ export class Client {
                 trace = Trace.start();
             }
 
-            this.mergeTree.ackPendingSegment(deltaOpArgs, this.verboseOps);
+            this.mergeTree.ackPendingSegment(deltaOpArgs);
             if (deltaOpArgs.op.type === MergeTreeDeltaType.ANNOTATE) {
                 if (deltaOpArgs.op.combiningOp && (deltaOpArgs.op.combiningOp.name === "consensus")) {
                     this.updateConsensusProperty(deltaOpArgs.op, deltaOpArgs.sequencedMessage!);
@@ -598,11 +591,6 @@ export class Client {
                 this.accumTime += elapsedMicroseconds(trace);
                 this.accumOps++;
                 this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
-            }
-
-            if (this.verboseOps) {
-                console.log(`@cli ${this.getLongClientId(this.getCollabWindow().clientId)} ` +
-                    `ack seq # ${deltaOpArgs.sequencedMessage?.sequenceNumber}`);
             }
         };
 
@@ -985,12 +973,6 @@ export class Client {
     }
 
     getPropertiesAtPosition(pos: number) {
-        const segWindow = this.getCollabWindow();
-        if (this.verboseOps) {
-            // eslint-disable-next-line max-len
-            console.log(`getPropertiesAtPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
-        }
-
         let propertiesAtPosition: PropertySet | undefined;
         const segoff = this.getContainingSegment(pos);
         const seg = segoff.segment;
@@ -1000,12 +982,6 @@ export class Client {
         return propertiesAtPosition;
     }
     getRangeExtentsOfPosition(pos: number) {
-        const segWindow = this.getCollabWindow();
-        if (this.verboseOps) {
-            // eslint-disable-next-line max-len
-            console.log(`getRangeExtentsOfPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
-        }
-
         let posStart: number | undefined;
         let posAfterEnd: number | undefined;
 

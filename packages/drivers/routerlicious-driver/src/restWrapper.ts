@@ -102,11 +102,11 @@ export class RouterliciousRestWrapper extends RestWrapper {
             }, responseBody.retryAfter * 1000));
         }
 
+        const responseSummary = responseBody !== undefined
+            ? typeof responseBody === "string" ? responseBody : safeStringify(responseBody)
+            : response.statusText;
         throwR11sNetworkError(
-            "r11sFetchError",
-            responseBody !== undefined
-                ? typeof responseBody === "string" ? responseBody : safeStringify(responseBody)
-                : response.statusText,
+            `R11s fetch error: ${responseSummary}`,
             response.status,
             responseBody?.retryAfter,
         );

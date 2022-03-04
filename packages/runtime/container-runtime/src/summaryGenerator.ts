@@ -152,7 +152,7 @@ export class SummaryGenerator {
         private readonly pendingAckTimer: IPromiseTimer,
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
-        private readonly raiseSummarizingError: (errorCode: string) => void,
+        private readonly raiseSummarizingError: (errorMessage: string) => void,
         private readonly successfulSummaryCallback: () => void,
         private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
         private readonly logger: ITelemetryLogger,
@@ -394,7 +394,7 @@ export class SummaryGenerator {
                 const message = summaryNack?.message;
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
-                const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });
+                const error = new LoggingError(`Received summaryNack: ${message}`, { retryAfterSeconds });
                 logger.sendErrorEvent(
                     { eventName: "SummaryNack", ...summarizeTelemetryProps, retryAfterSeconds }, error);
 

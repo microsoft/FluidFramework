@@ -6,7 +6,7 @@
 import { bufferToString, toUtf8 } from "@fluidframework/common-utils";
 import { IDocumentAttributes, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { convertWholeFlatSummaryToSnapshotTreeAndBlobs, IGitManager } from "@fluidframework/server-services-client";
-import { IDeliState } from "@fluidframework/server-services-core";
+import { IDeliState, requestWithRetry, shouldRetryNetworkError } from "@fluidframework/server-services-core";
 import {
     CommonProperties,
     getLumberBaseProperties,
@@ -25,6 +25,7 @@ export class SummaryReader implements ISummaryReader {
         private readonly documentId: string,
         private readonly summaryStorage: IGitManager,
         private readonly enableWholeSummaryUpload: boolean,
+        private readonly maxRetriesOnError: number = 6,
     ) {
         this.lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
     }
@@ -39,8 +40,18 @@ export class SummaryReader implements ISummaryReader {
 
         if (this.enableWholeSummaryUpload) {
             try {
-                const existingRef = await this.summaryStorage.getRef(encodeURIComponent(this.documentId));
-                const wholeFlatSummary = await this.summaryStorage.getSummary(existingRef.object.sha);
+                const existingRef = await requestWithRetry(
+                    async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
+                    "readWholeSummary_getRef",
+                    this.lumberProperties,
+                    shouldRetryNetworkError,
+                    this.maxRetriesOnError);
+                const wholeFlatSummary = await requestWithRetry(
+                    async() => this.summaryStorage.getSummary(existingRef.object.sha),
+                    "readWholeSummary_getSummary",
+                    this.lumberProperties,
+                    shouldRetryNetworkError,
+                    this.maxRetriesOnError);
                 const normalizedSummary = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
 
                 // Obtain IDs of specific fields from the downloaded summary
@@ -91,16 +102,41 @@ export class SummaryReader implements ISummaryReader {
             }
         } else {
             try {
-                const existingRef = await this.summaryStorage.getRef(encodeURIComponent(this.documentId));
+                const existingRef = await requestWithRetry(
+                    async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
+                    "readSummary_getRef",
+                    this.lumberProperties,
+                    shouldRetryNetworkError,
+                    this.maxRetriesOnError);
                 const [attributesContent, scribeContent, deliContent, opsContent] = await Promise.all([
-                    this.summaryStorage.getContent(existingRef.object.sha, ".protocol/attributes")
-                        .catch(() => undefined),
-                    this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/scribe")
-                        .catch(() => undefined),
-                    this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/deli")
-                        .catch(() => undefined),
-                    this.summaryStorage.getContent(existingRef.object.sha, ".logTail/logTail")
-                        .catch(() => undefined),
+                    requestWithRetry(
+                        async() => this.summaryStorage.getContent(existingRef.object.sha, ".protocol/attributes"),
+                        "readSummary_getProtocolAttributesContent",
+                        this.lumberProperties,
+                        shouldRetryNetworkError,
+                        this.maxRetriesOnError
+                    ).catch(() => undefined),
+                    requestWithRetry(
+                        async() => this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/scribe"),
+                        "readSummary_getServiceProtocolScribeContent",
+                        this.lumberProperties,
+                        shouldRetryNetworkError,
+                        this.maxRetriesOnError
+                    ).catch(() => undefined),
+                    requestWithRetry(
+                        async() => this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/deli"),
+                        "readSummary_getServiceProtocolDeliContent",
+                        this.lumberProperties,
+                        shouldRetryNetworkError,
+                        this.maxRetriesOnError
+                    ).catch(() => undefined),
+                    requestWithRetry(
+                        async() => this.summaryStorage.getContent(existingRef.object.sha, ".logTail/logTail"),
+                        "readSummary_getLogTailContent",
+                        this.lumberProperties,
+                        shouldRetryNetworkError,
+                        this.maxRetriesOnError
+                    ).catch(() => undefined),
                 ]);
 
                 const attributes = attributesContent ?

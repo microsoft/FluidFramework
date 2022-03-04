@@ -93,7 +93,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
     }
 
     it("Check double conversion of network error", async () => {
-        const networkError = createOdspNetworkError("errorCode", "Test Error", 400);
+        const networkError = createOdspNetworkError("Test Error", 400);
         const error1 = normalizeError(networkError);
         const error2 = normalizeError(error1);
         assertCustomPropertySupport(error1);

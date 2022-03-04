@@ -48,7 +48,6 @@ export interface IR11sError {
 export type R11sError = DriverError | IR11sError;
 
 export function createR11sNetworkError(
-    fluidErrorCode: string,
     errorMessage: string,
     statusCode?: number,
     retryAfterMs?: number,
@@ -60,33 +59,31 @@ export function createR11sNetworkError(
             // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
             // the error message will start with NetworkError as defined in restWrapper.ts
             return new GenericNetworkError(
-                fluidErrorCode, errorMessage, errorMessage.startsWith("NetworkError"), props);
+                errorMessage, errorMessage.startsWith("NetworkError"), props);
         case 401:
         case 403:
             return new AuthorizationError(
-                fluidErrorCode, errorMessage, undefined, undefined, props);
+                errorMessage, undefined, undefined, props);
         case 404:
             const errorType = R11sErrorType.fileNotFoundOrAccessDeniedError;
-            return new NonRetryableError(fluidErrorCode, errorMessage, errorType, props);
+            return new NonRetryableError(errorMessage, errorType, props);
         case 429:
             return createGenericNetworkError(
-                fluidErrorCode, errorMessage, { canRetry: true, retryAfterMs }, props);
+                errorMessage, { canRetry: true, retryAfterMs }, props);
         case 500:
-            return new GenericNetworkError(fluidErrorCode, errorMessage, true, props);
+            return new GenericNetworkError(errorMessage, true, props);
         default:
             const retryInfo = { canRetry: retryAfterMs !== undefined, retryAfterMs };
-            return createGenericNetworkError(fluidErrorCode, errorMessage, retryInfo, props);
+            return createGenericNetworkError(errorMessage, retryInfo, props);
     }
 }
 
 export function throwR11sNetworkError(
-    fluidErrorCode: string,
     errorMessage: string,
     statusCode?: number,
     retryAfterMs?: number,
 ): never {
     const networkError = createR11sNetworkError(
-        fluidErrorCode,
         errorMessage,
         statusCode,
         retryAfterMs);
@@ -99,9 +96,8 @@ export function throwR11sNetworkError(
  * Returns network error based on error object from R11s socket (IR11sSocketError)
  */
 export function errorObjectFromSocketError(socketError: IR11sSocketError, handler: string): R11sError {
-    const message = `R11sSocketError (${handler}): ${socketError.message}`;
+    const message = `R11s socket error (${handler}): ${socketError.message}`;
     return createR11sNetworkError(
-        "r11sSocketError",
         message,
         socketError.code,
         socketError.retryAfterMs,
