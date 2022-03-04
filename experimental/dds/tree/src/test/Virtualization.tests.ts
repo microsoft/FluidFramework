@@ -172,6 +172,10 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('correctly saves handles and their corresponding starting revisions to the summary', async () => {
+		testObjectProvider.logger.registerExpectedEvent(
+			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
+			{ eventName: 'fluid:telemetry:Batching:LengthTooBig' }
+		);
 		await processNewEditChunks(4);
 
 		const { editHistory } = fullHistorySummarizer_0_1_0(sharedTree.edits, sharedTree.currentView);

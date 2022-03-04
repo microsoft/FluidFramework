@@ -97,7 +97,7 @@ describe("connectionManager", () => {
 
         // Act I - retryableError
         const error: IAnyDriverError =
-            new RetryableError("retryableError", undefined, DriverErrorType.genericError, { driverVersion: pkgVersion });
+            new RetryableError("Retryable error", DriverErrorType.genericError, { driverVersion: pkgVersion });
         let oldConnection = connection;
         connection.emitError(error);
         connection = await waitForConnection();
@@ -111,7 +111,7 @@ describe("connectionManager", () => {
 
         // Act II - nonretryable disconnect
         const disconnectReason: IAnyDriverError =
-            new NonRetryableError("fatalDisconnectReason", undefined, DriverErrorType.genericError, { driverVersion: pkgVersion });
+            new NonRetryableError("Fatal disconnect reason", DriverErrorType.genericError, { driverVersion: pkgVersion });
         oldConnection = connection;
         connection.emitDisconnect(disconnectReason);
         connection = await waitForConnection();
@@ -119,7 +119,7 @@ describe("connectionManager", () => {
         // Assert II
         assert(oldConnection.disposed, "Old connection should be disposed after emitting disconnect");
         assert.equal(connection.clientId, "mock_client_2", "New connection should have expected id");
-        mockLogger.assertMatchAny([{ eventName: "reconnectingDespiteFatalError", reconnectMode: "Enabled", error: "fatalDisconnectReason", canRetry: false, }]);
+        mockLogger.assertMatchAny([{ eventName: "reconnectingDespiteFatalError", reconnectMode: "Enabled", error: "Fatal disconnect reason", canRetry: false, }]);
         assert(!closed, "Don't expect closeHandler to be called even when connection emits a non-retryable disconnect");
         assert.equal(disconnectCount, 2, "Expected 2 disconnects from emitting an error and disconnect");
         assert.equal(connectionCount, 3, "Expected 3 connections after the two disconnects");
@@ -132,6 +132,6 @@ describe("connectionManager", () => {
         // Assert III
         assert(closed, "closeHandler should be called in response to 403 nack");
         assert(!oldConnection.disposed, "connection shouldn't be disposed since mock closeHandler doesn't do it - don't expect it here after fatal nack");
-        mockLogger.assertMatch([], "Expected no logs sent, specifically not reconnectingDespiteFatalError event");
+        assert(!mockLogger.matchEvents([{ eventName: "reconnectingDespiteFatalError" }]), "Should not see reconnectingDespiteFatalError event after fatal nack");
     });
 });

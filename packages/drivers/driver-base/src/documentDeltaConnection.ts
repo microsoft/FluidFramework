@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -30,9 +30,6 @@ import {
 } from "@fluidframework/telemetry-utils";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion";
-
-// Local storage key to disable the BatchManager
-const batchManagerDisabledKey = "Fluid.Driver.BaseDocumentDeltaConnection.DisableBatchManager";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -66,8 +63,6 @@ export class DocumentDeltaConnection
 
     private socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    protected readonly submitManager: BatchManager<IDocumentMessage[]>;
-
     private _details: IConnected | undefined;
 
     private reconnectAttempts: number = 0;
@@ -91,7 +86,6 @@ export class DocumentDeltaConnection
      */
     protected _disposed: boolean = false;
     private readonly mc: MonitoringContext;
-    protected readonly isBatchManagerDisabled: boolean = false;
     /**
      * @deprecated - Implementors should manage their own logger or monitoring context
      */
@@ -123,9 +117,6 @@ export class DocumentDeltaConnection
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(logger, "DeltaConnection"));
 
-        this.submitManager = new BatchManager<IDocumentMessage[]>(
-            (submitType, work) => this.emitMessages(submitType, work));
-
         this.on("newListener", (event, listener) => {
             assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
 
@@ -153,8 +144,6 @@ export class DocumentDeltaConnection
                     });
             }
         });
-
-        this.isBatchManagerDisabled = this.mc.config.getBoolean(batchManagerDisabledKey) === true;
     }
 
     /**
@@ -286,11 +275,7 @@ export class DocumentDeltaConnection
     }
 
     protected submitCore(type: string, messages: IDocumentMessage[]) {
-        if (this.isBatchManagerDisabled) {
-            this.emitMessages(type, [messages]);
-        } else {
-            this.submitManager.add(type, messages);
-        }
+        this.emitMessages(type, [messages]);
     }
 
     /**
@@ -320,7 +305,7 @@ export class DocumentDeltaConnection
         this.disposeCore(
             false, // socketProtocolError
             createGenericNetworkError(
-                "clientClosingConnection", undefined, { canRetry: true }, { driverVersion }));
+                "Client closing delta connection", { canRetry: true }, { driverVersion }));
     }
 
     protected disposeCore(socketProtocolError: boolean, err: IAnyDriverError) {
@@ -398,7 +383,7 @@ export class DocumentDeltaConnection
                     return;
                 }
 
-                fail(true, this.createErrorObject("connectError", error));
+                fail(true, this.createErrorObject("connect_error", error));
             });
 
             this.addConnectionListener("reconnect_attempt", () => {
@@ -407,7 +392,7 @@ export class DocumentDeltaConnection
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                fail(true, this.createErrorObject("connectTimeout"));
+                fail(true, this.createErrorObject("connect_timeout"));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -427,7 +412,7 @@ export class DocumentDeltaConnection
                     // In this case we will get "read", even if we requested "write"
                     if (actualMode !== requestedMode) {
                         fail(false, this.createErrorObject(
-                            "connectDocumentSuccess",
+                            "connect_document_success",
                             "Connected in a different mode than was requested",
                             false,
                         ));
@@ -436,7 +421,7 @@ export class DocumentDeltaConnection
                 } else {
                     if (actualMode === "write") {
                         fail(false, this.createErrorObject(
-                            "connectDocumentSuccess",
+                            "connect_document_success",
                             "Connected in write mode without write permissions",
                             false,
                         ));
@@ -478,7 +463,7 @@ export class DocumentDeltaConnection
 
                 // This is not an socket.io error - it's Fluid protocol error.
                 // In this case fail connection and indicate that we were unable to create connection
-                fail(false, this.createErrorObject("connectDocumentError", error));
+                fail(false, this.createErrorObject("connect_document_error", error));
             }));
 
             this.socket.emit("connect_document", connectMessage);
@@ -556,24 +541,24 @@ export class DocumentDeltaConnection
         // Note: we suspect the incoming error object is either:
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - an Error object thrown by socket.io engine. Be careful with not recording PII!
-        let message = `socket.io (${handler})`;
+        let message: string;
         if (typeof error !== "object") {
-            message = `${message}: ${error}`;
+            message = `${error}`;
         } else if (error?.type === "TransportError") {
             // JSON.stringify drops Error.message
-            if (error?.message !== undefined) {
-                message = `${message}: ${error.message}`;
-            }
+            const messagePrefix = (error?.message !== undefined)
+                ? `${error.message}: `
+                : "";
+
             // Websocket errors reported by engine.io-client.
             // They are Error objects with description containing WS error and description = "TransportError"
             // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
-            message = `${message}: ${JSON.stringify(error, getCircularReplacer())}`;
+            message = `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
         } else {
-            message = `${message}: [object omitted]`;
+            message = "[object omitted]";
         }
         const errorObj = createGenericNetworkError(
-            `socketError [${handler}]`,
-            message,
+            `socket.io (${handler}): ${message}`,
             { canRetry },
             { driverVersion },
         );

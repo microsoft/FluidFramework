@@ -48,6 +48,7 @@
     "@fluidframework/container-runtime-definitions-0.54.0": "npm:@fluidframework/container-runtime-definitions@0.54.0",
     "@fluidframework/container-runtime-definitions-0.55.0": "npm:@fluidframework/container-runtime-definitions@0.55.0",
     "@fluidframework/container-runtime-definitions-0.56.0": "npm:@fluidframework/container-runtime-definitions@0.56.0",
+    "@fluidframework/container-runtime-definitions-0.57.0": "npm:@fluidframework/container-runtime-definitions@0.57.0",
     "@fluidframework/eslint-config-fluid": "^0.26.0-0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
@@ -67,7 +68,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.57.0",
+    "version": "0.58.0",
     "broken": {
       "0.51.1": {
         "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
@@ -136,6 +137,34 @@
         },
         "InterfaceDeclaration_IContainerRuntime": {
           "backCompat": false,
+          "forwardCompat": false
+        }
+      },
+      "0.56.0": {
+        "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
+          "backCompat": true,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideContainerRuntime": {
+          "backCompat": true,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IContainerRuntime": {
+          "backCompat": true,
+          "forwardCompat": false
+        }
+      },
+      "0.57.0": {
+        "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
+          "backCompat": true,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideContainerRuntime": {
+          "backCompat": true,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IContainerRuntime": {
+          "backCompat": true,
           "forwardCompat": false
         }
       }

@@ -188,7 +188,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly quorum: IQuorumClients;
     // @deprecated (undocumented)
-    raiseContainerWarning(warning: ContainerWarning): void;
+    raiseContainerWarning?(warning: ContainerWarning): void;
     readonly scope: IFluidObject & FluidObject;
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;

@@ -6,8 +6,8 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { AliasResult, IDataStore, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import { DataStores } from "./dataStores";
@@ -36,42 +36,6 @@ export interface IDataStoreAliasMessage {
         && typeof maybeDataStoreAliasMessage?.alias === "string";
 };
 
-/**
- * Encapsulates the return codes of the aliasing API
- */
-export enum AliasResult {
-    /**
-     * The datastore has been successfully aliased
-     */
-    Success = "Success",
-    /**
-     * There is already a datastore bound to the provided alias
-     */
-    Conflict = "Conflict",
-    /**
-     * The datastore is currently in the process of being aliased
-     */
-    Aliasing = "Aliasing",
-    /**
-     * The datastore has been attempted to be aliased before
-     */
-    AlreadyAliased = "AlreadyAliased",
-}
-
-/**
- * A fluid router with the capability of being assigned an alias
- */
- export interface IDataStore extends IFluidRouter {
-    /**
-     * Attempt to assign an alias to the datastore.
-     * If the operation succeeds, the datastore can be referenced
-     * by the supplied alias.
-     *
-     * @param alias - Given alias for this datastore.
-     */
-    trySetAlias(alias: string): Promise<AliasResult>;
-}
-
 export const channelToDataStore = (
     fluidDataStoreChannel: IFluidDataStoreChannel,
     internalId: string,
@@ -94,11 +58,11 @@ class DataStore implements IDataStore {
         switch (this.aliasState) {
             // If we're already aliasing, throw an exception
             case AliasState.Aliasing:
-                return AliasResult.Aliasing;
+                return "Aliasing";
             // If this datastore is already aliased, return true only if this
             // is a repeated call for the same alias
             case AliasState.Aliased:
-                return this.alias === alias ? AliasResult.Success : AliasResult.AlreadyAliased;
+                return this.alias === alias ? "Success" : "AlreadyAliased";
             // There is no current or past alias operation for this datastore,
             // it is safe to continue execution
             case AliasState.None: break;
@@ -118,7 +82,7 @@ class DataStore implements IDataStore {
             // Explicitly Lock-out future attempts of aliasing,
             // regardless of result
             this.aliasState = AliasState.Aliased;
-            return localResult ? AliasResult.Success : AliasResult.Conflict;
+            return localResult ? "Success" : "Conflict";
         }
 
         const aliased = await this.ackBasedPromise<boolean>((resolve) => {
@@ -148,7 +112,7 @@ class DataStore implements IDataStore {
             return false;
         });
 
-        return aliased ? AliasResult.Success : AliasResult.Conflict;
+        return aliased ? "Success" : "Conflict";
     }
 
     async request(request: IRequest): Promise<IResponse> {

@@ -53,9 +53,6 @@
                     {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
                     {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
 
-                    <!-- {{ printf "%#v" .URL }}
-                    {{ printf "%#v" $current.RelPermalink }} -->
-
                     <li {{ if $isCurrentPage }}class="active" {{ end }}>
                         <a href="{{ .RelPermalink }}"
                             {{ if $isCurrentPage }}aria-label="Current Page: {{ (default .Name .Title) | safeHTML }} " {{ end }}>

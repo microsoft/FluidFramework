@@ -53,6 +53,7 @@ import {
     IConnectionManagerFactoryArgs,
     IConnectionManager,
  } from "./contracts";
+import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;
@@ -575,9 +576,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // DeltaManager overall policy - drop all ops on disconnection and rely on
             // container runtime to deal with resubmitting any ops that did not make it through.
             // So drop them, but also raise error event to look into details.
-            this.logger.sendErrorEvent({
+            this.logger.sendTelemetryEvent({
                 eventName: "OpenBatchOnDisconnect",
                 length: this.messageBuffer.length,
+                reason: {
+                    value: reason,
+                    tag: TelemetryDataTag.PackageData,
+                }
             });
             this.messageBuffer.length = 0;
         }
@@ -598,7 +603,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
             const throttlingWarning: IThrottlingWarning = ThrottlingWarning.wrap(
                 error,
-                "deltaManagerEmitDelayInfo",
                 delayMs / 1000 /* retryAfterSeconds */,
                 this.logger,
             );
@@ -722,8 +726,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                         // This looks like a data corruption but the culprit has been found instead
                         // to be the file being overwritten in storage.  See PR #5882.
                         const error = new NonRetryableError(
-                            "twoMessagesWithSameSeqNumAndDifferentPayload",
-                            undefined,
+                            "Found two messages with the same sequenceNumber but different payloads",
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connectionManager.clientId,
@@ -777,7 +780,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
-            throw new DataCorruptionError("msnMovesBackwards", {
+            throw new DataCorruptionError("Found a lower minimumSequenceNumber (msn) than previously recorded", {
                 ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
             });
@@ -785,7 +788,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
-            throw new DataCorruptionError("nonSequentialSequenceNumber", {
+            throw new DataCorruptionError("Found a non-Sequential sequenceNumber", {
                 ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
             });
