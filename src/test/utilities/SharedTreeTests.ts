@@ -695,7 +695,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 					testTree: testTree1,
 					containerRuntimeFactory,
 				} = createSimpleTestTree({ localMode: false });
-				const { sharedTree: sharedTree2 } = createSimpleTestTree();
+				const { tree: sharedTree2 } = setUpTestSharedTree();
 
 				const newNode = testTree1.buildLeaf();
 
@@ -710,7 +710,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 
 			it('can be used to initialize a tree with an empty edit list', () => {
 				const { sharedTree: sharedTree1, containerRuntimeFactory } = createSimpleTestTree({ localMode: false });
-				const { sharedTree: sharedTree2 } = createSimpleTestTree();
+				const { tree: sharedTree2 } = setUpTestSharedTree();
 
 				containerRuntimeFactory.processAllMessages();
 

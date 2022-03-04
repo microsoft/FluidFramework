@@ -201,8 +201,6 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 							expectedTree,
 							true
 						);
-						const { tree: tree2 } = setUpTestSharedTree();
-						tree2.loadSummary(newSummary);
 
 						// Check that the new summary is equivalent to the saved one
 						const serializedSummary = assertNotUndefined(noHistorySummaryByVersion.get(version));
