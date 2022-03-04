@@ -30,7 +30,7 @@ export interface PromiseCacheOptions {
  * Handles garbage collection of expiring cache entries.
  * Not exported.
  */
-class GarbageCollector<TKey> {
+export class GarbageCollector<TKey> {
     private readonly gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
 
     constructor(
