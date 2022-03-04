@@ -994,8 +994,6 @@ export class MergeTree {
     // (undocumented)
     getLength(refSeq: number, clientId: number): number;
     // (undocumented)
-    getLongClientId?: (id: number) => string;
-    // (undocumented)
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
