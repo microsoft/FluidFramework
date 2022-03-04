@@ -88,6 +88,7 @@ export class RestGitService {
                 "Storage-Name": this.storageName,
             })}`,
         );
+
         Lumberjack.info(
             `Created RestGitService: ${JSON.stringify({
                 "BaseUrl": storage.url,
