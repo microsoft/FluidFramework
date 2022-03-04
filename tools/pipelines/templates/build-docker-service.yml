@@ -90,7 +90,7 @@ variables:
     value: $[variables.containerRegistryConnection]
   - name: containerTag
     value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
-  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+  - ${{ if or( eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.SourceBranch'], 'refs/heads/next')) }}:
     - name: latestContainerTagSuffix
       value: latest
     - name: latestContainerTag
