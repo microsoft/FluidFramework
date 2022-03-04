@@ -280,15 +280,12 @@ stages:
           submodules: false
           clean: true
 
-        - download: current
-          artifact: fluidframework-docs
-          path: '$(Pipeline.Workspace)'
-
-        - task: CopyFiles@2
+        - task: DownloadPipelineArtifact@2
           displayName: 'Copy fluidframework-docs to public folder'
           inputs:
-            contents: '$(Pipeline.Workspace)/fluidframework-docs/**'
-            targetFolder: '$(Build.SourcesDirectory)/docs/public'
+            source: current
+            artifact: fluidframework-docs
+            path: '$(Build.SourcesDirectory)/docs/public'
 
         - task: AzureStaticWebApp@0
           displayName: 'Deploy site'
