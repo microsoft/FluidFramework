@@ -44,7 +44,7 @@ export type BuildNode = BuildTreeNode | DetachedSequenceId;
 /**
  * Node for use in a Build change.
  */
-export interface BuildTreeNode extends Omit<TreeNode<BuildNode>, 'identifier'> {
+export interface BuildTreeNode extends Omit<TreeNode<BuildNode, unknown>, 'identifier'> {
 	identifier?: NodeId;
 }
 
@@ -340,14 +340,14 @@ export const StablePlace = {
 	/**
 	 * @returns The location directly before `node`.
 	 */
-	before: (node: NodeData | NodeId): StablePlace => ({
+	before: (node: NodeData<NodeId> | NodeId): StablePlace => ({
 		side: Side.Before,
 		referenceSibling: getNodeId(node),
 	}),
 	/**
 	 * @returns The location directly after `node`.
 	 */
-	after: (node: NodeData | NodeId): StablePlace => ({ side: Side.After, referenceSibling: getNodeId(node) }),
+	after: (node: NodeData<NodeId> | NodeId): StablePlace => ({ side: Side.After, referenceSibling: getNodeId(node) }),
 	/**
 	 * @returns The location at the start of `trait`.
 	 */
@@ -382,7 +382,10 @@ export const StableRange = {
 	 * @returns a `StableRange` which contains only the provided `node`.
 	 * Both the start and end `StablePlace` objects used to anchor this `StableRange` are in terms of the passed in node.
 	 */
-	only: (node: NodeData | NodeId): StableRange => ({ start: StablePlace.before(node), end: StablePlace.after(node) }),
+	only: (node: NodeData<NodeId> | NodeId): StableRange => ({
+		start: StablePlace.before(node),
+		end: StablePlace.after(node),
+	}),
 	/**
 	 * @returns a `StableRange` which contains everything in the trait.
 	 * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
@@ -397,14 +400,14 @@ export const StableRange = {
 /**
  * @returns True iff the given `node` is of type NodeData.
  */
-function isNodeData(node: NodeData | NodeId): node is NodeData {
-	return (node as NodeData).definition !== undefined && (node as NodeData).identifier !== undefined;
+function isNodeData(node: NodeData<NodeId> | NodeId): node is NodeData<NodeId> {
+	return (node as NodeData<NodeId>).definition !== undefined && (node as NodeData<NodeId>).identifier !== undefined;
 }
 
 /**
  * @returns The NodeId for a given node or its id.
  */
-export function getNodeId(node: NodeData | NodeId): NodeId {
+export function getNodeId(node: NodeData<NodeId> | NodeId): NodeId {
 	if (isNodeData(node)) {
 		return node.identifier;
 	} else {

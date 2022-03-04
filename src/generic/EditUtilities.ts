@@ -6,7 +6,7 @@
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { compareArrays, fail, Mutable } from '../Common';
-import { EditId, TraitLabel } from '../Identifiers';
+import { EditId, NodeId, StableNodeId, TraitLabel } from '../Identifiers';
 import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
 import { NodeIdConverter } from './NodeIdUtilities';
 import {
@@ -15,7 +15,6 @@ import {
 	Edit,
 	HasTraits,
 	NodeData,
-	NodeData_0_0_2,
 	Payload,
 	TraitLocation,
 	TraitLocation_0_0_2,
@@ -386,7 +385,10 @@ function isKnownType<T, Type extends T>(value: T, isType?: (value: T) => value i
 export function deepCompareNodes(
 	a: ChangeNode | ChangeNode_0_0_2,
 	b: ChangeNode | ChangeNode_0_0_2,
-	comparator: (a: NodeData | NodeData_0_0_2, b: NodeData | NodeData_0_0_2) => boolean = compareNodes
+	comparator: (
+		a: NodeData<NodeId> | NodeData<StableNodeId>,
+		b: NodeData<NodeId> | NodeData<StableNodeId>
+	) => boolean = compareNodes
 ): boolean {
 	if (a === b) {
 		return true;
@@ -432,7 +434,10 @@ export function deepCompareNodes(
  * Does not compare children
  * @param nodes - two or more nodes to compare
  */
-export function compareNodes(a: NodeData | NodeData_0_0_2, b: NodeData | NodeData_0_0_2): boolean {
+export function compareNodes(
+	a: NodeData<NodeId> | NodeData<StableNodeId>,
+	b: NodeData<NodeId> | NodeData<StableNodeId>
+): boolean {
 	if (a === b) {
 		return true;
 	}

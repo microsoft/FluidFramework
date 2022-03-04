@@ -12,7 +12,7 @@ import { NodeData, Side, TraitLocation } from './PersistedTypes';
  * An immutable view of a distributed tree node.
  * @public
  */
-export interface TreeViewNode extends NodeData {
+export interface TreeViewNode extends NodeData<NodeId> {
 	readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
 }
 

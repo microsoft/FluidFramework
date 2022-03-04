@@ -5,7 +5,7 @@
 
 import { DetachedSequenceId, NodeId, StableNodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
-import { NodeIdConverter, RevisionView, Side, TreeNode_0_0_2, TreeView } from '../generic';
+import { NodeIdConverter, RevisionView, Side, TreeNode, TreeView } from '../generic';
 import { getChangeNode_0_0_2FromViewNode } from '../SerializationUtilities';
 import { rangeFromStableRange } from '../TreeViewUtilities';
 import {
@@ -64,7 +64,7 @@ export function revert(
 
 							ids.push(...nodesForDetachedSequence);
 						} else {
-							ids.push((curr as TreeNode_0_0_2<BuildNodeInternal>).identifier);
+							ids.push((curr as TreeNode<BuildNodeInternal, StableNodeId>).identifier);
 						}
 						return ids;
 					}, [])

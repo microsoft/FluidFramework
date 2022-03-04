@@ -10,14 +10,7 @@
 // persisted types (as documented below) is followed.
 import { DetachedSequenceId, StableNodeId, TraitLabel, UuidString } from '../Identifiers';
 import { assert, assertNotUndefined } from '../Common';
-import {
-	NodeData_0_0_2,
-	Payload,
-	PlaceholderTree_0_0_2,
-	Side,
-	TraitLocation_0_0_2,
-	TreeNodeSequence,
-} from '../generic';
+import { NodeData, Payload, Side, TraitLocation_0_0_2, TreeNode, TreeNodeSequence } from '../generic';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.
@@ -68,7 +61,7 @@ export type ChangeInternal = InsertInternal | DetachInternal | BuildInternal | S
  * {@inheritdoc BuildNode}
  * @public
  */
-export type BuildNodeInternal = PlaceholderTree_0_0_2<DetachedSequenceId>;
+export type BuildNodeInternal = TreeNode<BuildNodeInternal, StableNodeId> | DetachedSequenceId;
 
 /**
  * {@inheritdoc Build}
@@ -191,13 +184,13 @@ export const ChangeInternal = {
 		type: ChangeTypeInternal.Detach,
 	}),
 
-	setPayload: (nodeToModify: NodeData_0_0_2 | StableNodeId, payload: Payload): SetValueInternal => ({
+	setPayload: (nodeToModify: NodeData<StableNodeId> | StableNodeId, payload: Payload): SetValueInternal => ({
 		nodeToModify: getStableNodeId(nodeToModify),
 		payload,
 		type: ChangeTypeInternal.SetValue,
 	}),
 
-	clearPayload: (nodeToModify: NodeData_0_0_2 | StableNodeId): SetValueInternal => ({
+	clearPayload: (nodeToModify: NodeData<StableNodeId> | StableNodeId): SetValueInternal => ({
 		nodeToModify: getStableNodeId(nodeToModify),
 		// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface above.)
 		// eslint-disable-next-line no-null/no-null
@@ -302,14 +295,14 @@ export const StablePlace_0_0_2 = {
 	/**
 	 * @returns The location directly before `node`.
 	 */
-	before: (node: NodeData_0_0_2 | StableNodeId): StablePlace_0_0_2 => ({
+	before: (node: NodeData<StableNodeId> | StableNodeId): StablePlace_0_0_2 => ({
 		side: Side.Before,
 		referenceSibling: getStableNodeId(node),
 	}),
 	/**
 	 * @returns The location directly after `node`.
 	 */
-	after: (node: NodeData_0_0_2 | StableNodeId): StablePlace_0_0_2 => ({
+	after: (node: NodeData<StableNodeId> | StableNodeId): StablePlace_0_0_2 => ({
 		side: Side.After,
 		referenceSibling: getStableNodeId(node),
 	}),
@@ -346,7 +339,7 @@ export const StableRange_0_0_2 = {
 	 * @returns a `StableRange` which contains only the provided `node`.
 	 * Both the start and end `StablePlace` objects used to anchor this `StableRange` are in terms of the passed in node.
 	 */
-	only: (node: NodeData_0_0_2 | StableNodeId): StableRange_0_0_2 => ({
+	only: (node: NodeData<StableNodeId> | StableNodeId): StableRange_0_0_2 => ({
 		start: StablePlace_0_0_2.before(node),
 		end: StablePlace_0_0_2.after(node),
 	}),
@@ -365,15 +358,18 @@ export const StableRange_0_0_2 = {
  * @returns True iff the given `node` is of type StableNodeData.
  * @internal
  */
-export function isNodeData_0_0_2(node: NodeData_0_0_2 | StableNodeId): node is NodeData_0_0_2 {
-	return (node as NodeData_0_0_2).definition !== undefined && (node as NodeData_0_0_2).identifier !== undefined;
+export function isNodeData_0_0_2(node: NodeData<StableNodeId> | StableNodeId): node is NodeData<StableNodeId> {
+	return (
+		(node as NodeData<StableNodeId>).definition !== undefined &&
+		(node as NodeData<StableNodeId>).identifier !== undefined
+	);
 }
 
 /**
  * @returns The NodeId for a given node or its id.
  * @internal
  */
-export function getStableNodeId(node: NodeData_0_0_2 | StableNodeId): StableNodeId {
+export function getStableNodeId(node: NodeData<StableNodeId> | StableNodeId): StableNodeId {
 	if (isNodeData_0_0_2(node)) {
 		return node.identifier;
 	} else {

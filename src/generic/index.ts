@@ -27,11 +27,8 @@ export {
 	TraitMap,
 	TreeNodeSequence,
 	Payload,
-	NodeDataBase,
 	NodeData,
-	NodeData_0_0_2,
 	TreeNode,
-	TreeNode_0_0_2,
 	ChangeNode,
 	ChangeNode_0_0_2,
 	EditStatus,
@@ -40,7 +37,6 @@ export {
 	SharedTreeOpType,
 	SharedTreeSummaryWriteFormat,
 	PlaceholderTree,
-	PlaceholderTree_0_0_2,
 	HasTraits,
 } from './PersistedTypes';
 export {

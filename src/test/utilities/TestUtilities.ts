@@ -385,7 +385,7 @@ export async function asyncFunctionThrowsCorrectly(
  * Does not compare children or payloads.
  * @param nodes - two or more nodes to compare
  */
-export function areNodesEquivalent(...nodes: NodeData[]): boolean {
+export function areNodesEquivalent(...nodes: NodeData<unknown>[]): boolean {
 	if (nodes.length < 2) {
 		fail('Too few nodes to compare');
 	}
@@ -652,6 +652,6 @@ export function noopEdit(view: TreeView): Change[] {
 }
 
 /** Translate an ID in one context to an ID in another */
-export function translateId(id: NodeId | NodeData, from: NodeIdConverter, to: NodeIdConverter): NodeId {
+export function translateId(id: NodeId | NodeData<NodeId>, from: NodeIdConverter, to: NodeIdConverter): NodeId {
 	return to.convertToNodeId(from.convertToStableNodeId(getNodeId(id)));
 }

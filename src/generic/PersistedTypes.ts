@@ -146,10 +146,10 @@ export type TreeNodeSequence<TChild> = readonly TChild[];
 export type Payload = Serializable;
 
 /**
- * Contains properties common to all nodes
+ * The fields required by a node in a tree
  * @public
  */
-export interface NodeDataBase {
+export interface NodeData<TId> {
 	/**
 	 * A payload of arbitrary serializable data
 	 */
@@ -161,29 +161,22 @@ export interface NodeDataBase {
 	 * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
 	 */
 	readonly definition: Definition;
-}
-
-/**
- * The fields required by a node in a tree
- * @public
- */
-export interface NodeData extends NodeDataBase {
 	/**
 	 * Identifier which can be used to refer to this Node.
 	 */
-	readonly identifier: NodeId;
+	readonly identifier: TId;
 }
 
 /**
  * Satisfies `NodeData` and may contain children under traits (which may or may not be `TreeNodes`)
  * @public
  */
-export interface TreeNode<TChild> extends NodeData, HasTraits<TChild> {}
+export interface TreeNode<TChild, TId> extends NodeData<TId>, HasTraits<TChild> {}
 
 /**
  * A tree whose nodes are either TreeNodes or a placeholder
  */
-export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
+export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>, NodeId> | TPlaceholder;
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
@@ -198,7 +191,7 @@ export interface TraitLocation {
  * JSON-compatible Node type. Objects of this type will be persisted in internal change objects (under Edits) in the SharedTree history.
  * @public
  */
-export type ChangeNode = TreeNode<ChangeNode>;
+export type ChangeNode = TreeNode<ChangeNode, NodeId>;
 
 /**
  * The status code of an attempt to apply the changes in an Edit.
@@ -276,31 +269,6 @@ export enum SharedTreeSummaryWriteFormat {
 // #region 0_0_2
 
 /**
- * The fields required by a node in a tree
- * @public
- */
-export interface NodeData_0_0_2 extends NodeDataBase {
-	/**
-	 * Identifier which can be used to refer to this Node.
-	 */
-	readonly identifier: StableNodeId;
-}
-
-/**
- * Satisfies `NodeData_0_0_2` and may contain children under traits (which may or may not be `TreeNodes`)
- * @public
- */
-export interface TreeNode_0_0_2<TChild> extends NodeData_0_0_2, HasTraits<TChild> {}
-
-/**
- * A tree whose nodes are either TreeNode_0_0_2s or a placeholder
- * @public
- */
-export type PlaceholderTree_0_0_2<TPlaceholder = never> =
-	| TreeNode_0_0_2<PlaceholderTree_0_0_2<TPlaceholder>>
-	| TPlaceholder;
-
-/**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
  * @public
  */
@@ -312,6 +280,6 @@ export interface TraitLocation_0_0_2 extends Omit<TraitLocation, 'parent'> {
  * JSON-compatible Node type. Objects of this type will be persisted in internal change objects (under Edits) in the SharedTree history.
  * @public
  */
-export type ChangeNode_0_0_2 = TreeNode_0_0_2<ChangeNode_0_0_2>;
+export type ChangeNode_0_0_2 = TreeNode<ChangeNode_0_0_2, StableNodeId>;
 
 // #endregion

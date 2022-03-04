@@ -7,14 +7,7 @@ import { copyPropertyIfDefined } from '../Common';
 import { NodeId, StableNodeId } from '../Identifiers';
 import { convertTreeNodes } from './EditUtilities';
 import { NodeIdConverter } from './NodeIdUtilities';
-import {
-	ChangeNode,
-	ChangeNode_0_0_2,
-	NodeData,
-	NodeData_0_0_2,
-	TraitLocation,
-	TraitLocation_0_0_2,
-} from './PersistedTypes';
+import { ChangeNode, ChangeNode_0_0_2, NodeData, TraitLocation, TraitLocation_0_0_2 } from './PersistedTypes';
 
 /**
  * Convert a {@link ChangeNode_0_0_2} to a {@link ChangeNode}. Returns undefined if the conversion was not possible.
@@ -48,11 +41,11 @@ export function tryConvertToChangeNode_0_0_2(
  * Convert a {@link NodeData_0_0_2} to a {@link NodeData}. Returns undefined if the conversion was not possible.
  */
 export function tryConvertToNodeData(
-	nodeData: NodeData_0_0_2,
+	nodeData: NodeData<StableNodeId>,
 	idConverter: NodeIdConverter,
 	convertId: (nodeId: StableNodeId, idConverter: NodeIdConverter) => NodeId | undefined = (id, manager) =>
 		manager.tryConvertToNodeId(id)
-): NodeData | undefined {
+): NodeData<NodeId> | undefined {
 	const identifier = convertId(nodeData.identifier, idConverter);
 	if (identifier === undefined) {
 		return undefined;
@@ -66,11 +59,11 @@ export function tryConvertToNodeData(
  * Convert a {@link NodeData} to a {@link NodeData_0_0_2}. Returns undefined if the conversion was not possible.
  */
 export function tryConvertToNodeData_0_0_2(
-	nodeData: NodeData,
+	nodeData: NodeData<NodeId>,
 	idConverter: NodeIdConverter,
 	convertId: (nodeId: NodeId, idConverter: NodeIdConverter) => StableNodeId | undefined = (id, manager) =>
 		manager.tryConvertToStableNodeId(id)
-): NodeData_0_0_2 | undefined {
+): NodeData<StableNodeId> | undefined {
 	const identifier = convertId(nodeData.identifier, idConverter);
 	if (identifier === undefined) {
 		return undefined;

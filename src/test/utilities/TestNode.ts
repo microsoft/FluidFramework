@@ -14,7 +14,6 @@ import {
 	NodeIdContext,
 	NodeIdConverter,
 	TraitLocation_0_0_2,
-	TreeNode_0_0_2,
 	ChangeNode_0_0_2,
 	tryConvertToTraitLocation_0_0_2,
 	convertTreeNodes,
@@ -26,7 +25,7 @@ import { initialTree } from '../../InitialTree';
 import { expectDefined } from './TestCommon';
 
 /** A legacy format of a `TestNode` */
-export type TestNode_0_0_2 = TreeNode_0_0_2<TestNode_0_0_2>;
+export type TestNode_0_0_2 = TreeNode<TestNode_0_0_2, StableNodeId>;
 
 /**
  * A node with no children
@@ -45,7 +44,7 @@ export interface TestTraitLocation extends TraitLocation {
 /**
  * An object containing useful properties for analyzing a node within a test context.
  */
-export interface TestNode extends TreeNode<TestNode> {
+export interface TestNode extends TreeNode<TestNode, NodeId> {
 	/** The label of the trait under which this node resides */
 	traitLabel: TraitLabel;
 	/** The trait location at which this node resides */

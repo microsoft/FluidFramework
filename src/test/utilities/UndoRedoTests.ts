@@ -7,7 +7,7 @@ import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils'
 import { expect } from 'chai';
 import { noop } from '../../Common';
 import { Change, Delete, Insert, SharedTree, StablePlace, StableRange } from '../../default-edits';
-import { DetachedSequenceId, EditId } from '../../Identifiers';
+import { DetachedSequenceId, EditId, NodeId } from '../../Identifiers';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { deepCompareNodes, NodeData } from '../../generic';
 import { setUpTestSharedTree, setUpTestTree, translateId } from './TestUtilities';
@@ -423,7 +423,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 /**
  * Generate all possible places in the given trait
  */
-function leftTraitPlaces(testTree: TestTree, trait: NodeData[]): { index: number; place: StablePlace }[] {
+function leftTraitPlaces(testTree: TestTree, trait: NodeData<NodeId>[]): { index: number; place: StablePlace }[] {
 	const places: { index: number; place: StablePlace }[] = [];
 	places.push({ index: 0, place: StablePlace.atStartOf(testTree.left.traitLocation) });
 	for (let i = 0; i < trait.length; i++) {

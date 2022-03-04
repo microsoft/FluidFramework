@@ -5,10 +5,10 @@
 
 import { copyPropertyIfDefined, fail, Mutable, MutableMap } from '../Common';
 import { Forest } from '../Forest';
-import { NodeId, TraitLabel } from '../Identifiers';
+import { NodeId, StableNodeId, TraitLabel } from '../Identifiers';
 import { iterateChildren } from './EditUtilities';
 import { NodeIdConverter } from './NodeIdUtilities';
-import { HasTraits, Payload, TreeNode, TreeNode_0_0_2 } from './PersistedTypes';
+import { HasTraits, Payload, TreeNode } from './PersistedTypes';
 import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView';
 
 /**
@@ -21,20 +21,20 @@ export class RevisionView extends TreeView {
 	 * @param root - the root of the tree to use as the contents of the {@link RevisionView}
 	 * @param expensiveValidation - whether or not to perform additional validation, e.g. to catch errors when testing
 	 */
-	public static fromTree<T extends TreeNode<T>>(root: T, expensiveValidation?: boolean): RevisionView;
+	public static fromTree<T extends TreeNode<T, NodeId>>(root: T, expensiveValidation?: boolean): RevisionView;
 	/**
 	 * Constructs a {@link RevisionView} using the supplied tree.
 	 * @param root - the root of the tree to use as the contents of the `RevisionView`
 	 * @param idConverter - the {@link NodeIdConverter} that will recompress the IDs the in the tree
 	 * @param expensiveValidation - whether or not to perform additional validation, e.g. to catch errors when testing
 	 */
-	public static fromTree<T extends TreeNode_0_0_2<T>>(
+	public static fromTree<T extends TreeNode<T, StableNodeId>>(
 		root: T,
 		idConverter: NodeIdConverter,
 		expensiveValidation?: boolean
 	): RevisionView | undefined;
 
-	public static fromTree<T extends TreeNode<T> | TreeNode_0_0_2<T>>(
+	public static fromTree<T extends TreeNode<T, NodeId> | TreeNode<T, StableNodeId>>(
 		root: T,
 		idConverterOrExpensiveValidation?: NodeIdConverter | boolean,
 		expensiveValidation = false

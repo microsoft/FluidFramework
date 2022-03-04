@@ -18,7 +18,7 @@ type Optional<T> = {
  *
  * @public
  */
-export interface ForestNode extends NodeData {
+export interface ForestNode extends NodeData<NodeId> {
 	readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
 }
 
