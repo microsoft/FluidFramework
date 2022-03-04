@@ -426,6 +426,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
          * above scenario.
          */
         it("Aliasing a bound datastore marks it as root correctly", async () => {
+            await reset();
             await setupContainers({
                 ... testContainerConfig,
                 runtimeOptions: {
