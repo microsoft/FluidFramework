@@ -224,6 +224,7 @@ export class SnapshotV1 {
                         segment.removedClientIds !== undefined
                             ? this.getLongClientId(segment.removedClientIds[0])
                             : undefined;
+
                     raw.removedClientIds = segment.removedClientIds?.map((id)=>this.getLongClientId(id));
                 }
 
