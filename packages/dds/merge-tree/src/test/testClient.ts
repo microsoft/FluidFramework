@@ -230,7 +230,7 @@ export class TestClient extends Client {
         seq: number = UnassignedSequenceNumber,
         refSeq: number = this.getCurrentSeq(),
         longClientId?: string,
-        minSeqNumber = 0) {
+        minSeqNumber = this.getCollabWindow().minSeq) {
         const msg: ISequencedDocumentMessage = {
             clientId: longClientId === undefined ? this.longClientId : longClientId,
             clientSequenceNumber: 1,
