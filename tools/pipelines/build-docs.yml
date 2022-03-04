@@ -103,6 +103,7 @@ stages:
     - job: debug_variables
       displayName: Show Variables
       dependsOn: [] # run in parallel
+      pool: Small
       steps:
         - script: |
             echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
@@ -118,6 +119,7 @@ stages:
     - job: component_detection
       displayName: Component Detection
       dependsOn: [] # run in parallel
+      pool: Small
       steps:
         - task: ComponentGovernanceComponentDetection@0
           displayName: Component Detection
@@ -131,6 +133,7 @@ stages:
       displayName: 'Combine api-extractor JSON'
       dependsOn: [] # run in parallel
       environment: 'fluid-docs-env'
+      pool: Large
       strategy:
         runOnce:
           deploy:
@@ -144,6 +147,7 @@ stages:
     - job: build_site
       displayName: 'Build site'
       dependsOn: upload_json
+      pool: Large
       steps:
         - checkout: self
           submodules: false
@@ -270,6 +274,7 @@ stages:
 - stage: deploy
   displayName: 'Deploy site'
   dependsOn: build
+  pool: Small
   jobs:
     - job: deploy_site
       displayName: 'Deploy site'
