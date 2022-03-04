@@ -31,11 +31,11 @@ export class TextSegment extends BaseSegment {
     }
 
     public static make(text: string, props?: PropertySet) {
-        const tseg = new TextSegment(text);
+        const seg = new TextSegment(text);
         if (props) {
-            tseg.addProperties(props);
+            seg.addProperties(props);
         }
-        return tseg;
+        return seg;
     }
 
     public static fromJSONObject(spec: any) {

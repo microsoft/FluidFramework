@@ -2103,7 +2103,7 @@ export class MergeTree {
             if (pos === 0) {
                 // normalize the seq numbers
                 // if the new seg is local (UnassignedSequenceNumber) give it the highest possible
-                // seq for comparision, as it will get a seq higher than any other seq once sequences
+                // seq for comparison, as it will get a seq higher than any other seq once sequences
                 // if the current seg is local (UnassignedSequenceNumber) give it the second highest
                 // possible seq, as the highest is reserved for the previous.
                 const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
