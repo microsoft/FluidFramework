@@ -5,11 +5,11 @@
 
 import random from "random-js";
 import {
-    // annotateRange,
+    annotateRange,
     doOverRange,
     IConfigRange,
     IMergeTreeOperationRunnerConfig,
-    // insertAtRefPos,
+    insertAtRefPos,
     removeRange,
     runMergeTreeOperationRunner,
     TestOperation,
@@ -24,13 +24,13 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
 
 const allOperations: TestOperation[] = [
     removeRange,
-    // annotateRange,
-    // insertAtRefPos,
+    annotateRange,
+    insertAtRefPos,
 ];
 
 export const debugOptions: IConflictFarmConfig = {
     minLength: { min: 2, max: 2 },
-    clients: { min: 2, max: 3 },
+    clients: { min: 3, max: 3 },
     opsPerRoundRange: { min: 1, max: 100 },
     rounds: 1000,
     operations: allOperations,
