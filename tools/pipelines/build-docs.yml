@@ -131,6 +131,7 @@ stages:
 
 - stage: build
   displayName: 'Build website'
+  dependsOn: check
   jobs:
     - deployment: upload_json
       displayName: 'Combine api-extractor JSON'
@@ -197,11 +198,12 @@ stages:
   # BEGIN Secure development tasks
 - stage: guardian
   displayName: Guardian
+  dependsOn: build
   pool:
     vmImage: windows-latest
   jobs:
     - job: guardian_tasks
-      condition: in(stageDependencies.json.upload_json.result, 'Succeeded', 'SucceededWithIssues')
+      condition: in(stageDependencies.build.build_site.result, 'Succeeded', 'SucceededWithIssues')
       steps:
         - checkout: self
           submodules: false
@@ -271,10 +273,10 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
+  dependsOn: build
   jobs:
     - job: deploy_site
       displayName: 'Build site'
-      dependsOn: upload_json
       steps:
         - checkout: self
           submodules: false
