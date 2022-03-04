@@ -86,6 +86,14 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
      */
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
 
+    private _text: SharedString | undefined;
+    public get text(): SharedString {
+        if(this._text === undefined) {
+            throw new Error("Text not loaded");
+        }
+        return this._text;
+    }
+
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         if (!this.mapHost) {
             this.mapHost = document.createElement("div");
@@ -109,6 +117,14 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
         this.root.set("text", codeString.handle);
     }
 
+    protected async hasInitialized(): Promise<void> {
+        const textHandle = this.root.get<IFluidHandle<SharedString>>("text");
+        if (textHandle === undefined) {
+            throw new Error("Text improperly initialized");
+        }
+        this._text = await textHandle.get();
+    }
+
     /**
      * Sets up the Monaco editor for use and attaches its HTML element to the mapHost element.
      * Also sets up eventing to send/receive ops as the text is changed.
@@ -123,12 +139,6 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
         // const outputDiv = document.createElement("div");
         // outputDiv.style.width = "50%";
         // hostWrapper.appendChild(outputDiv);
-
-        const textHandle = this.root.get<IFluidHandle<SharedString>>("text");
-        if (textHandle === undefined) {
-            throw new Error("Text improperly initialized");
-        }
-        const text = await textHandle.get();
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
         if (hostDts) {
@@ -145,7 +155,7 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
                 });
         }
 
-        this.codeModel = monaco.editor.createModel(text.getText(), "typescript");
+        this.codeModel = monaco.editor.createModel(this.text.getText(), "typescript");
         const outputModel = monaco.editor.createModel("", "javascript");
 
         this.codeEditor = monaco.editor.create(
@@ -184,17 +194,17 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
             for (const change of e.changes) {
                 if (change.text) {
                     if (change.rangeLength === 0) {
-                        text.insertText(change.rangeOffset, change.text);
+                        this.text.insertText(change.rangeOffset, change.text);
                     } else {
-                        text.replaceText(change.rangeOffset, change.rangeOffset + change.rangeLength, change.text);
+                        this.text.replaceText(change.rangeOffset, change.rangeOffset + change.rangeLength, change.text);
                     }
                 } else {
-                    text.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
+                    this.text.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
                 }
             }
         });
 
-        text.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
+        this.text.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
             if (ev.isLocal) {
                 return;
             }
