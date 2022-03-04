@@ -101,7 +101,6 @@ export class Client {
         options?: PropertySet,
     ) {
         this.mergeTree = new MergeTree(options);
-        this.mergeTree.getLongClientId = (id) => this.getLongClientId(id);
     }
 
     /**
@@ -889,7 +888,7 @@ export class Client {
             assert(
                 catchUpMsgs === undefined || catchUpMsgs.length === 0,
                 0x03f /* "New format should not emit catchup ops" */);
-            const snap = new SnapshotV1(this.mergeTree, this.logger);
+            const snap = new SnapshotV1(this.mergeTree, this.logger, (id)=>this.getLongClientId(id));
             snap.extractSync();
             return snap.emit(serializer, handle);
         } else {

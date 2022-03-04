@@ -77,7 +77,11 @@ class TestString {
     }
 
     public getSummary() {
-        const snapshot = new SnapshotV1(this.client.mergeTree, this.client.logger);
+        const snapshot = new SnapshotV1(
+            this.client.mergeTree,
+            this.client.logger,
+            (id)=>this.client.getLongClientId(id));
+
         snapshot.extractSync();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return snapshot.emit(TestClient.serializer, undefined!).summary;

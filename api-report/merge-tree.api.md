@@ -294,9 +294,6 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
 
 // @public (undocumented)
-export function glc(mergeTree: MergeTree, id: number): string;
-
-// @public (undocumented)
 export class Heap<T> {
     constructor(a: T[], comp: Comparer<T>);
     // (undocumented)
@@ -997,8 +994,6 @@ export class MergeTree {
     // (undocumented)
     getLength(refSeq: number, clientId: number): number;
     // (undocumented)
-    getLongClientId?: (id: number) => string;
-    // (undocumented)
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
@@ -1028,8 +1023,6 @@ export class MergeTree {
     // (undocumented)
     mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
     // (undocumented)
-    nodeToString(block: IMergeBlock, strbuf: string, indentCount?: number): string;
-    // (undocumented)
     options?: PropertySet | undefined;
     // (undocumented)
     static readonly options: {
@@ -1053,8 +1046,6 @@ export class MergeTree {
     setMinSeq(minSeq: number): void;
     // (undocumented)
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
-    // (undocumented)
-    toString(): string;
     // (undocumented)
     walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
     }

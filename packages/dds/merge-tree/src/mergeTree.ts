@@ -912,14 +912,6 @@ const LRUSegmentComparer: Comparer<LRUSegment> = {
     compare: (a, b) => a.maxSeq - b.maxSeq,
 };
 
-export function glc(mergeTree: MergeTree, id: number) {
-    if (mergeTree.getLongClientId) {
-        return mergeTree.getLongClientId(id);
-    } else {
-        return id.toString();
-    }
-}
-
 export interface SegmentAccumulator {
     segments: ISegment[];
 }
@@ -1059,8 +1051,6 @@ export class MergeTree {
     // if we need to have pointers to non-markers, we can change to point at local refs
     private readonly idToSegment = new Map<string, ISegment>();
     private minSeqListeners: Heap<MinListener> | undefined;
-    // For diagnostics
-    public getLongClientId?: (id: number) => string;
     public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
     public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
@@ -2605,46 +2595,6 @@ export class MergeTree {
             }
         }
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
-    }
-
-    public nodeToString(block: IMergeBlock, strbuf: string, indentCount = 0) {
-        let _strbuf = strbuf;
-        _strbuf += internedSpaces(indentCount);
-        // eslint-disable-next-line max-len
-        _strbuf += `Node (len ${block.cachedLength}) p len (${block.parent ? block.parent.cachedLength : 0}) ord ${ordinalToArray(block.ordinal)} with ${block.childCount} segs:\n`;
-        if (MergeTree.blockUpdateMarkers) {
-            _strbuf += internedSpaces(indentCount);
-            _strbuf += (<IHierBlock>block).hierToString(indentCount);
-        }
-        if (this.collabWindow.collaborating) {
-            _strbuf += internedSpaces(indentCount);
-            _strbuf += `${block.partialLengths!.toString((id) => glc(this, id), indentCount)}\n`;
-        }
-        const children = block.children;
-        for (let childIndex = 0; childIndex < block.childCount; childIndex++) {
-            const child = children[childIndex];
-            if (!child.isLeaf()) {
-                _strbuf = this.nodeToString(child, _strbuf, indentCount + 4);
-            } else {
-                const segment = child;
-                _strbuf += internedSpaces(indentCount + 4);
-                // eslint-disable-next-line max-len
-                _strbuf += `cli: ${glc(this, segment.clientId)} seq: ${segment.seq} ord: ${ordinalToArray(segment.ordinal)}`;
-                const removalInfo: IRemovalInfo = segment;
-                if (removalInfo.removedSeq !== undefined) {
-                    _strbuf += ` rcli: ${glc(this, removalInfo.removedClientId!)} rseq: ${removalInfo.removedSeq}`;
-                }
-                _strbuf += "\n";
-                _strbuf += internedSpaces(indentCount + 4);
-                _strbuf += segment.toString();
-                _strbuf += "\n";
-            }
-        }
-        return _strbuf;
-    }
-
-    public toString() {
-        return this.nodeToString(this.root, "", 0);
     }
 
     public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
