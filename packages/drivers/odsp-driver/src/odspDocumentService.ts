@@ -371,27 +371,28 @@ export class OdspDocumentService implements IDocumentService {
                     this.calculateJoinSessionRefreshDelta(response.entryTime, refreshSessionDurationSeconds);
             }
         }
-        if (!disableJoinSessionRefresh && refreshAfterDeltaMs > 0) {
-            this.scheduleJoinSessionRefresh(refreshAfterDeltaMs)
-                .catch((error) => {
-                    this.mc.logger.sendErrorEvent({
-                            eventName: "JoinSessionRefreshError",
-                            entryTime: response.entryTime,
-                            refreshSessionDurationSeconds,
-                            refreshAfterDeltaMs,
-                        },
-                        error,
-                    )
-                });;
-        } else {
-            // Logging just for informational purposes to help with debugging as this is a new feature.
-            this.mc.logger.sendErrorEvent({
-                eventName: "JoinSessionRefreshNotScheduled",
-                refreshAfterDeltaMs,
-                refreshSessionDurationSeconds,
-                entryTime: response.entryTime,
-                disableJoinSessionRefresh,
-            });
+        if (!disableJoinSessionRefresh) {
+            if (refreshAfterDeltaMs > 0) {
+                this.scheduleJoinSessionRefresh(refreshAfterDeltaMs)
+                    .catch((error) => {
+                        this.mc.logger.sendErrorEvent({
+                                eventName: "JoinSessionRefreshError",
+                                entryTime: response.entryTime,
+                                refreshSessionDurationSeconds,
+                                refreshAfterDeltaMs,
+                            },
+                            error,
+                        )
+                    });;
+            } else {
+                // Logging just for informational purposes to help with debugging as this is a new feature.
+                this.mc.logger.sendErrorEvent({
+                    eventName: "JoinSessionRefreshNotScheduled",
+                    refreshAfterDeltaMs,
+                    refreshSessionDurationSeconds,
+                    entryTime: response.entryTime,
+                });
+            }
         }
         return response.joinSessionResponse;
     }
