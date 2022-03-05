@@ -4,7 +4,7 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import type { OutgoingHttpHeaders } from "http";
+import type { AxiosRequestHeaders } from "axios";
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
 import {
@@ -57,11 +57,21 @@ export class RestGitService {
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly cache?: ICache,
-        private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
-        const defaultHeaders: OutgoingHttpHeaders = {
-            "User-Agent": userAgent,
-            "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
-        };
+        private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
+        private readonly storageName? : string) {
+        let defaultHeaders: AxiosRequestHeaders;
+        if (storageName !== undefined) {
+            defaultHeaders = {
+                "User-Agent": userAgent,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+                "Storage-Name": this.storageName,
+            };
+        } else {
+            defaultHeaders = {
+                "User-Agent": userAgent,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+            };
+        }
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
@@ -75,12 +85,15 @@ export class RestGitService {
             `Created RestGitService: ${JSON.stringify({
                 "BaseUrl": storage.url,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+                "Storage-Name": this.storageName,
             })}`,
         );
+
         Lumberjack.info(
             `Created RestGitService: ${JSON.stringify({
                 "BaseUrl": storage.url,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+                "Storage-Name": this.storageName,
             })}`,
             this.lumberProperties,
         );

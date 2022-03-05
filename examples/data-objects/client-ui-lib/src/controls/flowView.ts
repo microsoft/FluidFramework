@@ -4,9 +4,6 @@
  */
 
 import { performance } from "@fluidframework/common-utils";
-import {
-    FluidObject,
-} from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -14,8 +11,6 @@ import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/proto
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@fluidframework/undo-redo";
-import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { CharacterCodes, Paragraph, Table } from "../text";
@@ -27,22 +22,7 @@ import { KeyCode } from "./keycode";
 import {
     CursorDirection,
     IViewCursor,
-    IViewLayout,
 } from "./layout";
-
-function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
-    if (marker && marker.properties && marker.properties.crefTest) {
-        const crefTest: IReferenceDoc = marker.properties.crefTest;
-        if ((!crefTest.layout) || (!crefTest.layout.inline)) {
-            return marker as IBlockViewMarker;
-        }
-    }
-}
-
-interface IBlockViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IFluidHTMLView>;
-    instance?: IFluidHTMLView & FluidObject<IViewLayout>;
-}
 
 interface IFlowViewUser extends IUser {
     name: string;
@@ -277,43 +257,6 @@ function endRenderSegments(marker: MergeTree.Marker) {
 }
 
 const wordHeadingColor = "rgb(47, 84, 150)";
-
-/**
- * Ensure the given 'element' is focusable and restore the default behavior of HTML intrinsic
- * controls (e.g., <input>) within the element.
- */
-function allowDOMEvents(element: HTMLElement) {
-    // Ensure element can receive DOM focus (see Example 1):
-    // https://www.w3.org/WAI/GL/WCAG20/WD-WCAG20-TECHS/SCR29.html
-
-    // Note: 'tabIndex' should never be NaN, undefined, etc., but use of negation below ensures
-    //       these degenerate values will also be replaced with 0.
-    if (!(element.tabIndex >= 0)) {
-        element.tabIndex = 0;
-    }
-
-    // TODO: Unsure if the empty/overlapping line divs overlapping inclusions are intentional?
-    //
-    // Elevate elements expecting DOM focus within their stacking container to ensure they
-    // appear above empty line divs generated after their marker.
-    element.style.zIndex = "1";
-
-    // Elements of a component do not expect whitespace to be preserved.  Revert the white-space
-    // 'pre' style applied by the lineDiv.
-    element.style.whiteSpace = "normal";
-
-    // Stops these events from bubbling back up to the FlowView when the <div> is focused.
-    // The FlowView invokes 'preventDefault()' on these events, which blocks the behavior of
-    // HTML intrinsic controls like <input />.
-    element.addEventListener("mousedown", (e) => { e.stopPropagation(); });
-    element.addEventListener("mousemove", (e) => { e.stopPropagation(); });
-    element.addEventListener("mouseup", (e) => { e.stopPropagation(); });
-    element.addEventListener("keydown", (e) => { e.stopPropagation(); });
-    element.addEventListener("keypress", (e) => { e.stopPropagation(); });
-    element.addEventListener("keyup", (e) => { e.stopPropagation(); });
-
-    return element;
-}
 
 function renderSegmentIntoLine(
     segment: MergeTree.ISegment, segpos: number, refSeq: number,
@@ -1268,23 +1211,6 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
         return lineDiv;
     }
 
-    function makeBlockContentDiv(left: number, top: number, minWidth: string, minHeight: string) {
-        const blockDiv = document.createElement("div");
-        blockDiv.style.position = "absolute";
-        blockDiv.style.left = `${left}px`;
-        blockDiv.style.top = `${top}px`;
-        blockDiv.style.minWidth = minWidth;
-        blockDiv.style.minHeight = minHeight;
-        allowDOMEvents(blockDiv);
-        return blockDiv;
-    }
-
-    function makeBlockDiv(left: number, top: number, minWidth: string, minHeight: string) {
-        const blockDiv = makeBlockContentDiv(left, top, minWidth, minHeight);
-        layoutContext.viewport.div.appendChild(blockDiv);
-        return blockDiv;
-    }
-
     let currentPos = layoutContext.startPos;
     let curPGMarker: Paragraph.IParagraphMarker;
     let curPGMarkerPos: number;
@@ -1427,65 +1353,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             ? segoff.segment
             : undefined;
 
-        const newBlock = getComponentBlock(asMarker);
-        if (newBlock) {
-            let ch: number;
-            if (newBlock.instance) {
-                let wpct = 0.75;
-                const layout = newBlock.instance.IViewLayout;
-                if (layout && layout.requestedWidthPercentage) {
-                    wpct = layout.requestedWidthPercentage;
-                }
-                const width = `${Math.round(wpct * parseInt(layoutContext.viewport.div.style.width, 10))}px`;
-                const minHeight = `${Math.round(0.33 * parseInt(layoutContext.viewport.div.style.height, 10))}px`;
-                const blockDiv = makeBlockDiv(0, layoutContext.viewport.getLineTop(), width, minHeight);
-                blockDiv.style.width = width;
-                if ((!layout) || (!layout.variableHeight)) {
-                    blockDiv.style.height = minHeight;
-                }
-                newBlock.instance.render(blockDiv, { display: "block" });
-                // Cache this in FlowView
-                ch = blockDiv.getBoundingClientRect().height;
-                console.log(`block height ${ch}`);
-            } else {
-                // Delay load the instance if not available
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                if (!newBlock.instanceP) {
-                    newBlock.instanceP = newBlock.properties.leafId.get()
-                        .then(async (component: FluidObject) => {
-                            // TODO below is a temporary workaround. Should every QI interface also implement
-                            // FluidObject. Then you can go from IFluidHTMLView to IViewLayout.
-                            // Or should you query for each one individually.
-                            if (!HTMLViewAdapter.canAdapt(component)) {
-                                return Promise.reject(new Error("component is not viewable"));
-                            }
-
-                            return new HTMLViewAdapter(component);
-                        });
-
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    newBlock.instanceP.then((instance) => {
-                        newBlock.instance = instance;
-                        const compPos = getPosition(layoutContext.flowView.sharedString, asMarker);
-                        layoutContext.flowView.hostSearchMenu(compPos);
-                    });
-                }
-
-                ch = 10;
-                const lineDiv = makeLineDiv(
-                    new ui.Rectangle(
-                        0,
-                        layoutContext.viewport.getLineTop(),
-                        parseInt(layoutContext.viewport.div.style.width, 10),
-                        ch),
-                    layoutContext.docContext.fontstr);
-                lineDiv.style.backgroundColor = "red";
-            }
-
-            layoutContext.viewport.vskip(ch);
-            currentPos++;
-            segoff = undefined;
-        } else if (asMarker && asMarker.hasRangeLabel("table")) {
+        if (asMarker && asMarker.hasRangeLabel("table")) {
             let tableView: Table.Table;
             if (asMarker.removedSeq === undefined) {
                 renderTable(asMarker, docContext, layoutContext);

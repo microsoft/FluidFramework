@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/routerlicious-urlresolver",
-  "version": "0.58.0",
+  "version": "0.58.1000",
   "description": "Url Resolver for routerlicious urls.",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -35,13 +35,13 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.42.0",
     "@fluidframework/driver-definitions": "^0.45.0-0",
-    "@fluidframework/protocol-definitions": "^0.1026.0",
+    "@fluidframework/protocol-definitions": "^0.1027.0-0",
     "nconf": "^0.11.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
-    "@fluidframework/mocha-test-setup": "^0.58.0",
+    "@fluidframework/eslint-config-fluid": "^0.26.0",
+    "@fluidframework/mocha-test-setup": "^0.58.1000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/nconf": "^0.10.0",
