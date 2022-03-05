@@ -157,6 +157,29 @@ export enum ConnectionState {
     Connected,
 }
 
+/** Invoke the callback once deltaManager has processed all ops known at the time this function is called */
+function waitForOps(container: IContainer, resolve: (hasCheckpointSequenceNumber: boolean) => void) {
+    const deltaManager = container.deltaManager;
+    assert(container.connectionState !== ConnectionState.Disconnected,
+        0x0cd /* "Container disconnected while waiting for ops!" */);
+    const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
+
+    const targetSeqNumber = deltaManager.lastKnownSeqNumber;
+    assert(deltaManager.lastSequenceNumber <= targetSeqNumber,
+        0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
+    if (deltaManager.lastSequenceNumber === targetSeqNumber) {
+        resolve(hasCheckpointSequenceNumber);
+        return;
+    }
+    const callbackOps = (message: ISequencedDocumentMessage) => {
+        if (message.sequenceNumber >= targetSeqNumber) {
+            resolve(hasCheckpointSequenceNumber);
+            deltaManager.off("op", callbackOps);
+        }
+    };
+    deltaManager.on("op", callbackOps);
+};
+
 /**
  * Waits until container connects to delta storage and gets up-to-date
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
@@ -174,43 +197,22 @@ export async function waitContainerToCatchUp(container: IContainer) {
     }
 
     return new Promise<boolean>((resolve, reject) => {
-        const deltaManager = container.deltaManager;
-
         container.on("closed", reject);
 
-        const waitForOps = () => {
-            assert(container.connectionState !== ConnectionState.Disconnected,
-                0x0cd /* "Container disconnected while waiting for ops!" */);
-            const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
-
-            const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
-            assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
-                0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
-            if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
-                resolve(hasCheckpointSequenceNumber);
-                return;
-            }
-            const callbackOps = (message: ISequencedDocumentMessage) => {
-                if (connectionOpSeqNumber <= message.sequenceNumber) {
-                    resolve(hasCheckpointSequenceNumber);
-                    deltaManager.off("op", callbackOps);
-                }
-            };
-            deltaManager.on("op", callbackOps);
-        };
+        //* I don't fully understand this comment
 
         // We can leverage DeltaManager's "connect" event here and test for ConnectionState.Disconnected
         // But that works only if service provides us checkPointSequenceNumber
         // Our internal testing is based on R11S that does not, but almost all tests connect as "write" and
         // use this function to catch up, so leveraging our own join op as a fence/barrier
         if (container.connectionState === ConnectionState.Connected) {
-            waitForOps();
+            waitForOps(container, resolve);
             return;
         }
 
         const callback = () => {
             container.off(connectedEventName, callback);
-            waitForOps();
+            waitForOps(container, resolve);
         };
         container.on(connectedEventName, callback);
 
@@ -613,6 +615,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.propagateConnectionState();
                     }
                 },
+                onCaughtUp: (callback: () => {}) => {
+                    waitForOps(this, callback);
+                }
             },
             this.mc.logger,
         );

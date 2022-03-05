@@ -18,6 +18,7 @@ export interface IConnectionStateHandler {
     maxClientLeaveWaitTime: number | undefined,
     logConnectionIssue: (eventName: string) => void,
     connectionStateChanged: () => void,
+    onCaughtUp: (callback: () => {}) => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -188,25 +189,33 @@ export class ConnectionStateHandler {
         // Report telemetry after we set client id, but before transitioning to Connected state below!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
-        const quorumClients = this.handler.quorumClients();
         // Check if we already processed our own join op through delta storage!
         // we are fetching ops from storage in parallel to connecting to ordering service
         // Given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
         // Note that we might be still initializing quorum - connection is established proactively on load!
-        if ((quorumClients !== undefined && quorumClients.getMember(details.clientId) !== undefined)
-            || connectionMode === "read"
-        ) {
-            assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "there should be no timer for 'read' connections" */);
-            this.setConnectionState(ConnectionState.Connected);
-        } else if (connectionMode === "write") {
+        const alreadyProcessedOwnJoinOp = this.handler.quorumClients()?.getMember(details.clientId) !== undefined;
+        const writeConnection = connectionMode === "write";
+        if (writeConnection && !alreadyProcessedOwnJoinOp) {
             this.startJoinOpTimer();
+        } else { // read connection || alreadyProcessedOwnJoinOp
+            // There should be no timer for 'read' connections,
+            // and if we processed our Join op we would have processed our previous Leave op prior to that
+            assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "Unexpected timer state" */);
+
+            //* I wonder if I need this check...
+            //* shouldn't onCaughtUp always fire immediately if we've already processed our join op?
+            if (writeConnection) {
+                this.setConnectionState(ConnectionState.Connected);
+            } else {
+                this.handler.onCaughtUp(() => this.setConnectionState(ConnectionState.Connected));
+            }
         }
     }
 
     private setConnectionState(value: ConnectionState.Disconnected, reason: string);
     private setConnectionState(value: ConnectionState.Connected);
-    private setConnectionState(value: ConnectionState, reason?: string) {
+    private setConnectionState(value: ConnectionState, reason?: string): void {
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
