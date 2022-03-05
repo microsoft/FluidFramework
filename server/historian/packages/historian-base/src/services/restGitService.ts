@@ -4,7 +4,7 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import type { OutgoingHttpHeaders } from "http";
+import type { AxiosRequestHeaders } from "axios";
 import * as querystring from "querystring";
 import * as git from "@fluidframework/gitresources";
 import {
@@ -59,7 +59,7 @@ export class RestGitService {
         private readonly cache?: ICache,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
         private readonly storageName? : string) {
-        let defaultHeaders: OutgoingHttpHeaders;
+        let defaultHeaders: AxiosRequestHeaders;
         if (storageName !== undefined) {
             defaultHeaders = {
                 "User-Agent": userAgent,
