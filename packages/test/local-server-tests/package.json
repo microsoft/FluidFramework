@@ -66,7 +66,7 @@
     "@fluidframework/driver-base": "^0.58.0",
     "@fluidframework/driver-definitions": "^0.45.0-0",
     "@fluidframework/driver-utils": "^0.58.0",
-    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.26.0",
     "@fluidframework/ink": "^0.58.0",
     "@fluidframework/local-driver": "^0.58.0",
     "@fluidframework/map": "^0.58.0",
