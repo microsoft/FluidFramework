@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 # build-docs pipeline
-# This pipeline builds the main branch docs each time the client packages are built
+# This pipeline builds the main/next branch docs each time the client packages are built
 
 name: $(Build.BuildId)
 
@@ -37,6 +37,7 @@ variables:
   - name: latestPipeline
     value: ${{ or(
       eq(variables['Build.SourceBranchName'], 'main'),
+      eq(variables['Build.SourceBranchName'], 'next'),
       eq(variables['Build.SourceBranchName'], 'pl-test')
       )}}
   - name: n1Branch
@@ -49,17 +50,20 @@ variables:
     value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
   - name: Packaging.EnableSBOMSigning
     value: true
-  - name: isMain
-    value: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
+  - name: isMainOrNext
+    value: ${{ or(
+      eq(variables['Build.SourceBranchName'], 'main'),
+      eq(variables['Build.SourceBranchName'], 'next')
+      )}}
   - name: shouldDeploy
     value: ${{ or(
       eq(parameters.deployOverride, 'force'),
-      and(eq(variables.isMain, true), eq(parameters.deployOverride, 'default'))
+      and(eq(variables.isMainOrNext, true), eq(parameters.deployOverride, 'default'))
       )}}
   - name: shouldRetainGuardianAssets
     value: ${{ or(
       eq(parameters.guardianAssetRetentionOverride, 'force'),
-      and(eq(variables.isMain, true), eq(parameters.guardianAssetRetentionOverride, 'default'))
+      and(eq(variables.isMainOrNext, true), eq(parameters.guardianAssetRetentionOverride, 'default'))
       )}}
   - name: arrow.releasedtoproduction
     value: eq(variables.shouldDeploy, true)
@@ -70,6 +74,7 @@ trigger:
     include:
     - release/*
     - main
+    - next
 pr: none
 
 resources:
@@ -92,6 +97,7 @@ resources:
       branches:
         include:
         - main
+        - next
         - docs/**
   - pipeline: server
     source: server-routerlicious
@@ -138,7 +144,7 @@ stages:
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 STORAGE_KEY: $(STORAGE_KEY)
-                uploadAsLatest: ${{ variables.isMain }}
+                uploadAsLatest: ${{ variables.isMainOrNext }}
 
 - stage: site_build
   displayName: 'Build website'
