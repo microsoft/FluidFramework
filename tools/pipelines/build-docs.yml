@@ -250,6 +250,7 @@ stages:
         - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
           displayName: 'Guardian Break'
           condition: succeededOrFailed()
+          continueOnError: false
           inputs:
             GdnBreakPolicyMinSev: Warning
             GdnBreakAllTools: true
@@ -258,7 +259,6 @@ stages:
             GdnBreakGdnToolESLintSeverity: Warning
             GdnBreakPolicy: M365
             GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)\'
-          continueOnError: true
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Baselines'
