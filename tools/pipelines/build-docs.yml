@@ -269,12 +269,12 @@ stages:
 # END Secure development tasks
 
 - stage: deploy
-  displayName: 'Deploy site'
+  displayName: 'Deploy website'
   dependsOn: build
   pool: Small
   jobs:
     - job: deploy_site
-      displayName: 'Deploy site'
+      displayName: 'Deploy website'
       steps:
         - checkout: self
           submodules: false
@@ -288,7 +288,7 @@ stages:
             path: '$(Build.SourcesDirectory)/docs/public'
 
         - task: AzureStaticWebApp@0
-          displayName: 'Deploy site'
+          displayName: 'Deploy website to ASWA'
           condition: eq(variables.shouldDeploy, true)
           inputs:
             skip_app_build: true # site was built in previous stage
