@@ -198,18 +198,14 @@ export class ConnectionStateHandler {
         const writeConnection = connectionMode === "write";
         if (writeConnection && !alreadyProcessedOwnJoinOp) {
             this.startJoinOpTimer();
-        } else { // read connection || alreadyProcessedOwnJoinOp
+        } else {
             // There should be no timer for 'read' connections,
             // and if we processed our Join op we would have processed our previous Leave op prior to that
             assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "Unexpected timer state" */);
 
-            //* I wonder if I need this check...
-            //* shouldn't onCaughtUp always fire immediately if we've already processed our join op?
-            if (writeConnection) {
-                this.setConnectionState(ConnectionState.Connected);
-            } else {
-                this.handler.onCaughtUp(() => this.setConnectionState(ConnectionState.Connected));
-            }
+            // For write connections, we are caught up already (since we've seen our Join op) and this will be immediate
+            // For read connections, we will wait, so "Connected" event has identical semantics to write connection
+            this.handler.onCaughtUp(() => this.setConnectionState(ConnectionState.Connected));
         }
     }
 
