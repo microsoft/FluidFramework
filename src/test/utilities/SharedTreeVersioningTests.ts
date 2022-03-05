@@ -3,12 +3,36 @@
  * Licensed under the MIT License.
  */
 
+import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../..';
 import { SharedTree } from '../../default-edits';
+import { SharedTreeOp, SharedTreeOpType } from '../../generic';
 import { EditLog } from '../../EditLog';
 import { applyNoop, SharedTreeTestingComponents, SharedTreeTestingOptions } from './TestUtilities';
 
+/**
+ * Spies on all future ops submitted to `containerRuntimeFactory`. When ops are submitted
+ * @param containerRuntimeFactory
+ * @returns
+ */
+function spyOnSubmittedOps(containerRuntimeFactory: MockContainerRuntimeFactory): SharedTreeOp[] {
+	const ops: SharedTreeOp[] = [];
+	const originalPush = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
+	containerRuntimeFactory.pushMessage = (message: Partial<ISequencedDocumentMessage>) => {
+		const { contents } = message;
+		ops.push(contents as SharedTreeOp);
+		originalPush(message);
+	};
+	return ops;
+}
+
+function spyOnVersionChanges(tree: SharedTree): SharedTreeSummaryWriteFormat[] {
+	const versions: SharedTreeSummaryWriteFormat[] = [];
+	tree.on(SharedTreeDiagnosticEvent.WriteVersionChanged, (version) => versions.push(version));
+	return versions;
+}
 /**
  * Runs a test suite for operations on `SharedTree` that depend on correct versioning.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
@@ -18,11 +42,13 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>
 ) {
 	describe(title, () => {
-		const treeOptions = { localMode: false, writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_0_2 };
+		const oldVersion = SharedTreeSummaryWriteFormat.Format_0_0_2;
+		const newVersion = SharedTreeSummaryWriteFormat.Format_0_1_1;
+		const treeOptions = { localMode: false, writeSummaryFormat: oldVersion };
 		const secondTreeOptions = {
 			id: 'secondTestSharedTree',
 			localMode: false,
-			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+			writeSummaryFormat: newVersion,
 		};
 
 		it('only processes edit ops if they have the same version', () => {
@@ -63,10 +89,6 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 
 			const summary = tree.saveSummary();
 
-			let processedUpdates = 0;
-			let processedUpdates2 = 0;
-			let processedUpdates3 = 0;
-
 			// Load the summary into multiple newer trees to trigger version update ops
 			const { tree: newerTree, containerRuntimeFactory: newerContainerRuntimeFactory } =
 				setUpTestSharedTree(secondTreeOptions);
@@ -78,24 +100,20 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 				containerRuntimeFactory: newerContainerRuntimeFactory,
 				...secondTreeOptions,
 			});
-			newerTree.on(SharedTreeDiagnosticEvent.VersionUpdated, () => {
-				processedUpdates++;
-			});
-			newerTree2.on(SharedTreeDiagnosticEvent.VersionUpdated, () => {
-				processedUpdates2++;
-			});
-			newerTree3.on(SharedTreeDiagnosticEvent.VersionUpdated, () => {
-				processedUpdates3++;
-			});
+
+			const versions = spyOnVersionChanges(newerTree);
+			const versions2 = spyOnVersionChanges(newerTree2);
+			const versions3 = spyOnVersionChanges(newerTree3);
+
 			newerTree.loadSummary(summary);
 			newerTree2.loadSummary(summary);
 			newerTree3.loadSummary(summary);
 			newerContainerRuntimeFactory.processAllMessages();
 
 			// Each tree should have processed a version update once
-			expect(processedUpdates).to.equal(1);
-			expect(processedUpdates2).to.equal(1);
-			expect(processedUpdates3).to.equal(1);
+			expect(versions).to.deep.equal([oldVersion, newVersion]);
+			expect(versions2).to.deep.equal([oldVersion, newVersion]);
+			expect(versions3).to.deep.equal([oldVersion, newVersion]);
 		});
 
 		it('maintains custom EditLog and LogViewer callbacks when updating', () => {
@@ -105,21 +123,23 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 			const summary = tree.saveSummary();
 
 			let editAdded = 0;
-			let updateProcessed = 0;
 
 			// Load the summary into multiple newer trees to trigger version update ops
 			const { tree: newerTree, containerRuntimeFactory: newerContainerRuntimeFactory } =
 				setUpTestSharedTree(secondTreeOptions);
 
-			newerTree.on(SharedTreeDiagnosticEvent.VersionUpdated, () => updateProcessed++);
+			const versions = spyOnVersionChanges(newerTree);
 
 			newerTree.loadSummary(summary);
 			(newerTree.edits as EditLog).registerEditAddedHandler(() => editAdded++);
 
-			expect(updateProcessed).to.equal(0);
+			expect(versions).to.have.length(1);
+			expect(versions[0]).to.equal(oldVersion);
+
 			// Update occurs after the handler is added to the old edit log
 			newerContainerRuntimeFactory.processAllMessages();
-			expect(updateProcessed).to.equal(1);
+			expect(versions).to.have.length(2);
+			expect(versions[1]).to.equal(newVersion);
 
 			const additionalEdits = 5;
 			for (let i = 0; i < additionalEdits; i++) {
@@ -129,6 +149,37 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 
 			// The edit added handler should run twice for each additional edit (once when applying locally and once when applying the sequenced edit)
 			expect(editAdded).to.equal(additionalEdits * 2);
+		});
+
+		it('begins writing the new version only after updating', () => {
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+			// Process an edit
+			applyNoop(tree);
+			containerRuntimeFactory.processAllMessages();
+
+			const summary = tree.saveSummary();
+
+			// Load the summary into a newer tree to trigger a version update op
+			const { tree: newerTree, containerRuntimeFactory: newerContainerRuntimeFactory } =
+				setUpTestSharedTree(secondTreeOptions);
+
+			const ops = spyOnSubmittedOps(newerContainerRuntimeFactory);
+
+			newerTree.loadSummary(summary);
+			applyNoop(newerTree);
+			newerContainerRuntimeFactory.processAllMessages();
+			applyNoop(newerTree);
+
+			expect(ops.length).to.equal(3);
+			expect(ops.map((op) => op.type)).to.eql([
+				SharedTreeOpType.Update,
+				SharedTreeOpType.Edit,
+				SharedTreeOpType.Edit,
+			]);
+			// Because the first op was submitted before the Update message was sequenced, it should use
+			// the same write format as the loaded summary.
+			expect(ops[1].version).to.equal(oldVersion);
+			expect(ops[2].version).to.equal(newVersion);
 		});
 	});
 }

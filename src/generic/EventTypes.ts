@@ -67,7 +67,8 @@ export enum SharedTreeDiagnosticEvent {
 	 */
 	UnexpectedHistoryChunk = 'unexpectedHistoryChunk',
 	/**
-	 * A version update op was successfully processed.
+	 * The current write format changed, either because an old summary was loaded or an update op was successfully processed.
+	 * This event is emitted with the new version as an argument.
 	 */
-	VersionUpdated = 'versionUpdated',
+	WriteVersionChanged = 'writeVersionChanged',
 }

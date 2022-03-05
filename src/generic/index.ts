@@ -34,6 +34,7 @@ export {
 	EditStatus,
 	TraitLocation,
 	TraitLocation_0_0_2,
+	SharedTreeOp,
 	SharedTreeOpType,
 	SharedTreeSummaryWriteFormat,
 	PlaceholderTree,

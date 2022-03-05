@@ -546,7 +546,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 			this.submitLocalMessage({ type: SharedTreeOpType.Update, version: this.writeSummaryFormat });
 
 			// Sets the write format to the loaded version so that SharedTree continues to write the old version while waiting for the update op to be sequenced.
-			this.writeSummaryFormat = loadedSummaryVersion as SharedTreeSummaryWriteFormat;
+			this.changeWriteFormat(loadedSummaryVersion as SharedTreeSummaryWriteFormat);
 		}
 
 		const convertedSummary = convertSummaryToReadFormat<TChangeInternal>(summary);
@@ -818,6 +818,10 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	private processVersionUpdate(version: SharedTreeSummaryWriteFormat) {
 		if (isUpdateRequired(this.writeSummaryFormat, version)) {
 			try {
+				// The edit log may contain some local edits submitted after the version update op was submitted but
+				// before we receive the message it has been sequenced. Since these edits must be sequenced after the version
+				// update op (and therefore will be discarded), by current design they should be removed from the edit log.
+				this.editLog.clearLocalEdits();
 				const oldSummary = this.saveSummary();
 
 				if (version === SharedTreeSummaryWriteFormat.Format_0_1_1) {
@@ -832,12 +836,10 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 					throw new Error(`Updating to version ${version} is not supported.`);
 				}
 
-				this.writeSummaryFormat = version;
+				this.changeWriteFormat(version);
 				if (this.currentIsOldest) {
 					this.uploadCatchUpBlobs();
 				}
-
-				this.emit(SharedTreeDiagnosticEvent.VersionUpdated);
 			} catch (error) {
 				this.logger.sendErrorEvent(
 					{
@@ -991,6 +993,11 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 				break;
 			}
 		}
+	}
+
+	private changeWriteFormat(newFormat: SharedTreeSummaryWriteFormat): void {
+		this.writeSummaryFormat = newFormat;
+		this.emit(SharedTreeDiagnosticEvent.WriteVersionChanged, newFormat);
 	}
 }
 
