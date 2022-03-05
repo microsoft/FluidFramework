@@ -22,6 +22,7 @@ import {
     IPersistedCache,
     HostStoragePolicy,
     IFileEntry,
+    IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
 import {
@@ -57,6 +58,11 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         ensureFluidResolvedUrl(createNewResolvedUrl);
 
         let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
+        const resolveUrlData: IOdspUrlParts = {
+            siteUrl: odspResolvedUrl.siteUrl,
+            driveId: odspResolvedUrl.driveId,
+            itemId: odspResolvedUrl.itemId,
+        };
         const [, queryString] = odspResolvedUrl.url.split("?");
 
         const searchParams = new URLSearchParams(queryString);
@@ -94,7 +100,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 odspResolvedUrl = await createNewFluidFile(
                     toInstrumentedOdspTokenFetcher(
                         odspLogger,
-                        odspResolvedUrl,
+                        resolveUrlData,
                         this.getStorageToken,
                         true /* throwOnNullToken */,
                     ),
@@ -150,6 +156,11 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         cacheAndTrackerArg?: ICacheAndTracker,
     ): Promise<IDocumentService> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+        const resolveUrlData: IOdspUrlParts = {
+            siteUrl: odspResolvedUrl.siteUrl,
+            driveId: odspResolvedUrl.driveId,
+            itemId: odspResolvedUrl.itemId,
+        };
         const cacheAndTracker = cacheAndTrackerArg ?? createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,
@@ -158,7 +169,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
         const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
             odspLogger,
-            odspResolvedUrl,
+            resolveUrlData,
             this.getStorageToken,
             true /* throwOnNullToken */,
         );
@@ -167,7 +178,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             ? undefined
             : async (options: TokenFetchOptions) => toInstrumentedOdspTokenFetcher(
                 odspLogger,
-                odspResolvedUrl,
+                resolveUrlData,
                 this.getWebsocketToken!,
                 false /* throwOnNullToken */,
             )(options, "GetWebsocketToken");
