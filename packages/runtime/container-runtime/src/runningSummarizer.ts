@@ -386,7 +386,6 @@ export class RunningSummarizer implements IDisposable {
                 const result = await resultSummarize.receivedSummaryAckOrNack;
 
                 if (result.success) {
-                    this.totalSuccessfulAttempts++;
                     return;
                 }
                 // Check for retryDelay that can come from summaryNack or upload summary flow.

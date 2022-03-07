@@ -163,7 +163,7 @@ This should not even be possible, but it means that an unhandled error was raise
 > Event Prefix: `Summarizer:Running:`
 
 - `summarizeCount` - the number of summarize attempts this client has made. This can be used to correlate events for individual summary attempts.
-- `summarizerSuccessfulAttempts` - the number of successful summaries this summarizer instance has performed
+- `summarizerSuccessfulAttempts` - the number of successful summaries this summarizer instance has performed. This property subtracted from the `summarizeCount` property equals the number of attempts that failed to produce a summary.
 
 ### SummaryAckWaitTimeout
 
@@ -185,7 +185,7 @@ During first load, the wait for a summary ack/nack op in response to a summary o
 
 ### SummarizeAttemptDelay
 
-Logs the presence of a delay before attempting summary
+Logs the presence of a delay before attempting summary. Note that the event is logged before waiting for the delay.
 
 - `duration` - duration delay in seconds. This is the `retryAfter` value found in the summary nack response op, if present.
 Otherwise, it's the delay from regular summarize attempt retry.
@@ -251,7 +251,7 @@ The event cancels in response to a summary nack op for this attempt, an error al
 - `summarySequenceNumber` (ack/nack received only) - sequence number of this attempt's summary op.
 - `handle` (ack only) - summary handle found on this attempt's summary ack op.
 
-### generate
+### Summarize_generate
 
 This event fires during a summary attempt, as soon as the ContainerRuntime has finished its summarize work, which consists of: generating the tree, uploading to storage, and submitting the op. It should fire this event even if something goes wrong during those steps.
 
@@ -388,7 +388,7 @@ Although this should be unlikely, it is possible only when `refreshLatestAck` is
 
 Fires on summary submit if the summary sequence number does not match the sequence number of the last message processsed by the Delta Manager.
 
-- `message` - Message encoding the mismatched sequence numbers
+- `error` - error message containing the mismatched sequence numbers
 
 ### GarbageCollection
 
