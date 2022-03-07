@@ -10,7 +10,7 @@
 /* eslint-disable no-use-before-define */
 
 import Ajv from "ajv";
-import ajvKeywords from "ajv-keywords"
+import ajvKeywords from "ajv-keywords";
 
 import each from "lodash/each";
 import isEqual from "lodash/isEqual";

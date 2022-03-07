@@ -366,7 +366,7 @@ export class OdspDocumentService implements IDocumentService {
                 ...response,
                 refreshAfterDeltaMs: this.calculateJoinSessionRefreshDelta(
                     response.entryTime, response.joinSessionResponse.refreshSessionDurationSeconds),
-            }
+            };
         };
         let response = await getResponseAndRefreshAfterDeltaMs();
         // This means that the cached entry has expired(This should not be possible if the response is fetched
@@ -390,8 +390,8 @@ export class OdspDocumentService implements IDocumentService {
                                 ...props,
                             },
                             error,
-                        )
-                    });;
+                        );
+                    });
             } else {
                 // Logging just for informational purposes to help with debugging as this is a new feature.
                 this.mc.logger.sendErrorEvent({

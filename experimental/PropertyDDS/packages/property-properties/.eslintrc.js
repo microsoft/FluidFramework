@@ -14,11 +14,15 @@ module.exports = {
         "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/dot-notation": "off",
         "@typescript-eslint/no-unnecessary-type-assertion": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/quotes": "off",
         "import/no-duplicates": "off",
         "max-len": "off",
         "no-bitwise": "off",
         "no-var": "off",
         "prefer-const": "off",
+        "quote-props": "off",
         "unicorn/better-regex": "off",
         "unicorn/no-unsafe-regex": "off"
     }

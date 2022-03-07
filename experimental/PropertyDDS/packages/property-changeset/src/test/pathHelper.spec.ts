@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions*/
+/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview In this file, we will test the path helper
  *    functions described in /src/properties/path_helper.js
@@ -12,7 +12,6 @@ import { expect } from 'chai';
 import { PathHelper } from "../pathHelper";
 
 describe('PathHelper', function() {
-
     describe('tokenizePathString', function() {
         it('should work for simple paths separated by dots', function() {
             let types = [];
@@ -194,7 +193,6 @@ describe('PathHelper', function() {
             ]);
 
             expect(function() { PathHelper.tokenizePathString('/../test2'); }).to.throw();
-
         });
     });
 
@@ -236,7 +234,6 @@ describe('PathHelper', function() {
             expect(PathHelper.quotePathSegmentIfNeeded('test_string')).to.equal('test_string');
         });
     });
-
 
     describe('unquotePathSegment', function() {
         it('should unquote simple strings', function() {
@@ -373,6 +370,5 @@ describe('PathHelper', function() {
             expect(res.coverageExtent).to.equal(PathHelper.CoverageExtent.PARTLY_COVERED);
             expect(res.pathList).to.deep.equal(['a.b.c', 'a.b.d']);
         });
-
     });
 });

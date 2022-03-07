@@ -13,6 +13,7 @@ module.exports = {
     "rules": {
         "@typescript-eslint/ban-ts-comment": "off",
         "@typescript-eslint/ban-types": "off",
+        "@typescript-eslint/consistent-type-definitions": "off",
         "@typescript-eslint/dot-notation": "off",
         "@typescript-eslint/no-dynamic-delete": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
@@ -35,6 +36,8 @@ module.exports = {
         "no-inner-declarations": "off",
         "no-multi-spaces": "off",
         "no-param-reassign": "off",
+        "no-prototype-builtins": "off",
+        "no-restricted-syntax": "off",
         "no-var": "off",
         "prefer-arrow-callback": "off",
         "prefer-const": "off",

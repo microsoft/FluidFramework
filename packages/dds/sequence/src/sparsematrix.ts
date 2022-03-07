@@ -159,7 +159,6 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
     }
 
     public getTag(pos: number) {
-
         return this.tags[pos];
     }
 
@@ -276,13 +275,10 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
     public getItem(row: number, col: number):
         // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
-
         Jsonable<string | number | boolean | IFluidHandle<IFluidObject & FluidObject & IFluidLoadable>> {
         const pos = rowColToPosition(row, col);
-        const { segment, offset } =
-            this.getContainingSegment(pos);
+        const { segment, offset } = this.getContainingSegment(pos);
         if (RunSegment.is(segment)) {
-
             return segment.items[offset];
         } else if (PaddingSegment.is(segment)) {
             return undefined;
@@ -294,7 +290,6 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     public getTag(row: number, col: number) {
         const { segment, offset } = this.getSegment(row, col);
         if (RunSegment.is(segment)) {
-
             return segment.getTag(offset);
         }
         return undefined;

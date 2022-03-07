@@ -327,7 +327,7 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
 
     /** Back-compat to appease isFluidError typeguard in old code that may handle this error */
     // @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
-    private fluidErrorCode: "-" = "-";
+    private readonly fluidErrorCode: "-" = "-";
 
     /**
      * Create a new LoggingError

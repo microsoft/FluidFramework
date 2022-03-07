@@ -12,9 +12,8 @@ import isNumber from "lodash/isNumber";
 import {copy as cloneDeep} from "fastest-json-copy";
 import range from "lodash/range";
 
-
-import { ChangeSet, SerializedChangeSet } from "../changeset";
 import { expect, assert } from "chai";
+import { ChangeSet, SerializedChangeSet } from "../changeset";
 
 describe("Array Operations", function() {
     let guidCounter = 1;
@@ -224,8 +223,8 @@ describe("Array Operations", function() {
     function runTestApplyingReverseAndRebasedChangesetForIndependentModifications(baseInsertPositions,
         rebasedInsertPositions,
         baseOperation = "insert",
-        baseCount = 1) {
-
+        baseCount = 1,
+    ) {
         const createInserts = (positions, count) => positions.map((x) => [
             x,
             generateNamedEntities(count),

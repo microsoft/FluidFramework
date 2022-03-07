@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Lazy } from "@fluidframework/common-utils";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
 import {
@@ -14,7 +15,6 @@ import {
     baseVersion,
     reinstall,
 } from "./compatOptions";
-import { Lazy } from "@fluidframework/common-utils";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -126,9 +126,7 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
     ];
 };
 
-
-export const configList = new Lazy<readonly CompatConfig[]>(()=>{
-
+export const configList = new Lazy<readonly CompatConfig[]>(() => {
     // set it in the env for parallel workers
     if (compatKind) {
         process.env.fluid__test__compatKind = JSON.stringify(compatKind);
@@ -172,7 +170,6 @@ export const configList = new Lazy<readonly CompatConfig[]>(()=>{
     }
     return configList;
 });
-
 
 /*
  * Mocha start up to ensure legacy versions are installed

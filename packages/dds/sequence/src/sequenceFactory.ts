@@ -94,10 +94,8 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
      * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
      */
     public static segmentFromSpec(segSpec: IJSONSegment) {
-
         const runSegment = segSpec as IJSONRunSegment<object>;
         if (runSegment.items) {
-
             const seg = new SubSequence<object>(runSegment.items);
             if (runSegment.props) {
                 seg.addProperties(runSegment.props);
@@ -133,7 +131,6 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         attributes: IChannelAttributes): Promise<ISharedObject> {
-
         const sharedSeq = new SharedObjectSequence<object>(runtime, id, attributes);
         await sharedSeq.load(services);
         return sharedSeq;

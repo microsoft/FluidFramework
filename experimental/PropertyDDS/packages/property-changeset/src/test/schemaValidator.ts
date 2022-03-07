@@ -37,7 +37,7 @@ export class SchemaValidator {
         this.schemaMap[schema.typeid] = schema;
     };
 
-    inheritsFromAsync(child, ancestor) {
+    async inheritsFromAsync(child, ancestor) {
         return new Promise(function(resolve, reject) {
             setTimeout(function() {
                 try {
@@ -50,7 +50,7 @@ export class SchemaValidator {
         });
     }
 
-    hasSchemaAsync = (typeid) => new Promise(function(resolve, reject) {
+    hasSchemaAsync = async (typeid) => new Promise(function(resolve, reject) {
         setTimeout(function() {
             resolve(this.schemaMap[typeid] !== undefined);
         }, 5);
@@ -117,4 +117,3 @@ export class SchemaValidator {
         }
     };
 };
-

@@ -26,7 +26,7 @@ import { TemplateValidator } from "../../templateValidator";
                 expect(error.message).to.have.string(asyncErrorMessage);
             });
         } else {
-            return new Promise(resolve => {
+            return new Promise((resolve) => {
                 resolve(schemaValidator.validate(template, templatePrevious, async, skipSemver));
             });
         }
@@ -238,7 +238,7 @@ import { TemplateValidator } from "../../templateValidator";
 
                 it("fail: changed 'inherits'", function() {
                     let templatePrevious = JSON.parse(JSON.stringify(
-                        require('../schemas/goodReservedTypes')
+                        require('../schemas/goodReservedTypes'),
                     ));
                     let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.inherits = 'Reference<Adsk.Core:Math.Color-1.0.0>';
@@ -977,7 +977,7 @@ import { TemplateValidator } from "../../templateValidator";
                 return validate(
                     function(result) {
                         expect(result.isValid).to.equal(false);
-                        //console.log(result.errors);
+                        // console.log(result.errors);
                         expect(result.errors.length).to.equal(5);
                         expect(result.errors[3].message).to.include("should have required property 'inherits'");
                         expect(result.errors[4].message).to.include("/constants/0 should have required property 'typeid'");
@@ -1146,7 +1146,7 @@ import { TemplateValidator } from "../../templateValidator";
                     () => {
                         done(new Error('Should not be valid!'));
                     },
-                    error => {
+                    (error) => {
                         expect(error).to.exist;
                         done();
                     }

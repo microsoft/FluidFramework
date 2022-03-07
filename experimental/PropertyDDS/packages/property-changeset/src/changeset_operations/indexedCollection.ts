@@ -462,7 +462,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
         };
 
         // Helper function which adds the Changes for a ChangeSet that is ordered by typeid
-        const addChangesWithTypeids = function (in_collection, in_changeIdentifier, in_changePrefix) {
+        const addChangesWithTypeids = function(in_collection, in_changeIdentifier, in_changePrefix) {
             if (in_collection === undefined) {
                 return;
             }

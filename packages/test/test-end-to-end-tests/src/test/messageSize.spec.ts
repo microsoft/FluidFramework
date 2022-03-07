@@ -50,7 +50,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     ) => {
         const configWithFeatureGates = {
             ...containerConfig,
-            loaderProps: { configProvider: configProvider(featureGates) }
+            loaderProps: { configProvider: configProvider(featureGates) },
         };
 
         // Create a Container for the first client.
@@ -78,7 +78,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
             const value = dataObject2map.get(`key${i}`);
             assert.strictEqual(value, expected, `Wrong value for key${i}`);
         }
-    }
+    };
 
     const containerError = async (container: IContainer) =>
         new Promise<IErrorBase | undefined>((resolve) => container.once("closed", (error) => { resolve(error); }));
