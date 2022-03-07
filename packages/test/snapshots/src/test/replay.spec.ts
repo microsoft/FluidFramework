@@ -8,19 +8,19 @@ import { Mode, processContent } from "../replayMultipleFiles";
 describe("Snapshots", function() {
     this.timeout(300000);
 
-    it("Stress Test", async () => {
+    describe("Stress Test", async () => {
         await processContent(Mode.Stress);
     });
 
-    it("writes snapshot in correct format", async () => {
+    describe("writes snapshot in correct format", async () => {
         await processContent(Mode.Compare);
     });
 
-    it("loads snapshots in old format", async () => {
+    describe("loads snapshots in old format", async () => {
         await processContent(Mode.Validate);
     });
 
-    it("loads snapshots in old format and writes in correct format", async () => {
+    describe("loads snapshots in old format and writes in correct format", async () => {
         await processContent(Mode.BackCompat);
     });
 });

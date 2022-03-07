@@ -140,6 +140,7 @@ export async function processContent(mode: Mode, concurrently = true) {
     const limiter = new ConcurrencyLimiter(numberOfThreads);
 
     for (const node of fs.readdirSync(fileLocation, { withFileTypes: true })) {
+
         if (!node.isDirectory()) {
             continue;
         }
@@ -149,40 +150,41 @@ export async function processContent(mode: Mode, concurrently = true) {
             console.error(`Can't locate ${messages}`);
             continue;
         }
+        it(folder, async ()=>{
+            // Clean up any failed snapshots that might have been written out in previous test run.
+            cleanFailedSnapshots(folder);
 
-        // Clean up any failed snapshots that might have been written out in previous test run.
-        cleanFailedSnapshots(folder);
+            // SnapFreq is the most interesting options to tweak
+            // On one hand we want to generate snapshots often, ideally every 50 ops
+            // This allows us to exercise more cases and increases chances of finding bugs.
+            // At the same time that generates more files in repository, and adds to the size of it
+            // Thus using two passes:
+            // 1) Stress test - testing eventual consistency only
+            // 2) Testing backward compat - only testing snapshots at every 1000 ops
+            const snapFreq = mode === Mode.Stress ? 50 : 1000;
+            const data: IWorkerArgs = {
+                folder,
+                mode,
+                snapFreq,
+            };
 
-        // SnapFreq is the most interesting options to tweak
-        // On one hand we want to generate snapshots often, ideally every 50 ops
-        // This allows us to exercise more cases and increases chances of finding bugs.
-        // At the same time that generates more files in repository, and adds to the size of it
-        // Thus using two passes:
-        // 1) Stress test - testing eventual consistency only
-        // 2) Testing backward compat - only testing snapshots at every 1000 ops
-        const snapFreq = mode === Mode.Stress ? 50 : 1000;
-        const data: IWorkerArgs = {
-            folder,
-            mode,
-            snapFreq,
-        };
-
-        switch (mode) {
-            case Mode.Validate:
-                await processNodeForValidate(data, concurrently, limiter);
-                break;
-            case Mode.UpdateSnapshots:
-                await processNodeForUpdatingSnapshots(data, concurrently, limiter);
-                break;
-            case Mode.BackCompat:
-                await processNodeForBackCompat(data);
-                break;
-            case Mode.NewSnapshots:
-                await processNodeForNewSnapshots(data, concurrently, limiter);
-                break;
-            default:
-                await processNode(data, concurrently, limiter);
-        }
+            switch (mode) {
+                case Mode.Validate:
+                    await processNodeForValidate(data, concurrently, limiter);
+                    break;
+                case Mode.UpdateSnapshots:
+                    await processNodeForUpdatingSnapshots(data, concurrently, limiter);
+                    break;
+                case Mode.BackCompat:
+                    await processNodeForBackCompat(data);
+                    break;
+                case Mode.NewSnapshots:
+                    await processNodeForNewSnapshots(data, concurrently, limiter);
+                    break;
+                default:
+                    await processNode(data, concurrently, limiter);
+            }
+        });
     }
 
     return limiter.waitAll();
