@@ -53,14 +53,14 @@ export async function prefetchLatestSnapshot(
     const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
-    const resolveUrlData: IOdspUrlParts = {
+    const resolvedUrlData: IOdspUrlParts = {
         siteUrl: odspResolvedUrl.siteUrl,
         driveId: odspResolvedUrl.driveId,
         itemId: odspResolvedUrl.itemId,
     };
     const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
         odspLogger,
-        resolveUrlData,
+        resolvedUrlData,
         getStorageToken,
         true /* throwOnNullToken */,
     );

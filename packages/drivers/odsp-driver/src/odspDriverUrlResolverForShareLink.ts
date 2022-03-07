@@ -69,12 +69,12 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         private readonly appName?: string,
     ) {
         this.logger = createOdspLogger(logger);
-         if (shareLinkFetcherProps) {
-             this.shareLinkFetcherProps = {
-                 ...shareLinkFetcherProps,
-                 tokenFetcher: shareLinkFetcherProps.tokenFetcher,
-             };
-         }
+        if (shareLinkFetcherProps) {
+            this.shareLinkFetcherProps = {
+                ...shareLinkFetcherProps,
+                tokenFetcher: shareLinkFetcherProps.tokenFetcher,
+            };
+        }
     }
 
     /**

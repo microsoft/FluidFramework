@@ -58,7 +58,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         ensureFluidResolvedUrl(createNewResolvedUrl);
 
         let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
-        const resolveUrlData: IOdspUrlParts = {
+        const resolvedUrlData: IOdspUrlParts = {
             siteUrl: odspResolvedUrl.siteUrl,
             driveId: odspResolvedUrl.driveId,
             itemId: odspResolvedUrl.itemId,
@@ -100,7 +100,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 odspResolvedUrl = await createNewFluidFile(
                     toInstrumentedOdspTokenFetcher(
                         odspLogger,
-                        resolveUrlData,
+                        resolvedUrlData,
                         this.getStorageToken,
                         true /* throwOnNullToken */,
                     ),
@@ -156,7 +156,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         cacheAndTrackerArg?: ICacheAndTracker,
     ): Promise<IDocumentService> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-        const resolveUrlData: IOdspUrlParts = {
+        const resolvedUrlData: IOdspUrlParts = {
             siteUrl: odspResolvedUrl.siteUrl,
             driveId: odspResolvedUrl.driveId,
             itemId: odspResolvedUrl.itemId,
@@ -169,7 +169,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
         const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
             odspLogger,
-            resolveUrlData,
+            resolvedUrlData,
             this.getStorageToken,
             true /* throwOnNullToken */,
         );
@@ -178,7 +178,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             ? undefined
             : async (options: TokenFetchOptions) => toInstrumentedOdspTokenFetcher(
                 odspLogger,
-                resolveUrlData,
+                resolvedUrlData,
                 this.getWebsocketToken!,
                 false /* throwOnNullToken */,
             )(options, "GetWebsocketToken");
