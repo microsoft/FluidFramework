@@ -82,7 +82,6 @@ export class RouterliciousRestWrapper extends RestWrapper {
                     isNetworkError ? `NetworkError: ${error.message}` : safeStringify(error));
             }));
 
-        // const responseBody: any = await response.clone().json().catch(async () => response.text());
         const responseBody: any = response.headers.get("content-type")?.includes("application/json")
             ? await response.json()
             : await response.text();
