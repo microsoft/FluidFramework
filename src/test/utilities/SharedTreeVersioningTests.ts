@@ -67,7 +67,7 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 			expect(newerTree.edits.length).to.equal(0);
 		});
 
-		it('throws if an edit op with a newer version is received', () => {
+		it('throws if an edit op with a newer version than the write version is received', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const { tree: newerTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
 
@@ -179,6 +179,36 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 			// Because the first op was submitted before the Update message was sequenced, it should use
 			// the same write format as the loaded summary.
 			expect(ops[1].version).to.equal(oldVersion);
+			expect(ops[2].version).to.equal(newVersion);
+		});
+
+		it('can update to a write version higher than the initialized write version', () => {
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+			const versions = spyOnVersionChanges(tree);
+			const ops = spyOnSubmittedOps(containerRuntimeFactory);
+
+			// Process an edit
+			applyNoop(tree);
+			containerRuntimeFactory.processAllMessages();
+			const summary = tree.saveSummary();
+
+			// Load the summary into a newer tree to trigger a version update op
+			const { tree: newerTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
+			newerTree.loadSummary(summary);
+			containerRuntimeFactory.processAllMessages();
+
+			// Apply another arbitrary edit to the initial tree, which should now be using the new write version.
+			applyNoop(tree);
+
+			expect(versions).to.eql([newVersion]);
+			expect(ops.length).to.equal(3);
+			expect(ops.map((op) => op.type)).to.eql([
+				SharedTreeOpType.Edit,
+				SharedTreeOpType.Update,
+				SharedTreeOpType.Edit,
+			]);
+
+			expect(ops[0].version).to.equal(oldVersion);
 			expect(ops[2].version).to.equal(newVersion);
 		});
 	});

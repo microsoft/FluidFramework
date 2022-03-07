@@ -42,6 +42,9 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 	 * Get a factory for SharedTree to register with the data store.
 	 * @param summarizeHistory - Determines if the history is included in summaries.
 	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
+	 * This format may be updated to a newer (supported) version if a collaborating shared-tree is initialized
+	 * with a newer write version.
+	 * See docs/Breaking-Change-Migration for more details on this scheme.
 	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
