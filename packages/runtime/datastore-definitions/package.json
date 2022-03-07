@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/datastore-definitions",
-  "version": "0.58.0",
+  "version": "0.58.1000",
   "description": "Fluid data store definitions",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -33,22 +33,23 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.46.0-0",
+    "@fluidframework/container-definitions": "^0.47.0-0",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/protocol-definitions": "^0.1026.0",
-    "@fluidframework/runtime-definitions": "^0.58.0",
+    "@fluidframework/protocol-definitions": "^0.1027.0-0",
+    "@fluidframework/runtime-definitions": "^0.58.1000",
     "@types/node": "^14.18.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.49276",
+    "@fluidframework/build-tools": "^0.2.54658",
     "@fluidframework/datastore-definitions-0.51.1": "npm:@fluidframework/datastore-definitions@0.51.1",
     "@fluidframework/datastore-definitions-0.52.0": "npm:@fluidframework/datastore-definitions@0.52.0",
     "@fluidframework/datastore-definitions-0.53.0": "npm:@fluidframework/datastore-definitions@0.53.0",
     "@fluidframework/datastore-definitions-0.54.0": "npm:@fluidframework/datastore-definitions@0.54.0",
     "@fluidframework/datastore-definitions-0.55.0": "npm:@fluidframework/datastore-definitions@0.55.0",
     "@fluidframework/datastore-definitions-0.56.0": "npm:@fluidframework/datastore-definitions@0.56.0",
-    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
+    "@fluidframework/datastore-definitions-0.57.0": "npm:@fluidframework/datastore-definitions@0.57.0",
+    "@fluidframework/eslint-config-fluid": "^0.26.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
@@ -67,7 +68,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.57.0",
+    "version": "0.58.0",
     "broken": {
       "0.51.1": {
         "InterfaceDeclaration_IChannel": {
@@ -147,6 +148,16 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_IDeltaConnection": {
+          "backCompat": false,
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreRuntime": {
+          "backCompat": false,
+          "forwardCompat": false
+        }
+      },
+      "0.56.0": {
+        "InterfaceDeclaration_IChannelFactory": {
           "backCompat": false,
           "forwardCompat": false
         },

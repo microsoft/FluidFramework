@@ -30,7 +30,7 @@ describe("Runtime", () => {
                         return {
                             deltaManager: new MockDeltaManager(),
                             quorum: new MockQuorum(),
-                            logger: new MockLogger(),
+                            taggedLogger: new MockLogger(),
                             clientDetails: { capabilities: { interactive: true } },
                             closeFn: (error?: ICriticalContainerError): void => {
                                 if (error !== undefined) {
@@ -137,7 +137,7 @@ describe("Runtime", () => {
                     return {
                         deltaManager: new MockDeltaManager(),
                         quorum: new MockQuorum(),
-                        logger: new MockLogger(),
+                        taggedLogger: new MockLogger(),
                         clientDetails: { capabilities: { interactive: true } },
                         updateDirtyContainerState: (dirty: boolean) => { },
                         attachState,
@@ -540,7 +540,7 @@ describe("Runtime", () => {
                     clientId: "fakeClientId",
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorum(),
-                    logger: mockLogger,
+                    taggedLogger: mockLogger,
                     clientDetails: { capabilities: { interactive: true } },
                     closeFn: (error?: ICriticalContainerError): void => {
                         if (error !== undefined) {
