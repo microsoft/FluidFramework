@@ -270,7 +270,7 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  dependsOn: build
+  dependsOn: [build, guardian]
   pool: Small
   jobs:
     - job: deploy_site
@@ -289,7 +289,7 @@ stages:
 
         - task: AzureStaticWebApp@0
           displayName: 'Deploy website to ASWA'
-          condition: eq(variables.shouldDeploy, true)
+          condition: and(in(stageDependencies.guardian.guardian_tasks.result, 'Succeeded', 'SucceededWithIssues'), eq(variables.shouldDeploy, true))
           inputs:
             skip_app_build: true # site was built in previous stage
             cwd: $(Build.SourcesDirectory)
