@@ -211,7 +211,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // This call updates this.isRootDataStore if it has not yet been updated
         // The initial value is stored in the initial snapshot of the data store
         const { isRootDataStore } = await this.getInitialSnapshotDetails();
-        this.isRootDataStore = isRootDataStore;
+        // Prevent isRootDataStore from accidentally setting this.isRootDataStore to false.
+        // This is backwards compatible as older clients use this.isRootDataStore as the source of truth
+        this.isRootDataStore = this.isRootDataStore || isRootDataStore;
         return this.isRootDataStore;
     }
 
@@ -808,12 +810,12 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         }
 
         // Maintain the truth of this.isRootDataStore
-        this.isRootDataStore = isRootDataStore;
+        this.isRootDataStore = this.isRootDataStore || isRootDataStore;
 
         return {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             pkg: this.pkg!,
-            isRootDataStore,
+            isRootDataStore: this.isRootDataStore,
             snapshot: tree,
         };
     });
