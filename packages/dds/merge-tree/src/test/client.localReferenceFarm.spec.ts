@@ -20,7 +20,7 @@ import { TestClientLogger } from "./testClientLogger";
  const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig = {
     initLen: {min: 2, max: 4},
     modLen: {min: 1, max: 8},
-    opsPerRoundRange: { min: 10, max: 10 },
+    opsPerRoundRange: {min: 10, max: 10},
     rounds: 10,
     operations: [removeRange],
     growthFunc: (input: number) => input * 2,
