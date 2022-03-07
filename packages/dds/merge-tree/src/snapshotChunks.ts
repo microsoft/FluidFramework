@@ -94,7 +94,7 @@ export function serializeAsMinSupportedVersion(
     switch (chunk.version) {
         case undefined:
             targetChuck = chunk as MergeTreeChunkLegacy;
-            targetChuck.headerMetadata = buildHeaderMetadataForLegecyChunk(path, targetChuck, options);
+            targetChuck.headerMetadata = buildHeaderMetadataForLegacyChunk(path, targetChuck, options);
             break;
 
         case "1":
@@ -143,7 +143,7 @@ export function toLatestVersion(
                 version: "1",
                 length: chunkLegacy.chunkLengthChars,
                 segmentCount: chunkLegacy.chunkSegmentCount,
-                headerMetadata: buildHeaderMetadataForLegecyChunk(path, chunkLegacy, options),
+                headerMetadata: buildHeaderMetadataForLegacyChunk(path, chunkLegacy, options),
                 segments: chunkLegacy.segmentTexts,
                 startIndex: chunkLegacy.chunkStartSegmentIndex,
             };
@@ -156,7 +156,7 @@ export function toLatestVersion(
     }
 }
 
-function buildHeaderMetadataForLegecyChunk(
+function buildHeaderMetadataForLegacyChunk(
     path: string, chunk: MergeTreeChunkLegacy, options: PropertySet | undefined): MergeTreeHeaderMetadata | undefined {
     if (path === SnapshotLegacy.header) {
         if (chunk.headerMetadata !== undefined) {

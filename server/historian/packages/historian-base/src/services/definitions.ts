@@ -76,6 +76,7 @@ export interface ITenant {
  */
 export interface ITenantCustomDataExternal extends ITenantCustomData {
     externalStorageData?: IExternalStorage;
+    storageName?: string;
 }
 
 export interface IExternalStorage {

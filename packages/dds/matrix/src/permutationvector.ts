@@ -76,7 +76,7 @@ export class PermutationSegment extends BaseSegment {
         // it is included if the undo stack continues to unwind to the original insertion.
         //
         // Out of paranoia we link and unlink in separate loops to avoid mutating the underlying
-        // set during enumeration.  In pratice, this is unlikely to matter since there should be
+        // set during enumeration.  In practice, this is unlikely to matter since there should be
         // exactly 0 or 1 items in the enumeration.
         for (const group of this.trackingCollection.trackingGroups) {
             group.link(destination);
@@ -282,9 +282,9 @@ export class PermutationVector extends Client {
         // containing this position and use 'findReconnectionPosition' to adjust for the local ops that
         // have not yet been submitted.
 
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
-        return this.findReconnectionPostition(containingSegment, localSeq) + containingOffset!;
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.findReconnectionPosition(containingSegment, localSeq) + containingOffset!;
     }
 
     // Constructs an ISummaryTreeWithStats for the cell data.
@@ -331,7 +331,7 @@ export class PermutationVector extends Client {
             case MergeTreeDeltaType.INSERT:
                 // Pass 1: Perform any internal maintenance first to avoid reentrancy.
                 for (const { segment, position } of ranges) {
-                    // HACK: We need to include the allocated handle in the segment's JSON reperesntation
+                    // HACK: We need to include the allocated handle in the segment's JSON representation
                     //       for snapshots, but need to ignore the remote client's handle allocations when
                     //       processing remote ops.
                     segment.reset();
