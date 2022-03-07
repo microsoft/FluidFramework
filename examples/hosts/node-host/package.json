@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/node-host",
-  "version": "0.58.0",
+  "version": "0.58.1000",
   "private": true,
   "description": "Fluid container host for Node.js environment",
   "homepage": "https://fluidframework.com",
@@ -23,21 +23,21 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-example/key-value-cache": "^0.58.0",
-    "@fluidframework/container-definitions": "^0.46.0-0",
-    "@fluidframework/container-loader": "^0.58.0",
+    "@fluid-example/key-value-cache": "^0.58.1000",
+    "@fluidframework/container-definitions": "^0.47.0-0",
+    "@fluidframework/container-loader": "^0.58.1000",
     "@fluidframework/core-interfaces": "^0.42.0",
     "@fluidframework/driver-definitions": "^0.45.0-0",
-    "@fluidframework/protocol-definitions": "^0.1026.0",
-    "@fluidframework/routerlicious-driver": "^0.58.0",
-    "@fluidframework/routerlicious-host": "^0.58.0",
-    "@fluidframework/test-runtime-utils": "^0.58.0",
+    "@fluidframework/protocol-definitions": "^0.1027.0-0",
+    "@fluidframework/routerlicious-driver": "^0.58.1000",
+    "@fluidframework/routerlicious-host": "^0.58.1000",
+    "@fluidframework/test-runtime-utils": "^0.58.1000",
     "jsonwebtoken": "^8.4.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.26.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
