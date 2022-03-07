@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/test-dds-utils",
-  "version": "0.58.0",
+  "version": "0.58.1000",
   "private": true,
   "description": "Fluid DDS test utilities",
   "homepage": "https://fluidframework.com",
@@ -46,11 +46,11 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/shared-object-base": "^0.58.0"
+    "@fluidframework/shared-object-base": "^0.58.1000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.26.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",

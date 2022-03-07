@@ -180,7 +180,7 @@ export class Heap<T> {
         const x = this.L[1];
         this.L[1] = this.L[this.count()];
         this.L.pop();
-        this.fixdown(1);
+        this.fixDown(1);
         return x;
     }
 
@@ -199,7 +199,7 @@ export class Heap<T> {
         }
     }
 
-    private fixdown(k: number) {
+    private fixDown(k: number) {
         let _k = k;
         while ((_k << 1) <= (this.count())) {
             let j = _k << 1;

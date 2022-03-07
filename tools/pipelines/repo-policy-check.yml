@@ -5,10 +5,12 @@
 
 trigger:
 - main
+- next
 - release/*
 
 pr:
 - main
+- next
 - release/*
 
 pool:

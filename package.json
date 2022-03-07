@@ -71,7 +71,7 @@
     "webpack:profile": "lerna run --no-sort webpack:profile --stream"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.49276",
+    "@fluidframework/build-tools": "^0.2.54658",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.12.7",
     "@microsoft/api-extractor": "^7.16.1",
