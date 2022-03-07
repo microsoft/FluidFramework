@@ -326,17 +326,17 @@ describe("Array Operations", function() {
                         createArrayCS({
                             insert: [
                                 [1, generateNamedEntities(1)],
-                            ]
+                            ],
                         }),
                         createArrayCS({
                             insert: [
                                 [6, generateNamedEntities(1)],
-                            ]
+                            ],
                         }),
                         createArrayCS({
                             insert: [
                                 [9, generateNamedEntities(1)],
-                            ]
+                            ],
                         }),
                         createArrayCS({
                             remove: [
@@ -349,12 +349,12 @@ describe("Array Operations", function() {
                         createArrayCS({
                             insert: [
                                 [insertPosition, generateNamedEntities(1)],
-                            ]
+                            ],
                         }),
                         createArrayCS({
                             insert: [
                                 [0, generateNamedEntities(10)],
-                            ]
+                            ],
                         }),
                     );
                 });
@@ -365,46 +365,46 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
             testRebaseDistributivity([
                 createArrayCS({
                     remove: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [3, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -413,23 +413,23 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [3, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -438,23 +438,23 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     remove: [
                         [1, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
             const arrayCS = getArrayCS(deltacS);
@@ -466,33 +466,33 @@ describe("Array Operations", function() {
                 createArrayCS({
                     insert: [
                         [2, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [0, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [1, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [1, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -501,33 +501,33 @@ describe("Array Operations", function() {
                 createArrayCS({
                     insert: [
                         [4, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [2, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [3, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [2, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [3, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -536,43 +536,43 @@ describe("Array Operations", function() {
                 createArrayCS({
                     insert: [
                         [4, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [6, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [2, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [3, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     remove: [
                         [4, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [2, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     insert: [
                         [3, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -581,23 +581,23 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [1, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [1, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     remove: [
                         [1, generateNamedEntities(1, [3])],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(10)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -606,23 +606,23 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [8, generateNamedEntities(2)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [8, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     remove: [
                         [8, generateNamedEntities(1, [3])],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(14)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -631,7 +631,7 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [8, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
@@ -644,12 +644,12 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [8, generateNamedEntities(1, [3])],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(14)],
-                    ]
+                    ],
                 }),
             );
         });
@@ -658,18 +658,18 @@ describe("Array Operations", function() {
                 createArrayCS({
                     remove: [
                         [4, generateNamedEntities(1)],
-                    ]
+                    ],
                 }),
             ],
                 createArrayCS({
                     remove: [
                         [3, generateNamedEntities(3)],
-                    ]
+                    ],
                 }),
                 createArrayCS({
                     insert: [
                         [0, generateNamedEntities(14)],
-                    ]
+                    ],
                 }),
             );
         });

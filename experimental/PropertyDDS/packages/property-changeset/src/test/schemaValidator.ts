@@ -27,15 +27,15 @@ export class SchemaValidator {
         this.getAllParentsForTemplate(in_templateTypeid, parents, true);
 
         return parents[in_baseTypeid] !== undefined;
-    };
+    }
 
     hasSchema(typeid: string | number) {
         return this.schemaMap[typeid] !== undefined;
-    };
+    }
 
     register(schema) {
         this.schemaMap[schema.typeid] = schema;
-    };
+    }
 
     async inheritsFromAsync(child, ancestor) {
         return new Promise(function(resolve, reject) {
@@ -89,7 +89,7 @@ export class SchemaValidator {
                 this.getAllParentsForTemplate(parents[i], out_parents, undefined);
             }
         }
-    };
+    }
 
     validate(in_schema, in_previousSchema?, in_async?, in_skipSemver?, in_allowDraft?): any {
         in_skipSemver = in_skipSemver || false;
@@ -115,5 +115,5 @@ export class SchemaValidator {
 
             return templateValidator.validate(in_schema, in_previousSchema);
         }
-    };
-};
+    }
+}

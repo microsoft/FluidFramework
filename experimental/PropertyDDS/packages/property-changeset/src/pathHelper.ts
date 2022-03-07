@@ -11,7 +11,7 @@ import { constants } from '@fluid-experimental/property-common';
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 
-export type PathTree = Map<String, PathTree>
+export type PathTree = Map<String, PathTree>;
 
 /**
  * Helper functions for string processing
@@ -35,7 +35,7 @@ export namespace PathHelper {
         DEREFERENCE_TOKEN,
         /** A ../ that indicates one step above the current path */
         RAISE_LEVEL_TOKEN,
-    };
+    }
 
     /**
      * Tokenizes a path string
@@ -45,7 +45,7 @@ export namespace PathHelper {
      *
      * @returns the tokens from the path string
      */
-    export const tokenizePathString = function(in_path: string, out_types?: TOKEN_TYPES[]): Array<string> { // eslint-disable-line complexity
+    export const tokenizePathString = function(in_path: string, out_types?: TOKEN_TYPES[]): string[] { // eslint-disable-line complexity
         const tokens = [];
         let currentToken = "";
 
@@ -456,7 +456,7 @@ export namespace PathHelper {
         // The base path is fully covered by at least one path from a given list of paths.
         // This means a property with this path would be covered and all of its children would be covered also.
         FULLY_COVERED,
-    };
+    }
 
     interface BasePathCoverage {
         coverageExtent: CoverageExtent,
@@ -474,7 +474,7 @@ export namespace PathHelper {
      * @returns The coverage of the property and its children. For a coverage of
      *    'FULLY_COVERED', only the first matching path is returned.
      */
-    export const getPathCoverage = function(in_basePath: string, in_paths: Array<string>): BasePathCoverage {
+    export const getPathCoverage = function(in_basePath: string, in_paths: string[]): BasePathCoverage {
         // First, check if the base path is entirely included in one of the paths
         for (let i = 0; i < in_paths.length; i++) {
             if (in_basePath.startsWith(in_paths[i])) {
