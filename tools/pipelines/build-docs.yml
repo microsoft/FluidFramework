@@ -172,7 +172,7 @@ stages:
           inputs:
             source: current
             artifact: api-extractor-combined
-            path: '$(Build.SourcesDirectory)/_api-extractor-temp'
+            path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
         - task: UseNode@1
           displayName: 'Use Node 14.x'
