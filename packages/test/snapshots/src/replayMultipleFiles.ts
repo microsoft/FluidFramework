@@ -103,7 +103,7 @@ export async function processOneNode(args: IWorkerArgs) {
     replayArgs.inDirName = args.folder;
     // The output snapshots to compare against are under "currentSnapshots" sub-directory.
     replayArgs.outDirName = `${args.folder}/${currentSnapshots}`;
-    if(args.mode === Mode.NewSnapshots){
+    if (args.mode === Mode.NewSnapshots) {
         // when generating new snapshots, match those from
         // the original file based on summarize ops
         replayArgs.testSummaries = true;
@@ -145,7 +145,6 @@ export async function processContent(mode: Mode, concurrently = true) {
     const limiter = new ConcurrencyLimiter(numberOfThreads);
 
     for (const node of fs.readdirSync(fileLocation, { withFileTypes: true })) {
-
         if (!node.isDirectory()) {
             continue;
         }
@@ -221,7 +220,7 @@ async function processNodeForValidate(
 }
 
 /**
- * In UdpateSnapshots mode, the snapshot format has changed and we need to update the reference snapshot files with the
+ * In UpdateSnapshots mode, the snapshot format has changed and we need to update the reference snapshot files with the
  * newer version. We need to do the following:
  * - Move the current snapshot files to a new sub-folder in the older snapshots folder.
  * - Update the current snapshot files to the newer version.
@@ -238,7 +237,7 @@ async function processNodeForUpdatingSnapshots(
     const versionFileName = `${currentSnapshotsDir}/snapshotVersion.json`;
     assert(fs.existsSync(versionFileName), `Version file ${versionFileName} does not exist`);
 
-    // Get the version of the current snapshots. This becomes the the folder name under the "src_snapshtos" folder
+    // Get the version of the current snapshots. This becomes the the folder name under the "src_snapshots" folder
     // where these snapshots will be moved.
     const versionContent = JSON.parse(fs.readFileSync(`${versionFileName}`, "utf-8"));
     const version = versionContent.snapshotVersion;
@@ -270,7 +269,7 @@ async function processNodeForNewSnapshots(
     limiter: ConcurrencyLimiter,
 ) {
     const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
-    // If current snapshots dir already exists, these are existing snapshtos. We should skip because we don't want to
+    // If current snapshots dir already exists, these are existing snapshots. We should skip because we don't want to
     // update them.
     if (fs.existsSync(currentSnapshotsDir)) {
         return;
@@ -372,7 +371,8 @@ async function processNode(
         });
 
         worker.on("error", (error) => {
-            reject(`${JSON.stringify(workerData)}\n${error}`);
+            error.message = `${JSON.stringify(workerData)}\n${error.message}`;
+            reject(error);
         });
 
         worker.on("exit", (code) => {

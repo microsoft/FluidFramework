@@ -41,7 +41,7 @@ import { ReplayArgs } from "./replayArgs";
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
 try {
-
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     threads = require("worker_threads");
 } catch (error) { }
 
@@ -78,18 +78,18 @@ class ContainerContent {
 
     public constructor(public readonly op: number) {
         this._normalizedSnapshot = new Lazy(() => {
-            assert(this.snapshot !== undefined, 0x1c5 /* "snapshot should be set before retreiving it" */);
+            assert(this.snapshot !== undefined, 0x1c5 /* "snapshot should be set before retrieving it" */);
             return getNormalizedFileSnapshot(this.snapshot);
         });
 
         this._snapshotAsString = new Lazy(() => {
-            assert(this.snapshot !== undefined, 0x1c6 /* "snapshot should be set before retreiving it" */);
+            assert(this.snapshot !== undefined, 0x1c6 /* "snapshot should be set before retrieving it" */);
             return JSON.stringify(this.snapshot, undefined, 2);
         });
 
         this._snapshotExpanded = new Lazy(() => {
             assert(this.snapshot !== undefined,
-                0x1c7 /* "snapshot should be set before retreiving it as expanded string" */);
+                0x1c7 /* "snapshot should be set before retrieving it as expanded string" */);
             const snapshotExpanded: IFileSnapshot = {
                 commits: {},
                 tree: expandTreeForReadability(this.snapshot.tree),
@@ -359,8 +359,7 @@ export class ReplayTool {
         return this.shouldReportError(errorString);
     }
 
-
-    private loadDoc(doc: Document) {
+    private async loadDoc(doc: Document) {
         return doc.load(
             this.deltaStorageService,
             (event) => this.errorHandler(event));
@@ -526,7 +525,7 @@ export class ReplayTool {
             const currentOp = this.mainDocument.currentOp;
             if (nextSnapPoint <= currentOp) {
                 nextSnapPoint = originalSummaries.shift() ??
-                    (this.args.snapFreq !== undefined ? currentOp + this.args.snapFreq: this.args.to);
+                    (this.args.snapFreq !== undefined ? currentOp + this.args.snapFreq : this.args.to);
             }
             let replayTo = Math.min(nextSnapPoint, this.args.to);
 
