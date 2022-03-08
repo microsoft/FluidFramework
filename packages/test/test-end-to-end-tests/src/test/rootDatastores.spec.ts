@@ -65,7 +65,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         provider.reset();
         const configWithFeatureGates = {
             ...containerConfig,
-            loaderProps: { configProvider: configProvider(featureGates) }
+            loaderProps: { configProvider: configProvider(featureGates) },
         };
         container1 = await provider.makeTestContainer(configWithFeatureGates);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "/");
@@ -328,7 +328,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const aliasResult2 = await ds2.trySetAlias(alias);
             const aliasResult3 = await ds2.trySetAlias(alias + alias);
 
-
             assert.equal(aliasResult1, "Success");
             assert.equal(aliasResult2, "Conflict");
             assert.equal(aliasResult3, "AlreadyAliased");
@@ -470,20 +469,20 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 // This executes getInitialSnapshotDetails, a LazyPromise, before the alias op is sent to update
                 // the isRootDataStore property in the dataStoreContext
                 await containerRuntime2.getRootDataStore(aliasedDataStore1.runtime.id);
-            } catch (e) {
+            } catch(e) {
                 callFailed = true;
             }
             assert(callFailed, "Expected getRootDataStore to fail as the datastore is not yet a root datastore");
 
             // Alias a datastore
-            const alias = "alias";
-            const aliasResult1 = await aliasableDataStore1.trySetAlias(alias);
+            const _alias = "alias";
+            const aliasResult1 = await aliasableDataStore1.trySetAlias(_alias);
             assert(aliasResult1 === "Success", `Expected an successful aliasing. Got: ${aliasResult1}`);
             await provider.ensureSynchronized();
 
             // Should be able to retrieve root datastore from remote
             assert.doesNotThrow(async () =>
-                await containerRuntime2.getRootDataStore(alias), "An aliased datastore should be a root datastore");
+                containerRuntime2.getRootDataStore(_alias), "An aliased datastore should be a root datastore");
         });
     });
 });

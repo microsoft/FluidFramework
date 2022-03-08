@@ -18,7 +18,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.createTag(request.body as ICreateTagParams));
+        ).then(async (repoManager) => repoManager.createTag(request.body as ICreateTagParams));
 
         handleResponse(resultP, response, 201);
     });
@@ -27,7 +27,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.getTag(request.params[0]));
+        ).then(async (repoManager) => repoManager.getTag(request.params[0]));
 
         handleResponse(resultP, response);
     });

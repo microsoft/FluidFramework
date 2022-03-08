@@ -16,7 +16,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.createTree(request.body as ICreateTreeParams));
+        ).then(async (repoManager) => repoManager.createTree(request.body as ICreateTreeParams));
 
         handleResponse(resultP, response, 201);
     });
@@ -25,7 +25,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.getTree(request.params.sha, request.query.recursive === "1"));
+        ).then(async (repoManager) => repoManager.getTree(request.params.sha, request.query.recursive === "1"));
 
         handleResponse(resultP, response);
     });

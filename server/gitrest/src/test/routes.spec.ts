@@ -21,8 +21,8 @@ import sillyname from "sillyname";
 import request from "supertest";
 import * as app from "../app";
 import { ExternalStorageManager } from "../externalStorageManager";
-import * as testUtils from "./utils";
 import { NodegitRepositoryManagerFactory } from "../utils";
+import * as testUtils from "./utils";
 
 // TODO: (issue logged): replace email & name
 const commitEmail = "kurtb@microsoft.com";

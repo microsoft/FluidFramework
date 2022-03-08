@@ -99,7 +99,6 @@ export class SummaryManager implements IDisposable {
         }: Readonly<Partial<ISummaryManagerConfig>> = {},
         private readonly summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
     ) {
-
         this.logger = ChildLogger.create(
             parentLogger,
             "SummaryManager",

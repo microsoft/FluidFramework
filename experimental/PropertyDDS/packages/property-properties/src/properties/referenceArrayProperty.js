@@ -5,20 +5,19 @@
 /**
  * @fileoverview Definition of the reference array property class
  */
-const _ = require('lodash');
-const { ValueArrayProperty } = require('./valueArrayProperty');
 const { PathHelper, TypeIdHelper } = require('@fluid-experimental/property-changeset');
-const { BaseProperty } = require('./baseProperty');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const { UniversalDataArray, ConsoleUtils } = require('@fluid-experimental/property-common');
+const _ = require('lodash');
 const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
+const { BaseProperty } = require('./baseProperty');
 const { ReferenceProperty } = require('./referenceProperty');
+const { ValueArrayProperty } = require('./valueArrayProperty');
 
 /**
  * An ArrayProperty which stores reference values
  */
 export class ReferenceArrayProperty extends ValueArrayProperty {
-
     /**
      * @param {Object} in_params - Input parameters for property creation
      *
@@ -30,7 +29,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Returns the typeid for the target of this reference
@@ -42,7 +41,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      */
     getReferenceTargetTypeId() {
         return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
-    };
+    }
 
     /**
      * Resolves the referenced property for the given key
@@ -77,7 +76,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 
             return this.getParent().resolvePath(value, in_options);
         }
-    };
+    }
 
     /**
      * Checks whether the reference is valid. This is either the case when it is empty or when the referenced
@@ -89,7 +88,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
     isReferenceValid(in_position) {
         return ValueArrayProperty.prototype.get.call(this, in_position) === '' ||
             this.get(in_position) !== undefined;
-    };
+    }
 
     /**
      * Sets the range in the array to point to the given property objects or to be equal to the given paths
@@ -105,7 +104,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
     setRange(in_offset, in_array) {
         var arr = ReferenceArrayProperty._convertInputToPaths(in_array, 'setRange');
         ValueArrayProperty.prototype.setRange.call(this, in_offset, arr);
-    };
+    }
 
     /**
      * Insert a range which points to the given property objects into the array
@@ -121,7 +120,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
     insertRange(in_offset, in_array) {
         var arr = ReferenceArrayProperty._convertInputToPaths(in_array, 'insertRange');
         ValueArrayProperty.prototype.insertRange.call(this, in_offset, arr);
-    };
+    }
 
     /**
      * returns the path value of a reference.
@@ -130,7 +129,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      */
     getValue(in_id) {
         return this._dataArrayRef.getValue(in_id);
-    };
+    }
 
     /**
      * Returns an object with all the nested values contained in this property
@@ -144,7 +143,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
             result.push(this.getValue(ids[i]));
         }
         return result;
-    };
+    }
 
     /**
      * Removes the last element of the array
@@ -159,7 +158,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
         } else {
             return undefined;
         }
-    };
+    }
 
     /**
      * Removes an element of the array and shift remaining elements to the left
@@ -173,7 +172,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
         var value = this.getValue(in_position);
         this.removeRange(in_position, 1);
         return value;
-    };
+    }
 
     /**
      * Removes a given number of elements from the array and shifts remaining values to the left.
@@ -200,13 +199,12 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
         this._removeRangeWithoutDirtying(in_offset, in_deleteCount);
         this._setDirty();
         return result;
-    };
+    }
 
     /**
      * @inheritdoc
      */
     _resolvePathSegment(in_segment, in_segmentType) {
-
         // Array tokens are automatically resolved
         if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
             return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
@@ -214,7 +212,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
             // Everything else is handled by the implementation in the base property
             return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
         }
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -225,7 +223,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, '');
         }
-    };
+    }
 
     /**
      * Validates the array and returns a sanitized version of it containing only strings.
@@ -239,7 +237,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      * @throws if in_array is not an array
      * @throws if one of the items in in_array is defined, but is not a property or a string.
      */
-    static _convertInputToPaths = function (in_array, in_callerName) {
+    static _convertInputToPaths = function(in_array, in_callerName) {
         if (!_.isArray(in_array)) {
             throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'ReferenceArrayProperty.' + in_callerName);
         }
@@ -250,6 +248,5 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
         }
         return arr;
     };
-
 }
 ReferenceArrayProperty.prototype._typeid = 'Reference';

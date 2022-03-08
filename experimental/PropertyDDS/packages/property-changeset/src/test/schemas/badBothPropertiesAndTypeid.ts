@@ -17,10 +17,10 @@
             'id': 'r',
             'typeid': 'Float32',
             'properties': [
-                { 'typeid': 'Int32', 'id': 'ri' }
-            ]
+                { 'typeid': 'Int32', 'id': 'ri' },
+            ],
         }],
-        'typeid': 'TeamLeoValidation2:ColorID-1.0.0'
+        'typeid': 'TeamLeoValidation2:ColorID-1.0.0',
     };
     module.exports = templateSchema;
 })();
