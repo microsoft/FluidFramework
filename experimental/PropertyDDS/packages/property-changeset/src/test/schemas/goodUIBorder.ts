@@ -20,8 +20,8 @@
                 'properties': [
                     { 'id': 'solid', 'value': 200, 'annotation': { 'description': 'solid line' } },
                     { 'id': 'dashed', 'value': 100, 'annotation': { 'description': 'dashed line' } },
-                    { 'id': 'dotted', 'value': 300, 'annotation': { 'description': 'dotted line' } }
-                ]
+                    { 'id': 'dotted', 'value': 300, 'annotation': { 'description': 'dotted line' } },
+                ],
             },
             {
                 'id': 'style',
@@ -29,12 +29,12 @@
                     'id': 'thickness',
                     'typeid': 'Uint32',
                     'annotation': {
-                        'description': 'border thickness in Pixels'
+                        'description': 'border thickness in Pixels',
                     },
-                    'unit': 'Adsk.Core:Units.Imaging-1.0.0'
-                }]
-            }
-        ]
+                    'unit': 'Adsk.Core:Units.Imaging-1.0.0',
+                }],
+            },
+        ],
     };
     module.exports = templateSchema;
 })();

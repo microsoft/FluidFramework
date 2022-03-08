@@ -8,7 +8,7 @@
 
 export enum ConflictType  {
     /** We had two incompatible ChangeSets, they probably were with respect to different base commits */
-    INVALID_CHANGESET_BASE=1,
+    INVALID_CHANGESET_BASE = 1,
     /** A value was changed in both ChangeSets */
     COLLIDING_SET,
     /** A deleted child node was modified */
@@ -27,6 +27,4 @@ export enum ConflictType  {
     MISMATCH_TEMPLATES,
     // Tried to insert inside a removed array range
     INSERT_IN_REMOVED_RANGE,
-};
-
-
+}

@@ -21,7 +21,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.getCommits(
+        ).then(async (repoManager) => repoManager.getCommits(
             request.query.sha as string,
             Number(request.query.count as string),
             getExternalWriterParams(request.query?.config as string),

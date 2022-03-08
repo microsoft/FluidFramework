@@ -8,10 +8,9 @@ import {
     ChangeSet,
     PathHelper,
     SerializedChangeSet,
-    TypeIdHelper
+    TypeIdHelper,
 } from '@fluid-experimental/property-changeset';
-import { constants } from '@fluid-experimental/property-common';
-import { ConsoleUtils } from '@fluid-experimental/property-common';
+import { ConsoleUtils, constants } from '@fluid-experimental/property-common';
 import { LazyLoadedProperties as Property } from './lazyLoadedProperties';
 
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
@@ -26,7 +25,7 @@ enum REFERENCE_RESOLUTION {
     /** If a reference is the last entry during the path resolution, it will not automatically be resolved */
     NO_LEAFS,
     /** References are never automatically resolved */
-    NEVER
+    NEVER,
 }
 
 /**
@@ -38,8 +37,8 @@ enum MODIFIED_STATE_FLAGS {
     /** The property is marked as changed in the currently pending ChangeSet */
     PENDING_CHANGE,
     /** The property has been modified and the result has not yet been reported to the application for scene updates */
-    DIRTY
-};
+    DIRTY,
+}
 
 /**
  * Token Types
@@ -52,9 +51,8 @@ const PATH_TOKENS = {
     /** A * that indicates a dereferencing operation */ // note: reversed!
     REF: { 'token': 'REF' },
     /** A ../ that indicates one step above the current path */
-    UP: { 'token': 'UP' }
+    UP: { 'token': 'UP' },
 };
-
 
 interface IBasePropertyParams {
     /** id of the property */
@@ -66,11 +64,11 @@ interface IBasePropertyParams {
     /** The type of property this template represents i.e. single, array, map, set. */
     context: string,
 
-    //TODO: UNUSED PARAMETER ??
+    // TODO: UNUSED PARAMETER ??
     /** List of property templates that are used to define children properties */
     properties: BaseProperty[],
 
-    //TODO: UNUSED PARAMETER ??
+    // TODO: UNUSED PARAMETER ??
     /**  List of property template typeids that this PropertyTemplate inherits from */
     inherits: string[]
 }
@@ -142,7 +140,7 @@ export abstract class BaseProperty {
         if (!this._noDirtyInBase) {
             this._dirty = MODIFIED_STATE_FLAGS.CLEAN;
         }
-    };
+    }
 
     static MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
     static REFERENCE_RESOLUTION = REFERENCE_RESOLUTION;
@@ -153,14 +151,14 @@ export abstract class BaseProperty {
      */
     getTypeid(): string {
         return this._typeid;
-    };
+    }
 
     /**
      * @returns The context of this property
      */
     getContext(): string {
         return this._context;
-    };
+    }
 
     /**
      * Get the scope to which this property belongs to.
@@ -173,7 +171,7 @@ export abstract class BaseProperty {
         } else {
             return undefined;
         }
-    };
+    }
 
     /**
      * Returns the full property type identifier for the ChangeSet including the enum type id
@@ -183,7 +181,7 @@ export abstract class BaseProperty {
      */
     getFullTypeid(in_hideCollection = false): string {
         return this._typeid;
-    };
+    }
 
     /**
      * Updates the parent for the property
@@ -199,7 +197,7 @@ export abstract class BaseProperty {
         if (this._parent && this._isDirty() && !this._parent._isDirty()) {
             this._parent._setDirty(false, this);
         }
-    };
+    }
 
     /**
      * Is this property the root of the property set tree?
@@ -210,7 +208,7 @@ export abstract class BaseProperty {
         // This checks, whether this is the root of a CheckOutView
         // (all other properties should have a parent property)
         return this._parent === undefined;
-    };
+    }
 
     /**
      * Is this property the ancestor of in_otherProperty?
@@ -230,7 +228,7 @@ export abstract class BaseProperty {
             }
         }
         return false;
-    };
+    }
 
     /**
      * Is this property the descendant of in_otherProperty?
@@ -242,7 +240,7 @@ export abstract class BaseProperty {
     isDescendantOf(in_otherProperty: BaseProperty): boolean {
         ConsoleUtils.assert(in_otherProperty, MSG.MISSING_IN_OTHERPROP);
         return in_otherProperty.isAncestorOf(this);
-    };
+    }
 
     /**
      * Is this property a leaf node with regard to flattening?
@@ -253,7 +251,7 @@ export abstract class BaseProperty {
      */
     _isFlattenLeaf(): boolean {
         return false;
-    };
+    }
 
     /**
      * Get the parent of this property
@@ -262,7 +260,7 @@ export abstract class BaseProperty {
      */
     getParent(): BaseProperty | undefined {
         return this._parent;
-    };
+    }
 
     /**
      * checks whether the property is dynamic (only properties inherting from NodeProperty are)
@@ -270,7 +268,7 @@ export abstract class BaseProperty {
      */
     isDynamic() {
         return false;
-    };
+    }
 
     /**
      * Sets the property as dirty and/or pending. This will add one or both flags if not already set and will
@@ -286,7 +284,7 @@ export abstract class BaseProperty {
     _setDirty(
         in_reportToView = true,
         in_callingChild: BaseProperty = undefined,
-        in_flags: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE
+        in_flags: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE,
     ) {
         if (in_flags === undefined) {
             in_flags = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE;
@@ -309,7 +307,7 @@ export abstract class BaseProperty {
         if (reportToView) {
             this._reportDirtinessToView();
         }
-    };
+    }
 
     /**
      * Sets the dirty flags for this property
@@ -317,7 +315,7 @@ export abstract class BaseProperty {
      */
     _setDirtyFlags(in_flags: MODIFIED_STATE_FLAGS) {
         this._dirty = in_flags;
-    };
+    }
 
     /**
      * Gets the dirty flags for this property
@@ -325,7 +323,7 @@ export abstract class BaseProperty {
      */
     _getDirtyFlags(): MODIFIED_STATE_FLAGS {
         return this._dirty;
-    };
+    }
 
     /**
      * Helper function, which reports the fact that a property has been dirtied to the checkout view
@@ -351,7 +349,7 @@ export abstract class BaseProperty {
         ) {
             currentNode._tree._reportDirtinessToView();
         }
-    };
+    }
 
     /**
      * Modifies the property according to the given changeset
@@ -366,7 +364,7 @@ export abstract class BaseProperty {
 
         // We just forward the call to the internal function
         this._applyChangeset(in_changeSet, true);
-    };
+    }
 
     /**
      * Modifies the property according to the given changeset
@@ -403,7 +401,7 @@ export abstract class BaseProperty {
         if (in_reportToView) {
             this._reportDirtinessToView();
         }
-    };
+    }
 
     /**
      * Re-apply dirty flags from changesets
@@ -420,7 +418,6 @@ export abstract class BaseProperty {
         // changeset, sometimes only one in the other changeset, sometimes one in both.
         const typeids = _.keys(in_pendingChangeSet).concat(_.keys(in_dirtyChangeSet));
         for (const typeid of typeids) {
-
             if (ChangeSet.isReservedKeyword(typeid)) {
                 continue; // Ignore the special keys
             }
@@ -429,7 +426,6 @@ export abstract class BaseProperty {
 
             const paths = _.keys(pendingChangeSet).concat(_.keys(dirtyChangeSet));
             for (const path of paths) {
-
                 let property = this.resolvePath(path);
                 if (property) {
                     property._reapplyDirtyFlags(
@@ -444,7 +440,7 @@ export abstract class BaseProperty {
 
     protected resolvePath(path: string, params?: any): BaseProperty {
         throw new Error("Method not implemented.");
-    };
+    }
 
     /**
      * Removes the dirtiness flag from this property
@@ -455,8 +451,7 @@ export abstract class BaseProperty {
     _cleanDirty(in_flags) {
         this._setDirtyFlags(in_flags === undefined ? MODIFIED_STATE_FLAGS.CLEAN :
             (this._getDirtyFlags() & ~in_flags));
-    };
-
+    }
 
     /**
      * Removes the dirtiness flag from this property and recursively from all of its children
@@ -469,7 +464,7 @@ export abstract class BaseProperty {
         for (const dirtyChild of dirtyChildren) {
             const child = this.get(
                 dirtyChild,
-                { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }
+                { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER },
             );
             child.cleanDirty(in_flags);
             child._cleanDirty(in_flags);
@@ -477,7 +472,7 @@ export abstract class BaseProperty {
 
         // after all paths are clean, we are also clean!
         this._cleanDirty(in_flags);
-    };
+    }
 
     /**
      * Indicates that the property has been modified and a corresponding modified call has not yet been sent to the
@@ -488,7 +483,7 @@ export abstract class BaseProperty {
      */
     _isDirty(in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY): boolean {
         return !!(this._getDirtyFlags() & in_dirtinessType);
-    };
+    }
 
     /**
      * Indicates that the property has been modified and a corresponding modified call has not yet been sent to the
@@ -498,7 +493,7 @@ export abstract class BaseProperty {
      */
     isDirty(): boolean {
         return this._isDirty();
-    };
+    }
 
     /**
      * The property has pending changes in the current ChangeSet.
@@ -506,7 +501,7 @@ export abstract class BaseProperty {
      */
     hasPendingChanges(): boolean {
         return this._isDirty(MODIFIED_STATE_FLAGS.PENDING_CHANGE);
-    };
+    }
 
     /**
      * Returns the ChangeSet of all sub-properties
@@ -516,7 +511,7 @@ export abstract class BaseProperty {
     getPendingChanges(): ChangeSet {
         var serialized = this._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
         return new ChangeSet(serialized);
-    };
+    }
 
     /**
      * Get the id of this property
@@ -525,7 +520,7 @@ export abstract class BaseProperty {
      */
     getId(): string | undefined {
         return this._id;
-    };
+    }
 
     /**
      * Sets the checkedOutRepositoryInfo.
@@ -534,7 +529,7 @@ export abstract class BaseProperty {
      */
     _setCheckoutView(value) {
         this._checkoutView = value;
-    };
+    }
 
     /**
      * Returns the checkoutView
@@ -543,7 +538,7 @@ export abstract class BaseProperty {
     _getCheckoutView() {
         let checkedOutRepositoryInfo = this._getCheckedOutRepositoryInfo();
         return checkedOutRepositoryInfo ? checkedOutRepositoryInfo.getCheckoutView() : undefined;
-    };
+    }
 
     /**
      * Returns the checkedOutRepositoryInfo.
@@ -556,7 +551,7 @@ export abstract class BaseProperty {
         } else {
             return this.getRoot() ? this.getRoot()._getCheckedOutRepositoryInfo() : undefined;
         }
-    };
+    }
 
     /**
      * Returns the Workspace
@@ -565,7 +560,7 @@ export abstract class BaseProperty {
     getWorkspace() {
         const root = this.getRoot();
         return root ? root._tree : undefined;
-    };
+    }
 
     /**
      * Returns the path segment for a child
@@ -576,7 +571,7 @@ export abstract class BaseProperty {
      */
     _getPathSegmentForChildNode(in_childNode: BaseProperty): string {
         return PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(in_childNode.getId());
-    };
+    }
 
     /**
      * Resolves a direct child node based on the given path segment
@@ -594,7 +589,7 @@ export abstract class BaseProperty {
         }
 
         return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
-    };
+    }
 
     /**
      * Set the id of this property
@@ -619,7 +614,7 @@ export abstract class BaseProperty {
         this._setDirty();
 
         return in_id;
-    };
+    }
 
     /**
      * Return a clone of this property
@@ -628,7 +623,7 @@ export abstract class BaseProperty {
     clone(): BaseProperty {
         const PropertyFactory = Property.PropertyFactory;
         var clone = PropertyFactory._createProperty(
-            this.getFullTypeid(), null, undefined, this._getScope(), true
+            this.getFullTypeid(), null, undefined, this._getScope(), true,
         );
 
         // TODO: this is not very efficient. Clone should be overriden
@@ -636,10 +631,10 @@ export abstract class BaseProperty {
         clone.deserialize(this._serialize());
         clone.cleanDirty(
             BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE |
-            BaseProperty.MODIFIED_STATE_FLAGS.DIRTY
+            BaseProperty.MODIFIED_STATE_FLAGS.DIRTY,
         );
         return clone;
-    };
+    }
 
     /**
      * Returns true if the property is a primitive type
@@ -647,7 +642,7 @@ export abstract class BaseProperty {
      */
     isPrimitiveType() {
         return TypeIdHelper.isPrimitiveType(this._typeid);
-    };
+    }
 
     /**
      * Get a flattened, tree like representation of this object and all of it's
@@ -662,7 +657,7 @@ export abstract class BaseProperty {
      */
     private _flatten(): object {
         return { propertyNode: this };
-    };
+    }
 
     /**
      * Repeatedly calls back the given function with human-readable string representations
@@ -675,7 +670,7 @@ export abstract class BaseProperty {
             printFct = console.log;
         }
         this._prettyPrint('', '', printFct);
-    };
+    }
 
     /**
      * Return a JSON representation of the properties and its children.
@@ -688,18 +683,18 @@ export abstract class BaseProperty {
             context: this._context,
             typeid: this.getTypeid(),
             isConstant: this._isConstant,
-            value: []
+            value: [],
         };
 
         var ids = this.getIds();
         for (const id of ids) {
             json.value.push(
-                this.get(id, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })._toJson()
+                this.get(id, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })._toJson(),
             );
         }
 
         return json;
-    };
+    }
 
     getIds(): string[] {
         return [];
@@ -726,7 +721,7 @@ export abstract class BaseProperty {
         }
         printFct(indent + externalId + this.getId() + ' (' + context + this.getTypeid() + '):');
         this._prettyPrintChildren(indent, printFct);
-    };
+    }
 
     /**
      * Repeatedly calls back the given function with human-readable string
@@ -740,7 +735,7 @@ export abstract class BaseProperty {
         for (var i = 0; i < ids.length; i++) {
             this.get(ids[i], { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })._prettyPrint(indent, '', printFct);
         }
-    };
+    }
 
     /**
      * Returns the possible paths from the given from_property to this property. If multiple paths
@@ -796,7 +791,7 @@ export abstract class BaseProperty {
             return paths;
         }
         return [];
-    };
+    }
 
     /**
      * Returns the possible paths from the given in_fromProperty to this property. If no direct paths
@@ -829,7 +824,7 @@ export abstract class BaseProperty {
         } else {
             return undefined;
         }
-    };
+    }
 
     /**
      * Returns the path from the given in_fromProperty to this property if a direct path
@@ -873,7 +868,7 @@ export abstract class BaseProperty {
         } else {
             return undefined;
         }
-    };
+    }
 
     /**
      * Returns the possible paths from the given in_fromProperty to this property.
@@ -896,7 +891,7 @@ export abstract class BaseProperty {
                 return [this._getIndirectPath(in_fromProperty)];
             }
         }
-    };
+    }
 
     /**
      * Returns the path from the given fron_property to this node if such a path exists.
@@ -926,7 +921,7 @@ export abstract class BaseProperty {
                 ' and ' + this.getAbsolutePath());
         }
         return paths[0];
-    };
+    }
 
     /**
      * Returns the path from the root of the workspace to this node
@@ -985,7 +980,7 @@ export abstract class BaseProperty {
         absolutePath = '/' + absolutePath;
 
         return absolutePath;
-    };
+    }
 
     /**
      * Traverses the property hierarchy upwards until the a node without parent is reached
@@ -1008,7 +1003,7 @@ export abstract class BaseProperty {
         }
 
         return undefined;
-    };
+    }
 
     /**
      * @type {string} Constant to stop the traversal in traverseUp and traverseDown functions
@@ -1025,7 +1020,7 @@ export abstract class BaseProperty {
      */
     private _getDirtyChildren(in_flags: MODIFIED_STATE_FLAGS): string[] {
         return [];
-    };
+    }
 
     /**
      * Returns the root of the property hierarchy
@@ -1033,7 +1028,7 @@ export abstract class BaseProperty {
      */
     getRoot(): BaseProperty {
         return this._parent ? this._parent.getRoot() : this;
-    };
+    }
 
     /**
      * Traverses all children in the child hierarchy
@@ -1047,7 +1042,7 @@ export abstract class BaseProperty {
      */
     _traverse(in_callback: Function, in_pathFromTraversalStart: string): string | undefined {
         return undefined;
-    };
+    }
 
     /**
      * Deserialize takes a currently existing property and sets it to the hierarchy described in the normalized
@@ -1072,11 +1067,11 @@ export abstract class BaseProperty {
         in_serializedObj: SerializedChangeSet,
         in_filteringOptions = {},
         in_createChangeSet = true,
-        in_reportToView = false
+        in_reportToView = false,
     ): SerializedChangeSet {
         this._checkIsNotReadOnly(false);
         return this._deserialize(in_serializedObj, in_reportToView, in_filteringOptions, in_createChangeSet);
-    };
+    }
 
     /**
      * Sets the property to the state in the given normalized changeset
@@ -1099,7 +1094,7 @@ export abstract class BaseProperty {
         in_createChangeSet = true,
     ): SerializedChangeSet {
         return {};
-    };
+    }
 
     /**
      * Serialize the property into a changeSet
@@ -1119,11 +1114,10 @@ export abstract class BaseProperty {
         in_dirtyOnly: boolean = false,
         in_includeRootTypeid: boolean = false,
         in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.PENDING_CHANGE,
-        in_includeReferencedRepositories: boolean = false
+        in_includeReferencedRepositories: boolean = false,
     ): object {
         return {};
-    };
-
+    }
 
     /**
      * Serialize the property
@@ -1137,10 +1131,12 @@ export abstract class BaseProperty {
             dirtyOnly: false,
             includeRootTypeid: false,
             dirtinessType: MODIFIED_STATE_FLAGS.PENDING_CHANGE,
-            includeReferencedRepositories: false
+            includeReferencedRepositories: false,
         };
         if (in_options !== undefined) {
-            if (typeof in_options !== 'object') throw new Error(MSG.SERIALIZE_TAKES_OBJECT);
+            if (typeof in_options !== 'object') {
+                throw new Error(MSG.SERIALIZE_TAKES_OBJECT);
+            }
             Object.assign(opts, in_options);
         }
 
@@ -1148,9 +1144,9 @@ export abstract class BaseProperty {
             opts.dirtyOnly,
             opts.includeRootTypeid,
             opts.dirtinessType,
-            opts.includeReferencedRepositories
+            opts.includeReferencedRepositories,
         );
-    };
+    }
 
     /**
      * Indicate that all static members have been added to the property
@@ -1158,7 +1154,7 @@ export abstract class BaseProperty {
      * This function is invoked by the PropertyFactory once all static members have been added to the template
      * @protected
      */
-    _signalAllStaticMembersHaveBeenAdded() { };
+    _signalAllStaticMembersHaveBeenAdded() { }
 
     /**
      * Tests whether this property may be modified
@@ -1177,7 +1173,7 @@ export abstract class BaseProperty {
                 throw new Error(MSG.MODIFICATION_OF_REFERENCED_PROPERTY);
             }
         }
-    };
+    }
 
     /**
      * Set a property and its children as constants (readonly properties)
@@ -1195,7 +1191,7 @@ export abstract class BaseProperty {
 
     traverseDown(arg0: (prop: any) => void) {
         throw new Error("Method not implemented.");
-    };
+    }
 
     /**
      * Unsets a property and its children as constants
@@ -1213,7 +1209,7 @@ export abstract class BaseProperty {
                 delete prop._isConstant;
             });
         }
-    };
+    }
 
     /**
      * Dirties this node and all of its children
@@ -1232,7 +1228,7 @@ export abstract class BaseProperty {
         if (in_reportToView) {
             this._reportDirtinessToView();
         }
-    };
+    }
 
     /**
      * Determines whether a property can be inserted as a child of another property
@@ -1242,7 +1238,6 @@ export abstract class BaseProperty {
      * @throws if the property can not be inserted
      */
     _validateInsertIn(in_targetParent: BaseProperty) {
-
         // A root?
         if (this._getCheckedOutRepositoryInfo() !== undefined) {
             throw new Error(MSG.INSERTED_ROOT_ENTRY);
@@ -1261,7 +1256,7 @@ export abstract class BaseProperty {
         if (this._parent !== undefined || this._getCheckoutView() !== undefined) {
             throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
         }
-    };
+    }
 
     /**
      * TODO: Remove it later. Kept not to modify tests
@@ -1288,7 +1283,7 @@ export abstract class BaseProperty {
             // We know that part of the property is covered, if we don't find any actual children not covered
             // by the paths it's because we're fully covered.
             if (this.isPrimitiveType()) {
-                const childrenIds = this.getContext() === 'single' ? [] : this.getIds()
+                const childrenIds = this.getContext() === 'single' ? [] : this.getIds();
                 for (const childId of childrenIds) {
                     const childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childId);
                     if (PathHelper.getPathCoverage(childPath, coverage.pathList).coverageExtent === PathHelper.CoverageExtent.UNCOVERED) {
@@ -1310,12 +1305,11 @@ export abstract class BaseProperty {
         }
 
         return false;
-    };
+    }
 
     get _properties() {
         return this._flatten();
     }
-
 }
 
 (BaseProperty as any).prototype._isConstant = false;

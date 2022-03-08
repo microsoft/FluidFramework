@@ -21,7 +21,10 @@ describe("connectionManager", () => {
     let _mockDeltaConnection: MockDocumentDeltaConnection | undefined;
     const mockDocumentService = new MockDocumentService(
         undefined /* deltaStorageFactory */,
-        () => { _mockDeltaConnection = new MockDocumentDeltaConnection(`mock_client_${nextClientId++}`); return _mockDeltaConnection },
+        () => {
+            _mockDeltaConnection = new MockDocumentDeltaConnection(`mock_client_${nextClientId++}`);
+            return _mockDeltaConnection;
+        },
     );
     const client: Partial<IClient> = {
         details: { capabilities: { interactive: true } },
@@ -119,7 +122,12 @@ describe("connectionManager", () => {
         // Assert II
         assert(oldConnection.disposed, "Old connection should be disposed after emitting disconnect");
         assert.equal(connection.clientId, "mock_client_2", "New connection should have expected id");
-        mockLogger.assertMatchAny([{ eventName: "reconnectingDespiteFatalError", reconnectMode: "Enabled", error: "Fatal disconnect reason", canRetry: false, }]);
+        mockLogger.assertMatchAny([{
+            eventName: "reconnectingDespiteFatalError",
+            reconnectMode: "Enabled",
+            error: "Fatal disconnect reason",
+            canRetry: false,
+        }]);
         assert(!closed, "Don't expect closeHandler to be called even when connection emits a non-retryable disconnect");
         assert.equal(disconnectCount, 2, "Expected 2 disconnects from emitting an error and disconnect");
         assert.equal(connectionCount, 3, "Expected 3 connections after the two disconnects");

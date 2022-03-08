@@ -17,30 +17,30 @@
                 'id': 'position',
                 'properties': [{
                         'id': 'x',
-                        'typeid': 'Float32'
+                        'typeid': 'Float32',
                     },
                     {
                         'id': 'y',
-                        'typeid': 'Float32'
+                        'typeid': 'Float32',
                     },
                     {
                         'id': 'z',
-                        'typeid': 'Float32'
-                    }
-                ]
+                        'typeid': 'Float32',
+                    },
+                ],
             },
             {
                 'id': 'color',
-                'typeid': 'TeamLeoValidation2:ColorID-1.0.0'
+                'typeid': 'TeamLeoValidation2:ColorID-1.0.0',
             },
             {
                 'id': 'normal',
                 'typeid': 'Float32',
                 'context': 'array',
-                'length': 3
-            }
+                'length': 3,
+            },
         ],
-        'typeid': 'TeamLeoValidation2:PointID-1.0.0'
+        'typeid': 'TeamLeoValidation2:PointID-1.0.0',
     };
     module.exports = templateSchema;
 })();
