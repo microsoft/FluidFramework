@@ -42,6 +42,14 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const IdleDetectionTime = 100;
     const testContainerConfig: ITestContainerConfig = {
         fluidDataObjectType: DataObjectFactoryType.Test,
+        runtimeOptions: {
+            summaryOptions: {
+                disableSummaries: true,
+            },
+            gcOptions: {
+                gcAllowed: true,
+            },
+        },
     };
 
     const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => {
@@ -57,7 +65,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         provider.reset();
         const configWithFeatureGates = {
             ...containerConfig,
-            loaderProps: { configProvider: configProvider(featureGates) }
+            loaderProps: { configProvider: configProvider(featureGates) },
         };
         container1 = await provider.makeTestContainer(configWithFeatureGates);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "/");
@@ -78,7 +86,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const allDataCorruption = async (containers: IContainer[]) => Promise.all(
         containers.map(async (c) => new Promise<boolean>((resolve) => c.once("closed", (error) => {
             resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
-        })))).then((all)=>!all.includes(false));
+        })))).then((all) => !all.includes(false));
 
     const runtimeOf = (dataObject: ITestFluidObject): IContainerRuntime =>
         dataObject.context.containerRuntime as IContainerRuntime;
@@ -109,7 +117,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         afterEach(async () => reset());
 
         itExpects("Root datastore creation fails at attach op", [
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             // Isolate inbound communication
@@ -126,8 +134,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        itExpects("Root datastore creation with props fails at attach op",[
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
+        itExpects("Root datastore creation with props fails at attach op", [
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             // Isolate inbound communication
@@ -144,8 +152,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        itExpects("Root datastore creation with the same id breaks container",[
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
+        itExpects("Root datastore creation with the same id breaks container", [
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             await createRootDataStore(dataObject1, "2");
@@ -154,8 +162,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        itExpects("Root datastore creation with the same id and legacy API breaks container",[
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
+        itExpects("Root datastore creation with the same id and legacy API breaks container", [
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             await createRootDataStore(dataObject1, "2");
@@ -320,7 +328,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const aliasResult2 = await ds2.trySetAlias(alias);
             const aliasResult3 = await ds2.trySetAlias(alias + alias);
 
-
             assert.equal(aliasResult1, "Success");
             assert.equal(aliasResult2, "Conflict");
             assert.equal(aliasResult3, "AlreadyAliased");
@@ -328,9 +335,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
-        itExpects("Creating a root data store with an existing alias as an id breaks the container",[
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"},
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"},
+        itExpects("Creating a root data store with an existing alias as an id breaks the container", [
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
@@ -348,9 +354,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         itExpects("Receiving a bad alias message breaks the container", [
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage"},
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage"},
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage"},
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
         ], async () => {
             const dataCorruption = allDataCorruption([container1, container2]);
             await corruptedAliasOp(runtimeOf(dataObject1), alias);
@@ -368,135 +373,120 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.equal(aliasResult2, "Conflict");
 
             await provider.ensureSynchronized();
-
             const container3 = await provider.loadTestContainer(testContainerConfig);
             const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
             assert.ok(await getRootDataStore(dataObject3, alias));
         });
 
         it("Assign an alias which has previously been assigned as id by the legacy API, " +
-        "different containers", async () => {
-            await createRootDataStore(dataObject1, alias);
-            const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
-            const aliasResult2 = await ds2.trySetAlias(alias);
-            assert.equal(aliasResult2, "Conflict");
+            "different containers", async () => {
+                await createRootDataStore(dataObject1, alias);
+                const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
+                const aliasResult2 = await ds2.trySetAlias(alias);
+                assert.equal(aliasResult2, "Conflict");
 
-            assert.ok(await getRootDataStore(dataObject2, alias));
-        });
-
-        it("Assign multiple data stores to the same alias, first write wins, " +
-        "different containers from snapshot", async () => {
-
-            await setupContainers({
-                ... testContainerConfig,
-                runtimeOptions: {
-                    summaryOptions: {
-                        generateSummaries: true,
-                        initialSummarizerDelayMs: 10,
-                        summaryConfigOverrides: {
-                            idleTime: IdleDetectionTime,
-                            maxTime: IdleDetectionTime * 12,
-                        },
-                    },
-                    gcOptions: {
-                        gcAllowed: true,
-                    },
-                },
+                assert.ok(await getRootDataStore(dataObject2, alias));
             });
 
-            // andre4i: Move this into test utils or something. Same as for other
-            // flavors of this function across the end to end tests
-            const waitForSummary = async (
-                testObjectProvider: ITestObjectProvider,
-                container: IContainer,
-                summaryCollection: SummaryCollection,
-            ): Promise<string> => {
-                await testObjectProvider.ensureSynchronized();
-                const ackedSummary: IAckedSummary =
-                    await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
-                return ackedSummary.summaryAck.contents.handle;
-            };
+        it("Assign multiple data stores to the same alias, first write wins, " +
+            "different containers from snapshot", async () => {
+                await setupContainers({
+                    ...testContainerConfig,
+                    runtimeOptions: {
+                        summaryOptions: {
+                            generateSummaries: true,
+                            initialSummarizerDelayMs: 10,
+                            summaryConfigOverrides: {
+                                idleTime: IdleDetectionTime,
+                                maxTime: IdleDetectionTime * 12,
+                            },
+                        },
+                        gcOptions: {
+                            gcAllowed: true,
+                        },
+                    },
+                });
 
-            const sc = new SummaryCollection(container1.deltaManager, new TelemetryNullLogger());
-            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
-            const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
+                // andre4i: Move this into test utils or something. Same as for other
+                // flavors of this function across the end to end tests
+                const waitForSummary = async (
+                    testObjectProvider: ITestObjectProvider,
+                    container: IContainer,
+                    summaryCollection: SummaryCollection,
+                ): Promise<string> => {
+                    await testObjectProvider.ensureSynchronized();
+                    const ackedSummary: IAckedSummary =
+                        await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
+                    return ackedSummary.summaryAck.contents.handle;
+                };
 
-            const aliasResult1 = await ds1.trySetAlias(alias);
-            const aliasResult2 = await ds2.trySetAlias(alias);
+                const sc = new SummaryCollection(container1.deltaManager, new TelemetryNullLogger());
+                const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+                const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
 
-            assert.equal(aliasResult1, "Success");
-            assert.equal(aliasResult2, "Conflict");
+                const aliasResult1 = await ds1.trySetAlias(alias);
+                const aliasResult2 = await ds2.trySetAlias(alias);
+                assert.equal(aliasResult1, "Success");
+                assert.equal(aliasResult2, "Conflict");
 
-            await provider.ensureSynchronized();
-            const version = await waitForSummary(provider, container1, sc);
+                await provider.ensureSynchronized();
+                const version = await waitForSummary(provider, container1, sc);
 
-            const container3 = await provider.loadTestContainer(
-                testContainerConfig,
-                {
-                    [LoaderHeader.version]: version,
-                }, // requestHeader
-            );
-            const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
-            const ds3 = await runtimeOf(dataObject3).createDataStore(packageName);
-            const aliasResult3 = await ds3.trySetAlias(alias);
+                const container3 = await provider.loadTestContainer(
+                    testContainerConfig,
+                    {
+                        [LoaderHeader.version]: version,
+                    }, // requestHeader
+                );
+                const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
+                const ds3 = await runtimeOf(dataObject3).createDataStore(packageName);
+                const aliasResult3 = await ds3.trySetAlias(alias);
 
-            assert.equal(aliasResult3, "Conflict");
-            assert.ok(await getRootDataStore(dataObject3, alias));
-        });
+                assert.equal(aliasResult3, "Conflict");
+                assert.ok(await getRootDataStore(dataObject3, alias));
+            });
 
         /**
          * Aliasing datastores summarized before the alias op is sent and after the attach op is sent
          * does not cause a datastore corruption issue
-         * 
+         *
          * This test validates a bug where the rootiness of a datastore was not set to true in the
          * above scenario.
          */
         it("Aliasing a bound datastore marks it as root correctly", async () => {
-            await setupContainers({
-                ... testContainerConfig,
-                runtimeOptions: {
-                    summaryOptions: {
-                        disableSummaries: true,
-                    },
-                    gcOptions: {
-                        gcAllowed: true,
-                    },
-                },
-            });
-
             const containerRuntime1 = runtimeOf(dataObject1);
             const aliasableDataStore1 = await containerRuntime1.createDataStore(packageName);
-            const aliasedDataStoreResponse1 = await aliasableDataStore1.request({url:"/"});
+            const aliasedDataStoreResponse1 = await aliasableDataStore1.request({ url: "/" });
             const aliasedDataStore1 = aliasedDataStoreResponse1.value as ITestFluidObject;
             // Casting any to repro a race condition where bindToContext is called before summarization,
             // but aliasing happens afterwards
             (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
             await provider.ensureSynchronized();
-            
+
             const containerRuntime2 = runtimeOf(dataObject2) as ContainerRuntime;
             let callFailed = false;
-            try{
+            try {
                 // This executes getInitialSnapshotDetails, a LazyPromise, before the alias op is sent to update
                 // the isRootDataStore property in the dataStoreContext
                 await containerRuntime2.getRootDataStore(aliasedDataStore1.runtime.id);
-            }catch(e){
+            } catch (e) {
                 callFailed = true;
             }
             assert(callFailed, "Expected getRootDataStore to fail as the datastore is not yet a root datastore");
-            
+
             // Alias a datastore
-            const alias = "alias";
-            const aliasResult1 = await aliasableDataStore1.trySetAlias(alias);
+            const _alias = "alias";
+            const aliasResult1 = await aliasableDataStore1.trySetAlias(_alias);
             assert(aliasResult1 === "Success", `Expected an successful aliasing. Got: ${aliasResult1}`);
             await provider.ensureSynchronized();
-            
+
             // Should be able to retrieve root datastore from remote
             assert.doesNotThrow(async () => 
-                await containerRuntime2.getRootDataStore(alias), "A remote aliased datastore should be a root datastore");
+                await containerRuntime2.getRootDataStore(_alias), "A remote aliased datastore should be a root datastore");
 
             // Should be able to retrieve local root datastore
             assert.doesNotThrow(async () => 
-                await containerRuntime1.getRootDataStore(alias), "A local aliased datastore should be a root datastore");
+                await containerRuntime1.getRootDataStore(_alias), "A local aliased datastore should be a root datastore");
         });
     });
 });

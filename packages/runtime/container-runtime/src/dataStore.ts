@@ -123,7 +123,7 @@ class DataStore implements IDataStore {
         private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
         private readonly internalId: string,
         private readonly runtime: ContainerRuntime,
-        private datastores: DataStores,
+        private readonly datastores: DataStores,
         private readonly logger: ITelemetryLogger,
     ) { }
     public get IFluidRouter() { return this.fluidDataStoreChannel; }

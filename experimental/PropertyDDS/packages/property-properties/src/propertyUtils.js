@@ -4,7 +4,6 @@
  */
 
 export class PropertyUtils {
-
     /**
      * Gather all properties that pass an arbitrary predicate function
      * @param {property-properties.NodeProperty} in_rootProperty The root property to traverse from
@@ -12,9 +11,9 @@ export class PropertyUtils {
      * @return {Array.<property-properties.BasePropertyy>} The list of properties that passed the predicate
      * function
      */
-    static gatherProperties = function (in_rootProperty, in_predicate) {
+    static gatherProperties = function(in_rootProperty, in_predicate) {
         var gatheredProperties = {};
-        in_rootProperty.traverseDown(function (property, path) {
+        in_rootProperty.traverseDown(function(property, path) {
             if (in_predicate(property)) {
                 gatheredProperties[path] = property;
             }
@@ -22,5 +21,4 @@ export class PropertyUtils {
 
         return gatheredProperties;
     };
-
 }

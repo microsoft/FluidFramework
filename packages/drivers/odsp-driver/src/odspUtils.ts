@@ -32,6 +32,7 @@ import {
     ICacheEntry,
     snapshotKey,
     InstrumentedStorageTokenFetcher,
+    IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -271,7 +272,7 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
 
 export function toInstrumentedOdspTokenFetcher(
     logger: ITelemetryLogger,
-    resolvedUrl: IOdspResolvedUrl,
+    resolvedUrlParts: IOdspUrlParts,
     tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
     throwOnNullToken: boolean,
 ): InstrumentedStorageTokenFetcher {
@@ -290,9 +291,7 @@ export function toInstrumentedOdspTokenFetcher(
             },
             async (event) => tokenFetcher({
                 ...options,
-                siteUrl: resolvedUrl.siteUrl,
-                driveId: resolvedUrl.driveId,
-                itemId: resolvedUrl.itemId,
+                ...resolvedUrlParts,
             }).then((tokenResponse) => {
                 const token = tokenFromResponse(tokenResponse);
                 // This event alone generates so many events that is materially impacts cost of telemetry

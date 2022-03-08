@@ -799,13 +799,13 @@ function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
 
 class Viewport {
     // Keep the line divs in order
-    private lineDivs: ILineDiv[] = [];
+    private readonly lineDivs: ILineDiv[] = [];
     private lineTop = 0;
     private excludedRects = <IExcludedRectangle[]>[];
     private lineX = 0;
     private readonly inclusions: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
 
-    constructor(private maxHeight: number, public div: IViewportDiv, private width: number) {
+    constructor(private readonly maxHeight: number, public div: IViewportDiv, private readonly width: number) {
     }
 
     // Remove inclusions that are not in the excluded rect list

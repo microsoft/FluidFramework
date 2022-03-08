@@ -61,13 +61,16 @@
     "@fluid-experimental/property-common": "^0.58.1000",
     "ajv": "7.1.1",
     "async": "^3.2.0",
+    "fastest-json-copy": "^1.0.1",
     "lodash": "^4.17.21",
     "semver": "^7.3.4",
-    "traverse": "0.6.6"
+    "traverse": "0.6.6",
+    "underscore": "^1.12.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/mocha-test-setup": "^0.58.1000",
+    "@types/mocha": "^8.2.2",
     "chai": "^4.2.0",
     "concurrently": "^6.2.0",
     "cross-env": "^7.0.2",
