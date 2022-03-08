@@ -174,8 +174,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     createSubDirectory(subdirName: string): IDirectory;
     delete(key: string): boolean;
     deleteSubDirectory(subdirName: string): boolean;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "dispose"
-    //
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)

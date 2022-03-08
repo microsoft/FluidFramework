@@ -428,9 +428,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         return this;
     }
 
-    /**
-     * {@inheritDoc IDirectory.dispose}
-     */
     public dispose(error?: Error): void {
         this._disposed = true;
         this.root.dispose();        
@@ -875,9 +872,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         super();
     }
 
-    /**
-     * {@inheritDoc IDirectory.dispose}
-     */
     public dispose(): void {
         this._disposed = true;
         this.emit("dispose", this);   
