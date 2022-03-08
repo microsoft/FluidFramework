@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IClient } from "@fluidframework/protocol-definitions";
 import { strict as assert } from "assert";
+import { IClient } from "@fluidframework/protocol-definitions";
 import { stub, useFakeTimers, SinonFakeTimers } from "sinon";
 import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection";
 import * as joinSession from "../vroom";

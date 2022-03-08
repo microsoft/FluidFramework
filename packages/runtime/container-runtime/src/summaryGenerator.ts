@@ -201,7 +201,7 @@ export class SummaryGenerator {
             fullTree,
             timeSinceLastAttempt,
             timeSinceLastSummary,
-        }
+        };
 
         const summarizeEvent = PerformanceEvent.start(logger, {
             eventName: "Summarize",

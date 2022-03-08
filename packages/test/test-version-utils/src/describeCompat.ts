@@ -48,6 +48,7 @@ function createCompatSuite(
                     }
                     return provider;
                 });
+                // eslint-disable-next-line prefer-arrow-callback
                 afterEach(function(done: Mocha.Done) {
                     done(getUnexpectedLogErrorException(provider.logger, "Use itExpects to specify expected errors. "));
                     if (resetAfterEach) {

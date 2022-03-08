@@ -25,6 +25,7 @@ import {
     normalizeError,
     logIfFalse,
     safeRaiseEvent,
+    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -53,7 +54,6 @@ import {
     IConnectionManagerFactoryArgs,
     IConnectionManager,
  } from "./contracts";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;
@@ -184,7 +184,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
-
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents: JSON.stringify(contents),
             metadata,
@@ -582,7 +581,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 reason: {
                     value: reason,
                     tag: TelemetryDataTag.PackageData,
-                }
+                },
             });
             this.messageBuffer.length = 0;
         }
