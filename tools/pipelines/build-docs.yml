@@ -299,7 +299,7 @@ stages:
 
         - task: AzureStaticWebApp@0
           displayName: 'Deploy website to ASWA'
-          condition: and(in(stageDependencies.guardian.guardian_tasks.result, 'Succeeded', 'SucceededWithIssues'), eq(variables.shouldDeploy, true))
+          condition: eq(variables.shouldDeploy, true)
           inputs:
             skip_app_build: true # site was built in previous stage
             cwd: $(Build.SourcesDirectory)
