@@ -8,7 +8,7 @@ import cors from "cors";
 import express, { Express } from "express";
 import morgan from "morgan";
 import nconf from "nconf";
-import split = require("split");
+import split from "split";
 import winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { IExternalStorageManager } from "./externalStorageManager";

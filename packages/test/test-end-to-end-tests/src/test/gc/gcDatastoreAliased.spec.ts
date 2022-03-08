@@ -16,7 +16,7 @@ import { describeFullCompat } from "@fluidframework/test-version-utils";
 import {
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import { IContainerRuntimeBase, } from "@fluidframework/runtime-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { TestDataObject } from "./mockSummarizerClient";
 import { mockConfigProvider } from "./mockConfigProivder";
 
@@ -50,7 +50,7 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         [innerRequestHandler],
         runtimeOptions,
     );
-    
+
     // Enable config provider setting to write GC data at the root.
     const settings = { "Fluid.GarbageCollection.LogUnknownOutboundRoutes": "true" };
     const configProvider = mockConfigProvider(settings);
@@ -67,7 +67,7 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
 
     const createContainer = async (): Promise<IContainer> => {
         return provider.createContainer(runtimeFactory, { configProvider });
-    }
+    };
     const loadContainer = async (): Promise<IContainer> => {
         return provider.loadContainer(runtimeFactory, { configProvider });
     };
@@ -94,7 +94,7 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         // We run the summary so await this.getInitialSnapshotDetails() is called before the datastore is aliased
-        // and after the datastore is attached. This sets the isRootDataStore. This should be passing as there is 
+        // and after the datastore is attached. This sets the isRootDataStore. This should be passing as there is
         // further GC work that will require this test to pass https://github.com/microsoft/FluidFramework/issues/8859
         await summarizeOnContainer(container2);
 
@@ -103,15 +103,15 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         const aliasResult1 = await aliasableDataStore1.trySetAlias(alias);
         assert(aliasResult1 === "Success", `Expected an successful aliasing. Got: ${aliasResult1}`);
         await provider.ensureSynchronized();
-        
+
         // Should be able to retrieve root datastore from remote
         const containerRuntime2 = mainDataStore2.containerRuntime;
         const aliasableDataStore2 = await containerRuntime2.getRootDataStore(alias);
         const aliasedDataStoreResponse2 = await aliasableDataStore2.request({url:"/"});
         const aliasedDataStore2 = aliasedDataStoreResponse2.value as TestDataObject;
         assert(aliasedDataStore2._context.baseSnapshot?.unreferenced !== true, "datastore should be referenced");
-        
+
         await summarizeOnContainer(container2);
         // TODO: Check GC is notified
     });
-}); 
+});

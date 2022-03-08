@@ -272,9 +272,9 @@ describe("Odsp Error", () => {
         const responseText = {
             error: {
                 "@error.redirectLocation": redirectLocation,
-                code: "itemNotFound",
-                message: "The site has been moved to a new location.",
-                innerError: {},
+                "code": "itemNotFound",
+                "message": "The site has been moved to a new location.",
+                "innerError": {},
             },
         };
         const error: any = createOdspNetworkErrorWithResponse(
