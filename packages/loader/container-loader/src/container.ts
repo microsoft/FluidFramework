@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-
+// eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
@@ -221,7 +221,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
 }
 
 const getCodeProposal =
-
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
@@ -1571,13 +1571,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private propagateConnectionState() {
-        if(this.closed){
-            // its possible the container is closed during initial
-            // connecting phase, and there is not context, or protocolHandler
-            // so if the container is already closed, do not propagate the state
-            return;
-        }
-
         const logOpsOnReconnect: boolean =
             this.connectionState === ConnectionState.Connected &&
             !this.firstConnection &&
