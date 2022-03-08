@@ -208,7 +208,6 @@ stages:
   # BEGIN Secure development tasks
 - stage: guardian
   displayName: Guardian
-  dependsOn: build
   pool:
     vmImage: windows-latest
   jobs:
@@ -282,7 +281,6 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  dependsOn: [build, guardian]
   pool: Small
   jobs:
     - job: deploy_site
