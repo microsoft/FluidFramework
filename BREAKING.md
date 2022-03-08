@@ -15,7 +15,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Removed `IOdspResolvedUrl.sharingLinkToRedeem`](#Removed-IOdspResolvedUrl.sharingLinkToRedeem)
 - [Removed url from ICreateBlobResponse](#removed-url-from-ICreateBlobResponse)
 - [`readonly` removed from `IDeltaManager`, `DeltaManager`, and `DeltaManagerProxy`](#readonly-removed-from-IDeltaManager-and-DeltaManager-DeltaManagerProxy)
-- [Synthesize Decoupled from IFluidObject and Deprecations Removed](Synthesize-Decoupled-from-IFluidObject-and-Deprecations-Removed)
+- [Synthesize Decoupled from IFluidObject and Deprecations Removed](#Synthesize-Decoupled-from-IFluidObject-and-Deprecations-Removed)
 - [codeDetails removed from Container](#codeDetails-removed-from-Container)
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
 - [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
