@@ -208,13 +208,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public async isRoot(): Promise<boolean> {
-        // This call updates this.isRootDataStore if it has not yet been updated
-        // The initial value is stored in the initial snapshot of the data store
-        const { isRootDataStore } = await this.getInitialSnapshotDetails();
-        // Prevent isRootDataStore from accidentally setting this.isRootDataStore to false.
-        // This is backwards compatible as older clients use this.isRootDataStore as the source of truth
-        this.isRootDataStore = this.isRootDataStore || isRootDataStore;
-        return this.isRootDataStore;
+        return this.isAliased() || (await this.getInitialSnapshotDetails()).isRootDataStore;
+    }
+
+    protected isAliased(): boolean {
+        return this.isAliasedDataStore || false;
     }
 
     protected registry: IFluidDataStoreRegistry | undefined;
@@ -229,7 +227,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _attachState: AttachState;
 
     // Calls to isRoot should be made instead of directly accessing this member
-    protected isRootDataStore: boolean | undefined;
+    private isAliasedDataStore: boolean | undefined;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
@@ -455,9 +453,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
 
         // Add data store's attributes to the summary.
-        const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
-        this.isRootDataStore = isRootDataStore;
-        const attributes = createAttributes(pkg, this.isRootDataStore, this.disableIsolatedChannels);
+        const { pkg } = await this.getInitialSnapshotDetails();
+        const isRootOrAliasedDataStore = await this.isRoot();
+        const attributes = createAttributes(pkg, isRootOrAliasedDataStore, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC data to the summary if it's not written at the root.
@@ -683,7 +681,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * This method should not be used outside of the aliasing context.
      * It will be removed, as the source of truth for this flag will be the aliasing blob.
      */
-    public abstract setRoot(): void;
+     public setRoot(): void {
+        this.isAliasedDataStore = true;
+    }
 
     /**
      * @deprecated - Renamed to getBaseGCDetails().
@@ -800,7 +800,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
              * data stores in older documents are not garbage collected incorrectly. This may lead to additional
              * roots in the document but they won't break.
              */
-            isRootDataStore = this.isRootDataStore === true || (attributes.isRootDataStore ?? true);
+            isRootDataStore = attributes.isRootDataStore ?? true;
 
             if (hasIsolatedChannels(attributes)) {
                 tree = tree.trees[channelsTreeName];
@@ -809,13 +809,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
             }
         }
 
-        // Maintain the truth of this.isRootDataStore
-        this.isRootDataStore = this.isRootDataStore || isRootDataStore;
-
         return {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             pkg: this.pkg!,
-            isRootDataStore: this.isRootDataStore,
+            isRootDataStore,
             snapshot: tree,
         };
     });
@@ -838,15 +835,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
     public generateAttachMessage(): IAttachMessage {
         throw new Error("Cannot attach remote store");
     }
-
-    /**
-     * @deprecated - Sets the datastore as root, for aliasing purposes: #7948
-     * This method should not be used outside of the aliasing context.
-     * It will be removed, as the source of truth for this flag will be the aliasing blob.
-     */
-    public setRoot(): void {
-        this.isRootDataStore = true;
-    }
 }
 
 /**
@@ -858,6 +846,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
      * @deprecated 0.16 Issue #1635, #3631
      */
     public readonly createProps?: any;
+    private isLocalRootDataStore: boolean | undefined;
 
     constructor(props: ILocalFluidDataStoreContextProps) {
         super(
@@ -869,7 +858,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         );
 
         this.snapshotTree = props.snapshotTree;
-        this.isRootDataStore = props.isRootDataStore;
+        this.isLocalRootDataStore = props.isRootDataStore;
         this.createProps = props.createProps;
         this.attachListeners();
     }
@@ -888,8 +877,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     public generateAttachMessage(): IAttachMessage {
         assert(this.channel !== undefined, 0x14f /* "There should be a channel when generating attach message" */);
         assert(this.pkg !== undefined, 0x150 /* "pkg should be available in local data store context" */);
-        assert(this.isRootDataStore !== undefined,
-            0x151 /* "isRootDataStore should be available in local data store context" */);
+        assert(this.isLocalRootDataStore !== undefined,
+            0x151 /* "isLocalRootDataStore should be available in local data store context" */);
 
         const summarizeResult = this.channel.getAttachSummary();
 
@@ -901,7 +890,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         // Add data store's attributes to the summary.
         const attributes = createAttributes(
             this.pkg,
-            this.isRootDataStore,
+            this.isLocalRootDataStore,
             this.disableIsolatedChannels,
         );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
@@ -935,16 +924,18 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
                 // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
                 // stores in older documents are not garbage collected incorrectly. This may lead to additional
                 // roots in the document but they won't break.
-                this.isRootDataStore = this.isRootDataStore || (attributes.isRootDataStore ?? true);
+                this.isLocalRootDataStore = this.isLocalRootDataStore ||
+                    this.isAliased() ||
+                    (attributes.isRootDataStore ?? true);
             }
         }
         assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
-        assert(this.isRootDataStore !== undefined,
-            0x153 /* "isRootDataStore should be available in local data store" */);
+        assert(this.isLocalRootDataStore !== undefined,
+            0x153 /* "isLocalRootDataStore should be available in local data store" */);
 
         return {
             pkg: this.pkg,
-            isRootDataStore: this.isRootDataStore,
+            isRootDataStore: this.isLocalRootDataStore,
             snapshot,
         };
     }
@@ -967,8 +958,13 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
      * This method should not be used outside of the aliasing context.
      * It will be removed, as the source of truth for this flag will be the aliasing blob.
      */
-    public setRoot(): void {
-        this.isRootDataStore = true;
+        public setRoot(): void {
+            this.isLocalRootDataStore = true;
+            super.setRoot();
+        }
+
+    public async isRoot(): Promise<boolean> {
+        return this.isLocalRootDataStore || await super.isRoot();
     }
 }
 
@@ -1019,7 +1015,7 @@ export class LocalDetachedFluidDataStoreContext
 
         super.bindRuntime(dataStoreRuntime);
 
-        if (this.isRootDataStore) {
+        if (await this.isRoot()) {
             dataStoreRuntime.bindToContext();
         }
     }

@@ -492,7 +492,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             
             // Should be able to retrieve root datastore from remote
             assert.doesNotThrow(async () => 
-                await containerRuntime2.getRootDataStore(alias), "An aliased datastore should be a root datastore");
+                await containerRuntime2.getRootDataStore(alias), "A remote aliased datastore should be a root datastore");
+
+            // Should be able to retrieve local root datastore
+            assert.doesNotThrow(async () => 
+                await containerRuntime1.getRootDataStore(alias), "A local aliased datastore should be a root datastore");
         });
     });
 });
