@@ -192,6 +192,7 @@ export function generateClientNames(): string[] {
     addClientNames("A", 26);
     addClientNames("a", 26);
     addClientNames("0", 17);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return clientNames;
 }
 

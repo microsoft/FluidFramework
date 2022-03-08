@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const _ = require('lodash');
-const { ValueArrayProperty } = require('./valueArrayProperty');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const { TypeIdHelper } = require('@fluid-experimental/property-changeset');
 const { BaseDataArray } = require('@fluid-experimental/property-common');
+const _ = require('lodash');
+const { ValueArrayProperty } = require('./valueArrayProperty');
 
 /**
  * This class is a specialized version of the ArrayProperty for enums.
@@ -32,7 +32,7 @@ export class EnumArrayProperty extends ValueArrayProperty {
         // dictonary [value->enum] and [enum->value] to efficiently lookup
         // values/enums for the property.
         this._enumDictionary = in_params._enumDictionary;
-    };
+    }
 
     /**
      * Since an enum can be identified by its value and its enum string,
@@ -56,7 +56,7 @@ export class EnumArrayProperty extends ValueArrayProperty {
                 return in_value;
             }
         }
-    };
+    }
 
     /**
      * inserts the content of a given array into the array property
@@ -77,11 +77,11 @@ export class EnumArrayProperty extends ValueArrayProperty {
 
         var internalValueArray = [];
         var that = this;
-        _.each(in_array, function (element) {
+        _.each(in_array, function(element) {
             internalValueArray.push(that._convertEnumToInternalValue(element));
         });
         ValueArrayProperty.prototype.insertRange.call(this, in_offset, internalValueArray);
-    };
+    }
 
     /**
      * Sets the content of an enum in an enum array
@@ -95,7 +95,7 @@ export class EnumArrayProperty extends ValueArrayProperty {
             throw new Error(MSG.VALUE_STRING_OR_NUMBER + in_value);
         }
         this.setRange(in_index, [in_value]);
-    };
+    }
 
     /**
      * Sets the content of an enum in an enum array. Alternative syntax to .set()
@@ -106,7 +106,7 @@ export class EnumArrayProperty extends ValueArrayProperty {
      */
     setEnumByString(in_index, in_value) {
         this.set(in_index, in_value);
-    };
+    }
 
     /**
      * sets the array properties elements to the content of the given array
@@ -127,11 +127,11 @@ export class EnumArrayProperty extends ValueArrayProperty {
 
         var internalValueArray = [];
         var that = this;
-        _.each(in_array, function (element) {
+        _.each(in_array, function(element) {
             internalValueArray.push(that._convertEnumToInternalValue(element));
         });
         ValueArrayProperty.prototype.setRange.call(this, in_offset, internalValueArray);
-    };
+    }
 
     /**
      * get the array element at a given index
@@ -147,7 +147,7 @@ export class EnumArrayProperty extends ValueArrayProperty {
         } else {
             return resultEntry.id;
         }
-    };
+    }
 
     /**
      * get an array of the enum strings starting at a given index
@@ -170,7 +170,7 @@ export class EnumArrayProperty extends ValueArrayProperty {
             result.push(this.getEnumString(i + in_offset));
         }
         return result;
-    };
+    }
 
     /**
      * Returns the full property type identifier for the ChangeSet including the enum type id
@@ -183,7 +183,7 @@ export class EnumArrayProperty extends ValueArrayProperty {
         } else {
             return TypeIdHelper.createSerializationTypeId(this._typeid, 'array', true);
         }
-    };
+    }
 
     /**
      * @inheritdoc
@@ -195,7 +195,7 @@ export class EnumArrayProperty extends ValueArrayProperty {
             result.push(child);
         }
         return result;
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -203,7 +203,7 @@ export class EnumArrayProperty extends ValueArrayProperty {
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Int32Array, in_length);
-    };
+    }
 
     /**
      * let the user to query all valid entries of an enum array property
@@ -211,7 +211,6 @@ export class EnumArrayProperty extends ValueArrayProperty {
      */
     getValidEnumList() {
         return this._enumDictionary.enumEntriesById;
-    };
-
+    }
 }
 EnumArrayProperty.prototype._typeid = 'Enum';

@@ -67,6 +67,7 @@ steps:
 
 - task: AzureCLI@2
   displayName: 'Upload JSON'
+  continueOnError: true
   inputs:
     azureSubscription: 'fluid-docs'
     scriptType: bash
@@ -77,9 +78,10 @@ steps:
 - ${{ if eq(parameters.uploadAsLatest, true) }}:
   - task: AzureCLI@2
     displayName: 'Upload JSON as latest.tar.gz'
+    continueOnError: true
     inputs:
       azureSubscription: 'fluid-docs'
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |
-        az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --verbose
+        az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --overwrite --verbose

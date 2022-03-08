@@ -41,7 +41,7 @@ const ensureContainerConnected = async (container: IContainer) => {
     if (!container.connected) {
         return new Promise<void>((resolve) => container.once("connected", () => resolve()));
     }
-}
+};
 
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
 

@@ -7,7 +7,7 @@ import { mountableViewRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject, RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
@@ -17,24 +17,18 @@ export { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "./prosemirror"
 
 const defaultComponentId = "default";
 
-type ViewCallback<T> = (fluidModel: T) => any;
-
-const makeViewRequestHandler = <T>(viewCallback: ViewCallback<T>): RuntimeRequestHandler =>
-    async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts.length === 0) {
-            const objectRequest = RequestParser.create({
-                url: ``,
-                headers: request.headers,
-            });
-            const fluidObject = await requestFluidObject<T>(
-                await runtime.getRootDataStore(defaultComponentId),
-                objectRequest);
-            const viewResponse = viewCallback(fluidObject);
-            return { status: 200, mimeType: "fluid/view", value: viewResponse };
-        }
-    };
-
-const viewCallback = (proseMirror: ProseMirror) => new ProseMirrorView(proseMirror.collabManager);
+const viewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
+    if (request.pathParts.length === 0) {
+        const objectRequest = RequestParser.create({
+            url: ``,
+            headers: request.headers,
+        });
+        const proseMirror = await requestFluidObject<ProseMirror>(
+            await runtime.getRootDataStore(defaultComponentId),
+            objectRequest);
+        return { status: 200, mimeType: "fluid/view", value: new ProseMirrorView(proseMirror.collabManager) };
+    }
+};
 
 class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
@@ -53,7 +47,7 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
             context,
             registry,
             buildRuntimeRequestHandler(
-                mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)]),
+                mountableViewRequestHandler(MountableView, [viewRequestHandler]),
             ),
             undefined, // runtimeOptions
             undefined, // containerScope
