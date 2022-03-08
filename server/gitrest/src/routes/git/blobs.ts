@@ -16,7 +16,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.createBlob(
+        ).then(async (repoManager) => repoManager.createBlob(
             request.body as ICreateBlobParams,
         ));
 
@@ -30,7 +30,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.getBlob(
+        ).then(async (repoManager) => repoManager.getBlob(
             request.params.sha,
         ));
 

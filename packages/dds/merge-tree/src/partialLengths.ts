@@ -177,8 +177,8 @@ export class PartialSequenceLengths {
                     // Find next earliest sequence number
                     if (indices[k] < childPartialsCounts[k]) {
                         const cpLen = childPartials[k].partialLengths[indices[k]];
-                        // eslint-disable-next-line max-len
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         if ((outerIndexOfEarliest < 0) || (cpLen.seq < earliestPartialLength!.seq)) {
                             outerIndexOfEarliest = k;
                             earliestPartialLength = cpLen;
@@ -186,8 +186,7 @@ export class PartialSequenceLengths {
                     }
                 }
                 if (outerIndexOfEarliest >= 0) {
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     addNext(earliestPartialLength!);
                     indices[outerIndexOfEarliest]++;
                 }
@@ -263,9 +262,9 @@ export class PartialSequenceLengths {
         }
     }
 
-    private static getOverlapClients(overlapClientids: number[], seglen: number) {
+    private static getOverlapClients(overlapClientIds: number[], seglen: number) {
         const bst = new RedBlackTree<number, IOverlapClient>(compareNumbers);
-        for (const clientId of overlapClientids) {
+        for (const clientId of overlapClientIds) {
             bst.put(clientId, { clientId, seglen });
         }
         return bst;
@@ -277,11 +276,11 @@ export class PartialSequenceLengths {
         seglen: number) {
         if (partialLength.overlapRemoveClients) {
             for (const clientId of overlapRemoveClientIds) {
-                const ovlapClientNode = partialLength.overlapRemoveClients.get(clientId);
-                if (!ovlapClientNode) {
+                const overlapClientNode = partialLength.overlapRemoveClients.get(clientId);
+                if (!overlapClientNode) {
                     partialLength.overlapRemoveClients.put(clientId, { clientId, seglen });
                 } else {
-                    ovlapClientNode.data.seglen += seglen;
+                    overlapClientNode.data.seglen += seglen;
                 }
             }
         } else {
@@ -367,7 +366,6 @@ export class PartialSequenceLengths {
             }
         }
         if (seqPartialLen === undefined) {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             seqPartialLen = {
                 clientId,
                 seglen: seqSeglen,
@@ -453,14 +451,14 @@ export class PartialSequenceLengths {
     public getPartialLength(refSeq: number, clientId: number) {
         let pLen = this.minLength;
         const seqIndex = latestLEQ(this.partialLengths, refSeq);
-        const cliLatestindex = this.cliLatest(clientId);
+        const cliLatestIndex = this.cliLatest(clientId);
         const cliSeq = this.clientSeqNumbers[clientId];
         if (seqIndex >= 0) {
             // Add the partial length up to refSeq
             pLen += this.partialLengths[seqIndex].len;
 
-            if (cliLatestindex >= 0) {
-                const cliLatest = cliSeq[cliLatestindex];
+            if (cliLatestIndex >= 0) {
+                const cliLatest = cliSeq[cliLatestIndex];
 
                 if (cliLatest.seq > refSeq) {
                     // The client has local edits after refSeq, add in the length adjustments
@@ -474,8 +472,8 @@ export class PartialSequenceLengths {
         } else {
             // RefSeq is before any of the partial lengths
             // so just add in all local edits of that client (which should all be after the refSeq)
-            if (cliLatestindex >= 0) {
-                const cliLatest = cliSeq[cliLatestindex];
+            if (cliLatestIndex >= 0) {
+                const cliLatest = cliSeq[cliLatestIndex];
                 pLen += cliLatest.len;
             }
         }

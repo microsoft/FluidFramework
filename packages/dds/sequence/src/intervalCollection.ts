@@ -18,9 +18,7 @@ import {
     IntervalNode,
     IntervalTree,
     LocalReference,
-    MergeTree,
     MergeTreeDeltaType,
-    ordinalToArray,
     PropertiesManager,
     PropertySet,
     RedBlackTree,
@@ -195,7 +193,6 @@ export class Interval implements ISerializableInterval {
 export class SequenceInterval implements ISerializableInterval {
     public properties: PropertySet;
     public propertyManager: PropertiesManager;
-    private readonly checkMergeTree: MergeTree;
 
     constructor(
         public start: LocalReference,
@@ -260,9 +257,6 @@ export class SequenceInterval implements ISerializableInterval {
     public overlaps(b: SequenceInterval) {
         const result = (this.start.compare(b.end) < 0) &&
             (this.end.compare(b.start) >= 0);
-        if (this.checkMergeTree) {
-            this.checkOverlaps(b, result);
-        }
         return result;
     }
 
@@ -298,24 +292,6 @@ export class SequenceInterval implements ISerializableInterval {
         const startPos = this.start.toPosition();
         const endPos = this.start.toPosition();
         return (endPos > bstart) && (startPos < bend);
-    }
-
-    private checkOverlaps(b: SequenceInterval, result: boolean) {
-        const astart = this.start.toPosition();
-        const bstart = b.start.toPosition();
-        const aend = this.end.toPosition();
-        const bend = b.end.toPosition();
-        const checkResult = ((astart < bend) && (bstart < aend));
-        if (checkResult !== result) {
-            // eslint-disable-next-line max-len
-            console.log(`check mismatch: res ${result} ${this.start.segment === b.end.segment} ${b.start.segment === this.end.segment}`);
-            console.log(`as ${astart} ae ${aend} bs ${bstart} be ${bend}`);
-            console.log(`as ${ordinalToArray(this.start.segment.ordinal)}@${this.start.offset}`);
-            console.log(`ae ${ordinalToArray(this.end.segment.ordinal)}@${this.end.offset}`);
-            console.log(`bs ${ordinalToArray(b.start.segment.ordinal)}@${b.start.offset}`);
-            console.log(`be ${ordinalToArray(b.end.segment.ordinal)}@${b.end.offset}`);
-            console.log(this.checkMergeTree.nodeToString(b.start.segment.parent, ""));
-        }
     }
 
     public modify(label: string, start: number, end: number) {

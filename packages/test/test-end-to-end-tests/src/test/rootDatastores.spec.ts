@@ -57,7 +57,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         provider.reset();
         const configWithFeatureGates = {
             ...containerConfig,
-            loaderProps: { configProvider: configProvider(featureGates) }
+            loaderProps: { configProvider: configProvider(featureGates) },
         };
         container1 = await provider.makeTestContainer(configWithFeatureGates);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "/");
@@ -109,7 +109,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         afterEach(async () => reset());
 
         itExpects("Root datastore creation fails at attach op", [
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             // Isolate inbound communication
@@ -127,7 +127,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         itExpects("Root datastore creation with props fails at attach op",[
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             // Isolate inbound communication
@@ -145,7 +145,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         itExpects("Root datastore creation with the same id breaks container",[
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             await createRootDataStore(dataObject1, "2");
@@ -155,7 +155,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         itExpects("Root datastore creation with the same id and legacy API breaks container",[
-            {eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id"}
+            { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
             await createRootDataStore(dataObject1, "2");
@@ -320,7 +320,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const aliasResult2 = await ds2.trySetAlias(alias);
             const aliasResult3 = await ds2.trySetAlias(alias + alias);
 
-
             assert.equal(aliasResult1, "Success");
             assert.equal(aliasResult2, "Conflict");
             assert.equal(aliasResult3, "AlreadyAliased");
@@ -386,7 +385,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         it("Assign multiple data stores to the same alias, first write wins, " +
         "different containers from snapshot", async () => {
-
             await setupContainers({
                 ... testContainerConfig,
                 runtimeOptions: {
@@ -447,7 +445,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         /**
          * Aliasing datastores summarized before the alias op is sent and after the attach op is sent
          * does not cause a datastore corruption issue
-         * 
+         *
          * This test validates a bug where the rootiness of a datastore was not set to true in the
          * above scenario.
          */
@@ -472,27 +470,27 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             // but aliasing happens afterwards
             (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
             await provider.ensureSynchronized();
-            
+
             const containerRuntime2 = runtimeOf(dataObject2) as ContainerRuntime;
             let callFailed = false;
-            try{
+            try {
                 // This executes getInitialSnapshotDetails, a LazyPromise, before the alias op is sent to update
                 // the isRootDataStore property in the dataStoreContext
                 await containerRuntime2.getRootDataStore(aliasedDataStore1.runtime.id);
-            }catch(e){
+            } catch(e) {
                 callFailed = true;
             }
             assert(callFailed, "Expected getRootDataStore to fail as the datastore is not yet a root datastore");
-            
+
             // Alias a datastore
-            const alias = "alias";
-            const aliasResult1 = await aliasableDataStore1.trySetAlias(alias);
+            const _alias = "alias";
+            const aliasResult1 = await aliasableDataStore1.trySetAlias(_alias);
             assert(aliasResult1 === "Success", `Expected an successful aliasing. Got: ${aliasResult1}`);
             await provider.ensureSynchronized();
-            
+
             // Should be able to retrieve root datastore from remote
-            assert.doesNotThrow(async () => 
-                await containerRuntime2.getRootDataStore(alias), "An aliased datastore should be a root datastore");
+            assert.doesNotThrow(async () =>
+                containerRuntime2.getRootDataStore(_alias), "An aliased datastore should be a root datastore");
         });
     });
 });

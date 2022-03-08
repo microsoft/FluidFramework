@@ -52,7 +52,8 @@ import { pkgVersion as driverVersion } from "./packageVersion";
  */
 export class OdspDocumentService implements IDocumentService {
     private _policies: IDocumentServicePolicies;
-
+    // Timer which runs and executes the join session call after intervals.
+    private joinSessionRefreshTimer: ReturnType<typeof setTimeout> | undefined;
     /**
      * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -237,27 +238,7 @@ export class OdspDocumentService implements IDocumentService {
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
 
-            const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options).catch((e) => {
-                const likelyFacetCodes = e as IFacetCodes;
-                if (Array.isArray(likelyFacetCodes.facetCodes)) {
-                    for (const code of likelyFacetCodes.facetCodes) {
-                        switch (code) {
-                            case "sessionForbiddenOnPreservedFiles":
-                            case "sessionForbiddenOnModerationEnabledLibrary":
-                            case "sessionForbiddenOnRequireCheckout":
-                                // This document can only be opened in storage-only mode.
-                                // DeltaManager will recognize this error
-                                // and load without a delta stream connection.
-                                this._policies = {...this._policies,storageOnly: true};
-                                throw new DeltaStreamConnectionForbiddenError(code, { driverVersion });
-                            default:
-                                continue;
-                        }
-                    }
-                }
-                throw e;
-            });
-
+            const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options);
             const [websocketEndpoint, websocketToken, io] =
                 await Promise.all([
                     joinSessionPromise,
@@ -286,6 +267,8 @@ export class OdspDocumentService implements IDocumentService {
                 // On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
                 // get the auth error on reconnecting and face latency.
                 connection.on("disconnect", (error: any) => {
+                    // Clear the join session refresh timer so that it can be restarted on reconnection.
+                    this.clearJoinSessionTimer();
                     if (typeof error === "object" && error !== null
                         && error.errorType === DriverErrorType.authorizationError) {
                         this.cache.sessionJoinCache.remove(this.joinSessionKey);
@@ -303,12 +286,59 @@ export class OdspDocumentService implements IDocumentService {
         });
     }
 
+    private clearJoinSessionTimer() {
+        if (this.joinSessionRefreshTimer !== undefined) {
+            clearTimeout(this.joinSessionRefreshTimer);
+            this.joinSessionRefreshTimer = undefined;
+        }
+    }
+
+    private async scheduleJoinSessionRefresh(delta: number) {
+        await new Promise<void>((resolve, reject) => {
+            this.joinSessionRefreshTimer = setTimeout(() => {
+                getWithRetryForTokenRefresh(async (options) => {
+                    await this.joinSession(false, options);
+                    resolve();
+                }).catch((error) => {
+                    reject(error);
+                });
+            }, delta);
+        });
+    }
+
     private async joinSession(
         requestSocketToken: boolean,
         options: TokenFetchOptionsEx,
+    ) {
+        return this.joinSessionCore(requestSocketToken, options).catch((e) => {
+            const likelyFacetCodes = e as IFacetCodes;
+            if (Array.isArray(likelyFacetCodes.facetCodes)) {
+                for (const code of likelyFacetCodes.facetCodes) {
+                    switch (code) {
+                        case "sessionForbiddenOnPreservedFiles":
+                        case "sessionForbiddenOnModerationEnabledLibrary":
+                        case "sessionForbiddenOnRequireCheckout":
+                            // This document can only be opened in storage-only mode.
+                            // DeltaManager will recognize this error
+                            // and load without a delta stream connection.
+                            this._policies = {...this._policies,storageOnly: true};
+                            throw new DeltaStreamConnectionForbiddenError(code, { driverVersion });
+                        default:
+                            continue;
+                    }
+                }
+            }
+            throw e;
+        });
+    }
+
+    private async joinSessionCore(
+        requestSocketToken: boolean,
+        options: TokenFetchOptionsEx,
     ): Promise<ISocketStorageDiscovery> {
-        const executeFetch = async () =>
-            fetchJoinSession(
+        const disableJoinSessionRefresh = this.mc.config.getBoolean("Fluid.Driver.Odsp.disableJoinSessionRefresh");
+        const executeFetch = async () => {
+            const joinSessionResponse = await fetchJoinSession(
                 this.odspResolvedUrl,
                 "opStream/joinSession",
                 "POST",
@@ -317,12 +347,65 @@ export class OdspDocumentService implements IDocumentService {
                 this.epochTracker,
                 requestSocketToken,
                 options,
+                disableJoinSessionRefresh,
                 this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
             );
+            return {
+                entryTime: Date.now(),
+                joinSessionResponse,
+            };
+        };
 
-        // Note: The sessionCache is configured with a sliding expiry of 1 hour,
-        // so if we've fetched the join session within the last hour we won't run executeFetch again now.
-        return this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+        const getResponseAndRefreshAfterDeltaMs = async () => {
+            let _response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+            // If the response does not contain refreshSessionDurationSeconds, then treat it as old flow and let the
+            // cache entry to be treated as expired after 1 hour.
+            _response.joinSessionResponse.refreshSessionDurationSeconds =
+                _response.joinSessionResponse.refreshSessionDurationSeconds ?? 3600;
+            return {
+                ..._response,
+                refreshAfterDeltaMs: this.calculateJoinSessionRefreshDelta(
+                    _response.entryTime, _response.joinSessionResponse.refreshSessionDurationSeconds),
+            };
+        };
+        let response = await getResponseAndRefreshAfterDeltaMs();
+        // This means that the cached entry has expired(This should not be possible if the response is fetched
+        // from the network call). In this case we remove the cached entry and fetch the new response.
+        if (response.refreshAfterDeltaMs <= 0) {
+            this.cache.sessionJoinCache.remove(this.joinSessionKey);
+            response = await getResponseAndRefreshAfterDeltaMs();
+        }
+        if (!disableJoinSessionRefresh) {
+            const props = {
+                entryTime: response.entryTime,
+                refreshSessionDurationSeconds:
+                    response.joinSessionResponse.refreshSessionDurationSeconds,
+                refreshAfterDeltaMs: response.refreshAfterDeltaMs,
+            };
+            if (response.refreshAfterDeltaMs > 0) {
+                this.scheduleJoinSessionRefresh(response.refreshAfterDeltaMs)
+                    .catch((error) => {
+                        this.mc.logger.sendErrorEvent({
+                                eventName: "JoinSessionRefreshError",
+                                ...props,
+                            },
+                            error,
+                        );
+                    });
+            } else {
+                // Logging just for informational purposes to help with debugging as this is a new feature.
+                this.mc.logger.sendErrorEvent({
+                    eventName: "JoinSessionRefreshNotScheduled",
+                    ...props,
+                });
+            }
+        }
+        return response.joinSessionResponse;
+    }
+
+    private calculateJoinSessionRefreshDelta(responseFetchTime: number, refreshSessionDurationSeconds: number) {
+        // 30 seconds is buffer time to refresh the session.
+        return responseFetchTime + ((refreshSessionDurationSeconds * 1000) - 30000) - Date.now();
     }
 
     /**

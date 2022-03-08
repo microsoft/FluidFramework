@@ -128,61 +128,61 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * At any point you call reportAndClearTrackedEvents which will provide all unexpected errors, and
  * any expected events that have not occurred.
  */
-export class EventAndErrorTrackingLogger extends TelemetryLogger{
-    constructor(private readonly baseLogger: ITelemetryBaseLogger){
+export class EventAndErrorTrackingLogger extends TelemetryLogger {
+    constructor(private readonly baseLogger: ITelemetryBaseLogger) {
         super();
     }
 
-    private readonly expectedEvents: ({index:number, event: ITelemetryGenericEvent | undefined} | undefined)[] = []
-    private readonly unexpectedErrors: ITelemetryBaseEvent[] =[];
+    private readonly expectedEvents: ({index: number, event: ITelemetryGenericEvent | undefined} | undefined)[] = [];
+    private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
-    public registerExpectedEvent(... orderedExpectedEvents: ITelemetryGenericEvent[]){
-        if(this.expectedEvents.length !== 0){
+    public registerExpectedEvent(... orderedExpectedEvents: ITelemetryGenericEvent[]) {
+        if(this.expectedEvents.length !== 0) {
             // we don't have to error here. just no reason not to. given the events must be
             // ordered it could be tricky to figure out problems around multiple registrations.
             throw new Error(
                 "Expected events already registered.\n"
-                + "Call reportAndClearTrackedEvents to clear them before registering more")
+                + "Call reportAndClearTrackedEvents to clear them before registering more");
         }
         this.expectedEvents.push(... orderedExpectedEvents.map((event,index)=>({index, event})));
     }
 
     send(event: ITelemetryBaseEvent): void {
         const ee = this.expectedEvents[0]?.event;
-        if(ee?.eventName === event.eventName){
+        if(ee?.eventName === event.eventName) {
             let matches = true;
-            for(const key of Object.keys(ee)){
-                if(ee[key] !== event[key]){
+            for(const key of Object.keys(ee)) {
+                if(ee[key] !== event[key]) {
                     matches = false;
                     break;
                 }
             }
-            if(matches){
+            if(matches) {
                 // we found an expected event
                 // so remove it from the list of expected events
                 // and if it is an error, change it to generic
                 // this helps keep our telemetry clear of
                 // expected errors.
                 this.expectedEvents.shift();
-                if(event.category === "error"){
+                if(event.category === "error") {
                     event.category = "generic";
                 }
             }
         }
-        if(event.category === "error"){
+        if(event.category === "error") {
             this.unexpectedErrors.push(event);
         }
 
-        this.baseLogger.send(event)
+        this.baseLogger.send(event);
     }
 
-    public reportAndClearTrackedEvents(){
+    public reportAndClearTrackedEvents() {
         const expectedNotFound = this.expectedEvents.splice(0, this.expectedEvents.length);
         const unexpectedErrors = this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
         return {
             expectedNotFound,
             unexpectedErrors,
-        }
+        };
     }
 }
 
@@ -378,8 +378,8 @@ export class TestObjectProvider implements ITestObjectProvider {
         this._documentIdStrategy.reset();
         const logError = getUnexpectedLogErrorException(this._logger);
         if(logError) {
-            throw logError
-        };
+            throw logError;
+        }
         this._logger = undefined;
         this._documentCreated = false;
     }
@@ -393,16 +393,16 @@ export class TestObjectProvider implements ITestObjectProvider {
     }
 }
 
-export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string){
-    if(logger === undefined){
+export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string) {
+    if(logger === undefined) {
         return;
     }
     const results = logger.reportAndClearTrackedEvents();
-    if(results.unexpectedErrors.length > 0){
+    if(results.unexpectedErrors.length > 0) {
         return new Error(
             `${prefix ?? ""}Unexpected Errors in Logs:\n${JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
     }
-    if(results.expectedNotFound.length > 0){
+    if(results.expectedNotFound.length > 0) {
         return new Error(
             `${prefix ?? ""}Expected Events not found:\n${JSON.stringify(results.expectedNotFound, undefined, 2)}`);
     }

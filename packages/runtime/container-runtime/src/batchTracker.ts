@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import EventEmitter from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import EventEmitter from "events";
 
 export class BatchTracker {
     private readonly logger: ITelemetryLogger;
@@ -33,7 +33,7 @@ export class BatchTracker {
         this.batchEventEmitter.on("batchEnd", (error: any | undefined, message: ISequencedDocumentMessage) => {
             assert(
                 this.startBatchSequenceNumber !== undefined && this.batchProcessingStartTimeStamp !== undefined,
-                "batchBegin must fire before batchEnd");
+                0x2ba /* "batchBegin must fire before batchEnd" */);
 
             const length = message.sequenceNumber - this.startBatchSequenceNumber + 1;
             if (length >= batchLengthThreshold) {
@@ -77,4 +77,4 @@ export const BindBatchTracker = (
     logger: ITelemetryLogger,
     batchLengthThreshold: number = 128,
     batchCountSamplingRate: number = 1000,
-) => new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate)
+) => new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate);

@@ -745,8 +745,8 @@ export function TestPack(verbose = true) {
             client.applyMessages(countToApply);
         }
 
-        function serverProcessSome(server: TestClient, all = false) {
-            const svrMsgCount = server.getMessageCount();
+        function serverProcessSome(_server: TestClient, all = false) {
+            const svrMsgCount = _server.getMessageCount();
             let countToApply: number;
             if (all) {
                 countToApply = svrMsgCount;
@@ -754,7 +754,7 @@ export function TestPack(verbose = true) {
             else {
                 countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
             }
-            return server.applyMessages(countToApply);
+            return _server.applyMessages(countToApply);
         }
 
         function randomSpateOfInserts(client: TestClient, charIndex: number) {
@@ -1399,21 +1399,21 @@ function tst() {
     let corpusFilename = path.join(__dirname, "../../../public/literature/pp.txt");
     let corpusContent = fs.readFileSync(corpusFilename, "utf8");
     const corpusTree = new TST<number>();
-    function addCorpus(corpusContent: string, corpusTree: TST<number>) {
+    function addCorpus(_corpusContent: string, _corpusTree: TST<number>) {
         let count = 0;
         const re = /\b\w+\b/g;
         let result: RegExpExecArray;
         do {
-            result = re.exec(corpusContent);
+            result = re.exec(_corpusContent);
             if (result) {
                 const candidate = result[0];
                 count++;
-                const val = corpusTree.get(candidate);
+                const val = _corpusTree.get(candidate);
                 if (val !== undefined) {
-                    corpusTree.put(candidate, val + 1);
+                    _corpusTree.put(candidate, val + 1);
                 }
                 else {
-                    corpusTree.put(candidate, 1);
+                    _corpusTree.put(candidate, 1);
                 }
             }
         } while (result);
@@ -1517,7 +1517,7 @@ export class DocumentTree {
                 );
                 this.pos++;
             } else {
-
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 const trid = docNode.name + this.ids[docNode.name].toString();
                 docNode.id = trid;
                 id = this.ids[docNode.name]++;
@@ -1560,7 +1560,7 @@ export class DocumentTree {
         };
 
         function printStack(stack: Stack<string>) {
-            // eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in, no-restricted-syntax
             for (const item in stack.items) {
                 log(item);
             }

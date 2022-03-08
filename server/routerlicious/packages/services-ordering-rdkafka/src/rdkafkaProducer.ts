@@ -292,7 +292,6 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 									tenantId: boxcar.tenantId,
 									documentId: boxcar.documentId,
 								});
-
 							} else {
 								boxcar.deferred.resolve();
                                 Lumberjack.info(
@@ -313,7 +312,6 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 						.then(boxcar.deferred.resolve)
 						.catch(boxcar.deferred.reject);
 				}
-
 			} catch (ex) {
 				// produce can throw if the outgoing message queue is full
 				boxcar.deferred.reject(ex);
