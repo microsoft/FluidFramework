@@ -5,10 +5,11 @@
 
 import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils";
 import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
 
 function createExpectsTest(orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) {
-    return async function(this:Context) {
+    return async function(this: Context) {
         const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
         if (provider === undefined) {
             throw new Error("Expected __fluidTestProvider on this");
@@ -33,7 +34,7 @@ function createExpectsTest(orderedExpectedEvents: ITelemetryGenericEvent[], test
 }
 
 export type ExpectsTest =
-    (name: string, orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) => Mocha.Test
+    (name: string, orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) => Mocha.Test;
 
 /**
  * Similar to mocha's it function, but allow specifying expected events.
