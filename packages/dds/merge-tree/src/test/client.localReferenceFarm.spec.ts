@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import random from "random-js";
-import { doOverRange } from ".";
 import { LocalReference, ReferenceType } from "..";
 import {
     IMergeTreeOperationRunnerConfig,
@@ -16,6 +15,7 @@ import {
 } from "./mergeTreeOperationRunner";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
+import { doOverRange } from ".";
 
  const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig = {
     initLen: {min: 2, max: 4},
@@ -26,14 +26,12 @@ import { TestClientLogger } from "./testClientLogger";
     growthFunc: (input: number) => input * 2,
 };
 
-
 describe("MergeTree.Client", () => {
     // Generate a list of single character client names, support up to 69 clients
     const clientNames = generateClientNames();
 
     doOverRange(defaultOptions.initLen, defaultOptions.growthFunc, (initLen)=>{
         doOverRange(defaultOptions.modLen, defaultOptions.growthFunc, (modLen)=>{
-
             it(`LocalReferenceFarm_${initLen}_${modLen}`, async () => {
                 const mt = random.engines.mt19937();
                 mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, initLen, modLen]);
@@ -49,19 +47,19 @@ describe("MergeTree.Client", () => {
                     seq,
                     clients,
                     initLen,
-                    defaultOptions
+                    defaultOptions,
                 );
                 // add local references
-                const refs: LocalReference[][]=[];
+                const refs: LocalReference[][] = [];
 
-                const validateRefs = (reason: string, workload:()=>void)=>{
+                const validateRefs = (reason: string, workload: () => void)=>{
                     const preWorkload = TestClientLogger.toString(clients);
                     workload();
-                    for(let c=1;c<clients.length;c++){
-                        for(let r =0; r<refs[c].length;r++){
+                    for(let c = 1; c < clients.length; c++) {
+                        for(let r = 0; r < refs[c].length; r++) {
                             const pos0 = refs[0][r].toPosition();
                             const posC = refs[c][r].toPosition();
-                            if(pos0 !== posC){
+                            if(pos0 !== posC) {
                                 assert.equal(
                                     pos0, posC,
                                     `${reason}:\n${preWorkload}\n${TestClientLogger.toString(clients)}`);
@@ -74,7 +72,7 @@ describe("MergeTree.Client", () => {
                 validateRefs("Initialize", ()=>{
                     clients.forEach((c,i)=>{
                         refs.push([]);
-                        for(let t = 0;t<c.getLength();t++){
+                        for(let t = 0; t < c.getLength(); t++) {
                             const seg = c.getContainingSegment(t);
                             const lref = new LocalReference(c, seg.segment, seg.offset, ReferenceType.SlideOnRemove);
                             c.addLocalReference(lref);
@@ -84,10 +82,9 @@ describe("MergeTree.Client", () => {
                     });
                 });
 
-
                 validateRefs("After Init Zamboni",()=>{
-                    //trigger zamboni multiple times as it is incremental
-                    for(let i = clients[0].getCollabWindow().minSeq;i<=seq;i++){
+                    // trigger zamboni multiple times as it is incremental
+                    for(let i = clients[0].getCollabWindow().minSeq; i <= seq; i++) {
                         clients.forEach((c)=>c.updateMinSeq(i));
                     }
                 });
@@ -103,15 +100,13 @@ describe("MergeTree.Client", () => {
                     );
                 });
 
-
                 validateRefs("After Final Zamboni",()=>{
-                    //trigger zamboni multiple times as it is incremental
-                    for(let i = clients[0].getCollabWindow().minSeq;i<=seq;i++){
+                    // trigger zamboni multiple times as it is incremental
+                    for(let i = clients[0].getCollabWindow().minSeq; i <= seq; i++) {
                         clients.forEach((c)=>c.updateMinSeq(i));
                     }
                 });
-
-            })
+            });
         });
     });
 });

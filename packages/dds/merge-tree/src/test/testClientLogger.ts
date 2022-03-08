@@ -54,12 +54,10 @@ export function createClientsAtInitialState<TClients extends ClientMap>(
     return {...clients, all};
 }
 export class TestClientLogger {
-
-    public static toString(clients: readonly TestClient[]){
-
+    public static toString(clients: readonly TestClient[]) {
         return clients.map((c)=>this.getSegString(c)).reduce<[string,string]>((pv,cv)=>{
-            pv[0]+=`|${cv.acked.padEnd(cv.local.length,"")}`;
-            pv[1]+=`|${cv.local.padEnd(cv.acked.length,"")}`;
+            pv[0] += `|${cv.acked.padEnd(cv.local.length,"")}`;
+            pv[1] += `|${cv.local.padEnd(cv.acked.length,"")}`;
             return pv;
         },["",""]).join("\n");
     }
@@ -89,7 +87,7 @@ export class TestClientLogger {
                 }
                 const clientLogIndex = i * 2;
 
-                this.ackedLine[clientLogIndex]=getOpString(op.sequencedMessage ?? c.makeOpMessage(op.op))
+                this.ackedLine[clientLogIndex] = getOpString(op.sequencedMessage ?? c.makeOpMessage(op.op));
                 const segStrings = TestClientLogger.getSegString(c);
                 this.ackedLine[clientLogIndex + 1] = segStrings.acked;
                 this.localLine[clientLogIndex + 1] = segStrings.local;
@@ -119,10 +117,10 @@ export class TestClientLogger {
     }
 
     private addNewLogLine() {
-        if(this.incrementalLog){
-            while(this.roundLogLines.length > 0){
+        if(this.incrementalLog) {
+            while(this.roundLogLines.length > 0) {
                 const logLine = this.roundLogLines.shift();
-                if(logLine.some((c)=>c.trim().length >0)){
+                if(logLine.some((c)=>c.trim().length > 0)) {
                     console.log(logLine.map((v, i) => v.padEnd(this.paddings[i])).join(" | "));
                 }
             }
@@ -169,7 +167,7 @@ export class TestClientLogger {
 
     public toString(excludeHeader: boolean = false) {
         let str = "";
-        if(!excludeHeader){
+        if(!excludeHeader) {
             str +=
                 `_: Local State\n`
                 + `-: Deleted\n`
