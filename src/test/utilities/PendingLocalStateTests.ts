@@ -18,7 +18,7 @@ import {
 	StablePlace,
 } from '../..';
 import { fail } from '../../Common';
-import { SharedTreeOp, SharedTreeOpType } from '../../generic/PersistedTypes';
+import { SharedTreeOp, SharedTreeOpType } from '../../generic/persisted-types';
 import type { EditLog } from '../../EditLog';
 import {
 	LocalServerSharedTreeTestingComponents,

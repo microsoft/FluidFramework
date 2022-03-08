@@ -13,7 +13,7 @@ import {
 	ChangeNode,
 	NodeIdContext,
 	NodeIdConverter,
-	TraitLocation_0_0_2,
+	TraitLocationInternal_0_0_2,
 	ChangeNode_0_0_2,
 	tryConvertToTraitLocation_0_0_2,
 	convertTreeNodes,
@@ -36,7 +36,7 @@ export type LeafNode<T> = Omit<T, 'traits'> & { traits: Record<string, never> };
  * Test extension of {@link TraitLocation} which can be converted to stable or legacy formats
  */
 export interface TestTraitLocation extends TraitLocation {
-	stable: TraitLocation_0_0_2;
+	stable: TraitLocationInternal_0_0_2;
 	/** Translate this location into the equivalent location in another ID context */
 	translate(idConverter: NodeIdConverter): TestTraitLocation;
 }

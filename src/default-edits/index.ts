@@ -18,10 +18,9 @@ export {
 	ConstraintEffect,
 	DeleteInternal,
 	MoveInternal,
-	StablePlace_0_0_2,
-	StableRange_0_0_2,
-	getStableNodeId,
-} from './PersistedTypes';
+	StablePlaceInternal_0_0_2,
+	StableRangeInternal_0_0_2,
+} from './persisted-types';
 export * from './ChangeTypes';
 export * from './Factory';
 export * from './HistoryEditFactory';

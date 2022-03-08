@@ -8,9 +8,9 @@ import {
 	StablePlace,
 	StableRange,
 	tryConvertToStablePlace,
-	tryConvertToStablePlace_0_0_2,
+	tryConvertToStablePlaceInternal_0_0_2,
 	tryConvertToStableRange,
-	tryConvertToStableRange_0_0_2,
+	tryConvertToStableRangeInternal_0_0_2,
 } from '../default-edits';
 import {
 	tryConvertToChangeNode,
@@ -27,15 +27,15 @@ describe('0_0_2 type conversions', () => {
 
 	it('can convert stable places', () => {
 		const stablePlace = StablePlace.after(testTree.left);
-		const stablePlace_0_0_2 = expectDefined(tryConvertToStablePlace_0_0_2(stablePlace, testTree));
-		const stablePlaceConverted = expectDefined(tryConvertToStablePlace(stablePlace_0_0_2, testTree));
+		const StablePlaceInternal_0_0_2 = expectDefined(tryConvertToStablePlaceInternal_0_0_2(stablePlace, testTree));
+		const stablePlaceConverted = expectDefined(tryConvertToStablePlace(StablePlaceInternal_0_0_2, testTree));
 		expect(stablePlace).to.deep.equal(stablePlaceConverted);
 	});
 
 	it('can convert stable ranges', () => {
 		const stableRange = StableRange.only(testTree.left);
-		const stableRange_0_0_2 = expectDefined(tryConvertToStableRange_0_0_2(stableRange, testTree));
-		const stableRangeConverted = expectDefined(tryConvertToStableRange(stableRange_0_0_2, testTree));
+		const StableRangeInternal_0_0_2 = expectDefined(tryConvertToStableRangeInternal_0_0_2(stableRange, testTree));
+		const stableRangeConverted = expectDefined(tryConvertToStableRange(StableRangeInternal_0_0_2, testTree));
 		expect(stableRange).to.deep.equal(stableRangeConverted);
 	});
 

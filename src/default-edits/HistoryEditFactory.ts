@@ -15,12 +15,12 @@ import {
 	SetValueInternal,
 	InsertInternal,
 	BuildNodeInternal,
-	StableRange_0_0_2,
-} from './PersistedTypes';
+	StableRangeInternal_0_0_2,
+} from './persisted-types';
 import { Transaction } from './Transaction';
 import { isDetachedSequenceId, RangeValidationResultKind, validateStableRange } from './EditUtilities';
 import { StablePlace } from './ChangeTypes';
-import { tryConvertToStablePlace_0_0_2 } from './Conversion002';
+import { tryConvertToStablePlaceInternal_0_0_2 } from './Conversion002';
 
 /**
  * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes
@@ -146,7 +146,7 @@ function createInvertedInsert(
 	const leftmostNode = nodesInserted[0];
 	const rightmostNode = nodesInserted[nodesInserted.length - 1];
 
-	const source: StableRange_0_0_2 = {
+	const source: StableRangeInternal_0_0_2 = {
 		start: {
 			referenceSibling: leftmostNode,
 			side: Side.Before,
@@ -230,7 +230,7 @@ function createInvertedDetach(
 		};
 	}
 
-	const insertDestination_0_0_2 = tryConvertToStablePlace_0_0_2(insertDestination, idConverter);
+	const insertDestination_0_0_2 = tryConvertToStablePlaceInternal_0_0_2(insertDestination, idConverter);
 	if (insertDestination_0_0_2 === undefined) {
 		return undefined;
 	}

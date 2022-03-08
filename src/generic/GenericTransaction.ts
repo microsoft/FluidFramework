@@ -6,7 +6,7 @@
 import { assert, fail, Result } from '../Common';
 import { ReconciliationChange, ReconciliationPath } from '../ReconciliationPath';
 import { RevisionView, TransactionView } from './RevisionView';
-import { EditStatus } from './PersistedTypes';
+import { EditStatus } from './persisted-types';
 import { NodeIdConverter } from './NodeIdUtilities';
 
 /**

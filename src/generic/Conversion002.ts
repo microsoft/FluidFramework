@@ -7,7 +7,13 @@ import { copyPropertyIfDefined } from '../Common';
 import { NodeId, StableNodeId } from '../Identifiers';
 import { convertTreeNodes } from './EditUtilities';
 import { NodeIdConverter } from './NodeIdUtilities';
-import { ChangeNode, ChangeNode_0_0_2, NodeData, TraitLocation, TraitLocation_0_0_2 } from './PersistedTypes';
+import {
+	ChangeNode,
+	ChangeNode_0_0_2,
+	NodeData,
+	TraitLocationInternal,
+	TraitLocationInternal_0_0_2,
+} from './persisted-types';
 
 /**
  * Convert a {@link ChangeNode_0_0_2} to a {@link ChangeNode}. Returns undefined if the conversion was not possible.
@@ -77,9 +83,9 @@ export function tryConvertToNodeData_0_0_2(
  * Convert a {@link TraitLocation} to a {@link TraitLocation_0_0_2}. Returns undefined if the conversion was not possible.
  */
 export function tryConvertToTraitLocation(
-	traitLocation: TraitLocation_0_0_2,
+	traitLocation: TraitLocationInternal_0_0_2,
 	idConverter: NodeIdConverter
-): TraitLocation | undefined {
+): TraitLocationInternal | undefined {
 	const parent = idConverter.tryConvertToNodeId(traitLocation.parent);
 	if (parent === undefined) {
 		return undefined;
@@ -94,9 +100,9 @@ export function tryConvertToTraitLocation(
  * Convert a {@link TraitLocation_0_0_2} to a {@link TraitLocation}. Returns undefined if the conversion was not possible.
  */
 export function tryConvertToTraitLocation_0_0_2(
-	traitLocation: TraitLocation,
+	traitLocation: TraitLocationInternal,
 	idConverter: NodeIdConverter
-): TraitLocation_0_0_2 | undefined {
+): TraitLocationInternal_0_0_2 | undefined {
 	const parent = idConverter.tryConvertToStableNodeId(traitLocation.parent);
 	if (parent === undefined) {
 		return undefined;

@@ -26,9 +26,9 @@ import {
 	DetachInternal,
 	InsertInternal,
 	SetValueInternal,
-	StablePlace_0_0_2,
-	StableRange_0_0_2,
-} from './PersistedTypes';
+	StablePlaceInternal_0_0_2,
+	StableRangeInternal_0_0_2,
+} from './persisted-types';
 import {
 	detachRange,
 	insertIntoTrait,
@@ -658,7 +658,7 @@ export namespace Transaction {
 		/**
 		 * The faulting place
 		 */
-		readonly place: StablePlace_0_0_2;
+		readonly place: StablePlaceInternal_0_0_2;
 		/**
 		 * The reason for the failure
 		 */
@@ -680,7 +680,7 @@ export namespace Transaction {
 		/**
 		 * Faulting range
 		 */
-		readonly range: StableRange_0_0_2;
+		readonly range: StableRangeInternal_0_0_2;
 		/**
 		 * The reason for the failure
 		 */

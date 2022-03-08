@@ -51,7 +51,7 @@ import {
 	SharedTreeOp,
 	EditStatus,
 	SharedTreeSummaryWriteFormat,
-} from './PersistedTypes';
+} from './persisted-types';
 import { serialize, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
 import { areRevisionViewsSemanticallyEqual, newEditId } from './EditUtilities';
 import { NodeIdContext } from './NodeIdUtilities';

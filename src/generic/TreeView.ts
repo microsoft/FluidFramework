@@ -6,7 +6,16 @@
 import { assert, fail } from '../Common';
 import { NodeId, TraitLabel } from '../Identifiers';
 import { Delta, Forest } from '../Forest';
-import { NodeData, Side, TraitLocation } from './PersistedTypes';
+import { NodeData, Side } from './persisted-types';
+
+/**
+ * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
+ * @public
+ */
+export interface TraitLocation {
+	readonly parent: NodeId;
+	readonly label: TraitLabel;
+}
 
 /**
  * An immutable view of a distributed tree node.

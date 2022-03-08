@@ -6,7 +6,7 @@
 import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
 import { assert, assertNotUndefined } from '../Common';
 import { NodeData, Payload, Side, TraitLocation, TreeNode, TreeNodeSequence } from '../generic';
-import { ConstraintEffect } from './PersistedTypes';
+import { ConstraintEffect } from './persisted-types';
 
 /**
  * The type of a Change

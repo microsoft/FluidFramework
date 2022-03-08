@@ -6,7 +6,7 @@
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { GenericSharedTree } from '../generic';
 import { OrderedEditSet, EditHandle, EditLog } from '../EditLog';
-import { EditWithoutId } from './PersistedTypes';
+import { EditWithoutId } from './persisted-types';
 
 /**
  * Format used for exporting an uploaded edit chunk and its associated handle path. Primarily used for testing SharedTree summaries.

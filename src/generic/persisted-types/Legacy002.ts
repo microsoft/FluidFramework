@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// All types imported into this file inherit the requirements documented below.
-// These imports are ok because they consist only of type aliases for primitive types,
-// and thus have no impact on serialization as long as the primitive type they are an alias for does not change.
-// This does mean that the various UuidString types must remain strings, and must never change the format unless the process for changing
-// persisted types (as documented below) is followed.
 import { Serializable } from '@fluidframework/datastore-definitions';
-import { Definition, EditId, NodeId, StableNodeId, TraitLabel } from '../Identifiers';
+import { EditId, Definition, StableNodeId, TraitLabel } from '../../Identifiers';
 
 /**
  * Defines a place relative to sibling.
@@ -34,33 +29,6 @@ export enum Side {
 	Before = 0,
 	After = 1,
 }
-
-/**
- * Types for Edits in Fluid Ops and Fluid summaries.
- *
- * Types describing locations in the tree are stable in the presence of other concurrent edits.
- *
- * All types are compatible with Fluid Serializable.
- *
- * These types can only be modified in ways that are both backwards and forwards compatible since they
- * are used in edits, and thus are persisted (using Fluid serialization).
- *
- * This means these types cannot be changed in any way that impacts their Fluid serialization
- * except through a very careful process:
- *
- * 1. The planned change must support all old data, and maintain the exact semantics of it.
- * This means that the change is pretty much limited to adding optional fields,
- * or making required fields optional.
- * 2. Support for the new format must be deployed to all users (This means all applications using SharedTree must do this),
- * and this deployment must be confirmed to be stable and will not be rolled back.
- * 3. Usage of the new format may start.
- *
- * Support for the old format can NEVER be removed: it must be maintained indefinably or old documents will break.
- * Because this process puts requirements on applications using shared tree,
- * step 3 should only ever be done in a Major version update,
- * and must be explicitly called out in the release notes
- * stating which versions of SharedTree are supported for documents modified by the new version.
- */
 
 /**
  * A collection of changes to the tree that are applied atomically along with a unique identifier for the edit.
@@ -109,30 +77,6 @@ export interface EditBase<TChange> {
 }
 
 /**
- * Json compatible map as object.
- * Keys are TraitLabels,
- * Values are the content of the trait specified by the key.
- * @public
- */
-export interface TraitMap<TChild> {
-	readonly [key: string]: TreeNodeSequence<TChild>;
-}
-
-/**
- * An object which may have traits with children of the given type underneath it
- * @public
- */
-export interface HasTraits<TChild> {
-	readonly traits: TraitMap<TChild>;
-}
-
-/**
- * A sequence of Nodes that make up a trait under a Node
- * @public
- */
-export type TreeNodeSequence<TChild> = readonly TChild[];
-
-/**
  * Json compatible representation of a payload storing arbitrary Serializable data.
  *
  * Keys starting with "IFluid" are reserved for special use such as the JavaScript feature detection pattern and should not be used.
@@ -144,6 +88,30 @@ export type TreeNodeSequence<TChild> = readonly TChild[];
  * @public
  */
 export type Payload = Serializable;
+
+/**
+ * Json compatible map as object.
+ * Keys are TraitLabels,
+ * Values are the content of the trait specified by the key.
+ * @public
+ */
+export interface TraitMap<TChild> {
+	readonly [key: string]: TreeNodeSequence<TChild>;
+}
+
+/**
+ * A sequence of Nodes that make up a trait under a Node
+ * @public
+ */
+export type TreeNodeSequence<TChild> = readonly TChild[];
+
+/**
+ * An object which may have traits with children of the given type underneath it
+ * @public
+ */
+export interface HasTraits<TChild> {
+	readonly traits: TraitMap<TChild>;
+}
 
 /**
  * The fields required by a node in a tree
@@ -174,16 +142,11 @@ export interface NodeData<TId> {
 export interface TreeNode<TChild, TId> extends NodeData<TId>, HasTraits<TChild> {}
 
 /**
- * A tree whose nodes are either TreeNodes or a placeholder
- */
-export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>, NodeId> | TPlaceholder;
-
-/**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
  * @public
  */
-export interface TraitLocation {
-	readonly parent: NodeId;
+export interface TraitLocationInternal_0_0_2 {
+	readonly parent: StableNodeId;
 	readonly label: TraitLabel;
 }
 
@@ -191,7 +154,7 @@ export interface TraitLocation {
  * JSON-compatible Node type. Objects of this type will be persisted in internal change objects (under Edits) in the SharedTree history.
  * @public
  */
-export type ChangeNode = TreeNode<ChangeNode, NodeId>;
+export type ChangeNode_0_0_2 = TreeNode<ChangeNode_0_0_2, StableNodeId>;
 
 /**
  * The status code of an attempt to apply the changes in an Edit.
@@ -265,21 +228,3 @@ export enum SharedTreeSummaryWriteFormat {
 	/** Supports history virtualization and makes currentView optional. */
 	Format_0_1_1 = '0.1.1',
 }
-
-// #region 0_0_2
-
-/**
- * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
- * @public
- */
-export interface TraitLocation_0_0_2 extends Omit<TraitLocation, 'parent'> {
-	parent: StableNodeId;
-}
-
-/**
- * JSON-compatible Node type. Objects of this type will be persisted in internal change objects (under Edits) in the SharedTree history.
- * @public
- */
-export type ChangeNode_0_0_2 = TreeNode<ChangeNode_0_0_2, StableNodeId>;
-
-// #endregion

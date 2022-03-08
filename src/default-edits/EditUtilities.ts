@@ -11,14 +11,19 @@ import {
 	NodeIdConverter,
 	Side,
 	TraitLocation,
-	TraitLocation_0_0_2,
+	TraitLocationInternal_0_0_2,
 	TransactionView,
 	TreeNodeSequence,
 	TreeView,
 	tryConvertToTraitLocation,
 } from '../generic';
 import { placeFromStablePlace, rangeFromStableRange } from '../TreeViewUtilities';
-import { BuildNodeInternal, ChangeInternal, StablePlace_0_0_2, StableRange_0_0_2 } from './PersistedTypes';
+import {
+	BuildNodeInternal,
+	ChangeInternal,
+	StablePlaceInternal_0_0_2,
+	StableRangeInternal_0_0_2,
+} from './persisted-types';
 import { BuildNode, BuildTreeNode, Change, StablePlace, StableRange } from './ChangeTypes';
 
 /**
@@ -40,11 +45,11 @@ export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode
  * @internal
  */
 export function setTraitInternal(
-	trait: TraitLocation_0_0_2,
+	trait: TraitLocationInternal_0_0_2,
 	nodes: TreeNodeSequence<BuildNodeInternal>
 ): ChangeInternal[] {
 	const id = 0 as DetachedSequenceId;
-	const traitContents = StableRange_0_0_2.all(trait);
+	const traitContents = StableRangeInternal_0_0_2.all(trait);
 	return [
 		ChangeInternal.detach(traitContents),
 		ChangeInternal.build(nodes, id),
@@ -59,7 +64,7 @@ export function setTraitInternal(
  */
 export function validateStablePlace(
 	view: TreeView,
-	place: StablePlace_0_0_2,
+	place: StablePlaceInternal_0_0_2,
 	idConverter: NodeIdConverter
 ):
 	| {
@@ -140,7 +145,7 @@ export type BadPlaceValidationResult = Exclude<PlaceValidationResult, PlaceValid
  */
 export function validateStableRange(
 	view: TreeView,
-	range: StableRange_0_0_2,
+	range: StableRangeInternal_0_0_2,
 	idConverter: NodeIdConverter
 ):
 	| { result: RangeValidationResultKind.Valid; start: StablePlace; end: StablePlace }
@@ -201,7 +206,11 @@ export type RangeValidationResult =
 	| RangeValidationResultKind.Valid
 	| RangeValidationResultKind.PlacesInDifferentTraits
 	| RangeValidationResultKind.Inverted
-	| { kind: RangeValidationResultKind.BadPlace; place: StablePlace_0_0_2; placeFailure: BadPlaceValidationResult };
+	| {
+			kind: RangeValidationResultKind.BadPlace;
+			place: StablePlaceInternal_0_0_2;
+			placeFailure: BadPlaceValidationResult;
+	  };
 
 /**
  * The result of validating a bad range.

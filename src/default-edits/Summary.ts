@@ -21,7 +21,7 @@ import {
 	SharedTreeSummaryWriteFormat,
 } from '../generic';
 import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
-import { ChangeInternal, StablePlace_0_0_2 } from './PersistedTypes';
+import { ChangeInternal, StablePlaceInternal_0_0_2 } from './persisted-types';
 import { setTraitInternal } from './EditUtilities';
 
 const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
@@ -59,7 +59,10 @@ export function noHistorySummarizer(
 		const id = 0 as DetachedSequenceId;
 		changes.push(
 			ChangeInternal.build(children, id),
-			ChangeInternal.insert(id, StablePlace_0_0_2.atStartOf({ parent: rootId, label: label as TraitLabel }))
+			ChangeInternal.insert(
+				id,
+				StablePlaceInternal_0_0_2.atStartOf({ parent: rootId, label: label as TraitLabel })
+			)
 		);
 	});
 	assert(currentTree.payload === undefined, 'setValue not yet supported.');

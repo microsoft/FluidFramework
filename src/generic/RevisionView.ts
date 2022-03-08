@@ -8,7 +8,7 @@ import { Forest } from '../Forest';
 import { NodeId, StableNodeId, TraitLabel } from '../Identifiers';
 import { iterateChildren } from './EditUtilities';
 import { NodeIdConverter } from './NodeIdUtilities';
-import { HasTraits, Payload, TreeNode } from './PersistedTypes';
+import { HasTraits, Payload, TreeNode } from './persisted-types';
 import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView';
 
 /**

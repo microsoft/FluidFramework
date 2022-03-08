@@ -32,14 +32,12 @@ export {
 	ChangeNode,
 	ChangeNode_0_0_2,
 	EditStatus,
-	TraitLocation,
-	TraitLocation_0_0_2,
+	TraitLocationInternal_0_0_2,
 	SharedTreeOp,
 	SharedTreeOpType,
 	SharedTreeSummaryWriteFormat,
-	PlaceholderTree,
 	HasTraits,
-} from './PersistedTypes';
+} from './persisted-types';
 export {
 	newEdit,
 	newEditId,
@@ -83,9 +81,10 @@ export {
 	TraitNodeIndex,
 	TreeViewPlace,
 	TreeViewRange,
+	TraitLocation,
 } from './TreeView';
 export { RevisionView, TransactionView } from './RevisionView';
-export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
+export * from './NodeIdUtilities';
 export * from './Conversion002';
 
 /**

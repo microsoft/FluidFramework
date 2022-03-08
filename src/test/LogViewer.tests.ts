@@ -10,10 +10,10 @@ import {
 	ChangeInternal,
 	ConstraintEffect,
 	InsertInternal,
-	StablePlace_0_0_2,
+	StablePlaceInternal_0_0_2,
 	StableRange,
 	Transaction,
-	tryConvertToStableRange_0_0_2,
+	tryConvertToStableRangeInternal_0_0_2,
 } from '../default-edits';
 import {
 	CachingLogViewer,
@@ -52,7 +52,7 @@ function getTestTreeLog(testTree: TestTree): EditLog<ChangeInternal> {
 		newEdit(
 			InsertInternal.create(
 				[testTree.buildStableLeaf(testTree.left.identifier)],
-				StablePlace_0_0_2.atStartOf(testTree.left.traitLocation.stable)
+				StablePlaceInternal_0_0_2.atStartOf(testTree.left.traitLocation.stable)
 			)
 		),
 		{ sequenceNumber: 1, referenceSequenceNumber: 0 }
@@ -61,7 +61,7 @@ function getTestTreeLog(testTree: TestTree): EditLog<ChangeInternal> {
 		newEdit(
 			InsertInternal.create(
 				[testTree.buildStableLeaf(testTree.right.identifier)],
-				StablePlace_0_0_2.atStartOf(testTree.right.traitLocation.stable)
+				StablePlaceInternal_0_0_2.atStartOf(testTree.right.traitLocation.stable)
 			)
 		),
 		{ sequenceNumber: 2, referenceSequenceNumber: 1 }
@@ -77,7 +77,7 @@ function getLogWithNumEdits(nodeIdContext: NodeIdContext, numEdits: number): Edi
 			newEdit(
 				InsertInternal.create(
 					[buildStableLeaf(nodeIdContext)],
-					StablePlace_0_0_2.atStartOf({ label: testTraitLabel, parent: initialTree.identifier })
+					StablePlaceInternal_0_0_2.atStartOf({ label: testTraitLabel, parent: initialTree.identifier })
 				)
 			),
 			{
@@ -108,7 +108,7 @@ function getSimpleLogWithLocalEdits(testTree: TestTree): EditLog<ChangeInternal>
 		newEdit(
 			InsertInternal.create(
 				[testTree.buildStableLeaf()],
-				StablePlace_0_0_2.atEndOf(testTree.left.traitLocation.stable)
+				StablePlaceInternal_0_0_2.atEndOf(testTree.left.traitLocation.stable)
 			)
 		)
 	);
@@ -116,7 +116,7 @@ function getSimpleLogWithLocalEdits(testTree: TestTree): EditLog<ChangeInternal>
 		newEdit(
 			InsertInternal.create(
 				[testTree.buildStableLeaf()],
-				StablePlace_0_0_2.atEndOf(testTree.right.traitLocation.stable)
+				StablePlaceInternal_0_0_2.atEndOf(testTree.right.traitLocation.stable)
 			)
 		)
 	);
@@ -124,7 +124,7 @@ function getSimpleLogWithLocalEdits(testTree: TestTree): EditLog<ChangeInternal>
 		newEdit(
 			InsertInternal.create(
 				[testTree.buildStableLeaf()],
-				StablePlace_0_0_2.atEndOf(testTree.left.traitLocation.stable)
+				StablePlaceInternal_0_0_2.atEndOf(testTree.left.traitLocation.stable)
 			)
 		)
 	);
@@ -244,7 +244,7 @@ function runLogViewerCorrectnessTests(
 					newEdit(
 						InsertInternal.create(
 							[testTree.buildStableLeaf()],
-							StablePlace_0_0_2.atStartOf(testTree.right.traitLocation.stable)
+							StablePlaceInternal_0_0_2.atStartOf(testTree.right.traitLocation.stable)
 						)
 					),
 					{ sequenceNumber: seqNumber, referenceSequenceNumber: seqNumber - 1 }
@@ -365,7 +365,7 @@ describe('CachingLogViewer', () => {
 		simpleLog.addSequencedEdit(
 			newEdit([
 				ChangeInternal.constraint(
-					expectDefined(tryConvertToStableRange_0_0_2(StableRange.only(testTree.left), testTree)),
+					expectDefined(tryConvertToStableRangeInternal_0_0_2(StableRange.only(testTree.left), testTree)),
 					ConstraintEffect.InvalidAndDiscard,
 					undefined,
 					0
@@ -405,7 +405,7 @@ describe('CachingLogViewer', () => {
 			newEdit(
 				InsertInternal.create(
 					[testTree.buildStableLeaf()],
-					StablePlace_0_0_2.atEndOf(testTree.right.traitLocation.stable)
+					StablePlaceInternal_0_0_2.atEndOf(testTree.right.traitLocation.stable)
 				)
 			)
 		);
@@ -413,7 +413,7 @@ describe('CachingLogViewer', () => {
 			newEdit(
 				InsertInternal.create(
 					[testTree.buildStableLeaf()],
-					StablePlace_0_0_2.atEndOf(testTree.right.traitLocation.stable)
+					StablePlaceInternal_0_0_2.atEndOf(testTree.right.traitLocation.stable)
 				)
 			),
 			{
@@ -504,7 +504,7 @@ describe('CachingLogViewer', () => {
 			newEdit(
 				InsertInternal.create(
 					[testTree.buildStableLeaf()],
-					StablePlace_0_0_2.atEndOf(testTree.right.traitLocation.stable)
+					StablePlaceInternal_0_0_2.atEndOf(testTree.right.traitLocation.stable)
 				)
 			)
 		);
@@ -546,7 +546,7 @@ describe('CachingLogViewer', () => {
 			newEdit(
 				InsertInternal.create(
 					[testTree.buildStableLeaf()],
-					StablePlace_0_0_2.atEndOf(testTree.right.traitLocation.stable)
+					StablePlaceInternal_0_0_2.atEndOf(testTree.right.traitLocation.stable)
 				)
 			),
 			{ sequenceNumber: 3, referenceSequenceNumber: 2, minimumSequenceNumber: 2 }
@@ -673,7 +673,7 @@ describe('CachingLogViewer', () => {
 				InsertInternal.create(
 					[testTree.buildStableLeaf()],
 					expectDefined(
-						StablePlace_0_0_2.atEndOf({
+						StablePlaceInternal_0_0_2.atEndOf({
 							label: testTraitLabel,
 							parent: testTree.convertToStableNodeId(testTree.generateNodeId()),
 						})
@@ -705,7 +705,7 @@ describe('CachingLogViewer', () => {
 			const validEdit1 = newEdit(
 				InsertInternal.create(
 					[testTree.buildStableLeaf()],
-					StablePlace_0_0_2.atStartOf(testTree.left.traitLocation.stable)
+					StablePlaceInternal_0_0_2.atStartOf(testTree.left.traitLocation.stable)
 				)
 			);
 			log.addSequencedEdit(validEdit1, { sequenceNumber: 3, referenceSequenceNumber: 2 });
@@ -719,7 +719,7 @@ describe('CachingLogViewer', () => {
 			const validEdit2 = newEdit(
 				InsertInternal.create(
 					[testTree.buildStableLeaf()],
-					StablePlace_0_0_2.atStartOf(testTree.left.traitLocation.stable)
+					StablePlaceInternal_0_0_2.atStartOf(testTree.left.traitLocation.stable)
 				)
 			);
 			log.addSequencedEdit(validEdit2, { sequenceNumber: 4, referenceSequenceNumber: 2 });

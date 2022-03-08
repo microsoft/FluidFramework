@@ -9,17 +9,7 @@ import { compareArrays, fail, Mutable } from '../Common';
 import { EditId, NodeId, StableNodeId, TraitLabel } from '../Identifiers';
 import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
 import { NodeIdConverter } from './NodeIdUtilities';
-import {
-	ChangeNode,
-	ChangeNode_0_0_2,
-	Edit,
-	HasTraits,
-	NodeData,
-	Payload,
-	TraitLocation,
-	TraitLocation_0_0_2,
-	TraitMap,
-} from './PersistedTypes';
+import { ChangeNode, ChangeNode_0_0_2, Edit, HasTraits, NodeData, Payload, TraitMap } from './persisted-types';
 import { TreeView } from './TreeView';
 
 /**
@@ -33,20 +23,6 @@ export function compareEdits(editIdA: EditId, editIdB: EditId): boolean {
 	// TODO #45414: We should also be deep comparing the list of changes in the edit. This is not straightforward.
 	// We can use our edit validation code when we write it since it will need to do deep walks of the changes.
 	return editIdA === editIdB;
-}
-
-/**
- * Check if two TraitLocations are equal.
- */
-export function compareTraits(
-	traitA: TraitLocation | TraitLocation_0_0_2,
-	traitB: TraitLocation | TraitLocation_0_0_2
-): boolean {
-	if (traitA.label !== traitB.label || traitA.parent !== traitB.parent) {
-		return false;
-	}
-
-	return true;
 }
 
 /**

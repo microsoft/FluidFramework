@@ -1,5 +1,11 @@
 import { expect } from 'chai';
-import { ChangeInternal, DetachInternal, revert, StablePlace_0_0_2, StableRange_0_0_2 } from '../default-edits';
+import {
+	ChangeInternal,
+	DetachInternal,
+	revert,
+	StablePlaceInternal_0_0_2,
+	StableRangeInternal_0_0_2,
+} from '../default-edits';
 import { Side } from '../generic';
 import { DetachedSequenceId } from '../Identifiers';
 import { expectDefined } from './utilities/TestCommon';
@@ -51,7 +57,7 @@ describe('revert', () => {
 		describe('because the edit conflicted', () => {
 			it('when reverting a detach of a node that is not in the tree', () => {
 				const nodeNotInTree = testTree.buildStableLeaf();
-				const change = ChangeInternal.detach(StableRange_0_0_2.only(nodeNotInTree));
+				const change = ChangeInternal.detach(StableRangeInternal_0_0_2.only(nodeNotInTree));
 				const result = revert([change], testTree.view, testTree);
 				expect(result).to.be.undefined;
 			});
@@ -73,7 +79,7 @@ describe('revert', () => {
 						[
 							ChangeInternal.insert(
 								detachedId,
-								StablePlace_0_0_2.atStartOf(testTree.left.traitLocation.stable)
+								StablePlaceInternal_0_0_2.atStartOf(testTree.left.traitLocation.stable)
 							),
 						],
 						testTree.view,
@@ -87,11 +93,11 @@ describe('revert', () => {
 							ChangeInternal.build([testTree.buildStableLeaf()], detachedId),
 							ChangeInternal.insert(
 								detachedId,
-								StablePlace_0_0_2.atStartOf(testTree.left.traitLocation.stable)
+								StablePlaceInternal_0_0_2.atStartOf(testTree.left.traitLocation.stable)
 							),
 							ChangeInternal.insert(
 								detachedId,
-								StablePlace_0_0_2.atStartOf(testTree.left.traitLocation.stable)
+								StablePlaceInternal_0_0_2.atStartOf(testTree.left.traitLocation.stable)
 							),
 						],
 						testTree.view,
@@ -106,8 +112,8 @@ describe('revert', () => {
 				expect(
 					revert(
 						[
-							ChangeInternal.detach(StableRange_0_0_2.only(testTree.left.stable), detachedId),
-							ChangeInternal.detach(StableRange_0_0_2.only(testTree.left.stable), detachedId),
+							ChangeInternal.detach(StableRangeInternal_0_0_2.only(testTree.left.stable), detachedId),
+							ChangeInternal.detach(StableRangeInternal_0_0_2.only(testTree.left.stable), detachedId),
 						],
 						testTree.view,
 						testTree
@@ -118,7 +124,7 @@ describe('revert', () => {
 					revert(
 						[
 							ChangeInternal.build([testTree.buildStableLeaf()], detachedId),
-							ChangeInternal.detach(StableRange_0_0_2.only(testTree.left.stable), detachedId),
+							ChangeInternal.detach(StableRangeInternal_0_0_2.only(testTree.left.stable), detachedId),
 						],
 						testTree.view,
 						testTree
