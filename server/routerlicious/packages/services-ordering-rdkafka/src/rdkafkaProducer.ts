@@ -14,9 +14,8 @@ import {
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { Deferred } from "@fluidframework/common-utils";
-
-import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	enableIdempotence: boolean;

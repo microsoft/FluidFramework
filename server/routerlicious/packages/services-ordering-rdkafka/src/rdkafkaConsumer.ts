@@ -14,8 +14,8 @@ import {
 	IZookeeperClient,
 	ZookeeperClientConstructor,
 } from "@fluidframework/server-services-core";
-import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 export interface IKafkaConsumerOptions extends Partial<IKafkaBaseOptions> {
 	consumeTimeout: number;
