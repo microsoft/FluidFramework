@@ -118,6 +118,7 @@ stages:
       dependsOn: [] # run in parallel
       pool: Small
       steps:
+        - checkout: none
         - script: |
             echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
             echo BASE_URL: $(BASE_URL)
@@ -128,6 +129,8 @@ stages:
             echo latestPipeline ${{ variables.latestPipeline }}
             echo n1Pipeline ${{ variables.n1Pipeline }}
             echo repoToTrigger ${{ variables.repoToTrigger }}
+            echo shouldDeploy ${{ variables.shouldDeploy }}
+            echo shouldRetainGuardianAssets ${{ variables.shouldRetainGuardianAssets }}
           displayName: Show Variables
 
     - job: component_detection
