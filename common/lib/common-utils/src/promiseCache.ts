@@ -204,4 +204,12 @@ export class PromiseCache<TKey, TResult> {
     ): boolean {
         return this.add(key, async () => value);
     }
+
+    /**
+     * Retuns the entries from the cache so they can be sorted/filtered out.
+     * @returns An array with all the cache's entries.
+     */
+    public getEntries?(): [TKey, Promise<TResult>] []{
+        return Array.from(this.cache);
+    };
 }
