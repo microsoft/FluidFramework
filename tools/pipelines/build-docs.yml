@@ -15,6 +15,13 @@ parameters:
       - default
       - skip
       - force
+  - name: deployEnvironment
+    displayName: Static web app environment to deploy to
+    type: string
+    default: new
+    values:
+      - new
+      - old
   - name: guardianAssetRetentionOverride
     displayName: Guardian Asset Retention Override (default = based on branch)
     type: string
@@ -63,6 +70,11 @@ variables:
       )}}
   - name: arrow.releasedtoproduction
     value: eq(variables.shouldDeploy, true)
+  - name: deploymentToken
+    ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
+      value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
+    ${{ if eq( parameters['deployEnvironment'], 'old') }}:
+      value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
 
 # no PR triggers
 trigger:
@@ -295,4 +307,4 @@ stages:
             cwd: $(Build.SourcesDirectory)
             app_location: 'docs/public'
             output_location: ''
-            azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
+            azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'
