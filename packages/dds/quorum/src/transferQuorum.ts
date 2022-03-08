@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import/no-internal-modules, import/no-extraneous-dependencies
 import cloneDeep from "lodash/cloneDeep";
 
 import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";

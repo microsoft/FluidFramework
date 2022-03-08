@@ -27,7 +27,7 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
 
 // @public (undocumented)
 export interface IQuorumEvents extends ISharedObjectEvents {
-    (event: "assigned" | "lost", listener: (taskId: string) => void): any;
+    (event: "accept", listener: (taskId: string) => void): any;
 }
 
 // @public

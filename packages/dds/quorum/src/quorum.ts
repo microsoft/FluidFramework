@@ -204,7 +204,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
             key,
             value,
             refSeq: this.runtime.deltaManager.lastSequenceNumber,
-        }
+        };
         const setId = uuid();
 
         const setPromise = new Promise<boolean>((resolve, reject) => {
@@ -233,7 +233,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
                 value,
                 // TODO And this should be the sequence number at which the MSN advances past the setSequenceNumber
                 sequenceNumber: setSequenceNumber,
-            }
+            };
             this.acceptedValues.set(key, pendingProposal);
         }
 
