@@ -37,6 +37,7 @@ import {
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
 import { IDisposable } from "@fluidframework/common-definitions";
+import { UsageError } from "@fluidframework/container-utils";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -888,7 +889,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
     private throwIfDisposed() {
         if (this._disposed) {
-            throw new Error("Cannot access Disposed subDirectory");
+            throw new UsageError("Cannot access Disposed subDirectory");
         }
     }
 
