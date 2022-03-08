@@ -106,7 +106,7 @@ async function getFileLinkCore(
                     getToken,
                     true /* throwOnNullToken */,
                 );
-                const storageToken = await storageTokenFetcher(options,"GetFileLinkCore", true);
+                const storageToken = await storageTokenFetcher(options,"GetFileLinkCore");
                 assert(storageToken !== null,
                     "Instrumented token fetcher with throwOnNullToken = true should never return null");
 
@@ -181,7 +181,7 @@ async function getFileItemLite(
                     getToken,
                     true /* throwOnNullToken */,
                 );
-                const storageToken = await storageTokenFetcher(options,"GetFileItemLite", true);
+                const storageToken = await storageTokenFetcher(options,"GetFileItemLite");
                 assert(storageToken !== null,
                     "Instrumented token fetcher with throwOnNullToken =true should never return null");
 
