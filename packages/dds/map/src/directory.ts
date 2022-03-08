@@ -36,6 +36,7 @@ import {
     makeSerializable,
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
+import { IDisposable } from "@fluidframework/common-definitions";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -337,8 +338,8 @@ export class DirectoryFactory {
  *
  * @sealed
  */
-export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
-    private _dispose = false;
+export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory, IDisposable {
+    private _disposed = false;
 
     /**
      * Create a new shared directory
@@ -429,16 +430,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * {@inheritDoc IDirectory.dispose}
      */
-    public dispose(): void {
-        this._dispose = true;
+    public dispose(error?: Error): void {
+        this._disposed = true;
         this.root.dispose();        
     }
 
-    /**
-     * {@inheritDoc IDirectory.isDisposed}
-     */
-    public isDisposed(): boolean {
-        return this._dispose;        
+    public get disposed(): boolean {
+        return this._disposed;        
     }
 
     /**
@@ -818,11 +816,11 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
  * Node of the directory tree.
  * @sealed
  */
-class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirectory {
+class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirectory, IDisposable {
     /**
      * Tells if the sub directory is disposed or not.
      */
-    private _dispose = false;
+    private _disposed = false;
 
     /**
      * String representation for the class.
@@ -880,19 +878,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * {@inheritDoc IDirectory.dispose}
      */
     public dispose(): void {
-        this._dispose = true;
+        this._disposed = true;
         this.emit("dispose", this);   
     }
 
-    /**
-     * {@inheritDoc IDirectory.isDisposed}
-     */
-    public isDisposed(): boolean {
-        return this._dispose;
+    public get disposed(): boolean {
+        return this._disposed;
     }
 
     private throwIfDisposed() {
-        if (this._dispose) {
+        if (this._disposed) {
             throw new Error("Cannot access Disposed subDirectory");
         }
     }
@@ -1551,7 +1546,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though?
         const successfullyRemoved = this._subdirectories.delete(subdirName);
-        previousValue?.dispose();
+        (previousValue as SharedDirectory)?.dispose();
         return successfullyRemoved;
     }
 }

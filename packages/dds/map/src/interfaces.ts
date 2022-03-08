@@ -49,16 +49,6 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     set<T = any>(key: string, value: T): this;
 
     /**
-     * Dispose the directory when it is deleted. 
-     */
-    dispose(): void;
-
-    /**
-     * Checks if the directory is disposed or not.
-     */
-    isDisposed(): boolean;
-
-    /**
      * Creates an IDirectory child of this IDirectory, or retrieves the existing IDirectory child if one with the
      * same name already exists.
      * @param subdirName - Name of the new child directory to create

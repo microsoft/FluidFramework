@@ -8,6 +8,7 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
@@ -41,12 +42,10 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     readonly absolutePath: string;
     createSubDirectory(subdirName: string): IDirectory;
     deleteSubDirectory(subdirName: string): boolean;
-    dispose(): void;
     get<T = any>(key: string): T | undefined;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     hasSubDirectory(subdirName: string): boolean;
-    isDisposed(): boolean;
     set<T = any>(key: string, value: T): this;
     subdirectories(): IterableIterator<[string, IDirectory]>;
 }
@@ -163,7 +162,7 @@ export class MapFactory implements IChannelFactory {
 }
 
 // @public @sealed
-export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
+export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory, IDisposable {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
@@ -175,7 +174,12 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     createSubDirectory(subdirName: string): IDirectory;
     delete(key: string): boolean;
     deleteSubDirectory(subdirName: string): boolean;
-    dispose(): void;
+    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: No member was found with name "dispose"
+    //
+    // (undocumented)
+    dispose(error?: Error): void;
+    // (undocumented)
+    get disposed(): boolean;
     entries(): IterableIterator<[string, any]>;
     forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
@@ -184,7 +188,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     has(key: string): boolean;
     hasSubDirectory(subdirName: string): boolean;
-    isDisposed(): boolean;
     keys(): IterableIterator<string>;
     // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
