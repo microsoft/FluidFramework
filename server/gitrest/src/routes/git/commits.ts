@@ -18,7 +18,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.createCommit(request.body as ICreateCommitParams));
+        ).then(async (repoManager) => repoManager.createCommit(request.body as ICreateCommitParams));
 
         handleResponse(resultP, response, 201);
     });
@@ -27,7 +27,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.getCommit(request.params.sha));
+        ).then(async (repoManager) => repoManager.getCommit(request.params.sha));
 
         handleResponse(resultP, response);
     });

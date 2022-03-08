@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import EventEmitter from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import EventEmitter from "events";
 
 export class BatchTracker {
     private readonly logger: ITelemetryLogger;
@@ -77,4 +77,4 @@ export const BindBatchTracker = (
     logger: ITelemetryLogger,
     batchLengthThreshold: number = 128,
     batchCountSamplingRate: number = 1000,
-) => new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate)
+) => new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate);

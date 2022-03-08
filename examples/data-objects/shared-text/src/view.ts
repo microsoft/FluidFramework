@@ -10,10 +10,12 @@ import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import { SharedTextDataObject } from "./dataObject";
 
+/* eslint-disable import/no-internal-modules, import/no-unassigned-import */
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/css/bootstrap-theme.min.css";
 import "../stylesheets/map.css";
 import "../stylesheets/style.css";
+/* eslint-enable import/no-internal-modules, import/no-unassigned-import */
 
 const debug = registerDebug("fluid:shared-text");
 

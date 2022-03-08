@@ -558,7 +558,7 @@ describe("Runtime", () => {
                         return { localAck: false, localOpMetadata: undefined };
                     },
                 } as PendingStateManager;
-            }
+            };
             const getMockDataStores = (): DataStores => {
                 return {
                     processFluidDataStoreOp:
@@ -567,7 +567,7 @@ describe("Runtime", () => {
                             _localMessageMetadata: unknown) => { },
                     setConnectionState: (_connected: boolean, _clientId?: string) => { },
                 } as DataStores;
-            }
+            };
 
             const getFirstContainerError = (): ICriticalContainerError => {
                 assert.ok(containerErrors.length > 0, "Container should have errors");
@@ -590,12 +590,12 @@ describe("Runtime", () => {
 
             function patchRuntime(
                 pendingStateManager: PendingStateManager,
-                maxReconnects: number | undefined = undefined
+                _maxReconnects: number | undefined = undefined,
             ) {
                 const runtime = containerRuntime as any;
                 runtime.pendingStateManager = pendingStateManager;
                 runtime.dataStores = getMockDataStores();
-                runtime.maxConsecutiveReconnects = maxReconnects ?? runtime.maxConsecutiveReconnects;
+                runtime.maxConsecutiveReconnects = _maxReconnects ?? runtime.maxConsecutiveReconnects;
                 return runtime as ContainerRuntime;
             }
 

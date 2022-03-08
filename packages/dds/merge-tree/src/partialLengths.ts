@@ -186,7 +186,6 @@ export class PartialSequenceLengths {
                     }
                 }
                 if (outerIndexOfEarliest >= 0) {
-
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     addNext(earliestPartialLength!);
                     indices[outerIndexOfEarliest]++;
@@ -367,7 +366,6 @@ export class PartialSequenceLengths {
             }
         }
         if (seqPartialLen === undefined) {
-
             seqPartialLen = {
                 clientId,
                 seglen: seqSeglen,
@@ -488,7 +486,7 @@ export class PartialSequenceLengths {
             buf += `(${partial.seq},${partial.len}) `;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-for-in-array
+        // eslint-disable-next-line @typescript-eslint/no-for-in-array, no-restricted-syntax
         for (const clientId in this.clientSeqNumbers) {
             if (this.clientSeqNumbers[clientId].length > 0) {
                 buf += `Client `;
@@ -530,7 +528,7 @@ export class PartialSequenceLengths {
             return minLength;
         }
         this.minLength += copyDown(this.partialLengths);
-        // eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in
+        // eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in, no-restricted-syntax
         for (const clientId in this.clientSeqNumbers) {
             const cliPartials = this.clientSeqNumbers[clientId];
             if (cliPartials) {

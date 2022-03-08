@@ -157,7 +157,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         const props = {
             dataProcessingError: 1,
             dataProcessingCodepath,
-            ...(sequencedMessage === undefined ? undefined : extractSafePropertiesFromMessage(sequencedMessage))
+            ...(sequencedMessage === undefined ? undefined : extractSafePropertiesFromMessage(sequencedMessage)),
         };
 
         const normalizedError = normalizeError(originalError, { props });
