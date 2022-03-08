@@ -20,7 +20,6 @@ import {
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";
@@ -28,15 +27,9 @@ const registry: ChannelFactoryRegistry = [
     [map1Id, SharedMap.getFactory()],
     [map2Id, SharedMap.getFactory()],
 ];
-const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => {
-    return {
-        getRawConfig: (name: string): ConfigTypes => settings[name],
-    };
-});
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
-    loaderProps: { configProvider: configProvider({ "Fluid.ContainerRuntime.FlushModeTurnBased": "true" }) },
 };
 
 describeFullCompat("Batching", (getTestObjectProvider) => {
