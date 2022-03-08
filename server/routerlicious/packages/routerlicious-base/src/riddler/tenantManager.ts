@@ -18,7 +18,7 @@ import { NetworkError } from "@fluidframework/server-services-client";
 import {
     BaseTelemetryProperties,
     getLumberBaseProperties,
-    Lumberjack
+    Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
