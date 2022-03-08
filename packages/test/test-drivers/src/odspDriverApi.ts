@@ -62,7 +62,7 @@ export const generateOdspHostStoragePolicy = (seed: number) => {
         sessionOptions: [undefined, ...generatePairwiseOptions(odspSessionOptions, seed)],
         enableRedeemFallback: booleanCases,
         cacheCreateNewSummary: booleanCases,
-        fetchBinarySnapshotFormat: [true, false],
+        fetchBinarySnapshotFormat: booleanCases,
         isolateSocketCache: [true],
         enableShareLinkWithCreate: [false],
     };

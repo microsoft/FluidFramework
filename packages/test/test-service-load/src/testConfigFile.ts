@@ -36,11 +36,6 @@ export interface ILoadTestConfig {
      * Number of "attachment" type blobs to add while detached. Note this is only supported on ODSP currently.
      */
     detachedBlobCount?: number,
-    /**
-     * It will be set as 1 in case the the client wants to create the file with specific file name for now as the
-     * server only enables the binary wire format for a specific file name as it is in testing phases.
-     */
-    binarySnapshotFormat?: number,
 
     /**
      * Override loader options to force a specific value
