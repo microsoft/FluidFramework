@@ -150,41 +150,39 @@ export async function processContent(mode: Mode, concurrently = true) {
             console.error(`Can't locate ${messages}`);
             continue;
         }
-        it(folder, async ()=>{
-            // Clean up any failed snapshots that might have been written out in previous test run.
-            cleanFailedSnapshots(folder);
+        // Clean up any failed snapshots that might have been written out in previous test run.
+        cleanFailedSnapshots(folder);
 
-            // SnapFreq is the most interesting options to tweak
-            // On one hand we want to generate snapshots often, ideally every 50 ops
-            // This allows us to exercise more cases and increases chances of finding bugs.
-            // At the same time that generates more files in repository, and adds to the size of it
-            // Thus using two passes:
-            // 1) Stress test - testing eventual consistency only
-            // 2) Testing backward compat - only testing snapshots at every 1000 ops
-            const snapFreq = mode === Mode.Stress ? 50 : 1000;
-            const data: IWorkerArgs = {
-                folder,
-                mode,
-                snapFreq,
-            };
+        // SnapFreq is the most interesting options to tweak
+        // On one hand we want to generate snapshots often, ideally every 50 ops
+        // This allows us to exercise more cases and increases chances of finding bugs.
+        // At the same time that generates more files in repository, and adds to the size of it
+        // Thus using two passes:
+        // 1) Stress test - testing eventual consistency only
+        // 2) Testing backward compat - only testing snapshots at every 1000 ops
+        const snapFreq = mode === Mode.Stress ? 50 : 1000;
+        const data: IWorkerArgs = {
+            folder,
+            mode,
+            snapFreq,
+        };
 
-            switch (mode) {
-                case Mode.Validate:
-                    await processNodeForValidate(data, concurrently, limiter);
-                    break;
-                case Mode.UpdateSnapshots:
-                    await processNodeForUpdatingSnapshots(data, concurrently, limiter);
-                    break;
-                case Mode.BackCompat:
-                    await processNodeForBackCompat(data);
-                    break;
-                case Mode.NewSnapshots:
-                    await processNodeForNewSnapshots(data, concurrently, limiter);
-                    break;
-                default:
-                    await processNode(data, concurrently, limiter);
-            }
-        });
+        switch (mode) {
+            case Mode.Validate:
+                await processNodeForValidate(data, concurrently, limiter);
+                break;
+            case Mode.UpdateSnapshots:
+                await processNodeForUpdatingSnapshots(data, concurrently, limiter);
+                break;
+            case Mode.BackCompat:
+                await processNodeForBackCompat(data);
+                break;
+            case Mode.NewSnapshots:
+                await processNodeForNewSnapshots(data, concurrently, limiter);
+                break;
+            default:
+                await processNode(data, concurrently, limiter);
+        }
     }
 
     return limiter.waitAll();
@@ -332,7 +330,7 @@ async function processNodeForBackCompat(data: IWorkerArgs) {
  * the threads. If concurrently if false, directly processes the snapshots.
  */
 async function processNode(
-    data: IWorkerArgs,
+    workerData: IWorkerArgs,
     concurrently: boolean,
     limiter: ConcurrencyLimiter,
 ) {
@@ -345,11 +343,11 @@ async function processNode(
     }
 
     if (!concurrently || !threads) {
-        await processOneNode(data);
+        await processOneNode(workerData);
         return;
     }
 
-    await (async (workerData: IWorkerArgs) => limiter.addWork(async () => new Promise((resolve, reject) => {
+    return limiter.addWork(async () => new Promise((resolve, reject) => {
         const worker = new threads.Worker(workerLocation, { workerData });
 
         worker.on("message", (message: string) => {
@@ -362,22 +360,22 @@ async function processNode(
                 + `If you changed snapshot representation and validated new format is backward`
                 + ` compatible, you can run 'npm run test:update' to update baseline snapshot files.\n`
                 + `Check README.md for more details.`;
-                reject(new Error(`${message}\n\n${extra}`));
+                reject(new Error(`${JSON.stringify(workerData)}\n${message}\n\n${extra}`));
             } else {
-                reject(new Error(message));
+                reject(new Error(`${JSON.stringify(workerData)}\nmessage`));
             }
         });
 
         worker.on("error", (error) => {
-            reject(error);
+            reject(`${JSON.stringify(workerData)}\n${error}`);
         });
 
         worker.on("exit", (code) => {
             if (code !== 0) {
-                reject(new Error(`Worker stopped with exit code ${code}`));
+                reject(new Error(`${JSON.stringify(workerData)}\nWorker stopped with exit code ${code}`));
             }
         });
-    })))(data);
+    }));
 }
 
 /**
