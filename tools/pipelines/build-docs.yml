@@ -2,20 +2,49 @@
 # Licensed under the MIT License.
 
 # build-docs pipeline
-# This pipeline builds the main branch docs each time the client packages are built
+# This pipeline builds the main/next branch docs each time the client packages are built
 
 name: $(Build.BuildId)
 
+parameters:
+  - name: deployOverride
+    displayName: Deployment Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+  - name: deployEnvironment
+    displayName: Static web app environment to deploy to
+    type: string
+    default: new
+    values:
+      - new
+      - old
+  - name: guardianAssetRetentionOverride
+    displayName: Guardian Asset Retention Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+  - name: publishGuardianBaselines
+    displayName: Publish Guardian Baseline Files
+    type: boolean
+    default: false
+
 variables:
-  - name: skipComponentGovernanceDetection
-    value: true
   - group: doc-versions
   - group: storage-vars
+  - group: InfoSec-SecurityResults
   - name: repoToTrigger
     value: microsoft/FluidFramework
   - name: latestPipeline
     value: ${{ or(
       eq(variables['Build.SourceBranchName'], 'main'),
+      eq(variables['Build.SourceBranchName'], 'next'),
       eq(variables['Build.SourceBranchName'], 'pl-test')
       )}}
   - name: n1Branch
@@ -26,14 +55,38 @@ variables:
     value: ${{ eq(variables['Build.SourceBranchName'], variables['RELEASE_BRANCH']) }}
   - name: validRun
     value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
+  - name: Packaging.EnableSBOMSigning
+    value: true
+  - name: isMainOrNext
+    value: ${{ or(
+      eq(variables['Build.SourceBranchName'], 'main'),
+      eq(variables['Build.SourceBranchName'], 'next')
+      )}}
+  - name: shouldDeploy
+    value: ${{ or(
+      eq(parameters.deployOverride, 'force'),
+      and(eq(variables.isMainOrNext, true), eq(parameters.deployOverride, 'default'))
+      )}}
+  - name: shouldRetainGuardianAssets
+    value: ${{ or(
+      eq(parameters.guardianAssetRetentionOverride, 'force'),
+      and(eq(variables.isMainOrNext, true), eq(parameters.guardianAssetRetentionOverride, 'default'))
+      )}}
+  - name: arrow.releasedtoproduction
+    value: eq(variables.shouldDeploy, true)
+  - name: deploymentToken
+    ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
+      value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
+    ${{ if eq( parameters['deployEnvironment'], 'old') }}:
+      value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
 
-# no branch and PR triggers
+# no PR triggers
 trigger:
   branches:
     include:
-    - master
     - release/*
     - main
+    - next
 pr: none
 
 resources:
@@ -56,45 +109,54 @@ resources:
       branches:
         include:
         - main
-        - docs/hugo
-        - pl-test
+        - next
+        - docs/**
   - pipeline: server
     source: server-routerlicious
 
 stages:
-- stage: check
-  displayName: Checks
-  pool: Small
+- stage: build
+  displayName: 'Build website'
+  dependsOn: [] # run in parallel
   jobs:
-  - job:
-    displayName: Component Detection
-    steps:
-    - script: |
-        echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
-        echo BASE_URL: $(BASE_URL)
-        echo RELEASE_VERSION: $(RELEASE_VERSION)
-        echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
-        echo N1_VERSION: $(N1_VERSION)
-        echo releasePipeline ${{ variables.releasePipeline }}
-        echo latestPipeline ${{ variables.latestPipeline }}
-        echo n1Pipeline ${{ variables.n1Pipeline }}
-        echo repoToTrigger ${{ variables.repoToTrigger }}
-      displayName: 'Show Variables'
-    - task: ComponentGovernanceComponentDetection@0
-      displayName: Component Detection
-      inputs:
-        sourceScanPath: docs
-        verbosity: Verbose
-        scanType: Register
-        alertWarningLevel: High
+    - job: debug_variables
+      displayName: Show Variables
+      dependsOn: [] # run in parallel
+      pool: Small
+      steps:
+        - checkout: none
+        - script: |
+            echo SourceBranchName: ${{ variables['Build.SourceBranchName'] }}
+            echo BASE_URL: $(BASE_URL)
+            echo RELEASE_VERSION: $(RELEASE_VERSION)
+            echo MAIN_BRANCH_VERSION: $(MAIN_BRANCH_VERSION)
+            echo N1_VERSION: $(N1_VERSION)
+            echo releasePipeline ${{ variables.releasePipeline }}
+            echo latestPipeline ${{ variables.latestPipeline }}
+            echo n1Pipeline ${{ variables.n1Pipeline }}
+            echo repoToTrigger ${{ variables.repoToTrigger }}
+            echo shouldDeploy ${{ variables.shouldDeploy }}
+            echo shouldRetainGuardianAssets ${{ variables.shouldRetainGuardianAssets }}
+          displayName: Show Variables
 
-- stage: json
-  displayName: 'API Extractor'
-  pool: Small
-  jobs:
+    - job: component_detection
+      displayName: Component Detection
+      dependsOn: [] # run in parallel
+      pool: Small
+      steps:
+        - task: ComponentGovernanceComponentDetection@0
+          displayName: Component Detection
+          inputs:
+            sourceScanPath: docs
+            verbosity: Verbose
+            scanType: Register
+            alertWarningLevel: High
+
     - deployment: upload_json
-      displayName: 'Upload JSON'
+      displayName: 'Combine api-extractor JSON'
+      dependsOn: [] # run in parallel
       environment: 'fluid-docs-env'
+      pool: Small
       strategy:
         runOnce:
           deploy:
@@ -103,24 +165,149 @@ stages:
               parameters:
                 STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
                 STORAGE_KEY: $(STORAGE_KEY)
-                uploadAsLatest: true
+                uploadAsLatest: ${{ variables.isMainOrNext }}
 
-- stage: github_actions
-  displayName: GitHub Action
-  pool: server
-  dependsOn: json
-  jobs:
-    - job: trigger_github_action
-      displayName: 'Trigger repository_dispatch'
+    - job: build_site
+      displayName: 'Build website'
+      dependsOn: upload_json
+      pool: Large
       steps:
-      - task: InvokeRESTAPI@1
-        inputs:
-          connectionType: 'connectedServiceName' # Options: connectedServiceName, connectedServiceNameARM
-          serviceConnection: 'GitHub Actions' # Required when connectionType == ConnectedServiceName
-          #azureServiceConnection: # Required when connectionType == ConnectedServiceNameARM
-          method: 'POST' # Options: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, PATCH
-          headers: '{"Accept": "application/vnd.github.v3+json"}'
-          body: '{"event_type": "Docs build for SHA $(Build.SourceVersion)"}' # Required when method != GET && Method != HEAD
-          urlSuffix: 'repos/$(repoToTrigger)/dispatches' # Optional
-          waitForCompletion: 'false' # Options: true, false
-          #successCriteria: # Optional
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Copy api-extractor JSON to staging folder'
+          inputs:
+            source: current
+            artifact: api-extractor-combined
+            path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
+
+        - task: UseNode@1
+          displayName: 'Use Node 14.x'
+          inputs:
+            version: 14.x
+
+        - task: Npm@1
+          displayName: npm ci
+          inputs:
+            command: 'custom'
+            workingDir: '$(Build.SourcesDirectory)/docs'
+            customCommand: 'ci'
+
+        - task: Npm@1
+          displayName: npm run build
+          inputs:
+            command: 'custom'
+            workingDir: '$(Build.SourcesDirectory)/docs'
+            customCommand: 'run build'
+
+        - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
+          displayName: 'Generate SBOM'
+          inputs:
+            BuildDropPath: '$(Build.SourcesDirectory)/docs/public'
+            PackageName: 'fluidframework-docs'
+            PackageVersion: '$(Build.BuildId)'
+
+        - task: PublishBuildArtifacts@1
+          displayName: 'Publish site build artifact'
+          inputs:
+            PathtoPublish: '$(Build.SourcesDirectory)/docs/public'
+            ArtifactName: 'fluidframework-docs'
+            publishLocation: 'Container'
+
+  # BEGIN Secure development tasks
+- stage: guardian
+  displayName: Guardian
+  dependsOn: [] # run in parallel
+  pool:
+    vmImage: windows-latest
+  jobs:
+    - job: guardian_tasks
+      displayName: Guardian tasks
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - task: UseNode@1
+          displayName: 'Use Node 14.x'
+          inputs:
+            version: 14.x
+
+        - task: UseDotNet@2
+          displayName: 'Use .NET Core 3.x'
+          condition: succeededOrFailed()
+          inputs:
+            packageType: sdk
+            version: 3.x
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-eslint.ESLint@1
+          displayName: 'Run ESLint'
+          condition: succeededOrFailed()
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@3
+          displayName: 'Publish Guardian Artifacts - All Tools'
+          condition: succeededOrFailed()
+          inputs:
+            ArtifactType: M365
+
+        - task: AssetRetention@3
+          displayName: Guardian Asset Retention
+          condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
+          inputs:
+            ArrowServiceConnection: 'Arrow_FluidFramework_internal'
+            AssetGroupName: 'fluidframework_$(System.TeamProject)_$(Build.DefinitionName)'
+            AssetNumber: '$(Build.BuildId)'
+            IsShipped: false # based on value of arrow.releasedtoproduction variable
+            DropsToRetain: 'CodeAnalysisLogs'
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
+          displayName: 'Guardian Break'
+          condition: succeededOrFailed()
+          continueOnError: false
+          inputs:
+            GdnBreakPolicyMinSev: Warning
+            GdnBreakAllTools: true
+            GdnBreakBaselineFiles: '$(Build.SourcesDirectory)/docs/.gdnbaselines'
+            GdnBreakGdnToolESLint: true
+            GdnBreakGdnToolESLintSeverity: Warning
+            GdnBreakPolicy: M365
+            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)\'
+
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Baselines'
+          condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
+            artifact: .gdn
+# END Secure development tasks
+
+- stage: deploy
+  displayName: 'Deploy website'
+  pool: Small
+  dependsOn: ['build', 'guardian']
+  jobs:
+    - job: deploy_site
+      displayName: 'Deploy website'
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Copy fluidframework-docs to public folder'
+          inputs:
+            source: current
+            artifact: fluidframework-docs
+            path: '$(Build.SourcesDirectory)/docs/public'
+
+        - task: AzureStaticWebApp@0
+          displayName: 'Deploy website to ASWA'
+          condition: eq(variables.shouldDeploy, true)
+          inputs:
+            skip_app_build: true # site was built in previous stage
+            cwd: $(Build.SourcesDirectory)
+            app_location: 'docs/public'
+            output_location: ''
+            azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'

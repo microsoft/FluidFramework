@@ -16,6 +16,7 @@ resources:
       branches:
       - release/*
       - main
+      - next
 
 variables:
 - group: prague-key-vault

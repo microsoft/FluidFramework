@@ -6,7 +6,8 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { ClientSessionExpiredError } from "@fluidframework/container-utils";
+import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
     cloneGCData,
     concatGarbageCollectionStates,
@@ -34,9 +35,9 @@ import {
     MonitoringContext,
     PerformanceEvent,
     TelemetryDataTag,
- } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils";
 
-import { IGCRuntimeOptions } from "./containerRuntime";
+import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
 import {
     getGCVersion,
@@ -67,7 +68,7 @@ const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
-const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; //30 days
+export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
@@ -91,7 +92,10 @@ interface IUnreferencedEvent {
     id: string;
     age: number;
     timeout: number;
-};
+    lastSummaryTime?: number;
+    externalRequest?: boolean;
+    viaHandle?: boolean;
+}
 
 /** Defines the APIs for the runtime object to be passed to the garbage collector. */
 export interface IGarbageCollectionRuntime {
@@ -101,6 +105,8 @@ export interface IGarbageCollectionRuntime {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     /** After GC has run, called to notify the runtime of routes that are used in it. */
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    /** Called when the runtime should close because of an error. */
+    closeFn(error?: ICriticalContainerError): void;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -129,10 +135,16 @@ export interface IGarbageCollector {
     getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>>;
     /** Called when the latest summary of the system has been refreshed. */
     latestSummaryStateRefreshed(result: RefreshSummaryResult, readAndParseBlob: ReadAndParseBlob): Promise<void>;
-    /** Called when a node is changed. Used to detect and log when an inactive node is changed. */
-    nodeChanged(id: string, packagePath?: readonly string[]): void;
+    /** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
+    nodeUpdated(
+        nodePath: string,
+        reason: "Loaded" | "Changed",
+        timestampMs?: number,
+        packagePath?: readonly string[],
+        requestHeaders?: IRequestHeader,
+    ): void;
     /** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
-    addedOutboundReference(fromNodeId: string, toNodeId: string): void;
+    addedOutboundReference(fromNodePath: string, toNodePath: string): void;
     dispose(): void;
 }
 
@@ -146,23 +158,43 @@ class UnreferencedStateTracker {
         return this._inactive;
     }
 
-    private readonly timer: Timer | undefined;
+    private timer: Timer | undefined;
 
     constructor(
         public readonly unreferencedTimestampMs: number,
-        inactiveTimeoutMs: number,
+        private readonly inactiveTimeoutMs: number,
+        currentReferenceTimestampMs?: number,
     ) {
-        // If the timeout has already expired, the node should become inactive immediately. Otherwise, start a timer of
-        // inactiveTimeoutMs after which the node will become inactive.
-        if (inactiveTimeoutMs <= 0) {
-            this._inactive = true;
-        } else {
-            this.timer = new Timer(inactiveTimeoutMs, () => { this._inactive = true; });
-            this.timer.start();
+        // If there is no current reference timestamp, don't track the node's inactive state. This will happen later
+        // when updateTracking is called with a reference timestamp.
+        if (currentReferenceTimestampMs !== undefined) {
+            this.updateTracking(currentReferenceTimestampMs);
         }
     }
 
-    /** Stop tracking this node. Reset the unreferenced timer, if any, and reset inactive state. */
+    /**
+     * Updates the tracking state based on the provided timestamp.
+     */
+    public updateTracking(currentReferenceTimestampMs: number) {
+        const unreferencedDurationMs = currentReferenceTimestampMs - this.unreferencedTimestampMs;
+        // If the timeout has already expired, the node has become inactive.
+        if (unreferencedDurationMs > this.inactiveTimeoutMs) {
+            this._inactive = true;
+            this.timer?.clear();
+            return;
+        }
+
+        // The node isn't inactive yet. Restart a timer for the duration remaining for it to become inactive.
+        const remainingDurationMs = this.inactiveTimeoutMs - unreferencedDurationMs;
+        if (this.timer === undefined) {
+            this.timer = new Timer(remainingDurationMs, () => { this._inactive = true; });
+        }
+        this.timer.restart(remainingDurationMs);
+    }
+
+    /**
+     * Stop tracking this node. Reset the unreferenced timer, if any, and reset inactive state.
+     */
     public stopTracking() {
         this.timer?.clear();
         this._inactive = false;
@@ -179,8 +211,8 @@ export class GarbageCollector implements IGarbageCollector {
         gcOptions: IGCRuntimeOptions,
         deleteUnusedRoutes: (unusedRoutes: string[]) => void,
         getNodePackagePath: (nodeId: string) => readonly string[] | undefined,
-        getCurrentTimestampMs: () => number,
-        closeFn: (error?: ICriticalContainerError) => void,
+        getCurrentReferenceTimestampMs: () => number | undefined,
+        getLastSummaryTimestampMs: () => number | undefined,
         baseSnapshot: ISnapshotTree | undefined,
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
@@ -192,8 +224,8 @@ export class GarbageCollector implements IGarbageCollector {
             gcOptions,
             deleteUnusedRoutes,
             getNodePackagePath,
-            getCurrentTimestampMs,
-            closeFn,
+            getCurrentReferenceTimestampMs,
+            getLastSummaryTimestampMs,
             baseSnapshot,
             readAndParseBlob,
             baseLogger,
@@ -289,7 +321,7 @@ export class GarbageCollector implements IGarbageCollector {
     // per event per node.
     private readonly loggedUnreferencedEvents: Set<string> = new Set();
     // Queue for unreferenced events that should be logged the next time GC runs.
-    private pendingEventsQueue: IUnreferencedEvent[] = [];
+    private readonly pendingEventsQueue: IUnreferencedEvent[] = [];
 
     protected constructor(
         private readonly provider: IGarbageCollectionRuntime,
@@ -298,9 +330,14 @@ export class GarbageCollector implements IGarbageCollector {
         private readonly deleteUnusedRoutes: (unusedRoutes: string[]) => void,
         /** For a given node path, returns the node's package path. */
         private readonly getNodePackagePath: (nodePath: string) => readonly string[] | undefined,
-        /** Returns the current timestamp to be assigned to nodes that become unreferenced. */
-        private readonly getCurrentTimestampMs: () => number,
-        private readonly closeFn: (error?: ICriticalContainerError) => void,
+        /**
+         * Returns a referenced timestamp to be used to track unreferenced nodes. This is a server generated timestamp
+         * and may not be available if there aren't any ops processed yet. If so, we skip tracking unreferenced state
+         * such as time when node becomes unreferenced or inactive.
+         */
+        private readonly getCurrentReferenceTimestampMs: () => number | undefined,
+        /** Returns the timestamp of the last summary generated for this container. */
+        private readonly getLastSummaryTimestampMs: () => number | undefined,
         baseSnapshot: ISnapshotTree | undefined,
         readAndParseBlob: ReadAndParseBlob,
         baseLogger: ITelemetryLogger,
@@ -335,9 +372,9 @@ export class GarbageCollector implements IGarbageCollector {
         // If session expiry is enabled, we need to close the container when the timeout expires
         if (this.sessionExpiryTimeoutMs !== undefined) {
             const timeoutMs = this.sessionExpiryTimeoutMs;
-            setLongTimeout(timeoutMs, 
+            setLongTimeout(timeoutMs,
                 () => {
-                    this.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
+                    this.provider.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
                 },
                 (timer) => {
                     this.sessionExpiryTimer = timer;
@@ -439,10 +476,13 @@ export class GarbageCollector implements IGarbageCollector {
             return Object.keys(gcState.gcNodes).length === 1 ? undefined : gcState;
         });
 
-        // Set up the initializer which initializes the base GC state from the base snapshot. Use lazy promise because
-        // we only do this once - the very first time we run GC.
+        /**
+         * Set up the initializer which initializes the base GC state from the base snapshot. Note that the reference
+         * timestamp maybe from old ops which were not summarized and stored in the file. So, the unreferenced state
+         * may be out of date. This is fine because the state is updated every time GC runs based on the time then.
+         */
         this.initializeBaseStateP = new LazyPromise<void>(async () => {
-            const currentTimestampMs = this.getCurrentTimestampMs();
+            const currentReferenceTimestampMs = this.getCurrentReferenceTimestampMs();
             const baseState = await baseSummaryStateP;
             if (baseState === undefined) {
                 return;
@@ -450,16 +490,13 @@ export class GarbageCollector implements IGarbageCollector {
 
             const gcNodes: { [ id: string ]: string[] } = {};
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
-                const unreferencedTimestampMs = nodeData.unreferencedTimestampMs;
-                if (unreferencedTimestampMs !== undefined) {
-                    // Get how long it has been since the node was unreferenced. Start a timeout for the remaining time
-                    // left for it to be eligible for deletion.
-                    const unreferencedDurationMs = currentTimestampMs - unreferencedTimestampMs;
+                if (nodeData.unreferencedTimestampMs !== undefined) {
                     this.unreferencedNodesState.set(
                         nodeId,
                         new UnreferencedStateTracker(
-                            unreferencedTimestampMs,
-                            this.deleteTimeoutMs - unreferencedDurationMs,
+                            nodeData.unreferencedTimestampMs,
+                            this.deleteTimeoutMs,
+                            currentReferenceTimestampMs,
                         ),
                     );
                 }
@@ -502,6 +539,25 @@ export class GarbageCollector implements IGarbageCollector {
             }
             return dataStoreGCDetailsMap;
         });
+
+        // Initialize the base state. The base GC data is used to detect and log when inactive / deleted objects are
+        // used in the container.
+        if (this.shouldRunGC) {
+            this.initializeBaseStateP.catch((error) => {
+                const dpe = DataProcessingError.wrapIfUnrecognized(
+                    error,
+                    "FailedToInitializeGC",
+                );
+                dpe.addTelemetryProperties({
+                    gcEnabled: this.gcEnabled,
+                    runSweep: this.shouldRunSweep,
+                    writeAtRoot: this._writeDataAtRoot,
+                    testMode: this.testMode,
+                    sessionExpiry: this.sessionExpiryTimeoutMs,
+                });
+                throw dpe;
+            });
+        }
     }
 
     /**
@@ -544,10 +600,10 @@ export class GarbageCollector implements IGarbageCollector {
             this.updateStateSinceLastRun(gcData);
 
             // Update the current state of the system based on the GC run.
-            const currentTimestampMs = this.getCurrentTimestampMs();
-            this.updateCurrentState(gcData, gcResult, currentTimestampMs);
+            const currentReferenceTimestampMs = this.getCurrentReferenceTimestampMs();
+            this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
 
-            this.provider.updateUsedRoutes(gcResult.referencedNodeIds, currentTimestampMs);
+            this.provider.updateUsedRoutes(gcResult.referencedNodeIds, currentReferenceTimestampMs);
 
             if (runSweep) {
                 // Placeholder for running sweep logic.
@@ -623,18 +679,53 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Called when a node with the given id is changed. If the node is inactive, log an error.
-     * @param id - The id of the node that changed.
+     * Called when a node with the given id is updated. If the node is inactive, log an error.
+     * @param nodePath - The id of the node that changed.
+     * @param reason - Whether the node was loaded or changed.
+     * @param timestampMs - The timestamp when the node changed.
      * @param packagePath - The package path of the node. This may not be available if the node hasn't been loaded yet.
+     * @param requestHeaders - If the node was loaded via request path, the headers in the request.
      */
-    public nodeChanged(id: string, packagePath?: readonly string[]) {
-        // Prefix "/" if needed to make it relative to the root.
-        const nodeId = id.startsWith("/") ? id : `/${id}`;
+    public nodeUpdated(
+        nodePath: string,
+        reason: "Loaded" | "Changed",
+        timestampMs?: number,
+        packagePath?: readonly string[],
+        requestHeaders?: IRequestHeader,
+    ) {
+        if (!this.shouldRunGC) {
+            return;
+        }
+
         this.logIfInactive(
-            "inactiveObjectChanged",
-            nodeId,
-            this.getCurrentTimestampMs(),
+            reason,
+            nodePath,
+            timestampMs,
             packagePath,
+            requestHeaders,
+        );
+    }
+
+    /**
+     * Called when an outbound reference is added to a node. This is used to identify all nodes that have been
+     * referenced between summaries so that their unreferenced timestamp can be reset.
+     *
+     * @param fromNodePath - The node from which the reference is added.
+     * @param toNodePath - The node to which the reference is added.
+     */
+    public addedOutboundReference(fromNodePath: string, toNodePath: string) {
+        if (!this.shouldRunGC) {
+            return;
+        }
+
+        const outboundRoutes = this.referencesSinceLastRun.get(fromNodePath) ?? [];
+        outboundRoutes.push(toNodePath);
+        this.referencesSinceLastRun.set(fromNodePath, outboundRoutes);
+
+        // If the node that got referenced is inactive, log an event as that may indicate use-after-delete.
+        this.logIfInactive(
+            "Revived",
+            toNodePath,
         );
     }
 
@@ -643,19 +734,6 @@ export class GarbageCollector implements IGarbageCollector {
             clearTimeout(this.sessionExpiryTimer);
             this.sessionExpiryTimer = undefined;
         }
-    }
-
-    /**
-     * Called when an outbound reference is added to a node. This is used to identify all nodes that have been
-     * referenced between summaries so that their unreferenced timestamp can be reset.
-     *
-     * @param fromNodeId - The node from which the reference is added.
-     * @param toNodeId - The node to which the reference is added.
-     */
-    public addedOutboundReference(fromNodeId: string, toNodeId: string) {
-        const outboundRoutes = this.referencesSinceLastRun.get(fromNodeId) ?? [];
-        outboundRoutes.push(toNodeId);
-        this.referencesSinceLastRun.set(fromNodeId, outboundRoutes);
     }
 
     /**
@@ -676,45 +754,54 @@ export class GarbageCollector implements IGarbageCollector {
      * 3. Clears tracking for nodes that were unreferenced but became referenced in this run.
      * @param gcData - The data representing the reference graph on which GC is run.
      * @param gcResult - The result of the GC run on the gcData.
-     * @param currentTimestampMs - The current timestamp to be used for unreferenced nodes' timestamp.
+     * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
      */
-    private updateCurrentState(gcData: IGarbageCollectionData, gcResult: IGCResult, currentTimestampMs: number) {
+    private updateCurrentState(
+        gcData: IGarbageCollectionData,
+        gcResult: IGCResult,
+        currentReferenceTimestampMs?: number,
+    ) {
         this.gcDataFromLastRun = cloneGCData(gcData);
         this.referencesSinceLastRun.clear();
-
-        // Iterate through the deleted nodes and start tracking if they became unreferenced in this run.
-        for (const nodeId of gcResult.deletedNodeIds) {
-            // The time when the node became unreferenced. This is added to the current GC state.
-            let unreferencedTimestampMs: number = currentTimestampMs;
-            const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
-            if (nodeStateTracker !== undefined) {
-                unreferencedTimestampMs = nodeStateTracker.unreferencedTimestampMs;
-            } else {
-                // Start tracking this node as it became unreferenced in this run.
-                this.unreferencedNodesState.set(
-                    nodeId,
-                    new UnreferencedStateTracker(unreferencedTimestampMs, this.deleteTimeoutMs),
-                );
-            }
-        }
 
         // Iterate through the referenced nodes and stop tracking if they were unreferenced before.
         for (const nodeId of gcResult.referencedNodeIds) {
             const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
             if (nodeStateTracker !== undefined) {
-                // If this node has been unreferenced for longer than deleteTimeoutMs and is being referenced,
-                // log an error as this may mean the deleteTimeoutMs is not long enough.
-                this.logIfInactive(
-                    "inactiveObjectRevived",
-                    nodeId,
-                    currentTimestampMs,
-                    // Get the package path of the data store to which this node belongs.
-                    this.getNodePackagePath(nodeId),
-                );
                 // Stop tracking so as to clear out any running timers.
                 nodeStateTracker.stopTracking();
                 // Delete the node as we don't need to track it any more.
                 this.unreferencedNodesState.delete(nodeId);
+            }
+        }
+
+        /**
+         * If there is no current reference time, skip tracking when a node becomes unreferenced. This would happen
+         * if no ops have been processed ever and we still try to run GC. If so, there is nothing interesting to track
+         * anyway.
+         */
+        if (currentReferenceTimestampMs === undefined) {
+            return;
+        }
+
+        /**
+         * If a node became unreferenced in this run, start tracking it.
+         * If a node was already unreferenced, update its tracking information. Since the current reference time is
+         * from the ops seen, this will ensure that we keep updating the unreferenced state as time moves forward.
+         */
+        for (const nodeId of gcResult.deletedNodeIds) {
+            const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
+            if (nodeStateTracker === undefined) {
+                this.unreferencedNodesState.set(
+                    nodeId,
+                    new UnreferencedStateTracker(
+                        currentReferenceTimestampMs,
+                        this.deleteTimeoutMs,
+                        currentReferenceTimestampMs,
+                    ),
+                );
+            } else {
+                nodeStateTracker.updateTracking(currentReferenceTimestampMs);
             }
         }
     }
@@ -786,8 +873,10 @@ export class GarbageCollector implements IGarbageCollector {
      * @param currentGCData - The GC data (reference graph) from the current GC run.
      */
     private validateReferenceCorrectness(currentGCData: IGarbageCollectionData) {
-        assert(this.gcDataFromLastRun !== undefined, 0x2b7
-            /* "Can't validate correctness without GC data from last run" */);
+        assert(
+            this.gcDataFromLastRun !== undefined,
+            0x2b7, /* "Can't validate correctness without GC data from last run" */
+        );
 
         // Get a list of all the outbound routes (or references) in the current GC data.
         const currentReferences: string[] = [];
@@ -897,10 +986,22 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Logs an event if a node is inactive and is used. If the package data for the node exists, log immediately. Else,
-     * queue it and it will be logged the next time GC runs as the package data should be available then.
+     * Logs an event if a node is inactive and is used.
      */
-    private logIfInactive(eventName: string, nodeId: string, timestampMs: number, packagePath?: readonly string[]) {
+    private logIfInactive(
+        eventSuffix: "Changed" | "Loaded" | "Revived",
+        nodeId: string,
+        currentReferenceTimestampMs = this.getCurrentReferenceTimestampMs(),
+        packagePath?: readonly string[],
+        requestHeaders?: IRequestHeader,
+    ) {
+        // If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
+        // logging as nothing interesting would have happened worth logging.
+        if (currentReferenceTimestampMs === undefined) {
+            return;
+        }
+
+        const eventName = `inactiveObject_${eventSuffix}`;
         // We log a particular event for a given node only once so that it is not too noisy.
         const uniqueEventId = `${nodeId}-${eventName}`;
         const nodeState = this.unreferencedNodesState.get(nodeId);
@@ -909,13 +1010,20 @@ export class GarbageCollector implements IGarbageCollector {
             const event: IUnreferencedEvent = {
                 eventName,
                 id: nodeId,
-                age: timestampMs - nodeState.unreferencedTimestampMs,
+                age: currentReferenceTimestampMs - nodeState.unreferencedTimestampMs,
                 timeout: this.deleteTimeoutMs,
+                lastSummaryTime: this.getLastSummaryTimestampMs(),
+                externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
+                viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
             };
-            if (packagePath !== undefined) {
+
+            // If the package data for the node exists, log immediately. Otherwise, queue it and it will be logged the
+            // next time GC runs as the package data should be available then.
+            const pkg = packagePath ?? this.getNodePackagePath(nodeId);
+            if (pkg !== undefined) {
                 this.mc.logger.sendErrorEvent({
                     ...event,
-                    pkg: { value: `/${packagePath.join("/")}`, tag: TelemetryDataTag.PackageData },
+                    pkg: { value: `/${pkg.join("/")}`, tag: TelemetryDataTag.PackageData },
                 });
             } else {
                 this.pendingEventsQueue.push(event);
@@ -958,8 +1066,8 @@ async function getGCStateFromSnapshot(
  * @param setTimerFn - the function used to update your timer variable
  */
 function setLongTimeout(
-    timeoutMs: number, 
-    timeoutFn: () => void, 
+    timeoutMs: number,
+    timeoutFn: () => void,
     setTimerFn: (timer: ReturnType<typeof setTimeout>) => void,
 ) {
     // The setTimeout max is 24.8 days before looping occurs.

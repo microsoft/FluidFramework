@@ -8,22 +8,31 @@ import {
     ITelemetryLogger,
     ITelemetryProperties,
 } from "@fluidframework/common-definitions";
+import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDeltaQueue,
     ReadOnlyInfo,
     IConnectionDetails,
     ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-    TelemetryLogger,
-    normalizeError,
-} from "@fluidframework/telemetry-utils";
+    GenericError,
+} from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions";
+import {
+    canRetryOnError,
+    createWriteError,
+    createGenericNetworkError,
+    getRetryDelayFromError,
+    IAnyDriverError,
+    logNetworkFailure,
+    waitForConnectedState,
+    DeltaStreamConnectionForbiddenError,
+} from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClient,
@@ -41,24 +50,15 @@ import {
     ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-    canRetryOnError,
-    createWriteError,
-    createGenericNetworkError,
-    getRetryDelayFromError,
-    IAnyDriverError,
-    logNetworkFailure,
-    waitForConnectedState,
-    DeltaStreamConnectionForbiddenError,
-} from "@fluidframework/driver-utils";
-import {
-    GenericError,
-} from "@fluidframework/container-utils";
-import { DeltaQueue } from "./deltaQueue";
+    TelemetryLogger,
+    normalizeError,
+} from "@fluidframework/telemetry-utils";
 import {
     ReconnectMode,
     IConnectionManager,
     IConnectionManagerFactoryArgs,
 } from "./contracts";
+import { DeltaQueue } from "./deltaQueue";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
@@ -67,17 +67,10 @@ const DefaultChunkSize = 16 * 1024;
 const fatalConnectErrorProp = { fatalConnectError: true };
 
 function getNackReconnectInfo(nackContent: INackContent) {
-    // check message.content for Back-compat with old service.
-    if (nackContent === undefined) {
-        return createGenericNetworkError(
-            "nackReasonUnknown", undefined, { canRetry: true }, { driverVersion: undefined });
-    }
-
     const message = `Nack (${nackContent.type}): ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
     const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
     return createGenericNetworkError(
-        `nack [${nackContent.code}]`,
         message,
         { canRetry, retryAfterMs },
         { statusCode: nackContent.code, driverVersion: undefined });
@@ -688,7 +681,7 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     /**
-     * Disconnect the current connection and reconnect.
+     * Disconnect the current connection and reconnect. Closes the container if it fails.
      * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
      * @param requestedMode - Read or write
      * @param error - Error reconnect information including whether or not to reconnect
@@ -698,11 +691,11 @@ export class ConnectionManager implements IConnectionManager {
         requestedMode: ConnectionMode,
         error: IAnyDriverError,
     ) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.reconnectOnErrorCore(
+        this.reconnect(
             requestedMode,
             error.message,
-            error);
+            error)
+        .catch(this.props.closeHandler);
     }
 
     /**
@@ -712,7 +705,7 @@ export class ConnectionManager implements IConnectionManager {
      * @param error - Error reconnect information including whether or not to reconnect
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
-    private async reconnectOnErrorCore(
+    private async reconnect(
         requestedMode: ConnectionMode,
         disconnectMessage: string,
         error?: IAnyDriverError,
@@ -812,7 +805,7 @@ export class ConnectionManager implements IConnectionManager {
                 this.pendingReconnect = true;
                 Promise.resolve().then(async () => {
                     if (this.pendingReconnect) { // still valid?
-                        await this.reconnectOnErrorCore(
+                        await this.reconnect(
                             "write", // connectionMode
                             "Switch to write", // message
                         );
@@ -863,10 +856,9 @@ export class ConnectionManager implements IConnectionManager {
     // Always connect in write mode after getting nacked.
     private readonly nackHandler = (documentId: string, messages: INack[]) => {
         const message = messages[0];
-        // TODO: we should remove this check when service updates?
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (this._readonlyPermissions) {
+        if (this._readonlyPermissions === true) {
             this.props.closeHandler(createWriteError("writeOnReadOnlyDocument", { driverVersion: undefined }));
+            return;
         }
 
         const reconnectInfo = getNackReconnectInfo(message.content);
@@ -874,6 +866,7 @@ export class ConnectionManager implements IConnectionManager {
         // If the nack indicates we cannot retry, then close the container outright
         if (!reconnectInfo.canRetry) {
             this.props.closeHandler(reconnectInfo);
+            return;
         }
 
         this.reconnectOnError(

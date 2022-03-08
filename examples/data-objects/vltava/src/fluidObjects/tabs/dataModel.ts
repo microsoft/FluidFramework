@@ -19,7 +19,6 @@ import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 import { v4 as uuid } from "uuid";
 
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { IFluidObjectInternalRegistry } from "../../interfaces";
 
 export interface ITabsTypes {
@@ -30,7 +29,7 @@ export interface ITabsTypes {
 
 export interface ITabsModel {
     type: string;
-    handle?: IFluidHandle;
+    handle: IFluidHandle;
 }
 
 export interface ITabsDataModel extends EventEmitter {
@@ -38,6 +37,7 @@ export interface ITabsDataModel extends EventEmitter {
     getTabIds(): string[];
     createTab(factory: IFluidDataStoreFactory): Promise<string>;
     getNewTabTypes(): ITabsTypes[];
+    getFluidObjectTabView(id: string): Promise<JSX.Element>;
 }
 
 export class TabsDataModel extends EventEmitter implements ITabsDataModel {
@@ -96,9 +96,23 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         return this.getFluidObjectFromDirectory(id, this.tabs, this.getObjectFromDirectory);
     }
 
+    public async getFluidObjectTabView(id: string): Promise<JSX.Element> {
+        const objectWithMetadata = this.tabs.get<ITabsModel>(id);
+        if (objectWithMetadata === undefined) {
+            throw new Error("Tab not found");
+        }
+        const registryEntry = this.internalRegistry.getByFactory(objectWithMetadata.type);
+        if (registryEntry === undefined) {
+            throw new Error("Tab of unknown type");
+        }
+
+        // Could be typed stronger, but getView just expects the passed object to have a .handle
+        return registryEntry.getView(objectWithMetadata);
+    }
+
     public getNewTabTypes(): ITabsTypes[] {
         const response: ITabsTypes[] = [];
-        this.internalRegistry.getFromCapability(IFluidHTMLView).forEach((e) => {
+        this.internalRegistry.getAll().forEach((e) => {
             response.push({
                 friendlyName: e.friendlyName,
                 fabricIconName: e.fabricIconName,

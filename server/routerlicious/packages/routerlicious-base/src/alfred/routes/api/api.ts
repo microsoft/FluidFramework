@@ -15,7 +15,7 @@ import {
     getParam,
 } from "@fluidframework/server-services-utils";
 import { Request, Router } from "express";
-import * as moniker from "moniker";
+import sillyname from "sillyname";
 import { Provider } from "nconf";
 import requestAPI from "request";
 import winston from "winston";
@@ -48,7 +48,7 @@ export function create(
     ) {
         const tenantId = getParam(request.params, "tenantId");
         const documentId = getParam(request.params, "id");
-        const clientId = moniker.choose();
+        const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
         sendJoin(tenantId, documentId, clientId, producer);
         sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
         sendLeave(tenantId, documentId, clientId, producer);
@@ -107,7 +107,7 @@ function mapSetBuilder(request: Request): any[] {
     for (const reqOp of reqOps) {
         ops.push(craftMapSet(reqOp));
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return ops;
 }
 

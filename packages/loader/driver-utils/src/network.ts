@@ -37,11 +37,8 @@ export function isOnline(): OnlineStatus {
  * It will be either DriverErrorType or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
  */
- export interface IAnyDriverError {
+ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     readonly errorType: string;
-    readonly message: string;
-    canRetry: boolean;
-    online?: string;
 }
 
 /** Telemetry props with driver-specific required properties */
@@ -54,7 +51,6 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     readonly errorType = DriverErrorType.genericNetworkError;
 
     constructor(
-        readonly fluidErrorCode: string,
         message: string,
         readonly canRetry: boolean,
         props: DriverErrorTelemetryProps,
@@ -75,8 +71,8 @@ export class DeltaStreamConnectionForbiddenError extends LoggingError implements
     readonly errorType: string = DeltaStreamConnectionForbiddenError.errorType;
     readonly canRetry = false;
 
-    constructor(readonly fluidErrorCode: string, props: DriverErrorTelemetryProps) {
-        super(fluidErrorCode, { ...props, statusCode: 400 });
+    constructor(message: string, props: DriverErrorTelemetryProps) {
+        super(message, { ...props, statusCode: 400 });
     }
 }
 
@@ -85,7 +81,6 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     readonly canRetry = false;
 
     constructor(
-        readonly fluidErrorCode: string,
         message: string,
         readonly claims: string | undefined,
         readonly tenantId: string | undefined,
@@ -98,7 +93,6 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
 
 export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
     constructor(
-        readonly fluidErrorCode: string,
         message: string,
         readonly errorType: T,
         readonly canRetry: boolean,
@@ -110,23 +104,21 @@ export class NetworkErrorBasic<T extends string> extends LoggingError implements
 
 export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(
-        fluidErrorCode: string,
-        message: string | undefined,
+        message: string,
         readonly errorType: T,
         props: DriverErrorTelemetryProps,
     ) {
-        super(fluidErrorCode, message ?? fluidErrorCode, errorType, false, props);
+        super(message, errorType, false, props);
     }
 }
 
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(
-        fluidErrorCode: string,
-        message: string | undefined,
+        message: string,
         readonly errorType: T,
         props: DriverErrorTelemetryProps,
     ) {
-        super(fluidErrorCode, message ?? fluidErrorCode, errorType, true, props);
+        super(message, errorType, true, props);
     }
 }
 
@@ -138,7 +130,6 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
     readonly canRetry = true;
 
     constructor(
-        readonly fluidErrorCode: string,
         message: string,
         readonly retryAfterSeconds: number,
         props: DriverErrorTelemetryProps,
@@ -147,20 +138,19 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
     }
 }
 
-export const createWriteError = (fluidErrorCode: string, props: DriverErrorTelemetryProps) =>
-    new NonRetryableError(fluidErrorCode, undefined, DriverErrorType.writeError, props);
+export const createWriteError = (message: string, props: DriverErrorTelemetryProps) =>
+    new NonRetryableError(message, DriverErrorType.writeError, props);
 
 export function createGenericNetworkError(
-    fluidErrorCode: string,
-    message: string | undefined,
+    message: string,
     retryInfo: {canRetry: boolean, retryAfterMs?: number },
     props: DriverErrorTelemetryProps,
 ): ThrottlingError | GenericNetworkError {
     if (retryInfo.retryAfterMs !== undefined && retryInfo.canRetry) {
         return new ThrottlingError(
-            fluidErrorCode, message ?? fluidErrorCode, retryInfo.retryAfterMs / 1000, props);
+            message, retryInfo.retryAfterMs / 1000, props);
     }
-    return new GenericNetworkError(fluidErrorCode, message ?? fluidErrorCode, retryInfo.canRetry, props);
+    return new GenericNetworkError(message, retryInfo.canRetry, props);
 }
 
 /**

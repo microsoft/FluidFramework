@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
@@ -21,7 +23,7 @@ import {
 } from "@fluidframework/test-utils";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
     version: number,
@@ -146,7 +148,12 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         await testRoundTrip();
     });
 
-    it("Code Proposal", async () => {
+    itExpects("Code Proposal",
+    [
+        {eventName:"fluid:telemetry:Container:ContainerClose", error:"Existing context does not satisfy incoming proposal"},
+        {eventName:"fluid:telemetry:Container:ContainerClose", error:"Existing context does not satisfy incoming proposal"},
+    ],
+    async () => {
         const proposal: IFluidCodeDetails = { package: packageV2 };
         for (let i = 0; i < containers.length; i++) {
             containers[i].once("codeDetailsProposed", (c) => {

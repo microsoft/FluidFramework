@@ -19,7 +19,7 @@ export async function getCommits(
     count: number,
 ): Promise<ICommitDetails[]> {
     const descriptions = await git.log({
-        fs: fs,
+        fs,
         depth: count,
         dir: utils.getGitDir(store, tenantId),
         ref: sha,

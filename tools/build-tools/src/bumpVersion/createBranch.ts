@@ -16,7 +16,7 @@ import * as semver from "semver";
  * Create release branch based on the repo state, bump minor version immediately
  * and push it to `main` and the new release branch to remote
  */
-export async function createReleaseBranch(context: Context) {
+export async function createReleaseBranch(context: Context, virtualPatch: boolean) {
 
     // run policy check before creating release branch.
     // right now this only does assert short codes
@@ -52,7 +52,7 @@ export async function createReleaseBranch(context: Context) {
 
     // creating the release branch and bump the version
     const releaseBranchVersion = `${ semver.major(releaseVersion) }.${ semver.minor(releaseVersion) }`;
-    const releaseBranch = `release / ${ releaseBranchVersion }`;
+    const releaseBranch = `release/${ releaseBranchVersion }`;
     const commit = await context.gitRepo.getShaForBranch(releaseBranch);
     if (commit) {
         fatal(`${ releaseBranch } already exists`);
@@ -70,7 +70,7 @@ export async function createReleaseBranch(context: Context) {
 
     // Bump the version
     console.log(`Bumping minor version for development`)
-    console.log(await bumpCurrentBranch(context, "minor", releaseName, depVersions));
+    console.log(await bumpCurrentBranch(context, "minor", releaseName, depVersions, virtualPatch));
 
     console.log("======================================================================================================");
     console.log(`Please create PR for branch ${ bumpBranch } targeting ${ context.originalBranchName } `);
@@ -86,7 +86,7 @@ export async function createReleaseBranch(context: Context) {
  * @param packageNeedBump the set of packages that needs to be bump
  * @param oldVersions old versions
  */
-async function bumpCurrentBranch(context: Context, versionBump: VersionBumpType, releaseName: string, depVersions: ReferenceVersionBag) {
+async function bumpCurrentBranch(context: Context, versionBump: VersionBumpType, releaseName: string, depVersions: ReferenceVersionBag, virtualPatch: boolean) {
     let clientNeedBump = false;
     let serverNeedBump = false;
     const packageNeedBump = new Set<Package>();
@@ -105,7 +105,7 @@ async function bumpCurrentBranch(context: Context, versionBump: VersionBumpType,
             }
         }
     }
-    const newVersions = await bumpRepo(context, versionBump, clientNeedBump, serverNeedBump, packageNeedBump);
+    const newVersions = await bumpRepo(context, versionBump, clientNeedBump, serverNeedBump, packageNeedBump, virtualPatch, depVersions);
     const repoState = getRepoStateChange(depVersions.repoVersions, newVersions);
 
     const releaseNewVersion = newVersions.get(releaseName);

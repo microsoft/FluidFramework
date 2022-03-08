@@ -13,10 +13,46 @@ level, identify the important lower level concepts, and discuss some of our key 
 
 The Fluid loader connects to the Fluid service and loads a Fluid container.
 
-<img src="/images/architecture.png" alt="The Fluid architecture consists of a client and service. The
+```goat
++-----Client----------------------------------------------------------------+
+|                                                                           |
+| +----------------------------------------------------------------------+  |
+| |        Fluid Loader                                                  |  |
+| | +------------------------+ +-------------------+  +----------------+ |  |
+| | | Document Service       | | Code Loader       |  |  Scopes        | |  |
+| | | Factory                | |                   |  +----------------+ |  |
+| | |                        | |                   |                     |  |
+| | |                        | |                   |  +----------------+ |  |
+| | |                        | |                   |  | URL Resolver   | |  |
+| | |                        | |                   |  |                | |  |
+| | +------------------------+ +-------------------+  +----------------+ |  |
+| |                                                                      |  |
+| +----------------------------------------------------------------------+  |
+|                                                                           +------------+
+| +---------Fluid Runtime (Container)------------------------------------+  |            |
+| |                                                                      |  |            v
+| | +--------------------------+  +----------------+  +----------------+ |  |  +---------------------+
+| | |                          |  |                |  |                | |  |  |                     |
+| | |                          |  |                |  |                | |  |  |    Fluid Service    |
+| | |   Fluid Object           |  | Fluid Object   |  | Fluid Object   | |  |  |                     |
+| | |                          |  |                |  |                | |  |  +---------------------+
+| | |                          |  |                |  |                | |  |
+| | +--------------------------+  +----------------+  +----------------+ |  |
+| |                                                                      |  |
+| | +-----+   +-----+    +-----+       +-----+             +-----+       |  |
+| | |     |   |     |    |     |       |     |             |     |       |  |
+| | | DDS |   | DDS |    | DDS |       | DDS |             | DDS |       |  |
+| | |     |   |     |    |     |       |     |             |     |       |  |
+| | +-----+   +-----+    +-----+       +-----+             +-----+       |  |
+| |                                                                      |  |
+| +----------------------------------------------------------------------+  |
+|                                                                           |
++---------------------------------------------------------------------------+
+```
+The Fluid architecture consists of a client and service. The
 client contains the Fluid loader and the Fluid container. The Fluid loader contains a document service factory, code
 loader, scopes, and a URL resolver. The Fluid runtime is encapsulated within a container, which is built using Fluid
-objects and distributed data structures.">
+objects and distributed data structures.
 
 If you want to load a Fluid container on your app or website, you'll load the container with the Fluid loader. If you
 want to create a new collaborative experience using the Fluid Framework, you'll create a Fluid container.
@@ -74,9 +110,40 @@ client, gives the op a sequential order number, and sends the ordered op back to
 structures use these ops to reconstruct state on each client. The Fluid service doesn't parse any of these ops; in fact,
 the service knows nothing about the contents of any Fluid container.
 
-<img src="/images/fluid-service.png" alt="Clients send operations to the Fluid service, which are assigned an order and
-then broadcast to the other connected clients. The client sending the operation also receives an acknowledgement from
-the service with the assigned order of the operation.">
+```goat
+                                                        URL
+                                                         +
+                                                         |
+                                                         |
+                                                         v
++--------------------------------------------------------+-------------------------------------------+
+| Fluid Loader                                                                                       |
+|                                                                                                    |
+| +-------------------------+ +-------------------------+ +-------------------------+ +------------+ |
+| |    Container Lookup &   | |  Fluid Service Driver   | | Container Code Loader   | | options    | |
+| |        Resolver         | |                         | |                         | |            | |
+| |                         | |                         | |                         | +------------+ |
+| |                         | |                         | |                         |                |
+| |                         | |                         | |                         | +------------+ |
+| |                         | |                         | |                         | | scopes     | |
+| |                         | |                         | |                         | |            | |
+| +-------------------------+ +-------------------------+ +-------------------------+ +------------+ |
+|                                                                                                    |
++--------------------------------------------------------+-------------------------------------------+
+                                                         |
+                                                         | request
+                                                         |
+                                                         v
+                                             +-----------+-------------+
+                                             |    Fluid Container or   |
+                                             |       Fluid Object      |
+                                             |                         |
+                                             +-------------------------+
+```
+
+\Clients send operations to the Fluid service, which are assigned an order and then broadcast to the other connected
+clients. The client sending the operation also receives an acknowledgement from the service with the assigned order of
+the operation.
 
 From the client perspective, this op flow is accessed through a **DeltaConnection** object.
 

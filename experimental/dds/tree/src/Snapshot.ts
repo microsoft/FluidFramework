@@ -104,6 +104,7 @@ export class Snapshot {
 			const { identifier, definition } = node;
 			const traits: Map<TraitLabel, readonly NodeId[]> = new Map();
 
+			// eslint-disable-next-line no-restricted-syntax
 			for (const key in node.traits) {
 				if (Object.prototype.hasOwnProperty.call(node.traits, key)) {
 					const element = node.traits[key];
@@ -348,6 +349,7 @@ export class Snapshot {
 }
 
 function getIndex(side: Side, index: TraitNodeIndex): PlaceIndex {
+	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	return (side + index) as PlaceIndex;
 }
 

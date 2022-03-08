@@ -4,22 +4,22 @@
  */
 
 import { strict as assert } from "assert";
-import { Context, VersionChangeType } from "./context";
-import { getRepoStateChange } from "./versionBag";
+import { Context, isVersionBumpType, VersionChangeType } from "./context";
+import { getRepoStateChange, VersionBag } from "./versionBag";
 import { fatal, exec } from "./utils";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getPackageShortName } from "./releaseVersion";
 import * as semver from "semver";
 
-export async function bumpVersionCommand(context:Context, bump: string, version: VersionChangeType, commit: boolean) {
+export async function bumpVersionCommand(context:Context, bump: string, version: VersionChangeType, commit: boolean, virtualPatch: boolean) {
     const bumpBranch = `bump_${version}_${Date.now()}`;
     if (commit) {
         console.log(`Creating branch ${bumpBranch}`);
         await context.createBranch(bumpBranch);
     }
 
-    await bumpVersion(context, [bump], version, getPackageShortName(bump), commit ? "" : undefined);
+    await bumpVersion(context, [bump], version, getPackageShortName(bump), virtualPatch, commit ? "" : undefined);
 
     if (commit) {
         console.log("======================================================================================================");
@@ -30,7 +30,7 @@ export async function bumpVersionCommand(context:Context, bump: string, version:
 /**
  * Functions and utilities to update the package versions
  */
-export async function bumpVersion(context: Context, bump: string[], version: VersionChangeType, packageShortNames: string, commit?: string) {
+export async function bumpVersion(context: Context, bump: string[], version: VersionChangeType, packageShortNames: string, virtualPatch: boolean, commit?: string) {
     console.log(`Bumping ${packageShortNames} to ${version}`);
 
     let clientNeedBump = false;
@@ -67,7 +67,7 @@ export async function bumpVersion(context: Context, bump: string[], version: Ver
     }
 
     const oldVersions = context.collectVersions();
-    const newVersions = await bumpRepo(context, version, clientNeedBump, serverNeedBump, packageNeedBump);
+    const newVersions = await bumpRepo(context, version, clientNeedBump, serverNeedBump, packageNeedBump, virtualPatch, oldVersions);
     const bumpRepoState = getRepoStateChange(oldVersions, newVersions);
     console.log(bumpRepoState);
 
@@ -76,31 +76,82 @@ export async function bumpVersion(context: Context, bump: string[], version: Ver
     }
 }
 
+
+/**
+ * Translate a VersionChangeType for the virtual patch scenario where we overload a beta version number
+ * to include all of major, minor, and patch.  Actual semver type is not translated
+ * "major" maps to "minor" (<N + 1>.x.x -> x.<N + 1>.x)
+ * "minor" maps to "patch" * 1000 (x.<N + 1>.x -> x.x.<N + 1>00x)
+ * "patch" is unchanged
+ */
+function translateVirtualVersion(
+    versionBump: VersionChangeType,
+    versionString: string,
+    virtualPatch: boolean,
+): VersionChangeType {
+    if (!virtualPatch) {
+        return versionBump;
+    }
+
+    // Virtual patch can only be used for a major/minor/patch bump and not a specifc version
+    if (!isVersionBumpType(versionBump)) {
+        fatal("Can only use virtual patches when doing major/minor/patch bumps");
+    }
+
+    if (versionBump === "major") {
+        return "minor";
+    }
+
+    // minor adds 1000, patch adds 1
+    const virtualVersion = semver.parse(versionString);
+    if (!virtualVersion) {
+        fatal("unable to deconstruct package version for virtual patch");
+    }
+    virtualVersion.patch += versionBump === "minor" ? 1000 : 1;
+    virtualVersion.format(); // semver must be reformated after edits
+    return virtualVersion;
+}
 /**
  * Bump version of packages in the repo
  *
  * @param versionBump the kind of version bump
  */
-export async function bumpRepo(context: Context, versionBump: VersionChangeType, clientNeedBump: boolean, serverNeedBump: boolean, packageNeedBump: Set<Package>) {
-    const bumpMonoRepo = async (monoRepo: MonoRepo) => {
-        return exec(`npx lerna version ${versionBump} --no-push --no-git-tag-version -y && npm run build:genver`, monoRepo.repoPath, "bump mono repo");
+export async function bumpRepo(
+    context: Context,
+    versionBump: VersionChangeType,
+    clientNeedBump: boolean,
+    serverNeedBump: boolean,
+    packageNeedBump: Set<Package>,
+    virtualPatch: boolean,
+    versionBag: VersionBag,
+) {
+    const bumpMonoRepo = async (repoVersionBump: VersionChangeType, monoRepo: MonoRepo) => {
+        return exec(`npx lerna version ${repoVersionBump} --no-push --no-git-tag-version -y && npm run build:genver`, monoRepo.repoPath, "bump mono repo");
     }
 
+    const vPatchLogString = virtualPatch ? " using virtual patches" : "";
+
     if (clientNeedBump) {
-        console.log("  Bumping client version");
-        await bumpLegacyDependencies(context, versionBump);
-        await bumpMonoRepo(context.repo.clientMonoRepo);
+        console.log(`  Bumping client version${vPatchLogString}`);
+        // Translate the versionBump into the appropriate change for virtual patch versioning
+        const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get("Client"), virtualPatch);
+        await bumpLegacyDependencies(context, translatedVersionBump);
+        await bumpMonoRepo(translatedVersionBump, context.repo.clientMonoRepo);
     }
 
     if (serverNeedBump) {
-        console.log("  Bumping server version");
+        console.log(`  Bumping server version${vPatchLogString}`);
         assert(context.repo.serverMonoRepo, "Attempted server version bump on a Fluid repo with no server directory");
-        await bumpMonoRepo(context.repo.serverMonoRepo!);
+        // Translate the versionBump into the appropriate change for virtual patch versioning
+        const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get("Server"), virtualPatch);
+        await bumpMonoRepo(translatedVersionBump, context.repo.serverMonoRepo!);
     }
 
     for (const pkg of packageNeedBump) {
-        console.log(`  Bumping ${pkg.name}`);
-        let cmd = `npm version ${versionBump}`;
+        console.log(`  Bumping ${pkg.name}${vPatchLogString}`);
+        // Translate the versionBump into the appropriate change for virtual patch versioning
+        const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get(pkg.name), virtualPatch);
+        let cmd = `npm version ${translatedVersionBump}`;
         if (pkg.getScript("build:genver")) {
             cmd += " && npm run build:genver";
         }

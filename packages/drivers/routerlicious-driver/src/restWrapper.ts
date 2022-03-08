@@ -16,7 +16,7 @@ import {
     RequestInfo as FetchRequestInfo,
     RequestInit as FetchRequestInit,
 } from "node-fetch";
-import type { AxiosRequestConfig } from "axios";
+import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
 import { throwR11sNetworkError } from "./errorUtils";
@@ -37,7 +37,9 @@ const axiosRequestConfigToFetchRequestConfig = (requestConfig: AxiosRequestConfi
         : requestConfig.url ?? "";
     const requestInit: RequestInit = {
         method: requestConfig.method,
-        headers: requestConfig.headers,
+        // NOTE: I believe that although the Axios type permits non-string values in the header, here we are
+        // guaranteed the requestConfig only has string values in its header.
+        headers: requestConfig.headers as Record<string, string>,
         body: requestConfig.data,
     };
     return [requestInfo, requestInit];
@@ -102,23 +104,25 @@ export class RouterliciousRestWrapper extends RestWrapper {
             }, responseBody.retryAfter * 1000));
         }
 
+        const responseSummary = responseBody !== undefined
+            ? typeof responseBody === "string" ? responseBody : safeStringify(responseBody)
+            : response.statusText;
         throwR11sNetworkError(
-            "r11sFetchError",
-            responseBody !== undefined
-                ? typeof responseBody === "string" ? responseBody : safeStringify(responseBody)
-                : response.statusText,
+            `R11s fetch error: ${responseSummary}`,
             response.status,
             responseBody?.retryAfter,
         );
     }
 
-    private generateHeaders(requestHeaders?: Record<string, unknown>): Record<string, unknown> {
+    private generateHeaders(requestHeaders?: AxiosRequestHeaders | undefined): Record<string, string> {
         const correlationId = requestHeaders?.["x-correlation-id"] || uuid();
 
         return {
             ...requestHeaders,
-            "x-correlation-id": correlationId,
-            "Authorization": this.authorizationHeader,
+            // NOTE: Can correlationId actually be number | true?
+            "x-correlation-id": correlationId as string,
+            // NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?
+            "Authorization": this.authorizationHeader!,
         };
     }
 }

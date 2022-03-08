@@ -19,6 +19,9 @@ import * as semver from "semver";
 
 export type VersionBumpType = "major" | "minor" | "patch";
 export type VersionChangeType = VersionBumpType | semver.SemVer;
+export function isVersionBumpType(type: VersionChangeType | string): type is VersionBumpType {
+    return type === "major" || type === "minor" || type === "patch";
+}
 
 export class Context {
     public readonly repo: FluidRepo;

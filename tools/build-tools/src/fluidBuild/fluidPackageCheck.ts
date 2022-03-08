@@ -703,7 +703,7 @@ export class FluidPackageCheck {
                 continue;
             }
             const files = fs.readdirSync(dir, { withFileTypes: true });
-            if (files.some((dirent) => !dirent.isDirectory() && dirent.name.endsWith(".ts"))) {
+            if (files.some((dirent) => !dirent.isDirectory() && (dirent.name.endsWith(".ts") || dirent.name.endsWith(".spec.js")))) {
                 return true;
             }
             dirs.push(...files.filter((dirent) => dirent.isDirectory()).map((dirent) => path.join(dir, dirent.name)));

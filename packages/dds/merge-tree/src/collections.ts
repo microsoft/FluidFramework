@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq */
-/* eslint-disable no-bitwise */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 /* Remove once strictNullCheck is enabled */
 
@@ -61,7 +60,6 @@ export class List<T> {
     public next: List<T>;
     public prev: List<T>;
 
-    // eslint-disable-next-line @typescript-eslint/prefer-readonly
     constructor(public isHead: boolean, private data: T | undefined) {
         this.prev = this;
         this.next = this;
@@ -182,7 +180,7 @@ export class Heap<T> {
         const x = this.L[1];
         this.L[1] = this.L[this.count()];
         this.L.pop();
-        this.fixdown(1);
+        this.fixDown(1);
         return x;
     }
 
@@ -201,7 +199,7 @@ export class Heap<T> {
         }
     }
 
-    private fixdown(k: number) {
+    private fixDown(k: number) {
         let _k = k;
         while ((_k << 1) <= (this.count())) {
             let j = _k << 1;
@@ -262,7 +260,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     }
 
     private isRed(node: RBNode<TKey, TData> | undefined) {
-        return !!node && (node.color == RBColor.RED);
+        return !!node && (node.color === RBColor.RED);
     }
 
     private nodeSize(node: RBNode<TKey, TData> | undefined) {
@@ -508,14 +506,14 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
             if (this.isRed(_node.left)) {
                 _node = this.rotateRight(_node);
             }
-            if ((this.compareKeys(key, _node.key) == 0) && (!_node.right)) {
+            if ((this.compareKeys(key, _node.key) === 0) && (!_node.right)) {
                 return undefined;
             }
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             if ((!this.isRed(_node.right)) && (!this.isRed(_node.right!.left))) {
                 _node = this.moveRedRight(_node);
             }
-            if (this.compareKeys(key, _node.key) == 0) {
+            if (this.compareKeys(key, _node.key) === 0) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const subtreeMin = this.nodeMin(_node.right!);
                 _node.key = subtreeMin.key;
@@ -530,17 +528,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
         return this.balance(_node);
     }
-    private height() {
-        return this.nodeHeight(this.root);
-    }
-    private nodeHeight(node: RBNode<TKey, TData> | undefined): number {
-        if (node === undefined) {
-            return -1;
-        }
-        else {
-            return 1 + Math.max(this.nodeHeight(node.left), this.nodeHeight(node.right));
-        }
-    }
 
     public floor(key: TKey) {
         if (!this.isEmpty()) {
@@ -551,7 +538,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     private nodeFloor(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined {
         if (node) {
             const cmp = this.compareKeys(key, node.key);
-            if (cmp == 0) {
+            if (cmp === 0) {
                 return node;
             }
             else if (cmp < 0) {
@@ -578,7 +565,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     private nodeCeil(node: RBNode<TKey, TData> | undefined, key: TKey): RBNode<TKey, TData> | undefined {
         if (node) {
             const cmp = this.compareKeys(key, node.key);
-            if (cmp == 0) {
+            if (cmp === 0) {
                 return node;
             }
             else if (cmp > 0) {
@@ -659,7 +646,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     }
 
     private oppositeColor(c: RBColor) {
-        return (c == RBColor.BLACK) ? RBColor.RED : RBColor.BLACK;
+        return (c === RBColor.BLACK) ? RBColor.RED : RBColor.BLACK;
     }
 
     private flipColors(node: RBNode<TKey, TData>) {
@@ -837,9 +824,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
         }
         return go;
     }
-    public diag() {
-        console.log(`Height is ${this.height()}`);
-    }
 }
 
 export interface AugmentedIntervalNode {
@@ -1013,7 +997,6 @@ export class TST<T> {
             this.n++;
         }
         this.root = this.nodePut(this.root, key, val, 0);
-        // console.log(`put ${key}`);
     }
 
     private nodePut(x: TSTNode<T> | undefined, key: string, val: T, d: number) {

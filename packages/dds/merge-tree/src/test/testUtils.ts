@@ -14,7 +14,7 @@ import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { TextSegment } from "../textSegment";
 import { ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
-import { loadText } from "../text";
+import { loadText } from "./text";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
     const content = fs.readFileSync(filename, "utf8");
