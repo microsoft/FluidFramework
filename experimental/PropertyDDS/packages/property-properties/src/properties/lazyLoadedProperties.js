@@ -22,4 +22,3 @@ export const LazyLoadedProperties = {
     NodeProperty: undefined,
     IndexedCollectionBaseProperty: undefined,
 };
-

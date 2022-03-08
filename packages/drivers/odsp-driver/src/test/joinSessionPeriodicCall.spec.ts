@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { stub, useFakeTimers, SinonFakeTimers } from "sinon";
 import { strict as assert } from "assert";
+import { IClient } from "@fluidframework/protocol-definitions";
+import { stub, useFakeTimers, SinonFakeTimers } from "sinon";
 import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection";
 import * as joinSession from "../vroom";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
@@ -13,7 +14,6 @@ import { OdspFluidDataStoreLocator } from "../contractsPublic";
 import { createOdspUrl } from "../createOdspUrl";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentService } from "../odspDocumentService";
-import { IClient } from "@fluidframework/protocol-definitions";
 import { ISocketStorageDiscovery } from "../contracts";
 import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection";
 
@@ -67,7 +67,7 @@ describe("joinSessions Tests", () => {
         joinSessionResponse.refreshSessionDurationSeconds = time;
         const joinSessionStub = stub(
             joinSession, "fetchJoinSession").callsFake(
-                () => Promise.resolve(joinSessionResponse));
+                async () => joinSessionResponse);
         return joinSessionStub;
     }
 
@@ -98,12 +98,12 @@ describe("joinSessions Tests", () => {
             disposed: false,
             submit: (message) => {},
             submitSignal: (message) => {},
-            on: (op: any, func?:any) => {},
+            on: (op: any, func?: any) => {},
         };
         const createDeltaConnectionStub = stub(
             odspDocumentDeltaConnection.OdspDocumentDeltaConnection, "create").callsFake(
-                () => Promise.resolve(deltaConnection as any as OdspDocumentDeltaConnection));
-        let joinSessionStub = addJoinSessionStub(100)
+                async () => deltaConnection as any as OdspDocumentDeltaConnection);
+        let joinSessionStub = addJoinSessionStub(100);
         await service.connectToDeltaStream(client);
         createDeltaConnectionStub.restore();
         joinSessionStub.restore();

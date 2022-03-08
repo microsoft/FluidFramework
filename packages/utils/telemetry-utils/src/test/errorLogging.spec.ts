@@ -750,10 +750,10 @@ describe("Error Discovery", () => {
 
         const errorType = "someErrorType";
         assert(!isFluidError(
-            Object.assign(new LoggingError("hello"), { errorType, _errorInstanceId: undefined })
+            Object.assign(new LoggingError("hello"), { errorType, _errorInstanceId: undefined }),
         ));
         assert(isFluidError(
-            Object.assign(new LoggingError("hello"), { errorType })
+            Object.assign(new LoggingError("hello"), { errorType }),
         ));
     });
     // I copied the old version of isFluidError here, it depends on fluidErrorCode.
@@ -775,10 +775,10 @@ describe("Error Discovery", () => {
 
         const errorType = "someErrorType";
         assert(!isFluidError_old(
-            Object.assign(new LoggingError("hello"), { errorType, _errorInstanceId: undefined })
+            Object.assign(new LoggingError("hello"), { errorType, _errorInstanceId: undefined }),
         ));
         assert(isFluidError_old(
-            Object.assign(new LoggingError("hello"), { errorType })
+            Object.assign(new LoggingError("hello"), { errorType }),
         ));
     });
 });

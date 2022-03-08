@@ -226,13 +226,13 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         // back-compat: IFluidCodeDetails usage to be removed in 0.58.0
         let containerPackageName;
         if (packageInfoSource && "name" in packageInfoSource) {
-            containerPackageName = packageInfoSource.name
+            containerPackageName = packageInfoSource.name;
         } else if (isFluidPackage(packageInfoSource?.package)) {
-            containerPackageName = packageInfoSource?.package.name
+            containerPackageName = packageInfoSource?.package.name;
         } else {
-            containerPackageName = packageInfoSource?.package
+            containerPackageName = packageInfoSource?.package;
         }
-        containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName
+        containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,

@@ -26,7 +26,7 @@ import { TemplateValidator } from "../../templateValidator";
                 expect(error.message).to.have.string(asyncErrorMessage);
             });
         } else {
-            return new Promise(resolve => {
+            return new Promise((resolve) => {
                 resolve(schemaValidator.validate(template, templatePrevious, async, skipSemver));
             });
         }
@@ -238,7 +238,7 @@ import { TemplateValidator } from "../../templateValidator";
 
                 it("fail: changed 'inherits'", function() {
                     let templatePrevious = JSON.parse(JSON.stringify(
-                        require('../schemas/goodReservedTypes')
+                        require('../schemas/goodReservedTypes'),
                     ));
                     let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.inherits = 'Reference<Adsk.Core:Math.Color-1.0.0>';
@@ -395,7 +395,7 @@ import { TemplateValidator } from "../../templateValidator";
 
                 it("warn: changed 'inherits'", function() {
                     let templatePrevious = JSON.parse(JSON.stringify(
-                        require('../schemas/goodReservedTypes')
+                        require('../schemas/goodReservedTypes'),
                     ));
                     let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:Example-' + semver.inc('1.0.0', 'patch');
@@ -541,7 +541,7 @@ import { TemplateValidator } from "../../templateValidator";
 
                 it("warn: changed 'inherits'", function() {
                     let templatePrevious = JSON.parse(JSON.stringify(
-                        require('../schemas/goodReservedTypes')
+                        require('../schemas/goodReservedTypes'),
                     ));
                     let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:Example-' + semver.inc('1.0.0', 'minor');
@@ -685,7 +685,7 @@ import { TemplateValidator } from "../../templateValidator";
 
                 it("pass: changed 'inherits'", function() {
                     let templatePrevious = JSON.parse(JSON.stringify(
-                        require('../schemas/goodReservedTypes')
+                        require('../schemas/goodReservedTypes'),
                     ));
                     let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:Example-' + semver.inc('1.0.0', 'major');
@@ -774,7 +774,7 @@ import { TemplateValidator } from "../../templateValidator";
 
                 let copies = [
                     JSON.parse(JSON.stringify(templatePrevious)),
-                    JSON.parse(JSON.stringify(template))
+                    JSON.parse(JSON.stringify(template)),
                 ];
 
                 let expectations = function(result) {
@@ -831,7 +831,7 @@ import { TemplateValidator } from "../../templateValidator";
             it('should pass a schema with an empty array of properties', function() {
                 let EmptyPropertySchema = {
                     typeid: 'Test:EmptyPropertySchema-1.0.0',
-                    properties: []
+                    properties: [],
                 };
 
                 let expectations = function(result) {
@@ -861,10 +861,10 @@ import { TemplateValidator } from "../../templateValidator";
 
                 it('fail: deep equal with out of order multiple inheritance', function() {
                     let template = JSON.parse('{"typeid":"autodesk.core:translation.controller-1.0.0",' +
-                        '"inherits":["NamedProperty","NodeProperty"]}'
+                        '"inherits":["NamedProperty","NodeProperty"]}',
                     );
                     let templatePrevious = JSON.parse('{"typeid":"autodesk.core:translation.controller-1.0.0",' +
-                        '"inherits":["NodeProperty","NamedProperty"]}'
+                        '"inherits":["NodeProperty","NamedProperty"]}',
                     );
 
                     let expectations = function(result) {
@@ -882,10 +882,10 @@ import { TemplateValidator } from "../../templateValidator";
                     describe('pass: deep equal between no properties and an empty properties array', () => {
                         let templateArray = {
                             typeid: 'SimpleTest:Shape-1.0.0',
-                            properties: []
+                            properties: [],
                         };
                         let templateAbstract = {
-                            typeid: 'SimpleTest:Shape-1.0.0'
+                            typeid: 'SimpleTest:Shape-1.0.0',
                         };
 
                         it('source is abstract and target is an empty properties array', function() {
@@ -920,7 +920,7 @@ import { TemplateValidator } from "../../templateValidator";
                 new TemplateValidator({
                     skipSemver: true,
                     inheritsFrom: schemaValidator.inheritsFrom as any,
-                    hasSchema: schemaValidator.hasSchema as any
+                    hasSchema: schemaValidator.hasSchema as any,
                 });
             });
 
@@ -937,7 +937,7 @@ import { TemplateValidator } from "../../templateValidator";
             it('should pass a valid template', function() {
                 let ConstantValid = {
                     typeid: 'ConstantTest:ConstantValid-1.0.0',
-                    constants: [{ id: 'valid', typeid: 'String', value: 'value' }]
+                    constants: [{ id: 'valid', typeid: 'String', value: 'value' }],
                 };
 
                 let expectations = function(result) {
@@ -951,7 +951,7 @@ import { TemplateValidator } from "../../templateValidator";
             it('should fail if constants array has no elements', function() {
                 let ConstantEmptyArray = {
                     typeid: 'ConstantTest:ConstantEmptyArray-1.0.0',
-                    constants: []
+                    constants: [],
                 };
 
                 return validate(expectationsGenerator('/constants should NOT have fewer than 1 items'),
@@ -961,7 +961,7 @@ import { TemplateValidator } from "../../templateValidator";
             it('should fail if constant does not have an id', function() {
                 let ConstantNoId = {
                     typeid: 'ConstantTest:ConstantNoId-1.0.0',
-                    constants: [{ typeid: 'String', value: 'value' }]
+                    constants: [{ typeid: 'String', value: 'value' }],
                 };
 
                 return validate(expectationsGenerator('/constants/0 should have required property \'id\''),
@@ -971,19 +971,19 @@ import { TemplateValidator } from "../../templateValidator";
             it('should fail if constant does not have a typeid', function() {
                 let ConstantNoTypeid = {
                     typeid: 'ConstantTest:ConstantNoTypeid-1.0.0',
-                    constants: [{ id: 'id', value: 'value' }]
+                    constants: [{ id: 'id', value: 'value' }],
                 };
 
                 return validate(
                     function(result) {
                         expect(result.isValid).to.equal(false);
-                        //console.log(result.errors);
+                        // console.log(result.errors);
                         expect(result.errors.length).to.equal(5);
                         expect(result.errors[3].message).to.include("should have required property 'inherits'");
                         expect(result.errors[4].message).to.include("/constants/0 should have required property 'typeid'");
                         return result;
                     },
-                    ConstantNoTypeid, null, true
+                    ConstantNoTypeid, null, true,
                 );
             });
 
@@ -991,7 +991,7 @@ import { TemplateValidator } from "../../templateValidator";
                 let ConstantNoTypeid = {
                     typeid: 'ConstantTest:ConstantNoTypeid-1.0.0',
                     inherits: 'ConstantTest:ConstantParentWithTypeid-1.0.0',
-                    constants: [{ id: 'id', value: 'value' }]
+                    constants: [{ id: 'id', value: 'value' }],
                 };
 
                 let expectations = function(result) {
@@ -1005,7 +1005,7 @@ import { TemplateValidator } from "../../templateValidator";
             it('should not fail if constant does not have a value or typedValue', function() {
                 let ConstantNoValue = {
                     typeid: 'ConstantTest:ConstantNoValue-1.0.0',
-                    constants: [{ id: 'id', typeid: 'String' }]
+                    constants: [{ id: 'id', typeid: 'String' }],
                 };
 
                 let expectations = function(result) {
@@ -1024,8 +1024,8 @@ import { TemplateValidator } from "../../templateValidator";
                         typeid: 'Int32',
                         context: 'map',
                         contextKeyType: 'typeid',
-                        value: { 'SimpleTest:ConstantTemplate1-1.0.0': 1, 'SimpleTest:ConstantTemplate2-1.0.0': -1 }
-                    }]
+                        value: { 'SimpleTest:ConstantTemplate1-1.0.0': 1, 'SimpleTest:ConstantTemplate2-1.0.0': -1 },
+                    }],
                 };
 
                 let expectations = function(result) {
@@ -1044,8 +1044,8 @@ import { TemplateValidator } from "../../templateValidator";
                         typeid: 'Int32',
                         context: 'map',
                         contextKeyType: 'badvalue',
-                        value: { 'SimpleTest:ConstantTemplate1-1.0.0': 1, 'SimpleTest:ConstantTemplate2-1.0.0': -1 }
-                    }]
+                        value: { 'SimpleTest:ConstantTemplate1-1.0.0': 1, 'SimpleTest:ConstantTemplate2-1.0.0': -1 },
+                    }],
                 };
 
                 return validate(
@@ -1057,7 +1057,7 @@ import { TemplateValidator } from "../../templateValidator";
                     },
                     ConstantNoValue,
                     null,
-                    true
+                    true,
                 );
             });
 
@@ -1069,8 +1069,8 @@ import { TemplateValidator } from "../../templateValidator";
                         typeid: 'Int32',
                         context: 'map',
                         contextKeyType: 'typeid',
-                        value: { 'NotATypeId': 1, 'AlsoNotATypeId': -1 }
-                    }]
+                        value: { 'NotATypeId': 1, 'AlsoNotATypeId': -1 },
+                    }],
                 };
 
                 let expectations = function(result) {
@@ -1095,8 +1095,8 @@ import { TemplateValidator } from "../../templateValidator";
                         typeid: 'Int32',
                         context: 'map',
                         contextKeyType: 'typeid',
-                        value: { 'SimpleTest:ConstantTemplate1-1.0.0': 1, 'SimpleTest:ConstantTemplate2-1.0.0': -1 }
-                    }]
+                        value: { 'SimpleTest:ConstantTemplate1-1.0.0': 1, 'SimpleTest:ConstantTemplate2-1.0.0': -1 },
+                    }],
                 };
 
                 let expectations = function(result) {
@@ -1117,17 +1117,17 @@ import { TemplateValidator } from "../../templateValidator";
 
                 let templateValidator = new TemplateValidator({
                     inheritsFromAsync: schemaValidator.inheritsFromAsync as any,
-                    hasSchemaAsync: schemaValidator.hasSchemaAsync as any
+                    hasSchemaAsync: schemaValidator.hasSchemaAsync as any,
                 });
 
                 // Doesn't inherit from 'NamedProperty'. Will cause an error
                 let grandParentSchema = {
-                    'typeid': 'test:grandparentschema-1.0.0'
+                    'typeid': 'test:grandparentschema-1.0.0',
                 };
 
                 let parentSchema = {
                     'typeid': 'test:parentschema-1.0.0',
-                    'inherits': ['test:grandparentschema-1.0.0']
+                    'inherits': ['test:grandparentschema-1.0.0'],
                 };
 
                 let childSchema = {
@@ -1135,8 +1135,8 @@ import { TemplateValidator } from "../../templateValidator";
                     properties: [{
                         id: 'set',
                         typeid: 'test:parentschema-1.0.0',
-                        context: 'set'
-                    }]
+                        context: 'set',
+                    }],
                 };
 
                 schemaValidator.register(grandParentSchema);
@@ -1146,10 +1146,10 @@ import { TemplateValidator } from "../../templateValidator";
                     () => {
                         done(new Error('Should not be valid!'));
                     },
-                    error => {
+                    (error) => {
                         expect(error).to.exist;
                         done();
-                    }
+                    },
                 );
             });
         });

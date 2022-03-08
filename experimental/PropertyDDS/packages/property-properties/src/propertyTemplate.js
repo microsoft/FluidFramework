@@ -76,15 +76,15 @@ export class PropertyTemplate {
         // check for inlined enums and parse them:
         this._digestNestedInlineEnumProperties(this);
         this._serializedParams = in_params;
-    };
+    }
 
     hasNestedProperties() {
         return (this.properties && this.properties.length > 0);
-    };
+    }
 
     hasNestedConstants() {
         return (this.constants && this.constants.length > 0);
-    };
+    }
 
     /**
      * internal function to recursivly traverse a property template and create dictionaries for found inline enums
@@ -102,7 +102,7 @@ export class PropertyTemplate {
                 }
             }
         }
-    };
+    }
 
     /**
      * read the enum types list of a template and create a dictionary [value->enum] and [enum->value] for it
@@ -133,7 +133,7 @@ export class PropertyTemplate {
         }
 
         return enumDictionary;
-    };
+    }
 
     /**
      * Clones the PropertyTemplate
@@ -142,7 +142,7 @@ export class PropertyTemplate {
      */
     clone() {
         return new PropertyTemplate(deepCopy(this._serializedParams));
-    };
+    }
 
     /**
      * Method used to check whether the template is versioned.
@@ -159,7 +159,7 @@ export class PropertyTemplate {
         var version = splitTypeId.version;
 
         return /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(version);
-    };
+    }
 
     /**
      * Return the version number of the template.
@@ -174,7 +174,7 @@ export class PropertyTemplate {
             console.warn(MSG.TEMPLATE_NOT_VERSIONED, this.typeid);
             return undefined;
         }
-    };
+    }
 
     /**
      * Canonical representation of a PropertyTemplate.
@@ -196,7 +196,6 @@ export class PropertyTemplate {
      * @return {string} The version string is returned.
      */
     _canonicalForm(in_obj, in_target_, in_key_, in_preserve_) {
-
         in_preserve_ = in_preserve_ === undefined ? false : in_preserve_;
 
         var target, copyMembers;
@@ -220,12 +219,11 @@ export class PropertyTemplate {
                 (_.isArray(in_obj) !== _.isArray(target)) ||
                 !_.isObject(target)) {
                 throw new Error(
-                    MSG.INVALID_TARGET_PROPERTY_TEMPLATE + this.typeid
+                    MSG.INVALID_TARGET_PROPERTY_TEMPLATE + this.typeid,
                 );
             }
             copyMembers = true;
             copyDirectlyIntoKey = true;
-
         } else {
             // If no existing target object, we create a new object.
 
@@ -244,7 +242,7 @@ export class PropertyTemplate {
                 copyMembers = true;
             } else {
                 throw new Error(
-                    MSG.MISSING_CASE_IN_TEMPLATE_SERIALIZATION + this.typeid
+                    MSG.MISSING_CASE_IN_TEMPLATE_SERIALIZATION + this.typeid,
                 );
             }
         }
@@ -282,7 +280,7 @@ export class PropertyTemplate {
         }
 
         return in_target_;
-    };
+    }
 
     /**
      * Return the serialized parameters passed in the constructor
@@ -290,7 +288,7 @@ export class PropertyTemplate {
      */
     serialize() {
         return deepCopy(this._serializedParams);
-    };
+    }
 
     /**
      * Return the serialized parameters passed in the constructor, in a template canonical form
@@ -298,7 +296,7 @@ export class PropertyTemplate {
      */
     serializeCanonical() {
         return PropertyTemplate.prototype._canonicalForm(this._serializedParams);
-    };
+    }
 
     /**
      * Return the typeid of the template without the version number
@@ -313,7 +311,7 @@ export class PropertyTemplate {
         } else {
             return this.typeid;
         }
-    };
+    }
 
     /**
       * Determines if the argument is a template structure
@@ -328,7 +326,7 @@ export class PropertyTemplate {
             return true;
         }
         return false;
-    };
+    }
 
     /**
     * Extracts typeids directly referred to in a template
@@ -415,6 +413,5 @@ export class PropertyTemplate {
         }
 
         return Object.keys(dependencies);
-    };
-
+    }
 }
