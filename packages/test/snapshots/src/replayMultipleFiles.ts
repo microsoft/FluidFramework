@@ -103,8 +103,13 @@ export async function processOneNode(args: IWorkerArgs) {
     replayArgs.inDirName = args.folder;
     // The output snapshots to compare against are under "currentSnapshots" sub-directory.
     replayArgs.outDirName = `${args.folder}/${currentSnapshots}`;
-    replayArgs.snapFreq = args.snapFreq;
-
+    if(args.mode === Mode.NewSnapshots){
+        // when generating new snapshots, match those from
+        // the original file based on summarize ops
+        replayArgs.testSummaries = true;
+    } else{
+        replayArgs.snapFreq = args.snapFreq;
+    }
     replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;
     replayArgs.compare = args.mode === Mode.Compare;
     // Make it easier to see problems in stress tests

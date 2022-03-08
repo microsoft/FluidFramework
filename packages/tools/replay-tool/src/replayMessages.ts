@@ -41,7 +41,7 @@ import { ReplayArgs } from "./replayArgs";
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
 try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+
     threads = require("worker_threads");
 } catch (error) { }
 
@@ -148,7 +148,7 @@ class Document {
     private container: IContainer;
     private replayer: Replayer;
     private documentSeqNumber = 0;
-    private from = -1;
+    private from: number = -1;
     private snapshotFileName: string = "";
     private docLogger: TelemetryLogger;
     private originalSummarySeqs: number[];
@@ -356,7 +356,7 @@ export class ReplayTool {
         return this.shouldReportError(errorString);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
+
     private loadDoc(doc: Document) {
         return doc.load(
             this.deltaStorageService,
@@ -514,20 +514,16 @@ export class ReplayTool {
 
     private async mainCycle() {
         const originalSummaries =
-            this.args.testSummaries ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
-        let nextSnapPoint;
-        do {
-            nextSnapPoint = originalSummaries.shift() ?? this.args.from;
-        } while (nextSnapPoint < this.args.from);
+            this.args.testSummaries
+            ? this.mainDocument.originalSummarySequenceNumbers.filter((s)=>s >= this.args.from)
+            : [];
+        let nextSnapPoint = -1;
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const currentOp = this.mainDocument.currentOp;
             if (nextSnapPoint <= currentOp) {
-                if (this.args.snapFreq !== undefined) {
-                    nextSnapPoint = currentOp + this.args.snapFreq;
-                } else {
-                    nextSnapPoint = originalSummaries.shift() ?? this.args.to;
-                }
+                nextSnapPoint = originalSummaries.shift() ??
+                    (this.args.snapFreq !== undefined ? currentOp + this.args.snapFreq: this.args.to);
             }
             let replayTo = Math.min(nextSnapPoint, this.args.to);
 
