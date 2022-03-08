@@ -111,6 +111,7 @@ resources:
 stages:
 - stage: build
   displayName: 'Build website'
+  dependsOn: [] # run in parallel
   jobs:
     - job: debug_variables
       displayName: Show Variables
@@ -127,6 +128,7 @@ stages:
             echo latestPipeline ${{ variables.latestPipeline }}
             echo n1Pipeline ${{ variables.n1Pipeline }}
             echo repoToTrigger ${{ variables.repoToTrigger }}
+          displayName: Show Variables
 
     - job: component_detection
       displayName: Component Detection
@@ -208,23 +210,16 @@ stages:
   # BEGIN Secure development tasks
 - stage: guardian
   displayName: Guardian
+  dependsOn: [] # run in parallel
   pool:
     vmImage: windows-latest
   jobs:
     - job: guardian_tasks
       displayName: Guardian tasks
-      condition: in(stageDependencies.build.build_site.result, 'Succeeded', 'SucceededWithIssues')
       steps:
         - checkout: self
           submodules: false
           clean: true
-
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Copy fluidframework-docs to public folder'
-          inputs:
-            source: current
-            artifact: fluidframework-docs
-            path: '$(Build.SourcesDirectory)/docs/public'
 
         - task: UseNode@1
           displayName: 'Use Node 14.x'
@@ -282,6 +277,7 @@ stages:
 - stage: deploy
   displayName: 'Deploy website'
   pool: Small
+  dependsOn: ['build', 'guardian']
   jobs:
     - job: deploy_site
       displayName: 'Deploy website'
