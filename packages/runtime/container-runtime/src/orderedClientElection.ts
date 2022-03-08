@@ -253,14 +253,44 @@ export class OrderedClientElection
     public get eligibleCount() {
         return this._eligibleCount;
     }
+    public get electionSequenceNumber() {
+        return this._electionSequenceNumber;
+    }
+
+    /**
+     * OrderedClientCollection tracks electedClient and electedParent separately. This allows us to handle the case
+     * where a new interactive parent client has been elected, but the summarizer is still doing work, so
+     * a new summarizer should not yet be spawned. In this case, changing electedParent will cause SummaryManager
+     * to stop the current summarizer, but a new summarizer will not be spawned until the old summarizer client has
+     * left the quorum.
+     *
+     * Details:
+     *
+     * electedParent is the interactive client that has been elected to spawn a summarizer. It is typically the oldest
+     * eligible interactive client in the quorum. Only the electedParent is permitted to spawn a summarizer.
+     * Once elected, this client will remain the electedParent until it leaves the quorum or the summarizer that
+     * it spawned stops producing summaries, at which point a new electedParent will be chosen.
+     *
+     * electedClient is the non-interactive summarizer client if one exists. If not, then electedClient is equal to
+     * electedParent. If electedParent === electedClient, this is the signal for electedParent to spawn a new
+     * electedClient. Once a summarizer client becomes electedClient, a new summarizer will not be spawned until
+     * electedClient leaves the quorum.
+     *
+     * A typical sequence looks like this:
+     * i. Begin by electing A. electedParent === A, electedClient === A.
+     * ii. SummaryManager running on A spawns a summarizer client, A'. electedParent === A, electedClient === A'
+     * iii. A' stops producing summaries. A new parent client, B, is elected. electedParent === B, electedClient === A'
+     * iv. SummaryManager running on A detects the change to electedParent and tells the summarizer to stop, but A'
+     *      is in mid-summarization. No new summarizer is spawned, as electedParent !== electedClient.
+     * v. A' completes its summary, and the summarizer and backing client are torn down.
+     * vi. A' leaves the quorum, and B takes its place as electedClient. electedParent === B, electedClient === B
+     * vii. SummaryManager running on B spawns a summarizer client, B'. electedParent === B, electedClient === B'
+     */
     public get electedClient() {
         return this._electedClient;
     }
     public get electedParent() {
         return this._electedParent;
-    }
-    public get electionSequenceNumber() {
-        return this._electionSequenceNumber;
     }
 
     constructor(
