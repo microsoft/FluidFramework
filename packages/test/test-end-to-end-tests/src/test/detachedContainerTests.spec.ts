@@ -351,7 +351,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const comp2 = await requestFluidObject<ITestFluidObject>(router, "/");
 
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            try{
+            try {
                 assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
                 assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
                 assert.strictEqual(contents.contents.id,
@@ -359,7 +359,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
                 assert.strictEqual(contents.contents.type,
                     testDataStoreType, "DataStore type should match");
                 defPromise.resolve();
-            }catch(e){
+            } catch(e) {
                 defPromise.reject(e);
             }
             return 0;
@@ -660,7 +660,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
     }).timeout(5000);
 
     itExpects("Container should be closed on failed attach with non retryable error",[
-        {eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error"}
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error" },
     ], async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 

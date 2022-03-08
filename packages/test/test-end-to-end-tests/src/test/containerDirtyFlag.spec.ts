@@ -36,7 +36,6 @@ const testValue = "test value";
 
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
 
-
 async function ensureContainerConnected(container: Container): Promise<void> {
     if (!container.connected) {
         return new Promise((resolve) => container.once("connected", () => resolve()));
