@@ -846,7 +846,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
      * @deprecated 0.16 Issue #1635, #3631
      */
     public readonly createProps?: any;
-    private isLocalRootDataStore: boolean | undefined;
 
     constructor(props: ILocalFluidDataStoreContextProps) {
         super(
@@ -858,7 +857,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         );
 
         this.snapshotTree = props.snapshotTree;
-        this.isLocalRootDataStore = props.isRootDataStore;
+        if(props.isRootDataStore === true){
+            this.setRoot();
+        }
         this.createProps = props.createProps;
         this.attachListeners();
     }
@@ -877,8 +878,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     public generateAttachMessage(): IAttachMessage {
         assert(this.channel !== undefined, 0x14f /* "There should be a channel when generating attach message" */);
         assert(this.pkg !== undefined, 0x150 /* "pkg should be available in local data store context" */);
-        assert(this.isLocalRootDataStore !== undefined,
-            0x151 /* "isLocalRootDataStore should be available in local data store context" */);
 
         const summarizeResult = this.channel.getAttachSummary();
 
@@ -890,7 +889,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         // Add data store's attributes to the summary.
         const attributes = createAttributes(
             this.pkg,
-            this.isLocalRootDataStore,
+            this.isAliased(),
             this.disableIsolatedChannels,
         );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
@@ -910,6 +909,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         let snapshot = this.snapshotTree;
         let attributes: ReadFluidDataStoreAttributes;
+        let isRootDataStore = false;
         if (snapshot !== undefined) {
             // Get the dataStore attributes.
             // Note: storage can be undefined in special case while detached.
@@ -924,18 +924,17 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
                 // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
                 // stores in older documents are not garbage collected incorrectly. This may lead to additional
                 // roots in the document but they won't break.
-                this.isLocalRootDataStore = this.isLocalRootDataStore ||
-                    this.isAliased() ||
-                    (attributes.isRootDataStore ?? true);
+                if (attributes.isRootDataStore ?? true) {
+                    isRootDataStore = true;
+                    this.setRoot();
+                }
             }
         }
         assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
-        assert(this.isLocalRootDataStore !== undefined,
-            0x153 /* "isLocalRootDataStore should be available in local data store" */);
 
         return {
             pkg: this.pkg,
-            isRootDataStore: this.isLocalRootDataStore,
+            isRootDataStore,
             snapshot,
         };
     }
@@ -951,20 +950,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         // Local data store does not have initial summary.
         return {};
-    }
-
-    /**
-     * @deprecated - Sets the datastore as root, for aliasing purposes: #7948
-     * This method should not be used outside of the aliasing context.
-     * It will be removed, as the source of truth for this flag will be the aliasing blob.
-     */
-        public setRoot(): void {
-            this.isLocalRootDataStore = true;
-            super.setRoot();
-        }
-
-    public async isRoot(): Promise<boolean> {
-        return this.isLocalRootDataStore || await super.isRoot();
     }
 }
 
