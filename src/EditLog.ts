@@ -261,7 +261,8 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		summary: EditLogSummary<TChange> = { editIds: [], editChunks: [] },
 		logger?: ITelemetryLogger,
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
-		editsPerChunk = 100
+		editsPerChunk = 100,
+		indexOfFirstEditInSession = summary.editIds.length
 	) {
 		super();
 		const { editChunks, editIds } = summary;
@@ -291,7 +292,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 		this.sequencedEditIds = editIds.slice();
 
-		this.indexOfFirstEditInSession = this.numberOfSequencedEdits;
+		this.indexOfFirstEditInSession = indexOfFirstEditInSession;
 		this.maximumEvictableIndex = this.indexOfFirstEditInSession - 1;
 
 		this.sequencedEditIds.forEach((id, index) => {

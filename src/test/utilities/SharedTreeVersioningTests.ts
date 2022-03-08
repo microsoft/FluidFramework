@@ -211,5 +211,23 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 			expect(ops[0].version).to.equal(oldVersion);
 			expect(ops[2].version).to.equal(newVersion);
 		});
+
+		it('can load a 0.1.1 summary and access the current view', () => {
+			// This is a regression test for the logic initializing SharedTree's EditLog from a summary.
+			// The 0.1.1 format omits `currentTree`, but EditLog should still tolerate synchronous access
+			// of the first edit in the session (which is a single insert containing that tree).
+			const options: SharedTreeTestingOptions = {
+				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+				summarizeHistory: false,
+				localMode: false,
+			};
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree(options);
+			applyNoop(tree);
+			containerRuntimeFactory.processAllMessages();
+			const summary = tree.saveSummary();
+			const { tree: newTree } = setUpTestSharedTree({ containerRuntimeFactory, ...options });
+			newTree.loadSummary(summary);
+			expect(() => newTree.currentView).to.not.throw();
+		});
 	});
 }

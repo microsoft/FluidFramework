@@ -614,8 +614,18 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		// Dispose the current log viewer if it exists. This ensures that re-used EditAddedHandlers below don't retain references to old
 		// log viewers.
 		this.cachingLogViewer?.detachFromEditLog();
+		const indexOfFirstEditInSession =
+			editHistory?.editIds.length === 1 && summary.version === SharedTreeSummaryWriteFormat.Format_0_1_1
+				? 0
+				: editHistory?.editIds.length;
 		// Use previously registered EditAddedHandlers if there is an existing EditLog.
-		const editLog = new EditLog(editHistory, this.logger, this.editLog?.editAddedHandlers);
+		const editLog = new EditLog(
+			editHistory,
+			this.logger,
+			this.editLog?.editAddedHandlers,
+			undefined,
+			indexOfFirstEditInSession
+		);
 
 		editLog.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => {
 			this.emit(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk);
