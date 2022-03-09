@@ -31,33 +31,41 @@ const upgradeTestCases = getUpgradeTestCases(versions);
 
 describe("getFluidCacheIndexedDbInstance", () => {
     beforeEach(() => {
-        // The indexeddb mock uses setImmediate which doesn't work with Jest 27+. We map it to setTimeout until this issue is resolved: https://github.com/dumbmatter/fakeIndexedDB/issues/64
-        (global.setImmediate as any) = global.setTimeout;
         // Reset the indexed db before each test so that it starts off in an empty state
         const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
         (window.indexedDB as any) = new FDBFactory();
     });
 
-    it.each(upgradeTestCases)("%s", async (_, { oldVersionNumber }) => {
-        // Arrange
-        // Create a database with the old version number
-        const oldDb = await openDB(FluidDriverCacheDBName, oldVersionNumber, {
-            upgrade: (db) => {
-                // Create the old object to simulate what state we would be in
-                db.createObjectStore(oldVersionNameMapping[oldVersionNumber]!);
-            },
-        });
-        oldDb.close(); // Close so the upgrade won't be blocked
+    // The jest types in the FF repo are old, so it doesn't have the each signature. This typecast can be removed when the types are bumped
+    (it as any).each(upgradeTestCases)(
+        "%s",
+        async (_, { oldVersionNumber }) => {
+            // Arrange
+            // Create a database with the old version number
+            const oldDb = await openDB(
+                FluidDriverCacheDBName,
+                oldVersionNumber,
+                {
+                    upgrade: (db) => {
+                        // Create the old object to simulate what state we would be in
+                        db.createObjectStore(
+                            oldVersionNameMapping[oldVersionNumber]!
+                        );
+                    },
+                }
+            );
+            oldDb.close(); // Close so the upgrade won't be blocked
 
-        // Act
-        // Now attempt to get the FluidCache instance, which will run the upgrade function
-        const db = await getFluidCacheIndexedDbInstance();
+            // Act
+            // Now attempt to get the FluidCache instance, which will run the upgrade function
+            const db = await getFluidCacheIndexedDbInstance();
 
-        // Assert
-        expect(db.objectStoreNames).toEqual([FluidDriverObjectStoreName]);
-        expect(db.name).toEqual(FluidDriverCacheDBName);
-        expect(db.version).toEqual(CurrentCacheVersion);
-    });
+            // Assert
+            expect(db.objectStoreNames).toEqual([FluidDriverObjectStoreName]);
+            expect(db.name).toEqual(FluidDriverCacheDBName);
+            expect(db.version).toEqual(CurrentCacheVersion);
+        }
+    );
 
     it("if error thrown in deletion of old database, is swallowed and logged", async () => {
         // Arrange
@@ -79,7 +87,7 @@ describe("getFluidCacheIndexedDbInstance", () => {
 
         // Assert
         // We catch the error and send it to the logger
-        expect(sendSpy).toBeCalledTimes(1);
+        expect(sendSpy.mock.calls).toHaveLength(1);
         expect(sendSpy.mock.calls[0][0].eventName).toEqual(
             FluidCacheErrorEvent.FluidCacheDeleteOldDbError
         );

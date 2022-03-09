@@ -66,8 +66,6 @@ function getMockCacheEntry(
 
 describe("Fluid Cache tests", () => {
     beforeEach(() => {
-        // The indexeddb mock uses setImmediate which doesn't work with Jest 27+. We map it to setTimeout until this issue is resolved: https://github.com/dumbmatter/fakeIndexedDB/issues/64
-        (global.setImmediate as any) = global.setTimeout;
         // Reset the indexed db before each test so that it starts off in an empty state
         const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
         (window.indexedDB as any) = new FDBFactory();

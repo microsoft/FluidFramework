@@ -4,7 +4,8 @@
         "rootDir": "./",
         "outDir": "../../dist/test",
         "types": [
-            "jest"
+            "jest",
+            "node"
         ],
         "declaration": false,
         "declarationMap": false,
