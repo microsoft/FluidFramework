@@ -411,12 +411,10 @@ export const handlers: Handler[] = [
 
 function runNpmJsonLint(json: any, file: string) {
     const lintConfig = getLintConfig(file);
-    // console.log(JSON.stringify(lintConfig, undefined, 2));
     const options = {
         packageJsonObject: json,
         packageJsonFilePath: file,
         config: lintConfig,
-        // patterns: ["**/package.json"]
     };
 
     const linter = new NpmPackageJsonLint(options);
