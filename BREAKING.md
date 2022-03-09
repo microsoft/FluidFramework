@@ -15,6 +15,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
 - [Set raiseContainerWarning property as optional parameter on IContainerContext](#Set-raiseContainerWarning-property-as-optional-parameter-on-IContainerContext)
 - [Consolidate fluidErrorCode and message on FF Errors](#Consolidate-fluidErrorCode-and-message-on-FF-Errors)
+- [Disallowed access to deleted sub directory](#Disallowed-access-to-deleted-sub-directory)
 
 ### Move IntervalType from merge-tree to sequence package
 Move the type from the merge-tree package where it isn't used to the sequence package where it is used
@@ -36,6 +37,10 @@ Previously, the fluidErrorCode value (a pascaleCased term) was often used as the
 Now all error messages can be expected to be easily-read sentences,
 sometimes followed by a colon and an inner error message when applicable.
 
+
+### Disallowed access to deleted sub directory
+Users will now be disallowed to do operations on a deleted directory. Users can subscribe to `dispose` event to know if a sub directory is deleted.
+
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
 - [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
@@ -47,7 +52,6 @@ sometimes followed by a colon and an inner error message when applicable.
 - [Removing snapshot API from IRuntime](#Removing-snapshot-api-from-IRuntime)
 - [Remove Unused IFluidObject Augmentations](#Remove-Unused-IFluidObject-Augmentations)
 - [Duplicate extractLogSafeErrorProperties removed](#duplicate-extractlogsafeerrorproperties-removed)
-- [Disallowed access to deleted sub directory](#Disallowed-access-to-deleted-sub-directory)
 - [Code proposal rejection removed](#Code-proposal-rejection-removed)
 - [ContainerRuntime.createDataStore return type changed](#Containerruntimecreatedatastore-return-type-changed)
 - [Root datastore creation may throw an exception in case of name conflicts](#Root-datastore-creation-may-throw-an-exception-in-case-of-name-conflicts)
@@ -117,9 +121,6 @@ The interfaces that correspond to the above properties continue to exist, and ca
 
 The helper function `extractLogSafeErrorProperties` existed in both telemetry-utils and common-utils packages.
 The copy in common-utils was out of date and unused in this repo, and has now been removed.
-
-### Disallowed access to deleted sub directory
-Users will now be disallowed to do operations on a deleted directory. Users can subscribe to `dispose` event to know if a sub directory is deleted.
 
 ### Code proposal rejection removed
 Rejection functionality has been removed from Quorum.  As a result, the `"codeDetailsProposed"` event on `IContainer` now provides an `ISequencedProposal` rather than an `IPendingProposal`.
