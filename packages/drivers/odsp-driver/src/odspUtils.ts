@@ -155,6 +155,7 @@ export async function fetchHelper(
         //
         if (online === OnlineStatus.Offline) {
             throw new RetryableError(
+                // pre-0.58 error message prefix: Offline
                 `ODSP fetch failure (Offline): ${errorText}`, DriverErrorType.offlineError, { driverVersion });
         } else {
             throw new RetryableError(
