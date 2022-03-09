@@ -173,7 +173,7 @@ export class WholeSummaryWriteGitManager {
             `refs/heads/${this.documentId}`,
             { enabled: this.externalStorageEnabled },
         ).catch(() => undefined);
-        let commitParams: ICreateCommitParams
+        let commitParams: ICreateCommitParams;
         if (!existingRef && payload.sequenceNumber === 0) {
             // Create new document
             commitParams = {
@@ -209,7 +209,7 @@ export class WholeSummaryWriteGitManager {
                     force: true,
                     sha: commit.sha,
                 },
-                { enabled: this.externalStorageEnabled }
+                { enabled: this.externalStorageEnabled },
             );
         } else {
             await this.repoManager.createRef(
@@ -369,7 +369,7 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => getSummary(
+        ).then(async (repoManager) => getSummary(
             repoManager,
             request.params.sha,
             documentId,
@@ -392,7 +392,7 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => createSummary(
+        ).then(async (repoManager) => createSummary(
             repoManager,
             wholeSummaryPayload,
             documentId,
@@ -410,7 +410,7 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => deleteSummary(repoManager, softDelete));
+        ).then(async (repoManager) => deleteSummary(repoManager, softDelete));
         handleResponse(resultP, response, 204);
     });
 

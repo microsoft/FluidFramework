@@ -33,7 +33,7 @@ export class PropertiesManager {
                     0x05c /* "Trying to update more annotate props than do exist!" */);
                 this.pendingKeyUpdateCount[key]--;
                 if (this.pendingKeyUpdateCount?.[key] === 0) {
-
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete this.pendingKeyUpdateCount[key];
                 }
             }
@@ -78,6 +78,7 @@ export class PropertiesManager {
                 if (!newProps[key] && shouldModifyKey(key)) {
                     deltas[key] = oldProps[key];
 
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete oldProps[key];
                 }
             }
@@ -105,7 +106,7 @@ export class PropertiesManager {
                 newValue = newProps[key];
             }
             if (newValue === null) {
-
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete oldProps[key];
             } else {
                 oldProps[key] = newValue;
@@ -122,7 +123,7 @@ export class PropertiesManager {
     ): PropertySet | undefined {
         if (oldProps) {
             if (!newProps) {
-
+                // eslint-disable-next-line no-param-reassign
                 newProps = createMap<any>();
             }
             if (!newManager) {

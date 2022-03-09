@@ -75,6 +75,7 @@ export interface IMergeTreeClientSequenceArgs {
 export type MergeTreeDeltaCallback =
     (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> { }
 
 export type MergeTreeMaintenanceCallback =

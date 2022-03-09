@@ -8,19 +8,17 @@
 
 const _ = require('lodash');
 const { MSG } = require('@fluid-experimental/property-common').constants;
-const { _castFunctors } = require('./primitiveTypeCasts');
-const { BaseProperty } = require('./baseProperty');
-const { MapProperty } = require('./mapProperty');
 const { Int64, Uint64 } = require('@fluid-experimental/property-common');
 const { Int64Property, Uint64Property } = require('../properties/intProperties');
 const { validationsEnabled } = require('../enableValidations');
-
+const { _castFunctors } = require('./primitiveTypeCasts');
+const { BaseProperty } = require('./baseProperty');
+const { MapProperty } = require('./mapProperty');
 
 /**
  * A ValueMapProperty is a collection class that can contain an dictionary that maps from strings to primitive types.
  */
 export class ValueMapProperty extends MapProperty {
-
     /**
      * @param {Object} in_params - Input parameters for property creation
      *
@@ -32,7 +30,7 @@ export class ValueMapProperty extends MapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Inserts a value into the map. Using insert with a key that already exists will throw an error.
@@ -44,7 +42,7 @@ export class ValueMapProperty extends MapProperty {
     insert(in_key, in_value) {
         var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
         this._insert(in_key, castedValue, true);
-    };
+    }
 
     /**
      * Returns an object with all the nested values contained in this property
@@ -61,7 +59,7 @@ export class ValueMapProperty extends MapProperty {
             result[ids[i]] = this.get(ids[i]);
         }
         return result;
-    };
+    }
 
     /**
      * Return a JSON representation of the map and its items.
@@ -74,9 +72,9 @@ export class ValueMapProperty extends MapProperty {
             context: this._context,
             typeid: this.getTypeid(),
             isConstant: this._isConstant,
-            value: this.getValues()
+            value: this.getValues(),
         };
-    };
+    }
 
     /**
      * Repeatedly calls back the given function with human-readable string
@@ -92,10 +90,10 @@ export class ValueMapProperty extends MapProperty {
             prefix = '"';
             suffix = '"';
         }
-        _.mapValues(this._dynamicChildren, function (val, key) {
+        _.mapValues(this._dynamicChildren, function(val, key) {
             printFct(indent + key + ': ' + prefix + val + suffix);
         });
-    };
+    }
 
     /**
      * Sets the value of a property into the map.
@@ -103,15 +101,15 @@ export class ValueMapProperty extends MapProperty {
      * @param {string} in_key the key under which the entry is set
      * @param {*} in_value the value to be set
      */
-	set(in_key, in_value) {
-	    if (validationsEnabled.enabled) {
-	        this._checkIsNotReadOnly(true);
-	    }
-	        var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
-	    if (this._dynamicChildren[in_key] !== castedValue) {
-	        if (validationsEnabled.enabled) {
-	            this._checkIsNotReadOnly(true);
-	        }
+    set(in_key, in_value) {
+        if (validationsEnabled.enabled) {
+            this._checkIsNotReadOnly(true);
+        }
+            var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
+        if (this._dynamicChildren[in_key] !== castedValue) {
+            if (validationsEnabled.enabled) {
+                this._checkIsNotReadOnly(true);
+            }
             if (this._dynamicChildren[in_key] !== undefined) {
                 this._removeByKey(in_key, false);
             }
@@ -119,11 +117,11 @@ export class ValueMapProperty extends MapProperty {
             // Make one final report
             this._reportDirtinessToView();
         }
-    };
+    }
 
     _getValue(in_key) {
         return this._dynamicChildren[in_key];
-    };
+    }
 
     /**
      * @inheritdoc
@@ -189,8 +187,7 @@ export class ValueMapProperty extends MapProperty {
         // If working with primitive types, we have to update the dirty flag, when one of the entries
         // was changed
         this._setDirty(false);
-    };
-
+    }
 }
 // The value map contains primitive types
 ValueMapProperty.prototype._containsPrimitiveTypes = true;
@@ -211,7 +208,6 @@ export class Float32MapProperty extends ValueMapProperty {
     constructor(in_params) {
         super(in_params);
     }
-
 }
 Float32MapProperty.prototype._typeid = 'Float32';
 Float32MapProperty.prototype._castFunctor = _castFunctors.Float32;
@@ -231,7 +227,7 @@ export class Float64MapProperty extends ValueMapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 }
 Float64MapProperty.prototype._typeid = 'Float64';
 Float64MapProperty.prototype._castFunctor = _castFunctors.Float64;
@@ -251,7 +247,7 @@ export class Uint32MapProperty extends ValueMapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 }
 Uint32MapProperty.prototype._typeid = 'Uint32';
 Uint32MapProperty.prototype._castFunctor = _castFunctors.Uint32;
@@ -271,7 +267,7 @@ export class Uint16MapProperty extends ValueMapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 }
 Uint16MapProperty.prototype._typeid = 'Uint16';
 Uint16MapProperty.prototype._castFunctor = _castFunctors.Uint16;
@@ -291,7 +287,7 @@ export class Uint8MapProperty extends ValueMapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 }
 Uint8MapProperty.prototype._typeid = 'Uint8';
 Uint8MapProperty.prototype._castFunctor = _castFunctors.Uint8;
@@ -311,7 +307,7 @@ export class Int32MapProperty extends ValueMapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 }
 Int32MapProperty.prototype._typeid = 'Int32';
 Int32MapProperty.prototype._castFunctor = _castFunctors.Int32;
@@ -331,7 +327,7 @@ export class Integer64MapProperty extends ValueMapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Sets the entry with the given key to the value passed in
@@ -353,7 +349,7 @@ export class Integer64MapProperty extends ValueMapProperty {
             // Make one final report
             this._reportDirtinessToView();
         }
-    };
+    }
 
     /**
      * Function to serialize special primitive types.
@@ -365,7 +361,7 @@ export class Integer64MapProperty extends ValueMapProperty {
      */
     _serializeValue(in_obj) {
         return [in_obj.getValueLow(), in_obj.getValueHigh()];
-    };
+    }
 
     /**
      * @inheritdoc
@@ -373,7 +369,7 @@ export class Integer64MapProperty extends ValueMapProperty {
     _prettyPrintChildren(indent, printFct) {
         indent += '  ';
         var int64Prop;
-        _.mapValues(this._dynamicChildren, function (val, key) {
+        _.mapValues(this._dynamicChildren, function(val, key) {
             // TODO: The 'toString()' function is defined on Integer64Property, so we need to create
             //       such object to use it. It would be better to have it in Utils Integer64.prototype.toString
             if (val instanceof Int64) {
@@ -385,7 +381,7 @@ export class Integer64MapProperty extends ValueMapProperty {
             int64Prop.setValueHigh(val.getValueHigh());
             printFct(indent + key + ': ' + int64Prop);
         });
-    };
+    }
 }
 
 /**
@@ -403,7 +399,7 @@ export class Int64MapProperty extends Integer64MapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Specialized function to deserialize Int64 primitive types.
@@ -415,8 +411,7 @@ export class Int64MapProperty extends Integer64MapProperty {
      */
     _deserializeValue(in_serializedObj) {
         return new Int64(in_serializedObj[0], in_serializedObj[1]);
-    };
-
+    }
 }
 Int64MapProperty.prototype._typeid = 'Int64';
 Int64MapProperty.prototype._castFunctor = _castFunctors.Int64;
@@ -436,7 +431,7 @@ export class Uint64MapProperty extends Integer64MapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Specialized function to deserialize Uint64 primitive types.
@@ -448,7 +443,7 @@ export class Uint64MapProperty extends Integer64MapProperty {
      */
     _deserializeValue(in_serializedObj) {
         return new Uint64(in_serializedObj[0], in_serializedObj[1]);
-    };
+    }
 }
 Uint64MapProperty.prototype._typeid = 'Uint64';
 Uint64MapProperty.prototype._castFunctor = _castFunctors.Uint64;
@@ -467,7 +462,7 @@ export class Int16MapProperty extends ValueMapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 }
 Int16MapProperty.prototype._typeid = 'Int16';
 Int16MapProperty.prototype._castFunctor = _castFunctors.Int16;
@@ -487,7 +482,7 @@ export class Int8MapProperty extends ValueMapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 }
 Int8MapProperty.prototype._typeid = 'Int8';
 Int8MapProperty.prototype._castFunctor = _castFunctors.Int8;
@@ -507,7 +502,7 @@ export class StringMapProperty extends ValueMapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 }
 StringMapProperty.prototype._typeid = 'String';
 StringMapProperty.prototype._castFunctor = _castFunctors.String;
@@ -527,7 +522,7 @@ export class BoolMapProperty extends ValueMapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 }
 BoolMapProperty.prototype._typeid = 'Bool';
 BoolMapProperty.prototype._castFunctor = _castFunctors.Boolean;

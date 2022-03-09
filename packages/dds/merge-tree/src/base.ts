@@ -14,7 +14,7 @@ export interface QProperty<TKey, TData> {
 }
 
 export interface PropertyAction<TKey, TData> {
-
+    // eslint-disable-next-line @typescript-eslint/prefer-function-type
     <TAccum>(p: Property<TKey, TData>, accum?: TAccum): boolean;
 }
 
@@ -35,7 +35,7 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
 }
 
 export interface KeyComparer<TKey> {
-
+    // eslint-disable-next-line @typescript-eslint/prefer-function-type
     (a: TKey, b: TKey): number;
 }
 /**

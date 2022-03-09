@@ -856,9 +856,9 @@ export class ConnectionManager implements IConnectionManager {
     // Always connect in write mode after getting nacked.
     private readonly nackHandler = (documentId: string, messages: INack[]) => {
         const message = messages[0];
-        if (this._readonlyPermissions) {
+        if (this._readonlyPermissions === true) {
             this.props.closeHandler(createWriteError("writeOnReadOnlyDocument", { driverVersion: undefined }));
-            return
+            return;
         }
 
         const reconnectInfo = getNackReconnectInfo(message.content);

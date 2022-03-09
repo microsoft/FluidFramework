@@ -142,7 +142,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         };
         const container2 = await loadContainer({ documentServiceFactory: mockFactory });
         await waitContainerToCatchUp(container2);
-
     });
 
     it("Raise disconnected event", async () => {

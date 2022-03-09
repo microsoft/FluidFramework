@@ -71,19 +71,18 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 
     itExpects("GeneralError Test",
     [
-        {eventName: "fluid:telemetry:Container:ContainerClose", error: "false"},
-        {eventName: "TestException", errorType: ContainerErrorType.genericError}
+        {eventName: "fluid:telemetry:Container:ContainerClose", error: ""},
+        {eventName: "TestException", errorType: ContainerErrorType.genericError},
     ],
     async () => {
         const documentServiceFactory = provider.documentServiceFactory;
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         mockFactory.createDocumentService = async (resolvedUrl) => {
             const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-            service.connectToDeltaStream = async () => Promise.reject(false);
+            service.connectToDeltaStream = async () => { throw new Error(); };
             return service;
         };
         await loadContainer({ documentServiceFactory: mockFactory });
-
     });
 
     function assertCustomPropertySupport(err: any) {
