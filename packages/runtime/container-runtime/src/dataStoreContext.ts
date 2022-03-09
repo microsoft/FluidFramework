@@ -208,11 +208,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     public async isRoot(): Promise<boolean> {
-        return this.isAliased() || (await this.getInitialSnapshotDetails()).isRootDataStore;
+        return this.isInMemoryRoot() || (await this.getInitialSnapshotDetails()).isRootDataStore;
     }
 
-    protected isAliased(): boolean {
-        return this.isAliasedDataStore || false;
+    protected isInMemoryRoot(): boolean {
+        return this.isRootDataStore || false;
     }
 
     protected registry: IFluidDataStoreRegistry | undefined;
@@ -227,7 +227,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _attachState: AttachState;
 
     // Calls to isRoot should be made instead of directly accessing this member
-    private isAliasedDataStore: boolean | undefined;
+    private isRootDataStore: boolean | undefined;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
@@ -682,7 +682,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * It will be removed, as the source of truth for this flag will be the aliasing blob.
      */
      public setRoot(): void {
-        this.isAliasedDataStore = true;
+        this.isRootDataStore = true;
     }
 
     /**
@@ -889,7 +889,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         // Add data store's attributes to the summary.
         const attributes = createAttributes(
             this.pkg,
-            this.isAliased(),
+            this.isInMemoryRoot(),
             this.disableIsolatedChannels,
         );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
