@@ -210,11 +210,11 @@ export function applyMessages(
             message.sequenceNumber = ++seq;
             clients.forEach((c) => c.applyMsg(message));
         }
-    }catch(e){
-        if(e instanceof Error){
+    } catch(e) {
+        if(e instanceof Error) {
             e.message += `\n${logger.toString()}`;
         }
-        if(typeof e === "string"){
+        if(typeof e === "string") {
             throw new Error(`${e}\n${logger.toString()}`);
         }
         throw e;

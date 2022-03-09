@@ -107,13 +107,12 @@ export interface IRemovalInfo {
     removedSeq: number;
     removedClientIds: number[];
 }
-export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined{
-
-    if(maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined ){
+export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
+    if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined ) {
         return maybe as IRemovalInfo;
     }
     assert(maybe?.removedClientIds === undefined && maybe?.removedSeq === undefined,
-        "both removedClientIds and removedSeq should be set or not set")
+        "both removedClientIds and removedSeq should be set or not set");
 }
 
 /**
@@ -527,7 +526,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         b.clientId = this.clientId;
         // TODO: deep clone properties
         b.properties = clone(this.properties);
-        b.removedClientIds = this.removedClientIds?.slice()
+        b.removedClientIds = this.removedClientIds?.slice();
         // TODO: copy removed client overlap and branch removal info
         b.removedSeq = this.removedSeq;
         b.seq = this.seq;
