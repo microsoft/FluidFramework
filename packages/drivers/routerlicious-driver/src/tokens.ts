@@ -45,7 +45,6 @@ export interface ITokenProvider {
      */
     fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 
-
     /**
      * A callback triggered directly after creating the document.
      * @param documentId - Document ID.

@@ -98,7 +98,6 @@ export function create(
                 crypto.randomBytes(4).toString("hex"),
                 values);
 
-
             // Generate creation token given a jwt from header
             const authorizationHeader = request.header("Authorization");
             const tokenRegex = /Basic (.+)/;
@@ -107,11 +106,11 @@ export function create(
 
             const tenantKeyP = tenantManager.getKey(tenantId);
 
-            handleResponse(Promise.all([createP,tenantKeyP]).then((values) => {
+            handleResponse(Promise.all([createP, tenantKeyP]).then(([_, key]) => {
                 return {
                     id,
-                    token: getCreationToken(token, values[1], id)
-                }
+                    token: getCreationToken(token, key, id),
+                };
             }), response, undefined, 201);
         });
 
