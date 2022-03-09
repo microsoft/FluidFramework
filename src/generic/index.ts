@@ -5,6 +5,7 @@
 
 // API Exports
 
+export * from './persisted-types';
 export {
 	EditCommittedHandler,
 	SequencedEditAppliedHandler,
@@ -19,25 +20,6 @@ export {
 	SharedTreeFailureType,
 } from './GenericSharedTree';
 export * from './EventTypes';
-export {
-	Side,
-	Edit,
-	EditWithoutId,
-	EditBase,
-	TraitMap,
-	TreeNodeSequence,
-	Payload,
-	NodeData,
-	TreeNode,
-	ChangeNode,
-	ChangeNode_0_0_2,
-	EditStatus,
-	TraitLocationInternal_0_0_2,
-	SharedTreeOp,
-	SharedTreeOpType,
-	SharedTreeSummaryWriteFormat,
-	HasTraits,
-} from './persisted-types';
 export {
 	newEdit,
 	newEditId,

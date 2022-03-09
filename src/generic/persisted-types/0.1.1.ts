@@ -4,7 +4,7 @@
  */
 
 import { NodeId } from '../../Identifiers';
-import { TraitLocationInternal_0_0_2, TreeNode } from './Legacy002';
+import { TraitLocationInternal_0_0_2, TreeNode } from './0.0.2';
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.

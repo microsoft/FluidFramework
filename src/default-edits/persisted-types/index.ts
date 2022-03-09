@@ -17,4 +17,4 @@ export {
 	MoveInternal,
 	StablePlaceInternal_0_0_2,
 	StableRangeInternal_0_0_2,
-} from './Legacy002';
+} from './0.0.2';

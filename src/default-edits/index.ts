@@ -5,22 +5,8 @@
 
 // API Exports
 
+export * from './persisted-types';
 export { SharedTree } from './SharedTree';
-export {
-	ChangeTypeInternal,
-	ChangeInternal,
-	BuildInternal,
-	BuildNodeInternal,
-	InsertInternal,
-	DetachInternal,
-	SetValueInternal,
-	ConstraintInternal,
-	ConstraintEffect,
-	DeleteInternal,
-	MoveInternal,
-	StablePlaceInternal_0_0_2,
-	StableRangeInternal_0_0_2,
-} from './persisted-types';
 export * from './ChangeTypes';
 export * from './Factory';
 export * from './HistoryEditFactory';

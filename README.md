@@ -22,7 +22,7 @@ The order of the edits is:
 
 ## Tree Abstraction
 
-The tree abstraction used for `SharedTree` is summarized by the [TreeNode](./src/generic/persisted-types/Legacy002.ts) class. Nodes have _traits_, a _definition_, an _identity_, and optionally a payload to contain extra arbitrary data.
+The tree abstraction used for `SharedTree` is summarized by the [TreeNode](./src/generic/persisted-types/0.0.2.ts) class. Nodes have _traits_, a _definition_, an _identity_, and optionally a payload to contain extra arbitrary data.
 
 ### Definition
 
@@ -137,7 +137,7 @@ Design wise:
 
 # Edits
 
-An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [persisted-types](./src/generic/persisted-types/Legacy002.ts)). Each edit, when applied to a version of the document (a TreeView), produces a new version of the document.
+An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [persisted-types](./src/generic/persisted-types/0.0.2.ts)). Each edit, when applied to a version of the document (a TreeView), produces a new version of the document.
 
 Once an edit is acknowledged by the Fluid service (and thus it has a sequence number, and will be included in summaries), the version of the document it applies to is fixed: it will not be applied to any revision other than the one produced by its preceding edit.
 There may be operations that will create new edits based on existing ones and apply them in a different context, but these are logically considered new edits.
@@ -164,7 +164,7 @@ For example, two edits could be made concurrently: one that sorts a list alphabe
 Depending on how the sorting structures its changes and exactly where the insert occurred, the sort may or may not conflict if the insert gets acknowledged first.
 In some domains, it would be desired that this conflicts.
 In such domains, a Constraint could be added that would require the list to contain the same set of items as when the sort edit was created for it to apply correctly.
-The Constraint can specify what should happen if violated: see `ConstraintEffect` in [persisted-types](./src/default-edits/persisted-types/Legacy002.ts) for details.
+The Constraint can specify what should happen if violated: see `ConstraintEffect` in [persisted-types](./src/default-edits/persisted-types/0.0.2.ts) for details.
 
 Note that these constraints apply to more than just the case of edits that were made concurrently:
 edits to history also use conflicts (and thus constraints) to prevent historical edits from being re-contextualized in ways that break their semantics.

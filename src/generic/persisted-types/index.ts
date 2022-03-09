@@ -5,7 +5,7 @@
 
 // API Exports
 
-export { ChangeNode, TraitLocationInternal } from './Current';
+export { ChangeNode, TraitLocationInternal } from './0.1.1';
 export {
 	Side,
 	Edit,
@@ -25,4 +25,4 @@ export {
 	HasTraits,
 	SharedTreeEditOp,
 	SharedTreeHandleOp,
-} from './Legacy002';
+} from './0.0.2';
