@@ -115,13 +115,13 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
 
         it("can set flush mode to Immediate and send ops", async () => {
             dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
-            dataObject1map1.set("key1", "newValue");
-            dataObject1map2.set("key1", "newValue");
+            dataObject1map1.set("immediateKey", "newValue");
+            dataObject1map2.set("immediateKey", "newValue");
 
             await provider.ensureSynchronized();
 
-            assert.strictEqual(dataObject2map1.get("key1"), "newValue", "container2's map did not get updated");
-            assert.strictEqual(dataObject2map2.get("key1"), "newValue", "container2's map did not get updated");
+            assert.strictEqual(dataObject2map1.get("immediateKey"), "newValue", "container2's map did not get updated");
+            assert.strictEqual(dataObject2map2.get("immediateKey"), "newValue", "container2's map did not get updated");
         });
     });
 
