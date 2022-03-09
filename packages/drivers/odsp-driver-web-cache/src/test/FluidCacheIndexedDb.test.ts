@@ -49,10 +49,10 @@ describe("getFluidCacheIndexedDbInstance", () => {
                     upgrade: (db) => {
                         // Create the old object to simulate what state we would be in
                         db.createObjectStore(
-                            oldVersionNameMapping[oldVersionNumber]!
+                            oldVersionNameMapping[oldVersionNumber]!,
                         );
                     },
-                }
+                },
             );
             oldDb.close(); // Close so the upgrade won't be blocked
 
@@ -64,7 +64,7 @@ describe("getFluidCacheIndexedDbInstance", () => {
             expect(db.objectStoreNames).toEqual([FluidDriverObjectStoreName]);
             expect(db.name).toEqual(FluidDriverCacheDBName);
             expect(db.version).toEqual(CurrentCacheVersion);
-        }
+        },
     );
 
     it("if error thrown in deletion of old database, is swallowed and logged", async () => {
@@ -74,7 +74,7 @@ describe("getFluidCacheIndexedDbInstance", () => {
         // delete the old data store.
         const oldDb = await openDB(
             FluidDriverCacheDBName,
-            CurrentCacheVersion - 1
+            CurrentCacheVersion - 1,
         );
         oldDb.close(); // Close so the upgrade won't be blocked
 
@@ -89,7 +89,7 @@ describe("getFluidCacheIndexedDbInstance", () => {
         // We catch the error and send it to the logger
         expect(sendSpy.mock.calls).toHaveLength(1);
         expect(sendSpy.mock.calls[0][0].eventName).toEqual(
-            FluidCacheErrorEvent.FluidCacheDeleteOldDbError
+            FluidCacheErrorEvent.FluidCacheDeleteOldDbError,
         );
 
         // The cache was still created as expected

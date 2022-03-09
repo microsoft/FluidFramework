@@ -1,18 +1,19 @@
-import { FluidCache } from "../FluidCache";
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
+import { openDB } from "idb";
+import { FluidCache } from "../FluidCache";
 import {
     getFluidCacheIndexedDbInstance,
     FluidDriverObjectStoreName,
     FluidDriverCacheDBName,
     getKeyForCacheEntry,
 } from "../FluidCacheIndexedDb";
-import { openDB } from "idb";
 require("fake-indexeddb/auto");
 
 const mockPartitionKey = "FAKEPARTITIONKEY";
 
 function getFluidCache(config?: {
     maxCacheItemAge?: number;
+    // eslint-disable-next-line @rushstack/no-new-null
     partitionKey?: string | null;
 }) {
     return new FluidCache({
@@ -46,7 +47,7 @@ function setupDateMock(startMockTime: number) {
 // Gets a mock cache entry from an item key, all entries returned will be for the same document.
 function getMockCacheEntry(
     itemKey: string,
-    options?: { docId: string }
+    options?: { docId: string },
 ): ICacheEntry {
     return {
         file: {
@@ -75,7 +76,7 @@ describe("Fluid Cache tests", () => {
         const fluidCache = getFluidCache();
 
         const result = await fluidCache.get(
-            getMockCacheEntry("shouldNotExist")
+            getMockCacheEntry("shouldNotExist"),
         );
         expect(result).toBeUndefined();
     });
@@ -195,8 +196,8 @@ describe("Fluid Cache tests", () => {
         expect(
             await db.get(
                 FluidDriverObjectStoreName,
-                getKeyForCacheEntry(cacheEntry)
-            )
+                getKeyForCacheEntry(cacheEntry),
+            ),
         ).toEqual({
             cacheItemId: "shouldBeInLocalStorage",
             cachedObject: {
@@ -228,9 +229,9 @@ describe("Fluid Cache tests", () => {
             (
                 await db.get(
                     FluidDriverObjectStoreName,
-                    getKeyForCacheEntry(cacheEntry)
+                    getKeyForCacheEntry(cacheEntry),
                 )
-            )?.lastAccessTimeMs
+            )?.lastAccessTimeMs,
         ).toBe(100);
 
         DateMock.mockTimeMs = 800;
@@ -240,9 +241,9 @@ describe("Fluid Cache tests", () => {
             (
                 await db.get(
                     FluidDriverObjectStoreName,
-                    getKeyForCacheEntry(cacheEntry)
+                    getKeyForCacheEntry(cacheEntry),
                 )
-            )?.lastAccessTimeMs
+            )?.lastAccessTimeMs,
         ).toEqual(800);
 
         clearDateMock();

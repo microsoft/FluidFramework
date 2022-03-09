@@ -56,7 +56,7 @@ export class FluidCache implements IPersistedCache {
 
     private readonly partitionKey: string | null;
 
-    private maxCacheItemAge: number;
+    private readonly maxCacheItemAge: number;
 
     constructor(config: FluidCacheConfig) {
         this.logger = ChildLogger.create(config.logger);
@@ -74,9 +74,7 @@ export class FluidCache implements IPersistedCache {
                 let indexedDBSize: number | undefined;
                 if ("usageDetails" in estimate) {
                     indexedDBSize = (
-                        (estimate as any)[
-                            "usageDetails"
-                        ] as StorageQuotaUsageDetails
+                        (estimate as any).usageDetails as StorageQuotaUsageDetails
                     ).indexedDB;
                 }
 
@@ -97,18 +95,18 @@ export class FluidCache implements IPersistedCache {
 
                 const transaction = db.transaction(
                     FluidDriverObjectStoreName,
-                    "readwrite"
+                    "readwrite",
                 );
                 const index = await transaction.store.index("lastAccessTimeMs");
                 // Get items that have not been accessed in 4 weeks
                 const keysToDelete = await index.getAllKeys(
                     IDBKeyRange.upperBound(
-                        new Date().getTime() - 4 * 7 * 24 * 60 * 60 * 1000
-                    )
+                        new Date().getTime() - 4 * 7 * 24 * 60 * 60 * 1000,
+                    ),
                 );
 
                 await Promise.all(
-                    keysToDelete.map((key) => transaction.store.delete(key))
+                    keysToDelete.map((key) => transaction.store.delete(key)),
                 );
                 await transaction.done;
             } catch (error: any) {
@@ -117,7 +115,7 @@ export class FluidCache implements IPersistedCache {
                         eventName:
                             FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
                     },
-                    error
+                    error,
                 );
             }
         });
@@ -129,14 +127,14 @@ export class FluidCache implements IPersistedCache {
 
             const transaction = db.transaction(
                 FluidDriverObjectStoreName,
-                "readwrite"
+                "readwrite",
             );
             const index = transaction.store.index("fileId");
 
             const keysToDelete = await index.getAllKeys(file.docId);
 
             await Promise.all(
-                keysToDelete.map((key) => transaction.store.delete(key))
+                keysToDelete.map((key) => transaction.store.delete(key)),
             );
             await transaction.done;
         } catch (error: any) {
@@ -145,7 +143,7 @@ export class FluidCache implements IPersistedCache {
                     eventName:
                         FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
                 },
-                error
+                error,
             );
         }
     }
@@ -157,14 +155,14 @@ export class FluidCache implements IPersistedCache {
 
             const transaction = db.transaction(
                 FluidDriverObjectStoreName,
-                "readwrite"
+                "readwrite",
             );
             const index = await transaction.store.index("fileId");
 
             const keysToDelete = await index.getAllKeys(docId);
 
             await Promise.all(
-                keysToDelete.map((key) => transaction.store.delete(key))
+                keysToDelete.map((key) => transaction.store.delete(key)),
             );
             await transaction.done;
         } catch (error: any) {
@@ -173,7 +171,7 @@ export class FluidCache implements IPersistedCache {
                     eventName:
                         FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
                 },
-                error
+                error,
             );
         }
     }
@@ -226,7 +224,7 @@ export class FluidCache implements IPersistedCache {
 
             const transaction = db.transaction(
                 FluidDriverObjectStoreName,
-                "readwrite"
+                "readwrite",
             );
             // We don't want to block the get return of this function on updating the last accessed time
             // We catch this promise because there is no user bad if this is rejected.
@@ -243,7 +241,7 @@ export class FluidCache implements IPersistedCache {
                     ) {
                         await transaction.store.put(
                             { ...valueToUpdate, lastAccessTimeMs: currentTime },
-                            key
+                            key,
                         );
                     }
                     await transaction.done;
@@ -256,7 +254,7 @@ export class FluidCache implements IPersistedCache {
             // We can fail to open the db for a variety of reasons, such as the database version having upgraded underneath us. Return undefined in this case
             this.logger.sendErrorEvent(
                 { eventName: FluidCacheErrorEvent.FluidCacheGetError },
-                error
+                error,
             );
             return undefined;
         }
@@ -279,7 +277,7 @@ export class FluidCache implements IPersistedCache {
                     createdTimeMs: currentTime,
                     lastAccessTimeMs: currentTime,
                 },
-                getKeyForCacheEntry(entry)
+                getKeyForCacheEntry(entry),
             );
 
             db.close();
@@ -287,7 +285,7 @@ export class FluidCache implements IPersistedCache {
             // We can fail to open the db for a variety of reasons, such as the database version having upgraded underneath us
             this.logger.sendErrorEvent(
                 { eventName: FluidCacheErrorEvent.FluidCachePutError },
-                error
+                error,
             );
         }
     }

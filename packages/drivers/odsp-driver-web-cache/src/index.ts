@@ -1,2 +1,2 @@
-export * from './FluidCache';
-export { deleteFluidCacheIndexDbInstance } from './FluidCacheIndexedDb';
+export * from "./FluidCache";
+export { deleteFluidCacheIndexDbInstance } from "./FluidCacheIndexedDb";

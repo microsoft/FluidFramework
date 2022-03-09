@@ -1,26 +1,26 @@
-import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb';
-import { ICacheEntry } from '@fluidframework/odsp-driver-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { FluidCacheErrorEvent } from './fluidCacheTelemetry';
-import { ChildLogger } from '@fluidframework/telemetry-utils';
+import { openDB, DBSchema, IDBPDatabase, deleteDB } from "idb";
+import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { FluidCacheErrorEvent } from "./fluidCacheTelemetry";
 
 // The name of the database that we use for caching fluid info.
-export const FluidDriverCacheDBName = 'fluidDriverCache';
+export const FluidDriverCacheDBName = "fluidDriverCache";
 
 // The name of the object store within the indexed db instance that the driver will use to cache fluid content.
-export const FluidDriverObjectStoreName = 'driverStorage.V3';
+export const FluidDriverObjectStoreName = "driverStorage.V3";
 
 export const CurrentCacheVersion = 3;
 
 // Note that V1 and V2 were misspelled as "diver", and we need to keep using the misspelling here.
-export const oldVersionNameMapping: Partial<{ [key: number]: string }> = { 1: 'diverStorage', 2: 'diverStorage.V2' };
+export const oldVersionNameMapping: Partial<{ [key: number]: string }> = { 1: "diverStorage", 2: "diverStorage.V2" };
 
 export function getKeyForCacheEntry(entry: ICacheEntry) {
     return `${entry.file.docId}_${entry.type}_${entry.key}`;
 }
 
 export function getFluidCacheIndexedDbInstance(
-    logger?: ITelemetryBaseLogger
+    logger?: ITelemetryBaseLogger,
 ): Promise<IDBPDatabase<FluidCacheDBSchema>> {
     return new Promise((resolve, reject) => {
         openDB<FluidCacheDBSchema>(FluidDriverCacheDBName, CurrentCacheVersion, {
@@ -38,21 +38,21 @@ export function getFluidCacheIndexedDbInstance(
                     // db will throw. We can now assume that the old version is no longer there regardless.
                     ChildLogger.create(logger).sendErrorEvent(
                         { eventName: FluidCacheErrorEvent.FluidCacheDeleteOldDbError },
-                        error
+                        error,
                     );
                 }
 
                 const cacheObjectStore = db.createObjectStore(FluidDriverObjectStoreName);
-                cacheObjectStore.createIndex('createdTimeMs', 'createdTimeMs');
-                cacheObjectStore.createIndex('lastAccessTimeMs', 'lastAccessTimeMs');
-                cacheObjectStore.createIndex('partitionKey', 'partitionKey');
-                cacheObjectStore.createIndex('fileId', 'fileId');
+                cacheObjectStore.createIndex("createdTimeMs", "createdTimeMs");
+                cacheObjectStore.createIndex("lastAccessTimeMs", "lastAccessTimeMs");
+                cacheObjectStore.createIndex("partitionKey", "partitionKey");
+                cacheObjectStore.createIndex("fileId", "fileId");
             },
             blocked: () => {
                 // TODO: https://office.visualstudio.com/OC/_workitems/edit/5826124
                 // eslint-disable-next-line prefer-promise-reject-errors
-                reject('Could not open DB since it is blocked by an older client that has the DB open');
-            }
+                reject("Could not open DB since it is blocked by an older client that has the DB open");
+            },
         }).then(resolve, reject);
     });
 }

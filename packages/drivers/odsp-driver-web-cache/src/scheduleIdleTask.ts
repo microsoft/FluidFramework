@@ -2,16 +2,16 @@
 declare global {
     interface Window {
         requestIdleCallback:
-        | ((
-            callback: (deadline: {
-                readonly didTimeout: boolean;
-                timeRemaining: () => number;
-            }) => void,
-            opts?: {
-                timeout: number;
-            }
-        ) => number)
-        | undefined;
+            | ((
+                  callback: (deadline: {
+                      readonly didTimeout: boolean;
+                      timeRemaining: () => number;
+                  }) => void,
+                  opts?: {
+                      timeout: number;
+                  }
+              ) => number)
+            | undefined;
         cancelIdleCallback: ((handle: number) => void) | undefined;
     }
 }
@@ -57,7 +57,7 @@ function ensureIdleCallback() {
                         timeRemaining: () => Math.max(deadline - Date.now(), 0),
                         didTimeout: false,
                     }),
-                0
+                0,
             );
         }
         idleTaskScheduled = true;
@@ -71,10 +71,10 @@ function ensureIdleCallback() {
  */
 function runTasks(
     filter?: (taskQueueItem: TaskQueueItem) => boolean,
-    shouldContinueRunning?: () => boolean
+    shouldContinueRunning?: () => boolean,
 ) {
     // The next value for the task queue
-    let newTaskQueue: TaskQueueItem[] = [];
+    const newTaskQueue: TaskQueueItem[] = [];
 
     for (let index = 0; index < taskQueue.length; index += 1) {
         if (shouldContinueRunning && !shouldContinueRunning()) {
