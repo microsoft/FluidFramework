@@ -1,9 +1,24 @@
-import { IPersistedCache, ICacheEntry, IFileEntry } from '@fluidframework/odsp-driver-definitions';
-import { ITelemetryBaseLogger, ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ChildLogger } from '@fluidframework/telemetry-utils';
-import { scheduleIdleTask } from './scheduleIdleTask';
-import { getFluidCacheIndexedDbInstance, FluidDriverObjectStoreName, getKeyForCacheEntry } from './FluidCacheIndexedDb';
-import { FluidCacheErrorEvent, FluidCacheEventSubCategories, FluidCacheGenericEvent } from './fluidCacheTelemetry';
+import {
+    IPersistedCache,
+    ICacheEntry,
+    IFileEntry,
+} from "@fluidframework/odsp-driver-definitions";
+import {
+    ITelemetryBaseLogger,
+    ITelemetryLogger,
+} from "@fluidframework/common-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { scheduleIdleTask } from "./scheduleIdleTask";
+import {
+    getFluidCacheIndexedDbInstance,
+    FluidDriverObjectStoreName,
+    getKeyForCacheEntry,
+} from "./FluidCacheIndexedDb";
+import {
+    FluidCacheErrorEvent,
+    FluidCacheEventSubCategories,
+    FluidCacheGenericEvent,
+} from "./fluidCacheTelemetry";
 
 // Some browsers have a usageDetails property that will tell you more detailed information on how the storage is being used
 interface StorageQuotaUsageDetails {
@@ -18,6 +33,7 @@ export interface FluidCacheConfig {
      * A null value should only be used when the host can ensure that the cache is not able
      * to be shared with multiple users.
      */
+    // eslint-disable-next-line @rushstack/no-new-null
     partitionKey: string | null;
 
     /**
@@ -51,14 +67,17 @@ export class FluidCache implements IPersistedCache {
             // Log how much storage space is currently being used by indexed db.
             // NOTE: This API is not supported in all browsers and it doesn't let you see the size of a specific DB.
             // Exception added when eslint rule was added, this should be revisited when modifying this code
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             if (navigator.storage && navigator.storage.estimate) {
                 const estimate = await navigator.storage.estimate();
 
                 // Some browsers have a usageDetails property that will tell you more detailed information on how the storage is being used
                 let indexedDBSize: number | undefined;
-                if ('usageDetails' in estimate) {
-                    indexedDBSize = ((estimate as any)['usageDetails'] as StorageQuotaUsageDetails).indexedDB;
+                if ("usageDetails" in estimate) {
+                    indexedDBSize = (
+                        (estimate as any)[
+                            "usageDetails"
+                        ] as StorageQuotaUsageDetails
+                    ).indexedDB;
                 }
 
                 this.logger.sendTelemetryEvent({
@@ -66,7 +85,7 @@ export class FluidCache implements IPersistedCache {
                     subCategory: FluidCacheEventSubCategories.FluidCache,
                     quota: estimate.quota,
                     usage: estimate.usage,
-                    indexedDBSize
+                    indexedDBSize,
                 });
             }
         });
@@ -76,17 +95,30 @@ export class FluidCache implements IPersistedCache {
             try {
                 const db = await getFluidCacheIndexedDbInstance(this.logger);
 
-                const transaction = db.transaction(FluidDriverObjectStoreName, 'readwrite');
-                const index = await transaction.store.index('lastAccessTimeMs');
+                const transaction = db.transaction(
+                    FluidDriverObjectStoreName,
+                    "readwrite"
+                );
+                const index = await transaction.store.index("lastAccessTimeMs");
                 // Get items that have not been accessed in 4 weeks
                 const keysToDelete = await index.getAllKeys(
-                    IDBKeyRange.upperBound(new Date().getTime() - 4 * 7 * 24 * 60 * 60 * 1000)
+                    IDBKeyRange.upperBound(
+                        new Date().getTime() - 4 * 7 * 24 * 60 * 60 * 1000
+                    )
                 );
 
-                await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
+                await Promise.all(
+                    keysToDelete.map((key) => transaction.store.delete(key))
+                );
                 await transaction.done;
             } catch (error: any) {
-                this.logger.sendErrorEvent({ eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError }, error);
+                this.logger.sendErrorEvent(
+                    {
+                        eventName:
+                            FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
+                    },
+                    error
+                );
             }
         });
     }
@@ -95,15 +127,26 @@ export class FluidCache implements IPersistedCache {
         try {
             const db = await getFluidCacheIndexedDbInstance(this.logger);
 
-            const transaction = db.transaction(FluidDriverObjectStoreName, 'readwrite');
-            const index = await transaction.store.index('fileId');
+            const transaction = db.transaction(
+                FluidDriverObjectStoreName,
+                "readwrite"
+            );
+            const index = transaction.store.index("fileId");
 
             const keysToDelete = await index.getAllKeys(file.docId);
 
-            await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
+            await Promise.all(
+                keysToDelete.map((key) => transaction.store.delete(key))
+            );
             await transaction.done;
         } catch (error: any) {
-            this.logger.sendErrorEvent({ eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError }, error);
+            this.logger.sendErrorEvent(
+                {
+                    eventName:
+                        FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
+                },
+                error
+            );
         }
     }
 
@@ -112,15 +155,26 @@ export class FluidCache implements IPersistedCache {
         try {
             const db = await getFluidCacheIndexedDbInstance(this.logger);
 
-            const transaction = db.transaction(FluidDriverObjectStoreName, 'readwrite');
-            const index = await transaction.store.index('fileId');
+            const transaction = db.transaction(
+                FluidDriverObjectStoreName,
+                "readwrite"
+            );
+            const index = await transaction.store.index("fileId");
 
             const keysToDelete = await index.getAllKeys(docId);
 
-            await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
+            await Promise.all(
+                keysToDelete.map((key) => transaction.store.delete(key))
+            );
             await transaction.done;
         } catch (error: any) {
-            this.logger.sendErrorEvent({ eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError }, error);
+            this.logger.sendErrorEvent(
+                {
+                    eventName:
+                        FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
+                },
+                error
+            );
         }
     }
 
@@ -130,10 +184,10 @@ export class FluidCache implements IPersistedCache {
         const cachedItem = await this.getItemFromCache(cacheEntry);
 
         this.logger.sendPerformanceEvent({
-            eventName: 'FluidCacheAccess',
+            eventName: "FluidCacheAccess",
             cacheHit: cachedItem !== undefined,
             type: cacheEntry.type,
-            duration: performance.now() - startTime
+            duration: performance.now() - startTime,
         });
 
         // Value will contain metadata like the expiry time, we just want to return the object we were asked to cache
@@ -155,8 +209,9 @@ export class FluidCache implements IPersistedCache {
             // If the data does not come from the same partition, don't return it
             if (value.partitionKey !== this.partitionKey) {
                 this.logger.sendTelemetryEvent({
-                    eventName: FluidCacheGenericEvent.FluidCachePartitionKeyMismatch,
-                    subCategory: FluidCacheEventSubCategories.FluidCache
+                    eventName:
+                        FluidCacheGenericEvent.FluidCachePartitionKeyMismatch,
+                    subCategory: FluidCacheEventSubCategories.FluidCache,
                 });
 
                 return undefined;
@@ -169,7 +224,10 @@ export class FluidCache implements IPersistedCache {
                 return undefined;
             }
 
-            const transaction = db.transaction(FluidDriverObjectStoreName, 'readwrite');
+            const transaction = db.transaction(
+                FluidDriverObjectStoreName,
+                "readwrite"
+            );
             // We don't want to block the get return of this function on updating the last accessed time
             // We catch this promise because there is no user bad if this is rejected.
             transaction.store
@@ -180,20 +238,26 @@ export class FluidCache implements IPersistedCache {
                     if (
                         valueToUpdate !== undefined &&
                         valueToUpdate.createdTimeMs === value.createdTimeMs && // Exception added when eslint rule was added, this should be revisited when modifying this code
-                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                        (valueToUpdate.lastAccessTimeMs === undefined || valueToUpdate.lastAccessTimeMs < currentTime)
+                        (valueToUpdate.lastAccessTimeMs === undefined ||
+                            valueToUpdate.lastAccessTimeMs < currentTime)
                     ) {
-                        await transaction.store.put({ ...valueToUpdate, lastAccessTimeMs: currentTime }, key);
+                        await transaction.store.put(
+                            { ...valueToUpdate, lastAccessTimeMs: currentTime },
+                            key
+                        );
                     }
                     await transaction.done;
 
                     db.close();
                 })
-                .catch(() => { });
+                .catch(() => {});
             return value;
         } catch (error: any) {
             // We can fail to open the db for a variety of reasons, such as the database version having upgraded underneath us. Return undefined in this case
-            this.logger.sendErrorEvent({ eventName: FluidCacheErrorEvent.FluidCacheGetError }, error);
+            this.logger.sendErrorEvent(
+                { eventName: FluidCacheErrorEvent.FluidCacheGetError },
+                error
+            );
             return undefined;
         }
     }
@@ -213,7 +277,7 @@ export class FluidCache implements IPersistedCache {
                     cacheItemId: entry.key,
                     partitionKey: this.partitionKey,
                     createdTimeMs: currentTime,
-                    lastAccessTimeMs: currentTime
+                    lastAccessTimeMs: currentTime,
                 },
                 getKeyForCacheEntry(entry)
             );
@@ -221,7 +285,10 @@ export class FluidCache implements IPersistedCache {
             db.close();
         } catch (error: any) {
             // We can fail to open the db for a variety of reasons, such as the database version having upgraded underneath us
-            this.logger.sendErrorEvent({ eventName: FluidCacheErrorEvent.FluidCachePutError }, error);
+            this.logger.sendErrorEvent(
+                { eventName: FluidCacheErrorEvent.FluidCachePutError },
+                error
+            );
         }
     }
 }
