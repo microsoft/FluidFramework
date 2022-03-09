@@ -118,7 +118,6 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
             dataObject1map1.set("key1", "newValue");
             dataObject1map2.set("key1", "newValue");
 
-            // (dataObject2.context.containerRuntime as IContainerRuntime).flush();
             await provider.ensureSynchronized();
 
             assert.strictEqual(dataObject2map1.get("key1"), "newValue", "container2's map did not get updated");
