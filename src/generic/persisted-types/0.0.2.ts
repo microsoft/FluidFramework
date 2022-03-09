@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from '@fluidframework/datastore-definitions';
-import { EditId, Definition, StableNodeId, TraitLabel } from '../../Identifiers';
+import type { Serializable } from '@fluidframework/datastore-definitions';
+import type { EditId, Definition, StableNodeId, TraitLabel } from '../../Identifiers';
 
 /**
  * Defines a place relative to sibling.
@@ -193,25 +193,56 @@ export enum SharedTreeOpType {
 }
 
 /**
- * Requirements for SharedTree ops.
+ * SharedTreeOp containing a version stamp marking the write format of the tree which submitted it.
  */
-export interface SharedTreeOp {
-	readonly type: SharedTreeOpType;
+export interface VersionedOp {
+	/** The supported SharedTree write version, see {@link SharedTreeSummaryWriteFormat}. */
 	readonly version: SharedTreeSummaryWriteFormat;
 }
 
 /**
- * A SharedTree op that includes edit information.
+ * Requirements for SharedTree ops.
  */
-export interface SharedTreeEditOp<TChange> extends SharedTreeOp {
+export type SharedTreeOp<TChange = unknown> =
+	| SharedTreeEditOp<TChange>
+	| SharedTreeHandleOp
+	| SharedTreeNoOp
+	| SharedTreeUpdateOp;
+
+/**
+ * Op which has no application semantics. This op can be useful for triggering other
+ */
+export interface SharedTreeNoOp extends VersionedOp {
+	readonly type: SharedTreeOpType.NoOp;
+}
+
+/**
+ * Op indicating this SharedTree should upgrade its write format to the specified version.
+ * The `version` field of this op reflects the version which should be upgraded to, not
+ * the current version.
+ * See docs/Breaking-Change-Migration.md for more details on the semantics of this op.
+ */
+export interface SharedTreeUpdateOp extends VersionedOp {
+	readonly type: SharedTreeOpType.Update;
+}
+
+/**
+ * A SharedTree op that includes edit information, and optionally a list of interned strings.
+ */
+export interface SharedTreeEditOp<TChange> extends VersionedOp {
+	readonly type: SharedTreeOpType.Edit;
+	/** The collection of changes to apply. */
 	readonly edit: Edit<TChange>;
+	/** The list of interned strings to retrieve the original strings of interned edits. */
+	readonly internedStrings?: readonly string[];
 }
 
 /**
  * A SharedTree op that includes edit handle information.
  * The handle corresponds to an edit chunk in the edit log.
  */
-export interface SharedTreeHandleOp extends SharedTreeOp {
+export interface SharedTreeHandleOp extends VersionedOp {
+	readonly type: SharedTreeOpType.Handle;
 	/** The serialized handle to an uploaded edit chunk. */
 	readonly editHandle: string;
 	/** The index of the first edit in the chunk that corresponds to the handle. */

@@ -720,7 +720,8 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 */
 	protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
 		this.cachingLogViewer.setMinimumSequenceNumber(message.minimumSequenceNumber);
-		const { type, version } = message.contents;
+		const op: SharedTreeOp = message.contents;
+		const { type, version } = op;
 		const resolvedVersion = version ?? SharedTreeSummaryWriteFormat.Format_0_0_2;
 		const sameVersion = resolvedVersion === this.writeSummaryFormat;
 
@@ -728,10 +729,10 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		// Update ops should only be processed if they're not the same version.
 		if (sameVersion) {
 			if (type === SharedTreeOpType.Handle) {
-				const { editHandle, startRevision } = message.contents as SharedTreeHandleOp;
+				const { editHandle, startRevision } = op;
 				this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), startRevision);
 			} else if (type === SharedTreeOpType.Edit) {
-				const semiSerializedEdit = message.contents.edit;
+				const semiSerializedEdit = op.edit;
 				// semiSerializedEdit may have handles which have been replaced by `serializer.encode`.
 				// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
 				// Stringify using JSON, not IFluidSerializer since OPs use JSON directly.
@@ -742,7 +743,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 				this.processSequencedEdit(edit, message);
 			}
 		} else if (type === SharedTreeOpType.Update) {
-			this.processVersionUpdate(message.contents.version);
+			this.processVersionUpdate(op.version);
 		} else if (compareSummaryFormatVersions(version, this.writeSummaryFormat) === 1) {
 			// An op version newer than our current version should not be received. If this happens, either an
 			// incorrect op version has been written or an update op was skipped.
@@ -986,7 +987,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 */
 	protected applyStashedOp(content: any): void {
 		// Note: parameter is typed as "any" as in the base class to avoid exposing SharedTreeOp.
-		const op = content as SharedTreeOp;
+		const op: SharedTreeOp = content;
 		switch (op.type) {
 			case SharedTreeOpType.Edit: {
 				const { edit } = op as SharedTreeEditOp<TChangeInternal>;
@@ -999,7 +1000,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 			case SharedTreeOpType.NoOp:
 				break;
 			default: {
-				const _: never = op.type;
+				const _: never = op;
 				break;
 			}
 		}
