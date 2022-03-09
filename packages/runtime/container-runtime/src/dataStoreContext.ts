@@ -857,7 +857,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         );
 
         this.snapshotTree = props.snapshotTree;
-        if (props.isRootDataStore === true){
+        if (props.isRootDataStore === true) {
             this.setRoot();
         }
         this.createProps = props.createProps;
