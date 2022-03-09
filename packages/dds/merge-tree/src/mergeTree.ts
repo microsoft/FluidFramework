@@ -108,7 +108,7 @@ export interface IRemovalInfo {
     removedClientIds: number[];
 }
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
-    if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined ) {
+    if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
         return maybe as IRemovalInfo;
     }
     assert(maybe?.removedClientIds === undefined && maybe?.removedSeq === undefined,
