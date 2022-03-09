@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/driver-definitions": "^0.45.0-0",
+    "@fluidframework/odsp-driver-definitions": "^0.58.1000",
     "@fluidframework/telemetry-utils": "^0.58.1000",
     "idb": "^6.1.2"
   },
@@ -42,7 +42,7 @@
     "@fluidframework/eslint-config-fluid": "^0.27.0-0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
-    "@types/jest": "22.2.3",
+    "@types/jest": "26.0.14",
     "@types/socket.io-client": "^1.4.32",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
