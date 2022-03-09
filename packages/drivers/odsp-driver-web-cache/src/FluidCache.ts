@@ -20,7 +20,8 @@ import {
     FluidCacheGenericEvent,
 } from "./fluidCacheTelemetry";
 
-// Some browsers have a usageDetails property that will tell you more detailed information on how the storage is being used
+// Some browsers have a usageDetails property that will tell you more detailed information
+// on how the storage is being used
 interface StorageQuotaUsageDetails {
     indexedDB: number | undefined;
 }
@@ -42,8 +43,8 @@ export interface FluidCacheConfig {
     logger?: ITelemetryBaseLogger;
 
     /**
-     * A value in milliseconds that determines the maximum age of a cache entry to return. If an entry exists in the cache,
-     * but is older than this value, the cached value will not be returned.
+     * A value in milliseconds that determines the maximum age of a cache entry to return.
+     * If an entry exists in the cache, but is older than this value, the cached value will not be returned.
      */
     maxCacheItemAge: number;
 }
@@ -70,11 +71,13 @@ export class FluidCache implements IPersistedCache {
             if (navigator.storage && navigator.storage.estimate) {
                 const estimate = await navigator.storage.estimate();
 
-                // Some browsers have a usageDetails property that will tell you more detailed information on how the storage is being used
+                // Some browsers have a usageDetails property that will tell you
+                // more detailed information on how the storage is being used
                 let indexedDBSize: number | undefined;
                 if ("usageDetails" in estimate) {
                     indexedDBSize = (
-                        (estimate as any).usageDetails as StorageQuotaUsageDetails
+                        (estimate as any)
+                            .usageDetails as StorageQuotaUsageDetails
                     ).indexedDB;
                 }
 
@@ -97,7 +100,7 @@ export class FluidCache implements IPersistedCache {
                     FluidDriverObjectStoreName,
                     "readwrite",
                 );
-                const index = await transaction.store.index("lastAccessTimeMs");
+                const index = transaction.store.index("lastAccessTimeMs");
                 // Get items that have not been accessed in 4 weeks
                 const keysToDelete = await index.getAllKeys(
                     IDBKeyRange.upperBound(
@@ -157,7 +160,7 @@ export class FluidCache implements IPersistedCache {
                 FluidDriverObjectStoreName,
                 "readwrite",
             );
-            const index = await transaction.store.index("fileId");
+            const index = transaction.store.index("fileId");
 
             const keysToDelete = await index.getAllKeys(docId);
 
@@ -189,6 +192,7 @@ export class FluidCache implements IPersistedCache {
         });
 
         // Value will contain metadata like the expiry time, we just want to return the object we were asked to cache
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return cachedItem?.cachedObject;
     }
 
@@ -231,11 +235,12 @@ export class FluidCache implements IPersistedCache {
             transaction.store
                 .get(key)
                 .then(async (valueToUpdate) => {
-                    // This value in the database could have been updated concurrently by other tabs/iframes since we first read it.
-                    // Only update the last accessed time if the current value in the DB was the same one we returned.
+                    // This value in the database could have been updated concurrently by other tabs/iframes
+                    // since we first read it. Only update the last accessed time if the current value in the
+                    // DB was the same one we returned.
                     if (
                         valueToUpdate !== undefined &&
-                        valueToUpdate.createdTimeMs === value.createdTimeMs && // Exception added when eslint rule was added, this should be revisited when modifying this code
+                        valueToUpdate.createdTimeMs === value.createdTimeMs &&
                         (valueToUpdate.lastAccessTimeMs === undefined ||
                             valueToUpdate.lastAccessTimeMs < currentTime)
                     ) {
@@ -251,7 +256,8 @@ export class FluidCache implements IPersistedCache {
                 .catch(() => {});
             return value;
         } catch (error: any) {
-            // We can fail to open the db for a variety of reasons, such as the database version having upgraded underneath us. Return undefined in this case
+            // We can fail to open the db for a variety of reasons,
+            // such as the database version having upgraded underneath us. Return undefined in this case
             this.logger.sendErrorEvent(
                 { eventName: FluidCacheErrorEvent.FluidCacheGetError },
                 error,
@@ -282,7 +288,8 @@ export class FluidCache implements IPersistedCache {
 
             db.close();
         } catch (error: any) {
-            // We can fail to open the db for a variety of reasons, such as the database version having upgraded underneath us
+            // We can fail to open the db for a variety of reasons,
+            // such as the database version having upgraded underneath us
             this.logger.sendErrorEvent(
                 { eventName: FluidCacheErrorEvent.FluidCachePutError },
                 error,
