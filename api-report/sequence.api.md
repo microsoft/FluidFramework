@@ -239,7 +239,7 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
 // @public
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     // (undocumented)
-    (event: "createIntervalCollection", listener: (label: string, target: IEventThisPlaceHolder) => void): any;
+    (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
