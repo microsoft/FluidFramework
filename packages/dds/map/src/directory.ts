@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IDisposable } from "@fluidframework/common-definitions";
 import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
@@ -36,8 +38,6 @@ import {
     makeSerializable,
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
-import { IDisposable } from "@fluidframework/common-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -430,11 +430,11 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 
     public dispose(error?: Error): void {
         this._disposed = true;
-        this.root.dispose();        
+        this.root.dispose();
     }
 
     public get disposed(): boolean {
-        return this._disposed;        
+        return this._disposed;
     }
 
     /**
@@ -874,7 +874,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
     public dispose(): void {
         this._disposed = true;
-        this.emit("dispose", this);   
+        this.emit("dispose", this);
     }
 
     public get disposed(): boolean {
