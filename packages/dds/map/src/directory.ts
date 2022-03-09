@@ -340,8 +340,6 @@ export class DirectoryFactory {
  * @sealed
  */
 export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory, IDisposable {
-    private _disposed = false;
-
     /**
      * Create a new shared directory
      *
@@ -429,12 +427,11 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     public dispose(error?: Error): void {
-        this._disposed = true;
-        this.root.dispose();
+        this.root.dispose(error);
     }
 
     public get disposed(): boolean {
-        return this._disposed;
+        return this.root.disposed;
     }
 
     /**
@@ -872,9 +869,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         super();
     }
 
-    public dispose(): void {
+    public dispose(error?: Error): void {
         this._disposed = true;
-        this.emit("dispose", this);
+        this.emit("disposed", this);
     }
 
     public get disposed(): boolean {
@@ -1541,7 +1538,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though?
         const successfullyRemoved = this._subdirectories.delete(subdirName);
-        (previousValue as SharedDirectory)?.dispose();
+        (previousValue as SubDirectory)?.dispose();
         return successfullyRemoved;
     }
 }

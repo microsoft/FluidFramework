@@ -165,7 +165,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  *
  * - `target` - The IDirectory itself.
  *
- * ### "dispose"
+ * ### "disposed"
  *
  * The dispose event is emitted when this sub directory is deleted.
  *
@@ -183,7 +183,7 @@ export interface IDirectoryEvents extends IEvent {
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
-    (event: "dispose", listener: (
+    (event: "disposed", listener: (
         target: IEventThisPlaceHolder,
     ) => void);
 }
