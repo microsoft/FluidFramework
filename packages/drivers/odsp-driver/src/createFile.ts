@@ -61,6 +61,7 @@ export async function createNewFluidFile(
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throw new NonRetryableError(
+            // pre-0.58 error message: createNewInvalidFilename
             "Invalid filename for createNew", OdspErrorType.invalidFileNameError, { driverVersion });
     }
 
