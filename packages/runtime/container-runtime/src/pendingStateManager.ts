@@ -375,13 +375,6 @@ export class PendingStateManager implements IDisposable {
             return;
         }
 
-        // If the pending state is of type "flushMode", it must be Manual since Automatic flush mode is processed
-        // after a message is processed and not before.
-        if (pendingState.type === "flushMode") {
-            assert(pendingState.flushMode === FlushMode.TurnBased,
-                0x16a /* "Flush mode should be manual when processing batch begin" */);
-        }
-
         // We should not already be processing a batch and there should be no pending batch begin message.
         assert(!this.isProcessingBatch && this.pendingBatchBeginMessage === undefined,
             0x16b /* "The pending batch state indicates we are already processing a batch" */);
