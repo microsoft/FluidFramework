@@ -7,6 +7,8 @@ import {
     FluidDriverCacheDBName,
     getKeyForCacheEntry,
 } from "../FluidCacheIndexedDb";
+// eslint-disable-next-line max-len
+// eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports, import/no-internal-modules
 require("fake-indexeddb/auto");
 
 const mockPartitionKey = "FAKEPARTITIONKEY";
@@ -68,6 +70,8 @@ function getMockCacheEntry(
 describe("Fluid Cache tests", () => {
     beforeEach(() => {
         // Reset the indexed db before each test so that it starts off in an empty state
+        // eslint-disable-next-line max-len
+        // eslint-disable-next-line import/no-internal-modules, @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
         const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
         (window.indexedDB as any) = new FDBFactory();
     });
@@ -179,7 +183,8 @@ describe("Fluid Cache tests", () => {
         expect(await fluidCache.get(docId1Entry2)).toBeUndefined();
     });
 
-    // The tests above test the public API of Fluid Cache and those tests should not break if we changed the implementation.
+    // The tests above test the public API of Fluid Cache.
+    //  Those tests should not break if we changed the implementation.
     // The tests below test implementation details of the Fluid Cache, such as the usage of indexedDB.
     it("writes cached values to indexedDb", async () => {
         // We need to mock out the Date API to make this test work

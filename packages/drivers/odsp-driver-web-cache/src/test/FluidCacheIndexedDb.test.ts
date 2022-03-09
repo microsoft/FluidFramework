@@ -7,6 +7,8 @@ import {
     CurrentCacheVersion,
 } from "../FluidCacheIndexedDb";
 import { FluidCacheErrorEvent } from "../fluidCacheTelemetry";
+// eslint-disable-next-line max-len
+// eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports, import/no-internal-modules
 require("fake-indexeddb/auto");
 
 class MockLogger {
@@ -17,9 +19,9 @@ class MockLogger {
 const versions = Object.keys(oldVersionNameMapping);
 
 // Dynamically get the test cases for successful upgrades to run though all old versions
-const getUpgradeTestCases = (versions: string[]): any[] => {
+const getUpgradeTestCases = (versionsArray: string[]): any[] => {
     const testCases: any[] = [];
-    versions.map((value: string) => {
+    versionsArray.map((value: string) => {
         testCases.push([
             `upgrades successfully without an error for version number ${value}`,
             { oldVersionNumber: parseInt(value, 10 /* base10 */) },
@@ -32,11 +34,14 @@ const upgradeTestCases = getUpgradeTestCases(versions);
 describe("getFluidCacheIndexedDbInstance", () => {
     beforeEach(() => {
         // Reset the indexed db before each test so that it starts off in an empty state
+        // eslint-disable-next-line max-len
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
         const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
         (window.indexedDB as any) = new FDBFactory();
     });
 
-    // The jest types in the FF repo are old, so it doesn't have the each signature. This typecast can be removed when the types are bumped
+    // The jest types in the FF repo are old, so it doesn't have the each signature.
+    // This typecast can be removed when the types are bumped.
     (it as any).each(upgradeTestCases)(
         "%s",
         async (_, { oldVersionNumber }) => {
@@ -46,9 +51,9 @@ describe("getFluidCacheIndexedDbInstance", () => {
                 FluidDriverCacheDBName,
                 oldVersionNumber,
                 {
-                    upgrade: (db) => {
+                    upgrade: (dbToUpgrade) => {
                         // Create the old object to simulate what state we would be in
-                        db.createObjectStore(
+                        dbToUpgrade.createObjectStore(
                             oldVersionNameMapping[oldVersionNumber]!,
                         );
                     },
