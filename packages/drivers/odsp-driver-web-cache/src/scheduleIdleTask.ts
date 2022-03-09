@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Older versions of Typescript considered this API experimental and not in Typescript included types.
 // This can be removed when FF updates to Typescript 4.4 or later
 declare global {

@@ -1,13 +1,18 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from "idb";
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidCacheErrorEvent } from "./fluidCacheTelemetry";
 
-// The name of the database that we use for caching fluid info.
+// The name of the database that we use for caching Fluid info.
 export const FluidDriverCacheDBName = "fluidDriverCache";
 
-// The name of the object store within the indexed db instance that the driver will use to cache fluid content.
+// The name of the object store within the indexed db instance that the driver will use to cache Fluid content.
 export const FluidDriverObjectStoreName = "driverStorage.V3";
 
 export const CurrentCacheVersion = 3;

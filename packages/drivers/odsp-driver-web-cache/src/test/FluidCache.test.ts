@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { openDB } from "idb";
 import { FluidCache } from "../FluidCache";
