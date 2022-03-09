@@ -49,4 +49,9 @@ export class LazyCheckout<TChange, TChangeInternal, TFailure = unknown> extends 
 		}
 		return Promise.resolve();
 	}
+
+	public async waitForEditsToSubmit(): Promise<void> {
+		// This checkout is only lazy on updates, not edit application, so it does not need to wait for here.
+		return Promise.resolve();
+	}
 }
