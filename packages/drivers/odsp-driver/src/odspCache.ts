@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { strict as assert } from "assert";
 import { PromiseCache } from "@fluidframework/common-utils";
 import {
     IOdspResolvedUrl,
@@ -22,78 +22,45 @@ export interface IPersistedFileCache {
 }
 
 /**
- * Handles garbage collection of expiring cache entries.
- * Not exported.
- * (Based off of the same class in promiseCache.ts, could be consolidated)
- */
-class GarbageCollector<TKey> {
-    private readonly gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
-
-    constructor(
-        private readonly cleanup: (key: TKey) => void,
-    ) { }
-
-    /**
-     * Schedule GC for the given key, as applicable
-     */
-    public schedule(key: TKey, durationMs: number) {
-        this.gcTimeouts.set(
-            key,
-            setTimeout(
-                () => { this.cleanup(key); this.cancel(key); },
-                durationMs,
-            ),
-        );
-    }
-
-    /**
-     * Cancel any pending GC for the given key
-     */
-    public cancel(key: TKey) {
-        const timeout = this.gcTimeouts.get(key);
-        if (timeout !== undefined) {
-            clearTimeout(timeout);
-            this.gcTimeouts.delete(key);
-        }
-    }
-}
-
-/**
  * Default local-only implementation of IPersistedCache,
  * used if no persisted cache is provided by the host
  */
 export class LocalPersistentCache implements IPersistedCache {
-    private readonly cache = new Map<string, any>();
-    private readonly gc = new GarbageCollector<string>((key) => this.cache.delete(key));
+    private readonly pc: PromiseCache<string, any>;
 
-    public constructor(private readonly snapshotExpiryPolicy = 30 * 1000) {}
+    public constructor(private readonly snapshotExpiryPolicy = 30 * 1000) {
+        this.pc = new PromiseCache<string, any>({ expiry: {policy:"sliding", durationMs: this.snapshotExpiryPolicy} });
+    }
 
     async get(entry: ICacheEntry): Promise<any> {
         const key = this.keyFromEntry(entry);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.cache.get(key);
+        return this.pc.get(key);
     }
 
     async put(entry: ICacheEntry, value: any) {
         const key = this.keyFromEntry(entry);
-        this.cache.set(key, value);
-
-        // Do not keep items too long in memory
-        this.gc.cancel(key);
-        this.gc.schedule(key, this.snapshotExpiryPolicy);
+        this.pc.addValue(key,value);
     }
 
     async removeEntries(file: IFileEntry): Promise<void> {
-        Array.from(this.cache)
-        .filter(([cachekey]) => {
-            const docIdFromKey = cachekey.split("_");
-            if (docIdFromKey[0] === file.docId) {
-                return true;
-            }
-        })
-        .map(([cachekey]) => {
-            this.cache.delete(cachekey);
-        });
+        if (typeof this.pc.getEntries === "function" &&
+            this.pc.getEntries !== null)
+        {
+            this.pc.getEntries()
+            .filter(([cachekey]) => {
+                const docIdFromKey = cachekey.split("_");
+                if (docIdFromKey[0] === file.docId) {
+                    return true;
+                }
+            })
+            .map(([cachekey]) => {
+                this.pc.remove(cachekey);
+            });
+        }
+        else
+        {
+            assert("getEntries implementation not found");
+        }
     }
 
     private keyFromEntry(entry: ICacheEntry): string {
