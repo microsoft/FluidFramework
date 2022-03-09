@@ -324,7 +324,7 @@ export class PendingStateManager implements IDisposable {
     /**
      * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
      * the batch information was preserved for batch messages.
-     * @param message - The messsage that got ack'd and needs to be processed.
+     * @param message - The message that got ack'd and needs to be processed.
      */
     private processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
         // Pre-processing part - This may be the start of a batch.
@@ -367,6 +367,11 @@ export class PendingStateManager implements IDisposable {
     private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
         const pendingState = this.peekNextPendingState();
         if (pendingState.type !== "flush" && pendingState.type !== "flushMode") {
+            return;
+        }
+
+        if (pendingState.type === "flushMode" && pendingState.flushMode === FlushMode.Immediate) {
+            this.pendingStates.shift();
             return;
         }
 

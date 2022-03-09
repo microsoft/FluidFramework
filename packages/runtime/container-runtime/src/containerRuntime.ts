@@ -910,7 +910,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _orderSequentiallyCalls: number = 0;
     private _flushMode: FlushMode = FlushMode.TurnBased;
     private needsFlush = false;
-    private flushTrigger = false;
 
     private _connected: boolean;
 
@@ -2411,13 +2410,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.needsFlush = true;
 
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-                if (!this.flushTrigger) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    Promise.resolve().then(() => {
-                        this.flushTrigger = false;
-                        this.flush();
-                    });
-                }
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                Promise.resolve().then(() => {
+                    this.flush();
+                });
             }
 
             clientSequenceNumber = this.submitMaybeChunkedMessages(
