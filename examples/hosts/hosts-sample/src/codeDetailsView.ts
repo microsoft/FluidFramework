@@ -15,6 +15,7 @@ export const setupUI = (container: IContainer) => {
     // Observe container events to detect when it gets forcefully closed.
     container.once("closed", (error) => {
         if (
+            // pre-0.58 error message: ExistingContextDoesNotSatisfyIncomingProposal
             error?.message === "Existing context does not satisfy incoming proposal"
         ) {
             const reload = window.confirm(

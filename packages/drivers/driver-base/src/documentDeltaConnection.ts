@@ -305,6 +305,7 @@ export class DocumentDeltaConnection
         this.disposeCore(
             false, // socketProtocolError
             createGenericNetworkError(
+                // pre-0.58 error message: clientClosingConnection
                 "Client closing delta connection", { canRetry: true }, { driverVersion }));
     }
 
