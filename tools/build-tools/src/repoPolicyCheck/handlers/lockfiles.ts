@@ -35,13 +35,6 @@ export const handlers: Handler[] = [
             }
             return;
         },
-        resolver: file => {
-            const command = `package-lock-sanitizer -l ${file}`;
-            if (shell.exec(command).code !== 0) {
-                return { resolved: false, message: "Error: package-lock sanitize" };
-            }
-            return { resolved: true };
-        }
     },
     {
         name: "package-lockfiles-npm-version",
