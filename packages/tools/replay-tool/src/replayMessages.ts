@@ -41,13 +41,13 @@ import { ReplayArgs } from "./replayArgs";
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
 try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+
     threads = require("worker_threads");
 } catch (error) { }
 
 function expandTreeForReadability(tree: ITree): ITree {
     const newTree: ITree = { entries: [], id: undefined };
-    for (const node of tree.entries) {
+    for (const node of tree.entries.sort((a,b)=>a.path.localeCompare(b.path))) {
         const newNode = { ...node };
         if (node.type === TreeEntry.Tree) {
             newNode.value = expandTreeForReadability(node.value);
@@ -352,6 +352,7 @@ export class ReplayTool {
         if (event.eventName.includes("GarbageCollector:inactiveObject_")
             // there is something wrong with summary ops, but we don't run the summarizer, so it shouldn't matter
             || event.eventName.includes("SummaryAckWithoutOp")
+            || event.eventName.includes("GarbageCollection_cancel")
         ) {
             return false;
         }
