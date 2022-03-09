@@ -425,7 +425,7 @@ function runNpmJsonLint(json: any, file: string) {
     return { valid, validationResults };
 }
 
-const npmPackageJsonLintConfig = {
+const defaultNpmPackageJsonLintConfig = {
     rules: {
         "no-repeated-dependencies": "error",
         "require-repository-directory": "error",
@@ -439,22 +439,25 @@ const npmPackageJsonLintConfig = {
     }
 };
 
+/**
+ * Checks for an .npmpackagejsonlintrc.json file next to the package.json. If it exists, its contents will be merged
+ * into the default config.
+ *
+ * @param file path to the package.json file.
+ * @returns a config for npmPackageJsonLint.
+ */
 function getLintConfig(file: string) {
-    let finalConfig = {};
-    const defaultConfig = npmPackageJsonLintConfig;
     const configFilePath = path.join(path.dirname(file), ".npmpackagejsonlintrc.json");
-    // console.warn(`Looking for ${configFilePath}`);
+    const defaultConfig = defaultNpmPackageJsonLintConfig;
+    let finalConfig = {};
     if (pathExistsSync(configFilePath)) {
-        // console.log(`Found ${configFilePath}`);
         let configJson;
         try {
             configJson = JSON.parse(readFile(configFilePath));
         } catch (err) {
-            // TODO
             configJson = {};
         }
         merge(finalConfig, defaultConfig, configJson);
-        // console.log(JSON.stringify(finalConfig));
         return finalConfig;
     }
     return defaultConfig;
