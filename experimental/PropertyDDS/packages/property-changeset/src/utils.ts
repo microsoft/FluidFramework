@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-//@ts-ignore
+// @ts-ignore
 import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
 import { eachOfSeries, eachSeries, ErrorCallback, series, timesSeries, whilst } from "async";
 
@@ -20,10 +20,9 @@ import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIte
 import { ExtractedContext, TypeIdHelper } from "./helpers/typeidHelper";
 import { isReservedKeyword } from "./isReservedKeyword";
 import { PathHelper, PathTree } from "./pathHelper";
-import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes"
+import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
-
 
 type NextFn = (err?: Error | null | undefined | string, result?: unknown) => void;
 
@@ -84,7 +83,7 @@ export namespace Utils {
 
         // Call the callback function for this ChangeSet
         in_context._traversalStopped = false;
-        const typeid = in_context.getTypeid()
+        const typeid = in_context.getTypeid();
         let splitTypeId = typeid !== undefined ?
             TypeIdHelper.extractContext(typeid) :
             undefined;
@@ -505,7 +504,7 @@ export namespace Utils {
                 in_levelCallback(err);
             }
         });
-    };
+    }
 
     /**
      * Copies a change set into an object that is meant to be a placeholder for the next
@@ -572,7 +571,6 @@ export namespace Utils {
 
         return nestedChangeSet;
     };
-
 
     /**
      * Traverses a ChangeSet recursively and invokes the callback for each visited property.
@@ -1023,7 +1021,7 @@ export namespace Utils {
             }
         }
 
-        /**-
+        /**
          * Get the ChangeSet of the parent that contains the currently visited node.
          *
          * @returns The parent ChangeSet
@@ -1046,7 +1044,6 @@ export namespace Utils {
         setSplitTypeID(splitTypeid: ExtractedContext) {
             this._splitTypeId = splitTypeid;
         }
-
 
         /**
          * Sets user data, which will be passed to the recursive calls within this scope
@@ -2111,4 +2108,4 @@ export namespace Utils {
 
         return paths;
     }
-};
+}

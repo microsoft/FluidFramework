@@ -23,7 +23,6 @@ import { ValueMapProperty } from './properties/valueMapProperty';
 import { ValueProperty } from './properties/valueProperty';
 import { enableValidations } from './enableValidations';
 
-
 export {
     PropertyFactory,
     PropertyUtils,
@@ -44,5 +43,5 @@ export {
     ValueArrayProperty,
     ValueMapProperty,
     ValueProperty,
-    enableValidations
-}
+    enableValidations,
+};
