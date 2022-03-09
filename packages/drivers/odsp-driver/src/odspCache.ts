@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { PromiseCache } from "@fluidframework/common-utils";
+import { assert, PromiseCache } from "@fluidframework/common-utils";
 import {
     IOdspResolvedUrl,
     IFileEntry,
@@ -29,7 +28,8 @@ export class LocalPersistentCache implements IPersistedCache {
     private readonly pc: PromiseCache<string, any>;
 
     public constructor(private readonly snapshotExpiryPolicy = 30 * 1000) {
-        this.pc = new PromiseCache<string, any>({ expiry: {policy:"sliding", durationMs: this.snapshotExpiryPolicy} });
+        this.pc = new PromiseCache<string, any>(
+            { expiry: { policy: "absolute", durationMs: this.snapshotExpiryPolicy } });
     }
 
     async get(entry: ICacheEntry): Promise<any> {
@@ -39,26 +39,23 @@ export class LocalPersistentCache implements IPersistedCache {
 
     async put(entry: ICacheEntry, value: any) {
         const key = this.keyFromEntry(entry);
-        this.pc.addValue(key,value);
+        this.pc.addValue(key, value);
     }
 
     async removeEntries(file: IFileEntry): Promise<void> {
-        if (typeof this.pc.getEntries === "function" &&
-            this.pc.getEntries !== null)
-        {
+        if (typeof this.pc.getEntries === "function") {
             this.pc.getEntries()
-            .filter(([cachekey]) => {
-                const docIdFromKey = cachekey.split("_");
-                if (docIdFromKey[0] === file.docId) {
-                    return true;
-                }
-            })
-            .map(([cachekey]) => {
-                this.pc.remove(cachekey);
-            });
+                .filter(([cachekey]) => {
+                    const docIdFromKey = cachekey.split("_");
+                    if (docIdFromKey[0] === file.docId) {
+                        return true;
+                    }
+                })
+                .map(([cachekey]) => {
+                    this.pc.remove(cachekey);
+                });
         }
-        else
-        {
+        else {
             assert("getEntries implementation not found");
         }
     }
@@ -81,7 +78,7 @@ export interface INonPersistentCache {
     /**
      * Cache of joined/joining session info
      */
-    readonly sessionJoinCache: PromiseCache<string, {entryTime: number, joinSessionResponse: ISocketStorageDiscovery}>;
+    readonly sessionJoinCache: PromiseCache<string, { entryTime: number, joinSessionResponse: ISocketStorageDiscovery }>;
 
     /**
      * Cache of resolved/resolving file URLs
@@ -101,7 +98,7 @@ export interface IOdspCache extends INonPersistentCache {
 
 export class NonPersistentCache implements INonPersistentCache {
     public readonly sessionJoinCache =
-        new PromiseCache<string, {entryTime: number, joinSessionResponse: ISocketStorageDiscovery}>();
+        new PromiseCache<string, { entryTime: number, joinSessionResponse: ISocketStorageDiscovery }>();
 
     public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 }
