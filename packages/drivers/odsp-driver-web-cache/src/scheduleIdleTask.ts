@@ -2,16 +2,16 @@
 declare global {
     interface Window {
         requestIdleCallback:
-            | ((
-                  callback: (deadline: {
-                      readonly didTimeout: boolean;
-                      timeRemaining: () => number;
-                  }) => void,
-                  opts?: {
-                      timeout: number;
-                  }
-              ) => number)
-            | undefined;
+        | ((
+            callback: (deadline: {
+                readonly didTimeout: boolean;
+                timeRemaining: () => number;
+            }) => void,
+            opts?: {
+                timeout: number;
+            }
+        ) => number)
+        | undefined;
         cancelIdleCallback: ((handle: number) => void) | undefined;
     }
 }
