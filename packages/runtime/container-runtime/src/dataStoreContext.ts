@@ -211,19 +211,18 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * A datastore is considered as root if it
      * 1. is root in memory - see isInMemoryRoot
      * 2. is root as part of the base snapshot that the datastore loaded from
-     * @returns 
+     * @returns whether a datastore is root
      */
     public async isRoot(): Promise<boolean> {
         return this.isInMemoryRoot() || (await this.getInitialSnapshotDetails()).isRootDataStore;
     }
 
     /**
-     * There are 3 states where isInMemoryRoot needs to be set
+     * There are 3 states where isInMemoryRoot needs to be true
      * 1. when a datastore becomes aliased. This can happen for both remote and local datastores
      * 2. when a datastore is created locally as root
      * 3. when a datastore is created locally as root and is rehydrated
-     * 
-     * @returns 
+     * @returns whether a datastore is root in memory
      */
     protected isInMemoryRoot(): boolean {
         return this._isInMemoryRoot;
@@ -240,7 +239,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
 
-    // Calls to isRoot should be made instead of directly accessing this member
     private _isInMemoryRoot: boolean = false;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly subLogger: ITelemetryLogger;
