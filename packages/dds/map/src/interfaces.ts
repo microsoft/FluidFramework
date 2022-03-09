@@ -176,6 +176,8 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * ```
  *
  * - `target` - The IDirectory itself.
+ * 
+ * - `error` - The error which could have lead to dispose.
  */
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (
@@ -185,6 +187,7 @@ export interface IDirectoryEvents extends IEvent {
     ) => void);
     (event: "disposed", listener: (
         target: IEventThisPlaceHolder,
+        error?: Error,
     ) => void);
 }
 
