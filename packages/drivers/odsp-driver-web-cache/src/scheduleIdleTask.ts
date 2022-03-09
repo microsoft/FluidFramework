@@ -1,4 +1,5 @@
-// Despite most major browsers having this API, it is still considered experimental and therefore not in TypeScripts' standard types. This can be removed when FF updates to Typescript 4.4 or later
+// Older versions of Typescript considered this API experimental and not in Typescript included types.
+// This can be removed when FF updates to Typescript 4.4 or later
 declare global {
     interface Window {
         requestIdleCallback:
@@ -46,7 +47,6 @@ export function scheduleIdleTask(task: () => void) {
 function ensureIdleCallback() {
     if (!idleTaskScheduled) {
         // Exception added when eslint rule was added, this should be revisited when modifying this code
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (window.requestIdleCallback) {
             window.requestIdleCallback(idleTaskCallback);
         } else {
@@ -66,8 +66,10 @@ function ensureIdleCallback() {
 
 /**
  * Runs tasks from the task queue
- * @param filter - An optional function that will be called for each task to see if it should run. Returns false for tasks that should not run. If omitted all tasks run.
- * @param shouldContinueRunning - An optional function that will be called to determine if we have enough time to continue running tasks. If omitted, we don't stop running tasks.
+ * @param filter - An optional function that will be called for each task to see if it should run.
+ * Returns false for tasks that should not run. If omitted all tasks run.
+ * @param shouldContinueRunning - An optional function that will be called to determine if
+ * we have enough time to continue running tasks. If omitted, we don't stop running tasks.
  */
 function runTasks(
     filter?: (taskQueueItem: TaskQueueItem) => boolean,
