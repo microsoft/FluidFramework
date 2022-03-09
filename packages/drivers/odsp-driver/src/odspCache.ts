@@ -29,7 +29,7 @@ export class LocalPersistentCache implements IPersistedCache {
 
     public constructor(private readonly snapshotExpiryPolicy = 30 * 1000) {
         this.pc = new PromiseCache<string, any>(
-            { expiry: { policy: "absolute", durationMs: this.snapshotExpiryPolicy } });
+            { expiry: { policy: "sliding", durationMs: this.snapshotExpiryPolicy } });
     }
 
     async get(entry: ICacheEntry): Promise<any> {
