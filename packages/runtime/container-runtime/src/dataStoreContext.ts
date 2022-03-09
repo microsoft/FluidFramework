@@ -207,12 +207,26 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.registry;
     }
 
+    /**
+     * A datastore is considered as root if it
+     * 1. is root in memory - see isInMemoryRoot
+     * 2. is root as part of the base snapshot that the datastore loaded from
+     * @returns 
+     */
     public async isRoot(): Promise<boolean> {
         return this.isInMemoryRoot() || (await this.getInitialSnapshotDetails()).isRootDataStore;
     }
 
+    /**
+     * There are 3 states where isInMemoryRoot needs to be set
+     * 1. when a datastore becomes aliased. This can happen for both remote and local datastores
+     * 2. when a datastore is created locally as root
+     * 3. when a datastore is created locally as root and is rehydrated
+     * 
+     * @returns 
+     */
     protected isInMemoryRoot(): boolean {
-        return this.isRootDataStore || false;
+        return this._isInMemoryRoot;
     }
 
     protected registry: IFluidDataStoreRegistry | undefined;
@@ -227,7 +241,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _attachState: AttachState;
 
     // Calls to isRoot should be made instead of directly accessing this member
-    private isRootDataStore: boolean | undefined;
+    private _isInMemoryRoot: boolean = false;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
@@ -454,8 +468,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // Add data store's attributes to the summary.
         const { pkg } = await this.getInitialSnapshotDetails();
-        const isRootOrAliasedDataStore = await this.isRoot();
-        const attributes = createAttributes(pkg, isRootOrAliasedDataStore, this.disableIsolatedChannels);
+        const isRoot = await this.isRoot();
+        const attributes = createAttributes(pkg, isRoot, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC data to the summary if it's not written at the root.
@@ -681,8 +695,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * This method should not be used outside of the aliasing context.
      * It will be removed, as the source of truth for this flag will be the aliasing blob.
      */
-     public setRoot(): void {
-        this.isRootDataStore = true;
+     public setInMemoryRoot(): void {
+        this._isInMemoryRoot = true;
     }
 
     /**
@@ -858,7 +872,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
         this.snapshotTree = props.snapshotTree;
         if (props.isRootDataStore === true) {
-            this.setRoot();
+            this.setInMemoryRoot();
         }
         this.createProps = props.createProps;
         this.attachListeners();
@@ -926,7 +940,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
                 // roots in the document but they won't break.
                 if (attributes.isRootDataStore ?? true) {
                     isRootDataStore = true;
-                    this.setRoot();
+                    this.setInMemoryRoot();
                 }
             }
         }

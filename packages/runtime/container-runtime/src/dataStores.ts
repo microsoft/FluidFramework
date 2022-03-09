@@ -282,7 +282,7 @@ export class DataStores implements IDisposable {
         }
 
         this.aliasMap.set(aliasMessage.alias, currentContext.id);
-        currentContext.setRoot();
+        currentContext.setInMemoryRoot();
         return true;
     }
 
