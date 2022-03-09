@@ -782,6 +782,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
                 // "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber"
                 const error = new DataCorruptionError(
+                    // pre-0.58 error message: SummaryMetadataMismatch
                     "Summary metadata mismatch",
                     { runtimeSequenceNumber, protocolSequenceNumber },
                 );
@@ -1585,6 +1586,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.context.pendingLocalState = undefined;
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(new GenericError(
+                    // pre-0.58 error message: MaxReconnectsWithNoProgress
                     "Runtime detected too many reconnects with no progress syncing local ops",
                     undefined, // error
                     { attempts: this.consecutiveReconnects }));
@@ -1768,6 +1770,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls++;
             callback();
         } catch (error) {
+            // pre-0.58 error message: orderSequentiallyCallbackException
             this.closeFn(new GenericError("orderSequentially callback exception", error));
             throw error; // throw the original error for the consumer of the runtime
         } finally {
