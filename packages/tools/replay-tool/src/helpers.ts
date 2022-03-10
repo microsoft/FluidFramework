@@ -17,6 +17,7 @@ import { IFileSnapshot } from "@fluidframework/replay-driver";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import stringify from "json-stable-stringify";
 import { ReplayDataStoreFactory, ReplayRuntimeFactory } from "./replayFluidFactories";
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
@@ -55,10 +56,10 @@ export function compareWithReferenceSnapshot(
     const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
     const normalizedSnapshot = JSON.parse(
-        JSON.stringify(snapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
+        stringify(snapshot, {space: 2}).replace(packageVersionRegex, packageVersionPlaceholder),
     );
     const normalizedReferenceSnapshot = JSON.parse(
-        JSON.stringify(referenceSnapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
+        stringify(referenceSnapshot, {space: 2}).replace(packageVersionRegex, packageVersionPlaceholder),
     );
 
     // Put the assert in a try catch block, so that we can report errors, if any.
@@ -123,7 +124,7 @@ export async function loadContainer(
         gcOptions: { writeDataAtRoot: true },
     };
     const codeLoader = new ReplayCodeLoader(
-        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers)
+        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers),
     );
 
     // Load the Fluid document while forcing summarizeProtocolTree option

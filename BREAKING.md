@@ -10,6 +10,32 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.58 Breaking changes
+- [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from-merge-tree-to-sequence-package)
+- [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
+- [Set raiseContainerWarning property as optional parameter on IContainerContext](#Set-raiseContainerWarning-property-as-optional-parameter-on-IContainerContext)
+- [Consolidate fluidErrorCode and message on FF Errors](#Consolidate-fluidErrorCode-and-message-on-FF-Errors)
+
+### Move IntervalType from merge-tree to sequence package
+Move the type from the merge-tree package where it isn't used to the sequence package where it is used
+``` diff
+- import { IntervalType } from "@fluidframework/merge-tree";
++ import { IntervalType } from "@fluidframework/sequence";
+```
+
+## Remove logger property from IContainerContext
+The logger property in IContainerContext became an optional parameter in [release 0.56](#Set-logger-property-as-optional-parameter-in-IContainerContext). This property has now been removed. The `taggedLogger` property is now set as a required parameter in `IContainerContext` interface.
+
+## Set raiseContainerWarning property as optional parameter on IContainerContext
+`raiseContainerWarning` is set as an optional parameter on `IContainerContext` interface and would be removed from `IContainerContext` interface and `ContainerContext` class in the next release. Please see [#Remove-raiseContainerWarning-property] for more details.
+
+### Consolidate fluidErrorCode and message on FF Errors
+Errors raised by the Fluid Framework will no longer contain the property `fluidErrorCode`.
+This was present in many error constructors, and exposed in the type `IFluidErrorBase`, but has now been removed.
+Previously, the fluidErrorCode value (a pascaleCased term) was often used as the error message itself.
+Now all error messages can be expected to be easily-read sentences,
+sometimes followed by a colon and an inner error message when applicable.
+
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
 - [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
@@ -20,6 +46,10 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove IFluidObject from Aqueduct](#Remove-IFluidObject-from-Aqueduct)
 - [Removing snapshot API from IRuntime](#Removing-snapshot-api-from-IRuntime)
 - [Remove Unused IFluidObject Augmentations](#Remove-Unused-IFluidObject-Augmentations)
+- [Duplicate extractLogSafeErrorProperties removed](#duplicate-extractlogsafeerrorproperties-removed)
+- [Code proposal rejection removed](#Code-proposal-rejection-removed)
+- [ContainerRuntime.createDataStore return type changed](#Containerruntimecreatedatastore-return-type-changed)
+- [Root datastore creation may throw an exception in case of name conflicts](#Root-datastore-creation-may-throw-an-exception-in-case-of-name-conflicts)
 
 ### IFluidConfiguration removed
 
@@ -82,6 +112,20 @@ The following deprecated provider properties are no longer exposed off of IFluid
 
 The interfaces that correspond to the above properties continue to exist, and can use directly, or with the IFluidObject replacement [FluidObject](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts#L61)
 
+### Duplicate extractLogSafeErrorProperties removed
+
+The helper function `extractLogSafeErrorProperties` existed in both telemetry-utils and common-utils packages.
+The copy in common-utils was out of date and unused in this repo, and has now been removed.
+
+### Code proposal rejection removed
+Rejection functionality has been removed from Quorum.  As a result, the `"codeDetailsProposed"` event on `IContainer` now provides an `ISequencedProposal` rather than an `IPendingProposal`.
+
+### ContainerRuntime.createDataStore return type changed
+`ContainerRuntime.createDataStore` will now return an an `IDataStore` instead of an `IFluidRouter`. This change does not break the interface contract, as the former inherits the latter, however the concrete object will be a `DataStore` instance, which does not inherit `IFluidDataStoreChannel` as before.
+
+### Root datastore creation may throw an exception in case of name conflicts
+When creating root datastores using `ContainerRuntime.createRootDataStore` or `ContainerRuntime._createDataStoreWithProps`, in case of a name conflict (when attempting to create a root datastore with a name which already exists in the document), an exception of type `GenericError` may be thrown from the function.
+
 ## 0.56 Breaking changes
 - [`MessageType.Save` and code that handled it was removed](#messageType-save-and-code-that-handled-it-was-removed)
 - [Removed `IOdspResolvedUrl.sharingLinkToRedeem`](#Removed-IOdspResolvedUrl.sharingLinkToRedeem)
@@ -91,6 +135,9 @@ The interfaces that correspond to the above properties continue to exist, and ca
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
 - [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
 - [Removed SharedObject.is](#Removed-SharedObject.is)
+- [Removed IContainerContext.id](#Removed-IContainerContext.id-and-ContainerContext.id)
+- [Remove raiseContainerWarning property](#Remove-raiseContainerWarning-property)
+- [Set logger property as optional parameter in IContainerContext](#Set-logger-property-as-optional-parameter-in-IContainerContext)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -154,6 +201,24 @@ The `containerPath` property of `DriverPreCheckInfo` was deprecated and has now 
 
 ### Removed `SharedObject.is`
 The `is` method is removed from SharedObject. This was being used to detect SharedObjects stored inside other SharedObjects (and then binding them), which should not be happening anymore. Instead, use handles to SharedObjects.
+
+### Removed IContainerContext.id and ContainerContext.id
+The `id` property of IContainerContext was deprecated and now removed. The `id` property of ContainerContext was deprecated and now removed. id should not be exposed at
+runtime level anymore. Instead, get from container's resolvedURL if necessary.
+
+### Remove raiseContainerWarning property
+
+The `raiseContainerWarning` property is removed from the following interfaces in release 0.56:
+
+- `IContainerRuntime`
+- `IFluidDataStoreContext`
+- `IFluidDataStoreRuntime`
+
+This property was also deprecated in `IContainerContext` and will be removed in a future release. Application developers should generate their own telemetry/logging events.
+
+### Set logger property as optional parameter in IContainerContext
+
+The `logger` property from `IContainerContext` is now optional. It will be removed completely in a future release. Use `taggedLogger` instead. Loggers passed to `ContainerContext` will need to support tagged events.
 
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)

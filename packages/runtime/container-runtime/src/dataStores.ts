@@ -50,33 +50,9 @@ import {
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
-import { IUsedStateStats } from "./garbageCollection";
+import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 
 type PendingAliasResolve = (success: boolean) => void;
-
-/**
- * Interface for an op to be used for assigning an
- * alias to a datastore
- */
-interface IDataStoreAliasMessage {
-    /** The internal id of the datastore */
-    readonly internalId: string;
-    /** The alias name to be assigned to the datastore */
-    readonly alias: string;
-}
-
-/**
- * Type guard that returns true if the given alias message is actually an instance of
- * a class which implements @see IDataStoreAliasMessage
- * @param maybeDataStoreAliasMessage - message object to be validated
- * @returns True if the @see IDataStoreAliasMessage is fully implemented, false otherwise
- */
-const isDataStoreAliasMessage = (
-    maybeDataStoreAliasMessage: any,
-): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
-    return typeof maybeDataStoreAliasMessage?.internalId === "string"
-        && typeof maybeDataStoreAliasMessage?.alias === "string";
-};
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -115,7 +91,8 @@ export class DataStores implements IDisposable {
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
         getBaseGCDetails: () => Promise<Map<string, IGarbageCollectionDetailsBase>>,
-        private readonly dataStoreChanged: (id: string) => void,
+        private readonly dataStoreChanged: (
+            dataStorePath: string, timestampMs: number, packagePath?: readonly string[]) => void,
         private readonly aliasMap: Map<string, string>,
         private readonly writeGCDataAtRoot: boolean,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
@@ -217,7 +194,8 @@ export class DataStores implements IDisposable {
         if (this.alreadyProcessed(attachMessage.id)) {
             // TODO: dataStoreId may require a different tag from PackageData #7488
             const error = new DataCorruptionError(
-                "duplicateDataStoreCreatedWithExistingId",
+                // pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
+                "Duplicate DataStore created with existing id",
                 {
                     ...extractSafePropertiesFromMessage(message),
                     dataStoreId: {
@@ -290,7 +268,7 @@ export class DataStores implements IDisposable {
         }
     }
 
-    private processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): boolean {
+    public processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): boolean {
         if (this.alreadyProcessed(aliasMessage.alias)) {
             return false;
         }
@@ -305,7 +283,7 @@ export class DataStores implements IDisposable {
         }
 
         this.aliasMap.set(aliasMessage.alias, currentContext.id);
-        currentContext.setRoot();
+        currentContext.setInMemoryRoot();
         return true;
     }
 
@@ -411,7 +389,11 @@ export class DataStores implements IDisposable {
         context.process(transformed, local, localMessageMetadata);
 
         // Notify that a data store changed. This is used to detect if a deleted data store is being used.
-        this.dataStoreChanged(envelope.address);
+        this.dataStoreChanged(
+            `/${envelope.address}`,
+            message.timestamp,
+            context.isLoaded ? context.packagePath : undefined,
+        );
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
@@ -582,9 +564,8 @@ export class DataStores implements IDisposable {
      * @param usedRoutes - The routes that are used in all data stores in this Container.
      * @param gcTimestamp - The time when GC was run that generated these used routes. If any node node becomes
      * unreferenced as part of this GC run, this should be used to update the time when it happens.
-     * @returns the statistics of the used state of the data stores.
      */
-    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Get a map of data store ids to routes used in it.
         const usedDataStoreRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -597,13 +578,6 @@ export class DataStores implements IDisposable {
         for (const [contextId, context] of this.contexts) {
             context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? [], gcTimestamp);
         }
-
-        // Return the number of data stores that are unused.
-        const dataStoreCount = this.contexts.size;
-        return {
-            totalNodeCount: dataStoreCount,
-            unusedNodeCount: dataStoreCount - usedDataStoreRoutes.size,
-        };
     }
 
     /**
@@ -634,6 +608,18 @@ export class DataStores implements IDisposable {
             }
         }
         return outboundRoutes;
+    }
+
+    /**
+     * Returns the package path of the node with the given path. This is used by GC to log when an inactive / deleted
+     * node is used.
+     */
+    public getNodePackagePath(nodePath: string): readonly string[] | undefined {
+        // Currently, only return the data store package path for the node since GC is only interested in data stores.
+        const dataStoreId = nodePath.split("/")[1];
+        const context = this.contexts.get(dataStoreId);
+        assert(context !== undefined, 0x2b9 /* "Data store with given id does not exist" */);
+        return context.isLoaded ? context.packagePath : undefined;
     }
 }
 

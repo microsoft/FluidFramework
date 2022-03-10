@@ -36,7 +36,6 @@ async function start() {
 
     // Render it
     const contentDiv = document.getElementById("content");
-    // eslint-disable-next-line no-null/no-null
     if (contentDiv !== null) {
         ReactDOM.render(React.createElement(CollaborativeTextView, { text: defaultObject.text }), contentDiv);
     }

@@ -48,7 +48,6 @@ describe("LocalDeltaConnectionServer", () => {
         };
 
         const utf8Key = { utf8: "key" };
-        // eslint-disable-next-line no-null/no-null
         const token = jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 
         return deltaConnectionServer.connectWebSocket(

@@ -16,6 +16,7 @@ import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
+import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -89,9 +90,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+    createDataStore(pkg: string | string[]): Promise<IDataStore>;
     // (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidRouter>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IDataStore>;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     // (undocumented)
@@ -116,8 +117,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getAudience(): IAudience;
-    // (undocumented)
-    protected getDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     getPendingLocalState(): IPendingLocalState | undefined;
@@ -163,6 +162,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
+    submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void;
+    // (undocumented)
     submitDataStoreOp(id: string, contents: any, localOpMetadata?: unknown): void;
     // (undocumented)
     submitDataStoreSignal(address: string, type: string, content: any): void;
@@ -175,12 +176,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runGC?: boolean;
         fullGC?: boolean;
         runSweep?: boolean;
-    }): Promise<ISummaryTreeWithStats>;
+    }): Promise<IRootSummaryTreeWithStats>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     }
@@ -315,6 +316,7 @@ export interface IContainerRuntimeOptions {
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
     // (undocumented)
     summaryOptions?: ISummaryRuntimeOptions;
+    useDataStoreAliasing?: boolean;
 }
 
 // @public
@@ -325,9 +327,10 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 
 // @public
 export interface IGarbageCollectionRuntime {
+    closeFn(error?: ICriticalContainerError): void;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     updateStateBeforeGC(): Promise<void>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): IUsedStateStats;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
 
 // @public (undocumented)
@@ -342,21 +345,18 @@ export interface IGCRuntimeOptions {
 
 // @public
 export interface IGCStats {
-    // (undocumented)
-    deletedDataStores: number;
-    // (undocumented)
-    deletedNodes: number;
-    // (undocumented)
-    totalDataStores: number;
-    // (undocumented)
-    totalNodes: number;
+    dataStoreCount: number;
+    nodeCount: number;
+    unrefDataStoreCount: number;
+    unrefNodeCount: number;
+    updatedDataStoreCount: number;
+    updatedNodeCount: number;
 }
 
 // @public
 export interface IGeneratedSummaryStats extends ISummaryStats {
-    // (undocumented)
     readonly dataStoreCount: number;
-    // (undocumented)
+    readonly gcStateUpdatedDataStoreCount?: number;
     readonly summarizedDataStoreCount: number;
 }
 
@@ -428,6 +428,11 @@ export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
 export interface IProvideSummarizer {
     // @deprecated (undocumented)
     readonly ISummarizer: ISummarizer;
+}
+
+// @public
+export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
+    gcStats?: IGCStats;
 }
 
 // @public (undocumented)
@@ -580,14 +585,6 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 }
 
 // @public
-export interface IUsedStateStats {
-    // (undocumented)
-    totalNodeCount: number;
-    // (undocumented)
-    unusedNodeCount: number;
-}
-
-// @public
 export const neverCancelledSummaryToken: ISummaryCancellationToken;
 
 // @public (undocumented)
@@ -595,6 +592,13 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+
+// @public
+export enum RuntimeHeaders {
+    externalRequest = "externalRequest",
+    viaHandle = "viaHandle",
+    wait = "wait"
+}
 
 // @public (undocumented)
 export enum RuntimeMessage {

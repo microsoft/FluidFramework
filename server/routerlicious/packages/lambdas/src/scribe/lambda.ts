@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import assert from "assert";
 import { inspect } from "util";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
@@ -261,8 +259,6 @@ export class ScribeLambda implements IPartitionLambda {
                                 await this.sendSummaryNack(
                                     {
                                         message: "Failed to summarize the document.",
-                                        // errorMessage in ISummaryNack will be deprecated soon
-                                        errorMessage: "Failed to summarize the document.",
                                         summaryProposal: {
                                             summarySequenceNumber: value.operation.sequenceNumber,
                                         },

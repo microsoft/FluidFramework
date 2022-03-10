@@ -72,11 +72,12 @@ export class PropertiesManager {
             if (collaborating && seq === UnassignedSequenceNumber) {
                 this.pendingRewriteCount++;
             }
-            // We are re-writting so delete all the properties
+            // We are re-writing so delete all the properties
             // not in the new props
             for (const key of Object.keys(oldProps)) {
                 if (!newProps[key] && shouldModifyKey(key)) {
                     deltas[key] = oldProps[key];
+
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete oldProps[key];
                 }

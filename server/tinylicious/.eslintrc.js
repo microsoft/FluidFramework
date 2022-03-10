@@ -15,6 +15,5 @@
         "@typescript-eslint/promise-function-async":"off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "import/no-internal-modules":"off",
-        "no-null/no-null": "off",
     }
 }

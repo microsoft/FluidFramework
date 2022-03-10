@@ -10,6 +10,7 @@ module.exports = {
         "node": true
     },
     "extends": [
+        "./eslint7",
         "@rushstack/eslint-config/profile/web-app",
         "plugin:eslint-comments/recommended",
         "plugin:import/errors",

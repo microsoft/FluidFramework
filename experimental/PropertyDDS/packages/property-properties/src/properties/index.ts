@@ -5,58 +5,68 @@
 
 import { ArrayProperty } from './arrayProperty';
 import { BaseProperty } from './baseProperty';
-import { BoolArrayProperty } from './valueArrayProperty';
-import { BoolMapProperty } from './valueMapProperty';
 import { BoolProperty } from './boolProperty';
 import { ContainerProperty } from './containerProperty';
 import { EnumArrayProperty } from './enumArrayProperty';
 import { EnumProperty } from './enumProperty';
-import { Float32ArrayProperty } from './valueArrayProperty';
-import { Float32MapProperty } from './valueMapProperty';
-import { Float32Property } from './floatProperties';
-import { Float64ArrayProperty } from './valueArrayProperty';
-import { Float64MapProperty } from './valueMapProperty';
-import { Float64Property } from './floatProperties';
+import {
+    Float32Property,
+    Float64Property,
+} from './floatProperties';
 import { IndexedCollectionBaseProperty } from './indexedCollectionBaseProperty';
-import { Int16ArrayProperty } from './valueArrayProperty';
-import { Int16MapProperty } from './valueMapProperty';
-import { Int16Property } from './intProperties';
-import { Int32ArrayProperty } from './valueArrayProperty';
-import { Int32MapProperty } from './valueMapProperty';
-import { Int32Property } from './intProperties';
-import { Int64ArrayProperty } from './valueArrayProperty';
-import { Int64MapProperty } from './valueMapProperty';
-import { Int64Property } from './intProperties';
-import { Int8ArrayProperty } from './valueArrayProperty';
-import { Int8MapProperty } from './valueMapProperty';
-import { Int8Property } from './intProperties';
+import {
+    Int16Property,
+    Int32Property,
+    Int64Property,
+    Int8Property,
+    Uint64Property,
+} from './intProperties';
 import { MapProperty } from './mapProperty';
 import { NamedNodeProperty } from './namedNodeProperty';
 import { NamedProperty } from './namedProperty';
 import { NodeProperty } from './nodeProperty';
+import { _castFunctors } from './primitiveTypeCasts';
 import { ReferenceArrayProperty } from './referenceArrayProperty';
 import { ReferenceMapProperty } from './referenceMapProperty';
 import { ReferenceProperty } from './referenceProperty';
 import { SetProperty } from './setProperty';
-import { StringArrayProperty } from './valueArrayProperty';
-import { StringMapProperty } from './valueMapProperty';
 import { StringProperty } from './stringProperty';
-import { Uint16ArrayProperty } from './valueArrayProperty';
-import { Uint16MapProperty } from './valueMapProperty';
-import { Uint16Property } from './uintProperties';
-import { Uint32ArrayProperty } from './valueArrayProperty';
-import { Uint32MapProperty } from './valueMapProperty';
-import { Uint32Property } from './uintProperties';
-import { Uint64ArrayProperty } from './valueArrayProperty';
-import { Uint64MapProperty } from './valueMapProperty';
-import { Uint64Property } from './intProperties';
-import { Uint8ArrayProperty } from './valueArrayProperty';
-import { Uint8MapProperty } from './valueMapProperty';
-import { Uint8Property } from './uintProperties';
-import { ValueArrayProperty } from './valueArrayProperty';
-import { ValueMapProperty } from './valueMapProperty';
+import {
+    Uint16Property,
+    Uint32Property,
+    Uint8Property,
+} from './uintProperties';
+import {
+    BoolArrayProperty,
+    Float32ArrayProperty,
+    Float64ArrayProperty,
+    Int16ArrayProperty,
+    Int32ArrayProperty,
+    Int64ArrayProperty,
+    Int8ArrayProperty,
+    StringArrayProperty,
+    Uint16ArrayProperty,
+    Uint32ArrayProperty,
+    Uint64ArrayProperty,
+    Uint8ArrayProperty,
+    ValueArrayProperty,
+} from './valueArrayProperty';
+import {
+    BoolMapProperty,
+    Float32MapProperty,
+    Float64MapProperty,
+    Int16MapProperty,
+    Int32MapProperty,
+    Int64MapProperty,
+    Int8MapProperty,
+    StringMapProperty,
+    Uint16MapProperty,
+    Uint32MapProperty,
+    Uint64MapProperty,
+    Uint8MapProperty,
+    ValueMapProperty,
+} from './valueMapProperty';
 import { ValueProperty } from './valueProperty';
-import { _castFunctors } from './primitiveTypeCasts';
 
 export {
     ArrayProperty,
@@ -112,5 +122,5 @@ export {
     ValueArrayProperty,
     ValueMapProperty,
     ValueProperty,
-    _castFunctors
-}
+    _castFunctors,
+};

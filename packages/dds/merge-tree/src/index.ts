@@ -18,5 +18,4 @@ export * from "./segmentGroupCollection";
 export * from "./segmentPropertiesManager";
 export * from "./snapshotlegacy";
 export * from "./sortedSegmentSet";
-export { loadSegments } from "./text";
 export * from "./textSegment";

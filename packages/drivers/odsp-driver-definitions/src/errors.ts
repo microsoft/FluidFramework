@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DriverError } from "@fluidframework/driver-definitions";
+import { DriverError, IDriverErrorBase } from "@fluidframework/driver-definitions";
 
 export enum OdspErrorType {
     /**
@@ -46,17 +46,22 @@ export enum OdspErrorType {
     // SPO can occasionally return 403 for r/w operations on document when there is a fail over to another data center.
     // So to preserve integrity of the data, the data becomes readonly.
     serviceReadOnly = "serviceReadOnly",
+
+    // The location of file can move on Spo. So if the file location moves and we try to access the older location, then
+    // this error is thrown by server to let the client know about the new redirect location.
+    locationRedirection = "locationRedirection",
 }
 
 /**
  * Base interface for all errors and warnings
  * Superset of IDriverErrorBase, but with Odsp-specific errorType
  */
-export interface IOdspError {
+export interface IOdspError extends Omit<IDriverErrorBase, "errorType"> {
     readonly errorType: OdspErrorType;
-    readonly message: string;
-    canRetry: boolean;
-    online?: string;
+    /**
+     * Server epoch indicates when the file was last modified.
+     * Used to detect modifications outside Fluid's services
+     */
     serverEpoch?: string;
 }
 

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
@@ -21,7 +23,7 @@ import {
 } from "@fluidframework/test-utils";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
     version: number,
@@ -146,7 +148,12 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         await testRoundTrip();
     });
 
-    it("Code Proposal", async () => {
+    itExpects("Code Proposal",
+    [
+        {eventName:"fluid:telemetry:Container:ContainerClose", error:"Existing context does not satisfy incoming proposal"},
+        {eventName:"fluid:telemetry:Container:ContainerClose", error:"Existing context does not satisfy incoming proposal"},
+    ],
+    async () => {
         const proposal: IFluidCodeDetails = { package: packageV2 };
         for (let i = 0; i < containers.length; i++) {
             containers[i].once("codeDetailsProposed", (c) => {
@@ -174,38 +181,6 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
         for (let i = 0; i < containers.length; i++) {
             assert.strictEqual(containers[i].closed, true, `containers[${i}] should be closed`);
-        }
-    });
-
-    it("Code Proposal Rejection", async () => {
-        for (let i = 0; i < containers.length; i++) {
-            containers[i].once("contextChanged", () => {
-                throw Error(`context should not change for containers[${i}]`);
-            });
-        }
-
-        const proposal: IFluidCodeDetails = { package: packageV2 };
-        containers[1].on("codeDetailsProposed", (c, p) => {
-            assert.deepStrictEqual(
-                c,
-                proposal,
-                "codeDetails2 should have been proposed");
-            p.reject();
-        });
-
-        const res = await Promise.all([
-            containers[0].proposeCodeDetails(proposal),
-            provider.ensureSynchronized(),
-        ]);
-
-        assert.strictEqual(res[0], false, "Code proposal should be rejected");
-
-        for (let i = 0; i < containers.length; i++) {
-            assert.strictEqual(containers[i].closed, false, `containers[${i}] should not be closed`);
-            assert.deepStrictEqual(
-                containers[i].getSpecifiedCodeDetails?.(),
-                { package: packageV1 },
-                `containers[${i}] code details should not update`);
         }
     });
 

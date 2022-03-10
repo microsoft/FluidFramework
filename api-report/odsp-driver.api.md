@@ -6,6 +6,7 @@
 
 import { DriverPreCheckInfo } from '@fluidframework/driver-definitions';
 import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
+import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
 import { IdentityType } from '@fluidframework/odsp-driver-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
@@ -110,7 +111,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentService
 export class OdspDriverUrlResolver implements IUrlResolver {
     constructor();
     // (undocumented)
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, codeDetails?: IFluidCodeDetails): Promise<string>;
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo | IFluidCodeDetails): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
 }
@@ -121,7 +122,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     appendDataStorePath(requestUrl: URL, pathToAppend: string): string | undefined;
     static createDocumentUrl(baseUrl: string, driverInfo: OdspFluidDataStoreLocator): string;
     static createNavParam(locator: OdspFluidDataStoreLocator): string;
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, dataStorePath: string, codeDetails?: IFluidCodeDetails): Promise<string>;
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, dataStorePath: string, packageInfoSource?: IContainerPackageInfo | IFluidCodeDetails): Promise<string>;
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
     }
 

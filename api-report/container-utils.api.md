@@ -15,39 +15,30 @@ import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
 export class ClientSessionExpiredError extends LoggingError implements IFluidErrorBase {
-    constructor(fluidErrorCode: string, expiryMs: number);
+    constructor(message: string, expiryMs: number);
     // (undocumented)
     readonly errorType = ContainerErrorType.clientSessionExpiredError;
     // (undocumented)
     readonly expiryMs: number;
-    // (undocumented)
-    readonly fluidErrorCode: string;
 }
 
 // @public
-export const CreateProcessingError: typeof DataProcessingError.wrapIfUnrecognized;
-
-// @public (undocumented)
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    constructor(fluidErrorCode: string, props: ITelemetryProperties);
+    constructor(message: string, props: ITelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataCorruptionError;
-    // (undocumented)
-    readonly fluidErrorCode: string;
 }
 
-// @public (undocumented)
+// @public
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    constructor(errorMessage: string, fluidErrorCode: string, props?: ITelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
+    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataProcessingError;
-    // (undocumented)
-    readonly fluidErrorCode: string;
-    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, message?: ISequencedDocumentMessage): IFluidErrorBase;
+    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage): IFluidErrorBase;
 }
 
 // @public (undocumented)
@@ -62,34 +53,27 @@ export const extractSafePropertiesFromMessage: (message: ISequencedDocumentMessa
 
 // @public
 export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
-    constructor(fluidErrorCode: string, error?: any, props?: ITelemetryProperties);
+    constructor(message: string, error?: any, props?: ITelemetryProperties);
     // (undocumented)
     readonly error?: any;
     // (undocumented)
     readonly errorType = ContainerErrorType.genericError;
-    // (undocumented)
-    readonly fluidErrorCode: string;
 }
 
 // @public
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
-    constructor(message: string, fluidErrorCode: string, retryAfterSeconds: number, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType = ContainerErrorType.throttlingError;
     // (undocumented)
-    readonly fluidErrorCode: string;
-    // (undocumented)
     readonly retryAfterSeconds: number;
-    static wrap(error: any, errorCode: string, retryAfterSeconds: number, logger: ITelemetryLogger): IThrottlingWarning;
+    static wrap(error: unknown, retryAfterSeconds: number, logger: ITelemetryLogger): IThrottlingWarning;
 }
 
 // @public
 export class UsageError extends LoggingError implements IFluidErrorBase {
-    constructor(fluidErrorCode: string);
+    constructor(message: string);
     // (undocumented)
     readonly errorType = "usageError";
-    // (undocumented)
-    readonly fluidErrorCode: string;
 }
 
 

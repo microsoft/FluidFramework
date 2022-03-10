@@ -232,7 +232,7 @@ export class TestHistorian implements IHistorian {
                 url: "",
                 tree: [],
             };
-            for (const entry of tree.tree ?? tree.value?.tree) {
+            for (const entry of tree.tree ?? tree.value?.tree ?? []) {
                 const entryPath: string = path === "" ? entry.path : `${path}/${entry.path}`;
                 const treeEntry: git.ITreeEntry = {
                     mode: entry.mode,

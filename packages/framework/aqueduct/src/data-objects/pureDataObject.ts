@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IEvent } from "@fluidframework/common-definitions";
+import { assert, EventForwarder } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
     IFluidLoadable,
@@ -12,17 +14,15 @@ import {
     IResponse,
     FluidObject,
 } from "@fluidframework/core-interfaces";
-import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDirectory } from "@fluidframework/map";
-import { assert, EventForwarder } from "@fluidframework/common-utils";
 import { handleFromLegacyUri } from "@fluidframework/request-handler";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { serviceRoutePathRoot } from "../container-services";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
 import { DataObjectTypes, IDataObjectProps } from "./types";
-import { IEvent } from "@fluidframework/common-definitions";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
@@ -170,7 +170,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
         const handleMaybe = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(key);
         const handle = handleMaybe?.IFluidHandle;
         if (handle) {
-            return await handle.get();
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return handle.get();
         }
     }
 

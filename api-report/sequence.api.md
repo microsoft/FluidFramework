@@ -7,7 +7,6 @@
 import { BaseSegment } from '@fluidframework/merge-tree';
 import { Client } from '@fluidframework/merge-tree';
 import { Deferred } from '@fluidframework/common-utils';
-import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -17,8 +16,6 @@ import { IEvent } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IInterval } from '@fluidframework/merge-tree';
 import { IJSONSegment } from '@fluidframework/merge-tree';
@@ -30,7 +27,6 @@ import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeOp } from '@fluidframework/merge-tree';
 import { IMergeTreeRemoveMsg } from '@fluidframework/merge-tree';
 import { IntervalConflictResolver } from '@fluidframework/merge-tree';
-import { IntervalType } from '@fluidframework/merge-tree';
 import { IRelativePosition } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISegmentAction } from '@fluidframework/merge-tree';
@@ -181,6 +177,18 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
         done: boolean;
     };
     }
+
+// @public (undocumented)
+export enum IntervalType {
+    // (undocumented)
+    Nest = 1,
+    // (undocumented)
+    Simple = 0,
+    // (undocumented)
+    SlideOnRemove = 2,
+    // (undocumented)
+    Transient = 4
+}
 
 // @public
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
@@ -662,7 +670,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     static create(runtime: IFluidDataStoreRuntime, id?: string): SparseMatrix;
     static getFactory(): IChannelFactory;
     // (undocumented)
-    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle<IFluidObject & FluidObject & IFluidLoadable>>;
+    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle>;
     // (undocumented)
     getPositionProperties(row: number, col: number): PropertySet;
     // (undocumented)

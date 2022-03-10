@@ -1,0 +1,48 @@
+{
+  "version": "latest",
+  "baselines": {
+    "default": {
+      "name": "default",
+      "createdDate": "2022-03-03 04:59:14Z",
+      "lastUpdatedDate": "2022-03-03 04:59:14Z"
+    }
+  },
+  "results": {
+    "552baaa9d24596ed82e97b538dbef8abfcc9a0a8a9fdc8d3423424bf003b4fa7": {
+      "signature": "552baaa9d24596ed82e97b538dbef8abfcc9a0a8a9fdc8d3423424bf003b4fa7",
+      "alternativeSignatures": [
+        "b5f214e29b5462952a2841914ef8d1fc8141a9e8a69ea2b2be6c0cd409bf15d7",
+        "f7352489c50aed5529c30f15f2d6e019dc840612ceb612ea5ffb44a0d994c641",
+        "956ef6761cd88e6cc39f6bd892c0e1e0719ac955d3e4bd5a52189ab9e64db97f"
+      ],
+      "target": "docs/themes/thxvscode/assets/js/bundle.js",
+      "memberOf": [
+        "default"
+      ],
+      "tool": "eslint",
+      "ruleId": "@microsoft/sdl/no-inner-html",
+      "justification": "Comes from jquery dependency. Tracked by https://github.com/microsoft/FluidFramework/issues/9316.",
+      "createdDate": "2022-03-03 04:59:14Z",
+      "expirationDate": "2022-05-31 00:00:00Z",
+      "type": null
+    },
+    "0d4fa60d5f0b4f1d15e59fc8d68612e8f79f722ef23af4b073a0167ab4878fd6": {
+      "signature": "0d4fa60d5f0b4f1d15e59fc8d68612e8f79f722ef23af4b073a0167ab4878fd6",
+      "alternativeSignatures": [
+        "0c23128bddf2d4096ab21304a1026ea81637d87cf6c31a0ce9f56b97d03aad13",
+        "9ee87cd6cc4a7c3ee2b369ab55776beffe036908ab73e36bdc1ee30f78f925f4",
+        "b7a109924c97e48aae0751db9f9fae3963865ec0fcef79db223b22e1f72d8a20"
+      ],
+      "target": "docs/themes/thxvscode/assets/js/bundle.js",
+      "memberOf": [
+        "default"
+      ],
+      "tool": "eslint",
+      "ruleId": "@microsoft/sdl/no-html-method",
+      "justification": "Comes from jquery dependency. Tracked by https://github.com/microsoft/FluidFramework/issues/9316.",
+      "createdDate": "2022-03-03 04:59:14Z",
+      "expirationDate": "2022-05-31 00:00:00Z",
+      "type": null
+    }
+  }
+}

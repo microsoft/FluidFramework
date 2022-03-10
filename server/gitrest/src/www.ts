@@ -4,7 +4,7 @@
  */
 
 import * as path from "path";
-import * as winston from "winston";
+import winston from "winston";
 import { runService } from "@fluidframework/server-services-shared";
 import { configureLogging } from "@fluidframework/server-services-utils";
 import { GitrestResourcesFactory, GitrestRunnerFactory } from "./runnerFactory";

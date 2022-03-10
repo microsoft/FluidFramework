@@ -25,6 +25,7 @@ import {
     normalizeError,
     logIfFalse,
     safeRaiseEvent,
+    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -37,7 +38,6 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     MessageType,
-    ITrace,
     ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -45,8 +45,9 @@ import {
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
-    CreateProcessingError,
     DataCorruptionError,
+    extractSafePropertiesFromMessage,
+    DataProcessingError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 import {
@@ -183,19 +184,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
-        // Start adding trace for the op.
-        const traces: ITrace[] = [
-            {
-                action: "start",
-                service: "client",
-                timestamp: Date.now(),
-            }];
-
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents: JSON.stringify(contents),
             metadata,
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
-            traces,
             type,
         };
 
@@ -296,7 +288,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateProcessingError(error, "deltaManagerInboundErrorHandler", this.lastMessage));
+            this.close(
+                DataProcessingError.wrapIfUnrecognized(error, "deltaManagerInboundErrorHandler", this.lastMessage));
         });
 
         // Inbound signal queue
@@ -582,9 +575,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // DeltaManager overall policy - drop all ops on disconnection and rely on
             // container runtime to deal with resubmitting any ops that did not make it through.
             // So drop them, but also raise error event to look into details.
-            this.logger.sendErrorEvent({
+            this.logger.sendTelemetryEvent({
                 eventName: "OpenBatchOnDisconnect",
                 length: this.messageBuffer.length,
+                reason: {
+                    value: reason,
+                    tag: TelemetryDataTag.PackageData,
+                },
             });
             this.messageBuffer.length = 0;
         }
@@ -605,7 +602,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
             const throttlingWarning: IThrottlingWarning = ThrottlingWarning.wrap(
                 error,
-                "deltaManagerEmitDelayInfo",
                 delayMs / 1000 /* retryAfterSeconds */,
                 this.logger,
             );
@@ -726,9 +722,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                     const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
                     const message2 = this.comparableMessagePayload(message);
                     if (message1 !== message2) {
+                        // This looks like a data corruption but the culprit has been found instead
+                        // to be the file being overwritten in storage.  See PR #5882.
                         const error = new NonRetryableError(
-                            "twoMessagesWithSameSeqNumAndDifferentPayload",
-                            undefined,
+                            // pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
+                            "Found two messages with the same sequenceNumber but different payloads",
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connectionManager.clientId,
@@ -780,27 +778,20 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.connectionManager.beforeProcessingIncomingOp(message);
 
-        // Add final ack trace.
-        if (message.traces !== undefined && message.traces.length > 0) {
-            message.traces.push({
-                action: "end",
-                service: "client",
-                timestamp: Date.now(),
-            });
-        }
-
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
-            throw new DataCorruptionError("msnMovesBackwards", {
-                ...extractLogSafeMessageProperties(message),
+            // pre-0.58 error message: msnMovesBackwards
+            throw new DataCorruptionError("Found a lower minimumSequenceNumber (msn) than previously recorded", {
+                ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
             });
         }
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
-            throw new DataCorruptionError("nonSequentialSequenceNumber", {
-                ...extractLogSafeMessageProperties(message),
+            // pre-0.58 error message: nonSequentialSequenceNumber
+            throw new DataCorruptionError("Found a non-Sequential sequenceNumber", {
+                ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
             });
         }
@@ -937,18 +928,4 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             this.lastObservedSeqNumber = seq;
         }
     }
-}
-
-// TODO: move this elsewhere and use it more broadly for DataCorruptionError/DataProcessingError
-function extractLogSafeMessageProperties(message: Partial<ISequencedDocumentMessage>) {
-    const safeProps = {
-        messageClientId: message.clientId,
-        sequenceNumber: message.sequenceNumber,
-        clientSequenceNumber: message.clientSequenceNumber,
-        referenceSequenceNumber: message.referenceSequenceNumber,
-        minimumSequenceNumber: message.minimumSequenceNumber,
-        messageTimestamp: message.timestamp,
-    };
-
-    return safeProps;
 }

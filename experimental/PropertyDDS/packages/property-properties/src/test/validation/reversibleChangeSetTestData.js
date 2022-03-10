@@ -13,5 +13,5 @@ const originalChangeSet = {"modify":{"autodesk.titanium:vertical-1.0.0":{"fee9d9
 
 module.exports = {
   parentChangeSet,
-  originalChangeSet
+  originalChangeSet,
 };

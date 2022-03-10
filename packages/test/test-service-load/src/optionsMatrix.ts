@@ -78,6 +78,7 @@ export function generateRuntimeOptions(
         gcOptions: [undefined, ...gcOptions],
         summaryOptions: [undefined, ...summaryOptions],
         loadSequenceNumberVerification: [undefined],
+        useDataStoreAliasing: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(

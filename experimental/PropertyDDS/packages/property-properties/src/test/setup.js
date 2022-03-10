@@ -14,10 +14,9 @@ if (typeof process === 'object' && Object.prototype.toString.call(process) === '
     nock = require('nock');
     sinon = require('sinon');
     should = chai.should();
-    _ = require('lodash')
+    _ = require('lodash');
     isBrowser = false;
 } else {
-    /* eslint-disable */
     // We are in the browser. Set up variables like above using served js files.
     expect = chai.expect;
     assert = chai.assert;

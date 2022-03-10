@@ -15,18 +15,18 @@
     var templateSchema = {
         'properties': [{
                 'id': 'r',
-                'typeid': 'Float32'
+                'typeid': 'Float32',
             },
             {
                 'id': 'g',
-                'typeid': 'Float32'
+                'typeid': 'Float32',
             },
             {
                 'id': 'b',
-                'typeid': 'Flob32'
-            }
+                'typeid': 'Flob32',
+            },
         ],
-        'typeid': 'TeamLeoValidation2:ColorID-1.0.0'
+        'typeid': 'TeamLeoValidation2:ColorID-1.0.0',
     };
     module.exports = templateSchema;
 })();
