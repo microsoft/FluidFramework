@@ -66,6 +66,8 @@ const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
 const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
+// Feature gate key to log error messages if gc route validation fails.
+const logUnknownOutboundRoutesKey = "Fluid.GarbageCollection.LogUnknownOutboundRoutes";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -304,7 +306,7 @@ export class GarbageCollector implements IGarbageCollector {
     private gcDataFromLastRun: IGarbageCollectionData | undefined;
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
-    private readonly referencesSinceLastRun: Map<string, string[]> = new Map();
+    private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
 
     // Promise when resolved initializes the base state of the nodes from the base summary state.
     private readonly initializeBaseStateP: Promise<void>;
@@ -718,9 +720,9 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        const outboundRoutes = this.referencesSinceLastRun.get(fromNodePath) ?? [];
+        const outboundRoutes = this.newReferencesSinceLastRun.get(fromNodePath) ?? [];
         outboundRoutes.push(toNodePath);
-        this.referencesSinceLastRun.set(fromNodePath, outboundRoutes);
+        this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);
 
         // If the node that got referenced is inactive, log an event as that may indicate use-after-delete.
         this.logIfInactive(
@@ -762,7 +764,7 @@ export class GarbageCollector implements IGarbageCollector {
         currentReferenceTimestampMs?: number,
     ) {
         this.gcDataFromLastRun = cloneGCData(gcData);
-        this.referencesSinceLastRun.clear();
+        this.newReferencesSinceLastRun.clear();
 
         // Iterate through the referenced nodes and stop tracking if they were unreferenced before.
         for (const nodeId of gcResult.referencedNodeIds) {
@@ -816,12 +818,16 @@ export class GarbageCollector implements IGarbageCollector {
      */
     private updateStateSinceLastRun(currentGCData: IGarbageCollectionData) {
         // If we haven't run GC before or no references were added since the last run, there is nothing to do.
-        if (this.gcDataFromLastRun === undefined || this.referencesSinceLastRun.size === 0) {
+        if (this.gcDataFromLastRun === undefined) {
             return;
         }
 
         // Validate that we have identified all references correctly.
         this.validateReferenceCorrectness(currentGCData);
+
+        if (this.newReferencesSinceLastRun.size === 0) {
+            return;
+        }
 
         /**
          * Generate a super set of the GC data that contains the nodes and edges from last run, plus any new node and
@@ -839,7 +845,7 @@ export class GarbageCollector implements IGarbageCollector {
          *    - A new data store may have "root" DDSs already created and we don't detect them today.
          */
         const gcDataSuperSet = concatGarbageCollectionData(this.gcDataFromLastRun, currentGCData);
-        this.referencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
+        this.newReferencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
             if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
                 gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
             } else {
@@ -867,9 +873,12 @@ export class GarbageCollector implements IGarbageCollector {
     /**
      * Validates that all new references are correctly identified and processed. The basic principle for validation is
      * that we should not have new references in the reference graph (GC data) that have not been notified to the
-     * garbage collector via `referenceAdded`.
+     * garbage collector via `addedOutboundReference`.
      * We validate that the references in the current reference graph should be a subset of the references in the last
      * run's reference graph + references since the last run.
+     *
+     * Essentially validate Current datastore references = Previous datastore references + New datastore references
+     *
      * @param currentGCData - The GC data (reference graph) from the current GC run.
      */
     private validateReferenceCorrectness(currentGCData: IGarbageCollectionData) {
@@ -878,26 +887,32 @@ export class GarbageCollector implements IGarbageCollector {
             0x2b7, /* "Can't validate correctness without GC data from last run" */
         );
 
+        const getDataStoreReferencesFromParentToChild = (nodeId: string, references: string[]) =>
+            references.filter((reference) => !nodeId.startsWith(reference) && isDataStoreNode(reference));
+
         // Get a list of all the outbound routes (or references) in the current GC data.
         const currentReferences: string[] = [];
-        for (const [nodeId, outboundRoutes] of Object.entries(currentGCData.gcNodes)) {
+        for (const [nodeId, references] of Object.entries(currentGCData.gcNodes)) {
             /**
              * Remove routes from a child node to its parent which is added implicitly by the runtime. For instance,
-             * each adds its data store as an outbound route to mark it as referenced if the DDS is referenced.
-             * We won't get any explicit notification for these references so they must be removed before validation.
+             * each DDS adds its data store as an outbound route to mark it as referenced if the DDS is referenced.
+             * We won't get any notifications for these new references so they must be removed before validation.
              */
-            const explicitRoutes = outboundRoutes.filter((route) => !nodeId.startsWith(route));
-            currentReferences.push(...explicitRoutes);
+            const currentDataStoreReferences = getDataStoreReferencesFromParentToChild(nodeId, references);
+            currentReferences.push(...currentDataStoreReferences);
         }
 
-        // Get a list of outbound routes (or references) from the last run's GC data plus references added since the
-        // last run that were notified via `referenceAdded`.
-        const explicitReferences: string[] = [];
-        for (const [, outboundRoutes] of Object.entries(this.gcDataFromLastRun.gcNodes)) {
-            explicitReferences.push(...outboundRoutes);
+        // Get a list of references (or outbound routes) from the previous run's GC data plus new references added since
+        // the last run that were notified via `addedOutboundReference`.
+        const previousAndNewReferences: string[] = [];
+        const previousGraph = Object.entries(this.gcDataFromLastRun.gcNodes);
+        for (const [nodeId, references] of previousGraph) {
+            const previousDatastoreReferences = getDataStoreReferencesFromParentToChild(nodeId, references);
+            previousAndNewReferences.push(...previousDatastoreReferences);
         }
-        this.referencesSinceLastRun.forEach((outboundRoutes: string[]) => {
-            explicitReferences.push(...outboundRoutes);
+        this.newReferencesSinceLastRun.forEach((references: string[], nodeId: string) => {
+            const newDataStoreReferences = getDataStoreReferencesFromParentToChild(nodeId, references);
+            previousAndNewReferences.push(...newDataStoreReferences);
         });
 
         // Validate that the current reference graph doesn't have references that we are not already aware of. If this
@@ -905,17 +920,19 @@ export class GarbageCollector implements IGarbageCollector {
         currentReferences.forEach((route: string) => {
             // Validate references for data stores only. Currently, layers below data stores don't have GC implemented
             // so there is no guarantee their references will be notified.
-            if (isDataStoreNode(route) && !explicitReferences.includes(route)) {
+            if (!previousAndNewReferences.includes(route)) {
                 /**
                  * The following log will be enabled once this issue is resolved:
                  * https://github.com/microsoft/FluidFramework/issues/8878.
                  */
                 // We should ideally throw a data corruption error here. However, send an error for now until we have
                 // implemented sweep and have reasonable confidence in the sweep process.
-                // this.mc.logger.sendErrorEvent({
-                //     eventName: "gcUnknownOutboundRoute",
-                //     route,
-                // });
+                if (this.mc.config.getBoolean(logUnknownOutboundRoutesKey)) {
+                    this.mc.logger.sendErrorEvent({
+                        eventName: "gcUnknownOutboundRoute",
+                        route,
+                    });
+                }
             }
         });
     }

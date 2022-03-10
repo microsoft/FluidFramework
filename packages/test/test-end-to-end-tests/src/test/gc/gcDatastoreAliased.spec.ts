@@ -12,7 +12,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import {
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
@@ -23,7 +23,7 @@ import { mockConfigProvider } from "./mockConfigProivder";
 /**
  * Validates this scenario: When a datastore is aliased that it is considered a root datastore and always referenced
  */
-describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
+describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
@@ -85,7 +85,10 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
 
     // TODO: fully validate that GC is notified. Currently this tests the race condition
     // where a remote datastore is summarized before the alias op arrives when trySetAlias is called.
-    it("GC is notified when datastores are aliased.", async () => {
+    // TODO: Remove the itExpects once this issue is fixed https://github.com/microsoft/FluidFramework/issues/8859
+    itExpects("GC is notified when datastores are aliased.",
+    [{ eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:gcUnknownOutboundRoute" }],
+    async () => {
         await summarizeOnContainer(container2);
         const containerRuntime1 = mainDataStore1.containerRuntime;
         const aliasableDataStore1 = await containerRuntime1.createDataStore("TestDataObject");
