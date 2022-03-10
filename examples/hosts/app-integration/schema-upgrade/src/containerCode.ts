@@ -23,7 +23,7 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
                 InventoryListInstantiationFactory.registryEntry,
                 ContainerKillBitInstantiationFactory.registryEntry,
             ]), // registryEntries
-            [], // providerEntries
+            undefined,
             [
                 defaultRouteRequestHandler(inventoryListId),
                 rootDataStoreRequestHandler,

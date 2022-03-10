@@ -16,12 +16,9 @@ export interface IInventoryItemViewProps {
 
 export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInventoryItemViewProps) => {
     const { inventoryItem, disabled } = props;
-
-    // eslint-disable-next-line no-null/no-null
     const quantityRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
         const updateFromRemoteQuantity = () => {
-            // eslint-disable-next-line no-null/no-null
             if (quantityRef.current !== null) {
                 quantityRef.current.value = inventoryItem.quantity.toString();
             }
@@ -43,7 +40,7 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInv
             <CollaborativeInput
                 sharedString={ inventoryItem.name }
                 style={{ width: "200px" }}
-                disabled={ disabled }
+                // disabled={ disabled }
             ></CollaborativeInput>
             <input
                 ref={ quantityRef }

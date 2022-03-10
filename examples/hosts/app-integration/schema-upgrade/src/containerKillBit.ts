@@ -109,7 +109,7 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
  * scenario, the fourth argument is not used.
  */
 export const ContainerKillBitInstantiationFactory =
-    new DataObjectFactory<ContainerKillBit, undefined, undefined, IEvent> (
+    new DataObjectFactory<ContainerKillBit> (
         "container-kill-bit",
         ContainerKillBit,
         [

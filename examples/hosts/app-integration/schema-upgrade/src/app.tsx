@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { TinyliciousService } from "@fluid-experimental/get-container";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { IContainer } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { TinyliciousService } from "./tinyliciousService";
 import { AppView } from "./appView";
 import { containerKillBitId, InventoryListContainerRuntimeFactory } from "./containerCode";
 import { IContainerKillBit } from "./containerKillBit";
@@ -30,7 +31,7 @@ if (location.hash.length === 0) {
 const documentId = location.hash.substring(1);
 document.title = documentId;
 
-async function getInventoryListFromContainer(container: Container): Promise<IInventoryList> {
+async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
     const url = "/";
     const response = await container.request({ url });
@@ -45,7 +46,7 @@ async function getInventoryListFromContainer(container: Container): Promise<IInv
     return response.value as IInventoryList;
 }
 
-async function getContainerKillBitFromContainer(container: Container): Promise<IContainerKillBit> {
+async function getContainerKillBitFromContainer(container: IContainer): Promise<IContainerKillBit> {
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
     const url = containerKillBitId;
     const response = await container.request({ url });
@@ -73,7 +74,7 @@ async function start(): Promise<void> {
     });
 
     let fetchedData: string | undefined;
-    let container: Container;
+    let container: IContainer;
     let inventoryList: IInventoryList;
     let containerKillBit: IContainerKillBit;
 

@@ -7,8 +7,6 @@ import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
-import { IEvent } from "@fluidframework/common-definitions";
-// import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 
 export interface IInventoryItem extends EventEmitter {
@@ -147,7 +145,7 @@ export class InventoryList extends DataObject implements IInventoryList {
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList, undefined, undefined, IEvent>
+export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList>
 (
     "inventory-list",
     InventoryList,
