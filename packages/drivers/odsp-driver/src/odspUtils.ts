@@ -32,6 +32,7 @@ import {
     ICacheEntry,
     snapshotKey,
     InstrumentedStorageTokenFetcher,
+    IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -109,12 +110,14 @@ export async function fetchHelper(
         // Let's assume we can retry.
         if (!response) {
             throw new NonRetryableError(
+                // pre-0.58 error message: No response from fetch call
                 "No response from ODSP fetch call",
                 DriverErrorType.incorrectServerResponse,
                 { driverVersion });
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
+                // pre-0.58 error message prefix: odspFetchError
                 `ODSP fetch error [${response.status}]`, response.status, response, await response.text());
         }
 
@@ -152,9 +155,11 @@ export async function fetchHelper(
         //
         if (online === OnlineStatus.Offline) {
             throw new RetryableError(
+                // pre-0.58 error message prefix: Offline
                 `ODSP fetch failure (Offline): ${errorText}`, DriverErrorType.offlineError, { driverVersion });
         } else {
             throw new RetryableError(
+                // pre-0.58 error message prefix: Fetch error
                 `ODSP fetch failure: ${errorText}`, DriverErrorType.fetchFailure, { driverVersion });
         }
     });
@@ -201,6 +206,7 @@ export async function fetchAndParseAsJSONHelper<T>(
         // succeeds on retry.
         // So do not log error object itself.
         throwOdspNetworkError(
+            // pre-0.58 error message: errorWhileParsingFetchResponse
             "Error while parsing fetch response",
             fetchIncorrectResponse,
             content, // response
@@ -271,7 +277,7 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
 
 export function toInstrumentedOdspTokenFetcher(
     logger: ITelemetryLogger,
-    resolvedUrl: IOdspResolvedUrl,
+    resolvedUrlParts: IOdspUrlParts,
     tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
     throwOnNullToken: boolean,
 ): InstrumentedStorageTokenFetcher {
@@ -290,9 +296,7 @@ export function toInstrumentedOdspTokenFetcher(
             },
             async (event) => tokenFetcher({
                 ...options,
-                siteUrl: resolvedUrl.siteUrl,
-                driveId: resolvedUrl.driveId,
-                itemId: resolvedUrl.itemId,
+                ...resolvedUrlParts,
             }).then((tokenResponse) => {
                 const token = tokenFromResponse(tokenResponse);
                 // This event alone generates so many events that is materially impacts cost of telemetry
@@ -305,6 +309,7 @@ export function toInstrumentedOdspTokenFetcher(
                 }
                 if (token === null && throwOnNullToken) {
                     throw new NonRetryableError(
+                        // pre-0.58 error message: Token is null for ${name} call
                         `The Host-provided token fetcher for ${name} call returned null`,
                         OdspErrorType.fetchTokenError,
                         { method: name, driverVersion });

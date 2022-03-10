@@ -32,9 +32,12 @@ export class SharedTextDataObject extends DataObject {
         return this.runtime;
     }
 
-    private _sharedString: SharedString;
+    private _sharedString: SharedString | undefined;
     // It's also generally not a good pattern to expose raw data structures publicly.
     public get sharedString(): SharedString {
+        if (this._sharedString === undefined) {
+            throw new Error("Shared string not initialized");
+        }
         return this._sharedString;
     }
 
@@ -45,7 +48,11 @@ export class SharedTextDataObject extends DataObject {
     }
 
     protected async hasInitialized() {
-        this._sharedString = await this.root.get<IFluidHandle<SharedString>>(textSharedStringId).get();
+        const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(textSharedStringId);
+        if (sharedStringHandle === undefined) {
+            throw new Error("Shared string handle not found");
+        }
+        this._sharedString = await sharedStringHandle.get();
     }
 }
 

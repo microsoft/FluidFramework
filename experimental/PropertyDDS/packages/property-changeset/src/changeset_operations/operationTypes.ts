@@ -12,5 +12,5 @@ export enum ArrayIteratorOperationTypes {
     REMOVE,
     MODIFY,
     // MOVE, // reserved, not implemented yet
-    NOP
-};
+    NOP,
+}

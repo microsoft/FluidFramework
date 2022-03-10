@@ -15,7 +15,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.getContent(
+        ).then(async (repoManager) => repoManager.getContent(
             request.query.ref as string,
             request.params[0],
         ));

@@ -3,7 +3,11 @@
   "version": "0.58.1000",
   "description": "End to end tests",
   "homepage": "https://fluidframework.com",
-  "repository": "https://github.com/microsoft/FluidFramework",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "packages/test/test-end-to-end-tests"
+  },
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
@@ -115,7 +119,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.26.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/nock": "^9.3.0",

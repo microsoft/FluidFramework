@@ -37,18 +37,21 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     // Database connection for global db if enabled
     let globalDbMongoManager;
+    let globalDb;
     const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
     if (globalDbEnabled) {
         const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
         const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
         globalDbMongoManager = new core.MongoManager(globalDbMongoFactory, false);
+        globalDb = await globalDbMongoManager.getDatabase();
     }
     // Connection to stored document details
     const operationsDbMongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
     const operationsDbMongoManager = new core.MongoManager(operationsDbMongoFactory, false);
-    const client = await operationsDbMongoManager.getDatabase();
+    const operationsDb = await operationsDbMongoManager.getDatabase();
+    const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
     // eslint-disable-next-line @typescript-eslint/await-thenable
-    const collection = await client.collection<core.IDocument>(documentsCollectionName);
+    const collection = await db.collection<core.IDocument>(documentsCollectionName);
 
     const forwardProducer = services.createProducer(
         kafkaLibrary,

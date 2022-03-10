@@ -15,17 +15,17 @@ function createCompatSuite(
     tests: (this: Mocha.Suite, provider: () => ITestObjectProvider) => void,
     compatFilter?: CompatKind[],
 ) {
-    return function (this: Mocha.Suite){
+    return function(this: Mocha.Suite) {
         let configs = configList.value;
         if (compatFilter !== undefined) {
             configs = configs.filter((value) => compatFilter.includes(value.kind));
         }
 
         for (const config of configs) {
-            describe(config.name, function () {
+            describe(config.name, function() {
                 let provider: TestObjectProvider;
                 let resetAfterEach: boolean;
-                before(async function () {
+                before(async function() {
                     provider = await getVersionedTestObjectProvider(
                         baseVersion,
                         config.loader,
@@ -48,7 +48,8 @@ function createCompatSuite(
                     }
                     return provider;
                 });
-                afterEach(function (done:Mocha.Done) {
+                // eslint-disable-next-line prefer-arrow-callback
+                afterEach(function(done: Mocha.Done) {
                     done(getUnexpectedLogErrorException(provider.logger, "Use itExpects to specify expected errors. "));
                     if (resetAfterEach) {
                         provider.reset();
@@ -59,16 +60,16 @@ function createCompatSuite(
     };
 }
 
-export type DescribeCompatSuite=
+export type DescribeCompatSuite =
     (name: string,
     tests: (
         this: Mocha.Suite,
         provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void
-    ) => Mocha.Suite | void
+    ) => Mocha.Suite | void;
 
 export type DescribeCompat = DescribeCompatSuite & Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
 
-function createCompatDescribe(compatFilter?: CompatKind[]): DescribeCompat{
+function createCompatDescribe(compatFilter?: CompatKind[]): DescribeCompat {
     const d: DescribeCompat =
         (name, tests) => describe(name, createCompatSuite(tests, compatFilter));
     d.skip = (name, tests) => describe.skip(name, createCompatSuite(tests, compatFilter));
@@ -77,7 +78,7 @@ function createCompatDescribe(compatFilter?: CompatKind[]): DescribeCompat{
     return d;
 }
 
-export const describeNoCompat: DescribeCompat = createCompatDescribe([CompatKind.None])
+export const describeNoCompat: DescribeCompat = createCompatDescribe([CompatKind.None]);
 
 export const describeLoaderCompat: DescribeCompat = createCompatDescribe([CompatKind.None, CompatKind.Loader]);
 

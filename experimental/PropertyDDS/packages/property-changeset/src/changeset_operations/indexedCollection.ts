@@ -13,7 +13,7 @@
  import without from "lodash/without";
  import includes from "lodash/includes";
 
-//@ts-ignore
+// @ts-ignore
 import { constants, joinPaths } from "@fluid-experimental/property-common";
 import { ApplyChangeSetOptions, ConflictInfo, SerializedChangeSet } from "../changeset";
 import { TypeIdHelper } from "../helpers/typeidHelper";
@@ -199,7 +199,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
                     }
                 }
             }
-        };
+        }
 
         // Apply insert operations
         if (in_appliedPropertyChanges.insert) {
@@ -392,7 +392,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 
         // Remove unnecessary entries from the ChangeSet
         this._cleanIndexedCollectionChangeSet(io_basePropertyChanges, !isPrimitiveTypeid);
-    }
+    };
 
     /**
      * Performs the rebase operation for set and map collections
@@ -462,7 +462,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
         };
 
         // Helper function which adds the Changes for a ChangeSet that is ordered by typeid
-        const addChangesWithTypeids = function (in_collection, in_changeIdentifier, in_changePrefix) {
+        const addChangesWithTypeids = function(in_collection, in_changeIdentifier, in_changePrefix) {
             if (in_collection === undefined) {
                 return;
             }
@@ -753,7 +753,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 
         // Remove unnecessary entries from the ChangeSet
         this._cleanIndexedCollectionChangeSet(io_rebasePropertyChangeSet, !isPrimitiveTypeid);
-    }
+    };
 
     /**
      * Removes empty entries from the .children collection of the ChangeSet
@@ -818,5 +818,5 @@ export namespace ChangeSetIndexedCollectionFunctions {
         if (_fastIsEmptyObject(changes.modify)) {
             delete changes.modify;
         }
-    }
-};
+    };
+}
