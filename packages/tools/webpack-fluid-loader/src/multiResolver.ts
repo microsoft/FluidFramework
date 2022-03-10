@@ -39,6 +39,14 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                 options.bearerSecret);
 
         case "r11s":
+            if (options.fluidHost.includes("azurefd.net")) {
+                return new InsecureUrlResolver(
+                    "",
+                    options.fluidHost,
+                    options.fluidHost,
+                    options.tenantId,
+                    options.bearerSecret);
+            }
             return new InsecureUrlResolver(
                 options.fluidHost,
                 options.fluidHost.replace("www", "alfred"),

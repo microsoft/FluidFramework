@@ -9,8 +9,8 @@
     },
     "mongo": {
         "operationsDbEndpoint": "mongodb://mongodb:27017",
-        "globalDbEndpoint": "mongodb://mongodb:27017",
-        "globalDbEnabled": false,
+        "globalDbEndpoint": "mongodb://apmahade-test-global-cosmosdb-001:ol4XLfh5Ik07jgmT1CZxEKzgkeRiwRRLvNQXWSrSbWpWESVP6tS7M90g9YqP5ovSqL0wsgWB76C08qyVhLrJTw==@apmahade-test-global-cosmosdb-001.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&maxIdleTimeMS=120000&appName=@apmahade-test-global-cosmosdb-001@",
+        "globalDbEnabled": true,
         "expireAfterSeconds": -1,
         "createCosmosDBIndexes": false,
         "bufferMaxEntries": 50,

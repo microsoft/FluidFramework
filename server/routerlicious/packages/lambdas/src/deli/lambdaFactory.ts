@@ -18,7 +18,9 @@ import {
     IPartitionLambdaFactory,
     IProducer,
     IServiceConfiguration,
+    ISession,
     ITenantManager,
+    LambdaCloseType,
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
@@ -56,7 +58,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration,
-        globalDbMongoManager?: MongoManager) {
+        private readonly globalDbMongoManager?: MongoManager) {
         super();
     }
 
@@ -152,7 +154,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         const checkpointManager = createDeliCheckpointManagerFromCollection(tenantId, documentId, this.collection);
 
         // Should the lambda reaize that term has flipped to send a no-op message at the beginning?
-        return new DeliLambda(
+        const deliLambda = new DeliLambda(
             context,
             tenantId,
             documentId,
@@ -164,6 +166,29 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             this.serviceConfiguration,
             sessionMetric,
             sessionStartMetric);
+
+        deliLambda.on("close", async (closeType) => {
+            if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)
+                && this.globalDbMongoManager !== undefined) {
+                const db = await this.globalDbMongoManager.getDatabase();
+                const collection = db.collection("documents");
+                const result = await collection.findOne({ documentId });
+                if (result !== undefined) {
+                    const session = JSON.parse((result as IDocument).session) as ISession;
+                    session.isSessionAlive = false;
+                    await collection.update(
+                        {
+                            documentId,
+                        },
+                        {
+                            session: JSON.stringify(session),
+                        },
+                        {});
+                }
+            }
+        });
+
+        return deliLambda;
     }
 
     private logSessionFailureMetrics(

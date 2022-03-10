@@ -33,19 +33,25 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
     private static loadInternalDocumentStorageService(
         id: string,
         manager: GitManager,
+        noCacheGitManager: GitManager,
         logger: ITelemetryLogger,
         policies: IDocumentStorageServicePolicies,
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTreeVersion>): IDocumentStorageService {
+        snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
+        hasSessionLocationChanged?: boolean,
+        isSessionAlive?: boolean): IDocumentStorageService {
         const storageService = driverPolicies?.enableWholeSummaryUpload ?
             new WholeSummaryDocumentStorageService(
                 id,
                 manager,
+                noCacheGitManager,
                 logger,
                 policies,
                 blobCache,
                 snapshotTreeCache,
+                hasSessionLocationChanged,
+                isSessionAlive,
             ) :
             new ShreddedSummaryDocumentStorageService(
                 id,
@@ -66,19 +72,25 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
     constructor(
         public readonly id: string,
         public manager: GitManager,
+        public noCacheGitManager: GitManager,
         logger: ITelemetryLogger,
         policies: IDocumentStorageServicePolicies = {},
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTreeVersion>) {
+        snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
+        hasSessionLocationChanged?: boolean,
+        isSessionAlive?: boolean) {
         super(DocumentStorageService.loadInternalDocumentStorageService(
             id,
             manager,
+            noCacheGitManager,
             logger,
             policies,
             driverPolicies,
             blobCache,
             snapshotTreeCache,
+            hasSessionLocationChanged,
+            isSessionAlive,
         ));
     }
 

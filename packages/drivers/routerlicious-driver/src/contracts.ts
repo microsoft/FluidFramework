@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export interface IAlfredTenant {
-    id: string;
-    key: string;
-}
-
 export interface IDocumentSession {
     documentId: string;
 

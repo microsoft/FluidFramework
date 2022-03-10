@@ -12,6 +12,7 @@ import {
     IDocumentDetails,
     IDocumentStorage,
     IScribe,
+    ISession,
     ITenantManager,
 } from "@fluidframework/server-services-core";
 import {
@@ -59,6 +60,8 @@ export class TestDocumentStorage implements IDocumentStorage {
         sequenceNumber: number,
         term: number,
         initialHash: string,
+        ordererUrl: string,
+        historianUrl: string,
         values: [string, ICommittedProposal][],
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
@@ -128,6 +131,13 @@ export class TestDocumentStorage implements IDocumentStorage {
         };
 
         const collection = await this.databaseManager.getDocumentCollection();
+
+        const session: ISession = {
+            ordererUrl,
+            historianUrl,
+            isSessionAlive: true,
+        };
+
         const result = await collection.findOrCreate(
             {
                 documentId,
@@ -137,6 +147,7 @@ export class TestDocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
+                session: JSON.stringify(session),
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
@@ -192,6 +203,7 @@ export class TestDocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: undefined,
                 documentId,
+                session: undefined,
                 scribe: undefined,
                 tenantId,
                 version: "0.1",
