@@ -5,10 +5,22 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        "@fluidframework/eslint-config-fluid/recommended"
     ],
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
-    "rules": {}
+    "rules": {},
+    "overrides": [
+        {
+            // Rules only for test files
+            "files": [
+                "**/*.spec.ts",
+                "src/test/**"
+            ],
+            "rules": {
+                "@typescript-eslint/explicit-function-return-type": "off",
+            },
+        },
+    ]
 }

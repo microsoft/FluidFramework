@@ -83,7 +83,7 @@ export class AzureClient {
             this.props.connection.tenantId,
         );
         const fluidContainer = new (class extends FluidContainer {
-            async attach() {
+            async attach(): Promise<string> {
                 if (this.attachState !== AttachState.Detached) {
                     throw new Error(
                         "Cannot attach container. Container is not in detached state",
@@ -139,6 +139,7 @@ export class AzureClient {
             containerSchema,
         );
         const module = { fluidExport: runtimeFactory };
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         const codeLoader = { load: async () => module };
         return new Loader({
             urlResolver: this.urlResolver,
