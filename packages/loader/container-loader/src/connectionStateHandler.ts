@@ -227,7 +227,6 @@ export class ConnectionStateHandler {
         this._connectionState = value;
         const quorumClients = this.handler.quorumClients();
         let client: ILocalSequencedClient | undefined;
-
         if (this._clientId !== undefined) {
             client = quorumClients?.getMember(this._clientId);
         }

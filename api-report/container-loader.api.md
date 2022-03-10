@@ -127,7 +127,7 @@ export interface IContainerConfig {
     clientDetailsOverride?: IClientDetails;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
-    serializedClientId?: string;
+    serializedContainerState?: IPendingContainerState;
 }
 
 // @public (undocumented)

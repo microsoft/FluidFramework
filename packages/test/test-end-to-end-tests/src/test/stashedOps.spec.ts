@@ -356,8 +356,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     itExpects("waits for previous container's leave message", [
-        { "eventName": "fluid:telemetry:Container:connectedStateRejected" },
-        { "eventName": "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
+        { eventName: "fluid:telemetry:Container:connectedStateRejected" },
+        { eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
     ], async () => {
         const container = await provider.loadTestContainer(testContainerConfig);
         await new Promise<void>((resolve) => {
@@ -390,9 +390,11 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         const connectP = new Promise<void>((resolve, reject) => {
             container2.on("connected", () => {
-                container2.getQuorum().getMember(serializedClientId) === undefined
-                    ? resolve()
-                    : reject(new Error("connected while previous client in quorum"));
+                if (container2.getQuorum().getMember(serializedClientId) === undefined) {
+                    resolve();
+                } else {
+                    reject(new Error("connected while previous client in quorum"));
+                }
             });
         });
 

@@ -138,7 +138,7 @@ export interface IContainerConfig {
      */
     clientDetailsOverride?: IClientDetails;
     /**
-     * clientId from previously serialized container
+     * serialized state from a previous container
      */
     serializedContainerState?: IPendingContainerState;
 }
