@@ -50,6 +50,12 @@ export type DetachedSequenceId = number & { readonly DetachedSequenceId: 'f7d790
 export type CompressedId = FinalCompressedId | LocalCompressedId;
 
 /**
+ * The ID of the string that has been interned, which can be used by a {@link StringInterner} to retrieve the original string.
+ * @public
+ */
+export type InternedStringId = number & { readonly InternedStringId: 'e221abc9-9d17-4493-8db0-70c871a1c27c' };
+
+/**
  * A brand for identity types that are unique within a particular session (SharedTree instance).
  */
 export interface SessionUnique {
@@ -126,3 +132,13 @@ export type Definition = UuidString & { readonly Definition: 'c0ef9488-2a78-482d
  * @public
  */
 export type TraitLabel = UuidString & { readonly TraitLabel: '613826ed-49cc-4df3-b2b8-bfc6866af8e3' };
+
+/**
+ * Determine if a node is a DetachedSequenceId.
+ * @internal
+ */
+// Nodes can be an `object` type which is a banned type.
+// eslint-disable-next-line @typescript-eslint/ban-types
+export function isDetachedSequenceId(node: DetachedSequenceId | object): node is DetachedSequenceId {
+	return typeof node !== 'object';
+}

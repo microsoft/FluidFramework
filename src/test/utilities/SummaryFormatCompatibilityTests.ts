@@ -5,16 +5,10 @@
 
 import * as fs from 'fs';
 import { expect } from 'chai';
+import { v5 as uuidv5 } from 'uuid';
 // KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
 import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
-import {
-	Change,
-	ChangeInternal,
-	noHistorySummarizer,
-	noHistorySummarizer_0_1_1,
-	SharedTree,
-	SharedTreeNoHistorySummarizer,
-} from '../../default-edits';
+import { Change, ChangeInternal, SharedTree, getSharedTreeEncoder } from '../../default-edits';
 import {
 	Edit,
 	SharedTreeSummary,
@@ -23,11 +17,13 @@ import {
 	EditWithoutId,
 	UploadedEditChunkContents,
 	SharedTreeSummaryReadFormat,
+	SharedTreeEncoder,
 } from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { EditLog, separateEditAndId } from '../../EditLog';
 import { assertNotUndefined } from '../../Common';
 import { getChangeNodeFromView } from '../../SerializationUtilities';
+import type { EditId } from '../../Identifiers';
 import {
 	getDocumentFiles,
 	LocalServerSharedTreeTestingComponents,
@@ -39,17 +35,19 @@ import {
 } from './TestUtilities';
 import { TestFluidSerializer } from './TestSerializer';
 
+const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
+
 /**
- * A version/summarizer pair must be specified for a no history write test to be generated.
+ * A version/encoder pair must be specified for a no history write test to be generated.
  * Versions that can no longer be written should be removed from this list.
  */
-const noHistorySupportedSummarizers: {
+const noHistorySupportedEncoders: {
 	version: SharedTreeSummaryWriteFormat;
-	summarizer: SharedTreeNoHistorySummarizer;
-}[] = [
-	{ version: SharedTreeSummaryWriteFormat.Format_0_0_2, summarizer: noHistorySummarizer },
-	{ version: SharedTreeSummaryWriteFormat.Format_0_1_1, summarizer: noHistorySummarizer_0_1_1 },
-];
+	encoder: SharedTreeEncoder<ChangeInternal>;
+}[] = [SharedTreeSummaryWriteFormat.Format_0_0_2, SharedTreeSummaryWriteFormat.Format_0_1_1].map((version) => ({
+	version,
+	encoder: getSharedTreeEncoder(version, (edit) => uuidv5(JSON.stringify(edit.changes), uuidNamespace) as EditId),
+}));
 
 const supportedSummaryWriteFormats: SharedTreeSummaryWriteFormat[] = [
 	SharedTreeSummaryWriteFormat.Format_0_0_2,
@@ -189,17 +187,17 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					});
 				}
 
-				for (const { summarizer, version } of noHistorySupportedSummarizers) {
+				for (const { version, encoder } of noHistorySupportedEncoders) {
 					it(`version ${version} with no history can be written`, async () => {
 						await applyEdits(expectedTree, testObjectProvider, history);
 
 						// Save a new summary with the expected tree and use it to load a new SharedTree
 						const editLog = expectedTree.edits as EditLog<ChangeInternal>;
-						const newSummary = summarizer(
+						const newSummary = encoder.encodeSummary(
 							(useHandles = false) => editLog.getEditLogSummary(useHandles),
 							expectedTree.currentView,
 							expectedTree,
-							true
+							false
 						);
 
 						// Check that the new summary is equivalent to the saved one

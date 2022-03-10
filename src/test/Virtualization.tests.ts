@@ -14,10 +14,12 @@ import {
 	SharedTreeDiagnosticEvent,
 	SharedTreeSummaryWriteFormat,
 	SharedTreeSummary_0_0_2,
+	TreeCompressor_0_1_1,
 } from '../generic';
 import { SharedTree, Change, ChangeInternal } from '../default-edits';
 import { assertNotUndefined } from '../Common';
 import { initialTree } from '../InitialTree';
+import { StringInterner } from '..';
 import { applyNoop, createStableEdits, setUpLocalServerTestSharedTree } from './utilities/TestUtilities';
 
 describe('SharedTree history virtualization', () => {
@@ -29,7 +31,7 @@ describe('SharedTree history virtualization', () => {
 	function createCatchUpSummary(): SharedTreeSummary_0_0_2<Change> {
 		return {
 			currentTree: initialTree,
-			version: '0.0.2',
+			version: SharedTreeSummaryWriteFormat.Format_0_0_2,
 			sequencedEdits: createStableEdits(250),
 		};
 	}
@@ -285,9 +287,11 @@ describe('SharedTree history virtualization', () => {
 		const bigPayload = 'a'.repeat(fourMegas / numberOfEdits);
 		const edits = createStableEdits(numberOfEdits, undefined, () => bigPayload);
 
+		const interner = new StringInterner();
+		const treeCompressor = new TreeCompressor_0_1_1<never>();
 		const fakeSummary: SharedTreeSummary<Change> = {
-			version: '0.1.1',
-			currentTree: initialTree,
+			version: SharedTreeSummaryWriteFormat.Format_0_1_1,
+			currentTree: treeCompressor.compress(initialTree, interner),
 			editHistory: {
 				editChunks: [
 					{
@@ -297,6 +301,7 @@ describe('SharedTree history virtualization', () => {
 				],
 				editIds: edits.map((e) => e.id),
 			},
+			internedStrings: interner.getSerializable(),
 		};
 
 		sharedTree.loadSummary(fakeSummary);

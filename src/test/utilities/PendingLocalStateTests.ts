@@ -20,6 +20,7 @@ import {
 import { fail } from '../../Common';
 import { SharedTreeOp, SharedTreeOpType } from '../../generic/persisted-types';
 import type { EditLog } from '../../EditLog';
+import { getSharedTreeEncoder } from '../../default-edits';
 import {
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
@@ -67,26 +68,34 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 				return { tree: tree as WithApplyStashedOp<TSharedTree>, testTree: setUpTestTree(tree) };
 			}
 
-			it('applies edit ops locally', async () => {
-				const { tree, testTree } = makeTree();
-				const editCommittedLog: EditCommittedEventArguments<GenericSharedTree<any, any, any>>[] = [];
-				tree.on(SharedTreeEvent.EditCommitted, (args) => {
-					editCommittedLog.push(args);
+			for (const version of [
+				SharedTreeSummaryWriteFormat.Format_0_0_2,
+				SharedTreeSummaryWriteFormat.Format_0_1_1,
+			]) {
+				it(`applies edit ops with version ${version} locally`, async () => {
+					const { tree, testTree } = makeTree();
+					const editCommittedLog: EditCommittedEventArguments<GenericSharedTree<any, any, any>>[] = [];
+					tree.on(SharedTreeEvent.EditCommitted, (args) => {
+						editCommittedLog.push(args);
+					});
+					const initialEditLogLength = tree.edits.length;
+					const edit = newEdit(
+						Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.left.traitLocation)).map(
+							(change) => tree.internalizeChange(change)
+						)
+					);
+
+					const encoder = getSharedTreeEncoder(version);
+					const op = encoder.encodeEditOp(edit, (semiSerialized) => semiSerialized);
+					tree.applyStashedOp(op);
+
+					expect(tree.edits.length).to.equal(initialEditLogLength + 1);
+					expect(await tree.edits.tryGetEdit(edit.id)).to.deep.equal(edit);
+					expect(editCommittedLog.length).to.equal(1);
+					expect(editCommittedLog[0].editId).to.equal(edit.id);
+					expect(editCommittedLog[0].local).to.equal(true);
 				});
-				const initialEditLogLength = tree.edits.length;
-				const edit = newEdit(
-					Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.left.traitLocation))
-				);
-
-				const op = { type: SharedTreeOpType.Edit, edit };
-				tree.applyStashedOp(op);
-
-				expect(tree.edits.length).to.equal(initialEditLogLength + 1);
-				expect(await tree.edits.tryGetEdit(edit.id)).to.deep.equal(edit);
-				expect(editCommittedLog.length).to.equal(1);
-				expect(editCommittedLog[0].editId).to.equal(edit.id);
-				expect(editCommittedLog[0].local).to.equal(true);
-			});
+			}
 
 			it('applies NoOps without error', () => {
 				const { tree } = makeTree();

@@ -4,7 +4,7 @@
  */
 
 import { assert, copyPropertyIfDefined, fail, Result } from '../Common';
-import { NodeId, DetachedSequenceId, TraitLabel, StableNodeId } from '../Identifiers';
+import { NodeId, DetachedSequenceId, TraitLabel, isDetachedSequenceId, StableNodeId } from '../Identifiers';
 import {
 	GenericTransaction,
 	EditStatus,
@@ -34,7 +34,6 @@ import {
 	insertIntoTrait,
 	validateStablePlace,
 	validateStableRange,
-	isDetachedSequenceId,
 	BadPlaceValidationResult,
 	BadRangeValidationResult,
 	PlaceValidationResult,

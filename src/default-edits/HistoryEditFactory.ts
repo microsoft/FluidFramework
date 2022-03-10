@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DetachedSequenceId, NodeId, StableNodeId } from '../Identifiers';
+import { DetachedSequenceId, isDetachedSequenceId, NodeId, StableNodeId } from '../Identifiers';
 import { assert, fail } from '../Common';
 import { NodeIdConverter, RevisionView, Side, TreeNode, TreeView } from '../generic';
 import { getChangeNode_0_0_2FromViewNode } from '../SerializationUtilities';
@@ -18,7 +18,7 @@ import {
 	StableRangeInternal_0_0_2,
 } from './persisted-types';
 import { Transaction } from './Transaction';
-import { isDetachedSequenceId, RangeValidationResultKind, validateStableRange } from './EditUtilities';
+import { RangeValidationResultKind, validateStableRange } from './EditUtilities';
 import { StablePlace } from './ChangeTypes';
 import { tryConvertToStablePlaceInternal_0_0_2 } from './Conversion002';
 

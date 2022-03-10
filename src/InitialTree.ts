@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Definition, StableNodeId } from './Identifiers';
-import { ChangeNode_0_0_2 } from './generic';
+import type { Definition, StableNodeId } from './Identifiers';
+import type { ChangeNode_0_0_2 } from './generic';
 import { sharedTreeInitialTreeId } from './id-compressor';
 
 /**

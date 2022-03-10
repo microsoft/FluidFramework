@@ -418,7 +418,7 @@ export function getDocumentFiles(document: string): {
 	blobsByVersion: Map<string, string>;
 	history: Edit<ChangeInternal>[];
 	changeNode: ChangeNode;
-	sortedVersions: string[];
+	sortedVersions: SharedTreeSummaryWriteFormat[];
 } {
 	// Cache the contents of the relevant files here to avoid loading more than once.
 	// Map containing summary file contents, keys are summary versions, values have file contents
@@ -486,7 +486,9 @@ export function getDocumentFiles(document: string): {
 
 	const history = assertNotUndefined(historyOrUndefined);
 	const changeNode = assertNotUndefined(changeNodeOrUndefined);
-	const sortedVersions = Array.from(summaryByVersion.keys()).sort(versionComparator);
+	const sortedVersions = Array.from(summaryByVersion.keys()).sort(
+		versionComparator
+	) as SharedTreeSummaryWriteFormat[];
 
 	return {
 		summaryByVersion,

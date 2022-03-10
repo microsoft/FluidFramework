@@ -67,7 +67,8 @@ export {
 	RangeValidationResult,
 	BadRangeValidationResult,
 	Transaction,
-	isDetachedSequenceId,
+	CompressedBuildInternal,
+	CompressedBuildNode,
 } from './default-edits';
 export {
 	Side,
@@ -97,6 +98,9 @@ export {
 	TreeNode,
 	ChangeNode,
 	ChangeNode_0_0_2,
+	CompressedChangeNode,
+	CompressedTraits,
+	CompressedPlaceholderTree,
 	EditStatus,
 	TraitLocationInternal_0_0_2,
 	GenericTransaction,
@@ -115,7 +119,16 @@ export {
 	EditLogSummarizer,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
+	SharedTreeEncoder,
 	SharedTreeSummaryWriteFormat,
+	SharedTreeOp,
+	SharedTreeEditOp,
+	SharedTreeHandleOp,
+	SharedTreeNoOp,
+	SharedTreeUpdateOp,
+	VersionedOp,
+	SharedTreeOpType,
+	SummaryContents,
 	UploadedEditChunkContents,
 	getUploadedEditChunkContents,
 	saveUploadedEditChunkContents,
@@ -135,3 +148,4 @@ export {
 	areRevisionViewsSemanticallyEqual,
 	TraitLocation,
 } from './generic';
+export { StringInterner } from './StringInterner';

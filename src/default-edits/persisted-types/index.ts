@@ -18,3 +18,4 @@ export {
 	StablePlaceInternal_0_0_2,
 	StableRangeInternal_0_0_2,
 } from './0.0.2';
+export * from './0.1.1';

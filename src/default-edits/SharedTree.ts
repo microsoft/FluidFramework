@@ -3,27 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import {
-	ChangeNode_0_0_2,
-	convertTreeNodes,
-	Edit,
-	EditLogSummarizer,
-	GenericSharedTree,
-	RevisionView,
-	SharedTreeSummaryBase,
-	SharedTreeSummaryWriteFormat,
-} from '../generic';
+import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { convertTreeNodes, GenericSharedTree, SharedTreeSummaryWriteFormat } from '../generic';
+import type { ChangeNode_0_0_2, Edit, RevisionView, SharedTreeEncoder } from '../generic';
+import { isDetachedSequenceId } from '../Identifiers';
 import { copyPropertyIfDefined, fail } from '../Common';
-import { DetachedSequenceId } from '../Identifiers';
+import type { DetachedSequenceId } from '../Identifiers';
 import { ChangeInternal, ChangeTypeInternal, ConstraintInternal, DetachInternal } from './persisted-types';
 import { SharedTreeFactory } from './Factory';
 import { Transaction } from './Transaction';
-import { getSummaryByVersion } from './Summary';
-import { internalizeBuildNode, isDetachedSequenceId } from './EditUtilities';
+import { internalizeBuildNode } from './EditUtilities';
 import { revert } from './HistoryEditFactory';
 import { BuildTreeNode, Change, ChangeType } from './ChangeTypes';
 import { tryConvertToStablePlaceInternal_0_0_2, tryConvertToStableRangeInternal_0_0_2 } from './Conversion002';
+import { getSharedTreeEncoder } from './SharedTreeEncoder';
 
 /**
  * A distributed tree.
@@ -98,28 +91,6 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 	}
 
 	/**
-	 * {@inheritDoc GenericSharedTree.generateSummary}
-	 * @internal
-	 */
-	protected generateSummary(summarizeLog: EditLogSummarizer<ChangeInternal>): SharedTreeSummaryBase {
-		try {
-			return getSummaryByVersion(
-				summarizeLog,
-				this.currentView,
-				this,
-				this.summarizeHistory,
-				this.writeSummaryFormat
-			);
-		} catch (error) {
-			this.logger?.sendErrorEvent({
-				eventName: 'UnsupportedSummaryWriteFormat',
-				formatVersion: this.writeSummaryFormat,
-			});
-			throw error;
-		}
-	}
-
-	/**
 	 * {@inheritDoc GenericSharedTree.preprocessEdit}
 	 * @internal
 	 */
@@ -188,5 +159,12 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 			default:
 				fail('unexpected change type');
 		}
+	}
+
+	/**
+	 * {@inheritDoc GenericSharedTree.getSharedTreeEncoder}
+	 */
+	protected getSharedTreeEncoder(version: SharedTreeSummaryWriteFormat): SharedTreeEncoder<ChangeInternal> {
+		return getSharedTreeEncoder(version);
 	}
 }

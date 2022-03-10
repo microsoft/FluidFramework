@@ -52,6 +52,7 @@ export {
 	fullHistorySummarizer_0_1_1,
 	formatVersion,
 	serialize,
+	SummaryContents,
 } from './Summary';
 export {
 	NodeInTrait,
@@ -65,7 +66,9 @@ export {
 } from './TreeView';
 export { RevisionView, TransactionView } from './RevisionView';
 export * from './NodeIdUtilities';
+export type { SharedTreeEncoder } from './SharedTreeEncoder';
 export * from './Conversion002';
+export { TreeCompressor_0_1_1 } from './TreeCompressor';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package

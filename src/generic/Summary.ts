@@ -6,15 +6,18 @@
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-object-base';
 import { assertNotUndefined } from '../Common';
-import { readFormatVersion } from '../SummaryBackCompatibility';
+import { StringInterner } from '../StringInterner';
 import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
+import { TreeCompressor_0_1_1 } from './TreeCompressor';
 import { RevisionView } from './RevisionView';
 import {
 	Edit,
 	EditLogSummary,
-	SharedTreeSummary,
 	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
+	SharedTreeSummary,
+	ChangeNode,
+	SharedTreeSummaryWriteFormat,
 } from './persisted-types';
 import { NodeIdConverter } from './NodeIdUtilities';
 
@@ -23,7 +26,7 @@ import { NodeIdConverter } from './NodeIdUtilities';
  * When next changing the format, we should add a new format version variable for the edit-specific summaries and assign it an independent
  * version number.
  */
-export const formatVersion = '0.0.2';
+export const formatVersion = SharedTreeSummaryWriteFormat.Format_0_0_2;
 
 /**
  * Handler for summarizing the tree state.
@@ -36,6 +39,20 @@ export type SharedTreeSummarizer = (
 	logSummarizer: EditLogSummarizer,
 	currentView: RevisionView
 ) => SharedTreeSummaryBase;
+
+/**
+ * The contents of a SharedTree summary, converted to a common internal format that can be
+ * loaded into a SharedTree.
+ * @internal
+ */
+export interface SummaryContents<TChange> {
+	readonly currentTree?: ChangeNode;
+
+	/**
+	 * Information that can populate an edit log.
+	 */
+	readonly editHistory: EditLogSummary<TChange>;
+}
 
 /**
  * A function which produces the summary of an edit log
@@ -90,21 +107,26 @@ export function fullHistorySummarizer<TChange>(
 	return {
 		currentTree: getChangeNode_0_0_2FromView(currentView, idConverter),
 		sequencedEdits,
-		version: formatVersion,
+		version: SharedTreeSummaryWriteFormat.Format_0_0_2,
 	};
 }
 
 /**
- * Generates a summary with format version 0.1.0. This will prefer handles over edits in edit chunks where possible.
+ * Generates a summary with format version 0.1.0. This will prefer handles over edits in edit chunks where possible,
+ * and string interning and tree compression will be applied.
  */
 export function fullHistorySummarizer_0_1_1<TChange>(
 	summarizeLog: EditLogSummarizer,
 	currentView: RevisionView,
 	idConverter: NodeIdConverter
 ): SharedTreeSummary<TChange> {
+	const stringInterner = new StringInterner();
+	const treeCompressor = new TreeCompressor_0_1_1<never>();
+	const currentTree = treeCompressor.compress(getChangeNode_0_0_2FromView(currentView, idConverter), stringInterner);
 	return {
-		currentTree: getChangeNode_0_0_2FromView(currentView, idConverter),
+		currentTree,
 		editHistory: summarizeLog(true),
-		version: readFormatVersion,
+		version: SharedTreeSummaryWriteFormat.Format_0_1_1,
+		internedStrings: stringInterner.getSerializable(),
 	};
 }

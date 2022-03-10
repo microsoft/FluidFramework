@@ -8,7 +8,7 @@
 // and thus have no impact on serialization as long as the primitive type they are an alias for does not change.
 // This does mean that the various UuidString types must remain strings, and must never change the format unless the process for changing
 // persisted types (as documented below) is followed.
-import { DetachedSequenceId, StableNodeId, TraitLabel, UuidString } from '../../Identifiers';
+import type { DetachedSequenceId, StableNodeId, TraitLabel, UuidString } from '../../Identifiers';
 import { assert, assertNotUndefined } from '../../Common';
 import {
 	getNodeId,
@@ -57,6 +57,7 @@ export enum ChangeTypeInternal {
 	Build,
 	SetValue,
 	Constraint,
+	CompressedBuild,
 }
 
 /**

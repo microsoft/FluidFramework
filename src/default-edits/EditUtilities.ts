@@ -269,14 +269,6 @@ export function deepCloneStableRange(range: StableRange): StableRange {
 	return { start: deepCloneStablePlace(range.start), end: deepCloneStablePlace(range.end) };
 }
 
-/**
- * Determine if a node is a DetachedSequenceId.
- * @internal
- */
-export function isDetachedSequenceId(node: BuildNode | BuildNodeInternal): node is DetachedSequenceId {
-	return typeof node !== 'object';
-}
-
 /** Convert a tree used in a Build change into its internal representation */
 export function internalizeBuildNode(
 	nodeData: BuildTreeNode,

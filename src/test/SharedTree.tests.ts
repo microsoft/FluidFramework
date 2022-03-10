@@ -4,6 +4,7 @@
  */
 
 import { SharedTree } from '../default-edits';
+import { SharedTreeSummaryWriteFormat } from '../generic';
 import { setUpTestSharedTree, setUpLocalServerTestSharedTree } from './utilities/TestUtilities';
 import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests';
 import { runSummaryFormatCompatibilityTests } from './utilities/SummaryFormatCompatibilityTests';
@@ -12,7 +13,18 @@ import { runPendingLocalStateTests } from './utilities/PendingLocalStateTests';
 import { runSharedTreeVersioningTests } from './utilities/SharedTreeVersioningTests';
 
 describe('SharedTree', () => {
-	runSharedTreeOperationsTests<SharedTree>('Operations', setUpTestSharedTree);
+	describe('Operations', () => {
+		runSharedTreeOperationsTests<SharedTree>(
+			'using write format 0.0.2',
+			SharedTreeSummaryWriteFormat.Format_0_0_2,
+			setUpTestSharedTree
+		);
+		runSharedTreeOperationsTests<SharedTree>(
+			'using write format 0.1.1',
+			SharedTreeSummaryWriteFormat.Format_0_1_1,
+			setUpTestSharedTree
+		);
+	});
 	runSummaryFormatCompatibilityTests<SharedTree>('Summary', setUpTestSharedTree, setUpLocalServerTestSharedTree);
 	runSummarySizeTests<SharedTree>('Summary size', setUpLocalServerTestSharedTree);
 	runPendingLocalStateTests<SharedTree>('Pending local state', setUpTestSharedTree, setUpLocalServerTestSharedTree);

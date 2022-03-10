@@ -12,11 +12,6 @@ export * from './Factory';
 export * from './HistoryEditFactory';
 export * from './EditUtilities';
 export { Transaction } from './Transaction';
-export {
-	SharedTreeNoHistorySummarizer,
-	getSummaryByVersion,
-	noHistorySummarizer,
-	noHistorySummarizer_0_1_1,
-} from './Summary';
+export { getSharedTreeEncoder } from './SharedTreeEncoder';
 export { SharedTreeUndoRedoHandler } from './UndoRedoHandler';
 export * from './Conversion002';

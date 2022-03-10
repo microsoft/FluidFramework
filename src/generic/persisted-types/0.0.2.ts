@@ -4,7 +4,7 @@
  */
 
 import type { Serializable } from '@fluidframework/datastore-definitions';
-import type { EditId, Definition, StableNodeId, TraitLabel } from '../../Identifiers';
+import type { EditId, Definition, NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
 
 /**
  * Defines a place relative to sibling.
@@ -142,6 +142,11 @@ export interface NodeData<TId> {
 export interface TreeNode<TChild, TId> extends NodeData<TId>, HasTraits<TChild> {}
 
 /**
+ * A tree whose nodes are either TreeNodes or a placeholder
+ */
+export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>, NodeId> | TPlaceholder;
+
+/**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
  * @public
  */
@@ -250,13 +255,14 @@ export interface SharedTreeHandleOp extends VersionedOp {
 }
 
 /**
- * Format versions that SharedTree supports writing.
+ * Format versions that SharedTree supports writing. Changes to op or summary formats necessitate updates.
+ * TODO:#73367: Rename this to SharedTreeWriteFormat to reflect its scope.
  * @public
  */
 export enum SharedTreeSummaryWriteFormat {
 	/** Stores all edits in their raw format. */
 	Format_0_0_2 = '0.0.2',
-	/** Supports history virtualization and makes currentView optional. */
+	/** Supports history virtualization, tree compression, string interning, and makes currentView optional. */
 	Format_0_1_1 = '0.1.1',
 }
 
@@ -267,7 +273,7 @@ export interface SharedTreeSummaryBase {
 	/**
 	 * Field on summary under which version is stored.
 	 */
-	readonly version: string;
+	readonly version: SharedTreeSummaryWriteFormat;
 }
 
 /**
@@ -281,5 +287,5 @@ export interface SharedTreeSummary_0_0_2<TChange> extends SharedTreeSummaryBase 
 	 * A list of edits.
 	 */
 	readonly sequencedEdits: readonly Edit<TChange>[];
-	readonly version: '0.0.2';
+	readonly version: SharedTreeSummaryWriteFormat.Format_0_0_2;
 }
