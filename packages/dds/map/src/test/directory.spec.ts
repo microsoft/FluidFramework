@@ -178,14 +178,12 @@ describe("Directory", () => {
                 assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
 
                 // Usage Error on accessing disposed directory.
-                let usageErrorExpected = true;
                 try {
                     subDirectory.set("throw", "error");
+                    assert.fail("Should throw usage error");
                 } catch (error) {
                     assert.strictEqual(error.errorType, "usageError", "Should throw usage error");
-                    usageErrorExpected = false;
                 }
-                assert(usageErrorExpected === false, "Should throw usage error");
             });
 
             it("Rejects a undefined and null key set", () => {
