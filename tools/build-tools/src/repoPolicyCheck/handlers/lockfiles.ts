@@ -23,7 +23,7 @@ export const handlers: Handler[] = [
                 const results: string[] = [];
                 const containsBadUrl = matches.some((value) => {
                     const url = new URL(value);
-                    if (url.hostname !== `registry.npmjs.org` || url.protocol !== `https:`) {
+                    if (url.protocol === `https:` && url.hostname === `registry.npmjs.org`) {
                         return false;
                     }
                     results.push(value)
