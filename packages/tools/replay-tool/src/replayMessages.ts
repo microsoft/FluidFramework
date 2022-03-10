@@ -30,6 +30,7 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
+import stringify from "json-stable-stringify";
 import {
     compareWithReferenceSnapshot,
     getNormalizedFileSnapshot,
@@ -41,13 +42,13 @@ import { ReplayArgs } from "./replayArgs";
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
 try {
-
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     threads = require("worker_threads");
 } catch (error) { }
 
 function expandTreeForReadability(tree: ITree): ITree {
     const newTree: ITree = { entries: [], id: undefined };
-    for (const node of tree.entries.sort((a,b)=>a.path.localeCompare(b.path))) {
+    for (const node of tree.entries) {
         const newNode = { ...node };
         if (node.type === TreeEntry.Tree) {
             newNode.value = expandTreeForReadability(node.value);
@@ -84,7 +85,7 @@ class ContainerContent {
 
         this._snapshotAsString = new Lazy(() => {
             assert(this.snapshot !== undefined, 0x1c6 /* "snapshot should be set before retrieving it" */);
-            return JSON.stringify(this.snapshot, undefined, 2);
+            return stringify(this.snapshot, {space: 2});
         });
 
         this._snapshotExpanded = new Lazy(() => {
@@ -97,7 +98,7 @@ class ContainerContent {
             for (const commit of Object.keys(this.snapshot.commits)) {
                 snapshotExpanded.commits[commit] = expandTreeForReadability(this.snapshot.commits[commit]);
             }
-            return JSON.stringify(snapshotExpanded, undefined, 2);
+            return stringify(snapshotExpanded, {space: 2});
         });
     }
 
@@ -133,7 +134,7 @@ class Logger implements ITelemetryBaseLogger {
             const stack: string | undefined = event.stack as string | undefined;
             delete event.stack;
             const error = new Error(`An error has been logged from ${this.containerDescription}!\n
-                        ${JSON.stringify(event)}`);
+                        ${stringify(event)}`);
             error.stack = stack;
             // throw instead of printing an error to fail tests
             throw error;
@@ -335,7 +336,7 @@ export class ReplayTool {
     }
 
     private errorHandler(event: ITelemetryBaseEvent): boolean {
-        const errorString = JSON.stringify(event);
+        const errorString = stringify(event);
         // Snapshots errors are both reported to telemetry and propagated to caller
         // So if we d not filter them out, we report them twice.
         // Avoid that, but have a safety net - increase error count, so that tool
@@ -691,7 +692,7 @@ export class ReplayTool {
             // FluidFetchReaderFileSnapshotWriter.write()
             const summaryTree = await container.summarize(true);
             const file = `${dir}/summary.json`;
-            fs.writeFileSync(file, JSON.stringify(summaryTree, undefined, 2));
+            fs.writeFileSync(file, stringify(summaryTree, undefined, 2));
         }
         */
     }
