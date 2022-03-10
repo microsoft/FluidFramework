@@ -9,8 +9,10 @@ import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/cont
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { Ink } from "@fluidframework/ink";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import {
@@ -32,6 +34,7 @@ import {
     SharedString,
     SparseMatrix,
 } from "@fluidframework/sequence";
+import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 
 async function runtimeRequestHandler(request: IRequest, runtime: IContainerRuntime) {
     if (request.url === "/containerRuntime") {
@@ -68,6 +71,25 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
     }
 }
 
+export const nonComparableDdsFactories: IChannelFactory[] = [
+    SharedMatrix.getFactory(),
+    SharedSummaryBlock.getFactory(),
+];
+const allDdsFactories: IChannelFactory[] = [
+    ... nonComparableDdsFactories,
+    SharedMap.getFactory(),
+    SharedString.getFactory(),
+    Ink.getFactory(),
+    SharedCell.getFactory(),
+    SharedObjectSequence.getFactory(),
+    SharedNumberSequence.getFactory(),
+    ConsensusQueue.getFactory(),
+    ConsensusRegisterCollection.getFactory(),
+    SparseMatrix.getFactory(),
+    SharedDirectory.getFactory(),
+    SharedIntervalCollection.getFactory(),
+];
+
 /**
  * Simple data store factory that creates a data store runtime with a list of known DDSs. It does not create a data
  * object since the replay tool doesn't request any data store but only loads the data store runtime to summarize it.
@@ -96,19 +118,7 @@ export class ReplayDataStoreFactory implements IFluidDataStoreFactory, Partial<I
     public async instantiateDataStore(context: IFluidDataStoreContext) {
         return new this.runtimeClassArg(
             context,
-            new Map([
-                SharedMap.getFactory(),
-                SharedString.getFactory(),
-                Ink.getFactory(),
-                SharedCell.getFactory(),
-                SharedObjectSequence.getFactory(),
-                SharedNumberSequence.getFactory(),
-                ConsensusQueue.getFactory(),
-                ConsensusRegisterCollection.getFactory(),
-                SparseMatrix.getFactory(),
-                SharedDirectory.getFactory(),
-                SharedIntervalCollection.getFactory(),
-            ].map((factory) => [factory.type, factory])),
+            new Map(allDdsFactories.map((factory) => [factory.type, factory])),
             true /* existing */,
         );
     }
