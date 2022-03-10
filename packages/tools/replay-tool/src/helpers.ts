@@ -81,6 +81,7 @@ export function compareWithReferenceSnapshot(
 export async function loadContainer(
     documentServiceFactory: IDocumentServiceFactory,
     documentName: string,
+    strictChannels: boolean,
     logger?: TelemetryLogger,
     requestHandlers?: RuntimeRequestHandler[],
     loaderOptions?: ILoaderOptions,
@@ -100,7 +101,10 @@ export async function loadContainer(
         new Map<string, IResolvedUrl>([[resolved.url, resolved]]),
     );
 
-    const dataStoreFactory = new ReplayDataStoreFactory(mixinDataStoreWithAnyChannel());
+    const dataStoreFactory = new ReplayDataStoreFactory(
+        strictChannels
+            ? undefined
+            : mixinDataStoreWithAnyChannel());
     // List of data store registries in container runtime.
     const dataStoreRegistries = new Map([
         ["_scheduler", Promise.resolve(dataStoreFactory)],

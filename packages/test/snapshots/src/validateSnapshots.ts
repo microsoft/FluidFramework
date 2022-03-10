@@ -85,6 +85,7 @@ export async function validateSnapshots(
             const container: IContainer = await loadContainer(
                 new StaticStorageDocumentServiceFactory(storage),
                 FileStorageDocumentName,
+                true,
             );
 
             await uploadSummary(container);

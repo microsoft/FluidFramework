@@ -35,6 +35,7 @@ import {
     SparseMatrix,
 } from "@fluidframework/sequence";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
+import { UnknownChannelFactory } from "./unknownChannel";
 
 async function runtimeRequestHandler(request: IRequest, runtime: IContainerRuntime) {
     if (request.url === "/containerRuntime") {
@@ -74,6 +75,8 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
 export const nonComparableDdsFactories: IChannelFactory[] = [
     SharedMatrix.getFactory(),
     SharedSummaryBlock.getFactory(),
+    new UnknownChannelFactory("https://graph.microsoft.com/types/SharedArray"),
+    new UnknownChannelFactory("https://graph.microsoft.com/types/signal"),
 ];
 const allDdsFactories: IChannelFactory[] = [
     ... nonComparableDdsFactories,
