@@ -15,7 +15,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
 - [Set raiseContainerWarning property as optional parameter on IContainerContext](#Set-raiseContainerWarning-property-as-optional-parameter-on-IContainerContext)
 - [Consolidate fluidErrorCode and message on FF Errors](#Consolidate-fluidErrorCode-and-message-on-FF-Errors)
-- [Disallowed access to deleted sub directory](#Disallowed-access-to-deleted-sub-directory)
+- [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
 
 ### Move IntervalType from merge-tree to sequence package
 Move the type from the merge-tree package where it isn't used to the sequence package where it is used
@@ -38,8 +38,9 @@ Now all error messages can be expected to be easily-read sentences,
 sometimes followed by a colon and an inner error message when applicable.
 
 
-### Disallowed access to deleted sub directory
-Users will now be disallowed to do operations on a deleted directory. Users can subscribe to `dispose` event to know if a sub directory is deleted.
+### Doing operations not allowed on deleted sub directory
+Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory
+will throw `UsageError` exception now.
 
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
