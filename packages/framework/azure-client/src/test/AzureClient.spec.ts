@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AzureClient } from "../AzureClient";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
@@ -162,7 +163,7 @@ describe("AzureClient", () => {
         console.error = () => { };
         const containerAndServicesP = client.getContainer("containerConfig", schema);
 
-        const errorFn = (error) => {
+        const errorFn = (error: { message: any; }) => {
             assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
             return true;
         };
@@ -221,11 +222,11 @@ describe("AzureClient", () => {
         const initialObjectsCreate = container.initialObjects;
         const map1Create = initialObjectsCreate.map1 as SharedMap;
         map1Create.set("new-key", "new-value");
-        const valueCreate = await map1Create.get("new-key");
+        const valueCreate = await map1Create.get("new-key") as string;
 
         const { container: containerGet } = await client.getContainer(containerId, schema);
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
-        const valueGet = await mapWait(map1Get, "new-key");
+        const valueGet: string = await mapWait(map1Get, "new-key");
         assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
     });
 
@@ -252,7 +253,8 @@ describe("AzureClient", () => {
 
         const map1 = createFluidContainer.initialObjects.map1 as SharedMap;
         map1.set("new-pair-id", newPair.handle);
-        const obj = await map1.get("new-pair-id").get();
+        const hdl = await map1.get("new-pair-id") as IFluidHandle;
+        const obj = hdl.get();
         assert.ok(obj, "container added dynamic objects incorrectly");
     });
 });

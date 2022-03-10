@@ -41,6 +41,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
                 documentId,
                 userId: this.user?.userId,
                 userName: this.user?.userName,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 additionalDetails: this.user?.additionalDetails,
             },
         });
