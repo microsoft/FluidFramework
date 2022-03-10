@@ -1,5 +1,44 @@
 # Change Log
 
+## 28.4.0
+
+* improvement: Move summary types to persisted types
+  * Associated pull request: [38738](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38738)
+  * Commit: [13356a9172a4e40522695c3bdfa4227cae23d8fd](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/13356a9172a4e40522695c3bdfa4227cae23d8fd)
+* build: update sorted-btree to 1.6.2
+  * Associated pull request: [38737](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38737)
+  * Commit: [8ae2a5db49f4c8e5b05d4f11a57e19d376b10a32](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8ae2a5db49f4c8e5b05d4f11a57e19d376b10a32)
+* improvement: Express SharedTreeOp as a discriminated union over op types
+  * Associated pull request: [38734](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38734)
+  * Commit: [773801011638444ebc93e624b3b586708eb7462b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/773801011638444ebc93e624b3b586708eb7462b)
+* refactor: reorganize persisted types version files
+  * Associated pull request: [38724](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38724)
+  * Commit: [dbc91ec3afcea0e066a6ba38b095386c9441396e](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/dbc91ec3afcea0e066a6ba38b095386c9441396e)
+* refactor: BREAKING CHANGE: organize persisted types by version
+  * Associated pull request: [38671](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38671)
+  * Commit: [54900384494ab508e32457e96e5abafb34b6421e](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/54900384494ab508e32457e96e5abafb34b6421e)
+* fix: Allow access to currentView on no-history 0.1.1 summary load
+  * Associated pull request: [38641](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38641)
+  * Commit: [4bbc87829a95c80cb7b0816d53cbcb7054db265d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4bbc87829a95c80cb7b0816d53cbcb7054db265d)
+* test: Verify version upgrade succeeds for tree initialized with older writeFormat
+  * Associated pull request: [38628](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38628)
+  * Commit: [e13266623b7bbffc1765da02b97d0fbd15a146ac](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e13266623b7bbffc1765da02b97d0fbd15a146ac)
+* fix: BREAKING CHANGE: Remove local edits concurrent with VersionUpgrade op at upgrade processing time
+  * Associated pull request: [38598](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38598)
+  * Commit: [b3756162f07b6a9ff199c972983573e16a46fd34](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b3756162f07b6a9ff199c972983573e16a46fd34)
+* improvement: BREAKING CHANGE: Parameterize ID types
+  * Associated pull request: [38594](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38594)
+  * Commit: [e6733555881890ceb552bc31581950b50a20bca1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e6733555881890ceb552bc31581950b50a20bca1)
+* fix: Improve a couple of tests
+  * Associated pull request: [38568](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38568)
+  * Commit: [d31b44c275f99232885f0cfd55f12a74e53016c1](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d31b44c275f99232885f0cfd55f12a74e53016c1)
+* improvement: BREAKING CHANGE: Migrate remaining shared-tree tests to use TestTree
+  * Associated pull request: [38539](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38539)
+  * Commit: [7919b01a400e673aa2b4777354ee3b52cf168b8c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/7919b01a400e673aa2b4777354ee3b52cf168b8c)
+* improvement: Improve local ID unification in IdCompressor
+  * Associated pull request: [38523](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38523)
+  * Commit: [c1238345daf8e4df7a89af18288921d7fff2fb63](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c1238345daf8e4df7a89af18288921d7fff2fb63)
+
 ## 25.2.1
 
 * build: Update FluidFramework packages to 0.55.x
