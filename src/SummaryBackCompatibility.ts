@@ -7,24 +7,10 @@ import type { ITelemetryProperties } from '@fluidframework/common-definitions';
 import type { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { fail } from './Common';
 import { EditLog, getNumberOfHandlesFromEditLogSummary } from './EditLog';
-import { Edit, SharedTreeSummaryBase, SharedTreeSummary, ChangeNode_0_0_2 } from './generic';
+import { SharedTreeSummaryBase, SharedTreeSummary, SharedTreeSummary_0_0_2 } from './generic';
 
 /** The summary format version that is read by SharedTree. */
 export const readFormatVersion = '0.1.1';
-
-/**
- * Legacy summary format currently still used for writing.
- * TODO:#49901: Remove export when this format is no longer written.
- * @internal
- */
-export interface SharedTreeSummary_0_0_2<TChange> extends SharedTreeSummaryBase {
-	readonly currentTree: ChangeNode_0_0_2;
-	/**
-	 * A list of edits.
-	 */
-	readonly sequencedEdits: readonly Edit<TChange>[];
-	readonly version: '0.0.2';
-}
 
 /**
  * Deserializes a JSON object produced by `serialize()` and uses it to initialize the tree with the encoded state.

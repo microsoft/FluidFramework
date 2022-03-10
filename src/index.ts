@@ -21,7 +21,7 @@ export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta, Forest, ForestNode, ParentData } from './Forest';
 export { sharedTreeAssertionErrorType, isSharedTreeEvent, Result } from './Common';
 export * from './Identifiers';
-export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from './EditLog';
+export type { OrderedEditSet } from './EditLog';
 export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
 export { LazyCheckout } from './LazyCheckout';
@@ -71,6 +71,8 @@ export {
 } from './default-edits';
 export {
 	Side,
+	EditLogSummary,
+	EditHandle,
 	EditCommittedHandler,
 	EditCommittedEventArguments,
 	SequencedEditAppliedHandler,

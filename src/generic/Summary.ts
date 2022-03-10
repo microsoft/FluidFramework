@@ -6,11 +6,16 @@
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-object-base';
 import { assertNotUndefined } from '../Common';
-import { EditLogSummary } from '../EditLog';
-import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
+import { readFormatVersion } from '../SummaryBackCompatibility';
 import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
 import { RevisionView } from './RevisionView';
-import { ChangeNode_0_0_2, Edit } from './persisted-types';
+import {
+	Edit,
+	EditLogSummary,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
+	SharedTreeSummary_0_0_2,
+} from './persisted-types';
 import { NodeIdConverter } from './NodeIdUtilities';
 
 /**
@@ -37,29 +42,6 @@ export type SharedTreeSummarizer = (
  * @internal
  */
 export type EditLogSummarizer<TChange = any> = (useHandles?: boolean) => EditLogSummary<TChange>;
-
-/**
- * The minimal information on a SharedTree summary. Contains the summary format version.
- */
-export interface SharedTreeSummaryBase {
-	/**
-	 * Field on summary under which version is stored.
-	 */
-	readonly version: string;
-}
-
-/**
- * The contents of a SharedTree summary: the current tree, and the edits needed to get from `initialTree` to the current tree.
- * @public
- */
-export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {
-	readonly currentTree?: ChangeNode_0_0_2;
-
-	/**
-	 * Information that can populate an edit log.
-	 */
-	readonly editHistory?: EditLogSummary<TChange>;
-}
 
 /**
  * Serializes a SharedTree summary into a JSON string. This may later be used to initialize a SharedTree's state via `deserialize()`

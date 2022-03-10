@@ -6,11 +6,17 @@
 import { expect } from 'chai';
 // KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
 import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
-import { EditHandle, EditLog } from '../EditLog';
-import { Edit, SharedTreeSummary, SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../generic';
+import { EditLog } from '../EditLog';
+import {
+	Edit,
+	EditHandle,
+	SharedTreeSummary,
+	SharedTreeDiagnosticEvent,
+	SharedTreeSummaryWriteFormat,
+	SharedTreeSummary_0_0_2,
+} from '../generic';
 import { SharedTree, Change, ChangeInternal } from '../default-edits';
 import { assertNotUndefined } from '../Common';
-import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { initialTree } from '../InitialTree';
 import { applyNoop, createStableEdits, setUpLocalServerTestSharedTree } from './utilities/TestUtilities';
 

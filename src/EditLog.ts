@@ -7,7 +7,7 @@ import BTree from 'sorted-btree';
 import { IsoBuffer, TypedEventEmitter } from '@fluidframework/common-utils';
 import { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { assert, assertNotUndefined, compareArrays, compareFiniteNumbers, fail } from './Common';
-import { Edit, EditWithoutId, SharedTreeDiagnosticEvent } from './generic';
+import { Edit, EditChunk, EditHandle, EditLogSummary, EditWithoutId, SharedTreeDiagnosticEvent } from './generic';
 import { EditId } from './Identifiers';
 
 /**
@@ -61,36 +61,6 @@ export interface OrderedEditSet<TChange = unknown> {
 }
 
 /**
- * Information used to populate an edit log.
- * @public
- */
-export interface EditLogSummary<TChange> {
-	/**
-	 * A of list of serialized chunks and their corresponding keys.
-	 * Start revision is the index of the first edit in the chunk in relation to the edit log.
-	 */
-	readonly editChunks: readonly {
-		readonly startRevision: number;
-		readonly chunk: EditChunkOrHandle<TChange>;
-	}[];
-
-	/**
-	 * A list of edits IDs for all sequenced edits.
-	 */
-	readonly editIds: readonly EditId[];
-}
-
-/**
- * EditHandles are used to load edit chunks stored outside of the EditLog.
- * Can be satisfied by IFluidHandle<ArrayBufferLike>.
- * @public
- */
-export interface EditHandle {
-	readonly get: () => Promise<ArrayBufferLike>;
-	readonly absolutePath: string;
-}
-
-/**
  * Server-provided metadata for edits that have been sequenced.
  */
 export interface EditSequencingInfo {
@@ -135,20 +105,6 @@ export interface LocalOrderedEditId {
 	readonly isLocal: true;
 	readonly localSequence: number;
 }
-
-/**
- * A sequence of edits that may or may not to be downloaded into the EditLog from an external service
- */
-export interface EditChunk<TChange> {
-	handle?: EditHandle;
-	edits?: EditWithoutId<TChange>[];
-}
-
-/**
- * Either a chunk of edits or a handle that can be used to load that chunk.
- * @public
- */
-export type EditChunkOrHandle<TChange> = EditHandle | readonly EditWithoutId<TChange>[];
 
 /**
  * Metadata for an edit.

@@ -17,6 +17,7 @@ import {
 	EditCommittedEventArguments,
 	SequencedEditAppliedEventArguments,
 	deepCompareNodes,
+	SharedTreeSummary_0_0_2,
 } from '../../generic';
 import {
 	Change,
@@ -33,7 +34,7 @@ import { CachingLogViewer } from '../../LogViewer';
 import { EditLog } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
-import { deserialize, SharedTreeSummary_0_0_2 } from '../../SummaryBackCompatibility';
+import { deserialize } from '../../SummaryBackCompatibility';
 import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
 import {
 	areNodesEquivalent,

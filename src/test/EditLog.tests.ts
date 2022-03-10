@@ -5,10 +5,10 @@
 
 import { expect } from 'chai';
 import { IsoBuffer } from '@fluidframework/common-utils';
-import { EditHandle, EditLog, separateEditAndId } from '../EditLog';
+import { EditLog, separateEditAndId } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
-import { newEdit, Edit, EditWithoutId } from '../generic';
+import { newEdit, Edit, EditWithoutId, EditHandle } from '../generic';
 
 type DummyChange = never;
 

@@ -46,8 +46,6 @@ export {
 	ChangeResult,
 } from './GenericTransaction';
 export {
-	SharedTreeSummary,
-	SharedTreeSummaryBase,
 	SharedTreeSummarizer,
 	EditLogSummarizer,
 	fullHistorySummarizer,

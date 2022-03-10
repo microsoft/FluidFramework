@@ -259,3 +259,27 @@ export enum SharedTreeSummaryWriteFormat {
 	/** Supports history virtualization and makes currentView optional. */
 	Format_0_1_1 = '0.1.1',
 }
+
+/**
+ * The minimal information on a SharedTree summary. Contains the summary format version.
+ */
+export interface SharedTreeSummaryBase {
+	/**
+	 * Field on summary under which version is stored.
+	 */
+	readonly version: string;
+}
+
+/**
+ * Legacy summary format currently still used for writing.
+ * TODO:#49901: Remove export when this format is no longer written.
+ * @internal
+ */
+export interface SharedTreeSummary_0_0_2<TChange> extends SharedTreeSummaryBase {
+	readonly currentTree: ChangeNode_0_0_2;
+	/**
+	 * A list of edits.
+	 */
+	readonly sequencedEdits: readonly Edit<TChange>[];
+	readonly version: '0.0.2';
+}

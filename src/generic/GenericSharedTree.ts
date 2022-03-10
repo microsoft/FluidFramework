@@ -24,7 +24,7 @@ import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fl
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { v4 } from 'uuid';
 import { assert, assertNotUndefined, fail } from '../Common';
-import { EditLog, EditLogSummary, OrderedEditSet } from '../EditLog';
+import { EditLog, OrderedEditSet } from '../EditLog';
 import { EditId, NodeId, StableNodeId } from '../Identifiers';
 import { initialTree } from '../InitialTree';
 import {
@@ -44,15 +44,18 @@ import {
 import { ReconciliationPath } from '../ReconciliationPath';
 import {
 	Edit,
-	SharedTreeOpType,
+	EditLogSummary,
+	EditStatus,
+	EditWithoutId,
 	SharedTreeEditOp,
 	SharedTreeHandleOp,
-	EditWithoutId,
 	SharedTreeOp,
-	EditStatus,
+	SharedTreeOpType,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
 	SharedTreeSummaryWriteFormat,
 } from './persisted-types';
-import { serialize, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
+import { serialize, SharedTreeSummarizer } from './Summary';
 import { areRevisionViewsSemanticallyEqual, newEditId } from './EditUtilities';
 import { NodeIdContext } from './NodeIdUtilities';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';

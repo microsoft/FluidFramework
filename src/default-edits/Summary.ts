@@ -7,7 +7,7 @@ import { v5 as uuidv5 } from 'uuid';
 import { DetachedSequenceId, EditId, TraitLabel } from '../Identifiers';
 import { assert } from '../Common';
 import { initialTree } from '../InitialTree';
-import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
+import { readFormatVersion } from '../SummaryBackCompatibility';
 import {
 	EditLogSummarizer,
 	formatVersion,
@@ -19,6 +19,7 @@ import {
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
 	SharedTreeSummaryWriteFormat,
+	SharedTreeSummary_0_0_2,
 } from '../generic';
 import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
 import { ChangeInternal, StablePlaceInternal_0_0_2 } from './persisted-types';
