@@ -61,7 +61,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
         if (globalDbEnabled) {
             const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
             const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
-            globalDbMongoManager = new MongoManager(globalDbMongoFactory, false);
+            globalDbMongoManager = new MongoManager(globalDbMongoFactory);
         }
 
         const mongoManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
