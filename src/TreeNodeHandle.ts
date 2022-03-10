@@ -13,7 +13,7 @@ import { fail, memoizeGetter } from './Common';
  * performance; if performance is a concern, consider using the TreeView and TreeViewNode APIs directly.
  * @public
  */
-export class TreeNodeHandle implements TreeNode<TreeNodeHandle> {
+export class TreeNodeHandle implements TreeNode<TreeNodeHandle, NodeId> {
 	private readonly view: TreeView;
 	private readonly viewNode: TreeViewNode;
 

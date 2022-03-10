@@ -5,10 +5,12 @@
 
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { v4 as uuidv4 } from 'uuid';
-import { compareArrays, copyPropertyIfDefined, fail, Mutable } from '../Common';
-import { StablePlace, StableRange } from '../default-edits';
-import { EditId, TraitLabel } from '../Identifiers';
-import { Edit, HasTraits, Payload, StableTraitLocation, TraitMap } from './PersistedTypes';
+import { compareArrays, fail, Mutable } from '../Common';
+import { EditId, NodeId, StableNodeId, TraitLabel } from '../Identifiers';
+import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
+import { NodeIdConverter } from './NodeIdUtilities';
+import { ChangeNode, ChangeNode_0_0_2, Edit, HasTraits, NodeData, Payload, TraitMap } from './persisted-types';
+import { TreeView } from './TreeView';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -24,17 +26,6 @@ export function compareEdits(editIdA: EditId, editIdB: EditId): boolean {
 }
 
 /**
- * Check if two TraitLocations are equal.
- */
-export function compareTraits(traitA: StableTraitLocation, traitB: StableTraitLocation): boolean {
-	if (traitA.label !== traitB.label || traitA.parent !== traitB.parent) {
-		return false;
-	}
-
-	return true;
-}
-
-/**
  * Generates a new edit object from the supplied changes.
  */
 export function newEdit<TEdit>(changes: readonly TEdit[]): Edit<TEdit> {
@@ -46,23 +37,6 @@ export function newEdit<TEdit>(changes: readonly TEdit[]): Edit<TEdit> {
  */
 export function newEditId(): EditId {
 	return uuidv4() as EditId;
-}
-
-/**
- * Deeply clone the given StablePlace
- */
-export function deepCloneStablePlace(place: StablePlace): StablePlace {
-	const clone: StablePlace = { side: place.side };
-	copyPropertyIfDefined(place, clone, 'referenceSibling');
-	copyPropertyIfDefined(place, clone, 'referenceTrait');
-	return clone;
-}
-
-/**
- * Deeply clone the given StableRange
- */
-export function deepCloneStableRange(range: StableRange): StableRange {
-	return { start: deepCloneStablePlace(range.start), end: deepCloneStablePlace(range.end) };
 }
 
 /**
@@ -190,7 +164,7 @@ export type NoTraits<TChild extends HasTraits<unknown>> = Omit<TChild, keyof Has
 /**
  * Transform an input tree into an isomorphic output tree
  * @param tree - the input tree
- * @param convert - a conversion function that will run on each node in the input tree to produce the output tree
+ * @param convert - a conversion function that will run on each node in the input tree to produce the output tree.
  */
 export function convertTreeNodes<TIn extends HasTraits<TIn>, TOut extends HasTraits<TOut>>(
 	root: TIn,
@@ -200,7 +174,18 @@ export function convertTreeNodes<TIn extends HasTraits<TIn>, TOut extends HasTra
 /**
  * Transform an input tree into an isomorphic output tree
  * @param tree - the input tree
- * @param convert - a conversion function that will run on each (non-placeholder) node in the input tree to produce the output tree
+ * @param convert - a conversion function that will run on each node in the input tree to produce the output tree. Returning undefined
+ * means that conversion for the given node was impossible, at which time the entire tree conversion will be aborted and return undefined.
+ */
+export function convertTreeNodes<TIn extends HasTraits<TIn>, TOut extends HasTraits<TOut>>(
+	root: TIn,
+	convert: (node: TIn) => NoTraits<TOut> | undefined
+): TOut | undefined;
+
+/**
+ * Transform an input tree into an isomorphic output tree
+ * @param tree - the input tree
+ * @param convert - a conversion function that will run on each (non-placeholder) node in the input tree to produce the output tree.
  * @param isPlaceholder - a predicate which determines if a node is a placeholder
  */
 export function convertTreeNodes<
@@ -216,7 +201,27 @@ export function convertTreeNodes<
 /**
  * Transform an input tree into an isomorphic output tree
  * @param tree - the input tree
- * @param convert - a conversion function that will run on all nodes not of type TPlaceholder
+ * @param convert - a conversion function that will run on each (non-placeholder) node in the input tree to produce the output tree.
+ * Returning undefined means that conversion for the given node was impossible, at which time the entire tree conversion will be aborted
+ * and return undefined.
+ * @param isPlaceholder - a predicate which determines if a node is a placeholder
+ */
+export function convertTreeNodes<
+	TIn extends HasTraits<TIn | TPlaceholder>,
+	TOut extends HasTraits<TOut | TPlaceholder>,
+	TPlaceholder
+>(
+	root: TIn | TPlaceholder,
+	convert: (node: TIn) => NoTraits<TOut> | undefined,
+	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder
+): TOut | TPlaceholder | undefined;
+
+/**
+ * Transform an input tree into an isomorphic output tree
+ * @param tree - the input tree
+ * @param convert - a conversion function that will run on each (non-placeholder) node in the input tree to produce the output tree.
+ * Returning undefined means that conversion for the given node was impossible, at which time the entire tree conversion will be aborted
+ * and return undefined.
  * @param isPlaceholder - a predicate which determines if the given node is of type TPlaceholder
  */
 export function convertTreeNodes<
@@ -225,15 +230,19 @@ export function convertTreeNodes<
 	TPlaceholder
 >(
 	root: TIn | TPlaceholder,
-	convert: (node: TIn) => NoTraits<TOut>,
+	convert: (node: TIn) => NoTraits<TOut> | undefined,
 	isPlaceholder?: (node: TIn | TPlaceholder) => node is TPlaceholder
-): TOut | TPlaceholder {
+): TOut | TPlaceholder | undefined {
 	if (isKnownType(root, isPlaceholder)) {
 		return root;
 	}
 
 	const rootChildIterator = iterateChildren(Object.entries(root.traits))[Symbol.iterator]();
-	const convertedRoot = convert(root) as Mutable<TOut>;
+	const converted = convert(root);
+	if (converted === undefined) {
+		return undefined;
+	}
+	const convertedRoot = converted as Mutable<TOut>;
 	convertedRoot.traits = {};
 	const pendingNodes: {
 		childIterator: Iterator<[TraitLabel, TIn | TPlaceholder]>;
@@ -249,7 +258,11 @@ export function convertTreeNodes<
 			const [traitLabel, child] = value as [TraitLabel, TIn | TPlaceholder];
 			let newChild: Mutable<TOut> | TPlaceholder;
 			if (!isKnownType(child, isPlaceholder)) {
-				newChild = convert(child) as Mutable<TOut>;
+				const convertedChild = convert(child);
+				if (convertedChild === undefined) {
+					return undefined;
+				}
+				newChild = convertedChild as Mutable<TOut>;
 				newChild.traits = {};
 				pendingNodes.push({
 					childIterator: iterateChildren(Object.entries(child.traits))[Symbol.iterator](),
@@ -271,7 +284,63 @@ export function convertTreeNodes<
 	return convertedRoot;
 }
 
-function* iterateChildren<T>(traits: Iterable<[string, readonly T[]]>): Iterable<[TraitLabel, T]> {
+/**
+ * Visits an input tree in a depth-first pre-order traversal.
+ * @param tree - the input tree
+ * @param visitor - callback invoked for each node in the tree.
+ */
+export function walkTreeNodes<TIn extends HasTraits<TIn>>(tree: TIn, visitor: (node: TIn) => void): void;
+
+/**
+ * Visits an input tree containing placeholders in a depth-first pre-order traversal.
+ * @param tree - the input tree
+ * @param visitor - callback invoked for each node in the tree. Must return true if the given node is a TPlaceholder.
+ */
+export function walkTreeNodes<TIn extends HasTraits<TIn | TPlaceholder>, TPlaceholder = never>(
+	tree: TIn | TPlaceholder,
+	visitors:
+		| ((node: TIn) => void)
+		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
+	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder
+): void;
+
+export function walkTreeNodes<TIn extends HasTraits<TIn | TPlaceholder>, TPlaceholder = never>(
+	tree: TIn | TPlaceholder,
+	visitors:
+		| ((node: TIn) => void)
+		| { nodeVisitor?: (node: TIn) => void; placeholderVisitor?: (placeholder: TPlaceholder) => void },
+	isPlaceholder?: (node: TIn | TPlaceholder) => node is TPlaceholder
+): void {
+	const nodeVisitor = typeof visitors === 'function' ? visitors : visitors.nodeVisitor;
+	const placeholderVisitor = typeof visitors === 'object' ? visitors.placeholderVisitor : undefined;
+	if (isKnownType(tree, isPlaceholder)) {
+		placeholderVisitor?.(tree);
+		return;
+	}
+	nodeVisitor?.(tree);
+
+	const childIterators: Iterator<[TraitLabel, TIn | TPlaceholder]>[] = [
+		iterateChildren(Object.entries(tree.traits))[Symbol.iterator](),
+	];
+
+	while (childIterators.length > 0) {
+		const childIterator = childIterators[childIterators.length - 1] ?? fail('Undefined node');
+		const { value, done } = childIterator.next();
+		if (done === true) {
+			childIterators.pop();
+		} else {
+			const [_, child] = value as [TraitLabel, TIn | TPlaceholder];
+			if (isKnownType(child, isPlaceholder)) {
+				placeholderVisitor?.(child);
+			} else {
+				nodeVisitor?.(child);
+				childIterators.push(iterateChildren(Object.entries(child.traits))[Symbol.iterator]());
+			}
+		}
+	}
+}
+
+export function* iterateChildren<T>(traits: Iterable<[string, readonly T[]]>): Iterable<[TraitLabel, T]> {
 	for (const [label, trait] of traits) {
 		for (const child of trait) {
 			yield [label as TraitLabel, child];
@@ -282,4 +351,102 @@ function* iterateChildren<T>(traits: Iterable<[string, readonly T[]]>): Iterable
 // Useful for collapsing type checks in `convertTreeNodes` into a single line
 function isKnownType<T, Type extends T>(value: T, isType?: (value: T) => value is Type): value is Type {
 	return isType?.(value) ?? false;
+}
+
+/**
+ * Check if two trees are equivalent, meaning they have the same descendants with the same properties.
+ *
+ * See {@link comparePayloads} for payload comparison semantics.
+ */
+export function deepCompareNodes(
+	a: ChangeNode | ChangeNode_0_0_2,
+	b: ChangeNode | ChangeNode_0_0_2,
+	comparator: (
+		a: NodeData<NodeId> | NodeData<StableNodeId>,
+		b: NodeData<NodeId> | NodeData<StableNodeId>
+	) => boolean = compareNodes
+): boolean {
+	if (a === b) {
+		return true;
+	}
+
+	if (!comparator(a, b)) {
+		return false;
+	}
+
+	const traitsA = Object.entries(a.traits);
+	const traitsB = Object.entries(b.traits);
+
+	if (traitsA.length !== traitsB.length) {
+		return false;
+	}
+
+	for (const [traitLabel, childrenA] of traitsA) {
+		const childrenB = b.traits[traitLabel];
+
+		if (childrenA.length !== childrenB.length) {
+			return false;
+		}
+
+		const traitsEqual = compareArrays<ChangeNode | ChangeNode_0_0_2>(childrenA, childrenB, (childA, childB) => {
+			if (typeof childA === 'number' || typeof childB === 'number') {
+				// Check if children are DetachedSequenceIds
+				return childA === childB;
+			}
+
+			return deepCompareNodes(childA, childB);
+		});
+
+		if (!traitsEqual) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/*
+ * Returns true if two nodes have equivalent data and payloads, otherwise false.
+ * Does not compare children
+ * @param nodes - two or more nodes to compare
+ */
+export function compareNodes(
+	a: NodeData<NodeId> | NodeData<StableNodeId>,
+	b: NodeData<NodeId> | NodeData<StableNodeId>
+): boolean {
+	if (a === b) {
+		return true;
+	}
+
+	if (a.identifier !== b.identifier) {
+		return false;
+	}
+
+	if (a.definition !== b.definition) {
+		return false;
+	}
+
+	if (!comparePayloads(a.payload, b.payload)) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Compare two views such that semantically equivalent node IDs are considered equal.
+ */
+export function areRevisionViewsSemanticallyEqual(
+	treeViewA: TreeView,
+	idConverterA: NodeIdConverter,
+	treeViewB: TreeView,
+	idConverterB: NodeIdConverter
+): boolean {
+	const treeA = getChangeNode_0_0_2FromView(treeViewA, idConverterA);
+	const treeB = getChangeNode_0_0_2FromView(treeViewB, idConverterB);
+	if (!deepCompareNodes(treeA, treeB)) {
+		return false;
+	}
+
+	return true;
 }

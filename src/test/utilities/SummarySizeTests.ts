@@ -20,22 +20,20 @@ import {
 	StableRange,
 } from '../../default-edits';
 import { ChangeNode, Edit, TraitMap } from '../../generic';
-import { Definition, EditId, NodeId, TraitLabel } from '../../Identifiers';
+import { Definition, EditId, TraitLabel } from '../../Identifiers';
 import {
-	leftTraitLocation,
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
-	makeEmptyNode,
-	rightTraitLocation,
-	simpleTestTree,
+	setUpTestTree,
 } from './TestUtilities';
+import { TestTree } from './TestNode';
 
 /**
  * An entry into the summarySizeTests list.
  */
 interface SummarySizeTestEntry {
 	/** Helper to obtain the list of edits to apply to the SharedTree. */
-	edits: () => Change[][];
+	edits: (testTree: TestTree) => Change[][];
 	/** Expected size of the summary of the SharedTree after applying the `edits`. */
 	expectedSize: number;
 	/** Description for the test and the edits applied. */
@@ -49,15 +47,15 @@ interface SummarySizeTestEntry {
  */
 const summarySizeTests: SummarySizeTestEntry[] = [
 	{
-		edits: () => [Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))],
+		edits: (testTree) => [Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))],
 		expectedSize: 1707,
 		description: 'when inserting a node',
 	},
 	{
-		edits: () => {
+		edits: (testTree) => {
 			const edits: Change[][] = [];
 			for (let i = 0; i < 50; i++) {
-				edits.push(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)));
+				edits.push(Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation)));
 			}
 			return edits;
 		},
@@ -65,10 +63,10 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		description: 'with 50 inserts',
 	},
 	{
-		edits: () => {
-			const node = makeEmptyNode();
+		edits: (testTree) => {
+			const node = testTree.buildLeaf(testTree.generateNodeId());
 			return [
-				Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation)),
+				Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation)),
 				[Change.setPayload(node.identifier, 10)],
 			];
 		},
@@ -76,10 +74,10 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		description: 'when inserting and setting a node',
 	},
 	{
-		edits: () => {
-			const node = makeEmptyNode();
+		edits: (testTree) => {
+			const node = testTree.buildLeaf(testTree.generateNodeId());
 			return [
-				Insert.create([node], StablePlace.atEndOf(rightTraitLocation)),
+				Insert.create([node], StablePlace.atEndOf(testTree.right.traitLocation)),
 				[Delete.create(StableRange.only(node))],
 			];
 		},
@@ -87,22 +85,24 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		description: 'when inserting and deleting a node',
 	},
 	{
-		edits: () => [Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))],
+		edits: (testTree) => [Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))],
 		expectedSize: 1853,
 		description: 'when inserting and reverting a node',
 		revertEdits: true,
 	},
 	{
-		edits: () => [Insert.create([makeLargeTestTree()], StablePlace.atStartOf(rightTraitLocation))],
+		edits: (testTree) => [
+			Insert.create([makeLargeTestTree(testTree)], StablePlace.atStartOf(testTree.right.traitLocation)),
+		],
 		expectedSize: 2057093,
 		description: 'when inserting a large tree',
 	},
 	{
-		edits: () => {
-			const largeTree = makeLargeTestTree();
+		edits: (testTree) => {
+			const largeTree = makeLargeTestTree(testTree);
 			return [
-				Insert.create([largeTree], StablePlace.atStartOf(rightTraitLocation)),
-				Move.create(StableRange.only(largeTree), StablePlace.atEndOf(leftTraitLocation)),
+				Insert.create([largeTree], StablePlace.atStartOf(testTree.right.traitLocation)),
+				Move.create(StableRange.only(largeTree), StablePlace.atEndOf(testTree.left.traitLocation)),
 			];
 		},
 		expectedSize: 2057470,
@@ -124,15 +124,16 @@ export function runSummarySizeTests<TSharedTree extends SharedTree>(
 		const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
 		let tree: TSharedTree;
+		let testTree: TestTree;
 		let testObjectProvider: TestObjectProvider;
 
 		// Resets the tree before each test
 		beforeEach(async () => {
 			const testingComponents = await setUpLocalServerTestSharedTree({
 				setupEditId,
-				initialTree: simpleTestTree,
 			});
 			tree = testingComponents.tree;
+			testTree = setUpTestTree(tree);
 			testObjectProvider = testingComponents.testObjectProvider;
 		});
 
@@ -164,13 +165,13 @@ export function runSummarySizeTests<TSharedTree extends SharedTree>(
 
 		for (const { edits, expectedSize, description, revertEdits } of summarySizeTests) {
 			it(`does not exceed ${expectedSize} ${description}`, async () => {
-				await checkSummarySize(edits(), expectedSize, revertEdits);
+				await checkSummarySize(edits(testTree), expectedSize, revertEdits);
 			});
 		}
 	});
 }
 
-function makeLargeTestTree(nodesPerTrait = 10, traitsPerLevel = 2, levels = 2): ChangeNode {
+function makeLargeTestTree(testTree: TestTree, nodesPerTrait = 10, traitsPerLevel = 2, levels = 2): ChangeNode {
 	const definition = uuidv4() as Definition;
 
 	const traitLabels: TraitLabel[] = [];
@@ -180,12 +181,13 @@ function makeLargeTestTree(nodesPerTrait = 10, traitsPerLevel = 2, levels = 2): 
 
 	return {
 		definition,
-		identifier: uuidv4() as NodeId,
-		traits: generateTraits(definition, traitLabels, nodesPerTrait, levels),
+		identifier: testTree.generateNodeId(),
+		traits: generateTraits(testTree, definition, traitLabels, nodesPerTrait, levels),
 	};
 }
 
 function generateTraits(
+	testTree: TestTree,
 	definition: Definition,
 	traitLabels: TraitLabel[],
 	nodesPerTrait: number,
@@ -198,10 +200,10 @@ function generateTraits(
 		traits[label] = Array.from(Array(nodesPerTrait).keys()).map(() => {
 			return {
 				definition,
-				identifier: uuidv4() as NodeId,
+				identifier: testTree.generateNodeId(),
 				traits:
 					level < totalLevels
-						? generateTraits(definition, traitLabels, nodesPerTrait, totalLevels, level + 1)
+						? generateTraits(testTree, definition, traitLabels, nodesPerTrait, totalLevels, level + 1)
 						: {},
 			};
 		});

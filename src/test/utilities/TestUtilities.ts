@@ -5,7 +5,7 @@
 
 import * as fs from 'fs';
 import { resolve, join } from 'path';
-import { v4 as uuidv4, v4, v5 as uuidv5 } from 'uuid';
+import { v4, v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
@@ -28,30 +28,30 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { assert } from '@fluidframework/common-utils';
 import type { IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails } from '@fluidframework/core-interfaces';
-import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
-import { assertNotUndefined, compareArrays, fail } from '../../Common';
-import { initialTree } from '../../InitialTree';
-import { SharedTree, Change, setTrait, SharedTreeFactory, StablePlace, ChangeInternal } from '../../default-edits';
+import { DetachedSequenceId, EditId, NodeId, StableNodeId } from '../../Identifiers';
+import { assertNotUndefined, fail, identity } from '../../Common';
+import { SharedTree, Change, setTrait, ChangeInternal, StablePlace, getNodeId } from '../../default-edits';
 import {
 	ChangeNode,
-	comparePayloads,
 	Edit,
-	GenericSharedTree,
 	getUploadedEditChunkContents,
 	newEdit,
 	NodeData,
 	NodeIdContext,
+	NodeIdConverter,
+	Payload,
 	SharedTreeDiagnosticEvent,
 	SharedTreeSummaryWriteFormat,
-	StableTraitLocation,
+	TraitLocation,
+	TreeView,
 } from '../../generic';
-import { RevisionView, TreeView } from '../../generic/TreeView';
 import { EditLog } from '../../EditLog';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
-import { reservedIdCount } from '../../generic/GenericSharedTree';
+import { GenericSharedTree, reservedIdCount } from '../../generic/GenericSharedTree';
 import { getChangeNodeFromView, getChangeNodeFromViewNode } from '../../SerializationUtilities';
-import { RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
+import { initialTree } from '../../InitialTree';
+import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
@@ -108,107 +108,8 @@ export interface SharedTreeTestingOptions {
 	logger?: ITelemetryBaseLogger;
 }
 
-/**
- * Check if the given value is defined using mocha's `expect`. Return the defined value;
- */
-export function expectDefined<T>(value: T | undefined): T {
-	expect(value).to.be.not.undefined;
-	return value as T;
-}
-
-/**
- * Left node of {@link simpleTestTree}
- *
- * @deprecated Use {@link SimpleTestTree.left} instead.
- */
-export const left: ChangeNode = makeEmptyNode('a083857d-a8e1-447a-ba7c-92fd0be9db2b' as NodeId);
-
-/**
- * Right node of {@link simpleTestTree}
- *
- * @deprecated Use {@link SimpleTestTree.right} instead.
- */
-export const right: ChangeNode = makeEmptyNode('78849e85-cb7f-4b93-9fdc-18439c60fe30' as NodeId);
-
-/**
- * Label for the 'left' trait in {@link simpleTestTree}
- *
- * @deprecated Use {@link SimpleTestTree.left}'s {@link TestNode.traitLabel} instead.
- */
-export const leftTraitLabel = 'left' as TraitLabel;
-
-/**
- * Label for the 'right' trait in {@link simpleTestTree}
- *
- * @deprecated Use {@link SimpleTestTree.right}'s {@link TestNode.traitLabel} instead.
- */
-export const rightTraitLabel = 'right' as TraitLabel;
-
-/**
- * NodeId for the root node of {@link simpleTestTree}
- *
- * @deprecated Use {@link SimpleTestTree} instead.
- */
-export const rootNodeId = '25de3875-9537-47ec-8699-8a85e772a509' as NodeId;
-
-/**
- * A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait.
- *
- * @deprecated Use {@link SimpleTestTree} instead.
- */
-export const simpleTestTree: ChangeNode = {
-	...makeEmptyNode(rootNodeId),
-	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
-};
-
-/**
- * Convenient pre-made TraitLocation for the left trait of 'simpleTestTree'.
- *
- * @deprecated Use {@link SimpleTestTree.left}'s {@link TestNode.traitLocation} instead.
- */
-export const leftTraitLocation = {
-	parent: simpleTestTree.identifier,
-	label: leftTraitLabel,
-};
-
-/**
- * Convenient pre-made TraitLocation for the right trait of 'simpleTestTree'.
- *
- * @deprecated Use {@link SimpleTestTree.right}'s {@link TestNode.traitLocation} instead.
- */
-export const rightTraitLocation = {
-	parent: simpleTestTree.identifier,
-	label: rightTraitLabel,
-};
-
-/**
- * Convenient pre-made RevisionView for 'simpleTestTree'.
- *
- * @deprecated Use {@link SimpleTestTree.view} instead.
- */
-export const simpleRevisionView = RevisionView.fromTree(simpleTestTree);
-
-/**
- * Convenient pre-made RevisionView for 'initialTree'.
- */
-export const initialRevisionView = RevisionView.fromTree(initialTree);
-
-/**
- * Convenient pre-made RevisionView for 'simpleTestTree'.
- * Expensive validation is turned on for this view, and it should not be used for performance testing.
- *
- * @deprecated Construct a {@link RevisionView} from a non-static tree.
- */
-export const simpleRevisionViewWithValidation = RevisionView.fromTree(simpleTestTree, true);
-
-/**
- * Convenient pre-made RevisionView for 'initialTree'.
- * Expensive validation is turned on for this view, and it should not be used for performance testing.
- */
-export const initialRevisionViewWithValidation = RevisionView.fromTree(initialTree, true);
-
-export const testTraitLabel = 'e276f382-fa99-49a1-ae81-42001791c733' as TraitLabel;
-export function testTrait(view: TreeView): StableTraitLocation {
+export const testTraitLabel = SimpleTestTree.traitLabel;
+export function testTrait(view: TreeView): TraitLocation {
 	return {
 		label: testTraitLabel,
 		parent: view.root,
@@ -216,18 +117,9 @@ export function testTrait(view: TreeView): StableTraitLocation {
 }
 
 /** Sets up and returns an object of components useful for testing SharedTree. */
-export function setUpTestSharedTree(options?: SharedTreeTestingOptions): SharedTreeTestingComponents {
-	return setUpTestSharedTreeGeneric(SharedTree.getFactory, options);
-}
-
-/** Sets up and returns an object of components useful for testing a GenericSharedTree. */
-function setUpTestSharedTreeGeneric<TSharedTree extends SharedTree, TSharedTreeFactory extends SharedTreeFactory>(
-	factoryGetter: (
-		summarizeHistory?: boolean,
-		writeSummaryFormat?: SharedTreeSummaryWriteFormat
-	) => TSharedTreeFactory,
+export function setUpTestSharedTree(
 	options: SharedTreeTestingOptions = { localMode: true }
-): SharedTreeTestingComponents<TSharedTree> {
+): SharedTreeTestingComponents {
 	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId, summarizeHistory, writeSummaryFormat } =
 		options;
 	let componentRuntime: MockFluidDataStoreRuntime;
@@ -246,8 +138,8 @@ function setUpTestSharedTreeGeneric<TSharedTree extends SharedTree, TSharedTreeF
 	}
 
 	// Enable expensiveValidation
-	const factory = factoryGetter(summarizeHistory === undefined ? true : summarizeHistory, writeSummaryFormat);
-	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true) as TSharedTree;
+	const factory = SharedTree.getFactory(summarizeHistory === undefined ? true : summarizeHistory, writeSummaryFormat);
+	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true);
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
 		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
@@ -349,26 +241,6 @@ afterEach(() => {
 export async function setUpLocalServerTestSharedTree(
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents> {
-	return setUpLocalServerTestSharedTreeGeneric(SharedTree.getFactory, options);
-}
-
-/**
- * Sets up and returns an object of components useful for testing a GenericSharedTree with a local server.
- * Required for tests that involve the uploadBlob API.
- *
- * Any TestObjectProvider created by this function will be reset after the test completes (via afterEach) hook.
- */
-async function setUpLocalServerTestSharedTreeGeneric<
-	TSharedTree extends SharedTree,
-	TSharedTreeFactory extends SharedTreeFactory
->(
-	factoryGetter: (
-		summarizeHistory?: boolean,
-		writeSummaryFormat?: SharedTreeSummaryWriteFormat,
-		uploadEditChunks?: boolean
-	) => TSharedTreeFactory,
-	options: LocalServerSharedTreeTestingOptions
-): Promise<LocalServerSharedTreeTestingComponents<TSharedTree>> {
 	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory, writeSummaryFormat, uploadEditChunks } =
 		options;
 
@@ -376,7 +248,7 @@ async function setUpLocalServerTestSharedTreeGeneric<
 	const registry: ChannelFactoryRegistry = [
 		[
 			treeId,
-			factoryGetter(
+			SharedTree.getFactory(
 				summarizeHistory === undefined ? true : summarizeHistory,
 				writeSummaryFormat,
 				uploadEditChunks === undefined ? true : uploadEditChunks
@@ -421,8 +293,8 @@ async function setUpLocalServerTestSharedTreeGeneric<
 		)) as Container;
 	}
 
-	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
-	const tree = await dataObject.getSharedObject<TSharedTree>(treeId);
+	const dataObject = await requestFluidObject<ITestFluidObject>(container, '/');
+	const tree = await dataObject.getSharedObject<SharedTree>(treeId);
 
 	if (initialTree !== undefined && testObjectProvider === undefined) {
 		setTestTree(tree, initialTree, setupEditId);
@@ -433,68 +305,44 @@ async function setUpLocalServerTestSharedTreeGeneric<
 
 /** Sets testTrait to contain `node`. */
 function setTestTree(tree: SharedTree, node: ChangeNode, overrideId?: EditId): EditId {
+	const trait = testTrait(tree.currentView);
 	if (overrideId === undefined) {
-		return tree.applyEdit(...setTrait(testTrait(tree.currentView), [node])).id;
+		return tree.applyEdit(...setTrait(trait, [node])).id;
 	} else {
-		const changes = setTrait(testTrait(tree.currentView), [node]).map((c) => tree.internalizeChange(c));
+		const changes = setTrait(trait, [node]).map((c) => tree.internalizeChange(c));
 		return tree.applyEditInternal({ changes, id: overrideId }).id;
 	}
 }
 
 /**
- * Creates an empty node for testing purposes.
- *
- * @deprecated Use {@link SimpleTestTree.buildLeaf} instead.
- */
-export function makeEmptyNode(
-	identifier: NodeId = uuidv4() as NodeId
-): Omit<ChangeNode, 'traits'> & { traits: Record<string, never> } {
-	const definition = 'node' as Definition;
-	return { definition, identifier, traits: {} };
-}
-
-/** Creates a node with two children, one under a 'left' trait and one under a 'right' trait */
-export function makeTestNode(identifier: NodeId = uuidv4() as NodeId): ChangeNode {
-	const definition = 'node' as Definition;
-	const left: ChangeNode = makeEmptyNode('c4acaed2-afac-417e-a3d7-07ea73c0330a' as NodeId);
-	const right: ChangeNode = makeEmptyNode('452c618a-ba0c-4d9b-89f3-2248d27f8c7f' as NodeId);
-	const leftTraitLabel = 'left' as TraitLabel;
-	const rightTraitLabel = 'right' as TraitLabel;
-	return {
-		definition,
-		identifier,
-		traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
-	};
-}
-
-/**
  * Creates a list of edits with stable IDs that can be processed by a SharedTree.
- * @param numberOfEdits - the number of edits to create
  * @returns the list of created edits
  */
-export function createStableEdits(numberOfEdits: number): Edit<Change>[] {
+export function createStableEdits(
+	numberOfEdits: number,
+	idContext: NodeIdContext = makeTestNodeContext(),
+	payload: (i: number) => Payload = identity
+): Edit<Change>[] {
 	if (numberOfEdits === 0) {
 		return [];
 	}
 
 	const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
-
-	// First edit sets the test tree
-	const edit = newEdit(setTrait({ label: testTraitLabel, parent: initialTree.identifier }, [simpleTestTree]));
-
-	const nodeId = 'ae6b24eb-6fa8-42cc-abd2-48f250b7798f' as NodeId;
-	const node = makeEmptyNode(nodeId);
+	const nodeId = idContext.generateNodeId('ae6b24eb-6fa8-42cc-abd2-48f250b7798f');
+	const node = buildLeaf(nodeId);
 	const insertEmptyNode = newEdit([
 		Change.build([node], 0 as DetachedSequenceId),
-		Change.insert(0 as DetachedSequenceId, StablePlace.before(left)),
+		Change.insert(
+			0 as DetachedSequenceId,
+			StablePlace.atEndOf({ label: testTraitLabel, parent: idContext.convertToNodeId(initialTree.identifier) })
+		),
 	]);
 
-	const edits: Edit<Change>[] = [{ changes: edit.changes, id: '5a17f20a-0567-41d4-90bb-fcc381d23f05' as EditId }];
-	edits.push({ ...insertEmptyNode, id: uuidv5('test', uuidNamespace) as EditId });
+	const edits: Edit<Change>[] = [{ ...insertEmptyNode, id: uuidv5('test', uuidNamespace) as EditId }];
 
 	// Every subsequent edit is a set payload
-	for (let i = 1; i < numberOfEdits - 1; i++) {
-		const edit = newEdit([Change.setPayload(nodeId, i)]);
+	for (let i = 1; i < numberOfEdits; i++) {
+		const edit = newEdit([Change.setPayload(nodeId, payload(i))]);
 		edits.push({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 	}
 
@@ -537,7 +385,7 @@ export async function asyncFunctionThrowsCorrectly(
  * Does not compare children or payloads.
  * @param nodes - two or more nodes to compare
  */
-export function areNodesEquivalent(...nodes: NodeData[]): boolean {
+export function areNodesEquivalent(...nodes: NodeData<unknown>[]): boolean {
 	if (nodes.length < 2) {
 		fail('Too few nodes to compare');
 	}
@@ -548,55 +396,6 @@ export function areNodesEquivalent(...nodes: NodeData[]): boolean {
 		}
 
 		if (nodes[i].identifier !== nodes[0].identifier) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-/**
- * Check if two trees are equivalent, meaning they have the same descendants with the same properties.
- *
- * See {@link comparePayloads} for payload comparison semantics.
- */
-export function deepCompareNodes(a: ChangeNode, b: ChangeNode): boolean {
-	if (a.identifier !== b.identifier) {
-		return false;
-	}
-
-	if (a.definition !== b.definition) {
-		return false;
-	}
-
-	if (!comparePayloads(a.payload, b.payload)) {
-		return false;
-	}
-
-	const traitsA = Object.entries(a.traits);
-	const traitsB = Object.entries(b.traits);
-
-	if (traitsA.length !== traitsB.length) {
-		return false;
-	}
-
-	for (const [traitLabel, childrenA] of traitsA) {
-		const childrenB = b.traits[traitLabel];
-
-		if (childrenA.length !== childrenB.length) {
-			return false;
-		}
-
-		const traitsEqual = compareArrays(childrenA, childrenB, (childA, childB) => {
-			if (typeof childA === 'number' || typeof childB === 'number') {
-				// Check if children are DetachedSequenceIds
-				return childA === childB;
-			}
-
-			return deepCompareNodes(childA, childB);
-		});
-
-		if (!traitsEqual) {
 			return false;
 		}
 	}
@@ -850,4 +649,9 @@ export function noopEdit(view: TreeView): Change[] {
 		traitLocation,
 		trait.map((id) => getChangeNodeFromViewNode(view, id))
 	);
+}
+
+/** Translate an ID in one context to an ID in another */
+export function translateId(id: NodeId | NodeData<NodeId>, from: NodeIdConverter, to: NodeIdConverter): NodeId {
+	return to.convertToNodeId(from.convertToStableNodeId(getNodeId(id)));
 }

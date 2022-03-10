@@ -261,7 +261,8 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		summary: EditLogSummary<TChange> = { editIds: [], editChunks: [] },
 		logger?: ITelemetryLogger,
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
-		editsPerChunk = 100
+		editsPerChunk = 100,
+		indexOfFirstEditInSession = summary.editIds.length
 	) {
 		super();
 		const { editChunks, editIds } = summary;
@@ -291,7 +292,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 		this.sequencedEditIds = editIds.slice();
 
-		this.indexOfFirstEditInSession = this.numberOfSequencedEdits;
+		this.indexOfFirstEditInSession = indexOfFirstEditInSession;
 		this.maximumEvictableIndex = this.indexOfFirstEditInSession - 1;
 
 		this.sequencedEditIds.forEach((id, index) => {
@@ -524,6 +525,17 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 */
 	public addSequencedEdit(edit: Edit<TChange>, message: MessageSequencingInfo): void {
 		this.addSequencedEditInternal(edit, message, message.minimumSequenceNumber);
+	}
+
+	/**
+	 * Removes all local edits from this EditLog. This is somewhat of a kludge to support edit ops concurrent to a version update op.
+	 * TODO:#73073: Remove this API after conversion of old local edits is supported.
+	 */
+	public clearLocalEdits(): void {
+		for (const { id } of this.localEdits) {
+			this.allEditIds.delete(id);
+		}
+		this.localEdits.length = 0;
 	}
 
 	/**

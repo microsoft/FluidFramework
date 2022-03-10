@@ -6,15 +6,24 @@
 import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { assertNotUndefined, copyPropertyIfDefined } from '../Common';
 import {
-	ChangeNode,
-	NodeIdGenerator,
-	StableTraitLocation,
+	ChangeNode_0_0_2,
+	NodeIdContext,
+	NodeIdConverter,
+	Side,
+	TraitLocation,
+	TraitLocationInternal_0_0_2,
 	TransactionView,
 	TreeNodeSequence,
 	TreeView,
+	tryConvertToTraitLocation,
 } from '../generic';
 import { placeFromStablePlace, rangeFromStableRange } from '../TreeViewUtilities';
-import { BuildNodeInternal, ChangeInternal } from './PersistedTypes';
+import {
+	BuildNodeInternal,
+	ChangeInternal,
+	StablePlaceInternal_0_0_2,
+	StableRangeInternal_0_0_2,
+} from './persisted-types';
 import { BuildNode, BuildTreeNode, Change, StablePlace, StableRange } from './ChangeTypes';
 
 /**
@@ -25,7 +34,7 @@ import { BuildNode, BuildTreeNode, Change, StablePlace, StableRange } from './Ch
  * Create a sequence of changes that resets the contents of `trait`.
  * @public
  */
-export function setTrait(trait: StableTraitLocation, nodes: TreeNodeSequence<BuildNode>): Change[] {
+export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode>): Change[] {
 	const id = 0 as DetachedSequenceId;
 	const traitContents = StableRange.all(trait);
 	return [Change.detach(traitContents), Change.build(nodes, id), Change.insert(id, traitContents.start)];
@@ -36,11 +45,11 @@ export function setTrait(trait: StableTraitLocation, nodes: TreeNodeSequence<Bui
  * @internal
  */
 export function setTraitInternal(
-	trait: StableTraitLocation,
+	trait: TraitLocationInternal_0_0_2,
 	nodes: TreeNodeSequence<BuildNodeInternal>
 ): ChangeInternal[] {
 	const id = 0 as DetachedSequenceId;
-	const traitContents = StableRange.all(trait);
+	const traitContents = StableRangeInternal_0_0_2.all(trait);
 	return [
 		ChangeInternal.detach(traitContents),
 		ChangeInternal.build(nodes, id),
@@ -53,7 +62,24 @@ export function setTraitInternal(
  * @param view - the `TreeView` within which to validate the given place
  * @param place - the `StablePlace` to check
  */
-export function validateStablePlace(view: TreeView, place: StablePlace): PlaceValidationResult {
+export function validateStablePlace(
+	view: TreeView,
+	place: StablePlaceInternal_0_0_2,
+	idConverter: NodeIdConverter
+):
+	| {
+			result: PlaceValidationResult.Valid;
+			side: Side;
+			referenceSibling: NodeId;
+			referenceTrait?: never;
+	  }
+	| {
+			result: PlaceValidationResult.Valid;
+			side: Side;
+			referenceSibling?: never;
+			referenceTrait: TraitLocation;
+	  }
+	| { result: Exclude<PlaceValidationResult, PlaceValidationResult.Valid> } {
 	/* A StablePlace is valid if the following conditions are met:
 	 *     1. A sibling or trait is defined.
 	 *     2. If a sibling is defined, both it and its parent exist in the `TreeView`.
@@ -67,27 +93,33 @@ export function validateStablePlace(view: TreeView, place: StablePlace): PlaceVa
 		(referenceSibling === undefined && referenceTrait === undefined) ||
 		(referenceSibling !== undefined && referenceTrait !== undefined)
 	) {
-		return PlaceValidationResult.Malformed;
+		return { result: PlaceValidationResult.Malformed };
 	}
 
 	if (referenceSibling !== undefined) {
-		if (!view.hasNode(referenceSibling)) {
-			return PlaceValidationResult.MissingSibling;
+		const sibling = idConverter.tryConvertToNodeId(referenceSibling);
+		if (sibling === undefined || !view.hasNode(sibling)) {
+			return { result: PlaceValidationResult.MissingSibling };
 		}
 
 		// Detached nodes and the root are invalid anchors.
-		if (view.tryGetTraitLabel(referenceSibling) === undefined) {
-			return PlaceValidationResult.SiblingIsRootOrDetached;
+		if (view.tryGetTraitLabel(sibling) === undefined) {
+			return { result: PlaceValidationResult.SiblingIsRootOrDetached };
 		}
 
-		return PlaceValidationResult.Valid;
+		return { result: PlaceValidationResult.Valid, side: place.side, referenceSibling: sibling };
 	}
 
-	if (!view.hasNode(assertNotUndefined(referenceTrait).parent)) {
-		return PlaceValidationResult.MissingParent;
+	const trait = tryConvertToTraitLocation(assertNotUndefined(referenceTrait), idConverter);
+	if (trait === undefined) {
+		return { result: PlaceValidationResult.MissingParent };
 	}
 
-	return PlaceValidationResult.Valid;
+	if (!view.hasNode(trait.parent)) {
+		return { result: PlaceValidationResult.MissingParent };
+	}
+
+	return { result: PlaceValidationResult.Valid, side: place.side, referenceTrait: trait };
 }
 
 /**
@@ -111,7 +143,13 @@ export type BadPlaceValidationResult = Exclude<PlaceValidationResult, PlaceValid
  * @param view - the `TreeView` within which to validate the given range
  * @param range - the `StableRange` to check
  */
-export function validateStableRange(view: TreeView, range: StableRange): RangeValidationResult {
+export function validateStableRange(
+	view: TreeView,
+	range: StableRangeInternal_0_0_2,
+	idConverter: NodeIdConverter
+):
+	| { result: RangeValidationResultKind.Valid; start: StablePlace; end: StablePlace }
+	| { result: Exclude<RangeValidationResult, RangeValidationResultKind.Valid> } {
 	/* A StableRange is valid if the following conditions are met:
 	 *     1. Its start and end places are valid.
 	 *     2. Its start and end places are within the same trait.
@@ -119,32 +157,36 @@ export function validateStableRange(view: TreeView, range: StableRange): RangeVa
 	 */
 	const { start, end } = range;
 
-	const startValidationResult = validateStablePlace(view, start);
-	if (startValidationResult !== PlaceValidationResult.Valid) {
-		return { kind: RangeValidationResultKind.BadPlace, place: start, placeFailure: startValidationResult };
+	const validatedStart = validateStablePlace(view, start, idConverter);
+	if (validatedStart.result !== PlaceValidationResult.Valid) {
+		return {
+			result: { kind: RangeValidationResultKind.BadPlace, place: start, placeFailure: validatedStart.result },
+		};
 	}
 
-	const endValidationResult = validateStablePlace(view, end);
-	if (endValidationResult !== PlaceValidationResult.Valid) {
-		return { kind: RangeValidationResultKind.BadPlace, place: end, placeFailure: endValidationResult };
+	const validatedEnd = validateStablePlace(view, end, idConverter);
+	if (validatedEnd.result !== PlaceValidationResult.Valid) {
+		return { result: { kind: RangeValidationResultKind.BadPlace, place: end, placeFailure: validatedEnd.result } };
 	}
 
-	const startTraitLocation =
-		start.referenceTrait || view.getTraitLocation(assertNotUndefined(start.referenceSibling));
-	const endTraitLocation = end.referenceTrait || view.getTraitLocation(assertNotUndefined(end.referenceSibling));
+	const startTraitLocation = validatedStart.referenceTrait || view.getTraitLocation(validatedStart.referenceSibling);
+	const endTraitLocation = validatedEnd.referenceTrait || view.getTraitLocation(validatedEnd.referenceSibling);
 	if (!compareTraits(startTraitLocation, endTraitLocation)) {
-		return RangeValidationResultKind.PlacesInDifferentTraits;
+		return { result: RangeValidationResultKind.PlacesInDifferentTraits };
 	}
 
-	const { start: startPlace, end: endPlace } = rangeFromStableRange(view, range);
+	const { start: startPlace, end: endPlace } = rangeFromStableRange(view, {
+		start: validatedStart,
+		end: validatedEnd,
+	});
 	const startIndex = view.findIndexWithinTrait(startPlace);
 	const endIndex = view.findIndexWithinTrait(endPlace);
 
 	if (startIndex > endIndex) {
-		return RangeValidationResultKind.Inverted;
+		return { result: RangeValidationResultKind.Inverted };
 	}
 
-	return RangeValidationResultKind.Valid;
+	return { result: RangeValidationResultKind.Valid, start: validatedStart, end: validatedEnd };
 }
 
 /**
@@ -164,7 +206,11 @@ export type RangeValidationResult =
 	| RangeValidationResultKind.Valid
 	| RangeValidationResultKind.PlacesInDifferentTraits
 	| RangeValidationResultKind.Inverted
-	| { kind: RangeValidationResultKind.BadPlace; place: StablePlace; placeFailure: BadPlaceValidationResult };
+	| {
+			kind: RangeValidationResultKind.BadPlace;
+			place: StablePlaceInternal_0_0_2;
+			placeFailure: BadPlaceValidationResult;
+	  };
 
 /**
  * The result of validating a bad range.
@@ -174,7 +220,7 @@ export type BadRangeValidationResult = Exclude<RangeValidationResult, RangeValid
 /**
  * Check if two TraitLocations are equal.
  */
-function compareTraits(traitA: StableTraitLocation, traitB: StableTraitLocation): boolean {
+function compareTraits(traitA: TraitLocation, traitB: TraitLocation): boolean {
 	if (traitA.label !== traitB.label || traitA.parent !== traitB.parent) {
 		return false;
 	}
@@ -207,22 +253,38 @@ export function detachRange(
 }
 
 /**
- * Determine if an BuildNode is a DetachedSequenceId.
+ * Deeply clone the given StablePlace
+ */
+export function deepCloneStablePlace(place: StablePlace): StablePlace {
+	const clone: StablePlace = { side: place.side };
+	copyPropertyIfDefined(place, clone, 'referenceSibling');
+	copyPropertyIfDefined(place, clone, 'referenceTrait');
+	return clone;
+}
+
+/**
+ * Deeply clone the given StableRange
+ */
+export function deepCloneStableRange(range: StableRange): StableRange {
+	return { start: deepCloneStablePlace(range.start), end: deepCloneStablePlace(range.end) };
+}
+
+/**
+ * Determine if a node is a DetachedSequenceId.
  * @internal
  */
-export function isDetachedSequenceId(node: BuildNode): node is DetachedSequenceId {
+export function isDetachedSequenceId(node: BuildNode | BuildNodeInternal): node is DetachedSequenceId {
 	return typeof node !== 'object';
 }
 
 /** Convert a tree used in a Build change into its internal representation */
 export function internalizeBuildNode(
 	nodeData: BuildTreeNode,
-	nodeIdGenerator: NodeIdGenerator
-): Omit<ChangeNode, 'traits'> {
-	// TODO:#70358: Re-implement this method to use ids created by an IdCompressor
+	nodeIdContext: NodeIdContext
+): Omit<ChangeNode_0_0_2, 'traits'> {
 	const output = {
 		definition: nodeData.definition,
-		identifier: nodeData.identifier ?? nodeIdGenerator.generateNodeId(),
+		identifier: nodeIdContext.convertToStableNodeId(nodeData.identifier ?? nodeIdContext.generateNodeId()),
 	};
 	copyPropertyIfDefined(nodeData, output, 'payload');
 	return output;

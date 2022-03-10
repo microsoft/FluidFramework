@@ -5,6 +5,7 @@
 
 // API Exports
 
+export * from './persisted-types';
 export {
 	EditCommittedHandler,
 	SequencedEditAppliedHandler,
@@ -14,39 +15,22 @@ export {
 	ISharedTreeEvents,
 	GenericSharedTree,
 	SharedTreeFactoryOptions,
-	SharedTreeSummaryWriteFormat,
 	SharedTreeSummaryReadFormat,
 	SharedTreeChangeType,
 	SharedTreeFailureType,
 } from './GenericSharedTree';
 export * from './EventTypes';
 export {
-	Side,
-	Edit,
-	EditWithoutId,
-	EditBase,
-	TraitMap,
-	TreeNodeSequence,
-	Payload,
-	NodeData,
-	TreeNode,
-	ChangeNode,
-	EditStatus,
-	TraitLocation,
-	StableTraitLocation,
-	SharedTreeOpType,
-	PlaceholderTree,
-	HasTraits,
-} from './PersistedTypes';
-export {
 	newEdit,
 	newEditId,
 	comparePayloads,
 	convertTreeNodes,
-	deepCloneStablePlace,
-	deepCloneStableRange,
 	NoTraits,
-} from './GenericEditUtilities';
+	iterateChildren,
+	compareNodes,
+	deepCompareNodes,
+	areRevisionViewsSemanticallyEqual,
+} from './EditUtilities';
 export {
 	TransactionFactory,
 	GenericTransaction,
@@ -76,13 +60,14 @@ export {
 	PlaceIndex,
 	TreeViewNode,
 	TreeView,
-	RevisionView,
-	TransactionView,
 	TraitNodeIndex,
 	TreeViewPlace,
 	TreeViewRange,
+	TraitLocation,
 } from './TreeView';
-export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
+export { RevisionView, TransactionView } from './RevisionView';
+export * from './NodeIdUtilities';
+export * from './Conversion002';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package

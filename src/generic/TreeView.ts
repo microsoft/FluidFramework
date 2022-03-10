@@ -3,16 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { assert, copyPropertyIfDefined, fail } from '../Common';
+import { assert, fail } from '../Common';
 import { NodeId, TraitLabel } from '../Identifiers';
 import { Delta, Forest } from '../Forest';
-import { ChangeNode, NodeData, Payload, Side, StableTraitLocation } from './PersistedTypes';
+import { NodeData, Side } from './persisted-types';
+
+/**
+ * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
+ * @public
+ */
+export interface TraitLocation {
+	readonly parent: NodeId;
+	readonly label: TraitLabel;
+}
 
 /**
  * An immutable view of a distributed tree node.
  * @public
  */
-export interface TreeViewNode extends NodeData {
+export interface TreeViewNode extends NodeData<NodeId> {
 	readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
 }
 
@@ -42,7 +51,7 @@ export type TraitNodeIndex = number & { readonly TraitNodeIndex: unique symbol }
 export interface TreeViewPlace {
 	readonly sibling?: NodeId;
 	readonly side: Side;
-	readonly trait: StableTraitLocation;
+	readonly trait: TraitLocation;
 }
 
 /**
@@ -60,7 +69,7 @@ export interface TreeViewRange {
  * @public
  */
 export interface NodeInTrait {
-	readonly trait: StableTraitLocation;
+	readonly trait: TraitLocation;
 	readonly index: TraitNodeIndex;
 }
 
@@ -157,7 +166,7 @@ export abstract class TreeView {
 	 * @returns the trait location of the node with the given id. Fails if the node does not exist in this view or of it is the root
 	 * node
 	 */
-	public getTraitLocation(id: NodeId): StableTraitLocation {
+	public getTraitLocation(id: NodeId): TraitLocation {
 		const parentData = this.forest.getParent(id);
 		return {
 			parent: parentData.parentId,
@@ -169,7 +178,7 @@ export abstract class TreeView {
 	 * @returns the trait location of the node with the given id, or undefined if the node does not exist in this view or if it is the root
 	 * node
 	 */
-	public tryGetTraitLocation(id: NodeId): StableTraitLocation | undefined {
+	public tryGetTraitLocation(id: NodeId): TraitLocation | undefined {
 		const parentData = this.forest.tryGetParent(id);
 		if (parentData === undefined) {
 			return undefined;
@@ -233,7 +242,7 @@ export abstract class TreeView {
 	/**
 	 * @returns the trait at the given location. If no such trait exists, returns an empty trait.
 	 */
-	public getTrait(traitLocation: StableTraitLocation): readonly NodeId[] {
+	public getTrait(traitLocation: TraitLocation): readonly NodeId[] {
 		return this.getViewNode(traitLocation.parent).traits.get(traitLocation.label) ?? [];
 	}
 
@@ -272,7 +281,7 @@ export abstract class TreeView {
 		}
 	}
 
-	private getIndexOfSide(side: Side, traitLocation: StableTraitLocation): PlaceIndex {
+	private getIndexOfSide(side: Side, traitLocation: TraitLocation): PlaceIndex {
 		return side === Side.After ? (0 as PlaceIndex) : (this.getTrait(traitLocation).length as PlaceIndex);
 	}
 
@@ -285,122 +294,6 @@ export abstract class TreeView {
 	public delta(view: TreeView): Delta<NodeId> {
 		assert(this.root === view.root, 'Delta can only be calculated between views that share a root');
 		return this.forest.delta(view.forest);
-	}
-}
-
-/**
- * An immutable view of a distributed tree.
- * @public
- */
-export class RevisionView extends TreeView {
-	/**
-	 * Constructs a `RevisionView` using the supplied tree.
-	 * @param root - the root of the tree to use as the contents of the `RevisionView`
-	 */
-	public static fromTree(root: ChangeNode, expensiveValidation = false): RevisionView {
-		function insertNodeRecursive(node: ChangeNode, newViewNodes: Map<NodeId, TreeViewNode>): NodeId {
-			const { identifier, definition } = node;
-			const traits: Map<TraitLabel, readonly NodeId[]> = new Map();
-			// eslint-disable-next-line no-restricted-syntax
-			for (const key in node.traits) {
-				if (Object.prototype.hasOwnProperty.call(node.traits, key)) {
-					const element = node.traits[key];
-					if (element.length > 0) {
-						traits.set(
-							key as TraitLabel,
-							element.map((n) => insertNodeRecursive(n, newViewNodes))
-						);
-					}
-				}
-			}
-			const viewNode: TreeViewNode = { identifier, definition, traits };
-			copyPropertyIfDefined(node, viewNode, 'payload');
-			assert(
-				!newViewNodes.has(identifier),
-				`duplicate node in tree for view: { identifier: ${identifier}, definition: ${definition}`
-			);
-			newViewNodes.set(viewNode.identifier, viewNode);
-			return viewNode.identifier;
-		}
-
-		const map = new Map<NodeId, TreeViewNode>();
-		return new RevisionView(insertNodeRecursive(root, map), Forest.create(expensiveValidation).add(map.values()));
-	}
-
-	/** Begin a transaction by generating a mutable `TransactionView` from this view */
-	public openForTransaction(): TransactionView {
-		return new TransactionView(this.root, this.forest);
-	}
-
-	public equals(view: TreeView): boolean {
-		if (!(view instanceof RevisionView)) {
-			return false;
-		}
-
-		return this.hasEqualForest(view);
-	}
-}
-
-/**
- * An view of a distributed tree that is part of an ongoing transaction between `RevisionView`s.
- * @public
- */
-export class TransactionView extends TreeView {
-	/** Conclude a transaction by generating an immutable `RevisionView` from this view */
-	public close(): RevisionView {
-		return new RevisionView(this.root, this.forest);
-	}
-
-	/** Inserts all nodes in a NodeSequence into the view */
-	public addNodes(sequence: Iterable<TreeViewNode>): TransactionView {
-		return new TransactionView(this.root, this.forest.add(sequence));
-	}
-
-	/** Remove all nodes with the given ids from the view */
-	public deleteNodes(nodes: Iterable<NodeId>): TransactionView {
-		return new TransactionView(this.root, this.forest.delete(nodes, true));
-	}
-
-	/**
-	 * Parents a set of detached nodes at a specified place.
-	 * @param nodesToAttach - the nodes to parent in the specified place. The nodes must already be present in the view.
-	 * @param place - the location to insert the nodes.
-	 */
-	public attachRange(nodesToAttach: readonly NodeId[], place: TreeViewPlace): TransactionView {
-		const { parent, label } = place.trait;
-		const index = this.findIndexWithinTrait(place);
-		return new TransactionView(this.root, this.forest.attachRangeOfChildren(parent, label, index, nodesToAttach));
-	}
-
-	/**
-	 * Detaches a range of nodes from their parent. The detached nodes remain in the view.
-	 * @param rangeToDetach - the range of nodes to detach
-	 */
-	public detachRange(rangeToDetach: TreeViewRange): { view: TransactionView; detached: readonly NodeId[] } {
-		const { start, end } = rangeToDetach;
-		const { trait: traitLocation } = start;
-		const { parent, label } = traitLocation;
-		const startIndex = this.findIndexWithinTrait(start);
-		const endIndex = this.findIndexWithinTrait(end);
-		const { forest, detached } = this.forest.detachRangeOfChildren(parent, label, startIndex, endIndex);
-		return { view: new TransactionView(this.root, forest), detached };
-	}
-
-	/**
-	 * Sets or overwrites a node's value. The node must exist in this view.
-	 * @param nodeId - the id of the node
-	 * @param value - the new value
-	 */
-	public setNodeValue(nodeId: NodeId, value: Payload): TransactionView {
-		return new TransactionView(this.root, this.forest.setValue(nodeId, value));
-	}
-
-	public equals(view: TreeView): boolean {
-		if (!(view instanceof TransactionView)) {
-			return false;
-		}
-
-		return this.hasEqualForest(view);
 	}
 }
 

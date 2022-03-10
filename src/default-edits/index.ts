@@ -5,21 +5,8 @@
 
 // API Exports
 
+export * from './persisted-types';
 export { SharedTree } from './SharedTree';
-export {
-	ChangeTypeInternal,
-	ChangeInternal,
-	BuildInternal,
-	BuildNodeInternal,
-	InsertInternal,
-	DetachInternal,
-	SetValueInternal,
-	ConstraintInternal,
-	ConstraintEffect,
-	DeleteInternal,
-	MoveInternal,
-	getNodeId,
-} from './PersistedTypes';
 export * from './ChangeTypes';
 export * from './Factory';
 export * from './HistoryEditFactory';
@@ -32,3 +19,4 @@ export {
 	noHistorySummarizer_0_1_1,
 } from './Summary';
 export { SharedTreeUndoRedoHandler } from './UndoRedoHandler';
+export * from './Conversion002';

@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidSerializer } from '@fluidframework/core-interfaces';
-import { serializeHandles } from '@fluidframework/shared-object-base';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-object-base';
 import { assertNotUndefined } from '../Common';
 import { EditLogSummary } from '../EditLog';
 import { readFormatVersion, SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
-import { getChangeNodeFromView } from '../SerializationUtilities';
-import { RevisionView } from './TreeView';
-import { ChangeNode, Edit } from './PersistedTypes';
+import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
+import { RevisionView } from './RevisionView';
+import { ChangeNode_0_0_2, Edit } from './persisted-types';
+import { NodeIdConverter } from './NodeIdUtilities';
 
 /**
  * Format version for summaries that are written.
@@ -52,7 +53,7 @@ export interface SharedTreeSummaryBase {
  * @public
  */
 export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {
-	readonly currentTree?: ChangeNode;
+	readonly currentTree?: ChangeNode_0_0_2;
 
 	/**
 	 * Information that can populate an edit log.
@@ -78,7 +79,8 @@ export function serialize(summary: SharedTreeSummaryBase, serializer: IFluidSeri
  */
 export function fullHistorySummarizer<TChange>(
 	summarizeLog: EditLogSummarizer<unknown>,
-	currentView: RevisionView
+	currentView: RevisionView,
+	idConverter: NodeIdConverter
 ): SharedTreeSummary_0_0_2<TChange> | SharedTreeSummary<TChange> {
 	const { editChunks, editIds } = summarizeLog();
 
@@ -100,11 +102,11 @@ export function fullHistorySummarizer<TChange>(
 
 	// If the edit log includes handles without associated edits, we must write a summary version that supports handles.
 	if (includesHandles) {
-		return fullHistorySummarizer_0_1_1(summarizeLog, currentView);
+		return fullHistorySummarizer_0_1_1(summarizeLog, currentView, idConverter);
 	}
 
 	return {
-		currentTree: getChangeNodeFromView(currentView),
+		currentTree: getChangeNode_0_0_2FromView(currentView, idConverter),
 		sequencedEdits,
 		version: formatVersion,
 	};
@@ -115,10 +117,11 @@ export function fullHistorySummarizer<TChange>(
  */
 export function fullHistorySummarizer_0_1_1<TChange>(
 	summarizeLog: EditLogSummarizer,
-	currentView: RevisionView
+	currentView: RevisionView,
+	idConverter: NodeIdConverter
 ): SharedTreeSummary<TChange> {
 	return {
-		currentTree: getChangeNodeFromView(currentView),
+		currentTree: getChangeNode_0_0_2FromView(currentView, idConverter),
 		editHistory: summarizeLog(true),
 		version: readFormatVersion,
 	};

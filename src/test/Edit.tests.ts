@@ -4,8 +4,8 @@
  */
 
 import { expect } from 'chai';
-import { NodeId } from '../Identifiers';
-import { makeEmptyNode, makeTestNode, deepCompareNodes } from './utilities/TestUtilities';
+import { ChangeNode, deepCompareNodes } from '../generic';
+import { refreshTestTree } from './utilities/TestUtilities';
 
 // TODO #45414: Re-enable when compareEdits compares the actual changes instead of just the edit IDs.
 // 			    Commented out instead of skipped to avoid linting errors.
@@ -43,21 +43,34 @@ import { makeEmptyNode, makeTestNode, deepCompareNodes } from './utilities/TestU
 // });
 
 describe('deepCompareNodes', () => {
+	const testTree = refreshTestTree();
+
 	it('correctly compares two empty nodes', () => {
-		const nodeId = '8d39e7ee-890a-4443-aef7-16d7e8ef3de0' as NodeId;
-		expect(deepCompareNodes(makeEmptyNode(nodeId), makeEmptyNode(nodeId))).to.be.true;
+		const nodeId = testTree.generateNodeId();
+		expect(deepCompareNodes(testTree.buildLeaf(nodeId), testTree.buildLeaf(nodeId))).to.be.true;
 	});
 
 	it('correctly compares two deeply equal nodes', () => {
-		const nodeId = 'a5946b8c-fb40-4631-81c8-c5473da50359' as NodeId;
-		expect(deepCompareNodes(makeTestNode(nodeId), makeTestNode(nodeId))).to.be.true;
+		const otherTree: ChangeNode = {
+			definition: testTree.definition,
+			identifier: testTree.identifier,
+			traits: {
+				left: [{ definition: testTree.left.definition, identifier: testTree.left.identifier, traits: {} }],
+				right: [{ definition: testTree.right.definition, identifier: testTree.right.identifier, traits: {} }],
+			},
+		};
+		expect(deepCompareNodes(testTree, otherTree)).to.be.true;
 	});
 
 	it('returns false for unequal nodes', () => {
-		const nodeId = '30df2134-f347-494b-9f47-ddc9a73f227b' as NodeId;
-		expect(deepCompareNodes(makeEmptyNode(), makeEmptyNode())).to.be.false;
-		expect(deepCompareNodes(makeEmptyNode(nodeId), makeTestNode(nodeId))).to.be.false;
-		expect(deepCompareNodes(makeEmptyNode(), makeTestNode())).to.be.false;
-		expect(deepCompareNodes(makeTestNode(), makeEmptyNode())).to.be.false;
+		expect(
+			deepCompareNodes(
+				testTree.buildLeaf(testTree.generateNodeId()),
+				testTree.buildLeaf(testTree.generateNodeId())
+			)
+		).to.be.false;
+		expect(deepCompareNodes(testTree.buildLeaf(testTree.identifier), testTree)).to.be.false;
+		expect(deepCompareNodes(testTree.buildLeaf(testTree.identifier), testTree)).to.be.false;
+		expect(deepCompareNodes(testTree, testTree.buildLeaf(testTree.identifier))).to.be.false;
 	});
 });

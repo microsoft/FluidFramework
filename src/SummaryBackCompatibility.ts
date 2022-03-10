@@ -4,10 +4,10 @@
  */
 
 import type { ITelemetryProperties } from '@fluidframework/common-definitions';
-import { IFluidSerializer } from '@fluidframework/core-interfaces';
+import type { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { fail } from './Common';
 import { EditLog, getNumberOfHandlesFromEditLogSummary } from './EditLog';
-import { ChangeNode, Edit, SharedTreeSummaryBase, SharedTreeSummary } from './generic';
+import { Edit, SharedTreeSummaryBase, SharedTreeSummary, ChangeNode_0_0_2 } from './generic';
 
 /** The summary format version that is read by SharedTree. */
 export const readFormatVersion = '0.1.1';
@@ -18,7 +18,7 @@ export const readFormatVersion = '0.1.1';
  * @internal
  */
 export interface SharedTreeSummary_0_0_2<TChange> extends SharedTreeSummaryBase {
-	readonly currentTree: ChangeNode;
+	readonly currentTree: ChangeNode_0_0_2;
 	/**
 	 * A list of edits.
 	 */

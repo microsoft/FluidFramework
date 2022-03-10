@@ -4,6 +4,7 @@
  */
 
 import { NodeId, StableNodeId } from '../Identifiers';
+import { NodeData } from './persisted-types';
 
 /**
  * An object which can generate node IDs and convert node IDs between compressed and stable variants
@@ -51,4 +52,9 @@ export interface NodeIdConverter {
 	 * revision (but it is guaranteed to exist in at least one prior revision).
 	 */
 	tryConvertToNodeId(id: StableNodeId): NodeId | undefined;
+}
+
+/** Accepts either a node or a node's identifier, and returns the identifier */
+export function getNodeId<TId>(node: TId | NodeData<TId>): TId {
+	return (node as NodeData<TId>).identifier ?? (node as TId);
 }

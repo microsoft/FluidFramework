@@ -6,22 +6,13 @@
 import { expect } from 'chai';
 // KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
 import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
-import { v4 } from 'uuid';
 import { EditHandle, EditLog } from '../EditLog';
-import { Edit, EditWithoutId, newEdit, SharedTreeDiagnosticEvent, SharedTreeSummary } from '../generic';
-import { SharedTree, setTrait, Change, ChangeInternal } from '../default-edits';
+import { Edit, SharedTreeSummary, SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../generic';
+import { SharedTree, Change, ChangeInternal } from '../default-edits';
 import { assertNotUndefined } from '../Common';
 import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { initialTree } from '../InitialTree';
-import { SharedTreeSummaryWriteFormat } from '../generic/GenericSharedTree';
-import { EditId, NodeId } from '../Identifiers';
-import {
-	applyNoop,
-	createStableEdits,
-	setUpLocalServerTestSharedTree,
-	testTraitLabel,
-} from './utilities/TestUtilities';
-import { buildLeaf } from './utilities/TestNode';
+import { applyNoop, createStableEdits, setUpLocalServerTestSharedTree } from './utilities/TestUtilities';
 
 describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
@@ -29,11 +20,13 @@ describe('SharedTree history virtualization', () => {
 	let editChunksUploaded = 0;
 
 	// Create a summary used to test catchup blobbing
-	const summaryToCatchUp: SharedTreeSummary_0_0_2<Change> = {
-		currentTree: initialTree,
-		version: '0.0.2',
-		sequencedEdits: createStableEdits(250),
-	};
+	function createCatchUpSummary(): SharedTreeSummary_0_0_2<Change> {
+		return {
+			currentTree: initialTree,
+			version: '0.0.2',
+			sequencedEdits: createStableEdits(250),
+		};
+	}
 
 	beforeEach(async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({
@@ -113,7 +106,7 @@ describe('SharedTree history virtualization', () => {
 		// Wait for the op to to be submitted and processed across the containers.
 		await testObjectProvider.ensureSynchronized();
 
-		sharedTree.loadSummary(summaryToCatchUp);
+		sharedTree.loadSummary(createCatchUpSummary());
 
 		await testObjectProvider.ensureSynchronized();
 		expect(catchUpBlobsUploaded).to.equal(1);
@@ -150,9 +143,10 @@ describe('SharedTree history virtualization', () => {
 		await testObjectProvider.ensureSynchronized();
 
 		// Try to load summaries on all the trees
-		sharedTree.loadSummary(summaryToCatchUp);
-		sharedTree2.loadSummary(summaryToCatchUp);
-		sharedTree3.loadSummary(summaryToCatchUp);
+		const summary = createCatchUpSummary();
+		sharedTree.loadSummary(summary);
+		sharedTree2.loadSummary(summary);
+		sharedTree3.loadSummary(summary);
 
 		// `ensureSynchronized` does not guarantee blob upload
 		await new Promise((resolve) => setImmediate(resolve));
@@ -279,18 +273,11 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('does not upload blobs larger than 4MB', async () => {
-		const numberOfEdits = 10000;
-		const edits: EditWithoutId<Change>[] = [];
-		const editIds: EditId[] = [];
-
-		// Add some edits to create a chunk with.
-		while (edits.length < numberOfEdits) {
-			const edit = newEdit(
-				setTrait({ label: testTraitLabel, parent: initialTree.identifier }, [buildLeaf(v4() as NodeId)])
-			);
-			edits.push({ changes: edit.changes });
-			editIds.push(edit.id);
-		}
+		const numberOfEdits = 1000;
+		expect(numberOfEdits).to.be.greaterThanOrEqual(1000); // Blobbing is hardcoded to 1000 edits
+		const fourMegas = 2 ** 22;
+		const bigPayload = 'a'.repeat(fourMegas / numberOfEdits);
+		const edits = createStableEdits(numberOfEdits, undefined, () => bigPayload);
 
 		const fakeSummary: SharedTreeSummary<Change> = {
 			version: '0.1.1',
@@ -299,10 +286,10 @@ describe('SharedTree history virtualization', () => {
 				editChunks: [
 					{
 						startRevision: 0,
-						chunk: edits,
+						chunk: edits.map((e) => ({ changes: e.changes })),
 					},
 				],
-				editIds,
+				editIds: edits.map((e) => e.id),
 			},
 		};
 

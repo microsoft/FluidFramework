@@ -4,77 +4,148 @@
  */
 
 import { expect } from 'chai';
-import { Definition, NodeId, TraitLabel } from '../Identifiers';
-import { RevisionView } from '../generic/TreeView';
-import { detachRange, insertIntoTrait, StablePlace, StableRange } from '../default-edits';
-import { ChangeNode } from '../generic';
-import { getChangeNodeFromViewNode } from '../SerializationUtilities';
-import { makeEmptyNode, makeTestNode } from './utilities/TestUtilities';
+import { Definition } from '../Identifiers';
+import { ChangeNode, RevisionView } from '../generic';
+import { refreshTestTree } from './utilities/TestUtilities';
+import { TestNode } from './utilities/TestNode';
 
 describe('TreeView', () => {
-	describe('creation from a ChangeNode', () => {
-		it('ignores empty traits', () => {
-			const nodeId = '46711f26-5a27-4a35-9f04-0602dd853b43' as NodeId;
-			const testNode = makeTestNode();
-			const node: ChangeNode = {
-				traits: {
-					trait: [testNode],
-					emptyTrait: [],
-				},
-				definition: '9f9f7fd1-780b-4d78-bca7-2342df4523f2' as Definition,
-				identifier: nodeId,
+	describe('can compute deltas', () => {
+		const testTree = refreshTestTree();
+
+		it('that are the same object', () => {
+			const view = testTree.view;
+			expect(view.delta(view)).deep.equals({
+				changed: [],
+				added: [],
+				removed: [],
+			});
+		});
+
+		it('that have the same tree', () => {
+			const viewA = RevisionView.fromTree<TestNode>(testTree);
+			const viewB = RevisionView.fromTree<TestNode>(testTree);
+			expect(viewA.delta(viewB)).deep.equals({
+				changed: [],
+				added: [],
+				removed: [],
+			});
+		});
+
+		it('with different root ids', () => {
+			const viewA = RevisionView.fromTree(testTree.buildLeaf(testTree.generateNodeId()));
+			const viewB = RevisionView.fromTree(testTree.buildLeaf(testTree.generateNodeId()));
+			expect(() => viewA.delta(viewB)).to.throw('Delta can only be calculated between views that share a root');
+		});
+
+		it('with different subtrees', () => {
+			const rootId = testTree.generateNodeId();
+
+			const leafA = testTree.buildLeaf(testTree.generateNodeId());
+			const leafB = testTree.buildLeaf(testTree.generateNodeId());
+
+			const subtreeA = {
+				identifier: testTree.generateNodeId(),
+				definition: 'node' as Definition,
+				traits: { children: [leafA] },
+			};
+			const subtreeB = {
+				identifier: testTree.generateNodeId(),
+				definition: 'node' as Definition,
+				traits: { children: [leafB] },
 			};
 
-			const view = RevisionView.fromTree(node);
-			const changeNode = getChangeNodeFromViewNode(view, nodeId);
-			expect(changeNode.traits.trait[0].identifier).to.equal(testNode.identifier);
-			expect(changeNode.traits.emptyTrait).to.equal(undefined);
-		});
-	});
+			const rootA: ChangeNode = {
+				identifier: rootId,
+				definition: 'node' as Definition,
+				traits: {
+					children: [subtreeA],
+				},
+			};
+			const rootB: ChangeNode = {
+				identifier: rootId,
+				definition: 'node' as Definition,
+				traits: {
+					children: [subtreeB],
+				},
+			};
 
-	describe('Mutators', () => {
-		const label = 'label' as TraitLabel;
-		const nodeA = makeEmptyNode();
-		const nodeB = makeEmptyNode();
-		const tree: ChangeNode = {
-			...makeEmptyNode(),
-			traits: { [label]: [nodeA, nodeB] },
-		};
-		const startingView = RevisionView.fromTree(tree, true).openForTransaction();
-		it('can detach a single node', () => {
-			expect(startingView.getIndexInTrait(nodeA.identifier)).to.equal(0);
-			expect(startingView.getIndexInTrait(nodeB.identifier)).to.equal(1);
-			const { view } = detachRange(startingView, StableRange.only(nodeA));
-			expect(view.size).to.equal(3);
-			expect(view.hasNode(nodeA.identifier)).to.be.true;
-			expect(view.tryGetParentViewNode(nodeA.identifier)).to.be.undefined;
-			expect(view.tryGetParentViewNode(nodeB.identifier)?.identifier).to.equal(tree.identifier);
-			expect(view.getIndexInTrait(nodeB.identifier)).to.equal(0);
+			const viewA = RevisionView.fromTree(rootA);
+			const viewB = RevisionView.fromTree(rootB);
+			const delta = viewA.delta(viewB);
+			expect(delta.changed).deep.equals([rootId]);
+			expect(delta.removed.length).equals(2);
+			expect(delta.added.length).equals(2);
+			expect(delta.removed).contains(subtreeA.identifier);
+			expect(delta.removed).contains(leafA.identifier);
+			expect(delta.added).contains(subtreeB.identifier);
+			expect(delta.added).contains(leafB.identifier);
 		});
-		it('can detach an entire trait', () => {
-			const { view, detached } = detachRange(startingView, StableRange.all({ parent: tree.identifier, label }));
-			expect(detached).deep.equals([nodeA.identifier, nodeB.identifier]);
-			expect(view.size).to.equal(3);
-			expect(view.hasNode(nodeA.identifier)).to.be.true;
-			expect(view.hasNode(nodeB.identifier)).to.be.true;
-			expect(view.tryGetParentViewNode(nodeA.identifier)).to.be.undefined;
-			expect(view.tryGetParentViewNode(nodeB.identifier)).to.be.undefined;
+
+		it('with different payloads', () => {
+			const rootId = testTree.generateNodeId();
+			const nodeA: ChangeNode = {
+				identifier: rootId,
+				definition: 'node' as Definition,
+				payload: 'test1',
+				traits: {},
+			};
+			const nodeB: ChangeNode = {
+				identifier: rootId,
+				definition: 'node' as Definition,
+				payload: 'test2',
+				traits: {},
+			};
+
+			const viewA = RevisionView.fromTree(nodeA);
+			const viewB = RevisionView.fromTree(nodeB);
+			const delta = viewA.delta(viewB);
+			expect(delta.changed).deep.equals([rootId]);
+			expect(delta.removed).deep.equals([]);
+			expect(delta.added).deep.equals([]);
 		});
-		it('can insert a node', () => {
-			const newNode = makeEmptyNode();
-			let view = startingView.addNodes([{ ...newNode, traits: new Map() }]);
-			expect(view.size).to.equal(4);
-			expect(view.hasNode(newNode.identifier)).to.be.true;
-			expect(view.tryGetParentViewNode(newNode.identifier)).to.be.undefined;
-			view = insertIntoTrait(
-				view,
-				[newNode.identifier],
-				StablePlace.atStartOf({ parent: tree.identifier, label })
-			);
-			expect(view.tryGetParentViewNode(newNode.identifier)?.identifier).to.equal(tree.identifier);
-			expect(view.getIndexInTrait(newNode.identifier)).to.equal(0);
-			expect(view.getIndexInTrait(nodeA.identifier)).to.equal(1);
-			expect(view.getIndexInTrait(nodeB.identifier)).to.equal(2);
+
+		it('after an insert', () => {
+			const viewA = testTree.view;
+			const insertedNode = testTree.buildLeaf(testTree.generateNodeId());
+			const treeB: ChangeNode = {
+				identifier: testTree.identifier,
+				definition: testTree.definition,
+				traits: { ...testTree.traits, left: [insertedNode, testTree.left] },
+			};
+			const viewB = RevisionView.fromTree(treeB);
+			const delta = viewA.delta(viewB);
+			expect(delta.changed).deep.equals([testTree.identifier]);
+			expect(delta.removed).deep.equals([]);
+			expect(delta.added).deep.equals([insertedNode.identifier]);
+		});
+
+		it('after a delete', () => {
+			const viewA = testTree.view;
+			const treeB: ChangeNode = {
+				identifier: testTree.identifier,
+				definition: testTree.definition,
+				traits: { ...testTree.traits, left: [] },
+			};
+			const viewB = RevisionView.fromTree(treeB);
+			const delta = viewA.delta(viewB);
+			expect(delta.changed).deep.equals([testTree.identifier]);
+			expect(delta.removed).deep.equals([testTree.left.identifier]);
+			expect(delta.added).deep.equals([]);
+		});
+
+		it('after a move', () => {
+			const viewA = testTree.view;
+			const treeB: ChangeNode = {
+				identifier: testTree.identifier,
+				definition: testTree.definition,
+				traits: { ...testTree.traits, left: [], right: [testTree.right, testTree.left] },
+			};
+			const viewB = RevisionView.fromTree(treeB);
+			const delta = viewA.delta(viewB);
+			expect(delta.changed).deep.equals([testTree.identifier]);
+			expect(delta.removed).deep.equals([]);
+			expect(delta.added).deep.equals([]);
 		});
 	});
 });

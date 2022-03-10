@@ -6,7 +6,7 @@
 import Denque from 'denque';
 import { assert, fail, noop } from './Common';
 import { EditLog, SequencedOrderedEditId } from './EditLog';
-import { Edit, EditStatus, EditingResult, RevisionView, TransactionFactory, NodeIdContext } from './generic';
+import { Edit, EditStatus, EditingResult, RevisionView, TransactionFactory, NodeIdConverter } from './generic';
 import { EditId } from './Identifiers';
 import { RevisionValueCache } from './RevisionValueCache';
 import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath';
@@ -272,7 +272,7 @@ export class CachingLogViewer<TChange, TFailure = unknown> implements LogViewer 
 	public constructor(
 		log: EditLog<TChange>,
 		baseView: RevisionView,
-		private readonly nodeIdContext: NodeIdContext,
+		private readonly nodeIdConverter: NodeIdConverter,
 		knownRevisions: [Revision, EditCacheEntry<TChange, TFailure>][] = [],
 		expensiveValidation = false,
 		processEditStatus: EditStatusCallback = noop,
@@ -462,7 +462,7 @@ export class CachingLogViewer<TChange, TFailure = unknown> implements LogViewer 
 			cached = true;
 		} else {
 			reconciliationPath = this.reconciliationPathFromEdit(edit.id);
-			editingResult = this.transactionFactory(prevView, this.nodeIdContext)
+			editingResult = this.transactionFactory(prevView, this.nodeIdConverter)
 				.applyChanges(edit.changes, reconciliationPath)
 				.close();
 			cached = false;
