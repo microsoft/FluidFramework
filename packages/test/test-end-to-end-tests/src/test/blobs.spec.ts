@@ -231,7 +231,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     itExpects("works in detached container", [
-        {"eventName": "fluid:telemetry:Container:ContainerClose", "error": "0x202"}
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
         const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
@@ -282,7 +282,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     itExpects("redirect table saved in snapshot",[
-        {"eventName": "fluid:telemetry:Container:ContainerClose","message": "0x202",}
+        { eventName: "fluid:telemetry:Container:ContainerClose", message: "0x202" },
     ], async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
         const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
@@ -316,7 +316,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     itExpects("serialize/rehydrate then attach", [
-        {"eventName": "fluid:telemetry:Container:ContainerClose", "error": "0x202"}
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
         const loader = provider.makeTestLoader(
             {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
@@ -345,8 +345,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
     });
 
-    itExpects("serialize/rehydrate multiple times then attach",[
-        {"eventName": "fluid:telemetry:Container:ContainerClose", "error": "0x202"}
+    itExpects("serialize/rehydrate multiple times then attach", [
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
         const loader = provider.makeTestLoader(
             {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});

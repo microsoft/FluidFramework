@@ -51,7 +51,7 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
             inputEl.focus();
             return () => {
                 inputEl.removeEventListener("input", filterCommands);
-            }
+            };
         }
     });
 

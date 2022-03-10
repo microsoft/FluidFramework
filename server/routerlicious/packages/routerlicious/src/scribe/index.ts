@@ -8,6 +8,7 @@ import { createDocumentRouter } from "@fluidframework/server-routerlicious-base"
 import { createProducer, MongoDbFactory, TenantManager } from "@fluidframework/server-services";
 import {
     DefaultServiceConfiguration,
+    IDb,
     IDocument,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
@@ -17,7 +18,8 @@ import { Provider } from "nconf";
 
 export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFactory> {
     // Access config values
-    const mongoUrl = config.get("mongo:operationsDbEndpoint") as string;
+    const operationsDbMongoUrl = config.get("mongo:operationsDbEndpoint") as string;
+    const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const messagesCollectionName = config.get("mongo:collectionNames:scribeDeltas");
     const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes");
@@ -38,13 +40,23 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const tenantManager = new TenantManager(authEndpoint);
 
     // Access Mongo storage for pending summaries
-    const mongoFactory = new MongoDbFactory(mongoUrl, bufferMaxEntries);
-    const mongoManager = new MongoManager(mongoFactory, false);
-    const client = await mongoManager.getDatabase();
+    const operationsDbMongoFactory = new MongoDbFactory(operationsDbMongoUrl, bufferMaxEntries);
+    const operationsDbMongoManager = new MongoManager(operationsDbMongoFactory, false);
+    const operationsDb = await operationsDbMongoManager.getDatabase();
+
+    let globalDb;
+    if (globalDbEnabled) {
+        const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
+        const globalDbMongoFactory = new MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
+        const globalDbMongoManager = new MongoManager(globalDbMongoFactory, false);
+        globalDb = await globalDbMongoManager.getDatabase();
+    }
+
+    const documentsCollectionDb: IDb = globalDbEnabled ? globalDb : operationsDb;
 
     const [collection, scribeDeltas] = await Promise.all([
-        client.collection<IDocument>(documentsCollectionName),
-        client.collection<ISequencedOperationMessage>(messagesCollectionName),
+        documentsCollectionDb.collection<IDocument>(documentsCollectionName),
+        operationsDb.collection<ISequencedOperationMessage>(messagesCollectionName),
     ]);
 
     if (createCosmosDBIndexes) {
@@ -85,7 +97,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         kafkaSslCACertFilePath);
 
     return new ScribeLambdaFactory(
-        mongoManager,
+        operationsDbMongoManager,
         collection,
         scribeDeltas,
         producer,

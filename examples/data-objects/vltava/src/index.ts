@@ -70,11 +70,11 @@ export class InternalRegistry implements IFluidDataStoreRegistry, IFluidObjectIn
         return index >= 0 && this.containerFluidObjectArray[index].capabilities.includes(capability);
     }
 
-    public getByFactory(factoryId: string): IInternalRegistryEntry<DefaultRegistryTypes> | undefined {
+    public getByFactory(factoryId: string): IInternalRegistryEntry | undefined {
         return this.containerFluidObjectArray.find((entry) => entry.factory.type === factoryId);
     }
 
-    public getAll(): IInternalRegistryEntry<DefaultRegistryTypes>[] {
+    public getAll(): IInternalRegistryEntry[] {
         return this.containerFluidObjectArray;
     }
 }
@@ -100,7 +100,6 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultData
         setupLastEditedTrackerForContainer(tracker.IFluidLastEditedTracker, runtime);
     }
 }
-
 
 interface ISingleHandleItem {
     handle: IFluidHandle;

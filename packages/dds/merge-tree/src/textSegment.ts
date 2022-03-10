@@ -197,7 +197,6 @@ export class MergeTreeTextHelper {
         end: number, accumText: ITextAccumulatorType) => {
         let _start = start;
         if (TextSegment.is(segment)) {
-
             let beginTags = "";
             let endTags = "";
             if (isTextAndMarkerAccumulator(accumText)) {

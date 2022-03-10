@@ -55,8 +55,11 @@ export function combine(combiningInfo: ICombiningOp, currentValue: any, newValue
                 }
             }
             break;
+        default:
+            break;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return _currentValue;
 }
 
@@ -67,6 +70,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
         } else {
             // For now, straightforward; later use hashing
 
+            // eslint-disable-next-line no-restricted-syntax
             for (const key in a) {
                 if (b[key] === undefined) {
                     return false;
@@ -79,6 +83,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
                 }
             }
 
+            // eslint-disable-next-line no-restricted-syntax
             for (const key in b) {
                 if (a[key] === undefined) {
                     return false;
@@ -100,10 +105,11 @@ export function extend<T>(
     seq?: number,
 ) {
     if (extension !== undefined) {
-        // eslint-disable-next-line guard-for-in
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const key in extension) {
             const v = extension[key];
             if (v === null) {
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete base[key];
             } else {
                 if (combiningOp && (combiningOp.name !== "rewrite")) {
@@ -122,7 +128,7 @@ export function clone<T>(extension: MapLike<T> | undefined) {
         return undefined;
     }
     const cloneMap = createMap<T>();
-    // eslint-disable-next-line guard-for-in
+    // eslint-disable-next-line guard-for-in, no-restricted-syntax
     for (const key in extension) {
         const v = extension[key];
         if (v !== null) {
@@ -148,7 +154,7 @@ export function addProperties(
 
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
     if (extension !== undefined) {
-
+        // eslint-disable-next-line no-restricted-syntax
         for (const key in extension) {
             if (base[key] === undefined) {
                 base[key] = extension[key];

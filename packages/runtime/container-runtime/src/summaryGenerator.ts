@@ -201,7 +201,7 @@ export class SummaryGenerator {
             fullTree,
             timeSinceLastAttempt,
             timeSinceLastSummary,
-        }
+        };
 
         const summarizeEvent = PerformanceEvent.start(logger, {
             eventName: "Summarize",
@@ -394,6 +394,7 @@ export class SummaryGenerator {
                 const message = summaryNack?.message;
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
+                // pre-0.58 error message prefix: summaryNack
                 const error = new LoggingError(`Received summaryNack: ${message}`, { retryAfterSeconds });
                 logger.sendErrorEvent(
                     { eventName: "SummaryNack", ...summarizeTelemetryProps, retryAfterSeconds }, error);

@@ -3,7 +3,11 @@
   "version": "0.33.0",
   "description": "Collection of utility functions for Fluid",
   "homepage": "https://fluidframework.com",
-  "repository": "https://github.com/microsoft/FluidFramework",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "common/lib/common-utils"
+  },
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
@@ -83,9 +87,9 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.54658",
+    "@fluidframework/build-tools": "^0.2.56910",
     "@fluidframework/common-utils-0.32.1": "npm:@fluidframework/common-utils@0.32.1",
-    "@fluidframework/eslint-config-fluid": "^0.26.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/base64-js": "^1.3.0",

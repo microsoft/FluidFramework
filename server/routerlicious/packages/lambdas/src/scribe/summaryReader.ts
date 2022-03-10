@@ -47,7 +47,7 @@ export class SummaryReader implements ISummaryReader {
                     shouldRetryNetworkError,
                     this.maxRetriesOnError);
                 const wholeFlatSummary = await requestWithRetry(
-                    async() => this.summaryStorage.getSummary(existingRef.object.sha),
+                    async () => this.summaryStorage.getSummary(existingRef.object.sha),
                     "readWholeSummary_getSummary",
                     this.lumberProperties,
                     shouldRetryNetworkError,
@@ -110,32 +110,32 @@ export class SummaryReader implements ISummaryReader {
                     this.maxRetriesOnError);
                 const [attributesContent, scribeContent, deliContent, opsContent] = await Promise.all([
                     requestWithRetry(
-                        async() => this.summaryStorage.getContent(existingRef.object.sha, ".protocol/attributes"),
+                        async () => this.summaryStorage.getContent(existingRef.object.sha, ".protocol/attributes"),
                         "readSummary_getProtocolAttributesContent",
                         this.lumberProperties,
                         shouldRetryNetworkError,
-                        this.maxRetriesOnError
+                        this.maxRetriesOnError,
                     ).catch(() => undefined),
                     requestWithRetry(
-                        async() => this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/scribe"),
+                        async () => this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/scribe"),
                         "readSummary_getServiceProtocolScribeContent",
                         this.lumberProperties,
                         shouldRetryNetworkError,
-                        this.maxRetriesOnError
+                        this.maxRetriesOnError,
                     ).catch(() => undefined),
                     requestWithRetry(
-                        async() => this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/deli"),
+                        async () => this.summaryStorage.getContent(existingRef.object.sha, ".serviceProtocol/deli"),
                         "readSummary_getServiceProtocolDeliContent",
                         this.lumberProperties,
                         shouldRetryNetworkError,
-                        this.maxRetriesOnError
+                        this.maxRetriesOnError,
                     ).catch(() => undefined),
                     requestWithRetry(
-                        async() => this.summaryStorage.getContent(existingRef.object.sha, ".logTail/logTail"),
+                        async () => this.summaryStorage.getContent(existingRef.object.sha, ".logTail/logTail"),
                         "readSummary_getLogTailContent",
                         this.lumberProperties,
                         shouldRetryNetworkError,
-                        this.maxRetriesOnError
+                        this.maxRetriesOnError,
                     ).catch(() => undefined),
                 ]);
 

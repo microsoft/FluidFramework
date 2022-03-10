@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "description": "Local implementation of the Azure Fluid Relay service for testing/development use",
   "homepage": "https://fluidframework.com",
-  "repository": "https://github.com/microsoft/FluidFramework",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "server/azure-local-service"
+  },
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/index.js",
@@ -32,7 +36,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.26.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",

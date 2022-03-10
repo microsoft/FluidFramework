@@ -6,14 +6,14 @@
 /**
  * @fileoverview Abstract base class for indexed collections (sets and maps)
  */
-const _ = require('lodash');
-const { BaseProperty } = require('./baseProperty');
-const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
-const { deserialize } = require('../containerSerializer');
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
 const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const { MSG } = require('@fluid-experimental/property-common').constants;
+const _ = require('lodash');
+const { deserialize } = require('../containerSerializer');
 const { validationsEnabled } = require('../enableValidations');
+const { BaseProperty } = require('./baseProperty');
+const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
 
 /**
  * typedef {property-properties.BaseProperty|string|number|boolean} property-properties.IndexedCollectionBaseProperty~ValueType
@@ -27,7 +27,6 @@ const { validationsEnabled } = require('../enableValidations');
  * directly.
  */
 export class IndexedCollectionBaseProperty extends AbstractStaticCollectionProperty {
-
     /**
      * @param {Object} in_params - Input parameters for property creation
      *
@@ -39,16 +38,16 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         this._pendingChanges = {
             insert: {},
             remove: {},
-            modify: {}
+            modify: {},
         };
 
         /** Stores the dirty changes in the property (those that have not yet been reported to the application) */
         this._dirtyChanges = {
             insert: {},
             remove: {},
-            modify: {}
+            modify: {},
         };
-    };
+    }
 
     /**
      * Removes the dirtiness flag from this property
@@ -76,7 +75,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
             this._dirtyChanges.remove = {};
             this._dirtyChanges.modify = {};
         }
-    };
+    }
 
     /**
      * Removes the dirtiness flag from this property and recursively from all of its children
@@ -122,7 +121,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 
         // after all entries have been cleaned, we mark this property as clean
         this._cleanDirty(in_flags);
-    };
+    }
 
     /**
      * Inserts a property into the collection
@@ -136,14 +135,14 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      *     When batching updates, this can be prevented via this flag.
      */
     _insert(in_key, in_value, in_reportToView) {
-	    if (validationsEnabled.enabled) {
-	        this._checkIsNotReadOnly(false);
-	    }
+        if (validationsEnabled.enabled) {
+            this._checkIsNotReadOnly(false);
+        }
 
         if (!this.has(in_key)) {
             // Make sure, the property we are inserting is not already part of some other collection
             if (validationsEnabled.enabled && !this._containsPrimitiveTypes) {
-                in_value._validateInsertIn(this)
+                in_value._validateInsertIn(this);
             }
 
             this._dynamicChildren[in_key] = in_value;
@@ -188,7 +187,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         } else {
             throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_key);
         }
-    };
+    }
 
     /**
      * Removes an entry with the given key
@@ -233,7 +232,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         } else {
             throw new Error(MSG.REMOVED_NON_EXISTING_ENTRY + in_key);
         }
-    };
+    }
 
     /**
      * Serialize the property
@@ -262,7 +261,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         var that = this;
 
         // Helper function to decide whether to include a typeid or not in the ChangeSet
-        var addEntryInChangeSet = function (in_changes, in_typeid, in_key, in_value) {
+        var addEntryInChangeSet = function(in_changes, in_typeid, in_key, in_value) {
             // Determine where to insert the key. If necessary, an entry for the type is added.
             if (that._containsPrimitiveTypes) {
                 in_changes[in_key] = that._serializeValue(in_value);
@@ -289,7 +288,6 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
             var entry = this._dynamicChildren[key];
             typeid = this._containsPrimitiveTypes ? this.getFullTypeid(false) : entry.getFullTypeid(false);
             if (in_dirtyOnly) {
-
                 if (changes.insert[key]) {
                     // If the key was inserted in this ChangeSet include it into the inserted list
                     if (this._containsPrimitiveTypes) {
@@ -339,7 +337,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         }
 
         return serialized;
-    };
+    }
 
     /**
      * Function to deserialize special primitive types.
@@ -351,7 +349,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
      */
     _deserializeValue(in_serializedObj) {
         return in_serializedObj;
-    };
+    }
 
     /**
      * Function to serialize special primitive types.
@@ -365,7 +363,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         ConsoleUtils.assert(this._containsPrimitiveTypes, MSG.ASSERTION_FAILED +
             'Function IndexedCollectionBaseProperty._serializeValue() called on non-primitive collection');
         return in_obj;
-    };
+    }
 
     /**
      * @inheritdoc
@@ -373,7 +371,6 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     // eslint-disable-next-line complexity
     _deserialize(in_serializedObj, in_reportToView,
                  in_filteringOptions, in_createChangeSet) {
-
         var currentEntries = this._dynamicChildren;
         var allInsertedKeys = {};
 
@@ -383,7 +380,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         // Perform updates to the children
 
         // We make copies on two levels, since those are modified by the calls below
-        var insertedEntries = _.mapValues(in_serializedObj.insert, function (x) { return _.clone(x); }) || {};
+        var insertedEntries = _.mapValues(in_serializedObj.insert, function(x) { return _.clone(x); }) || {};
         var removedEntries = {};
         var modifiedEntries = {};
 
@@ -471,7 +468,6 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
             }
         }
 
-
         // If no typeids are included, we just use a placeholder for the iteration below
         var classKeys = this._containsPrimitiveTypes ? [undefined] : _.keys(modifiedEntries);
 
@@ -557,7 +553,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         }
 
         return appliedChangeset;
-    };
+    }
 
     /**
      * @inheritdoc
@@ -642,7 +638,6 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
                                 this._dirtyChanges.modify[key] = true;
                                 mapWasChangedByModify = true;
                             }
-
                         } else {
                             this._dynamicChildren[key]._applyChangeset(modifiedEntries[key], false);
                         }
@@ -663,7 +658,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         if (in_reportToView) {
             this._reportDirtinessToView();
         }
-    };
+    }
 
     /**
      * @inheritdoc
@@ -726,7 +721,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
                 }
             }
         }
-    };
+    }
 
     /**
      * @inheritdoc
@@ -736,7 +731,6 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
         if (in_callingChild && !this._containsPrimitiveTypes) {
             var key = in_callingChild.getId();
             if (this._dynamicChildren[key]) {
-
                 if (!this._pendingChanges.insert[key]) {
                     this._pendingChanges.modify[key] = true;
                 }
@@ -748,7 +742,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 
         // Forward dirtiness propagation to base class
         BaseProperty.prototype._setDirty.call(this, in_reportToView, in_callingChild);
-    };
+    }
 }
 /** Specifies, whether this is a collection of base types or of registered templates */
 IndexedCollectionBaseProperty.prototype._containsPrimitiveTypes = false;
