@@ -67,12 +67,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get closed(): boolean;
     // (undocumented)
+    connect(): void;
+    // (undocumented)
     get connected(): boolean;
     // (undocumented)
     get connectionState(): ConnectionState;
     static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // (undocumented)
+    disconnect(): void;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;

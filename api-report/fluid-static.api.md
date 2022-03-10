@@ -19,6 +19,16 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
+export namespace ConnectionState {
+    export type Connected = 2;
+    export type Connecting = 1;
+    export type Disconnected = 0;
+}
+
+// @public
+export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
+
+// @public
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
@@ -42,6 +52,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     attach(): Promise<string>;
     get attachState(): AttachState;
     get connected(): boolean;
+    get connectionState(): ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     dispose(): void;
     get disposed(): boolean;
@@ -59,7 +70,9 @@ export interface IConnection {
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
     readonly attachState: AttachState;
+    // @deprecated
     readonly connected: boolean;
+    readonly connectionState: ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     dispose(): void;
     readonly disposed: boolean;

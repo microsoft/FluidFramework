@@ -935,6 +935,78 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
+    public connect() {
+        if (!this.closed && !this.connected) {
+            // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
+            // If there is gap, we will learn about it once connected, but the gap should be small (if any),
+            // assuming that connect() is called quickly after initial container boot.
+            this.connectInternal({ reason: "DocumentOpenResume", fetchOpsFromStorage: false });
+        }
+    }
+
+    private connectInternal(args: IConnectionArgs) {
+        assert(!this.closed, "Attempting to connect() a closed DeltaManager");
+
+        // Resume processing ops
+        if (!this.resumedOpProcessingAfterLoad) {
+            this.resumedOpProcessingAfterLoad = true;
+            this._deltaManager.inbound.resume();
+            this._deltaManager.inboundSignal.resume();
+        }
+
+        // Ensure connection to web socket
+        this.connectToDeltaStream(args);
+
+        const mode = ReconnectMode.Enabled;
+        const currentMode = this._deltaManager.connectionManager.reconnectMode;
+
+        // Set Auto Reconnect Mode
+        if (currentMode !== mode) {
+            const now = performance.now();
+            const duration = now - this.setAutoReconnectTime;
+            this.setAutoReconnectTime = now;
+
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "AutoReconnectEnabled",
+                connectionMode: this.connectionMode,
+                connectionState: ConnectionState[this.connectionState],
+                duration,
+            });
+
+            this._deltaManager.connectionManager.setAutoReconnect(mode);
+        }
+    }
+
+    public disconnect() {
+        if (!this.closed && this.connected) {
+            this.disconnectInternal();
+        }
+    }
+
+    private disconnectInternal() {
+        assert(!this.closed, "Attempting to disconnect() a closed DeltaManager");
+
+        const mode = ReconnectMode.Disabled;
+        const currentMode = this._deltaManager.connectionManager.reconnectMode;
+
+        // Set Auto Reconnect Mode
+        if (currentMode !== mode) {
+            const now = performance.now();
+            const duration = now - this.setAutoReconnectTime;
+            this.setAutoReconnectTime = now;
+
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "AutoReconnectDisabled",
+                connectionMode: this.connectionMode,
+                connectionState: ConnectionState[this.connectionState],
+                duration,
+            });
+
+            // ConnectionManager will handle disconnecting the container
+            this._deltaManager.connectionManager.setAutoReconnect(mode);
+        }
+    }
+
     public resume() {
         if (!this.closed) {
             // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
@@ -1139,7 +1211,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             switch (loadMode.deltaConnection) {
                 case undefined:
-                    this.resume();
+                    this.connect();
                     break;
                 case "delayed":
                     this.resumedOpProcessingAfterLoad = true;

@@ -68,14 +68,47 @@ export interface IFluidContainerEvents extends IEvent {
 }
 
 /**
+ * Namespace for the different connection states a container can be in
+ */
+ export namespace ConnectionState {
+    /**
+     * The document is no longer connected to the delta server
+     */
+    export type Disconnected = 0;
+
+    /**
+     * The document has an inbound connection but is still pending for outbound deltas
+     */
+    export type Connecting = 1;
+
+    /**
+     * The document is fully connected
+     */
+     export type Connected = 2;
+}
+
+/**
+ * Type defining the different states of connectivity a container can be in
+ */
+export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
+
+/**
  * The IFluidContainer provides an entrypoint into the client side of collaborative Fluid data.  It provides access
  * to the data as well as status on the collaboration session.
  */
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
      * Whether the container is connected to the collaboration session.
+     * @deprecated - 0.58.1, This API will be removed in 0.59.0
+     * Use `connectionState` instead
+     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
      */
     readonly connected: boolean;
+
+    /**
+     * Provides the current connected state of the container
+     */
+    readonly connectionState: ConnectionState;
 
      /**
      * A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service.
@@ -182,6 +215,13 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      */
     public get connected() {
         return this.container.connected;
+    }
+
+    /**
+     * {@inheritDoc IFluidContainer.connectionState}
+     */
+     public get connectionState(): ConnectionState {
+        return this.container.connectionState;
     }
 
     /**
