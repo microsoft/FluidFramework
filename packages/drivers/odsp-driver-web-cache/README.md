@@ -37,19 +37,19 @@ entries corresponding to all documents, not just the ones corresponding to the F
 important to note that since the cache clearing code lives in `office-web-host`, no stale content will be deleted during
  extended periods of time where the host application does not load Fluid content with `office-web-host`.
 
-The `clearPersistedStorage` API that an application can use to clear out the entire contents of the snapshot cache at any
-time. We recommend calling the storage persistent clearing API when the user explicitly signs out. Hosting applications
+The `deleteFluidCacheIndexDbInstance` API that an application can use to clear out the entire contents of the snapshot
+cache at any time. We recommend calling this API when the user explicitly signs out. Hosting applications
 are on point for ensuring responsible usage of the snapshot caching capability to still meet any relevant
 customer promises, such as clearing out storage when appropriate or disabling snapshot caching under certain circumstances,
 such as when it is known the user is logged in to a public computer.
 
 
 ```typescript
-import { clearPersistedStorage } from '@fluidframework/odsp-driver-web-cache';
+import { deleteFluidCacheIndexDbInstance } from '@fluidframework/odsp-driver-web-cache';
 
-clearPersistedStorage();
+  // We put a catch here because Firefox Incognito will throw an error here. This is why we claim this method is a "best effort", since sometimes the browser won't let us access storage
+deleteFluidCacheIndexDbInstance().catch(() => {});
 ```
-
 
 ## Trademark
 
