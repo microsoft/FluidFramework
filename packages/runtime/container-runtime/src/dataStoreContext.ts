@@ -238,7 +238,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected channelDeferred: Deferred<IFluidDataStoreChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
-
     private _isInMemoryRoot: boolean = false;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly subLogger: ITelemetryLogger;
@@ -693,7 +692,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * This method should not be used outside of the aliasing context.
      * It will be removed, as the source of truth for this flag will be the aliasing blob.
      */
-     public setInMemoryRoot(): void {
+    public setInMemoryRoot(): void {
         this._isInMemoryRoot = true;
     }
 
