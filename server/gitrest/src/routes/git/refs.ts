@@ -30,7 +30,7 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.getRefs());
+        ).then(async (repoManager) => repoManager.getRefs());
         handleResponse(resultP, response);
     });
 
@@ -38,7 +38,7 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.getRef(
+        ).then(async (repoManager) => repoManager.getRef(
             getRefId(request.params[0]),
             getExternalWriterParams(request.query?.config as string),
         ));
@@ -50,7 +50,7 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.createRef(
+        ).then(async (repoManager) => repoManager.createRef(
             createRefParams,
             createRefParams.config,
         ));
@@ -62,7 +62,7 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.patchRef(
+        ).then(async (repoManager) => repoManager.patchRef(
             getRefId(request.params[0]),
             patchRefParams,
             patchRefParams.config,
@@ -74,7 +74,7 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => repoManager.deleteRef(getRefId(request.params[0])));
+        ).then(async (repoManager) => repoManager.deleteRef(getRefId(request.params[0])));
         handleResponse(resultP, response, 204);
     });
     return router;

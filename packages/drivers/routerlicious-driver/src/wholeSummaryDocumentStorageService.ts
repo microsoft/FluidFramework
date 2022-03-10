@@ -71,9 +71,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
                 && this.hasSessionLocationChanged) ||
                 (this.hasSessionLocationChanged !== undefined && !this.hasSessionLocationChanged &&
                     this.isSessionAlive !== undefined && this.isSessionAlive);
-            const { id, snapshotTree } = await this.fetchAndCacheSnapshotTree(latestSnapshotId, disableCache);
+            const { id: _id, snapshotTree } = await this.fetchAndCacheSnapshotTree(latestSnapshotId, disableCache);
             return [{
-                id,
+                id: _id,
                 treeId: snapshotTree.id!,
             }];
         }

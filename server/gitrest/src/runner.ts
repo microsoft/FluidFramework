@@ -21,7 +21,7 @@ export class GitrestRunner implements IRunner {
         private readonly externalStorageManager: IExternalStorageManager) {
     }
 
-    public start(): Promise<void> {
+    public async start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
         // Create the gitrest app
         const gitrest = app.create(this.config, this.externalStorageManager);
@@ -38,7 +38,7 @@ export class GitrestRunner implements IRunner {
         return this.runningDeferred.promise;
     }
 
-    public stop(): Promise<void> {
+    public async stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
         this.server.close().then(
             () => {

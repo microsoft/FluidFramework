@@ -4,15 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import {
-    IFluidObject,
-    IRequest,
-    IResponse,
-    IFluidCodeDetails,
-    IFluidCodeDetailsComparer,
-    IProvideFluidCodeDetailsComparer,
-    FluidObject,
-} from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import {
     IAudience,
     IContainerContext,
@@ -27,7 +19,17 @@ import {
     ICodeLoader,
     IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions";
+import {
+    IFluidObject,
+    IRequest,
+    IResponse,
+    IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
+    IProvideFluidCodeDetailsComparer,
+    FluidObject,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { isFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
     IClientConfiguration,
     IClientDetails,
@@ -42,9 +44,7 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
-import { isFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";

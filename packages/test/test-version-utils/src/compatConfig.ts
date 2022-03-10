@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Lazy } from "@fluidframework/common-utils";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
 import {
@@ -14,7 +15,6 @@ import {
     baseVersion,
     reinstall,
 } from "./compatOptions";
-import { Lazy } from "@fluidframework/common-utils";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -126,9 +126,7 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
     ];
 };
 
-
-export const configList = new Lazy<readonly CompatConfig[]>(()=>{
-
+export const configList = new Lazy<readonly CompatConfig[]>(() => {
     // set it in the env for parallel workers
     if (compatKind) {
         process.env.fluid__test__compatKind = JSON.stringify(compatKind);
@@ -141,26 +139,26 @@ export const configList = new Lazy<readonly CompatConfig[]>(()=>{
     process.env.fluid__test__tenantIndex = tenantIndex.toString();
     process.env.fluid__test__baseVersion = baseVersion;
 
-    let configList: CompatConfig[] = [];
+    let _configList: CompatConfig[] = [];
     if (!compatVersions || compatVersions.length === 0) {
         defaultVersions.forEach((value) => {
-            configList.push(...genConfig(value));
+            _configList.push(...genConfig(value));
         });
         LTSVersions.forEach((value) => {
-            configList.push(...genLTSConfig(value));
+            _configList.push(...genLTSConfig(value));
         });
     } else {
         compatVersions.forEach((value) => {
             if (value === "LTS") {
                 LTSVersions.forEach((lts) => {
-                    configList.push(...genLTSConfig(lts));
+                    _configList.push(...genLTSConfig(lts));
                 });
             } else {
                 const num = parseInt(value, 10);
                 if (num.toString() === value) {
-                    configList.push(...genConfig(num));
+                    _configList.push(...genConfig(num));
                 } else {
-                    configList.push(...genConfig(value));
+                    _configList.push(...genConfig(value));
                 }
             }
         });
@@ -168,11 +166,10 @@ export const configList = new Lazy<readonly CompatConfig[]>(()=>{
 
     if (compatKind !== undefined) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        configList = configList.filter((value) => compatKind!.includes(value.kind));
+        _configList = _configList.filter((value) => compatKind!.includes(value.kind));
     }
-    return configList;
+    return _configList;
 });
-
 
 /*
  * Mocha start up to ensure legacy versions are installed
