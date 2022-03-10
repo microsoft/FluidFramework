@@ -7,10 +7,9 @@ import assert from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
+import nock from "nock";
 import { RouterliciousRestWrapper } from "../restWrapper";
 import { R11sErrorType } from "../errorUtils";
-// eslint-disable-next-line @typescript-eslint/no-require-imports,import/order
-import nock = require("nock");
 
 describe("RouterliciousDriverRestWrapper", () => {
     const rateLimiter = new RateLimiter(1);
@@ -59,7 +58,6 @@ describe("RouterliciousDriverRestWrapper", () => {
         await restWrapper.load();
     });
     after(() => {
-        // reset();
         nock.restore();
     });
 
