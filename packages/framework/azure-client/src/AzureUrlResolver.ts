@@ -46,7 +46,6 @@ export class AzureUrlResolver implements IUrlResolver {
             throw new Error("Azure URL did not contain containerId");
         }
         const documentUrl = `${ordererUrl}/${tenantId}/${containerId}`;
-        // unicorn/no-useless-promise-resolve-reject
         return {
             endpoints: {
                 deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/${containerId}`,
