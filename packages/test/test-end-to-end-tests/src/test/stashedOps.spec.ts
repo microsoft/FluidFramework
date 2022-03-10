@@ -391,8 +391,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const connectP = new Promise<void>((resolve, reject) => {
             container2.on("connected", () => {
                 container2.getQuorum().getMember(serializedClientId) === undefined
-                ? resolve()
-                : reject(new Error("connected while previous client in quorum"));
+                    ? resolve()
+                    : reject(new Error("connected while previous client in quorum"));
             });
         });
 

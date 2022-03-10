@@ -140,7 +140,7 @@ export interface IContainerConfig {
     /**
      * clientId from previously serialized container
      */
-    serializedClientId?: string;
+    serializedContainerState?: IPendingContainerState;
 }
 
 export enum ConnectionState {
@@ -250,7 +250,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 clientDetailsOverride: loadOptions.clientDetailsOverride,
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
-                serializedClientId: pendingLocalState?.clientId,
+                serializedContainerState: pendingLocalState,
             });
 
         return PerformanceEvent.timedExecAsync(
@@ -619,7 +619,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
             },
             this.mc.logger,
-            config.serializedClientId,
+            config.serializedContainerState?.clientId,
         );
 
         this.on(savedContainerEvent, () => {

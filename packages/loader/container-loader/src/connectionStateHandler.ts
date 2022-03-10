@@ -22,7 +22,6 @@ export interface IConnectionStateHandler {
 
 export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
-    serialized?: boolean;
 }
 
 const JoinOpTimer = 45000;
@@ -30,7 +29,6 @@ const JoinOpTimer = 45000;
 export class ConnectionStateHandler {
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
-    private _clientId: string | undefined;
     private readonly prevClientLeftTimer: Timer;
     private readonly joinOpTimer: Timer;
 
@@ -55,7 +53,7 @@ export class ConnectionStateHandler {
     constructor(
         private readonly handler: IConnectionStateHandler,
         private readonly logger: ITelemetryLogger,
-        private readonly serializedClientId?: string,
+        private _clientId?: string,
     ) {
         this.prevClientLeftTimer = new Timer(
             // Default is 5 min for which we are going to wait for its own "leave" message. This is same as
@@ -67,8 +65,9 @@ export class ConnectionStateHandler {
                 this.applyForConnectedState("timeout");
             },
         );
-        // if we have a serialized clientId we will need to wait unless we see its "leave" op
-        if (serializedClientId !== undefined) {
+
+        // this is a serialized clientId which we will treat the same as a previous clientId on disconnect
+        if (this.clientId !== undefined) {
             this.prevClientLeftTimer.restart();
         }
 
@@ -138,7 +137,6 @@ export class ConnectionStateHandler {
         assert(quorumClients !== undefined, 0x236 /* "In all cases it should be already installed" */);
 
         assert(this.prevClientLeftTimer.hasTimer === false ||
-            (this.serializedClientId !== undefined && quorumClients.getMember(this.serializedClientId) !== undefined) ||
             (this.clientId !== undefined && quorumClients.getMember(this.clientId) !== undefined),
             "waiting for clientId not present in quorum");
 
@@ -169,7 +167,7 @@ export class ConnectionStateHandler {
 
     public receivedRemoveMemberEvent(clientId: string) {
         // If the client which has left was us, then finish the timer.
-        if (this.clientId === clientId || this.serializedClientId === clientId) {
+        if (this.clientId === clientId) {
             this.prevClientLeftTimer.clear();
             this.applyForConnectedState("removeMemberEvent");
         }
@@ -230,14 +228,6 @@ export class ConnectionStateHandler {
         const quorumClients = this.handler.quorumClients();
         let client: ILocalSequencedClient | undefined;
 
-        // look for previous clientIds in the quorum, including from a previously closed and serialized container
-        if (this.serializedClientId !== undefined) {
-            client = quorumClients?.getMember(this.serializedClientId);
-            if (client !== undefined) {
-                client.serialized = true;
-                assert(this._clientId === undefined, "serialized clientId in quorum after connection");
-            }
-        }
         if (this._clientId !== undefined) {
             client = quorumClients?.getMember(this._clientId);
         }
