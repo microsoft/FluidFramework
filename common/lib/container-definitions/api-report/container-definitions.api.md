@@ -452,6 +452,14 @@ export type ILoaderOptions = {
     maxClientLeaveWaitTime?: number;
 };
 
+// @public (undocumented)
+export interface IPendingLocalState {
+    // (undocumented)
+    pendingRuntimeState: unknown;
+    // (undocumented)
+    url: string;
+}
+
 // @public @deprecated (undocumented)
 export interface IProvideDeltaSender {
     // @deprecated (undocumented)

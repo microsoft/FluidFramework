@@ -132,10 +132,6 @@
         },
         "InterfaceDeclaration_IConnectionDetails": {
           "backCompat": false
-        },
-        "RemovedInterfaceDeclaration_IPendingLocalState": {
-          "backCompat": false,
-          "forwardCompat": false
         }
       },
       "0.40.0": {
@@ -195,10 +191,6 @@
         },
         "InterfaceDeclaration_IConnectionDetails": {
           "backCompat": false
-        },
-        "RemovedInterfaceDeclaration_IPendingLocalState": {
-          "backCompat": false,
-          "forwardCompat": false
         }
       },
       "0.41.0": {
@@ -256,10 +248,6 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "RemovedInterfaceDeclaration_IPendingLocalState": {
           "backCompat": false,
           "forwardCompat": false
         }
@@ -323,10 +311,6 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_IFluidModule": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "RemovedInterfaceDeclaration_IPendingLocalState": {
           "backCompat": false,
           "forwardCompat": false
         }
@@ -394,10 +378,6 @@
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
           "forwardCompat": false
-        },
-        "RemovedInterfaceDeclaration_IPendingLocalState": {
-          "backCompat": false,
-          "forwardCompat": false
         }
       },
       "0.44.0": {
@@ -463,10 +443,6 @@
         },
         "InterfaceDeclaration_IUsageError": {
           "backCompat": false
-        },
-        "RemovedInterfaceDeclaration_IPendingLocalState": {
-          "backCompat": false,
-          "forwardCompat": false
         }
       },
       "0.45.0": {
@@ -511,10 +487,6 @@
         },
         "InterfaceDeclaration_IProxyLoaderFactory": {
           "backCompat": false
-        },
-        "RemovedInterfaceDeclaration_IPendingLocalState": {
-          "backCompat": false,
-          "forwardCompat": false
         }
       },
       "0.46.0": {
@@ -541,13 +513,7 @@
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
           "forwardCompat": false
-        },
-        "RemovedInterfaceDeclaration_IPendingLocalState": {
-          "backCompat": false,
-          "forwardCompat": false
         }
-      },
-      "0.47.0": {
       }
     }
   }

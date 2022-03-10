@@ -797,28 +797,26 @@ use_old_TypeAliasDeclaration_ILoaderOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
-* "RemovedInterfaceDeclaration_IPendingLocalState": {"forwardCompat": false}
+* "InterfaceDeclaration_IPendingLocalState": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IPendingLocalState():
     old.IPendingLocalState;
-declare function use_current_RemovedInterfaceDeclaration_IPendingLocalState(
-    // @ts-expect-error compatibility expected to be broken
+declare function use_current_InterfaceDeclaration_IPendingLocalState(
     use: current.IPendingLocalState);
-use_current_RemovedInterfaceDeclaration_IPendingLocalState(
+use_current_InterfaceDeclaration_IPendingLocalState(
     get_old_InterfaceDeclaration_IPendingLocalState());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
-* "RemovedInterfaceDeclaration_IPendingLocalState": {"backCompat": false}
+* "InterfaceDeclaration_IPendingLocalState": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_IPendingLocalState():
-    // @ts-expect-error compatibility expected to be broken
+declare function get_current_InterfaceDeclaration_IPendingLocalState():
     current.IPendingLocalState;
 declare function use_old_InterfaceDeclaration_IPendingLocalState(
     use: old.IPendingLocalState);
 use_old_InterfaceDeclaration_IPendingLocalState(
-    get_current_RemovedInterfaceDeclaration_IPendingLocalState());
+    get_current_InterfaceDeclaration_IPendingLocalState());
 
 /*
 * Validate forward compat by using old type in place of current type
