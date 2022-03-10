@@ -353,7 +353,6 @@ export class ReplayTool {
         if (event.eventName.includes("GarbageCollector:inactiveObject_")
             // there is something wrong with summary ops, but we don't run the summarizer, so it shouldn't matter
             || event.eventName.includes("SummaryAckWithoutOp")
-            || event.eventName.includes("GarbageCollection_cancel")
         ) {
             return false;
         }
