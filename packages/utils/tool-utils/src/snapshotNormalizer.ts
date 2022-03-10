@@ -127,13 +127,11 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
 }
 
 function normalizeEntry(
-    entry: ITreeEntry, config: ISnapshotNormalizerConfig | undefined, excludedChannelContentOverride?: string,
+    entry: ITreeEntry,
+    config: ISnapshotNormalizerConfig | undefined,
 ): ITreeEntry {
     switch (entry.type) {
         case TreeEntry.Blob: {
-            if(excludedChannelContentOverride) {
-                return new BlobTreeEntry(entry.path, JSON.stringify({content: excludedChannelContentOverride}));
-            }
             let contents = entry.value.contents;
             // If this blob has to be normalized or it's a GC blob, parse and sort the blob contents first.
             if (config?.blobsToNormalize?.includes(entry.path) || entry.path.startsWith(gcBlobPrefix)) {
@@ -142,25 +140,13 @@ function normalizeEntry(
             return new BlobTreeEntry(entry.path, contents);
         }
         case TreeEntry.Tree: {
-            if(config?.excludedChannelContentTypes) {
-                for(const e of entry.value.entries) {
-                    if(e.type === TreeEntry.Blob && e.path === ".attributes") {
-                        const parsed: {type?: string} = JSON.parse(e.value.contents);
-                        if(parsed.type && config.excludedChannelContentTypes.includes(parsed.type)) {
-                            // remove everything but the attributes for excluded channels
-                            return new TreeTreeEntry(
-                                entry.path,
-                                {
-                                    ... entry,
-                                    entries:[
-                                        ... entry.value.entries
-                                            .filter((b)=>b !== e)
-                                            .map((b)=>normalizeEntry(
-                                                b,
-                                                config,
-                                                "excludedChannelContent")),
-                                        normalizeEntry(e, config)],
-                                    });
+            if(config?.excludedChannelContentTypes !== undefined) {
+                for(const maybeAttributes of entry.value.entries) {
+                    if(maybeAttributes.type === TreeEntry.Blob && maybeAttributes.path === ".attributes") {
+                        const parsed: {type?: string} = JSON.parse(maybeAttributes.value.contents);
+                        if(parsed.type !== undefined && config.excludedChannelContentTypes.includes(parsed.type)) {
+                            // remove everything to match the unknown channel
+                            return new TreeTreeEntry(entry.path, {entries:[maybeAttributes]});
                         }
                     }
                 }
