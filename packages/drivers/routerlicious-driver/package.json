@@ -86,7 +86,7 @@
     "@types/node-fetch": "^2.5.10",
     "@types/sinon": "^7.0.13",
     "@types/socket.io-client": "^1.4.32",
-    "@types/url-parse": "^1.4.4",
+    "@types/url-parse": "1.4.4",
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
