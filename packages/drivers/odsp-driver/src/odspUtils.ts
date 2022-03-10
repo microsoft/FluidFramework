@@ -32,6 +32,7 @@ import {
     ICacheEntry,
     snapshotKey,
     InstrumentedStorageTokenFetcher,
+    IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -109,14 +110,15 @@ export async function fetchHelper(
         // Let's assume we can retry.
         if (!response) {
             throw new NonRetryableError(
-                "odspFetchErrorNoResponse",
-                "No response from fetch call",
+                // pre-0.58 error message: No response from fetch call
+                "No response from ODSP fetch call",
                 DriverErrorType.incorrectServerResponse,
                 { driverVersion });
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                `odspFetchError [${response.status}]`, response.status, response, await response.text());
+                // pre-0.58 error message prefix: odspFetchError
+                `ODSP fetch error [${response.status}]`, response.status, response, await response.text());
         }
 
         const headers = headersToMap(response.headers);
@@ -138,25 +140,27 @@ export async function fetchHelper(
         // This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
         if (error.name === "AbortError") {
             throw new RetryableError(
-                "fetchAbort", "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, { driverVersion });
+                "Fetch Timeout (AbortError)", OdspErrorType.fetchTimeout, { driverVersion });
         }
         // TCP/IP timeout
         if (errorText.indexOf("ETIMEDOUT") !== -1) {
             throw new RetryableError(
-                "fetchETimedout", "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, { driverVersion });
+                "Fetch Timeout (ETIMEDOUT)", OdspErrorType.fetchTimeout, { driverVersion });
         }
 
         //
         // WARNING: Do not log error object itself or any of its properties!
-        // It could container PII, like URI in message itself, or token in properties.
+        // It could contain PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
         //
         if (online === OnlineStatus.Offline) {
             throw new RetryableError(
-                "OdspFetchOffline", `Offline: ${errorText}`, DriverErrorType.offlineError, { driverVersion });
+                // pre-0.58 error message prefix: Offline
+                `ODSP fetch failure (Offline): ${errorText}`, DriverErrorType.offlineError, { driverVersion });
         } else {
             throw new RetryableError(
-                "OdspFetchError", `Fetch error: ${errorText}`, DriverErrorType.fetchFailure, { driverVersion });
+                // pre-0.58 error message prefix: Fetch error
+                `ODSP fetch failure: ${errorText}`, DriverErrorType.fetchFailure, { driverVersion });
         }
     });
 }
@@ -202,7 +206,8 @@ export async function fetchAndParseAsJSONHelper<T>(
         // succeeds on retry.
         // So do not log error object itself.
         throwOdspNetworkError(
-            "errorWhileParsingFetchResponse",
+            // pre-0.58 error message: errorWhileParsingFetchResponse
+            "Error while parsing fetch response",
             fetchIncorrectResponse,
             content, // response
             text,
@@ -272,7 +277,7 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
 
 export function toInstrumentedOdspTokenFetcher(
     logger: ITelemetryLogger,
-    resolvedUrl: IOdspResolvedUrl,
+    resolvedUrlParts: IOdspUrlParts,
     tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
     throwOnNullToken: boolean,
 ): InstrumentedStorageTokenFetcher {
@@ -291,9 +296,7 @@ export function toInstrumentedOdspTokenFetcher(
             },
             async (event) => tokenFetcher({
                 ...options,
-                siteUrl: resolvedUrl.siteUrl,
-                driveId: resolvedUrl.driveId,
-                itemId: resolvedUrl.itemId,
+                ...resolvedUrlParts,
             }).then((tokenResponse) => {
                 const token = tokenFromResponse(tokenResponse);
                 // This event alone generates so many events that is materially impacts cost of telemetry
@@ -306,8 +309,8 @@ export function toInstrumentedOdspTokenFetcher(
                 }
                 if (token === null && throwOnNullToken) {
                     throw new NonRetryableError(
-                        "storageTokenIsNull",
-                        `Token is null for ${name} call`,
+                        // pre-0.58 error message: Token is null for ${name} call
+                        `The Host-provided token fetcher for ${name} call returned null`,
                         OdspErrorType.fetchTokenError,
                         { method: name, driverVersion });
                 }
@@ -319,8 +322,7 @@ export function toInstrumentedOdspTokenFetcher(
                 const tokenError = wrapError(
                     error,
                     (errorMessage) => new NetworkErrorBasic(
-                        "tokenFetcherFailed",
-                        errorMessage,
+                        `The Host-provided token fetcher for ${name} call threw an error: ${errorMessage}`,
                         OdspErrorType.fetchTokenError,
                         typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
                         { method: name, driverVersion }));

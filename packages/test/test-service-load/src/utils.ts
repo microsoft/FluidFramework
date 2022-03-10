@@ -59,8 +59,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
         return baseFlushP;
     }
     send(event: ITelemetryBaseEvent): void {
-
-        if(typeof event.testCategoryOverride === "string"){
+        if (typeof event.testCategoryOverride === "string") {
             event.category = event.testCategoryOverride;
         }
 
@@ -108,7 +107,7 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
         const id = this.size.toString();
         this.blobs.set(id, content);
-        return { id, url: "" };
+        return { id };
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {

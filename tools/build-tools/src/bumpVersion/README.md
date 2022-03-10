@@ -28,6 +28,10 @@ For each package/monorepo that needs to be release, from the bottom of the depen
 - run `npm install` to update all the lock file
 - commit the change and repeat on the next level of the dependency change
 
+#### Virtual patches
+
+The tool supports virtual patch versioning using the `--virtualPatch` flag.  The beta versioning scheme we use (0.x.x) does not have room to differentiate major/minor/patch because we only have 2 version components. We can simulate this by making the second component represent the major version, and combine minor and patch into the third by representing minor as a 1000 increment and patch as a 1 increment. This reserves number space (999 of them) between each minor version, allowing room for patches.  This mechanism is not needed outside of the beta versioning scheme.
+
 ### Update dependencies across monorepo or independent packages
 
 Note that the dependencies update is all done in the context of the current branch, regardless of what version it is in main or release/* branches

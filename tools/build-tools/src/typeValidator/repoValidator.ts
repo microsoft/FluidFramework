@@ -10,8 +10,8 @@ import { getPackageManifest } from "../common/fluidUtils";
 import { FluidRepoBuild } from "../fluidBuild/fluidRepoBuild"
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { getPackageDetails } from "./packageJson";
-import { BreakingIncrement, BrokenTypes, validatePackage } from "./packageValidator";
-import { enableLogging, log } from "./validatorUtils";
+import { BrokenTypes, validatePackage } from "./packageValidator";
+import { BreakingIncrement, log } from "./validatorUtils";
 
 /**
  * Groupings of packages that should be versioned in lockstep

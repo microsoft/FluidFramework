@@ -110,6 +110,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 return false;
             }
 
+            // eslint-disable-next-line no-unmodified-loop-condition
             while (odspAuthLock !== undefined) {
                 await odspAuthLock;
             }

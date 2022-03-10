@@ -31,7 +31,6 @@ describe("MergeTree.Client", () => {
             }
             for(const group of file) {
                 const logger = new TestClientLogger([...msgClients.values()].map((mc)=>mc.client));
-                logger.log();
                 const initialText = logger.validate();
                 assert.strictEqual(initialText, group.initialText, "Initial text not as expected");
                 for(const msg of group.msgs) {
@@ -43,16 +42,12 @@ describe("MergeTree.Client", () => {
                     const op = msg.contents as IMergeTreeOp;
                     msgClient.client.localTransaction(
                         op.type === MergeTreeDeltaType.GROUP ? op : createGroupOp(op));
-                    logger.log(msg);
                     msgClients.forEach((mc)=>mc.msgs.push(msg));
                 }
 
                 msgClients.forEach((mc)=>{
                     while(mc.msgs.length > 0) {
                         mc.client.applyMsg(mc.msgs.shift());
-                        if(mc.client === originalClient) {
-                            logger.log();
-                        }
                     }
                 });
                 const result = logger.validate();

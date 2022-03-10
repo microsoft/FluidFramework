@@ -44,7 +44,7 @@ export function exceptionToResponse(err: any): IResponse {
         mimeType: "text/plain",
         status,
         value: `${err}`,
-        get stack() { return ((err?.stack) as (string|undefined)) ?? errWithStack.stack; },
+        get stack() { return ((err?.stack) as (string | undefined)) ?? errWithStack.stack; },
     };
 }
 

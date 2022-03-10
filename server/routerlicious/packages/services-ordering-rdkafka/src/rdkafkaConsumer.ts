@@ -49,14 +49,14 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		options?: Partial<IKafkaConsumerOptions>) {
 		super(endpoints, clientId, topic, options);
 
-        this.defaultRestartOnKafkaErrorCodes = [
-            this.kafka.CODES.ERRORS.ERR__TRANSPORT,
-            this.kafka.CODES.ERRORS.ERR__MSG_TIMED_OUT,
-            this.kafka.CODES.ERRORS.ERR__ALL_BROKERS_DOWN,
-            this.kafka.CODES.ERRORS.ERR__TIMED_OUT,
-            this.kafka.CODES.ERRORS.ERR__SSL,
-            this.kafka.CODES.ERRORS.ERR_COORDINATOR_LOAD_IN_PROGRESS,
-        ];
+		this.defaultRestartOnKafkaErrorCodes = [
+			this.kafka.CODES.ERRORS.ERR__TRANSPORT,
+			this.kafka.CODES.ERRORS.ERR__MSG_TIMED_OUT,
+			this.kafka.CODES.ERRORS.ERR__ALL_BROKERS_DOWN,
+			this.kafka.CODES.ERRORS.ERR__TIMED_OUT,
+			this.kafka.CODES.ERRORS.ERR__SSL,
+			this.kafka.CODES.ERRORS.ERR_COORDINATOR_LOAD_IN_PROGRESS,
+		];
 
 		this.consumerOptions = {
 			...options,
@@ -368,7 +368,24 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private processMessage(message: kafkaTypes.Message) {
 		const partition = message.partition;
 
-		if (this.isRebalancing && this.assignedPartitions.has(partition)) {
+		if (!this.assignedPartitions.has(partition)) {
+			/*
+				It is possible for node-rdkafka to send us messages for old partitions after a rebalance is processed.
+				I assume it's due to some librdkafka logic related incoming message queueing.
+				If we try to process this message:
+				1. The emit "data" event will cause "Received message for untracked partition" to be thrown.
+				2. A "latestOffset" will be set for this untracked partition.
+				#1 is fine.. but #2 is a huge problem.
+				If the consumer has a latestOffset for an unassigned partition and at some point later, is then
+				assigned that partition, the consumer will start processing messages from that offset.
+				This would result in a gap of missed messages!
+				It needs to start from the latest committed kafka offset in this case.
+			*/
+
+			return;
+		}
+
+		if (this.isRebalancing) {
 			/*
 				It is possible to receive messages while we have not yet finished rebalancing
 				due to how we wait for the fetchPartitionEpochs call to finish before emitting the rebalanced event.

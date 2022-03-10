@@ -331,7 +331,7 @@ export class LocalOrderer implements IOrderer {
             lastState.proposals,
             lastState.values,
             () => -1,
-            () => { return; });
+        );
 
         const summaryWriter = new SummaryWriter(
             this.tenantId,

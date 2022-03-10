@@ -9,7 +9,7 @@ import {
     IResources,
     IResourcesFactory,
 } from "@fluidframework/server-services-core";
-import * as moniker from "moniker";
+import sillyname from "sillyname";
 import { Provider } from "nconf";
 import { KafkaNodeConsumer } from "./kafkaNodeConsumer";
 
@@ -55,7 +55,7 @@ export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> 
         const groupId = streamConfig.group;
         const receiveTopic = streamConfig.topic;
 
-        const clientId = moniker.choose();
+        const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
 
         const consumer = new KafkaNodeConsumer(
             { kafkaHost: kafkaEndpoint },
