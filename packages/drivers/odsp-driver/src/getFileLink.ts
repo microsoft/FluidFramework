@@ -108,7 +108,7 @@ async function getFileLinkCore(
                 );
                 const storageToken = await storageTokenFetcher(options,"GetFileLinkCore");
                 assert(storageToken !== null,
-                    "Instrumented token fetcher with throwOnNullToken = true should never return null");
+                    0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */);
 
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${odspUrlParts.siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
@@ -183,7 +183,7 @@ async function getFileItemLite(
                 );
                 const storageToken = await storageTokenFetcher(options,"GetFileItemLite");
                 assert(storageToken !== null,
-                    "Instrumented token fetcher with throwOnNullToken =true should never return null");
+                    0x2bc /* "Instrumented token fetcher with throwOnNullToken =true should never return null" */);
 
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl`,

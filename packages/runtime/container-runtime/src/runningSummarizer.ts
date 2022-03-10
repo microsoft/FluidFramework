@@ -131,6 +131,7 @@ export class RunningSummarizer implements IDisposable {
         this.pendingAckTimer = new PromiseTimer(
             maxAckWaitTime,
             () => {
+                // pre-0.58 error message: summaryAckWaitTimeout
                 this.raiseSummarizingError("Pending summary ack not received in time");
                 // Note: summarizeCount (from ChildLogger definition) may be 0,
                 // since this code path is hit when RunningSummarizer first starts up,
