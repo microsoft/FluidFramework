@@ -32,7 +32,7 @@ const testContainerConfig: ITestContainerConfig = {
     registry,
 };
 
-describeFullCompat("Batching", (getTestObjectProvider) => {
+describeFullCompat("Flushing ops", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
@@ -45,6 +45,13 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
     let dataObject1map2: SharedMap;
     let dataObject2map1: SharedMap;
     let dataObject2map2: SharedMap;
+
+    // Function to yield a turn in the Javascript event loop.
+    async function yieldJSTurn(): Promise<void> {
+        await new Promise<void>((resolve) => {
+            setTimeout(resolve);
+        });
+    }
 
     function setupBatchMessageListener(dataStore: ITestFluidObject, receivedMessages: ISequencedDocumentMessage[]) {
         dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
@@ -113,21 +120,17 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
             await provider.ensureSynchronized();
         });
 
-        /**
-         * This test fails because of this bug - https://github.com/microsoft/FluidFramework/issues/9398.
-         * To be enabled once the above bug is fixed.
-         */
-        it.skip("can set flush mode to Immediate and send ops", async () => {
+        it("can set flush mode to Immediate and send ops", async () => {
             dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
             dataObject1map1.set("key", "newValue");
             await provider.ensureSynchronized();
 
-            assert.strictEqual(dataObject2map1.get("key1"), "value1", "container1's map did not get updated");
-            assert.strictEqual(dataObject2map2.get("key1"), "value1", "container2's map did not get updated");
+            assert.strictEqual(dataObject1map1.get("key"), "newValue", "container1's map did not get updated");
+            assert.strictEqual(dataObject2map1.get("key"), "newValue", "container2's map did not get updated");
         });
     });
 
-    describe("Local ops batch metadata verification", () => {
+    describe("Batch metadata verification when ops are flushed in batches", () => {
         let dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
         let dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 
@@ -136,7 +139,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
             setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
         });
 
-        describe("Automatic batches via orderSequentially", () => {
+        describe("Automatic flushing of batches via orderSequentially", () => {
             it("can send and receive multiple batch ops correctly", async () => {
                 // Send messages in batch in the first dataStore.
                 dataObject1.context.containerRuntime.orderSequentially(() => {
@@ -185,16 +188,16 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                     dataObject2map2.set("key2", "value2");
                 });
 
-                // Manually flush the ops so that they are sent as a batch.
-                (dataObject2.context.containerRuntime as IContainerRuntime).flush();
+                // Yield a turn so that in TurnBased mode, the ops are flushed.
+                await yieldJSTurn();
 
                 dataObject2.context.containerRuntime.orderSequentially(() => {
                     dataObject2map1.set("key3", "value3");
                     dataObject2map2.set("key4", "value4");
                 });
 
-                // Manually flush the ops so that they are sent as a batch.
-                (dataObject2.context.containerRuntime as IContainerRuntime).flush();
+                // Yield a turn so that in TurnBased mode, the ops are flushed.
+                await yieldJSTurn();
 
                 // Wait for the ops to get processed by both the containers.
                 await provider.ensureSynchronized();
@@ -259,17 +262,20 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
             });
         });
 
-        describe("Manually flushed batches", () => {
-            it("can send and receive multiple batch ops that are manually flushed", async () => {
+        describe("TurnBased flushing of batches", () => {
+            beforeEach(() => {
                 dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+            });
+
+            it("can send and receive multiple batch ops that are flushed on JS turn", async () => {
                 // Send the ops that are to be batched together.
                 dataObject1map1.set("key1", "value1");
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
                 dataObject1map2.set("key4", "value4");
 
-                // Manually flush the ops so that they are sent as a batch.
-                (dataObject1.context.containerRuntime as IContainerRuntime).flush();
+                // Yield a turn so that the ops are flushed.
+                await yieldJSTurn();
 
                 // Wait for the ops to get processed by both the containers.
                 await provider.ensureSynchronized();
@@ -283,10 +289,11 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 verifyBatchMetadata(dataObject2BatchMessages);
             });
 
-            it("can send and receive single batch op that is manually flushed", async () => {
-                dataObject2.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
-                dataObject2map1.set("key1", "value1");
-                (dataObject2.context.containerRuntime as IContainerRuntime).flush();
+            it("can send and receive single batch op that is flushed on JS turn", async () => {
+                dataObject1map1.set("key1", "value1");
+
+                // Yield a turn so that the op is flushed.
+                await yieldJSTurn();
 
                 // Wait for the ops to get processed by both the containers.
                 await provider.ensureSynchronized();
@@ -300,34 +307,32 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 verifyBatchMetadata(dataObject2BatchMessages);
             });
 
-            it("can send and receive consecutive batches that are manually flushed", async () => {
+            it("can send and receive consecutive batches that are flushed on JS turn", async () => {
                 /**
                  * This test verifies that among other things, the PendingStateManager's algorithm of handling
                  * consecutive batches is correct.
                  */
 
-                dataObject2.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
-
                 // Send the ops that are to be batched together.
-                dataObject2map1.set("key1", "value1");
-                dataObject2map2.set("key2", "value2");
+                dataObject1map1.set("key1", "value1");
+                dataObject1map2.set("key2", "value2");
 
-                // Manually flush the batch.
-                (dataObject2.context.containerRuntime as IContainerRuntime).flush();
+                // Yield a turn so that the ops are flushed.
+                await yieldJSTurn();
 
                 // Send the second set of ops that are to be batched together.
-                dataObject2map1.set("key3", "value3");
-                dataObject2map2.set("key4", "value4");
+                dataObject1map1.set("key3", "value3");
+                dataObject1map2.set("key4", "value4");
 
-                // Manually flush the batch.
-                (dataObject2.context.containerRuntime as IContainerRuntime).flush();
+                // Yield a turn so that the ops are flushed.
+                await yieldJSTurn();
 
                 // Send a third set of ops that are to be batched together.
-                dataObject2map1.set("key5", "value5");
-                dataObject2map2.set("key6", "value6");
+                dataObject1map1.set("key5", "value5");
+                dataObject1map2.set("key6", "value6");
 
-                // Manually flush the batch.
-                (dataObject2.context.containerRuntime as IContainerRuntime).flush();
+                // Yield a turn so that the ops are flushed.
+                await yieldJSTurn();
 
                 // Wait for the ops to get processed by both the containers.
                 await provider.ensureSynchronized();
@@ -355,14 +360,14 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
         });
     });
 
-    describe("Document Dirty State", () => {
+    describe("Document Dirty State when batches are flushed", () => {
         // Verifies that the document dirty state for the given document is as expected.
         function verifyDocumentDirtyState(dataStore: ITestFluidObject, expectedState: boolean) {
             const dirty = (dataStore.context.containerRuntime as IContainerRuntime).isDirty;
             assert.equal(dirty, expectedState, "The document dirty state is not as expected");
         }
 
-        describe("Automatic batches via orderSequentially", () => {
+        describe("Automatic flushing of batches via orderSequentially", () => {
             it("should clean document dirty state after a batch with single message is sent", async () => {
                 // Send a batch with a single message.
                 dataObject1.context.containerRuntime.orderSequentially(() => {
@@ -449,11 +454,10 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
             });
         });
 
-        describe("Manually flushed batches", () => {
+        describe("TurnBased flushing of batches", () => {
             it("should clean document dirty state after a batch with single message is flushed", async () => {
-                // Manually flush a single batch message.
                 dataObject1map1.set("key1", "value1");
-                (dataObject1.context.containerRuntime as IContainerRuntime).flush();
+                await yieldJSTurn();
 
                 // Verify that the document is correctly set to dirty.
                 verifyDocumentDirtyState(dataObject1, true);
@@ -466,11 +470,10 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
             });
 
             it("should clean document dirty state after a batch with multiple messages is flushed", async () => {
-                // Manually flush a batch with multiple messages.
                 dataObject1map1.set("key1", "value1");
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
-                (dataObject1.context.containerRuntime as IContainerRuntime).flush();
+                await yieldJSTurn();
 
                 // Verify that the document is correctly set to dirty.
                 verifyDocumentDirtyState(dataObject1, true);
@@ -485,12 +488,12 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
             it("should clean document dirty state after consecutive batches are flushed", async () => {
                 // Flush a couple of batches consecutively.
                 dataObject1map1.set("key1", "value1");
-                (dataObject1.context.containerRuntime as IContainerRuntime).flush();
+                await yieldJSTurn();
 
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
                 dataObject1map2.set("key4", "value4");
-                (dataObject1.context.containerRuntime as IContainerRuntime).flush();
+                await yieldJSTurn();
 
                 // Verify that the document is correctly set to dirty.
                 verifyDocumentDirtyState(dataObject1, true);
@@ -511,10 +514,10 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
                 dataObject1map2.set("key4", "value4");
-                (dataObject1.context.containerRuntime as IContainerRuntime).flush();
+                await yieldJSTurn();
 
                 dataObject1map1.set("key5", "value5");
-                (dataObject1.context.containerRuntime as IContainerRuntime).flush();
+                await yieldJSTurn();
 
                 // Send another non-batch message.
                 dataObject1map1.set("key5", "value5");
