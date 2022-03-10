@@ -38,7 +38,7 @@ export class DirectoryFactory {
 }
 
 // @public
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents> {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, IDisposable {
     readonly absolutePath: string;
     createSubDirectory(subdirName: string): IDirectory;
     deleteSubDirectory(subdirName: string): boolean;
@@ -67,7 +67,7 @@ export interface IDirectoryEvents extends IEvent {
     // (undocumented)
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
-    (event: "disposed", listener: (target: IEventThisPlaceHolder, error?: Error) => void): any;
+    (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public (undocumented)
@@ -162,7 +162,7 @@ export class MapFactory implements IChannelFactory {
 }
 
 // @public @sealed
-export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory, IDisposable {
+export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);

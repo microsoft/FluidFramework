@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/common-definitions";
 import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
@@ -339,7 +338,7 @@ export class DirectoryFactory {
  *
  * @sealed
  */
-export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory, IDisposable {
+export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
     /**
      * Create a new shared directory
      *
@@ -811,7 +810,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
  * Node of the directory tree.
  * @sealed
  */
-class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirectory, IDisposable {
+class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirectory {
     /**
      * Tells if the sub directory is disposed or not.
      */
@@ -871,7 +870,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
     public dispose(error?: Error): void {
         this._disposed = true;
-        this.emit("disposed", this, error);
+        this.emit("disposed", this);
     }
 
     public get disposed(): boolean {
@@ -1538,7 +1537,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though?
         const successfullyRemoved = this._subdirectories.delete(subdirName);
-        (previousValue as SubDirectory)?.dispose();
+        previousValue?.dispose();
         return successfullyRemoved;
     }
 }

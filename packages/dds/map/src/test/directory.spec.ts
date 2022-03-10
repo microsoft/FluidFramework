@@ -140,9 +140,9 @@ describe("Directory", () => {
                 // Test dispose on subdirectory delete
                 let subDirectoryDisposed = false;
                 const subDirectory = directory.createSubDirectory("rock");
-                subDirectory.on("dispose", (value: IDirectory) => {
+                subDirectory.on("disposed", (value: IDirectory) => {
                     subDirectoryDisposed = true;
-                    assert.equal((value as SharedDirectory).disposed, true, "sub directory not deleted");
+                    assert.equal(value.disposed, true, "sub directory not deleted");
                 });
                 directory.deleteSubDirectory("rock");
                 assert.equal(subDirectoryDisposed, true, "sub directory not disposed!!");

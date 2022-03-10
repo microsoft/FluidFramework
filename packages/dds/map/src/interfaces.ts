@@ -4,7 +4,7 @@
  */
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IDisposable, IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -27,7 +27,7 @@ export interface IValueChanged {
  * @remarks
  * When used as a Map, operates on its keys.
  */
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents> {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, IDisposable {
     /**
      * The absolute path of the directory.
      */
@@ -176,8 +176,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * ```
  *
  * - `target` - The IDirectory itself.
- * 
- * - `error` - The error which could have lead to dispose.
  */
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (
@@ -187,7 +185,6 @@ export interface IDirectoryEvents extends IEvent {
     ) => void);
     (event: "disposed", listener: (
         target: IEventThisPlaceHolder,
-        error?: Error,
     ) => void);
 }
 
