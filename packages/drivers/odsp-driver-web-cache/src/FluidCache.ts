@@ -156,34 +156,6 @@ export class FluidCache implements IPersistedCache {
         }
     }
 
-    // TODO: This is replaced by removeEntries in FF bump 0.30.0, leaving it here for back compat.
-    public async removeAllEntriesForDocId(docId: string): Promise<void> {
-        try {
-            const db = await getFluidCacheIndexedDbInstance(this.logger);
-
-            const transaction = db.transaction(
-                FluidDriverObjectStoreName,
-                "readwrite",
-            );
-            const index = transaction.store.index("fileId");
-
-            const keysToDelete = await index.getAllKeys(docId);
-
-            await Promise.all(
-                keysToDelete.map((key) => transaction.store.delete(key)),
-            );
-            await transaction.done;
-        } catch (error: any) {
-            this.logger.sendErrorEvent(
-                {
-                    eventName:
-                        FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
-                },
-                error,
-            );
-        }
-    }
-
     public async get(cacheEntry: ICacheEntry): Promise<any> {
         const startTime = performance.now();
 
@@ -258,7 +230,7 @@ export class FluidCache implements IPersistedCache {
 
                     db.close();
                 })
-                .catch(() => {});
+                .catch(() => { });
             return value;
         } catch (error: any) {
             // We can fail to open the db for a variety of reasons,
