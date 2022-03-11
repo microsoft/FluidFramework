@@ -1630,18 +1630,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             switch (message.type) {
                 case ContainerMessageType.Attach:
-                    this.dataStores.processAttachMessage(message, local || localAck);
+                    this.dataStores.processAttachMessage(message, localAck);
                     break;
                 case ContainerMessageType.Alias:
-                    this.processAliasMessage(message, localOpMetadata, local);
+                    this.processAliasMessage(message, localOpMetadata, localAck);
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
                     // if localAck === true, treat this as a local op because it's one we sent on a previous container
-                    this.dataStores.processFluidDataStoreOp(message, local || localAck, localOpMetadata);
+                    this.dataStores.processFluidDataStoreOp(message, localAck, localOpMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
                     assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-                    this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
+                    this.blobManager.processBlobAttachOp(message.metadata.blobId, localAck);
                     break;
                 default:
             }

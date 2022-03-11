@@ -258,7 +258,13 @@ export class PendingStateManager implements IDisposable {
         }
 
         if (local) {
-            return { localAck: false, localOpMetadata: this.processPendingLocalMessage(message) };
+            if (this.firstStashedCSN !== undefined &&
+                message.clientSequenceNumber < this.firstStashedCSN &&
+                this.previousClientIds.has(message.clientId)) {
+                // this is an op from a previous container that was already ACKed before it was closed
+                return { localAck: false, localOpMetadata: undefined };
+            }
+            return { localAck: true, localOpMetadata: this.processPendingLocalMessage(message) };
         } else {
             return this.processRemoteMessage(message);
         }
