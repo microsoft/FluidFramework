@@ -150,7 +150,7 @@ export class OdspDocumentService implements IDocumentService {
         this.hostPolicy = hostPolicy;
         this.hostPolicy.fetchBinarySnapshotFormat ??=
             this.mc.config.getBoolean("Fluid.Driver.Odsp.binaryFormatSnapshot");
-        if (this.clientType === "") {
+        if (this.clientType === "summarizer") {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
     }

@@ -304,7 +304,10 @@ export interface IDocumentServiceFactory {
     /**
      * Returns an instance of IDocumentService
      */
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        clientType: string,
+        logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
 
     /**
      * Creates a new document with the provided options. Returns the document service.
@@ -314,6 +317,7 @@ export interface IDocumentServiceFactory {
     createContainer(
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
+        clientType: string,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService>;
 }
