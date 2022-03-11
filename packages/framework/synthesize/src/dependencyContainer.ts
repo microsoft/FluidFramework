@@ -81,7 +81,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     /**
      * @deprecated - Needed for back compat
      */
-    protected getProvider(provider: string & keyof TMap) {
+    private getProvider(provider: string & keyof TMap) {
         // this was removed, but some partners have trouble with back compat where they
         // use invalid patterns with IFluidObject and IFluidDependencySynthesizer
         // this is just for back compat until those are removed
