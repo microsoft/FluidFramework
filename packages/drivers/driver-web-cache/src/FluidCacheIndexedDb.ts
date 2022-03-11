@@ -28,7 +28,7 @@ export function getKeyForCacheEntry(entry: ICacheEntry) {
 }
 
 export function getFluidCacheIndexedDbInstance(
-    logger?: ITelemetryBaseLogger
+    logger?: ITelemetryBaseLogger,
 ): Promise<IDBPDatabase<FluidCacheDBSchema>> {
     return new Promise((resolve, reject) => {
         openDB<FluidCacheDBSchema>(
@@ -54,35 +54,35 @@ export function getFluidCacheIndexedDbInstance(
                                 eventName:
                                     FluidCacheErrorEvent.FluidCacheDeleteOldDbError,
                             },
-                            error
+                            error,
                         );
                     }
 
                     const cacheObjectStore = db.createObjectStore(
-                        FluidDriverObjectStoreName
+                        FluidDriverObjectStoreName,
                     );
                     cacheObjectStore.createIndex(
                         "createdTimeMs",
-                        "createdTimeMs"
+                        "createdTimeMs",
                     );
                     cacheObjectStore.createIndex(
                         "lastAccessTimeMs",
-                        "lastAccessTimeMs"
+                        "lastAccessTimeMs",
                     );
                     cacheObjectStore.createIndex(
                         "partitionKey",
-                        "partitionKey"
+                        "partitionKey",
                     );
                     cacheObjectStore.createIndex("fileId", "fileId");
                 },
                 blocked: () => {
                     reject(
                         new Error(
-                            "Could not open DB since it is blocked by an older client that has the DB open"
-                        )
+                            "Could not open DB since it is blocked by an older client that has the DB open",
+                        ),
                     );
                 },
-            }
+            },
         ).then(resolve, reject);
     });
 }
