@@ -1549,7 +1549,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         // Might want to consider cleaning out the structure more exhaustively though?
         const successfullyRemoved = this._subdirectories.delete(subdirName);
         if (previousValue !== undefined) {
-            previousValue?.dispose();
+            previousValue.dispose();
             const event: ISubDirectoryDeleted = {
                 key: subdirName,
                 path: this.absolutePath,
