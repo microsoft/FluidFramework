@@ -53,6 +53,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
+        clientType?: string,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
@@ -112,7 +113,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     this.hostPolicy.cacheCreateNewSummary ?? true,
                     !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                 );
-                const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger, cacheAndTracker);
+                const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
+                    clientType, cacheAndTracker);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -145,14 +147,16 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
+        clientType: string,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger));
+        return this.createDocumentServiceCore(resolvedUrl, clientType, createOdspLogger(logger));
     }
 
     private async createDocumentServiceCore(
         resolvedUrl: IResolvedUrl,
         odspLogger: TelemetryLogger,
+        clientType: string,
         cacheAndTrackerArg?: ICacheAndTracker,
     ): Promise<IDocumentService> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
@@ -192,6 +196,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             cacheAndTracker.cache,
             this.hostPolicy,
             cacheAndTracker.epochTracker,
+            clientType,
             this.socketReferenceKeyPrefix,
         );
     }
