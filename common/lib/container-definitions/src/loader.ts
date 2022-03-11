@@ -259,16 +259,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly connected: boolean;
 
     /**
-     * Try to connect the container to the delta stream
-     */
-    connect?(): void;
-
-    /**
-     * Disconnect the container from the delta stream
-     */
-    disconnect?(): void;
-
-    /**
      * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream
      * after receiving a disconnect event
      * @param reconnect - Boolean indicating if reconnect should automatically occur

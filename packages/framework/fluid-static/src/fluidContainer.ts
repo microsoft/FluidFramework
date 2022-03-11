@@ -5,7 +5,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { AttachState, IContainer, ConnectionState } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
@@ -66,31 +66,6 @@ import { RootDataObject } from "./rootDataObject";
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected" | "dispose" | "disconnected" | "saved" | "dirty", listener: () => void): void;
 }
-
-/**
- * Namespace for the different connection states a container can be in
- */
- export namespace ConnectionState {
-    /**
-     * The document is no longer connected to the delta server
-     */
-    export type Disconnected = 0;
-
-    /**
-     * The document has an inbound connection but is still pending for outbound deltas
-     */
-    export type Connecting = 1;
-
-    /**
-     * The document is fully connected
-     */
-     export type Connected = 2;
-}
-
-/**
- * Type defining the different states of connectivity a container can be in
- */
-export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
 
 /**
  * The IFluidContainer provides an entrypoint into the client side of collaborative Fluid data.  It provides access
