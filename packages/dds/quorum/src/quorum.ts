@@ -20,11 +20,6 @@ import { v4 as uuid } from "uuid";
 import { QuorumFactory } from "./quorumFactory";
 import { IQuorum, IQuorumEvents } from "./interfaces";
 
-interface IPendingOp {
-    type: "volunteer" | "abandon";
-    messageId: number;
-}
-
 interface IAcceptedValue {
     /**
      * The value that was accepted.
@@ -55,66 +50,54 @@ interface IQuorumOperation {
 const snapshotFileName = "header";
 
 /**
- * The TaskManager distributed data structure tracks queues of clients that want to exclusively run a task.
+ * The Quorum distributed data structure provides key/value storage with a cautious conflict resolution strategy.
+ * This strategy optimizes for all clients being aware of the change prior to considering the value as accepted.
  *
  * It is still experimental and under development.  Please do try it out, but expect breaking changes in the future.
  *
  * @remarks
  * ### Creation
  *
- * To create a `TaskManager`, call the static create method:
+ * To create a `Quorum`, call the static create method:
  *
  * ```typescript
- * const taskManager = TaskManager.create(this.runtime, id);
+ * const quorum = Quorum.create(this.runtime, id);
  * ```
  *
  * ### Usage
  *
- * To volunteer for a task, use the `lockTask()` method.  This returns a Promise that will resolve once the client
- * has acquired exclusive rights to run the task, or reject if the client is removed from the queue without acquiring
- * the rights.
+ * Setting and reading values is somewhat similar to a `SharedMap`.  However, because the acceptance strategy
+ * cannot be resolved until other clients have witnessed the set, the set is an async operation and the read will
+ * not reflect the set value immediately.
  *
  * ```typescript
- * taskManager.lockTask("NameOfTask")
- *     .then(() => { doTheTask(); })
+ * quorum.set("myKey", "myValue")
+ *     .then(() => { console.log(quorum.get("myKey")); })
  *     .catch((err) => { console.error(err); });
+ *
+ * // Reading from the quorum prior to the async operation's completion will still return the old value.
+ * console.log(quorum.get("myKey"));
  * ```
  *
- * To release the rights to the task, use the `abandon()` method.  The next client in the queue will then get the
- * rights to run the task.
+ * The acceptance process has two stages.  When an op indicating a client's attempt to set a value is sequenced,
+ * we first verify that it was set with knowledge of the most recently accepted value (consensus-like FWW).  If it
+ * meets this bar, then the value is "pending" (TODO: naming).  During this time, clients may observe the pending
+ * value and act upon it, but should be aware that not all other clients may have witnessed the value yet.  Once
+ * the MSN advances past the sequence number of the set, we know that all connected clients have witnessed the value
+ * and the value becomes "accepted".  Once the value is accepted, it once again becomes possible to set the value,
+ * again with consensus-like FWW resolution.
  *
- * ```typescript
- * taskManager.abandon("NameOfTask");
- * ```
- *
- * To inspect your state in the queue, you can use the `queued()` and `haveTaskLock()` methods.
- *
- * ```typescript
- * if (taskManager.queued("NameOfTask")) {
- *     console.log("This client is somewhere in the queue, potentially even having the lock");
- * }
- *
- * if (taskManager.queued("NameOfTask")) {
- *     console.log("This client currently has the rights to run the task");
- * }
- * ```
+ * TODO: Need another event to signal pending, need another method to permit read of pending.
  *
  * ### Eventing
  *
- * `TaskManager` is an `EventEmitter`, and will emit events when a task is assigned to the client or released.
+ * `Quorum` is an `EventEmitter`, and will emit events when a new value is accepted for a key.
  *
  * ```typescript
- * taskManager.on("assigned", (taskId: string) => {
- *     console.log(`Client was assigned task: ${taskId}`);
- * });
- *
- * taskManager.on("lost", (taskId: string) => {
- *     console.log(`Client released task: ${taskId}`);
+ * quorum.on("accept", (key: string) => {
+ *     console.log(`New value was accepted for key: ${ key }, value: ${ quorum.get(key) }`);
  * });
  * ```
- *
- * These can be useful if the logic to volunteer for a task is separated from the logic to perform the task and it's
- * not convenient to pass the Promise around.
  */
 export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     /**
@@ -152,11 +135,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     private readonly localAcceptance: EventEmitter = new EventEmitter();
 
     /**
-     * Tracks the most recent pending op for a given task
-     */
-    private readonly latestPendingOps: Map<string, IPendingOp> = new Map();
-
-    /**
      * Constructs a new task manager. If the object is non-local an id and service interfaces will
      * be provided
      *
@@ -182,9 +160,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
                     this.emit("lost", taskId);
                 }
             }
-
-            // All of our outstanding ops will be for the old clientId even if they get ack'd
-            this.latestPendingOps.clear();
         });
     }
 

@@ -9,7 +9,7 @@ export interface IQuorumEvents extends ISharedObjectEvents {
     /**
      * Notifies when a new value has been accepted.
      */
-    (event: "accept", listener: (taskId: string) => void);
+    (event: "accept", listener: (key: string) => void);
 }
 
 /**
