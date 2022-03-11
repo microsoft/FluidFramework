@@ -769,9 +769,10 @@ describe("Garbage Collection Tests", () => {
             await getUnreferencedTimestamps();
 
             // Validate that we got the "gcUnknownOutboundRoute" error.
-            mockLogger.matchEvents([
+            const eventsFound = mockLogger.matchEvents([
                 { eventName: unknownRouteEvent, route: nodeB },
             ]);
+            assert(eventsFound, `Expected only one event!`);
         });
     });
 });
