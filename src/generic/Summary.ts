@@ -17,7 +17,7 @@ import {
 	SharedTreeSummary_0_0_2,
 	SharedTreeSummary,
 	ChangeNode,
-	SharedTreeSummaryWriteFormat,
+	WriteFormat,
 } from './persisted-types';
 import { NodeIdConverter } from './NodeIdUtilities';
 
@@ -26,7 +26,7 @@ import { NodeIdConverter } from './NodeIdUtilities';
  * When next changing the format, we should add a new format version variable for the edit-specific summaries and assign it an independent
  * version number.
  */
-export const formatVersion = SharedTreeSummaryWriteFormat.Format_0_0_2;
+export const formatVersion = WriteFormat.v0_0_2;
 
 /**
  * Handler for summarizing the tree state.
@@ -107,7 +107,7 @@ export function fullHistorySummarizer<TChange>(
 	return {
 		currentTree: getChangeNode_0_0_2FromView(currentView, idConverter),
 		sequencedEdits,
-		version: SharedTreeSummaryWriteFormat.Format_0_0_2,
+		version: WriteFormat.v0_0_2,
 	};
 }
 
@@ -126,7 +126,7 @@ export function fullHistorySummarizer_0_1_1<TChange>(
 	return {
 		currentTree,
 		editHistory: summarizeLog(true),
-		version: SharedTreeSummaryWriteFormat.Format_0_1_1,
+		version: WriteFormat.v0_1_1,
 		internedStrings: stringInterner.getSerializable(),
 	};
 }

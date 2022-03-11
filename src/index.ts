@@ -120,7 +120,6 @@ export {
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
 	SharedTreeEncoder,
-	SharedTreeSummaryWriteFormat,
 	SharedTreeOp,
 	SharedTreeEditOp,
 	SharedTreeHandleOp,
@@ -147,5 +146,6 @@ export {
 	TransactionFactory,
 	areRevisionViewsSemanticallyEqual,
 	TraitLocation,
+	WriteFormat,
 } from './generic';
 export { StringInterner } from './StringInterner';

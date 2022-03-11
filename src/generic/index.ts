@@ -15,7 +15,6 @@ export {
 	ISharedTreeEvents,
 	GenericSharedTree,
 	SharedTreeFactoryOptions,
-	SharedTreeSummaryReadFormat,
 	SharedTreeChangeType,
 	SharedTreeFailureType,
 } from './GenericSharedTree';

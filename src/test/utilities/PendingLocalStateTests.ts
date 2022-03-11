@@ -14,7 +14,7 @@ import {
 	newEdit,
 	SharedTree,
 	SharedTreeEvent,
-	SharedTreeSummaryWriteFormat,
+	WriteFormat,
 	StablePlace,
 } from '../..';
 import { fail } from '../../Common';
@@ -68,10 +68,7 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 				return { tree: tree as WithApplyStashedOp<TSharedTree>, testTree: setUpTestTree(tree) };
 			}
 
-			for (const version of [
-				SharedTreeSummaryWriteFormat.Format_0_0_2,
-				SharedTreeSummaryWriteFormat.Format_0_1_1,
-			]) {
+			for (const version of [WriteFormat.v0_0_2, WriteFormat.v0_1_1]) {
 				it(`applies edit ops with version ${version} locally`, async () => {
 					const { tree, testTree } = makeTree();
 					const editCommittedLog: EditCommittedEventArguments<GenericSharedTree<any, any, any>>[] = [];
@@ -151,13 +148,13 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
 			// Setup
 			const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 				id: documentId,
-				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+				writeFormat: WriteFormat.v0_1_1,
 			});
 			const testTree = setUpTestTree(tree);
 			await setUpLocalServerTestSharedTree({
 				id: documentId,
 				testObjectProvider,
-				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+				writeFormat: WriteFormat.v0_1_1,
 			});
 
 			const url = (await container.getAbsoluteUrl('/')) ?? fail('Container unable to resolve "/".');

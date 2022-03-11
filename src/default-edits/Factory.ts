@@ -84,7 +84,7 @@ export class SharedTreeFactory implements IChannelFactory {
 			id,
 			this.options.expensiveValidation,
 			this.options.summarizeHistory,
-			this.options.writeSummaryFormat,
+			this.options.writeFormat,
 			this.options.uploadEditChunks
 		);
 		return sharedTree;

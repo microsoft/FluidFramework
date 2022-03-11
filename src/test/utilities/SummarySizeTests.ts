@@ -5,8 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { IsoBuffer } from '@fluidframework/common-utils';
-// KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
-import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
+import { TestObjectProvider } from '@fluidframework/test-utils';
 import { expect } from 'chai';
 import {
 	Change,

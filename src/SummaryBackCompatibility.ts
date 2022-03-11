@@ -7,12 +7,7 @@ import type { ITelemetryProperties } from '@fluidframework/common-definitions';
 import type { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { fail } from './Common';
 import { getNumberOfHandlesFromEditLogSummary } from './EditLog';
-import {
-	SharedTreeSummary,
-	SharedTreeSummaryBase,
-	SharedTreeSummaryWriteFormat,
-	SharedTreeSummary_0_0_2,
-} from './generic';
+import { SharedTreeSummary, SharedTreeSummaryBase, WriteFormat, SharedTreeSummary_0_0_2 } from './generic';
 
 /**
  * Deserializes a JSON object produced by `serialize()` and uses it to initialize the tree with the encoded state.
@@ -66,7 +61,7 @@ export interface SummaryStatistics extends ITelemetryProperties {
 export function getSummaryStatistics<TChange>(summary: SharedTreeSummaryBase): SummaryStatistics {
 	const { version } = summary;
 
-	if (version === SharedTreeSummaryWriteFormat.Format_0_1_1) {
+	if (version === WriteFormat.v0_1_1) {
 		const { editHistory } = summary as SharedTreeSummary<TChange>;
 
 		if (editHistory !== undefined) {
@@ -88,7 +83,7 @@ export function getSummaryStatistics<TChange>(summary: SharedTreeSummaryBase): S
 
 			fail('Missing fields on edit log summary');
 		}
-	} else if (version === SharedTreeSummaryWriteFormat.Format_0_0_2) {
+	} else if (version === WriteFormat.v0_0_2) {
 		const { sequencedEdits } = summary as SharedTreeSummary_0_0_2<TChange>;
 
 		return {

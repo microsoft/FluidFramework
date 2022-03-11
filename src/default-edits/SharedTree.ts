@@ -4,7 +4,7 @@
  */
 
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { convertTreeNodes, GenericSharedTree, SharedTreeSummaryWriteFormat } from '../generic';
+import { convertTreeNodes, GenericSharedTree, WriteFormat } from '../generic';
 import type { ChangeNode_0_0_2, Edit, RevisionView, SharedTreeEncoder } from '../generic';
 import { isDetachedSequenceId } from '../Identifiers';
 import { copyPropertyIfDefined, fail } from '../Common';
@@ -34,7 +34,7 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 	/**
 	 * Get a factory for SharedTree to register with the data store.
 	 * @param summarizeHistory - Determines if the history is included in summaries.
-	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
+	 * @param writeFormat - Determines the format version the SharedTree will write summaries in.
 	 * This format may be updated to a newer (supported) version if a collaborating shared-tree is initialized
 	 * with a newer write version.
 	 * See docs/Breaking-Change-Migration for more details on this scheme.
@@ -43,12 +43,12 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 	 */
 	public static getFactory(
 		summarizeHistory = false,
-		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
+		writeFormat = WriteFormat.v0_0_2,
 		uploadEditChunks = false
 	): SharedTreeFactory {
 		return new SharedTreeFactory({
 			summarizeHistory,
-			writeSummaryFormat,
+			writeFormat,
 			uploadEditChunks,
 		});
 	}
@@ -59,7 +59,7 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 	 * @param id - Unique ID for the SharedTree
 	 * @param expensiveValidation - enable expensive asserts
 	 * @param summarizeHistory - Determines if the history is included in summaries.
-	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
+	 * @param writeFormat - Determines the format version the SharedTree will write summaries in.
 	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 */
 	public constructor(
@@ -67,7 +67,7 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 		id: string,
 		expensiveValidation = false,
 		summarizeHistory = true,
-		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
+		writeFormat = WriteFormat.v0_0_2,
 		uploadEditChunks = false
 	) {
 		super(
@@ -77,7 +77,7 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 			SharedTreeFactory.Attributes,
 			expensiveValidation,
 			summarizeHistory,
-			writeSummaryFormat,
+			writeFormat,
 			uploadEditChunks
 		);
 	}
@@ -164,7 +164,7 @@ export class SharedTree extends GenericSharedTree<Change, ChangeInternal, Transa
 	/**
 	 * {@inheritDoc GenericSharedTree.getSharedTreeEncoder}
 	 */
-	protected getSharedTreeEncoder(version: SharedTreeSummaryWriteFormat): SharedTreeEncoder<ChangeInternal> {
+	protected getSharedTreeEncoder(version: WriteFormat): SharedTreeEncoder<ChangeInternal> {
 		return getSharedTreeEncoder(version);
 	}
 }

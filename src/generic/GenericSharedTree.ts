@@ -47,7 +47,7 @@ import {
 	SharedTreeOp,
 	SharedTreeOpType,
 	SharedTreeSummaryBase,
-	SharedTreeSummaryWriteFormat,
+	WriteFormat,
 } from './persisted-types';
 import { serialize, SummaryContents } from './Summary';
 import { areRevisionViewsSemanticallyEqual, newEditId } from './EditUtilities';
@@ -77,26 +77,7 @@ export const reservedIdCount = 1024;
 /**
  * Used for version comparison.
  */
-const sortedSummaryWriteVersions = [
-	SharedTreeSummaryWriteFormat.Format_0_0_2,
-	SharedTreeSummaryWriteFormat.Format_0_1_1,
-];
-
-/**
- * Format versions that SharedTree supports reading.
- * @public
- */
-export enum SharedTreeSummaryReadFormat {
-	/** Stores all edits in their raw format. */
-	Format_0_0_2 = '0.0.2',
-	/** Supports history virtualization, tree compression, string interning, and makes currentView optional. */
-	Format_0_1_1 = '0.1.1',
-}
-
-/**
- * Used for version comparison.
- */
-const sortedSummaryReadVersions = [SharedTreeSummaryReadFormat.Format_0_0_2, SharedTreeSummaryReadFormat.Format_0_1_1];
+const sortedWriteVersions = [WriteFormat.v0_0_2, WriteFormat.v0_1_1];
 
 /**
  * The arguments included when the EditCommitted SharedTreeEvent is emitted.
@@ -204,8 +185,8 @@ export interface SharedTreeFactoryOptions {
 	expensiveValidation?: boolean;
 	/** If false, does not include history in summaries. */
 	readonly summarizeHistory?: boolean;
-	/** Determines the summary format version to write, 0.0.2 by default. */
-	readonly writeSummaryFormat?: SharedTreeSummaryWriteFormat;
+	/** Determines the format version to write, 0.0.2 by default. */
+	readonly writeFormat?: WriteFormat;
 	/** If true, edit chunks are uploaded as blobs when they become full. */
 	readonly uploadEditChunks?: boolean;
 }
@@ -274,7 +255,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * @param id - Unique ID for the SharedTree
 	 * @param expensiveValidation - Enable expensive asserts.
 	 * @param summarizeHistory - Determines if the history is included in summaries.
-	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
+	 * @param writeFormat - Determines the format version the SharedTree will write summaries in.
 	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 */
 	public constructor(
@@ -284,12 +265,12 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		attributes: IChannelAttributes,
 		private readonly expensiveValidation = false,
 		protected readonly summarizeHistory = true,
-		protected writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
+		protected writeFormat = WriteFormat.v0_0_2,
 		private readonly uploadEditChunks = false
 	) {
 		super(id, runtime, attributes);
 		this.expensiveValidation = expensiveValidation;
-		this.encoder = this.getSharedTreeEncoder(writeSummaryFormat);
+		this.encoder = this.getSharedTreeEncoder(writeFormat);
 
 		// This code is somewhat duplicated from OldestClientObserver because it currently depends on the container runtime
 		// which SharedTree does not have access to.
@@ -311,7 +292,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 			initialSummary as SummaryContents<TChangeInternal>,
 			this.processEditResult,
 			this.processSequencedEditResult,
-			SharedTreeSummaryWriteFormat.Format_0_1_1
+			WriteFormat.v0_1_1
 		);
 
 		this.editLog = editLog;
@@ -460,7 +441,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 					fail('Edit chunk handle could not be serialized.'),
 				startRevision,
 				type: SharedTreeOpType.Handle,
-				version: this.writeSummaryFormat,
+				version: this.writeFormat,
 			};
 			this.submitLocalMessage(handleOp);
 			this.emit(SharedTreeDiagnosticEvent.EditChunkUploaded);
@@ -528,7 +509,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		} catch (error) {
 			this.logger?.sendErrorEvent({
 				eventName: 'UnsupportedSummaryWriteFormat',
-				formatVersion: this.writeSummaryFormat,
+				formatVersion: this.writeFormat,
 			});
 			throw error;
 		}
@@ -539,10 +520,10 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummaryBase): void {
-		const { version: loadedSummaryVersion } = summary as { version: SharedTreeSummaryWriteFormat };
+		const { version: loadedSummaryVersion } = summary as { version: WriteFormat };
 
-		if (isUpdateRequired(loadedSummaryVersion, this.writeSummaryFormat)) {
-			this.submitLocalMessage({ type: SharedTreeOpType.Update, version: this.writeSummaryFormat });
+		if (isUpdateRequired(loadedSummaryVersion, this.writeFormat)) {
+			this.submitLocalMessage({ type: SharedTreeOpType.Update, version: this.writeFormat });
 
 			// Sets the write format to the loaded version so that SharedTree continues to write the old version while waiting for the update op to be sequenced.
 			this.changeWriteFormat(loadedSummaryVersion);
@@ -551,12 +532,12 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		const decoder = this.getSharedTreeEncoder(loadedSummaryVersion);
 		const convertedSummary = decoder.decodeSummary(summary);
 
-		if (compareSummaryFormatVersions(loadedSummaryVersion, SharedTreeSummaryWriteFormat.Format_0_1_1) < 0) {
+		if (compareSummaryFormatVersions(loadedSummaryVersion, WriteFormat.v0_1_1) < 0) {
 			const { editHistory } = convertedSummary;
 			const { editIds, editChunks } = editHistory;
 			this.logger.sendTelemetryEvent({
 				eventName: 'SummaryConversion',
-				formatVersion: SharedTreeSummaryWriteFormat.Format_0_1_1,
+				formatVersion: WriteFormat.v0_1_1,
 				historySize: editIds.length,
 				totalNumberOfChunks: editChunks.length,
 				uploadedChunks: getNumberOfHandlesFromEditLogSummary(editHistory),
@@ -584,7 +565,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 				if (this.runtime.getQuorum().getMembers().size === 0) {
 					const noop: SharedTreeOp = {
 						type: SharedTreeOpType.NoOp,
-						version: this.writeSummaryFormat,
+						version: this.writeFormat,
 					};
 
 					this.submitLocalMessage(noop);
@@ -618,7 +599,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		summary: SummaryContents<TChangeInternal>,
 		editStatusCallback: EditStatusCallback,
 		sequencedEditResultCallback: SequencedEditResultCallback<TChangeInternal, TFailure>,
-		version: SharedTreeSummaryWriteFormat
+		version: WriteFormat
 	): { editLog: EditLog<TChangeInternal>; cachingLogViewer: CachingLogViewer<TChangeInternal, TFailure> } {
 		const { editHistory, currentTree } = summary;
 
@@ -626,9 +607,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		// log viewers.
 		this.cachingLogViewer?.detachFromEditLog();
 		const indexOfFirstEditInSession =
-			editHistory?.editIds.length === 1 && version === SharedTreeSummaryWriteFormat.Format_0_1_1
-				? 0
-				: editHistory?.editIds.length;
+			editHistory?.editIds.length === 1 && version === WriteFormat.v0_1_1 ? 0 : editHistory?.editIds.length;
 		// Use previously registered EditAddedHandlers if there is an existing EditLog.
 		const editLog = new EditLog(
 			editHistory,
@@ -670,7 +649,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * Upload any full chunks that have yet to be uploaded.
 	 */
 	private uploadCatchUpBlobs(): void {
-		if (this.writeSummaryFormat !== SharedTreeSummaryWriteFormat.Format_0_0_2 && this.uploadEditChunks) {
+		if (this.writeFormat !== WriteFormat.v0_0_2 && this.uploadEditChunks) {
 			for (const [startRevision, chunk] of this.editLog.getEditChunksReadyForUpload()) {
 				this.uploadEditChunk(chunk, startRevision)
 					.then(() => {
@@ -733,8 +712,8 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		this.cachingLogViewer.setMinimumSequenceNumber(message.minimumSequenceNumber);
 		const op: SharedTreeOp = message.contents;
 		const { type, version } = op;
-		const resolvedVersion = version ?? SharedTreeSummaryWriteFormat.Format_0_0_2;
-		const sameVersion = resolvedVersion === this.writeSummaryFormat;
+		const resolvedVersion = version ?? WriteFormat.v0_0_2;
+		const sameVersion = resolvedVersion === this.writeFormat;
 
 		// Edit and handle ops should only be processed if they're the same version as the tree write version.
 		// Update ops should only be processed if they're not the same version.
@@ -748,7 +727,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 			}
 		} else if (type === SharedTreeOpType.Update) {
 			this.processVersionUpdate(op.version);
-		} else if (compareSummaryFormatVersions(resolvedVersion, this.writeSummaryFormat) === 1) {
+		} else if (compareSummaryFormatVersions(resolvedVersion, this.writeFormat) === 1) {
 			// An op version newer than our current version should not be received. If this happens, either an
 			// incorrect op version has been written or an update op was skipped.
 			const error = 'Newer op version received by a client that has yet to be updated.';
@@ -777,11 +756,11 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	}
 
 	/**
-	 * Parses a sequenced edit. This is only invoked for ops with version matching the current `writeSummaryFormat`.
+	 * Parses a sequenced edit. This is only invoked for ops with version matching the current `writeFormat`.
 	 */
 	private parseSequencedEdit(op: SharedTreeEditOp<unknown>): Edit<TChangeInternal> {
 		// TODO:Type Safety: Improve type safety around op sending/parsing (e.g. discriminated union over version field somehow)
-		const decoder = this.getSharedTreeEncoder(op.version ?? SharedTreeSummaryWriteFormat.Format_0_0_2);
+		const decoder = this.getSharedTreeEncoder(op.version ?? WriteFormat.v0_0_2);
 		return decoder.decodeEditOp(op, (semiSerializedEdit) => {
 			// semiSerializedEdit may have handles which have been replaced by `serializer.encode`.
 			// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
@@ -797,7 +776,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * op/summary format dictated by the `version` parameter.
 	 * @param version - Version of the format to encode/decode.
 	 */
-	protected abstract getSharedTreeEncoder(version: SharedTreeSummaryWriteFormat): SharedTreeEncoder<TChangeInternal>;
+	protected abstract getSharedTreeEncoder(version: WriteFormat): SharedTreeEncoder<TChangeInternal>;
 
 	/*
 	 * Abstract helper that allows the concrete SharedTree type to perform pre-processing of an edit before it is added to the log.
@@ -825,7 +804,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		if (wasLocalEdit) {
 			this.editLog.addSequencedEdit(edit, message);
 			// If this client created the edit that filled up a chunk, it is responsible for uploading that chunk.
-			if (this.writeSummaryFormat !== SharedTreeSummaryWriteFormat.Format_0_0_2 && this.uploadEditChunks) {
+			if (this.writeFormat !== WriteFormat.v0_0_2 && this.uploadEditChunks) {
 				const lastPair = this.editLog.getLastEditChunk();
 				if (lastPair !== undefined) {
 					const [startRevision, chunk] = lastPair;
@@ -853,8 +832,8 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * Updates SharedTree to the provided version if the version is a valid write version newer than the current version.
 	 * @param version - The version to update to.
 	 */
-	private processVersionUpdate(version: SharedTreeSummaryWriteFormat) {
-		if (isUpdateRequired(this.writeSummaryFormat, version)) {
+	private processVersionUpdate(version: WriteFormat) {
+		if (isUpdateRequired(this.writeFormat, version)) {
 			try {
 				// The edit log may contain some local edits submitted after the version update op was submitted but
 				// before we receive the message it has been sequenced. Since these edits must be sequenced after the version
@@ -862,7 +841,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 				this.editLog.clearLocalEdits();
 				const oldSummary = this.saveSummary();
 
-				if (compareSummaryFormatVersions(version, SharedTreeSummaryWriteFormat.Format_0_1_1) >= 0) {
+				if (compareSummaryFormatVersions(version, WriteFormat.v0_1_1) >= 0) {
 					const decoder = this.getSharedTreeEncoder(oldSummary.version);
 					const summaryContents = decoder.decodeSummary(oldSummary);
 
@@ -1030,8 +1009,8 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		}
 	}
 
-	private changeWriteFormat(newFormat: SharedTreeSummaryWriteFormat): void {
-		this.writeSummaryFormat = newFormat;
+	private changeWriteFormat(newFormat: WriteFormat): void {
+		this.writeFormat = newFormat;
 		this.encoder = this.getSharedTreeEncoder(newFormat);
 		this.emit(SharedTreeDiagnosticEvent.WriteVersionChanged, newFormat);
 	}
@@ -1039,11 +1018,11 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 
 /**
  * @returns 1 if versionA is newer, -1 if versionB is newer, and 0 if the versions are the same.
- * @throws if either version isn't a valid SharedTreeSummaryReadFormat version.
+ * @throws if either version isn't a valid WriteFormat version.
  */
 function compareSummaryFormatVersions(versionA: string, versionB: string): number {
-	const versionAIndex = sortedSummaryReadVersions.indexOf(versionA as SharedTreeSummaryReadFormat);
-	const versionBIndex = sortedSummaryReadVersions.indexOf(versionB as SharedTreeSummaryReadFormat);
+	const versionAIndex = sortedWriteVersions.indexOf(versionA as WriteFormat);
+	const versionBIndex = sortedWriteVersions.indexOf(versionB as WriteFormat);
 
 	if (versionAIndex === -1 || versionBIndex === -1) {
 		fail('Summary version being compared cannot be read.');
@@ -1061,10 +1040,10 @@ function compareSummaryFormatVersions(versionA: string, versionB: string): numbe
 /**
  * Checks if the summary version needs to be updated.
  * @returns true if the old version is older than the new version.
- * @throws if the new version isn't a supported SharedTreeSummaryWriteFormat version.
+ * @throws if the new version isn't a supported WriteFormat version.
  */
 function isUpdateRequired(oldVersion: string, newVersion: string): boolean {
-	const newVersionIndex = sortedSummaryWriteVersions.indexOf(newVersion as SharedTreeSummaryWriteFormat);
+	const newVersionIndex = sortedWriteVersions.indexOf(newVersion as WriteFormat);
 	if (newVersionIndex === -1) {
 		fail('New write version is invalid.');
 	}

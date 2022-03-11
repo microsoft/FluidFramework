@@ -6,7 +6,7 @@
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
-import { SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../..';
+import { SharedTreeDiagnosticEvent, WriteFormat } from '../..';
 import { SharedTree } from '../../default-edits';
 import { SharedTreeOp, SharedTreeOpType } from '../../generic';
 import { EditLog } from '../../EditLog';
@@ -28,8 +28,8 @@ function spyOnSubmittedOps(containerRuntimeFactory: MockContainerRuntimeFactory)
 	return ops;
 }
 
-function spyOnVersionChanges(tree: SharedTree): SharedTreeSummaryWriteFormat[] {
-	const versions: SharedTreeSummaryWriteFormat[] = [];
+function spyOnVersionChanges(tree: SharedTree): WriteFormat[] {
+	const versions: WriteFormat[] = [];
 	tree.on(SharedTreeDiagnosticEvent.WriteVersionChanged, (version) => versions.push(version));
 	return versions;
 }
@@ -42,13 +42,13 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>
 ) {
 	describe(title, () => {
-		const oldVersion = SharedTreeSummaryWriteFormat.Format_0_0_2;
-		const newVersion = SharedTreeSummaryWriteFormat.Format_0_1_1;
-		const treeOptions = { localMode: false, writeSummaryFormat: oldVersion };
+		const oldVersion = WriteFormat.v0_0_2;
+		const newVersion = WriteFormat.v0_1_1;
+		const treeOptions = { localMode: false, writeFormat: oldVersion };
 		const secondTreeOptions = {
 			id: 'secondTestSharedTree',
 			localMode: false,
-			writeSummaryFormat: newVersion,
+			writeFormat: newVersion,
 		};
 
 		it('only processes edit ops if they have the same version', () => {
@@ -217,7 +217,7 @@ export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
 			// The 0.1.1 format omits `currentTree`, but EditLog should still tolerate synchronous access
 			// of the first edit in the session (which is a single insert containing that tree).
 			const options: SharedTreeTestingOptions = {
-				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+				writeFormat: WriteFormat.v0_1_1,
 				summarizeHistory: false,
 				localMode: false,
 			};

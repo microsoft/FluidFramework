@@ -6,17 +6,15 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
 import { v5 as uuidv5 } from 'uuid';
-// KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
-import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
+import { TestObjectProvider } from '@fluidframework/test-utils';
 import { Change, ChangeInternal, SharedTree, getSharedTreeEncoder } from '../../default-edits';
 import {
 	Edit,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
-	SharedTreeSummaryWriteFormat,
+	WriteFormat,
 	EditWithoutId,
 	UploadedEditChunkContents,
-	SharedTreeSummaryReadFormat,
 	SharedTreeEncoder,
 } from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
@@ -42,17 +40,14 @@ const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
  * Versions that can no longer be written should be removed from this list.
  */
 const noHistorySupportedEncoders: {
-	version: SharedTreeSummaryWriteFormat;
+	version: WriteFormat;
 	encoder: SharedTreeEncoder<ChangeInternal>;
-}[] = [SharedTreeSummaryWriteFormat.Format_0_0_2, SharedTreeSummaryWriteFormat.Format_0_1_1].map((version) => ({
+}[] = [WriteFormat.v0_0_2, WriteFormat.v0_1_1].map((version) => ({
 	version,
 	encoder: getSharedTreeEncoder(version, (edit) => uuidv5(JSON.stringify(edit.changes), uuidNamespace) as EditId),
 }));
 
-const supportedSummaryWriteFormats: SharedTreeSummaryWriteFormat[] = [
-	SharedTreeSummaryWriteFormat.Format_0_0_2,
-	SharedTreeSummaryWriteFormat.Format_0_1_1,
-];
+const supportedSummaryWriteFormats: WriteFormat[] = [WriteFormat.v0_0_2, WriteFormat.v0_1_1];
 
 /**
  * An entry into the forwardCompatibilityTests list that is run as the following test:
@@ -66,15 +61,15 @@ const supportedSummaryWriteFormats: SharedTreeSummaryWriteFormat[] = [
  */
 interface ForwardCompatibilityTestEntry {
 	/** Version of the summarizer, should be older than the load versions. */
-	summarizerVersion: SharedTreeSummaryWriteFormat;
+	summarizerVersion: WriteFormat;
 	/** A list of all the versions that can be read with directions on how they are expected to be handled by the specified summarizer. */
 	loadVersions: {
 		/** Version of the summary to load for testing. */
-		loadVersion: SharedTreeSummaryReadFormat;
+		loadVersion: WriteFormat;
 		/** Condition under which the summarizer will write a different format version than the summarizerVersion. */
 		condition: (summary: SharedTreeSummaryBase) => boolean;
 		/** The format version that will be written if the condition is true. */
-		conditionalWriteVersion: SharedTreeSummaryWriteFormat;
+		conditionalWriteVersion: WriteFormat;
 	}[];
 }
 
@@ -83,10 +78,10 @@ interface ForwardCompatibilityTestEntry {
  */
 const forwardCompatibilityTests: ForwardCompatibilityTestEntry[] = [
 	{
-		summarizerVersion: SharedTreeSummaryWriteFormat.Format_0_0_2,
+		summarizerVersion: WriteFormat.v0_0_2,
 		loadVersions: [
 			{
-				loadVersion: SharedTreeSummaryReadFormat.Format_0_1_1,
+				loadVersion: WriteFormat.v0_1_1,
 				// In the special case in which a SharedTree loads a summary with handles (which would necessarily
 				// imply that the summary was version >= 0.1.0), then a 0.1.0 summary is written even if the summarizer is 0.0.2.
 				condition: (summary: SharedTreeSummaryBase): boolean => {
@@ -97,7 +92,7 @@ const forwardCompatibilityTests: ForwardCompatibilityTestEntry[] = [
 					// An editChunk is a handle iff its "chunk" field is not an array
 					return castedSummary.editHistory.editChunks.some(({ chunk }) => !Array.isArray(chunk));
 				},
-				conditionalWriteVersion: SharedTreeSummaryWriteFormat.Format_0_1_1,
+				conditionalWriteVersion: WriteFormat.v0_1_1,
 			},
 		],
 	},
@@ -171,7 +166,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						// Use a tree with the correct summary write format
 						const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 							setupEditId: summaryCompatibilityTestSetupEditId,
-							writeSummaryFormat: version,
+							writeFormat: version,
 						});
 
 						await applyEdits(tree, testObjectProvider, history);
@@ -333,7 +328,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								// Use a tree with the correct summary write format
 								const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 									setupEditId: summaryCompatibilityTestSetupEditId,
-									writeSummaryFormat: supportedWriteVersion,
+									writeFormat: supportedWriteVersion,
 								});
 
 								// Load the summary to be read
@@ -377,7 +372,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								// Use a tree with the correct summary write format
 								const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 									setupEditId: summaryCompatibilityTestSetupEditId,
-									writeSummaryFormat: supportedWriteVersion,
+									writeFormat: supportedWriteVersion,
 								});
 
 								const serializedSummary = assertNotUndefined(summaryByVersion.get(loadVersion));
@@ -427,7 +422,7 @@ function expectBlobsByVersion(summary: SharedTreeSummaryBase, blobs: string, his
 	const storedBlobs: UploadedEditChunkContents<ChangeInternal>[] = JSON.parse(blobs);
 
 	switch (version) {
-		case SharedTreeSummaryWriteFormat.Format_0_1_1: {
+		case WriteFormat.v0_1_1: {
 			let loadedEdits: EditWithoutId<ChangeInternal>[] = [];
 
 			// Obtain all edits from the summary, replacing handles with edits loaded from the stored blob file.

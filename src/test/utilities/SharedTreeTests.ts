@@ -20,7 +20,7 @@ import {
 	EditStatus,
 	EditCommittedEventArguments,
 	SequencedEditAppliedEventArguments,
-	SharedTreeSummaryWriteFormat,
+	WriteFormat,
 	deepCompareNodes,
 	SharedTreeSummary_0_0_2,
 	SharedTreeSummary,
@@ -74,20 +74,20 @@ const undoRedoOptions = {
 };
 
 /**
- * Runs a test suite for operations on `SharedTree` writing ops at `writeSummaryFormat`.
+ * Runs a test suite for operations on `SharedTree` writing ops at `writeFormat`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
 export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 	title: string,
-	writeSummaryFormat: SharedTreeSummaryWriteFormat,
+	writeFormat: WriteFormat,
 	setUpTestSharedTreeWithDefaultVersion: (
 		options?: SharedTreeTestingOptions
 	) => SharedTreeTestingComponents<TSharedTree>
 ) {
 	const setUpTestSharedTree: typeof setUpTestSharedTreeWithDefaultVersion = (options) =>
-		setUpTestSharedTreeWithDefaultVersion({ writeSummaryFormat, ...options });
+		setUpTestSharedTreeWithDefaultVersion({ writeFormat, ...options });
 
-	const encoder = getSharedTreeEncoder(writeSummaryFormat);
+	const encoder = getSharedTreeEncoder(writeFormat);
 	/**
 	 * Convenience bundling of test components.
 	 * Like {@link SharedTreeTestingComponents}, but contains both the {@link SimpleTestTree} and
@@ -670,7 +670,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				// Serialize the state of one uninitialized tree into a second tree
 				const serialized = serialize(uninitializedTree.saveSummary(), testSerializer, testHandle);
 				const parsedTree = deserialize(serialized, testSerializer);
-				if (writeSummaryFormat === SharedTreeSummaryWriteFormat.Format_0_0_2) {
+				if (writeFormat === WriteFormat.v0_0_2) {
 					const summary = parsedTree as SharedTreeSummary_0_0_2<unknown>;
 					expect(summary.sequencedEdits).to.deep.equal([]);
 					expect(deepCompareNodes(summary.currentTree, initialTree)).to.be.true;
@@ -763,7 +763,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				} = createSimpleTestTree({
 					localMode: false,
 					summarizeHistory: true,
-					writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_0_2,
+					writeFormat: WriteFormat.v0_0_2,
 				});
 				const { sharedTree: sharedTree2 } = createSimpleTestTree();
 
@@ -1104,15 +1104,15 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 		});
 
 		// This functionality was only implemented in format 0.1.1.
-		if (writeSummaryFormat !== SharedTreeSummaryWriteFormat.Format_0_0_2) {
+		if (writeFormat !== WriteFormat.v0_0_2) {
 			describe('String interning and tree compression', () => {
 				it('compress ops via interning and tree compression and decompress when processing edits', () => {
 					const {
 						sharedTree: tree,
 						testTree,
 						containerRuntimeFactory,
-					} = createSimpleTestTree({ writeSummaryFormat });
-					const { tree: secondTree } = setUpTestSharedTree({ containerRuntimeFactory, writeSummaryFormat });
+					} = createSimpleTestTree({ writeFormat });
+					const { tree: secondTree } = setUpTestSharedTree({ containerRuntimeFactory, writeFormat });
 					const remoteRuntime = containerRuntimeFactory.createContainerRuntime(
 						new MockFluidDataStoreRuntime()
 					);
@@ -1149,8 +1149,8 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 						sharedTree: tree,
 						testTree: testTree,
 						containerRuntimeFactory,
-					} = createSimpleTestTree({ writeSummaryFormat });
-					const { sharedTree: secondTree } = createSimpleTestTree({ writeSummaryFormat });
+					} = createSimpleTestTree({ writeFormat });
+					const { sharedTree: secondTree } = createSimpleTestTree({ writeFormat });
 
 					const newNode = testTree.buildLeaf(testTree.generateNodeId());
 					tree.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));

@@ -193,7 +193,7 @@ export enum SharedTreeOpType {
 	Handle,
 	/** An op that does not affect the tree's state. */
 	NoOp,
-	/** Signals that SharedTree contents should be updated to match a new summary write version. */
+	/** Signals that SharedTree contents should be updated to match a new write format. */
 	Update,
 }
 
@@ -201,8 +201,8 @@ export enum SharedTreeOpType {
  * SharedTreeOp containing a version stamp marking the write format of the tree which submitted it.
  */
 export interface VersionedOp {
-	/** The supported SharedTree write version, see {@link SharedTreeSummaryWriteFormat}. */
-	readonly version: SharedTreeSummaryWriteFormat;
+	/** The supported SharedTree write version, see {@link WriteFormat}. */
+	readonly version: WriteFormat;
 }
 
 /**
@@ -256,14 +256,13 @@ export interface SharedTreeHandleOp extends VersionedOp {
 
 /**
  * Format versions that SharedTree supports writing. Changes to op or summary formats necessitate updates.
- * TODO:#73367: Rename this to SharedTreeWriteFormat to reflect its scope.
  * @public
  */
-export enum SharedTreeSummaryWriteFormat {
+export enum WriteFormat {
 	/** Stores all edits in their raw format. */
-	Format_0_0_2 = '0.0.2',
+	v0_0_2 = '0.0.2',
 	/** Supports history virtualization, tree compression, string interning, and makes currentView optional. */
-	Format_0_1_1 = '0.1.1',
+	v0_1_1 = '0.1.1',
 }
 
 /**
@@ -273,7 +272,7 @@ export interface SharedTreeSummaryBase {
 	/**
 	 * Field on summary under which version is stored.
 	 */
-	readonly version: SharedTreeSummaryWriteFormat;
+	readonly version: WriteFormat;
 }
 
 /**
@@ -287,5 +286,5 @@ export interface SharedTreeSummary_0_0_2<TChange> extends SharedTreeSummaryBase 
 	 * A list of edits.
 	 */
 	readonly sequencedEdits: readonly Edit<TChange>[];
-	readonly version: SharedTreeSummaryWriteFormat.Format_0_0_2;
+	readonly version: WriteFormat.v0_0_2;
 }

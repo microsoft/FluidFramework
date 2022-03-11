@@ -20,7 +20,7 @@ import {
 	SharedTreeSummary,
 	SharedTreeSummary_0_0_2,
 	SharedTreeSummaryBase,
-	SharedTreeSummaryWriteFormat,
+	WriteFormat,
 	SummaryContents,
 	TreeCompressor_0_1_1,
 } from '../generic';
@@ -60,7 +60,7 @@ class SharedTreeEncoder_0_1_1 implements SharedTreeEncoder<ChangeInternal> {
 		return {
 			type: SharedTreeOpType.Edit,
 			edit: semiSerialized,
-			version: SharedTreeSummaryWriteFormat.Format_0_1_1,
+			version: WriteFormat.v0_1_1,
 			internedStrings: interner.getSerializable(),
 		};
 	}
@@ -90,7 +90,7 @@ class SharedTreeEncoder_0_1_1 implements SharedTreeEncoder<ChangeInternal> {
 
 	public decodeSummary(summary: SharedTreeSummaryBase): SummaryContents<ChangeInternal> {
 		assert(
-			summary.version === SharedTreeSummaryWriteFormat.Format_0_1_1,
+			summary.version === WriteFormat.v0_1_1,
 			`Invalid summary version to decode: ${summary.version}, expected: 0.1.1`
 		);
 		const {
@@ -126,7 +126,7 @@ class SharedTreeEncoder_0_0_2 implements SharedTreeEncoder<ChangeInternal> {
 		return {
 			type: SharedTreeOpType.Edit,
 			edit: semiSerialized,
-			version: SharedTreeSummaryWriteFormat.Format_0_0_2,
+			version: WriteFormat.v0_0_2,
 		};
 	}
 
@@ -177,25 +177,24 @@ class SharedTreeEncoder_0_0_2 implements SharedTreeEncoder<ChangeInternal> {
 const encoders: {
 	[version: string]: new (noHistoryIdGenerator: NoHistoryIdGenerator) => SharedTreeEncoder<ChangeInternal>;
 } = {
-	[SharedTreeSummaryWriteFormat.Format_0_0_2]: SharedTreeEncoder_0_0_2,
-	[SharedTreeSummaryWriteFormat.Format_0_1_1]: SharedTreeEncoder_0_1_1,
+	[WriteFormat.v0_0_2]: SharedTreeEncoder_0_0_2,
+	[WriteFormat.v0_1_1]: SharedTreeEncoder_0_1_1,
 };
 
 type NoHistoryIdGenerator = (edit: Edit<unknown>) => EditId;
 
 /**
- * @param writeSummaryFormat
+ * @param writeFormat
  * @param noHistoryIdGenerator - Encoding of no-history summaries requires generation of a synthetic edit.
  * By default, the id of the syntehtic edit is generated using the v4 uuid strategy.
  * This argument can be provided to make it more stable, if desired (e.g. in tests).
  * @returns
  */
 export function getSharedTreeEncoder(
-	writeSummaryFormat: SharedTreeSummaryWriteFormat,
+	writeFormat: WriteFormat,
 	noHistoryIdGenerator: NoHistoryIdGenerator = (edit) => edit.id
 ): SharedTreeEncoder<ChangeInternal> {
-	const Encoder =
-		encoders[writeSummaryFormat] ?? fail(`Unable to find op interpreter for format: ${writeSummaryFormat}`);
+	const Encoder = encoders[writeFormat] ?? fail(`Unable to find op interpreter for format: ${writeFormat}`);
 	return new Encoder(noHistoryIdGenerator);
 }
 
@@ -239,7 +238,7 @@ function noHistorySummarizer(
 				changes: edit.changes,
 			},
 		],
-		version: SharedTreeSummaryWriteFormat.Format_0_0_2,
+		version: WriteFormat.v0_0_2,
 	};
 }
 
@@ -273,6 +272,6 @@ function noHistorySummarizer_0_1_1(
 			editChunks: [{ startRevision: 0, chunk: [{ changes: edit.changes }] }],
 			editIds: [idGenerator(edit)],
 		},
-		version: SharedTreeSummaryWriteFormat.Format_0_1_1,
+		version: WriteFormat.v0_1_1,
 	};
 }

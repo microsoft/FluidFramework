@@ -8,7 +8,7 @@ import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
 import { deserialize } from '../../SummaryBackCompatibility';
-import { SharedTreeSummaryWriteFormat } from '../../generic';
+import { WriteFormat } from '../../generic';
 import {
 	getDocumentFiles,
 	LocalServerSharedTreeTestingComponents,
@@ -58,7 +58,7 @@ export function runSummaryLoadPerfTests<TSharedTree extends SharedTree>(
 							before: async () => {
 								const testingComponents = await setUpLocalServerTestSharedTree({
 									setupEditId,
-									writeSummaryFormat: version as SharedTreeSummaryWriteFormat,
+									writeFormat: version as WriteFormat,
 									// Uploading edit chunks is unnecessary for testing summary load
 									uploadEditChunks: false,
 								});
