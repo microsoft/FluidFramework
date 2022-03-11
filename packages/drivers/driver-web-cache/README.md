@@ -33,9 +33,7 @@ new FluidCache({
 Whenever any Fluid content is loaded with the web cache enabled, a task is scheduled to clear out all "stale" cache
 entries. This task is scheduled with the `setIdleCallback` browser API. We define stale cache entries as any cache
 entries that have not been used (read or written to) within the last 4 weeks. The cache is cleared of all stale cache
-entries corresponding to all documents, not just the ones corresponding to the Fluid document being loaded. It is
-important to note that since the cache clearing code lives in `office-web-host`, no stale content will be deleted during
- extended periods of time where the host application does not load Fluid content with `office-web-host`.
+entries corresponding to all documents, not just the ones corresponding to the Fluid document being loaded.
 
 The `deleteFluidCacheIndexDbInstance` API that an application can use to clear out the entire contents of the snapshot
 cache at any time. We recommend calling this API when the user explicitly signs out. Hosting applications
