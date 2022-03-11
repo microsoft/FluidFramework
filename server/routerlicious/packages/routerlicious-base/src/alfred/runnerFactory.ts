@@ -49,8 +49,7 @@ export class OrdererManager implements core.IOrdererManager {
     }
 
     public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-        let ordererType = "kafka";
-        if(this.ordererUrl.includes("localhost")) {
+        try {
             const tenant = await this.tenantManager.getTenant(tenantId, documentId);
 
             const messageMetaData = { documentId, tenantId };
@@ -63,23 +62,15 @@ export class OrdererManager implements core.IOrdererManager {
             if (tenant.orderer.url !== this.ordererUrl) {
                 return Promise.reject(new Error("Invalid ordering service endpoint"));
             }
-            ordererType = tenant.orderer.type;
-        }
 
-        Lumberjack.info(
-            `tenant orderer type =: ${ordererType}`,
-            getLumberBaseProperties(documentId, tenantId),
-        );
-
-        try {
-            switch (ordererType) {
+            switch (tenant.orderer.type) {
                 case "kafka":
                     return this.kafkaFactory.create(tenantId, documentId);
                 default:
                     return this.localOrderManager.get(tenantId, documentId);
             }
         } catch(error) {
-            Lumberjack.error(`Error while creating kafka order`, getLumberBaseProperties(documentId, tenantId), error);
+            Lumberjack.error(`Error while creating kafka orderer`, getLumberBaseProperties(documentId, tenantId), error);
         }
     }
 }
