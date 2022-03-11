@@ -6,6 +6,7 @@
 import * as crypto from "crypto";
 import {
     IDocumentStorage,
+    IDocumentSession,
     IThrottler,
     ITenantManager,
     ICache,
@@ -22,7 +23,7 @@ import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
-import { Constants, handleResponse } from "../../../utils";
+import { Constants, convertUrls, handleResponse, getSession } from "../../../utils";
 
 export function create(
     storage: IDocumentStorage,
@@ -84,6 +85,18 @@ export function create(
             // Summary information
             const summary = request.body.summary;
 
+            const [ordererUrl, historianUrl] = convertUrls(request.headers.host);
+            const documentSession: IDocumentSession = {
+                documentId: id,
+                hasSessionLocationChanged: false,
+                session:
+                {
+                    ordererUrl,
+                    historianUrl,
+                    isSessionAlive: false,
+                },
+            };
+
             // Protocol state
             const sequenceNumber = request.body.sequenceNumber;
             const values = request.body.values;
@@ -95,10 +108,26 @@ export function create(
                 sequenceNumber,
                 1,
                 crypto.randomBytes(4).toString("hex"),
+                ordererUrl,
+                historianUrl,
                 values);
 
-            handleResponse(createP.then(() => id), response, undefined, 201);
+            handleResponse(createP.then(() => documentSession), response, undefined, 201);
         });
 
+    /**
+     * Get the session information.
+     */
+    router.get(
+    "/:tenantId/session/:id",
+    verifyStorageToken(tenantManager, config),
+    throttle(throttler, winston, commonThrottleOptions),
+    async (request, response, next) => {
+        const documentId = getParam(request.params, "id");
+        const tenantId = getParam(request.params, "tenantId");
+        const [ordererUrl, historianUrl] = convertUrls(request.headers.host);
+        const documentSessionP = getSession(globalDbMongoManager, documentId, ordererUrl, historianUrl, tenantId);
+        handleResponse(documentSessionP, response, undefined, 201);
+    });
     return router;
 }

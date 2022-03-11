@@ -34,6 +34,8 @@ export interface IDocumentStorage {
         sequenceNumber: number,
         term: number,
         initialHash: string,
+        ordererUrl: string,
+        historianUrl: string,
         values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
 }
 
@@ -114,6 +116,8 @@ export interface IDocument {
 
     tenantId: string;
 
+    session: string;
+
     // Scribe state
     scribe: string;
 
@@ -123,4 +127,20 @@ export interface IDocument {
     // Timestamp of when this document and related data will be hard deleted.
     // The document is soft deleted if a scheduled deletion timestamp is present.
     scheduledDeletionTime?: string;
+}
+
+export interface IDocumentSession {
+    documentId: string;
+
+    hasSessionLocationChanged: boolean;
+
+    session: ISession;
+}
+
+export interface ISession {
+    ordererUrl: string;
+
+    historianUrl: string;
+
+    isSessionAlive: boolean;
 }

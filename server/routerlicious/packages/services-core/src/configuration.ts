@@ -181,7 +181,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     scribe: {
         generateServiceSummary: true,
         enablePendingCheckpointMessages: true,
-        clearCacheAfterServiceSummary: false,
+        clearCacheAfterServiceSummary: true,
         ignoreStorageException: false,
     },
     moira: {
@@ -189,7 +189,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         endpoint: "",
     },
     documentLambda: {
-        partitionActivityTimeout: 10 * 60 * 1000,
+        partitionActivityTimeout: 1 * 30 * 1000,
         partitionActivityCheckInterval: 60 * 1000,
     },
 };

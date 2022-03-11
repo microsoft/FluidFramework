@@ -42,6 +42,7 @@ export class LocalDocumentService implements api.IDocumentService {
         return new socketStorage.DocumentStorageService(
             this.documentId,
             new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)),
+            new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)),
             new TelemetryNullLogger(),
             { minBlobSize: 2048 }); // Test blob aggregation.
     }
