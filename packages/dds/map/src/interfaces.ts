@@ -4,7 +4,7 @@
  */
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { IDisposable, IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -27,7 +27,7 @@ export interface IValueChanged {
  * @remarks
  * When used as a Map, operates on its keys.
  */
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents> {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, IDisposable {
     /**
      * The absolute path of the directory.
      */
@@ -230,6 +230,18 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * - `local` - Whether the clear originated from the this client.
  *
  * - `target` - The ISharedDirectory itself.
+ * 
+ * ### "disposed"
+ *
+ * The dispose event is emitted when this sub directory is deleted.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (local: boolean, target: IEventThisPlaceHolder) => void
+ * ```
+ *
+ * - `target` - The IDirectory itself.
  */
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (
@@ -245,6 +257,9 @@ export interface IDirectoryEvents extends IEvent {
     (event: "containedDirectoryDeleted", listener: (
         changed: IDirectoryDeleted,
         local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
+    (event: "disposed", listener: (
         target: IEventThisPlaceHolder,
     ) => void);
 }
