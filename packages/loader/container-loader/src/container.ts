@@ -1343,13 +1343,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         // Track membership changes and update connection state accordingly
-        protocol.quorum.on("addMember", (clientId, details) => {
-            this.connectionStateHandler.receivedAddMemberEvent(clientId);
-        });
-
-        protocol.quorum.on("removeMember", (clientId) => {
-            this.connectionStateHandler.receivedRemoveMemberEvent(clientId);
-        });
+        this.connectionStateHandler.loadProtocol(protocol);
 
         protocol.quorum.on("addProposal", (proposal: ISequencedProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {

@@ -4,10 +4,11 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
+import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert, Timer } from "@fluidframework/common-utils";
 import { ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
@@ -65,11 +66,6 @@ export class ConnectionStateHandler {
                 this.applyForConnectedState("timeout");
             },
         );
-
-        // this is a serialized clientId which we will treat the same as a previous clientId on disconnect
-        if (this.clientId !== undefined) {
-            this.prevClientLeftTimer.restart();
-        }
 
         // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
         // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
@@ -129,6 +125,10 @@ export class ConnectionStateHandler {
                 });
             }
             this.applyForConnectedState("addMemberEvent");
+        }
+        if (clientId === this.clientId) {
+            // This is our previous container's join message. This won't happen once #9242 is completed.
+            this.prevClientLeftTimer.restart();
         }
     }
 
@@ -268,5 +268,20 @@ export class ConnectionStateHandler {
 
         // Propagate event across layers
         this.handler.connectionStateChanged();
+    }
+
+    public loadProtocol(protocol: ProtocolOpHandler) {
+        protocol.quorum.on("addMember", (clientId, details) => {
+            this.receivedAddMemberEvent(clientId);
+        });
+
+        protocol.quorum.on("removeMember", (clientId) => {
+            this.receivedRemoveMemberEvent(clientId);
+        });
+
+        // if we have a clientId from a previous container we need to wait for its leave message
+        if (this.clientId !== undefined && protocol.quorum.getMember(this.clientId) !== undefined) {
+            this.prevClientLeftTimer.restart();
+        }
     }
 }
