@@ -301,11 +301,6 @@ export interface IDirectoryValueChanged extends IValueChanged {
  */
 export interface ISubDirectoryCreated extends IDirectoryCreated {
     /**
-     * The key storing the directory which is added.
-     */
-    key: string;
-
-    /**
      * The path at which the sub directory is added.
      */
     path: string;
