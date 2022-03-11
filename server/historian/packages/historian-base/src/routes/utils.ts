@@ -32,15 +32,15 @@ export function handleResponse<T>(
             response.status(status).json(result);
         },
         (error) => {
-            response.status(200).json(`avoid error during stress test=${error}`);
-            // if (error instanceof Error && error?.name === "NetworkError") {
-            //     const networkError = error as NetworkError;
-            //     response
-            //         .status(networkError.code ?? 400)
-            //         .json(networkError.details ?? error);
-            // } else {
-            //     response.status(error?.code ?? 400).json(error?.message ?? error);
-            // }
+            // response.status(200).json(`avoid error during stress test=${error}`);
+            if (error instanceof Error && error?.name === "NetworkError") {
+                const networkError = error as NetworkError;
+                response
+                    .status(networkError.code ?? 400)
+                    .json(networkError.details ?? error);
+            } else {
+                response.status(error?.code ?? 400).json(error?.message ?? error);
+            }
         });
 }
 
