@@ -138,9 +138,8 @@ export class AzureClient {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
-        const module: ICodeLoader = { fluidExport: runtimeFactory };
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        const codeLoader = { load: async (): ICodeLoader => module };
+        const module = { fluidExport: runtimeFactory };
+        const codeLoader: ICodeLoader = { load: async () => module };
         return new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
