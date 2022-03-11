@@ -22,12 +22,12 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
     // (undocumented)
     has(key: string): boolean;
     // (undocumented)
-    set(key: string, value: any): Promise<boolean>;
+    set(key: string, value: any): void;
 }
 
 // @public (undocumented)
 export interface IQuorumEvents extends ISharedObjectEvents {
-    (event: "accept", listener: (key: string) => void): any;
+    (event: "pending" | "accepted", listener: (key: string) => void): any;
 }
 
 // @public
@@ -52,7 +52,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     // @internal
     protected reSubmitCore(): void;
     // (undocumented)
-    set(key: string, value: any): Promise<boolean>;
+    set(key: string, value: any): void;
     // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     }

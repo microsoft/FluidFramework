@@ -16,13 +16,15 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-import { v4 as uuid } from "uuid";
 import { QuorumFactory } from "./quorumFactory";
 import { IQuorum, IQuorumEvents } from "./interfaces";
 
-interface IAcceptedValue {
+/**
+ * The accepted value information, if any.
+ */
+type AcceptedQuorumValue = {
     /**
-     * The value that was accepted.
+     * The accepted value.
      */
     value: any;
 
@@ -30,10 +32,31 @@ interface IAcceptedValue {
      * The sequence number when the value was accepted.
      */
     sequenceNumber: number;
-}
+};
+
+/**
+ * The pending change information, if any.
+ */
+type PendingQuorumValue = {
+    type: "set";
+    value: any;
+    sequenceNumber: number;
+} | {
+    type: "delete";
+    sequenceNumber: number;
+};
+
+/**
+ * Internal format of the values stored in the Quorum.
+ */
+type QuorumValue =
+    { accepted: AcceptedQuorumValue; pending: undefined; }
+    | { accepted: undefined; pending: PendingQuorumValue; }
+    | { accepted: AcceptedQuorumValue; pending: PendingQuorumValue; };
 
 /**
  * Quorum operation format
+ * TODO: Consider a delete operation
  */
 interface IQuorumOperation {
     type: "set";
@@ -120,7 +143,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         return new QuorumFactory();
     }
 
-    private readonly acceptedValues: Map<string, IAcceptedValue>;
+    private readonly values: Map<string, QuorumValue> = new Map();
 
     /**
      * Mapping of taskId to a queue of clientIds that are waiting on the task.  Maintains the consensus state of the
@@ -132,7 +155,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     private readonly disconnectWatcher: EventEmitter = new EventEmitter();
 
     private readonly incomingOp: EventEmitter = new EventEmitter();
-    private readonly localAcceptance: EventEmitter = new EventEmitter();
 
     /**
      * Constructs a new task manager. If the object is non-local an id and service interfaces will
@@ -143,8 +165,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
-
-        this.acceptedValues = new Map();
 
         this.incomingOp.on("set", this.handleIncomingSet);
 
@@ -164,15 +184,16 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     }
 
     public has(key: string): boolean {
-        return this.acceptedValues.has(key);
+        return this.values.get(key)?.accepted !== undefined;
     }
 
+    // TODO: have a separate method for getting the pending.
     public get(key: string): any {
-        return this.acceptedValues.get(key);
+        return this.values.get(key)?.accepted?.value;
     }
 
-    public async set(key: string, value: any): Promise<boolean> {
-        // TODO: Handle detached scenario
+    public set(key: string, value: any): void {
+        // TODO: handle detached scenario
 
         const setOp: IQuorumOperation = {
             type: "set",
@@ -180,43 +201,27 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
             value,
             refSeq: this.runtime.deltaManager.lastSequenceNumber,
         };
-        const setId = uuid();
 
-        const setPromise = new Promise<boolean>((resolve, reject) => {
-            // TODO reject in disposal scenarios?
-            const watchForAccept = (localId: string, valueAccepted: boolean) => {
-                if (localId === setId) {
-                    resolve(valueAccepted);
-                    this.localAcceptance.off("acceptFinalized", watchForAccept);
-                }
-            };
-            this.localAcceptance.on("acceptFinalized", watchForAccept);
-        });
-
-        this.submitLocalMessage(setOp, setId);
-
-        return setPromise;
+        this.submitLocalMessage(setOp);
     }
 
-    private handleIncomingSet(key: string, value: any, refSeq: number, setSequenceNumber: number, localId?: string) {
-        // To be accepted, the new value must have been set with awareness of the most recent value (first write wins)
-        // TODO this shouldn't accept yet -- instead it should just start waiting for MSN
-        const proposalValid = refSeq > setSequenceNumber;
-
-        if (proposalValid) {
-            const pendingProposal: IAcceptedValue = {
-                value,
-                // TODO And this should be the sequence number at which the MSN advances past the setSequenceNumber
-                sequenceNumber: setSequenceNumber,
-            };
-            this.acceptedValues.set(key, pendingProposal);
+    private handleIncomingSet(key: string, value: any, refSeq: number, setSequenceNumber: number) {
+        const currentValue = this.values.get(key);
+        // A proposal is valid if the value is unknown
+        // or if it was made with knowledge of the most recently accepted value
+        const proposalValid =
+            currentValue === undefined
+            || (currentValue.pending === undefined && currentValue.accepted.sequenceNumber <= refSeq);
+        if (!proposalValid) {
+            // Drop invalid proposals on the ground.  If set() returns a promise we will need to resolve it though.
+            return;
         }
 
-        const valueAccepted = true;
-        // Emit for local ops, so we can resolve outstanding promises
-        if (localId !== undefined) {
-            this.localAcceptance.emit("acceptFinalized", localId, valueAccepted);
-        }
+        const accepted = currentValue?.accepted;
+
+        this.values.set(key, { accepted, pending: { type: "set", value, sequenceNumber: setSequenceNumber }});
+
+        this.emit("pending", key);
     }
 
     /**
@@ -254,7 +259,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.disconnectWatcher.emit("disconnect");
     }
 
-    //
     /**
      * Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
      * queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.

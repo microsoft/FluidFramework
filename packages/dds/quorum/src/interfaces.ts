@@ -7,9 +7,9 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
 
 export interface IQuorumEvents extends ISharedObjectEvents {
     /**
-     * Notifies when a new value has been accepted.
+     * Notifies when a new value goes pending or has been accepted.
      */
-    (event: "accept", listener: (key: string) => void);
+    (event: "pending" | "accepted", listener: (key: string) => void);
 }
 
 /**
@@ -19,5 +19,5 @@ export interface IQuorumEvents extends ISharedObjectEvents {
 export interface IQuorum extends ISharedObject<IQuorumEvents> {
     has(key: string): boolean;
     get(key: string): any;
-    set(key: string, value: any): Promise<boolean>;
+    set(key: string, value: any): void;
 }
