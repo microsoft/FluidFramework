@@ -453,17 +453,21 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
         });
 
         describe("TurnBased flushing of batches", () => {
+            beforeEach(() => {
+                dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+            });
+
             it("should clean document dirty state after a batch with single message is flushed", async () => {
                 dataObject1map1.set("key1", "value1");
-                await yieldJSTurn();
 
                 // Verify that the document is correctly set to dirty.
                 verifyDocumentDirtyState(dataObject1, true);
 
-                // Wait for the ops to get processed by both the containers.
-                await provider.ensureSynchronized();
+                // Yield a turn so that the ops are flushed.
+                await yieldJSTurn();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
+                await provider.ensureSynchronized();
                 verifyDocumentDirtyState(dataObject1, false);
             });
 
@@ -471,62 +475,69 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
                 dataObject1map1.set("key1", "value1");
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
-                await yieldJSTurn();
 
                 // Verify that the document is correctly set to dirty.
                 verifyDocumentDirtyState(dataObject1, true);
 
-                // Wait for the ops to get processed by both the containers.
-                await provider.ensureSynchronized();
+                // Yield a turn so that the ops are flushed.
+                await yieldJSTurn();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
+                await provider.ensureSynchronized();
                 verifyDocumentDirtyState(dataObject1, false);
             });
 
             it("should clean document dirty state after consecutive batches are flushed", async () => {
-                // Flush a couple of batches consecutively.
                 dataObject1map1.set("key1", "value1");
+
+                // Verify that the document is correctly set to dirty.
+                verifyDocumentDirtyState(dataObject1, true);
+
+                // Yield a turn so that the op is flushed.
                 await yieldJSTurn();
 
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
                 dataObject1map2.set("key4", "value4");
-                await yieldJSTurn();
 
                 // Verify that the document is correctly set to dirty.
                 verifyDocumentDirtyState(dataObject1, true);
 
-                // Wait for the ops to get processed by both the containers.
-                await provider.ensureSynchronized();
+                // Yield a turn so that the ops are flushed.
+                await yieldJSTurn();
 
                 // Check that the document dirty state is cleaned after the ops are processed.
                 // Verify that the document dirty state is cleaned after the ops are processed.
+                await provider.ensureSynchronized();
                 verifyDocumentDirtyState(dataObject1, false);
             });
 
             it("should clean document dirty state after batch and non-batch messages are flushed", async () => {
-                // Send a non-batch message.
+                // Send a single message and yield a turn so that it is flushed.
                 dataObject1map1.set("key1", "value1");
+                await yieldJSTurn();
 
-                // Flush a couple of batches consecutively.
+                // Flush a couple of batches consecutively and yield a turn so that they are flushed.
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
                 dataObject1map2.set("key4", "value4");
                 await yieldJSTurn();
 
+                // Send a single message and yield a turn so that it is flushed.
                 dataObject1map1.set("key5", "value5");
                 await yieldJSTurn();
 
-                // Send another non-batch message.
+                // Send a single message.
                 dataObject1map1.set("key5", "value5");
 
                 // Verify that the document is correctly set to dirty.
                 verifyDocumentDirtyState(dataObject1, true);
 
-                // Wait for the ops to get processed by both the containers.
-                await provider.ensureSynchronized();
+                // Yield a turn so that the ops are flushed.
+                await yieldJSTurn();
 
                 // Verify that the document dirty state is cleaned after the ops are processed.
+                await provider.ensureSynchronized();
                 verifyDocumentDirtyState(dataObject1, false);
             });
         });
