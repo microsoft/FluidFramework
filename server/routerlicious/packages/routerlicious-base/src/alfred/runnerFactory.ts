@@ -70,7 +70,11 @@ export class OrdererManager implements core.IOrdererManager {
                     return this.localOrderManager.get(tenantId, documentId);
             }
         } catch(error) {
-            Lumberjack.error(`Error while creating kafka orderer`, getLumberBaseProperties(documentId, tenantId), error);
+            Lumberjack.error(
+                `Error while creating kafka orderer`,
+                getLumberBaseProperties(documentId, tenantId),
+                error
+            );
         }
     }
 }
