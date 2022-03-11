@@ -73,7 +73,7 @@ export class OrdererManager implements core.IOrdererManager {
             Lumberjack.error(
                 `Error while creating kafka orderer`,
                 getLumberBaseProperties(documentId, tenantId),
-                error
+                error,
             );
         }
     }
