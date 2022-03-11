@@ -13,10 +13,9 @@ import {
     OdspResourceTokenFetchOptions,
     IdentityType,
     TokenFetcher,
-    tokenFromResponse,
 } from "@fluidframework/odsp-driver-definitions";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { fetchHelper, getWithRetryForTokenRefresh } from "./odspUtils";
+import { fetchHelper, getWithRetryForTokenRefresh, toInstrumentedOdspTokenFetcher } from "./odspUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
@@ -101,12 +100,21 @@ async function getFileLinkCore(
             let additionalProps;
             const fileLink = await getWithRetryForTokenRefresh(async (options) => {
                 attempts++;
-                const token = await getToken({ ...options, ... odspUrlParts });
+                const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+                    logger,
+                    odspUrlParts,
+                    getToken,
+                    true /* throwOnNullToken */,
+                );
+                const storageToken = await storageTokenFetcher(options,"GetFileLinkCore");
+                assert(storageToken !== null,
+                    0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */);
+
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${odspUrlParts.siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
                         encodeURIComponent(`'${fileItem.webDavUrl}'`)
                     }`,
-                    tokenFromResponse(token),
+                    storageToken,
                     false,
                 );
                 const requestInit = {
@@ -167,10 +175,19 @@ async function getFileItemLite(
             const fileItem = await getWithRetryForTokenRefresh(async (options) => {
                 attempts++;
                 const {siteUrl, driveId, itemId} = odspUrlParts;
-                const token = await getToken({ ...options, siteUrl, driveId, itemId});
+                const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+                    logger,
+                    odspUrlParts,
+                    getToken,
+                    true /* throwOnNullToken */,
+                );
+                const storageToken = await storageTokenFetcher(options,"GetFileItemLite");
+                assert(storageToken !== null,
+                    0x2bc /* "Instrumented token fetcher with throwOnNullToken =true should never return null" */);
+
                 const { url, headers } = getUrlAndHeadersWithAuth(
                     `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl`,
-                    tokenFromResponse(token),
+                    storageToken,
                     forceAccessTokenViaAuthorizationHeader,
                 );
                 const requestInit = { method: "GET", headers };

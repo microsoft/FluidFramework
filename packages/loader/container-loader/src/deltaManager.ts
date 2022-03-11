@@ -725,6 +725,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                         // This looks like a data corruption but the culprit has been found instead
                         // to be the file being overwritten in storage.  See PR #5882.
                         const error = new NonRetryableError(
+                            // pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
                             "Found two messages with the same sequenceNumber but different payloads",
                             DriverErrorType.fileOverwrittenInStorage,
                             {
@@ -779,6 +780,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
+            // pre-0.58 error message: msnMovesBackwards
             throw new DataCorruptionError("Found a lower minimumSequenceNumber (msn) than previously recorded", {
                 ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
@@ -787,6 +789,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
+            // pre-0.58 error message: nonSequentialSequenceNumber
             throw new DataCorruptionError("Found a non-Sequential sequenceNumber", {
                 ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,

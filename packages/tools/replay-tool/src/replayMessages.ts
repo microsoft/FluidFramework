@@ -30,6 +30,7 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
+import stringify from "json-stable-stringify";
 import {
     compareWithReferenceSnapshot,
     getNormalizedFileSnapshot,
@@ -78,18 +79,18 @@ class ContainerContent {
 
     public constructor(public readonly op: number) {
         this._normalizedSnapshot = new Lazy(() => {
-            assert(this.snapshot !== undefined, 0x1c5 /* "snapshot should be set before retreiving it" */);
+            assert(this.snapshot !== undefined, 0x1c5 /* "snapshot should be set before retrieving it" */);
             return getNormalizedFileSnapshot(this.snapshot);
         });
 
         this._snapshotAsString = new Lazy(() => {
-            assert(this.snapshot !== undefined, 0x1c6 /* "snapshot should be set before retreiving it" */);
-            return JSON.stringify(this.snapshot, undefined, 2);
+            assert(this.snapshot !== undefined, 0x1c6 /* "snapshot should be set before retrieving it" */);
+            return stringify(this.snapshot, {space: 2});
         });
 
         this._snapshotExpanded = new Lazy(() => {
             assert(this.snapshot !== undefined,
-                0x1c7 /* "snapshot should be set before retreiving it as expanded string" */);
+                0x1c7 /* "snapshot should be set before retrieving it as expanded string" */);
             const snapshotExpanded: IFileSnapshot = {
                 commits: {},
                 tree: expandTreeForReadability(this.snapshot.tree),
@@ -97,7 +98,7 @@ class ContainerContent {
             for (const commit of Object.keys(this.snapshot.commits)) {
                 snapshotExpanded.commits[commit] = expandTreeForReadability(this.snapshot.commits[commit]);
             }
-            return JSON.stringify(snapshotExpanded, undefined, 2);
+            return stringify(snapshotExpanded, {space: 2});
         });
     }
 
@@ -133,7 +134,7 @@ class Logger implements ITelemetryBaseLogger {
             const stack: string | undefined = event.stack as string | undefined;
             delete event.stack;
             const error = new Error(`An error has been logged from ${this.containerDescription}!\n
-                        ${JSON.stringify(event)}`);
+                        ${stringify(event)}`);
             error.stack = stack;
             // throw instead of printing an error to fail tests
             throw error;
@@ -148,7 +149,7 @@ class Document {
     private container: IContainer;
     private replayer: Replayer;
     private documentSeqNumber = 0;
-    private from = -1;
+    private from: number = -1;
     private snapshotFileName: string = "";
     private docLogger: TelemetryLogger;
     private originalSummarySeqs: number[];
@@ -335,7 +336,7 @@ export class ReplayTool {
     }
 
     private errorHandler(event: ITelemetryBaseEvent): boolean {
-        const errorString = JSON.stringify(event);
+        const errorString = stringify(event);
         // Snapshots errors are both reported to telemetry and propagated to caller
         // So if we d not filter them out, we report them twice.
         // Avoid that, but have a safety net - increase error count, so that tool
@@ -349,15 +350,17 @@ export class ReplayTool {
 
         // GC will consider unreferenced node in old documents to be inactive. When such nodes receive ops or are
         // loaded, GC will log an error. Ignore those errors since we don't care about them when replaying old docs.
-        if (event.eventName.includes("GarbageCollector:inactiveObject_")) {
+        if (event.eventName.includes("GarbageCollector:inactiveObject_")
+            // there is something wrong with summary ops, but we don't run the summarizer, so it shouldn't matter
+            || event.eventName.includes("SummaryAckWithoutOp")
+        ) {
             return false;
         }
 
         return this.shouldReportError(errorString);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private loadDoc(doc: Document) {
+    private async loadDoc(doc: Document) {
         return doc.load(
             this.deltaStorageService,
             (event) => this.errorHandler(event));
@@ -514,20 +517,16 @@ export class ReplayTool {
 
     private async mainCycle() {
         const originalSummaries =
-            this.args.testSummaries ? [...this.mainDocument.originalSummarySequenceNumbers] : [];
-        let nextSnapPoint;
-        do {
-            nextSnapPoint = originalSummaries.shift() ?? this.args.from;
-        } while (nextSnapPoint < this.args.from);
+            this.args.testSummaries
+            ? this.mainDocument.originalSummarySequenceNumbers.filter((s)=>s >= this.args.from)
+            : [];
+        let nextSnapPoint = -1;
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const currentOp = this.mainDocument.currentOp;
             if (nextSnapPoint <= currentOp) {
-                if (this.args.snapFreq !== undefined) {
-                    nextSnapPoint = currentOp + this.args.snapFreq;
-                } else {
-                    nextSnapPoint = originalSummaries.shift() ?? this.args.to;
-                }
+                nextSnapPoint = originalSummaries.shift() ??
+                    (this.args.snapFreq !== undefined ? currentOp + this.args.snapFreq : this.args.to);
             }
             let replayTo = Math.min(nextSnapPoint, this.args.to);
 
@@ -692,7 +691,7 @@ export class ReplayTool {
             // FluidFetchReaderFileSnapshotWriter.write()
             const summaryTree = await container.summarize(true);
             const file = `${dir}/summary.json`;
-            fs.writeFileSync(file, JSON.stringify(summaryTree, undefined, 2));
+            fs.writeFileSync(file, stringify(summaryTree, undefined, 2));
         }
         */
     }
