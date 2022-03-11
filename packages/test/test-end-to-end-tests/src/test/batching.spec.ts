@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { Container } from "@fluidframework/container-loader";
 import { ContainerMessageType, isRuntimeMessage } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
@@ -18,9 +19,7 @@ import {
     ITestContainerConfig,
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import {
-    describeFullCompat,
-} from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";
@@ -39,6 +38,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
         provider = getTestObjectProvider();
     });
 
+    let container1: Container;
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
     let dataObject1map1: SharedMap;
@@ -82,23 +82,49 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
         }));
     }
 
+    async function ensureContainerConnected(container: Container): Promise<void> {
+        if (!container.connected) {
+            return new Promise((resolve) => container.once("connected", () => resolve()));
+        }
+    }
+
     beforeEach(async () => {
         // Create a Container for the first client.
-        const container1 = await provider.makeTestContainer(testContainerConfig);
+        container1 = await provider.makeTestContainer(testContainerConfig) as Container;
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-        dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
         dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
         dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
 
         // Load the Container that was created by the first client.
         const container2 = await provider.loadTestContainer(testContainerConfig);
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-        dataObject2.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
         dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
         dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 
         await waitForCleanContainers(dataObject1, dataObject2);
         await provider.ensureSynchronized();
+    });
+
+    describe("Flush Mode validation", () => {
+        beforeEach(async () => {
+            // Send an op in container1 so that it switches to "write" mode and wait for it to be connected.
+            dataObject1map1.set("key", "value");
+            await ensureContainerConnected(container1);
+            await provider.ensureSynchronized();
+        });
+
+        /**
+         * This test fails because of this bug - https://github.com/microsoft/FluidFramework/issues/9398.
+         * To be enabled once the above bug is fixed.
+         */
+        it.skip("can set flush mode to Immediate and send ops", async () => {
+            dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
+            dataObject1map1.set("key", "newValue");
+            await provider.ensureSynchronized();
+
+            assert.strictEqual(dataObject2map1.get("key1"), "value1", "container1's map did not get updated");
+            assert.strictEqual(dataObject2map2.get("key1"), "value1", "container2's map did not get updated");
+        });
     });
 
     describe("Local ops batch metadata verification", () => {
