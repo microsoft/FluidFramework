@@ -167,6 +167,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             sessionMetric,
             sessionStartMetric);
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         deliLambda.on("close", async (closeType) => {
             if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)
                 && this.globalDbMongoManager !== undefined) {

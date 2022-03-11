@@ -6,6 +6,7 @@
 import * as crypto from "crypto";
 import {
     IDocumentStorage,
+    IDocumentSession,
     IThrottler,
     ITenantManager,
     ICache,
