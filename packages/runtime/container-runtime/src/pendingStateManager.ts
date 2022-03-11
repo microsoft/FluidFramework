@@ -86,6 +86,13 @@ export class PendingStateManager implements IDisposable {
     // the correct batch metadata.
     private pendingBatchBeginMessage: ISequencedDocumentMessage | undefined;
 
+    /**
+     * This tracks what the flush mode was when the last message was acked. When we replay messages, we have to start
+     * with the flush mode that was set when the first pending message was sent. It is important to preserve this info
+     * because the flush mode could have been updated by the time the messages are replayed.
+     */
+    private lastAckedFlushMode: FlushMode;
+
     private clientId: string | undefined;
 
     private get connected(): boolean {
@@ -115,19 +122,28 @@ export class PendingStateManager implements IDisposable {
     constructor(
         private readonly containerRuntime: ContainerRuntime,
         private readonly applyStashedOp: (type, content) => Promise<unknown>,
-        initialState: IPendingLocalState | undefined,
+        initialFlushMode: FlushMode,
+        initialLocalState: IPendingLocalState | undefined,
     ) {
-        this.initialStates = new Deque<IPendingState>(initialState?.pendingStates ?? []);
+        this.initialStates = new Deque<IPendingState>(initialLocalState?.pendingStates ?? []);
 
-        if (initialState) {
-            if (initialState?.clientId) {
-                this.previousClientIds.add(initialState.clientId);
+        if (initialLocalState) {
+            if (initialLocalState?.clientId) {
+                this.previousClientIds.add(initialLocalState.clientId);
             }
             // get stashed op count and client sequence number of first op
-            const messages = initialState.pendingStates
+            const messages = initialLocalState.pendingStates
                 .filter((state) => state.type === "message") as IPendingMessage[];
             this.firstStashedCSN = messages[0].clientSequenceNumber;
         }
+
+        /**
+         * The initial flush mode is be default the first acked one because we want to start with this if the very first
+         * op has to be replayed. This will happen very often because containers usually start in "read" mode and switch
+         * to "write" when first op is sent. This triggers a reconnect and replaying of ops.
+         */
+        this.lastAckedFlushMode = initialFlushMode;
+        this.onFlushModeUpdated(initialFlushMode);
     }
 
     public get disposed() { return this.disposeOnce.evaluated; }
@@ -337,7 +353,7 @@ export class PendingStateManager implements IDisposable {
      */
     private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
         // Tracks the last FlushMode that was set before this message was sent.
-        let pendingFlushMode: IPendingFlushMode | undefined;
+        let pendingFlushMode: FlushMode | undefined;
         // Tracks whether a flush was called before this message was sent.
         let pendingFlush: boolean = false;
 
@@ -353,7 +369,7 @@ export class PendingStateManager implements IDisposable {
         let nextPendingState = this.peekNextPendingState();
         while (nextPendingState.type !== "message") {
             if (nextPendingState.type === "flushMode") {
-                pendingFlushMode = nextPendingState;
+                pendingFlushMode = nextPendingState.flushMode;
             }
             if (nextPendingState.type === "flush") {
                 pendingFlush = true;
@@ -362,9 +378,13 @@ export class PendingStateManager implements IDisposable {
             nextPendingState = this.peekNextPendingState();
         }
 
+        if (pendingFlushMode !== undefined) {
+            this.lastAckedFlushMode = pendingFlushMode;
+        }
+
         // If the FlushMode was set to Immediate before this message was sent, this message won't be a batch message
         // because in Immediate mode, every message is flushed individually.
-        if (pendingFlushMode?.flushMode === FlushMode.Immediate) {
+        if (pendingFlushMode === FlushMode.Immediate) {
             return;
         }
 
@@ -373,7 +393,7 @@ export class PendingStateManager implements IDisposable {
          * was an explicit flush call. Note that a flush call is tracked only in TurnBased mode and it indicates the end
          * of one batch and beginning of another.
          */
-        if (pendingFlushMode?.flushMode === FlushMode.TurnBased || pendingFlush) {
+        if (pendingFlushMode === FlushMode.TurnBased || pendingFlush) {
             // We should not already be processing a batch and there should be no pending batch begin message.
             assert(!this.isProcessingBatch && this.pendingBatchBeginMessage === undefined,
                 0x16b /* "The pending batch state indicates we are already processing a batch" */);
@@ -464,6 +484,8 @@ export class PendingStateManager implements IDisposable {
 
         // Save the current FlushMode so that we can revert it back after replaying the states.
         const savedFlushMode = this.containerRuntime.flushMode;
+
+        this.containerRuntime.setFlushMode(this.lastAckedFlushMode);
 
         // Process exactly `pendingStatesCount` items in the queue as it represents the number of states that were
         // pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
