@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
+import { ConnectionState } from '@fluidframework/container-definitions';
 import { DataObject } from '@fluidframework/aqueduct';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -17,16 +18,6 @@ import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
-
-// @public
-export namespace ConnectionState {
-    export type Connected = 2;
-    export type Connecting = 1;
-    export type Disconnected = 0;
-}
-
-// @public
-export type ConnectionState = ConnectionState.Disconnected | ConnectionState.Connecting | ConnectionState.Connected;
 
 // @public
 export interface ContainerSchema {
