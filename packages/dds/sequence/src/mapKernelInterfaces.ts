@@ -115,7 +115,7 @@ export interface IValueTypeCreator {
 }
 
 export interface ISharedMapEvents extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (
+    (event: "valueChanged" | "create", listener: (
         changed: IValueChanged,
         local: boolean,
         target: IEventThisPlaceHolder) => void);
