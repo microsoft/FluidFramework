@@ -11,11 +11,7 @@ import {
     RestLessClient,
     RestWrapper,
 } from "@fluidframework/server-services-client";
-import {
-    default as nodeFetch,
-    RequestInfo as FetchRequestInfo,
-    RequestInit as FetchRequestInit,
-} from "node-fetch";
+import fetch from "cross-fetch";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
@@ -23,13 +19,6 @@ import { throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider } from "./tokens";
 
 type AuthorizationHeaderGetter = (refresh?: boolean) => Promise<string | undefined>;
-
-// Borrowed from @fluidframework/odsp-driver's fetch.ts
-// The only purpose of this helper is to work around the slight misalignments between the
-// Browser's fetch API and the 'node-fetch' package by wrapping the call to the 'node-fetch' API
-// in the browser's types from 'lib.dom.d.ts'.
-export const fetch = async (request: RequestInfo, config?: RequestInit): Promise<Response> =>
-    nodeFetch(request as FetchRequestInfo, config as FetchRequestInit) as unknown as Response;
 
 const axiosRequestConfigToFetchRequestConfig = (requestConfig: AxiosRequestConfig): [RequestInfo, RequestInit] => {
     const requestInfo: string = requestConfig.baseURL !== undefined
@@ -78,7 +67,6 @@ export class RouterliciousRestWrapper extends RestWrapper {
                 // Fetch throws a TypeError on network error
                 const isNetworkError = error instanceof TypeError;
                 throwR11sNetworkError(
-                    "r11sFetchError",
                     isNetworkError ? `NetworkError: ${error.message}` : safeStringify(error));
             }));
 
