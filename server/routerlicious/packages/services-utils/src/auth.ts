@@ -44,22 +44,17 @@ export function validateTokenClaims(
     return claims;
 }
 
-export function getCreationToken(token: string, key: string, documentId: string) {
+/**
+ * Generates a document creation JWT token, this token doesn't provide any sort of authorization to the user.
+ * But it can be used by other services to validate the document creator identity upon creating a document.
+ */
+export function getCreationToken(token: string, key: string, documentId: string, lifetime = 5) {
  // Current time in seconds
- const now = Math.round((new Date()).getTime() / 1000);
  const tokenClaims = jwt.decode(token) as ITokenClaims;
 
- const claims: ITokenClaims = {
-     documentId,
-     tenantId: tokenClaims.tenantId,
-     user: tokenClaims.user,
-     scopes: [],
-     iat: now,
-     exp: now + 5 * 60,
-     ver: "1.0",
- };
+ const { tenantId, user } = tokenClaims;
 
- return jwt.sign(claims, key, { jwtid: uuid()});
+ return generateToken(tenantId, documentId, key, [], user, lifetime);
 }
 
 /**
