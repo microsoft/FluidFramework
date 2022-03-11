@@ -485,6 +485,8 @@ export class PendingStateManager implements IDisposable {
         // Save the current FlushMode so that we can revert it back after replaying the states.
         const savedFlushMode = this.containerRuntime.flushMode;
 
+        // Set the last acked flush mode. This is the flush mode that the next set of messages should use before it is
+        // changed.
         this.containerRuntime.setFlushMode(this.lastAckedFlushMode);
 
         // Process exactly `pendingStatesCount` items in the queue as it represents the number of states that were
