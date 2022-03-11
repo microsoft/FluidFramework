@@ -80,7 +80,7 @@ export async function bumpVersion(context: Context, bump: string[], version: Ver
 /**
  * Translate a VersionChangeType for the virtual patch scenario where we overload a beta version number
  * to include all of major, minor, and patch.  Actual semver type is not translated
- * "major" maps to "minor" (<N + 1>.x.x -> x.<N + 1>.x)
+ * "major" maps to "minor" with "patch" = 1000 (<N + 1>.x.x -> x.<N + 1>.1000)
  * "minor" maps to "patch" * 1000 (x.<N + 1>.x -> x.x.<N + 1>00x)
  * "patch" is unchanged
  */
@@ -93,21 +93,34 @@ function translateVirtualVersion(
         return versionBump;
     }
 
-    // Virtual patch can only be used for a major/minor/patch bump and not a specifc version
+    // Virtual patch can only be used for a major/minor/patch bump and not a specific version
     if (!isVersionBumpType(versionBump)) {
         fatal("Can only use virtual patches when doing major/minor/patch bumps");
     }
 
-    if (versionBump === "major") {
-        return "minor";
-    }
-
-    // minor adds 1000, patch adds 1
     const virtualVersion = semver.parse(versionString);
     if (!virtualVersion) {
         fatal("unable to deconstruct package version for virtual patch");
     }
-    virtualVersion.patch += versionBump === "minor" ? 1000 : 1;
+
+    switch (versionBump) {
+        case "major": {
+            virtualVersion.minor += 1;
+            // the "minor" component starts at 1000 to work around issues padding to
+            // 4 digits using 0s with semvers
+            virtualVersion.patch = 1000;
+            break;
+        }
+        case "minor": {
+            virtualVersion.patch += 1000;
+            break;
+        }
+        case "patch": {
+            virtualVersion.patch += 1;
+            break;
+        }
+    }
+
     virtualVersion.format(); // semver must be reformated after edits
     return virtualVersion;
 }
