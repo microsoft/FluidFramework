@@ -152,7 +152,6 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 
 // @public
 export interface ISubDirectoryCreated extends IDirectoryCreated {
-    key: string;
     path: string;
 }
 
