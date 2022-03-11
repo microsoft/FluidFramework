@@ -1,4 +1,4 @@
-# @fluidframework/odsp-driver-web-cache
+# @fluidframework/driver-web-cache
 
 This package provides an implementation of the `IPersistedCache` interface in the odsp-driver package. This cache enables
 storing of user content on the user's machine in order to provide faster boot experiences when opening the same Fluid
@@ -8,7 +8,7 @@ context.
 ## Usage
 
 ```typescript
-import { FluidCache } from '@fluidframework/odsp-driver-web-cache';
+import { FluidCache } from '@fluidframework/driver-web-cache';
 
 new FluidCache({
           partitionKey: userId,
@@ -45,7 +45,7 @@ such as when it is known the user is logged in to a public computer.
 
 
 ```typescript
-import { deleteFluidCacheIndexDbInstance } from '@fluidframework/odsp-driver-web-cache';
+import { deleteFluidCacheIndexDbInstance } from '@fluidframework/driver-web-cache';
 
   // We put a catch here because Firefox Incognito will throw an error here. This is why we claim this method is a "best effort", since sometimes the browser won't let us access storage
 deleteFluidCacheIndexDbInstance().catch(() => {});

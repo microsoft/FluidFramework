@@ -1,12 +1,12 @@
 {
-  "name": "@fluidframework/odsp-driver-web-cache",
+  "name": "@fluidframework/driver-web-cache",
   "version": "0.58.1000",
-  "description": "Implementation of the ODSP driver caching API for a web browser",
+  "description": "Implementation of the driver caching API for a web browser",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/drivers/odsp-driver-web-cache"
+    "directory": "packages/drivers/driver-web-cache"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
