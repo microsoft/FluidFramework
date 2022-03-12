@@ -102,6 +102,9 @@ function translateVirtualVersion(
     if (!virtualVersion) {
         fatal("unable to deconstruct package version for virtual patch");
     }
+    if (virtualVersion.major !== 0) {
+        fatal("Can only use virtual patches before major version 0");
+    }
 
     switch (versionBump) {
         case "major": {
