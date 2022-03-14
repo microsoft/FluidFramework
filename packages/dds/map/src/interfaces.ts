@@ -128,7 +128,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * - `local` - Whether the clear originated from the this client.
  *
  * - `target` - The ISharedDirectory itself.
- * 
+ *
  * ### "subDirectoryCreated"
  *
  * The subDirectoryCreated event is emitted when a subdirectory is created.
@@ -143,7 +143,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * - `local` - Whether the clear originated from the this client.
  *
  * - `target` - The ISharedDirectory itself.
- * 
+ *
  * * ### "subDirectoryDeleted"
  *
  * The subDirectoryDeleted event is emitted when a subdirectory is deleted.
@@ -153,7 +153,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * ```typescript
  * (changed: ISubDirectoryDeleted, local: boolean, target: IEventThisPlaceHolder) => void
  * ```
- * - `changed` - Information on the key that is deleted, its previous value and the path to the 
+ * - `changed` - Information on the key that is deleted, its previous value and the path to the
  * key that is deleted.
  *
  * - `local` - Whether the clear originated from the this client.
@@ -215,7 +215,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * - `local` - Whether the clear originated from the this client.
  *
  * - `target` - The ISharedDirectory itself.
- * 
+ *
  * * ### "subDirectoryDeleted"
  *
  * The subDirectoryDeleted event is emitted when a subdirectory is deleted.
@@ -225,13 +225,13 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * ```typescript
  * (changed: ISubDirectoryDeleted, local: boolean, target: IEventThisPlaceHolder) => void
  * ```
- * - `changed` - Information on the key that is deleted, its previous value and the path to the 
+ * - `changed` - Information on the key that is deleted, its previous value and the path to the
  * key that is deleted.
  *
  * - `local` - Whether the clear originated from the this client.
  *
  * - `target` - The ISharedDirectory itself.
- * 
+ *
  * ### "disposed"
  *
  * The dispose event is emitted when this sub directory is deleted.
