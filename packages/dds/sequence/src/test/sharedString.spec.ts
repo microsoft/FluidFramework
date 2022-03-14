@@ -23,6 +23,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
+import { IntervalType } from "../intervalCollection";
 
 describe("SharedString", () => {
     let sharedString: SharedString;
@@ -316,6 +317,47 @@ describe("SharedString", () => {
             sharedString2 = new SharedString(dataStoreRuntime2, "shared-string-2", SharedStringFactory.Attributes);
             sharedString2.initializeLocal();
             sharedString2.connect(services2);
+        });
+
+        it("interval consistency", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "xyz");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+            assert.notStrictEqual(collection2, undefined, "undefined");
+            assert.strictEqual(sharedString.getText(), sharedString2.getText(), "not equal text");
+
+            sharedString.insertText(0, "abc");
+            const interval1 = collection1.add(1, 1, IntervalType.SlideOnRemove);
+            sharedString2.insertText(0, "wha");
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "whaabcxyz", "different text 1");
+            assert.strictEqual(sharedString.getText(), "whaabcxyz", "different text 2");
+
+            for (const interval of collection1) {
+                assert.strictEqual(interval.start.toPosition(), 4, "different position 1");
+                assert.strictEqual(interval.end.toPosition(), 4, "different position 2");
+            }
+            for (const interval of collection2) {
+                assert.strictEqual(interval.start.toPosition(), 4, "different position 3");
+                assert.strictEqual(interval.end.toPosition(), 4, "different position 4");
+            }
+
+            collection2.change(interval1.getIntervalId(), 1, 6);
+            sharedString.removeText(0, 2);
+            collection1.change(interval1.getIntervalId(), 0, 5);
+
+            containerRuntimeFactory.processAllMessages();
+
+            for (const interval of collection1) {
+                assert.strictEqual(interval.start.toPosition(), 0, "different position 5");
+                assert.strictEqual(interval.end.toPosition(), 5, "different position 6");
+            }
+            for (const interval of collection2) {
+                assert.strictEqual(interval.start.toPosition(), 0, "different position 7");
+                assert.strictEqual(interval.end.toPosition(), 5, "different position 8");
+            }
         });
 
         it("can insert text", async () => {
