@@ -72,7 +72,7 @@ export class TinyliciousClient {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
 
         const fluidContainer = new (class extends FluidContainer {
-            async attach() {
+            public async attach(): Promise<string> {
                 if (this.attachState !== AttachState.Detached) {
                     throw new Error("Cannot attach container. Container is not in detached state");
                 }
@@ -115,11 +115,12 @@ export class TinyliciousClient {
         };
     }
 
-    private createLoader(containerSchema: ContainerSchema) {
+    private createLoader(containerSchema: ContainerSchema): Loader {
         const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
         const module = { fluidExport: containerRuntimeFactory };
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         const codeLoader = { load: async () => module };
         const loader = new Loader({
             urlResolver: this.urlResolver,

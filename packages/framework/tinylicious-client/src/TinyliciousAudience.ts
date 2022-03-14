@@ -14,6 +14,7 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
   protected createServiceMember(audienceMember: IClient): TinyliciousMember {
     return {
       userId: audienceMember.user.id,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       userName: (audienceMember.user as any).name,
       connections: [],
     };

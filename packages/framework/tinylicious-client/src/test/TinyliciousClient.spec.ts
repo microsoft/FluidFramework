@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TinyliciousClient } from "..";
 import { TestDataObject } from "./TestDataObject";
 
@@ -66,6 +68,7 @@ describe("TinyliciousClient", () => {
         const containerAndServicesP = tinyliciousClient.getContainer("containerConfig", schema);
 
         const errorFn = (error) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             assert.notStrictEqual(error.message, undefined, "TinyliciousClient error is undefined");
             return true;
         };
@@ -95,7 +98,7 @@ describe("TinyliciousClient", () => {
     });
 
     it("creates a container with detached state", async () => {
-        const container = (await tinyliciousClient.createContainer(schema)).container;
+        const { container } = await tinyliciousClient.createContainer(schema);
         assert.strictEqual(
             container.attachState, AttachState.Detached,
             "Container should be detached after creation",
@@ -103,11 +106,11 @@ describe("TinyliciousClient", () => {
     });
 
     it("creates a container that can only be attached once", async () => {
-        const container = (await tinyliciousClient.createContainer(schema)).container;
+        const { container } = await tinyliciousClient.createContainer(schema);
         const containerId = await container.attach();
 
         assert.strictEqual(
-            typeof(containerId), "string",
+            typeof (containerId), "string",
             "Attach did not return a string ID",
         );
         assert.strictEqual(
@@ -117,7 +120,7 @@ describe("TinyliciousClient", () => {
 
         await assert.rejects(
             container.attach(),
-            ()=> true,
+            () => true,
             "Container should not attached twice",
         );
     });
@@ -129,7 +132,7 @@ describe("TinyliciousClient", () => {
      * Expected behavior: containerCreate should have the identical SharedMap ID as containerGet.
      */
     it("can get a container successfully", async () => {
-        const containerCreate = (await tinyliciousClient.createContainer(schema)).container;
+        const { container: containerCreate } = await tinyliciousClient.createContainer(schema);
         const containerId = await containerCreate.attach();
         await new Promise<void>((resolve, reject) => {
             containerCreate.on("connected", () => {
@@ -137,7 +140,7 @@ describe("TinyliciousClient", () => {
             });
         });
 
-        const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).container;
+        const { container: containerGet } = await tinyliciousClient.getContainer(containerId, schema);
         const map1Create = containerCreate.initialObjects.map1 as SharedMap;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         assert.strictEqual(map1Get.id, map1Create.id, "Error getting a container");
@@ -150,7 +153,7 @@ describe("TinyliciousClient", () => {
      * each other after value is changed.
      */
     it("can change initialObjects value", async () => {
-        const containerCreate = (await tinyliciousClient.createContainer(schema)).container;
+        const { container: containerCreate } = await tinyliciousClient.createContainer(schema);
         const containerId = await containerCreate.attach();
         await new Promise<void>((resolve, reject) => {
             containerCreate.on("connected", () => {
@@ -161,10 +164,12 @@ describe("TinyliciousClient", () => {
         const initialObjectsCreate = containerCreate.initialObjects;
         const map1Create = initialObjectsCreate.map1 as SharedMap;
         map1Create.set("new-key", "new-value");
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const valueCreate = await map1Create.get("new-key");
 
-        const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).container;
+        const { container: containerGet } = await tinyliciousClient.getContainer(containerId, schema);
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const valueGet = await map1Get.get("new-key");
         assert.strictEqual(valueGet, valueCreate, "container can't connect with initial objects");
     });
@@ -185,7 +190,7 @@ describe("TinyliciousClient", () => {
             dynamicObjectTypes: [SharedDirectory],
         };
 
-        const container = (await tinyliciousClient.createContainer(dynamicSchema)).container;
+        const { container } = await tinyliciousClient.createContainer(dynamicSchema);
         await container.attach();
         await new Promise<void>((resolve, reject) => {
             container.on("connected", () => {
@@ -196,7 +201,8 @@ describe("TinyliciousClient", () => {
         const map1 = container.initialObjects.map1 as SharedMap;
         const newPair = await container.create(SharedDirectory);
         map1.set("newpair-id", newPair.handle);
-        const obj = await map1.get("newpair-id").get();
+        const hdl = await map1.get("newpair-id") as IFluidHandle;
+        const obj = await hdl.get() as SharedDirectory;
         assert.strictEqual(obj[Symbol.toStringTag], "SharedDirectory", "container added dynamic objects incorrectly");
     });
 
@@ -216,7 +222,7 @@ describe("TinyliciousClient", () => {
             dynamicObjectTypes: [TestDataObject],
         };
 
-        const createFluidContainer = (await tinyliciousClient.createContainer(dynamicSchema)).container;
+        const { container: createFluidContainer } = await tinyliciousClient.createContainer(dynamicSchema);
         await createFluidContainer.attach();
         await new Promise<void>((resolve, reject) => {
             createFluidContainer.on("connected", () => {
@@ -229,7 +235,8 @@ describe("TinyliciousClient", () => {
 
         const map1 = createFluidContainer.initialObjects.map1 as SharedMap;
         map1.set("newpair-id", newPair.handle);
-        const obj = await map1.get("newpair-id").get();
+        const hdl = await map1.get("newpair-id") as IFluidHandle;
+        const obj = await hdl.get() as TestDataObject;
         assert.ok(obj, "container added dynamic objects incorrectly");
     });
 });
