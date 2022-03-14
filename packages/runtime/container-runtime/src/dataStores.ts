@@ -282,6 +282,13 @@ export class DataStores implements IDisposable {
             return false;
         }
 
+        const currentHandle = new FluidObjectHandle(
+            currentContext,
+            aliasMessage.internalId,
+            this.runtime.IFluidHandleContext,
+        );
+        this.runtime.addedGCOutboundReference(this.containerRuntimeHandle, currentHandle);
+
         this.aliasMap.set(aliasMessage.alias, currentContext.id);
         currentContext.setInMemoryRoot();
         return true;

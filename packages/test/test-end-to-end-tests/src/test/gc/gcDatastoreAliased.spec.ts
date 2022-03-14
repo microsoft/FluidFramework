@@ -111,7 +111,12 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         const aliasedDataStore2 = aliasedDataStoreResponse2.value as TestDataObject;
         assert(aliasedDataStore2._context.baseSnapshot?.unreferenced !== true, "datastore should be referenced");
 
-        await summarizeOnContainer(container2);
-        // TODO: Check GC is notified
+        const gcReferences = (containerRuntime2 as any).garbageCollector.referencesSinceLastRun as Map<string,string[]>;
+        const references = gcReferences.get("/") as string[];
+        assert(references !== undefined, "Should be able to get the root datastore");
+        const reference = references.filter((ref) => ref === aliasedDataStore2.handle.absolutePath)[0];
+
+        assert.doesNotThrow(async () => summarizeOnContainer(container2), `Should be able to summarize!`);
+        assert(reference !== undefined, `The aliasableDataStore2 should be marked as referenced!`);
     });
 });
