@@ -18,11 +18,12 @@ import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import type { Socket } from 'socket.io-client';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
-    protected constructor(socket: SocketIOClient.Socket, documentId: string, logger: ITelemetryLogger, enableLongPollingDowngrades?: boolean);
+    protected constructor(socket: Socket, documentId: string, logger: ITelemetryLogger, enableLongPollingDowngrades?: boolean);
     // (undocumented)
     protected addTrackedListener(event: string, listener: (...args: any[]) => void): void;
     checkpointSequenceNumber: number | undefined;
@@ -68,7 +69,7 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     protected readonly queuedSignals: ISignalMessage[];
     get serviceConfiguration(): IClientConfiguration;
     // (undocumented)
-    protected readonly socket: SocketIOClient.Socket;
+    protected readonly socket: Socket;
     submit(messages: IDocumentMessage[]): void;
     // (undocumented)
     protected submitCore(type: string, messages: IDocumentMessage[]): void;

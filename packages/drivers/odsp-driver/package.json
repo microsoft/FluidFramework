@@ -85,7 +85,6 @@
     "@types/mocha": "^8.2.2",
     "@types/node-fetch": "^2.5.10",
     "@types/sha.js": "^2.4.0",
-    "@types/socket.io-client": "^1.4.32",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",
