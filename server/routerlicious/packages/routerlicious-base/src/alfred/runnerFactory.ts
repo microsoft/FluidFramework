@@ -59,7 +59,9 @@ export class OrdererManager implements core.IOrdererManager {
             getLumberBaseProperties(documentId, tenantId),
         );
 
-        if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
+
+        const globalDbEnabled = this.config.get("mongo:globalDbEnabled") as boolean;
+        if (tenant.orderer.url !== this.ordererUrl && !globalDbEnabled) {
             winston.error(`Invalid ordering service endpoint`, { messageMetaData });
             Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
             return Promise.reject(new Error("Invalid ordering service endpoint"));
