@@ -59,53 +59,51 @@ describeNoCompat("Flush mode validation", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
     });
 
-    describe("Flush Mode validation", () => {
-        it("can set flush mode to Immediate and send ops", async () => {
-            dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
-            dataObject1map1.set("flushMode", "Immediate");
-            await provider.ensureSynchronized();
+    it("can set flush mode to Immediate and send ops", async () => {
+        dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
+        dataObject1map1.set("flushMode", "Immediate");
+        await provider.ensureSynchronized();
 
-            assert.strictEqual(dataObject1map1.get("flushMode"), "Immediate", "container1's map did not get updated");
-        });
+        assert.strictEqual(dataObject1map1.get("flushMode"), "Immediate", "container1's map did not get updated");
+    });
 
-        it("can set flush mode to TurnBased and send ops", async () => {
-            dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
-            dataObject1map1.set("flushMode", "TurnBased");
-            await provider.ensureSynchronized();
+    it("can set flush mode to TurnBased and send ops", async () => {
+        dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+        dataObject1map1.set("flushMode", "TurnBased");
+        await provider.ensureSynchronized();
 
-            assert.strictEqual(dataObject1map1.get("flushMode"), "TurnBased", "container1's map did not get updated");
-        });
+        assert.strictEqual(dataObject1map1.get("flushMode"), "TurnBased", "container1's map did not get updated");
+    });
 
-        it("can set alternate flush modes and send ops", async () => {
-            dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
-            dataObject1map1.set("flushMode", "Immediate");
-            await provider.ensureSynchronized();
+    it("can set alternate flush modes and send ops", async () => {
+        dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
+        dataObject1map1.set("flushMode", "Immediate");
+        await provider.ensureSynchronized();
 
-            assert.strictEqual(dataObject1map1.get("flushMode"), "Immediate", "container1's map did not get updated");
+        assert.strictEqual(dataObject1map1.get("flushMode"), "Immediate", "container1's map did not get updated");
 
-            dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
-            dataObject1map1.set("flushMode", "TurnBased");
-            await provider.ensureSynchronized();
+        dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+        dataObject1map1.set("flushMode", "TurnBased");
+        await provider.ensureSynchronized();
 
-            assert.strictEqual(dataObject1map1.get("flushMode"), "TurnBased", "container1's map did not get updated");
+        assert.strictEqual(dataObject1map1.get("flushMode"), "TurnBased", "container1's map did not get updated");
 
-            dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
-            dataObject1map1.set("flushMode", "Immediate");
-            await provider.ensureSynchronized();
+        dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
+        dataObject1map1.set("flushMode", "Immediate");
+        await provider.ensureSynchronized();
 
-            assert.strictEqual(dataObject1map1.get("flushMode"), "Immediate", "container1's map did not get updated");
-        });
+        assert.strictEqual(dataObject1map1.get("flushMode"), "Immediate", "container1's map did not get updated");
+    });
 
-        it("can set alternate flush modes without ops in between", async () => {
-            dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
-            dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
-            dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
-            dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+    it("can set alternate flush modes without ops in between", async () => {
+        dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
+        dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+        dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
+        dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
-            dataObject1map1.set("flushMode", "TurnBased");
-            await provider.ensureSynchronized();
+        dataObject1map1.set("flushMode", "TurnBased");
+        await provider.ensureSynchronized();
 
-            assert.strictEqual(dataObject1map1.get("flushMode"), "TurnBased", "container1's map did not get updated");
-        });
+        assert.strictEqual(dataObject1map1.get("flushMode"), "TurnBased", "container1's map did not get updated");
     });
 });

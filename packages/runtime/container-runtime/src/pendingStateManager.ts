@@ -87,11 +87,11 @@ export class PendingStateManager implements IDisposable {
     private pendingBatchBeginMessage: ISequencedDocumentMessage | undefined;
 
     /**
-     * This tracks what the flush mode was when the last message was acked. When we replay messages, we have to start
-     * with the flush mode that was set when the first pending message was sent. It is important to preserve this info
-     * because the flush mode could have been updated by the time the messages are replayed.
+     * This tracks the flush mode for the next message in the pending state queue. When replaying messages, we need to
+     * first set the flush mode to this value and then send ops. It is important to do this info because the flush
+     * mode could have been updated.
      */
-    private lastAckedFlushMode: FlushMode;
+    private flushModeForNextMessage: FlushMode;
 
     private clientId: string | undefined;
 
@@ -137,12 +137,7 @@ export class PendingStateManager implements IDisposable {
             this.firstStashedCSN = messages[0].clientSequenceNumber;
         }
 
-        /**
-         * The initial flush mode is be default the first acked one because we want to start with this if the very first
-         * op has to be replayed. This will happen very often because containers usually start in "read" mode and switch
-         * to "write" when first op is sent. This triggers a reconnect and replaying of ops.
-         */
-        this.lastAckedFlushMode = initialFlushMode;
+        this.flushModeForNextMessage = initialFlushMode;
         this.onFlushModeUpdated(initialFlushMode);
     }
 
@@ -379,7 +374,7 @@ export class PendingStateManager implements IDisposable {
         }
 
         if (pendingFlushMode !== undefined) {
-            this.lastAckedFlushMode = pendingFlushMode;
+            this.flushModeForNextMessage = pendingFlushMode;
         }
 
         // If the FlushMode was set to Immediate before this message was sent, this message won't be a batch message
@@ -485,9 +480,9 @@ export class PendingStateManager implements IDisposable {
         // Save the current FlushMode so that we can revert it back after replaying the states.
         const savedFlushMode = this.containerRuntime.flushMode;
 
-        // Set the last acked flush mode. This is the flush mode that the next set of messages should use before it is
-        // changed.
-        this.containerRuntime.setFlushMode(this.lastAckedFlushMode);
+        // Set the flush mode for the next message. This step is important because the flush mode may have been changed
+        // after the next pending message was sent.
+        this.containerRuntime.setFlushMode(this.flushModeForNextMessage);
 
         // Process exactly `pendingStatesCount` items in the queue as it represents the number of states that were
         // pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
