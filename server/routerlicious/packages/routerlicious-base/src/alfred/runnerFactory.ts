@@ -41,7 +41,7 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 
 export class OrdererManager implements core.IOrdererManager {
     constructor(
-        private readonly config: Provider,
+        private readonly globalDbEnabled: boolean,
         private readonly ordererUrl: string,
         private readonly tenantManager: core.ITenantManager,
         private readonly localOrderManager: LocalOrderManager,
@@ -59,8 +59,7 @@ export class OrdererManager implements core.IOrdererManager {
             getLumberBaseProperties(documentId, tenantId),
         );
 
-        const globalDbEnabled = this.config.get("mongo:globalDbEnabled") as boolean;
-        if (tenant.orderer.url !== this.ordererUrl && !globalDbEnabled) {
+        if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
             winston.error(`Invalid ordering service endpoint`, { messageMetaData });
             Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
             return Promise.reject(new Error("Invalid ordering service endpoint"));
@@ -325,7 +324,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const serverUrl = config.get("worker:serverUrl");
 
         const orderManager = new OrdererManager(
-            config,
+            globalDbEnabled,
             serverUrl,
             tenantManager,
             localOrderManager,
