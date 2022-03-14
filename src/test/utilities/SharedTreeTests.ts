@@ -13,33 +13,6 @@ import {
 } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../../Common';
 import { Definition, DetachedSequenceId, EditId, TraitLabel } from '../../Identifiers';
-import {
-	SharedTreeEvent,
-	serialize,
-	newEdit,
-	EditStatus,
-	EditCommittedEventArguments,
-	SequencedEditAppliedEventArguments,
-	WriteFormat,
-	deepCompareNodes,
-	SharedTreeSummary_0_0_2,
-	SharedTreeSummary,
-	TreeCompressor_0_1_1,
-	SharedTreeSummaryBase,
-} from '../../generic';
-import {
-	Change,
-	ChangeType,
-	Delete,
-	Insert,
-	StablePlace,
-	StableRange,
-	SharedTree,
-	Move,
-	BuildNode,
-	getSharedTreeEncoder,
-	ChangeInternal,
-} from '../../default-edits';
 import { CachingLogViewer } from '../../LogViewer';
 import { EditLog, OrderedEditSet } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
@@ -48,6 +21,24 @@ import { deserialize } from '../../SummaryBackCompatibility';
 import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
 import { StringInterner } from '../../StringInterner';
 import { getChangeNodeFromView } from '../../SerializationUtilities';
+import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree';
+import {
+	ChangeInternal,
+	EditStatus,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
+	SharedTreeSummary_0_0_2,
+	WriteFormat,
+} from '../../persisted-types';
+import { getSharedTreeEncoder } from '../../SharedTreeEncoder';
+import { SharedTreeEvent } from '../../EventTypes';
+import { BuildNode, Change, ChangeType, Delete, Insert, Move, StablePlace, StableRange } from '../../ChangeTypes';
+import { deepCompareNodes, newEdit } from '../../EditUtilities';
+import { serialize } from '../../Summary';
+import { TreeCompressor_0_1_1 } from '../../TreeCompressor';
+import { buildLeaf, TestTree } from './TestNode';
+import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
+import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
 import {
 	areNodesEquivalent,
 	assertNoDelta,
@@ -58,9 +49,6 @@ import {
 	testTraitLabel,
 	translateId,
 } from './TestUtilities';
-import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
-import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
-import { buildLeaf, TestTree } from './TestNode';
 
 function revertEditInTree(tree: SharedTree, edit: EditId): EditId | undefined {
 	return tree.revert(edit);
@@ -77,12 +65,10 @@ const undoRedoOptions = {
  * Runs a test suite for operations on `SharedTree` writing ops at `writeFormat`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
+export function runSharedTreeOperationsTests(
 	title: string,
 	writeFormat: WriteFormat,
-	setUpTestSharedTreeWithDefaultVersion: (
-		options?: SharedTreeTestingOptions
-	) => SharedTreeTestingComponents<TSharedTree>
+	setUpTestSharedTreeWithDefaultVersion: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents
 ) {
 	const setUpTestSharedTree: typeof setUpTestSharedTreeWithDefaultVersion = (options) =>
 		setUpTestSharedTreeWithDefaultVersion({ writeFormat, ...options });
@@ -97,7 +83,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 		/**
 		 * {@inheritDoc SharedTreeTestingComponents.tree}
 		 */
-		sharedTree: TSharedTree;
+		sharedTree: SharedTree;
 
 		/**
 		 * {@link SimpleTestTree} corresponding to {@link SharedTreeTest.sharedTree}
@@ -236,7 +222,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 					Change.setPayload(detachedNode.identifier, 42),
 					Change.insert(detachedSequenceId, StablePlace.before(testTree.left))
 				);
-				const logViewer = sharedTree.logViewer as CachingLogViewer<Change>;
+				const logViewer = sharedTree.logViewer as CachingLogViewer;
 				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(id)).status).equals(
 					EditStatus.Invalid
 				);
@@ -260,7 +246,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 					),
 					Change.insert(detachedRightNodeSequenceId, StablePlace.before(testTree.left))
 				);
-				const logViewer = sharedTree.logViewer as CachingLogViewer<Change>;
+				const logViewer = sharedTree.logViewer as CachingLogViewer;
 				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(id)).status).equals(
 					EditStatus.Invalid
 				);
@@ -523,7 +509,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				);
 
 				containerRuntimeFactory.processAllMessages();
-				const logViewer = sharedTree1.logViewer as CachingLogViewer<Change>;
+				const logViewer = sharedTree1.logViewer as CachingLogViewer;
 				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit1.id)).status).equals(
 					EditStatus.Applied
 				);
@@ -1017,7 +1003,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 
 				let eventCount = 0;
 				let editIdFromEvent: EditId | undefined;
-				sharedTree.on(SharedTreeEvent.EditCommitted, (args: EditCommittedEventArguments<TSharedTree>) => {
+				sharedTree.on(SharedTreeEvent.EditCommitted, (args: EditCommittedEventArguments) => {
 					expect(args.local).true;
 					expect(args.tree).equals(sharedTree);
 					editIdFromEvent = args.editId;
@@ -1060,10 +1046,9 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				containerRuntimeFactory.processAllMessages();
 				await sharedTree1.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 
-				const eventArgs: SequencedEditAppliedEventArguments<TSharedTree>[] = [];
-				sharedTree1.on(
-					SharedTreeEvent.SequencedEditApplied,
-					(args: SequencedEditAppliedEventArguments<TSharedTree>) => eventArgs.push(args)
+				const eventArgs: SequencedEditAppliedEventArguments[] = [];
+				sharedTree1.on(SharedTreeEvent.SequencedEditApplied, (args: SequencedEditAppliedEventArguments) =>
+					eventArgs.push(args)
 				);
 
 				// Invalid change

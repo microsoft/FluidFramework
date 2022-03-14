@@ -5,7 +5,8 @@
 
 import { expect } from 'chai';
 import { Definition } from '../Identifiers';
-import { ChangeNode, RevisionView } from '../generic';
+import { RevisionView } from '../RevisionView';
+import { ChangeNode } from '../persisted-types';
 import { refreshTestTree } from './utilities/TestUtilities';
 import { TestNode } from './utilities/TestNode';
 

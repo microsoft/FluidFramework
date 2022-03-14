@@ -4,14 +4,10 @@
  */
 
 import { Result } from '../../Common';
-import {
-	ChangeResult,
-	EditStatus,
-	GenericTransaction,
-	GenericTransactionPolicy,
-	NodeIdConverter,
-	RevisionView,
-} from '../../generic';
+import { NodeIdConverter } from '../../NodeIdUtilities';
+import { ChangeInternal, EditStatus } from '../../persisted-types';
+import { RevisionView } from '../../RevisionView';
+import { ChangeResult, GenericTransaction, GenericTransactionPolicy, Transaction } from '../../Transaction';
 
 /**
  * @internal
@@ -30,33 +26,36 @@ export namespace MockTransaction {
 	 *
 	 * @internal
 	 */
-	export function factory<TChange>(
+	export function factory(
 		view: RevisionView,
 		_idConverter: NodeIdConverter,
 		options: Options = defaultOptions
-	): GenericTransaction<TChange> {
-		return new GenericTransaction(view, new Policy<TChange>(options));
+	): GenericTransaction {
+		return new GenericTransaction(view, new Policy(options));
 	}
 
 	/**
 	 * A mock implementation of `GenericTransaction` for use in tests.
 	 * @internal
 	 */
-	export class Policy<TChange> implements GenericTransactionPolicy<TChange> {
+	export class Policy implements GenericTransactionPolicy {
 		public options: Options;
 
 		public constructor(options: Options) {
 			this.options = options;
 		}
 
-		public tryResolveChange(_state, change: TChange): Result.Ok<TChange> {
+		public tryResolveChange(_state, change: ChangeInternal): Result.Ok<ChangeInternal> {
 			return Result.ok(change);
 		}
 
 		public validateOnClose(state): ChangeResult {
 			return this.options.statusOnClose === EditStatus.Applied
 				? Result.ok(state.view)
-				: Result.error({ status: this.options.statusOnClose, failure: undefined });
+				: Result.error({
+						status: this.options.statusOnClose,
+						failure: undefined as unknown as Transaction.Failure,
+				  });
 		}
 
 		public dispatchChange(state): ChangeResult {

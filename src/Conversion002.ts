@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { copyPropertyIfDefined } from '../Common';
-import { NodeId, StableNodeId } from '../Identifiers';
+import { copyPropertyIfDefined, Mutable } from './Common';
+import { NodeId, StableNodeId } from './Identifiers';
 import { convertTreeNodes } from './EditUtilities';
 import { NodeIdConverter } from './NodeIdUtilities';
 import {
 	ChangeNode,
 	ChangeNode_0_0_2,
 	NodeData,
+	StablePlaceInternal_0_0_2,
+	StableRangeInternal_0_0_2,
 	TraitLocationInternal,
 	TraitLocationInternal_0_0_2,
 } from './persisted-types';
+import { StablePlace, StableRange } from './ChangeTypes';
 
 /**
  * Convert a {@link ChangeNode_0_0_2} to a {@link ChangeNode}. Returns undefined if the conversion was not possible.
@@ -111,4 +114,103 @@ export function tryConvertToTraitLocation_0_0_2(
 		label: traitLocation.label,
 		parent,
 	};
+}
+
+/**
+ * Converts a {@link StableRangeInternal_0_0_2} to a {@link StableRange}. Returns undefined if the conversion was not possible.
+ */
+export function tryConvertToStableRange(
+	stableRange: StableRangeInternal_0_0_2,
+	idManager: NodeIdConverter
+): StableRange | undefined {
+	const start = tryConvertToStablePlace(stableRange.start, idManager);
+	if (start === undefined) {
+		return undefined;
+	}
+	const end = tryConvertToStablePlace(stableRange.end, idManager);
+	if (end === undefined) {
+		return undefined;
+	}
+	return { start, end };
+}
+
+/**
+ * Converts the {@link StableRange} to a {@link StableRangeInternal_0_0_2}. Returns undefined if the conversion was not possible.
+ */
+export function tryConvertToStableRangeInternal_0_0_2(
+	stableRange: StableRange,
+	idManager: NodeIdConverter
+): StableRangeInternal_0_0_2 | undefined {
+	const start = tryConvertToStablePlaceInternal_0_0_2(stableRange.start, idManager);
+	if (start === undefined) {
+		return undefined;
+	}
+	const end = tryConvertToStablePlaceInternal_0_0_2(stableRange.end, idManager);
+	if (end === undefined) {
+		return undefined;
+	}
+	return { start, end };
+}
+
+/**
+ * Converts a {@link StablePlaceInternal_0_0_2} to a {@link StablePlace}. Returns undefined if the conversion was not possible.
+ */
+export function tryConvertToStablePlace(
+	stablePlace: StablePlaceInternal_0_0_2,
+	idManager: NodeIdConverter
+): StablePlace | undefined {
+	const stablePlaceNew: Mutable<StablePlace> = {
+		side: stablePlace.side,
+	};
+	if (stablePlace.referenceSibling !== undefined) {
+		const nodeId = idManager.tryConvertToNodeId(stablePlace.referenceSibling);
+		if (nodeId === undefined) {
+			return undefined;
+		}
+		stablePlaceNew.referenceSibling = nodeId;
+	}
+
+	if (stablePlace.referenceTrait !== undefined) {
+		const parent = idManager.tryConvertToNodeId(stablePlace.referenceTrait.parent);
+		if (parent === undefined) {
+			return undefined;
+		}
+		stablePlaceNew.referenceTrait = {
+			label: stablePlace.referenceTrait.label,
+			parent,
+		};
+	}
+	return stablePlaceNew;
+}
+
+/**
+ * Converts the {@link StablePlace} to a {@link StablePlaceInternal_0_0_2}. Returns undefined if the conversion was not possible.
+ */
+export function tryConvertToStablePlaceInternal_0_0_2(
+	stablePlace: StablePlace,
+	idConverter: NodeIdConverter
+): StablePlaceInternal_0_0_2 | undefined {
+	const StablePlaceInternal_0_0_2: Mutable<StablePlaceInternal_0_0_2> = {
+		side: stablePlace.side,
+	};
+	if (stablePlace.referenceSibling !== undefined) {
+		const stableId = idConverter.tryConvertToStableNodeId(stablePlace.referenceSibling);
+		if (stableId === undefined) {
+			return undefined;
+		}
+		StablePlaceInternal_0_0_2.referenceSibling = stableId;
+	}
+
+	if (stablePlace.referenceTrait !== undefined) {
+		const parent = idConverter.tryConvertToStableNodeId(stablePlace.referenceTrait.parent);
+		if (parent === undefined) {
+			return undefined;
+		}
+		StablePlaceInternal_0_0_2.referenceTrait = {
+			label: stablePlace.referenceTrait.label,
+			parent,
+		};
+	}
+
+	return StablePlaceInternal_0_0_2;
 }

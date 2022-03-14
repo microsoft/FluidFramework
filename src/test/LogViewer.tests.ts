@@ -7,15 +7,6 @@ import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { EditLog } from '../EditLog';
 import {
-	ChangeInternal,
-	ConstraintEffect,
-	InsertInternal,
-	StablePlaceInternal_0_0_2,
-	StableRange,
-	Transaction,
-	tryConvertToStableRangeInternal_0_0_2,
-} from '../default-edits';
-import {
 	CachingLogViewer,
 	EditStatusCallback,
 	LogViewer,
@@ -24,20 +15,26 @@ import {
 } from '../LogViewer';
 import { EditId } from '../Identifiers';
 import { assert, copyPropertyIfDefined } from '../Common';
+import { initialTree } from '../InitialTree';
 import {
-	newEdit,
+	ChangeInternal,
+	ChangeNode,
+	ConstraintEffect,
 	Edit,
 	EditStatus,
-	ChangeNode,
-	RevisionView,
-	NodeIdContext,
-	areRevisionViewsSemanticallyEqual,
-} from '../generic';
-import { initialTree } from '../InitialTree';
-import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities';
-import { MockTransaction } from './utilities/MockTransaction';
-import { buildStableLeaf, TestTree } from './utilities/TestNode';
+	InsertInternal,
+	StablePlaceInternal_0_0_2,
+} from '../persisted-types';
+import { areRevisionViewsSemanticallyEqual, newEdit } from '../EditUtilities';
+import { NodeIdContext } from '../NodeIdUtilities';
+import { RevisionView } from '../RevisionView';
+import { Transaction } from '../Transaction';
+import { StableRange } from '../ChangeTypes';
+import { tryConvertToStableRangeInternal_0_0_2 } from '../Conversion002';
 import { expectDefined } from './utilities/TestCommon';
+import { buildStableLeaf, TestTree } from './utilities/TestNode';
+import { MockTransaction } from './utilities/MockTransaction';
+import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities';
 
 /**
  * Creates an {@link EditLog} and accompanying {@link RevisionView} with pre-existing edits.
@@ -282,9 +279,9 @@ describe('CachingLogViewer', () => {
 		baseView: RevisionView,
 		nodeIdContext: NodeIdContext,
 		editStatusCallback?: EditStatusCallback,
-		sequencedEditResultCallback?: SequencedEditResultCallback<ChangeInternal, Transaction.Failure>,
+		sequencedEditResultCallback?: SequencedEditResultCallback,
 		knownRevisions?: [number, RevisionView][]
-	): CachingLogViewer<ChangeInternal, Transaction.Failure> {
+	): CachingLogViewer {
 		return new CachingLogViewer(
 			log,
 			baseView,
@@ -331,10 +328,7 @@ describe('CachingLogViewer', () => {
 		}
 	});
 
-	async function requestAllRevisionViews(
-		viewer: CachingLogViewer<ChangeInternal, any>,
-		log: EditLog<ChangeInternal>
-	): Promise<void> {
+	async function requestAllRevisionViews(viewer: CachingLogViewer, log: EditLog<ChangeInternal>): Promise<void> {
 		for (let i = 0; i <= log.length; i++) {
 			await viewer.getRevisionView(i);
 		}
@@ -649,11 +643,11 @@ describe('CachingLogViewer', () => {
 	describe('Callbacks', () => {
 		function getViewer(): {
 			log: EditLog<ChangeInternal>;
-			viewer: CachingLogViewer<ChangeInternal, Transaction.Failure>;
-			events: SequencedEditResult<ChangeInternal, Transaction.Failure>[];
+			viewer: CachingLogViewer;
+			events: SequencedEditResult[];
 		} {
 			const log = getTestTreeLog(testTree);
-			const events: SequencedEditResult<ChangeInternal, Transaction.Failure>[] = [];
+			const events: SequencedEditResult[] = [];
 			const viewer = new CachingLogViewer(
 				log,
 				simpleLogBaseView,
@@ -661,7 +655,7 @@ describe('CachingLogViewer', () => {
 				[],
 				/* expensiveValidation */ true,
 				undefined,
-				(args: SequencedEditResult<ChangeInternal, Transaction.Failure>) => events.push(args),
+				(args: SequencedEditResult) => events.push(args),
 				Transaction.factory
 			);
 			return { log, viewer, events };
@@ -734,13 +728,13 @@ describe('CachingLogViewer', () => {
 
 	describe('Sequencing', () => {
 		function addFakeEdit(
-			logViewer: CachingLogViewer<unknown>,
+			logViewer: CachingLogViewer,
 			sequenceNumber: number,
 			referenceSequenceNumber?: number
 		): Edit<unknown> {
 			const id = String(sequenceNumber ?? uuidv4()) as EditId;
 			const fakeChange = id;
-			const edit = { changes: [fakeChange], id };
+			const edit = { changes: [fakeChange], id } as unknown as Edit<ChangeInternal>;
 			logViewer.log.addSequencedEdit(edit, {
 				sequenceNumber,
 				referenceSequenceNumber: referenceSequenceNumber ?? sequenceNumber - 1,
@@ -748,7 +742,7 @@ describe('CachingLogViewer', () => {
 			return edit;
 		}
 
-		function minimalLogViewer(): CachingLogViewer<unknown> {
+		function minimalLogViewer(): CachingLogViewer {
 			return new CachingLogViewer(
 				new EditLog(),
 				simpleLogBaseView,

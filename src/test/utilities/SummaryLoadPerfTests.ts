@@ -5,10 +5,10 @@
 
 import * as fs from 'fs';
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
 import { deserialize } from '../../SummaryBackCompatibility';
-import { WriteFormat } from '../../generic';
+import { SharedTree } from '../../SharedTree';
+import { WriteFormat } from '../../persisted-types';
 import {
 	getDocumentFiles,
 	LocalServerSharedTreeTestingComponents,
@@ -21,15 +21,15 @@ import { TestFluidSerializer } from './TestSerializer';
  * Runs a test suite for summary load perf on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSummaryLoadPerfTests<TSharedTree extends SharedTree>(
+export function runSummaryLoadPerfTests(
 	setUpLocalServerTestSharedTree: (
 		options: LocalServerSharedTreeTestingOptions
-	) => Promise<LocalServerSharedTreeTestingComponents<TSharedTree>>
+	) => Promise<LocalServerSharedTreeTestingComponents>
 ) {
 	describe('Summary Load', () => {
 		const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
-		let tree: TSharedTree;
+		let tree: SharedTree;
 
 		const testSerializer = new TestFluidSerializer();
 

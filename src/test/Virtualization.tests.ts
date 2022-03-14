@@ -6,19 +6,21 @@
 import { expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { EditLog } from '../EditLog';
+import { assertNotUndefined } from '../Common';
+import { initialTree } from '../InitialTree';
+import { SharedTree } from '../SharedTree';
 import {
+	ChangeInternal,
 	Edit,
 	EditHandle,
 	SharedTreeSummary,
-	SharedTreeDiagnosticEvent,
-	WriteFormat,
 	SharedTreeSummary_0_0_2,
-	TreeCompressor_0_1_1,
-} from '../generic';
-import { SharedTree, Change, ChangeInternal } from '../default-edits';
-import { assertNotUndefined } from '../Common';
-import { initialTree } from '../InitialTree';
-import { StringInterner } from '..';
+	WriteFormat,
+} from '../persisted-types';
+import { Change } from '../ChangeTypes';
+import { SharedTreeDiagnosticEvent } from '../EventTypes';
+import { StringInterner } from '../StringInterner';
+import { TreeCompressor_0_1_1 } from '../TreeCompressor';
 import { applyNoop, createStableEdits, setUpLocalServerTestSharedTree } from './utilities/TestUtilities';
 
 describe('SharedTree history virtualization', () => {

@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { TreeCompressor } from '../Compression';
-import { Definition, DetachedSequenceId, InternedStringId, isDetachedSequenceId, TraitLabel } from '../Identifiers';
-import { StringInterner } from '../StringInterner';
+import type { TreeCompressor } from './Compression';
+import { Definition, DetachedSequenceId, InternedStringId, isDetachedSequenceId, TraitLabel } from './Identifiers';
+import { StringInterner } from './StringInterner';
 import type { CompressedTraits, CompressedPlaceholderTree, PlaceholderTree } from './persisted-types';
 
 /**

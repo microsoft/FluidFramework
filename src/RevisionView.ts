@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { copyPropertyIfDefined, fail, Mutable, MutableMap } from '../Common';
-import { Forest } from '../Forest';
-import { NodeId, StableNodeId, TraitLabel } from '../Identifiers';
+import { copyPropertyIfDefined, fail, Mutable, MutableMap } from './Common';
+import { Forest } from './Forest';
+import { NodeId, StableNodeId, TraitLabel } from './Identifiers';
 import { iterateChildren } from './EditUtilities';
 import { NodeIdConverter } from './NodeIdUtilities';
 import { HasTraits, Payload, TreeNode } from './persisted-types';

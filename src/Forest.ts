@@ -6,8 +6,8 @@
 import BTree from 'sorted-btree';
 import { fail, assert, copyPropertyIfDefined, compareBtrees, compareStrings } from './Common';
 import { compareForestNodes } from './ForestUtilities';
-import { NodeData, Payload } from './generic';
 import { NodeId, TraitLabel } from './Identifiers';
+import { NodeData, Payload } from './persisted-types';
 
 type Optional<T> = {
 	[P in keyof T]: T[P] | undefined;

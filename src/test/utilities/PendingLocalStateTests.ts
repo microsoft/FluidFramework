@@ -7,20 +7,15 @@ import { expect } from 'chai';
 import { IContainer } from '@fluidframework/container-definitions';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import { ITestFluidObject, ITestObjectProvider } from '@fluidframework/test-utils';
-import {
-	EditCommittedEventArguments,
-	GenericSharedTree,
-	Insert,
-	newEdit,
-	SharedTree,
-	SharedTreeEvent,
-	WriteFormat,
-	StablePlace,
-} from '../..';
 import { fail } from '../../Common';
-import { SharedTreeOp, SharedTreeOpType } from '../../generic/persisted-types';
+import { SharedTreeOp, SharedTreeOpType, WriteFormat } from '../../persisted-types';
 import type { EditLog } from '../../EditLog';
-import { getSharedTreeEncoder } from '../../default-edits';
+import { EditCommittedEventArguments, SharedTree } from '../../SharedTree';
+import { SharedTreeEvent } from '../../EventTypes';
+import { newEdit } from '../../EditUtilities';
+import { Insert, StablePlace } from '../../ChangeTypes';
+import { getSharedTreeEncoder } from '../../SharedTreeEncoder';
+import { TestTree } from './TestNode';
 import {
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
@@ -28,7 +23,6 @@ import {
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
 } from './TestUtilities';
-import { TestTree } from './TestNode';
 
 type WithApplyStashedOp<T> = T & { applyStashedOp(op: SharedTreeOp): void };
 
@@ -50,28 +44,28 @@ async function withContainerOffline<TReturn>(
  * See documentation on `applyStashedOp`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runPendingLocalStateTests<TSharedTree extends SharedTree>(
+export function runPendingLocalStateTests(
 	title: string,
-	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>,
+	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents,
 	setUpLocalServerTestSharedTree: (
 		options: LocalServerSharedTreeTestingOptions
-	) => Promise<LocalServerSharedTreeTestingComponents<TSharedTree>>
+	) => Promise<LocalServerSharedTreeTestingComponents>
 ) {
 	describe(title, () => {
 		const documentId = 'documentId';
 
 		describe('applyStashedOp', () => {
-			function makeTree(): { tree: WithApplyStashedOp<TSharedTree>; testTree: TestTree } {
+			function makeTree(): { tree: WithApplyStashedOp<SharedTree>; testTree: TestTree } {
 				// Unit testing the contract of applyStashedOp without normal public access point through fluid services
 				// requires access violation (as it is protected on SharedTree).
 				const { tree } = setUpTestSharedTree();
-				return { tree: tree as WithApplyStashedOp<TSharedTree>, testTree: setUpTestTree(tree) };
+				return { tree: tree as WithApplyStashedOp<SharedTree>, testTree: setUpTestTree(tree) };
 			}
 
 			for (const version of [WriteFormat.v0_0_2, WriteFormat.v0_1_1]) {
 				it(`applies edit ops with version ${version} locally`, async () => {
 					const { tree, testTree } = makeTree();
-					const editCommittedLog: EditCommittedEventArguments<GenericSharedTree<any, any, any>>[] = [];
+					const editCommittedLog: EditCommittedEventArguments[] = [];
 					tree.on(SharedTreeEvent.EditCommitted, (args) => {
 						editCommittedLog.push(args);
 					});

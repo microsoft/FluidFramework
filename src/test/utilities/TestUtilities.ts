@@ -29,31 +29,23 @@ import type { IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { DetachedSequenceId, EditId, NodeId, StableNodeId } from '../../Identifiers';
 import { assertNotUndefined, fail, identity } from '../../Common';
-import { SharedTree, Change, setTrait, ChangeInternal, StablePlace, getNodeId } from '../../default-edits';
-import {
-	ChangeNode,
-	Edit,
-	getUploadedEditChunkContents,
-	newEdit,
-	NodeData,
-	NodeIdContext,
-	NodeIdConverter,
-	Payload,
-	SharedTreeDiagnosticEvent,
-	WriteFormat,
-	TraitLocation,
-	TreeView,
-} from '../../generic';
 import { EditLog } from '../../EditLog';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
-import { GenericSharedTree, reservedIdCount } from '../../generic/GenericSharedTree';
 import { getChangeNodeFromView, getChangeNodeFromViewNode } from '../../SerializationUtilities';
 import { initialTree } from '../../InitialTree';
+import { ChangeInternal, ChangeNode, Edit, NodeData, Payload, WriteFormat } from '../../persisted-types';
+import { TraitLocation, TreeView } from '../../TreeView';
+import { SharedTreeDiagnosticEvent } from '../../EventTypes';
+import { getNodeId, NodeIdContext, NodeIdConverter } from '../../NodeIdUtilities';
+import { newEdit, setTrait } from '../../EditUtilities';
+import { getUploadedEditChunkContents } from '../../SummaryTestUtilities';
+import { reservedIdCount, SharedTree } from '../../SharedTree';
+import { Change, StablePlace } from '../../ChangeTypes';
 import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
-export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
+export interface SharedTreeTestingComponents {
 	/** The MockFluidDataStoreRuntime used to created the SharedTree. */
 	componentRuntime: MockFluidDataStoreRuntime;
 	/**
@@ -62,7 +54,7 @@ export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
 	 * */
 	containerRuntimeFactory: MockContainerRuntimeFactory;
 	/** The SharedTree created and set up. */
-	tree: TSharedTree;
+	tree: SharedTree;
 }
 
 /** Options used to customize setUpTestSharedTree */
@@ -183,11 +175,11 @@ export function setUpTestSharedTree(
 const TestDataStoreType = '@fluid-example/test-dataStore';
 
 /** Objects returned by setUpLocalServerTestSharedTree */
-export interface LocalServerSharedTreeTestingComponents<TSharedTree = SharedTree> {
+export interface LocalServerSharedTreeTestingComponents {
 	/** The testObjectProvider created if one was not set in the options. */
 	testObjectProvider: TestObjectProvider;
 	/** The SharedTree created and set up. */
-	tree: TSharedTree;
+	tree: SharedTree;
 	/** The container created and set up. */
 	container: Container;
 }
@@ -348,7 +340,7 @@ export function createStableEdits(
 }
 
 /** Asserts that changes to SharedTree in editor() function do not cause any observable state change */
-export function assertNoDelta(tree: GenericSharedTree<any, any, any>, editor: () => void) {
+export function assertNoDelta(tree: SharedTree, editor: () => void) {
 	const viewA = tree.currentView;
 	editor();
 	const viewB = tree.currentView;

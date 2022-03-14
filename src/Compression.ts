@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { Edit, PlaceholderTree } from './generic';
 import type { DetachedSequenceId } from './Identifiers';
+import { Edit, PlaceholderTree } from './persisted-types';
 import type { StringInterner } from './StringInterner';
 
 /**

@@ -4,9 +4,9 @@
  */
 
 import { IsoBuffer } from '@fluidframework/common-utils';
-import { GenericSharedTree } from '../generic';
-import { OrderedEditSet, EditLog } from '../EditLog';
+import { OrderedEditSet, EditLog } from './EditLog';
 import { EditHandle, EditWithoutId } from './persisted-types';
+import { SharedTree } from './SharedTree';
 
 /**
  * Format used for exporting an uploaded edit chunk and its associated handle path. Primarily used for testing SharedTree summaries.
@@ -28,7 +28,7 @@ export interface UploadedEditChunkContents<TChange> {
  * @public
  */
 export async function getUploadedEditChunkContents<TChange>(
-	sharedTree: GenericSharedTree<any, TChange, any>
+	sharedTree: SharedTree
 ): Promise<UploadedEditChunkContents<TChange>[]> {
 	const editChunks: UploadedEditChunkContents<TChange>[] = [];
 	const { editChunks: editsOrHandles } = (sharedTree.edits as EditLog<TChange>).getEditLogSummary(true);

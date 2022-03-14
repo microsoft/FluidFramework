@@ -5,9 +5,11 @@
 
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import { CompressedPlaceholderTree, PlaceholderTree, RevisionView, TreeCompressor_0_1_1 } from '../generic';
 import type { Definition, DetachedSequenceId, InternedStringId, NodeId, TraitLabel } from '../Identifiers';
+import { CompressedPlaceholderTree, PlaceholderTree } from '../persisted-types';
+import { RevisionView } from '../RevisionView';
 import { StringInterner } from '../StringInterner';
+import { TreeCompressor_0_1_1 } from '../TreeCompressor';
 import { setUpTestTree } from './utilities/TestUtilities';
 
 /**

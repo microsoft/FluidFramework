@@ -8,10 +8,12 @@ import { v4 } from 'uuid';
 
 import { assert } from '../Common';
 import { Definition, NodeId, TraitLabel } from '../Identifiers';
-import { ChangeNode, RevisionView, Side, TreeViewNode } from '../generic';
 import { Forest, ForestNode } from '../Forest';
-import { refreshTestTree } from './utilities/TestUtilities';
+import { RevisionView } from '../RevisionView';
+import { ChangeNode, Side } from '../persisted-types';
+import { TreeViewNode } from '../TreeView';
 import { TestTree } from './utilities/TestNode';
+import { refreshTestTree } from './utilities/TestUtilities';
 
 describe('Forest Perf', () => {
 	const testTree = refreshTestTree();

@@ -6,22 +6,26 @@
 import * as fs from 'fs';
 import { expect } from 'chai';
 import { v5 as uuidv5 } from 'uuid';
-import { TestObjectProvider } from '@fluidframework/test-utils';
-import { Change, ChangeInternal, SharedTree, getSharedTreeEncoder } from '../../default-edits';
-import {
-	Edit,
-	SharedTreeSummary,
-	SharedTreeSummaryBase,
-	WriteFormat,
-	EditWithoutId,
-	UploadedEditChunkContents,
-	SharedTreeEncoder,
-} from '../../generic';
+// KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
+import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { EditLog, separateEditAndId } from '../../EditLog';
 import { assertNotUndefined } from '../../Common';
 import { getChangeNodeFromView } from '../../SerializationUtilities';
 import type { EditId } from '../../Identifiers';
+import {
+	ChangeInternal,
+	Edit,
+	EditWithoutId,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
+	WriteFormat,
+} from '../../persisted-types';
+import { getSharedTreeEncoder, SharedTreeEncoder } from '../../SharedTreeEncoder';
+import { SharedTree } from '../../SharedTree';
+import { Change } from '../../ChangeTypes';
+import { UploadedEditChunkContents } from '../../SummaryTestUtilities';
+import { TestFluidSerializer } from './TestSerializer';
 import {
 	getDocumentFiles,
 	LocalServerSharedTreeTestingComponents,
@@ -31,7 +35,6 @@ import {
 	summaryCompatibilityTestSetupEditId,
 	testDocumentsPathBase,
 } from './TestUtilities';
-import { TestFluidSerializer } from './TestSerializer';
 
 const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
 
@@ -102,17 +105,17 @@ const forwardCompatibilityTests: ForwardCompatibilityTestEntry[] = [
  * Runs a test suite for summaries on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTree>(
+export function runSummaryFormatCompatibilityTests(
 	title: string,
-	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>,
+	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents,
 	setUpLocalServerTestSharedTree: (
 		options: LocalServerSharedTreeTestingOptions
-	) => Promise<LocalServerSharedTreeTestingComponents<TSharedTree>>
+	) => Promise<LocalServerSharedTreeTestingComponents>
 ) {
 	// KLUDGE: Calling ensureSynchronized after too many edits are applied (about 450+) causes it to hang indefinitely,
 	//         bug filed at https://github.com/microsoft/FluidFramework/issues/7575
 	async function applyEdits(
-		tree: TSharedTree,
+		tree: SharedTree,
 		testObjectProvider: TestObjectProvider,
 		history: Edit<ChangeInternal>[]
 	) {
@@ -130,7 +133,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 	describe(title, () => {
 		const testSerializer = new TestFluidSerializer();
 
-		let expectedTree: TSharedTree;
+		let expectedTree: SharedTree;
 		let testObjectProvider: TestObjectProvider;
 		let editsPerChunk: number;
 		// Number of edits per catchup chunk

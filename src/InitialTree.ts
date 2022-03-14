@@ -4,8 +4,8 @@
  */
 
 import type { Definition, StableNodeId } from './Identifiers';
-import type { ChangeNode_0_0_2 } from './generic';
 import { sharedTreeInitialTreeId } from './id-compressor';
+import { ChangeNode_0_0_2 } from './persisted-types';
 
 /**
  * The initial tree.

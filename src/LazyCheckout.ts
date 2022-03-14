@@ -4,8 +4,10 @@
  */
 
 import { Checkout } from './Checkout';
-import { EditCommittedEventArguments, GenericSharedTree, RevisionView, ValidEditingResult } from './generic';
 import { EditId } from './Identifiers';
+import { RevisionView } from './RevisionView';
+import { EditCommittedEventArguments, SharedTree } from './SharedTree';
+import { ValidEditingResult } from './Transaction';
 
 /**
  * Checkout that only updates its view of the tree when explicitly requested.
@@ -14,26 +16,18 @@ import { EditId } from './Identifiers';
  * @public
  * @sealed
  */
-export class LazyCheckout<TChange, TChangeInternal, TFailure = unknown> extends Checkout<
-	TChange,
-	TChangeInternal,
-	TFailure
-> {
+export class LazyCheckout extends Checkout {
 	private latestView: RevisionView;
 
 	/**
 	 * @param tree - the tree
 	 */
-	public constructor(tree: GenericSharedTree<TChange, TChangeInternal, TFailure>) {
-		super(
-			tree,
-			tree.currentView,
-			(args: EditCommittedEventArguments<GenericSharedTree<TChange, TChangeInternal, TFailure>>) => {}
-		);
+	public constructor(tree: SharedTree) {
+		super(tree, tree.currentView, (args: EditCommittedEventArguments) => {});
 		this.latestView = tree.currentView;
 	}
 
-	protected handleNewEdit(id: EditId, result: ValidEditingResult<TChangeInternal>): void {
+	protected handleNewEdit(id: EditId, result: ValidEditingResult): void {
 		super.handleNewEdit(id, result);
 		this.latestView = result.after;
 	}

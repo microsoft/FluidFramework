@@ -4,8 +4,9 @@
  */
 
 import { Definition, NodeId } from './Identifiers';
-import { Payload, TraitMap, TreeNode, TreeView, TreeViewNode } from './generic';
 import { fail, memoizeGetter } from './Common';
+import { Payload, TraitMap, TreeNode } from './persisted-types';
+import { TreeView, TreeViewNode } from './TreeView';
 
 /**
  * A handle to a `TreeNode` that exists within a specific `TreeView`. This type provides a convenient

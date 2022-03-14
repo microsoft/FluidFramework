@@ -5,6 +5,9 @@
 
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
+import { DetachedSequenceId, NodeId } from '../Identifiers';
+import { StringInterner } from '../StringInterner';
+import type { TreeCompressor } from '../Compression';
 import {
 	BuildInternal,
 	ChangeInternal,
@@ -14,16 +17,14 @@ import {
 	ConstraintEffect,
 	ConstraintInternal,
 	DetachInternal,
+	Edit,
 	InsertInternal,
+	PlaceholderTree,
 	SetValueInternal,
-	StablePlace,
-	StableRange,
-} from '../default-edits';
-import { makeEditCompressor } from '../default-edits/EditCompression';
-import { Edit, newEdit, newEditId, PlaceholderTree } from '../generic';
-import { DetachedSequenceId, NodeId } from '../Identifiers';
-import { StringInterner } from '../StringInterner';
-import type { TreeCompressor } from '../Compression';
+} from '../persisted-types';
+import { makeEditCompressor } from '../EditCompression';
+import { StablePlace, StableRange } from '../ChangeTypes';
+import { newEdit, newEditId } from '../EditUtilities';
 import { setUpTestTree } from './utilities/TestUtilities';
 
 // CompressedChange type for this test suite. It aligns with CompressedChangeInternal but doesn't actually compress trees.

@@ -10,8 +10,7 @@ import {
 	IChannelFactory,
 	IChannel,
 } from '@fluidframework/datastore-definitions';
-import { SharedTreeFactoryOptions } from '../generic';
-import { SharedTree } from './SharedTree';
+import { SharedTree, SharedTreeFactoryOptions } from './SharedTree';
 
 /**
  * Factory for SharedTree.

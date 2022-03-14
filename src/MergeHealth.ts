@@ -5,18 +5,19 @@
 
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { assertNotUndefined, fail } from './Common';
-import { PlaceValidationResult, RangeValidationResultKind, SharedTree, Transaction } from './default-edits';
-import { EditStatus, GenericSharedTree, SequencedEditAppliedEventArguments, SharedTreeEvent } from './generic';
+import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities';
+import { SharedTreeEvent } from './EventTypes';
+import { EditStatus } from './persisted-types';
+import { SequencedEditAppliedEventArguments, SharedTree } from './SharedTree';
+import { Transaction } from './Transaction';
 
 /**
  * Logs generic telemetry for failed sequenced edits.
  * Only failing edits that were originally made locally are logged.
  * @param tree - The tree for which to log the telemetry.
  */
-export function useFailedSequencedEditTelemetry<TSharedTree extends GenericSharedTree<any, any, any>>(
-	tree: TSharedTree
-): { disable: () => void } {
-	function onEdit({ wasLocal, logger, outcome }: SequencedEditAppliedEventArguments<TSharedTree>): void {
+export function useFailedSequencedEditTelemetry(tree: SharedTree): { disable: () => void } {
+	function onEdit({ wasLocal, logger, outcome }: SequencedEditAppliedEventArguments): void {
 		if (wasLocal && outcome.status !== EditStatus.Applied) {
 			logger.send({
 				category: 'generic',
@@ -328,7 +329,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 	/**
 	 * Receives SequencedEditApplied events from trees.
 	 */
-	private readonly sequencedEditHandler = (params: SequencedEditAppliedEventArguments<SharedTree>) => {
+	private readonly sequencedEditHandler = (params: SequencedEditAppliedEventArguments) => {
 		const { edit, tree, wasLocal, logger, outcome, reconciliationPath } = params;
 		if (wasLocal) {
 			const tallyAndLogger = this.treeData.get(tree) ?? fail('Should only receive events for registered trees');

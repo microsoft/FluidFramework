@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TransactionView, TreeView } from './generic';
+import { ChangeInternal } from './persisted-types';
+import { TransactionView } from './RevisionView';
+import { TreeView } from './TreeView';
 
 /**
  * The path of edits from the revision view where a change was meant to have been applied to the view where the edit that contains the
@@ -12,7 +14,7 @@ import { TransactionView, TreeView } from './generic';
  * This path is always empty for a change that has no concurrent edits.
  * @public
  */
-export interface ReconciliationPath<TChange> {
+export interface ReconciliationPath {
 	/**
 	 * The number of edits in the path.
 	 */
@@ -21,14 +23,14 @@ export interface ReconciliationPath<TChange> {
 	 * Allows access to edit information.
 	 * @returns Reconciliation information for the edit at the given `index`.
 	 */
-	readonly [index: number]: ReconciliationEdit<TChange>;
+	readonly [index: number]: ReconciliationEdit;
 }
 
 /**
  * An edit in the `ReconciliationPath`.
  * @public
  */
-export interface ReconciliationEdit<TChange> {
+export interface ReconciliationEdit {
 	/**
 	 * The state before the edit was applied.
 	 */
@@ -45,19 +47,19 @@ export interface ReconciliationEdit<TChange> {
 	 * Allows access to change information.
 	 * @returns Reconciliation information for the change at the given `index`.
 	 */
-	readonly [index: number]: ReconciliationChange<TChange>;
+	readonly [index: number]: ReconciliationChange;
 }
 
 /**
  * A change in the `ReconciliationPath`.
  * @public
  */
-export interface ReconciliationChange<TChange> {
+export interface ReconciliationChange {
 	/**
 	 * The resolved change that was applied during the edit.
 	 * Resolved changes are guaranteed to be expressed with valid tree locations instead of anchors that need resolution.
 	 */
-	readonly resolvedChange: TChange;
+	readonly resolvedChange: ChangeInternal;
 	/**
 	 * The resulting view from applying the resolved change.
 	 */

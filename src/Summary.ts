@@ -5,9 +5,9 @@
 
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-object-base';
-import { assertNotUndefined } from '../Common';
-import { StringInterner } from '../StringInterner';
-import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
+import { assertNotUndefined } from './Common';
+import { StringInterner } from './StringInterner';
+import { getChangeNode_0_0_2FromView } from './SerializationUtilities';
 import { TreeCompressor_0_1_1 } from './TreeCompressor';
 import { RevisionView } from './RevisionView';
 import {
@@ -74,7 +74,6 @@ export function serialize(summary: SharedTreeSummaryBase, serializer: IFluidSeri
 
 /**
  * Preserves the full history in the generated summary.
- * @public
  */
 export function fullHistorySummarizer<TChange>(
 	summarizeLog: EditLogSummarizer<unknown>,

@@ -6,22 +6,14 @@
 import { expect } from 'chai';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
-import { EditStatus, RevisionView, SequencedEditAppliedEventArguments } from '../generic';
-import {
-	Change,
-	ChangeType,
-	Delete,
-	Insert,
-	StablePlace,
-	StableRange,
-	SharedTree,
-	Move,
-	ConstraintEffect,
-	Transaction,
-} from '../default-edits';
 import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth';
-import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
+import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree';
+import { RevisionView } from '../RevisionView';
+import { Change, ChangeType, Delete, Insert, Move, StablePlace, StableRange } from '../ChangeTypes';
+import { ConstraintEffect, EditStatus } from '../persisted-types';
+import { Transaction } from '../Transaction';
 import { buildLeaf, TestTree } from './utilities/TestNode';
+import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
 
 async function setupHeartbeat() {
 	const events: ITelemetryBaseEvent[] = [];
@@ -85,7 +77,7 @@ function itAggregates(
 
 function itAggregatesMocked(
 	nameOfAggregatedData: string,
-	params: readonly Partial<Record<keyof SequencedEditAppliedEventArguments<SharedTree>, unknown>>[],
+	params: readonly Partial<Record<keyof SequencedEditAppliedEventArguments, unknown>>[],
 	action: (ITelemetryBaseEvent) => void
 ): Mocha.Test {
 	return it(`Aggregates mocked ${nameOfAggregatedData}`, () => {

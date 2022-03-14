@@ -6,10 +6,10 @@
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
-import { SharedTreeDiagnosticEvent, WriteFormat } from '../..';
-import { SharedTree } from '../../default-edits';
-import { SharedTreeOp, SharedTreeOpType } from '../../generic';
 import { EditLog } from '../../EditLog';
+import { SharedTreeDiagnosticEvent } from '../../EventTypes';
+import { SharedTreeOp, SharedTreeOpType, WriteFormat } from '../../persisted-types';
+import { SharedTree } from '../../SharedTree';
 import { applyNoop, SharedTreeTestingComponents, SharedTreeTestingOptions } from './TestUtilities';
 
 /**
@@ -37,9 +37,9 @@ function spyOnVersionChanges(tree: SharedTree): WriteFormat[] {
  * Runs a test suite for operations on `SharedTree` that depend on correct versioning.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSharedTreeVersioningTests<TSharedTree extends SharedTree>(
+export function runSharedTreeVersioningTests(
 	title: string,
-	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>
+	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents
 ) {
 	describe(title, () => {
 		const oldVersion = WriteFormat.v0_0_2;

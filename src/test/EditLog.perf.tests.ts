@@ -4,9 +4,10 @@
  */
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { Change, Insert, StablePlace } from '../default-edits';
+import { Change, Insert, StablePlace } from '../ChangeTypes';
 import { EditLog } from '../EditLog';
-import { Edit, newEdit } from '../generic';
+import { newEdit } from '../EditUtilities';
+import { Edit } from '../persisted-types';
 import { setUpTestTree } from './utilities/TestUtilities';
 
 describe('EditLog Perf', () => {

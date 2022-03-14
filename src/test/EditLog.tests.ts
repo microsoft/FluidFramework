@@ -8,7 +8,8 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { EditLog, separateEditAndId } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
-import { newEdit, Edit, EditWithoutId, EditHandle } from '../generic';
+import { Edit, EditHandle, EditWithoutId } from '../persisted-types';
+import { newEdit } from '../EditUtilities';
 
 type DummyChange = never;
 

@@ -3,25 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { BuildTreeNode } from '../../ChangeTypes';
 import { memoizeGetter, fail, setPropertyIfDefined } from '../../Common';
-import { BuildTreeNode } from '../../default-edits';
-import {
-	TraitLocation,
-	TraitMap,
-	TreeNode,
-	Payload,
-	ChangeNode,
-	NodeIdContext,
-	NodeIdConverter,
-	TraitLocationInternal_0_0_2,
-	ChangeNode_0_0_2,
-	tryConvertToTraitLocation_0_0_2,
-	convertTreeNodes,
-	tryConvertToNodeData_0_0_2,
-	RevisionView,
-} from '../../generic';
+import { tryConvertToNodeData_0_0_2, tryConvertToTraitLocation_0_0_2 } from '../../Conversion002';
+import { convertTreeNodes } from '../../EditUtilities';
 import { Definition, NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
 import { initialTree } from '../../InitialTree';
+import { NodeIdContext, NodeIdConverter } from '../../NodeIdUtilities';
+import {
+	ChangeNode,
+	ChangeNode_0_0_2,
+	Payload,
+	TraitLocationInternal_0_0_2,
+	TraitMap,
+	TreeNode,
+} from '../../persisted-types';
+import { RevisionView } from '../../RevisionView';
+import { TraitLocation } from '../../TreeView';
 import { expectDefined } from './TestCommon';
 
 /** A legacy format of a `TestNode` */

@@ -7,8 +7,9 @@ import BTree from 'sorted-btree';
 import { IsoBuffer, TypedEventEmitter } from '@fluidframework/common-utils';
 import { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { assert, assertNotUndefined, compareArrays, compareFiniteNumbers, fail } from './Common';
-import { Edit, EditChunk, EditHandle, EditLogSummary, EditWithoutId, SharedTreeDiagnosticEvent } from './generic';
 import { EditId } from './Identifiers';
+import { Edit, EditChunk, EditHandle, EditLogSummary, EditWithoutId } from './persisted-types';
+import { SharedTreeDiagnosticEvent } from './EventTypes';
 
 /**
  * An ordered set of Edits associated with a SharedTree.

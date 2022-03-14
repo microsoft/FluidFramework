@@ -5,37 +5,33 @@
 
 import { expect } from 'chai';
 import { DetachedSequenceId, NodeId, StableNodeId, TraitLabel } from '../Identifiers';
-import {
-	ChangeNode_0_0_2,
-	deepCompareNodes,
-	EditStatus,
-	GenericTransaction,
-	Side,
-	tryConvertToChangeNode,
-} from '../generic';
-import {
-	Transaction,
-	ChangeInternal,
-	ChangeTypeInternal,
-	ConstraintEffect,
-	StableRange,
-	StablePlace,
-	RangeValidationResultKind,
-	PlaceValidationResult,
-	InsertInternal,
-	tryConvertToStableRangeInternal_0_0_2,
-	StableRangeInternal_0_0_2,
-	tryConvertToStablePlaceInternal_0_0_2,
-	StablePlaceInternal_0_0_2,
-} from '../default-edits';
 import { assert } from '../Common';
 import { getChangeNodeFromViewNode } from '../SerializationUtilities';
-import { refreshTestTree, testTrait, testTraitLabel } from './utilities/TestUtilities';
-import { SimpleTestTree } from './utilities/TestNode';
+import { GenericTransaction, Transaction } from '../Transaction';
+import {
+	ChangeInternal,
+	ChangeNode_0_0_2,
+	ChangeTypeInternal,
+	ConstraintEffect,
+	EditStatus,
+	InsertInternal,
+	Side,
+	StablePlaceInternal_0_0_2,
+	StableRangeInternal_0_0_2,
+} from '../persisted-types';
+import { StablePlace, StableRange } from '../ChangeTypes';
+import {
+	tryConvertToChangeNode,
+	tryConvertToStablePlaceInternal_0_0_2,
+	tryConvertToStableRangeInternal_0_0_2,
+} from '../Conversion002';
+import { deepCompareNodes, PlaceValidationResult, RangeValidationResultKind } from '../EditUtilities';
 import { expectDefined } from './utilities/TestCommon';
+import { SimpleTestTree } from './utilities/TestNode';
+import { refreshTestTree, testTrait, testTraitLabel } from './utilities/TestUtilities';
 
 describe('Transaction', () => {
-	let transaction: GenericTransaction<ChangeInternal, Transaction.Failure>;
+	let transaction: GenericTransaction;
 	const testTree = refreshTestTree(
 		undefined,
 		(t) => {

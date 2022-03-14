@@ -7,7 +7,7 @@ import type { ITelemetryProperties } from '@fluidframework/common-definitions';
 import type { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { fail } from './Common';
 import { getNumberOfHandlesFromEditLogSummary } from './EditLog';
-import { SharedTreeSummary, SharedTreeSummaryBase, WriteFormat, SharedTreeSummary_0_0_2 } from './generic';
+import { SharedTreeSummary, SharedTreeSummaryBase, SharedTreeSummary_0_0_2, WriteFormat } from './persisted-types';
 
 /**
  * Deserializes a JSON object produced by `serialize()` and uses it to initialize the tree with the encoded state.

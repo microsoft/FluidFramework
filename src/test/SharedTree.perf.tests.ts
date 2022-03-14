@@ -6,8 +6,8 @@
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { assert } from '../Common';
-import { SharedTree } from '../default-edits';
 import { EditLog } from '../EditLog';
+import { SharedTree } from '../SharedTree';
 import { runSummaryLoadPerfTests } from './utilities/SummaryLoadPerfTests';
 import { createStableEdits, setUpLocalServerTestSharedTree, setUpTestSharedTree } from './utilities/TestUtilities';
 

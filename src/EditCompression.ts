@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Edit } from '../generic';
-import { DetachedSequenceId } from '../Identifiers';
-import type { EditCompressor, TreeCompressor } from '../Compression';
+import { DetachedSequenceId } from './Identifiers';
+import type { EditCompressor, TreeCompressor } from './Compression';
 import {
 	BuildInternal,
 	BuildNodeInternal,
@@ -13,6 +12,7 @@ import {
 	CompressedChangeInternal,
 	ChangeTypeInternal,
 	CompressedBuildInternal,
+	Edit,
 } from './persisted-types';
 
 /**

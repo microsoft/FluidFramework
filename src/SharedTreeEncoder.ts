@@ -3,40 +3,80 @@
  * Licensed under the MIT License.
  */
 
-import { StringInterner } from '../StringInterner';
-import type { EditCompressor } from '../Compression';
+import { assert, fail } from './Common';
+import { EditCompressor } from './Compression';
+import { makeEditCompressor } from './EditCompression';
+import { EditLog } from './EditLog';
+import { newEdit, setTraitInternal } from './EditUtilities';
+import { DetachedSequenceId, EditId, TraitLabel } from './Identifiers';
+import { initialTree } from './InitialTree';
+import { NodeIdConverter } from './NodeIdUtilities';
 import {
+	ChangeInternal,
 	ChangeNode,
+	CompressedBuildNode,
+	CompressedChangeInternal,
 	Edit,
-	EditLogSummarizer,
-	fullHistorySummarizer,
-	fullHistorySummarizer_0_1_1,
-	newEdit,
-	NodeIdConverter,
-	RevisionView,
 	SharedTreeEditOp,
-	SharedTreeEncoder,
 	SharedTreeOpType,
 	SharedTreeSummary,
-	SharedTreeSummary_0_0_2,
 	SharedTreeSummaryBase,
-	WriteFormat,
-	SummaryContents,
-	TreeCompressor_0_1_1,
-} from '../generic';
-import { assert, fail } from '../Common';
-import { DetachedSequenceId, EditId, TraitLabel } from '../Identifiers';
-import { initialTree } from '../InitialTree';
-import { getChangeNode_0_0_2FromView } from '../SerializationUtilities';
-import { EditLog } from '../EditLog';
-import { makeEditCompressor } from './EditCompression';
-import {
-	CompressedChangeInternal,
-	CompressedBuildNode,
-	ChangeInternal,
+	SharedTreeSummary_0_0_2,
 	StablePlaceInternal_0_0_2,
+	WriteFormat,
 } from './persisted-types';
-import { setTraitInternal } from './EditUtilities';
+import { RevisionView } from './RevisionView';
+import { getChangeNode_0_0_2FromView } from './SerializationUtilities';
+import { StringInterner } from './StringInterner';
+import { EditLogSummarizer, fullHistorySummarizer, fullHistorySummarizer_0_1_1, SummaryContents } from './Summary';
+import { TreeCompressor_0_1_1 } from './TreeCompressor';
+
+/**
+ * Object capable of converting between the current internal representation for edits and some versioned format used
+ * for ops and summaries.
+ */
+export interface SharedTreeEncoder<TChangeInternal> {
+	/**
+	 * Encodes an edit op to be sent.
+	 * @param edit - edit to encode.
+	 * @param fluidSerialize - Callback which serializes fluid handles contained in a JSON-serializable object, returning the result.
+	 * Should be invoked on the edit contents at some point before op encoding is complete.
+	 * This is because edit contents may have Payloads needing to be serialized.
+	 */
+	encodeEditOp(
+		edit: Edit<TChangeInternal>,
+		fluidSerialize: (edit: Edit<unknown>) => Edit<unknown>
+	): SharedTreeEditOp<unknown>;
+
+	/**
+	 * Decodes an edit op encoded with `encodeEditOp`.
+	 * @param op - op to decode.
+	 * @param fluidDeserialize - Callback which deserializes fluid handles contained in a JSON-serializable object.
+	 * Should be invoked on the semi-serialized edit contents at some point before decoding is complete.
+	 * This will rehydrate any serialized fluid handles into usable IFluidHandle objects.
+	 */
+	decodeEditOp(
+		op: SharedTreeEditOp<unknown>,
+		fluidDeserialize: (semiSerializedEdit: Edit<unknown>) => Edit<unknown>
+	): Edit<TChangeInternal>;
+
+	/**
+	 * Encodes a summary.
+	 * @internal
+	 */
+	encodeSummary(
+		summarizeLog: EditLogSummarizer,
+		currentView: RevisionView,
+		idConverter: NodeIdConverter,
+		summarizeHistory: boolean
+	): SharedTreeSummaryBase;
+
+	/**
+	 * Decodes an encoded summary.
+	 * @internal
+	 */
+	decodeSummary(summary: SharedTreeSummaryBase): SummaryContents<TChangeInternal>;
+}
 
 class SharedTreeEncoder_0_1_1 implements SharedTreeEncoder<ChangeInternal> {
 	private readonly treeCompressor = new TreeCompressor_0_1_1<never>();
