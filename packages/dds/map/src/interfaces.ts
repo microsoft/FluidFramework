@@ -199,6 +199,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  *
  * - `local` - Whether the change originated from the this client.
  *
+ *
  * - `target` - The IDirectory itself.
  * ### "subDirectoryCreated"
  *
