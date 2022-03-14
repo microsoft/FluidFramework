@@ -1549,7 +1549,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         // Might want to consider cleaning out the structure more exhaustively though?
         const successfullyRemoved = this._subdirectories.delete(subdirName);
         if (previousValue !== undefined) {
-            previousValue.dispose();
+            this.disposeSubDirectoryTree(previousValue);
             const event: ISubDirectoryDeleted = {
                 key: subdirName,
                 path: this.absolutePath,
@@ -1560,5 +1560,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             this.emit("containedDirectoryDeleted", containedEvent, local, this);
         }
         return successfullyRemoved;
+    }
+
+    private disposeSubDirectoryTree(directory: IDirectory | undefined) {
+        if (!directory) {
+            return;
+        }
+        // Dispose the subdirectory tree. This will dispose the subdirectories from bottom to top.
+        const subDirectories = directory.subdirectories();
+        for (const [_, subDirectory] of subDirectories) {
+            this.disposeSubDirectoryTree(subDirectory);
+        }
+        directory.dispose();
     }
 }
