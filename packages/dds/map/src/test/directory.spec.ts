@@ -184,6 +184,22 @@ describe("Directory", () => {
                 } catch (error) {
                     assert.strictEqual(error.errorType, "usageError", "Should throw usage error");
                 }
+
+                // Check recursive dispose event firing
+                const subSubDirectory = newSubDirectory.createSubDirectory("rockChild");
+                let rockSubDirectoryDisposed = false;
+                let subSubDirectoryDisposed = false;
+                newSubDirectory.on("disposed", (value: IDirectory) => {
+                    rockSubDirectoryDisposed = true;
+                    assert.equal(value.disposed, true, "rock sub directory not deleted");
+                });
+                subSubDirectory.on("disposed", (value: IDirectory) => {
+                    subSubDirectoryDisposed = true;
+                    assert.equal(value.disposed, true, "sub sub directory not deleted");
+                });
+                directory.deleteSubDirectory("rock");
+                assert(rockSubDirectoryDisposed, "Rock sub directory should be disposed");
+                assert(subSubDirectoryDisposed, "sub sub directory should be disposed");
             });
 
             it("Rejects a undefined and null key set", () => {
