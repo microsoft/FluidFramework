@@ -1545,19 +1545,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         if (!directory) {
             return;
         }
-        const stack: [{node: IDirectory, visited: boolean}] = [{node: directory, visited: false}];
-        while (stack.length > 0) {
-            const node = stack.pop();
-            assert(node !== undefined, "Sub directory should be present");
-            if (node.visited) {
-                node.node.dispose();
-            } else {
-                stack.push({node: node.node, visited: true});
-                const subDirectories = node.node.subdirectories();
-                for (const [_, subDirectory] of subDirectories) {
-                    stack.push({node: subDirectory, visited: false});
-                }
-            }
+        // Dispose the subdirectory tree. This will dispose the subdirectories from bottom to top.
+        const subDirectories = directory.subdirectories();
+        for (const [_, subDirectory] of subDirectories) {
+            this.disposeSubDirectoryTree(subDirectory);
         }
+        directory.dispose();
     }
 }
