@@ -99,7 +99,7 @@ describe("Routerlicious", () => {
                         producer,
                         1024 * 1024,
                         DefaultServiceConfiguration);
-                    testOrderer = new OrdererManager(url, testTenantManager, null, kafkaOrderer);
+                    testOrderer = new OrdererManager(false, url, testTenantManager, null, kafkaOrderer);
 
                     const pubsub = new PubSub();
                     webSocketServer = new LocalWebSocketServer(pubsub);
@@ -352,7 +352,7 @@ describe("Routerlicious", () => {
                 commitSequenceNumber: 0,
                 sequenceNumber: 0,
             };
-            const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, 1, defaultHash, [["code", proposal]]);
+            const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, 1, defaultHash, url, url, [["code", proposal]]);
             assert.equal(docDetails.existing, false, "Doc should not be existing!!");
             assert.equal(docDetails.value.documentId, testId, "Docid should be the provided one!!");
             const deli: IDeliState = JSON.parse(docDetails.value.deli);

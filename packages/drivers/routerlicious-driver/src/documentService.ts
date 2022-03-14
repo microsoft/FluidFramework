@@ -37,6 +37,8 @@ export class DocumentService implements api.IDocumentService {
         private readonly driverPolicies: IRouterliciousDriverPolicies,
         private readonly blobCache: ICache<ArrayBufferLike>,
         private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
+        private readonly hasSessionLocationChanged?: boolean,
+        private readonly isSessionAlive?: boolean,
     ) {
     }
 
@@ -74,6 +76,12 @@ export class DocumentService implements api.IDocumentService {
             false,
             storageRestWrapper);
         const gitManager = new GitManager(historian);
+        const noCacheHistorian = new Historian(
+            this.gitUrl,
+            true,
+            true,
+            storageRestWrapper);
+        const noCacheGitManager = new GitManager(noCacheHistorian);
         const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
             caching: this.driverPolicies.enablePrefetch
                 ? api.LoaderCachingPolicy.Prefetch
@@ -84,11 +92,14 @@ export class DocumentService implements api.IDocumentService {
         this.documentStorageService = new DocumentStorageService(
             this.documentId,
             gitManager,
+            noCacheGitManager,
             this.logger,
             documentStorageServicePolicies,
             this.driverPolicies,
             this.blobCache,
-            this.snapshotTreeCache);
+            this.snapshotTreeCache,
+            this.hasSessionLocationChanged,
+            this.isSessionAlive);
         return this.documentStorageService;
     }
 
