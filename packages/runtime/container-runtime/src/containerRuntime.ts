@@ -294,6 +294,13 @@ export interface IContainerRuntimeOptions {
      * not effect the status of the container.
      */
     useDataStoreAliasing?: boolean;
+    /**
+     * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
+     * send all operations to the driver layer, while in TurnBased the operations will be buffered
+     * and then sent them as a single batch at the end of the turn.
+     * By default, flush mode is TurnBased.
+     */
+    flushMode?: FlushMode;
 }
 
 type IRuntimeMessageMetadata = undefined | {
@@ -346,6 +353,8 @@ const maxOpSizeInBytesKey = "Fluid.ContainerRuntime.MaxOpSizeInBytes";
 // in order to account for some extra overhead from serialization
 // to not reach the 1MB limits in socket.io and Kafka.
 const defaultMaxOpSizeInBytes = 768000;
+
+const defaultFlushMode = FlushMode.TurnBased;
 
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
@@ -710,6 +719,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             gcOptions = {},
             loadSequenceNumberVerification = "close",
             useDataStoreAliasing = false,
+            flushMode = defaultFlushMode,
         } = runtimeOptions;
 
         // We pack at data store level only. If isolated channels are disabled,
@@ -805,6 +815,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcOptions,
                 loadSequenceNumberVerification,
                 useDataStoreAliasing,
+                defaultFlushMode,
             },
             containerScope,
             logger,
@@ -909,7 +920,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly defaultMaxConsecutiveReconnects = 15;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode: FlushMode = FlushMode.TurnBased;
+    private _flushMode: FlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -1037,6 +1048,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.maxConsecutiveReconnects =
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
 
+        this._flushMode = runtimeOptions.flushMode;
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
@@ -1699,6 +1711,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (mode === this._flushMode) {
             return;
         }
+
+        this.mc.logger.sendTelemetryEvent({
+            eventName: "FlushModeUpdate",
+            old: this._flushMode,
+            new: mode,
+        });
 
         // Flush any pending batches if switching to immediate
         if (mode === FlushMode.Immediate) {

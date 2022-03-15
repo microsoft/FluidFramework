@@ -101,6 +101,7 @@ export interface IContainerRuntimeBase extends
 
     /**
      * Sets the flush mode for operations on the document.
+     * @deprecated - Will be removed in 0.61. See #9480.
      */
     setFlushMode(mode: FlushMode): void;
 
