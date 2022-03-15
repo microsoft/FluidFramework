@@ -7,7 +7,6 @@ import {
     IEvent,
     IEventProvider,
     ITelemetryLogger,
-    ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import {
     IFluidLoadable,
@@ -368,21 +367,3 @@ export interface ISummarizeHeuristicRunner {
     /** Disposes of resources */
     dispose(): void;
 }
-
-type ISummarizeTelemetryRequiredProperties =
-    /** Reason code for attempting to summarize */
-    "summarizeReason";
-
-type ISummarizeTelemetryOptionalProperties =
-    /** Number of attempts within the last time window, used for calculating the throttle delay. */
-    "summaryAttempts" |
-    /** Number of attempts within the current phase (currently capped at 2 ) */
-    "summaryAttemptsPerPhase" |
-    /** One-based count of phases we've attempted (used to index into an array of ISummarizeOptions */
-    "summaryAttemptPhase" |
-    keyof ISummarizeOptions;
-
-export type ISummarizeTelemetryProperties =
-    Pick<ITelemetryProperties, ISummarizeTelemetryRequiredProperties> &
-    Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
-
