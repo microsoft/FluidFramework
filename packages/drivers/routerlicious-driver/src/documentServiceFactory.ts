@@ -93,7 +93,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         );
 
         // the backend responds with the actual document ID associated with the new container.
-        const res = await ordererRestWrapper.post<{ id: string, token: string } | string>(
+        const res = await ordererRestWrapper.post<{ id: string, token?: string } | string>(
             `/documents/${tenantId}`,
             {
                 summary: convertSummaryToCreateNewSummary(appSummary),

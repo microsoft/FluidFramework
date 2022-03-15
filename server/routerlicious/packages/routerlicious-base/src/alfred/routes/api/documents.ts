@@ -111,7 +111,9 @@ export function create(
                         id,
                         token: getCreationToken(token, key, id),
                     }
-                    : id;
+                    : {
+                        id,
+                    };
             }), response, undefined, 201);
         });
 
