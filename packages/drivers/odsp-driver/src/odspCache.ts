@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, PromiseCache } from "@fluidframework/common-utils";
+import { PromiseCache } from "@fluidframework/common-utils";
 import {
     IOdspResolvedUrl,
     IFileEntry,
@@ -24,47 +24,68 @@ export interface IPersistedFileCache {
  * Default local-only implementation of IPersistedCache,
  * used if no persisted cache is provided by the host
  */
-export class LocalPersistentCache implements IPersistedCache {
-    private readonly pc: PromiseCache<string, any>;
+ export class LocalPersistentCache implements IPersistedCache {
+    private readonly cache = new Map<string, any>();
+    // For every document id there will be a single expiration entry inspite of the number of cache entries.
+    private readonly docIdExpirationMap = new Map<string, ReturnType<typeof setTimeout>>();
 
-    public constructor(private readonly snapshotExpiryPolicy = 30 * 1000) {
-        this.pc = new PromiseCache<string, any>(
-            { expiry: { policy: "sliding", durationMs: this.snapshotExpiryPolicy } });
-    }
+    public constructor(private readonly snapshotExpiryPolicy = 3600 * 1000) {}
 
     async get(entry: ICacheEntry): Promise<any> {
         const key = this.keyFromEntry(entry);
-        return this.pc.get(key);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return this.cache.get(key);
     }
 
     async put(entry: ICacheEntry, value: any) {
         const key = this.keyFromEntry(entry);
-        this.pc.addValue(key, value);
+        this.cache.set(key, value);
+        this.updateExpirationEntry(entry.file.docId);
     }
 
     async removeEntries(file: IFileEntry): Promise<void> {
-        if (typeof this.pc.getEntries === "function") {
-            this.pc.getEntries()
-                .filter(([cachekey]) => {
-                    const docIdFromKey = cachekey.split("_");
-                    if (docIdFromKey[0] === file.docId) {
-                        return true;
-                    }
-                })
-                .map(([cachekey]) => {
-                    this.pc.remove(cachekey);
-                });
+        this.removeDocIdEntriesFromCache(file.docId);
+    }
+
+    private removeDocIdEntriesFromCache(docId: string) {
+         return Array.from(this.cache)
+         .filter(([cachekey]) => {
+            const docIdFromKey = cachekey.split("_");
+            if (docIdFromKey[0] === docId) {
+                return true;
+            }
+        })
+        .map(([cachekey]) => {
+            this.cache.delete(cachekey);
+        });
+     }
+
+    private removeExpirationEntry(docId: string) {
+        const timeout = this.docIdExpirationMap.get(docId);
+        if (timeout !== undefined) {
+            clearTimeout(timeout);
+            this.docIdExpirationMap.delete(docId);
         }
-        else {
-            assert("getEntries implementation not found");
-        }
+    }
+
+    private updateExpirationEntry(docId: string) {
+        this.removeExpirationEntry(docId);
+        this.docIdExpirationMap.set(
+            docId,
+            setTimeout(
+                () => {
+                    this.removeDocIdEntriesFromCache(docId);
+                    this.removeExpirationEntry(docId);
+                },
+                this.snapshotExpiryPolicy,
+            ),
+        );
     }
 
     private keyFromEntry(entry: ICacheEntry): string {
         return `${entry.file.docId}_${entry.type}_${entry.key}`;
     }
 }
-
 export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string, T> {
     constructor(removeOnError?: (e: any) => boolean) {
         super({ expiry: { policy: "sliding", durationMs: 3600000 }, removeOnError });
