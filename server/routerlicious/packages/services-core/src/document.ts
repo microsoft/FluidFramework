@@ -75,7 +75,7 @@ export interface IDeliState {
     lastSentMSN: number | undefined;
 
     // Nack messages state
-    nackMessages: Array<[NackMessagesType, INackMessagesControlMessageContents]> |
+    nackMessages: [NackMessagesType, INackMessagesControlMessageContents][] |
     INackMessagesControlMessageContents | undefined;
 
     // List of successfully started lambdas at session start
