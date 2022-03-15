@@ -370,7 +370,8 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         if (!(repoPath in this.repositoryPCache)) {
             const directory = `${this.baseDir}/${repoPath}`;
 
-            if (!await exists(this.fileSystemManager, directory)) {
+            const repoExists = await exists(this.fileSystemManager, directory);
+            if (!repoExists) {
                 winston.info(`Repo does not exist ${directory}`);
                 // services-client/getOrCreateRepository depends on a 400 response code
                 throw new NetworkError(400, `Repo does not exist ${directory}`);

@@ -35,9 +35,15 @@ export interface IRepositoryManager {
 export interface IFileSystemManager {
     readFile: typeof fsPromises.readFile;
     writeFile: typeof fsPromises.writeFile;
+    unlink: typeof fsPromises.unlink;
+    readdir: typeof fsPromises.readdir;
     mkdir: typeof fsPromises.mkdir;
     rmdir: typeof fsPromises.rmdir;
     stat: typeof fsPromises.stat;
+    lstat: typeof fsPromises.lstat;
+    readlink: typeof fsPromises.readlink;
+    symlink: typeof fsPromises.symlink;
+    chmod: typeof fsPromises.chmod;
     rm: typeof fsPromises.rm;
 }
 

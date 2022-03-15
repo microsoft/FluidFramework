@@ -30,7 +30,6 @@ const commitEmail = "kurtb@microsoft.com";
 const commitName = "Kurt Berglund";
 
 async function createRepo(supertest: request.SuperTest<request.Test>, owner: string, name: string) {
-    console.log("Entered create repo");
     return supertest
         .post(`/${owner}/repos`)
         .set("Accept", "application/json")
@@ -149,7 +148,7 @@ describe("GitRest", () => {
         };
 
         const externalStorageManager = new ExternalStorageManager(testUtils.defaultProvider);
-        const repoManagerFactory = new NodegitRepositoryManagerFactory(
+        const getRepoManagerFactory = () => new NodegitRepositoryManagerFactory(
             testUtils.defaultProvider.get("storageDir"),
             fsPromises,
             externalStorageManager,
@@ -160,6 +159,7 @@ describe("GitRest", () => {
         // Create the git repo before and after each test
         let supertest: request.SuperTest<request.Test>;
         beforeEach(() => {
+            const repoManagerFactory = getRepoManagerFactory();
             const testApp = app.create(testUtils.defaultProvider, repoManagerFactory);
             supertest = request(testApp);
         });
@@ -423,6 +423,7 @@ describe("GitRest", () => {
                 const MaxParagraphs = 200;
 
                 await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
+                const repoManagerFactory = getRepoManagerFactory();
                 const repoManager = await repoManagerFactory.open(testOwnerName, testRepoName);
 
                 let lastCommit;
