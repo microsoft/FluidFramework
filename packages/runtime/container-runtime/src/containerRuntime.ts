@@ -2151,7 +2151,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (summaryRefSeqNum !== this.deltaManager.lastMessage?.sequenceNumber) {
                 summaryLogger.sendErrorEvent({
                     eventName: "LastSequenceMismatch",
-                    message,
+                    error: message,
                 });
             }
 
