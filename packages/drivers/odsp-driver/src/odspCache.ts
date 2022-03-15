@@ -48,6 +48,7 @@ export class LocalPersistentCache implements IPersistedCache {
     }
 
     private removeDocIdEntriesFromCache(docId: string) {
+        this.removeExpirationEntry(docId);
         return Array.from(this.cache)
             .filter(([cachekey]) => {
                 const docIdFromKey = cachekey.split("_");
@@ -75,7 +76,6 @@ export class LocalPersistentCache implements IPersistedCache {
             setTimeout(
                 () => {
                     this.removeDocIdEntriesFromCache(docId);
-                    this.removeExpirationEntry(docId);
                 },
                 this.snapshotExpiryPolicy,
             ),
