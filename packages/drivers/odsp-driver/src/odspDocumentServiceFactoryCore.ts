@@ -53,7 +53,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
-        clientType?: string,
+        clientIsSummarizer: boolean,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
@@ -114,7 +114,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                 );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
-                    clientType, cacheAndTracker);
+                    clientIsSummarizer, cacheAndTracker);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -147,16 +147,16 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
-        clientType: string,
+        clientIsSummarizer: boolean,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        return this.createDocumentServiceCore(resolvedUrl, clientType, createOdspLogger(logger));
+        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger), clientIsSummarizer);
     }
 
     private async createDocumentServiceCore(
         resolvedUrl: IResolvedUrl,
         odspLogger: TelemetryLogger,
-        clientType: string,
+        clientIsSummarizer: boolean,
         cacheAndTrackerArg?: ICacheAndTracker,
     ): Promise<IDocumentService> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
@@ -196,7 +196,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             cacheAndTracker.cache,
             this.hostPolicy,
             cacheAndTracker.epochTracker,
-            clientType,
+            clientIsSummarizer,
             this.socketReferenceKeyPrefix,
         );
     }

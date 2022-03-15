@@ -373,7 +373,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private readonly clientDetailsOverride: IClientDetails | undefined;
-    private readonly clientType: string;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
     private readonly _audience: Audience;
@@ -543,7 +542,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const interactive = this.client.details.capabilities.interactive;
         const clientType =
             `${interactive ? "interactive" : "noninteractive"}${type !== undefined && type !== "" ? `/${type}` : ""}`;
-        this.clientType = interactive ? "interactive" : "summarizer";
             // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
         this.subLogger = ChildLogger.create(
@@ -822,7 +820,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         async () => this.serviceFactory.createContainer(
                             summary,
                             createNewResolvedUrl,
-                            this.clientType,
+                            !this.client.details.capabilities.interactive,
                             this.subLogger,
                         ),
                         "containerAttach",

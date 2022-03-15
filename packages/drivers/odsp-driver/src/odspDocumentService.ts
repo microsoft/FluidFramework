@@ -77,7 +77,7 @@ export class OdspDocumentService implements IDocumentService {
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         epochTracker: EpochTracker,
-        clientType: string,
+        clientIsSummarizer: boolean,
         socketReferenceKeyPrefix?: string,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
@@ -89,7 +89,7 @@ export class OdspDocumentService implements IDocumentService {
             cache,
             hostPolicy,
             epochTracker,
-            clientType,
+            clientIsSummarizer,
             socketReferenceKeyPrefix,
         );
     }
@@ -129,7 +129,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
-        private readonly clientType: string,
+        private readonly clientIsSummarizer: boolean,
         private readonly socketReferenceKeyPrefix?: string,
     ) {
         this._policies = {
@@ -150,7 +150,7 @@ export class OdspDocumentService implements IDocumentService {
         this.hostPolicy = hostPolicy;
         this.hostPolicy.fetchBinarySnapshotFormat ??=
             this.mc.config.getBoolean("Fluid.Driver.Odsp.binaryFormatSnapshot");
-        if (this.clientType === "summarizer") {
+        if (this.clientIsSummarizer) {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
     }
