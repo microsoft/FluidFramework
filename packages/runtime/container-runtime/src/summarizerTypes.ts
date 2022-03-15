@@ -385,4 +385,3 @@ type ISummarizeTelemetryOptionalProperties =
 export type ISummarizeTelemetryProperties =
     Pick<ITelemetryProperties, ISummarizeTelemetryRequiredProperties> &
     Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
-
