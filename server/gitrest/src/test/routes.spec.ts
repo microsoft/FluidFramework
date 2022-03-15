@@ -149,13 +149,18 @@ describe("GitRest", () => {
         };
 
         const externalStorageManager = new ExternalStorageManager(testUtils.defaultProvider);
+        const repoManagerFactory = new NodegitRepositoryManagerFactory(
+            testUtils.defaultProvider.get("storageDir"),
+            fsPromises,
+            externalStorageManager,
+        );
 
         testUtils.initializeBeforeAfterTestHooks(testUtils.defaultProvider);
 
         // Create the git repo before and after each test
         let supertest: request.SuperTest<request.Test>;
         beforeEach(() => {
-            const testApp = app.create(testUtils.defaultProvider, fsPromises, externalStorageManager);
+            const testApp = app.create(testUtils.defaultProvider, repoManagerFactory);
             supertest = request(testApp);
         });
 
@@ -418,11 +423,6 @@ describe("GitRest", () => {
                 const MaxParagraphs = 200;
 
                 await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
-                const repoManagerFactory = new NodegitRepositoryManagerFactory(
-                    testUtils.defaultProvider.get("storageDir"),
-                    fsPromises,
-                    externalStorageManager,
-                );
                 const repoManager = await repoManagerFactory.open(testOwnerName, testRepoName);
 
                 let lastCommit;
