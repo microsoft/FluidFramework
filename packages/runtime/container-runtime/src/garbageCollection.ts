@@ -640,7 +640,15 @@ export class GarbageCollector implements IGarbageCollector {
 
         const builder = new SummaryTreeBuilder();
         builder.addBlob(`${gcBlobPrefix}_root`, JSON.stringify(gcState));
-        return builder.getSummaryTree();
+        const summaryTree = builder.getSummaryTree();
+
+        this.mc.logger.sendPerformanceEvent({
+            eventName: "GCBlobSize",
+            totalSize: summaryTree.stats.totalBlobSize,
+            gcBlobCount: summaryTree.stats.blobNodeCount,
+        });
+
+        return summaryTree;
     }
 
     /**
