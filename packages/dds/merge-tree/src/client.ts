@@ -967,8 +967,8 @@ export class Client {
     }
 
     getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage) {
-        let seq;
-        let clientId;
+        let seq: number;
+        let clientId: number;
         if (op) {
             clientId = this.getOrAddShortClientId(op.clientId);
             seq = op.sequenceNumber;
