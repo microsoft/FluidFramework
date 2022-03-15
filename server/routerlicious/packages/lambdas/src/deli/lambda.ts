@@ -513,9 +513,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         // Check if we should nack this message
         if (this.nackMessages.size > 0 && this.serviceConfiguration.deli.enableNackMessages) {
-            let shouldNack = true;
-
             for (const nackMessages of this.nackMessages.values()) {
+                let shouldNack = true;
+
                 if (nackMessages.allowSystemMessages &&
                     (isServiceMessageType(message.operation.type) || !message.clientId)) {
                     // this is a system message. don't nack it
