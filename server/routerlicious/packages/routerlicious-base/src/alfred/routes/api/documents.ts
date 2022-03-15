@@ -86,8 +86,7 @@ export function create(
             const summary = request.body.summary;
 
             // Protocol state
-            const sequenceNumber = request.body.sequenceNumber;
-            const values = request.body.values;
+            const { sequenceNumber, values, generateToken = false } = request.body;
 
             const createP = storage.createDocument(
                 tenantId,
@@ -107,10 +106,12 @@ export function create(
             const tenantKeyP = tenantManager.getKey(tenantId);
 
             handleResponse(Promise.all([createP, tenantKeyP]).then(([_, key]) => {
-                return {
-                    id,
-                    token: getCreationToken(token, key, id),
-                };
+                return generateToken
+                    ? {
+                        id,
+                        token: getCreationToken(token, key, id),
+                    }
+                    : id;
             }), response, undefined, 201);
         });
 

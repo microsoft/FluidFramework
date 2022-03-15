@@ -91,22 +91,36 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.driverPolicies.enableRestLess,
             resolvedUrl.endpoints.ordererUrl,
         );
-        // the backend responds with the actual document ID associated with the new container.
 
-        const { id: documentId, token } = await ordererRestWrapper.post<{id: string, token: string}>(
+        // the backend responds with the actual document ID associated with the new container.
+        const res = await ordererRestWrapper.post<{ id: string, token: string } | string>(
             `/documents/${tenantId}`,
             {
                 summary: convertSummaryToCreateNewSummary(appSummary),
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
+                generateToken: true,
             },
         );
 
-        if (this.tokenProvider.documentPostCreateCallback !== undefined) {
+        // For supporting backward compatibility, when the request has generateToken === true, it will return
+        // an object instead of string
+
+        let documentId: string;
+        let token: string | undefined;
+
+        if (typeof res === "string") {
+            documentId = res;
+        } else {
+            documentId = res.id;
+            token = res.token;
+        }
+
+        if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
             try {
                 await this.tokenProvider.documentPostCreateCallback(documentId, token);
             } catch (error) {
-                logger2.sendErrorEvent({eventName: "catchDocumentPostCreateCallback" }, error);
+                logger2.sendErrorEvent({ eventName: "catchDocumentPostCreateCallback" }, error);
             }
         }
 
