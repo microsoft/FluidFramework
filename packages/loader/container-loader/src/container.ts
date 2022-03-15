@@ -542,7 +542,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const interactive = this.client.details.capabilities.interactive;
         const clientType =
             `${interactive ? "interactive" : "noninteractive"}${type !== undefined && type !== "" ? `/${type}` : ""}`;
-            // Need to use the property getter for docId because for detached flow we don't have the docId initially.
+        // Need to use the property getter for docId because for detached flow we don't have the docId initially.
         // We assign the id later so property getter is used.
         this.subLogger = ChildLogger.create(
             loader.services.subLogger,
@@ -820,8 +820,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         async () => this.serviceFactory.createContainer(
                             summary,
                             createNewResolvedUrl,
-                            !this.client.details.capabilities.interactive,
                             this.subLogger,
+                            !this.client.details.capabilities.interactive,
                         ),
                         "containerAttach",
                         this.mc.logger,

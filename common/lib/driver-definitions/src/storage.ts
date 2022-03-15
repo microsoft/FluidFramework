@@ -306,8 +306,8 @@ export interface IDocumentServiceFactory {
      */
     createDocumentService(
         resolvedUrl: IResolvedUrl,
-        clientIsSummarizer: boolean,
-        logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+        logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean): Promise<IDocumentService>;
 
     /**
      * Creates a new document with the provided options. Returns the document service.
@@ -317,8 +317,8 @@ export interface IDocumentServiceFactory {
     createContainer(
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
-        clientIsSummarizer: boolean,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService>;
 }
 

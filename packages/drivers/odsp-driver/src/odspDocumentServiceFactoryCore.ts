@@ -114,7 +114,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                 );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
-                    clientIsSummarizer, cacheAndTracker);
+                    cacheAndTracker, clientIsSummarizer);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -147,17 +147,17 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
-        clientIsSummarizer: boolean,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
-        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger), clientIsSummarizer);
+        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger), undefined, clientIsSummarizer);
     }
 
     private async createDocumentServiceCore(
         resolvedUrl: IResolvedUrl,
         odspLogger: TelemetryLogger,
-        clientIsSummarizer: boolean,
         cacheAndTrackerArg?: ICacheAndTracker,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
         const resolvedUrlData: IOdspUrlParts = {
@@ -196,8 +196,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             cacheAndTracker.cache,
             this.hostPolicy,
             cacheAndTracker.epochTracker,
-            clientIsSummarizer,
             this.socketReferenceKeyPrefix,
+            clientIsSummarizer,
         );
     }
 }
