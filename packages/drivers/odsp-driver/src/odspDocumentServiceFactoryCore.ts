@@ -53,8 +53,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
-        clientIsSummarizer: boolean,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
 
