@@ -105,6 +105,13 @@ describe("RouterliciousDriverRestWrapper", () => {
                 errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
             });
         });
+        it("throws retriable error on Network Error", async () => {
+            nock(testHost).get(testPath).replyWithError({code: "ECONNRESET"});
+            await assert.rejects(restWrapper.get(testUrl), {
+                canRetry: true,
+                errorType: DriverErrorType.genericNetworkError,
+            });
+        });
     });
 
     describe("post()", () => {
@@ -149,6 +156,13 @@ describe("RouterliciousDriverRestWrapper", () => {
             await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
                 canRetry: false,
                 errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
+            });
+        });
+        it("throws retriable error on Network Error", async () => {
+            nock(testHost).post(testPath).replyWithError({code: "ECONNRESET"});
+            await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
+                canRetry: true,
+                errorType: DriverErrorType.genericNetworkError,
             });
         });
     });
@@ -197,6 +211,13 @@ describe("RouterliciousDriverRestWrapper", () => {
                 errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
             });
         });
+        it("throws retriable error on Network Error", async () => {
+            nock(testHost).patch(testPath).replyWithError({code: "ECONNRESET"});
+            await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
+                canRetry: true,
+                errorType: DriverErrorType.genericNetworkError,
+            });
+        });
     });
 
     describe("delete()", () => {
@@ -241,6 +262,13 @@ describe("RouterliciousDriverRestWrapper", () => {
             await assert.rejects(restWrapper.delete(testUrl), {
                 canRetry: false,
                 errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
+            });
+        });
+        it("throws retriable error on Network Error", async () => {
+            nock(testHost).delete(testPath).replyWithError({code: "ECONNRESET"});
+            await assert.rejects(restWrapper.delete(testUrl), {
+                canRetry: true,
+                errorType: DriverErrorType.genericNetworkError,
             });
         });
     });
