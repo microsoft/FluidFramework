@@ -25,7 +25,6 @@ import {
     normalizeError,
     logIfFalse,
     safeRaiseEvent,
-    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
