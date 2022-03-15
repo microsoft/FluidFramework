@@ -1,5 +1,26 @@
 # Change Log
 
+## 30.1.0
+
+* feat: Compress edit log in 0.1.1
+  * Associated pull request: [38796](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38796)
+  * Commit: [572d94431c01049fb66030b0c4b72749458c1738](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/572d94431c01049fb66030b0c4b72749458c1738)
+* build: Update dependencies
+  * Associated pull request: [38874](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38874)
+  * Commit: [9d196e64d4a2802e7057bdffa453461410d6737c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/9d196e64d4a2802e7057bdffa453461410d6737c)
+* refactor: BREAKING CHANGE: Remove GenericSharedTree
+  * Associated pull request: [38799](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38799)
+  * Commit: [e466ed4d9e38a39099839c127bf5d6de2e6f1952](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e466ed4d9e38a39099839c127bf5d6de2e6f1952)
+* improvement: BREAKING CHANGE: Clean up WriteFormat types and names
+  * Associated pull request: [38787](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38787)
+  * Commit: [5aafab9d6ac4426814cf9958d87e65c7e37a2360](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/5aafab9d6ac4426814cf9958d87e65c7e37a2360)
+* merge: releases/2022.03.2 into master
+  * Associated pull request: [38776](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38776)
+  * Commit: [e24f9fbfd9b61485d07085eedee5eec625e43200](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/e24f9fbfd9b61485d07085eedee5eec625e43200)
+* feat: Add string interning and tree compression of summary & ops to 0.1.1
+  * Associated pull request: [34937](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34937)
+  * Commit: [c4914b0635db97ba50f9e185c944ea48e8016d73](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c4914b0635db97ba50f9e185c944ea48e8016d73)
+
 ## 28.4.0
 
 * improvement: Move summary types to persisted types
