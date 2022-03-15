@@ -75,7 +75,7 @@ class DataStore implements IDataStore {
             alias,
         };
 
-        this.fluidDataStoreChannel.bindToContext();
+        this.fluidDataStoreChannel.attachGraph();
 
         if (this.runtime.attachState === AttachState.Detached) {
             const localResult = this.datastores.processAliasMessageCore(message);

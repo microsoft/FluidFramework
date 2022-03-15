@@ -13,7 +13,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    BindState,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -127,7 +126,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public get attachState(): AttachState {
-        return this._attachState;
+        return this._globalAttachState;
     }
 
     public get absolutePath(): string {
@@ -151,16 +150,22 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private readonly pendingAttach = new Map<string, IAttachMessage>();
 
-    private bindState: BindState;
-    // For new data stores, this is used to break the recursion while attaching the graph. The graph must be attached
-    // before the data store can move to Attached state (see _attachState) and become live.
-    // For existing data stores, the graph is always attached.
-    private graphAttachState: AttachState = AttachState.Detached;
+    /**
+     * Tracks whether this data store is locally attached to the container's object graph. Being locally attached makes
+     * it visible in the container via the root of the graph.
+     * The data store must be locally attached before it can become live and be visible globally. In other words, if
+     * the data store is globally attached, it has to be locally attached as well.
+     */
+    private localAttachState: AttachState;
+    /**
+     * Tracks whether this data store is attached globally and is visible to all other clients. It must be locally
+     * attached before it can be globally attached.
+     */
+    private _globalAttachState: AttachState;
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
     private readonly notBoundedChannelContextSet = new Set<string>();
     private boundhandles: Set<IFluidHandle> | undefined;
-    private _attachState: AttachState;
 
     public readonly id: string;
     public readonly options: ILoaderOptions;
@@ -260,9 +265,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         this.attachListener();
-        // If exists on storage or loaded from a snapshot, it should already be binded.
-        this.bindState = existing ? BindState.Bound : BindState.NotBound;
-        this._attachState = dataStoreContext.attachState;
+
+        this.localAttachState = existing ? AttachState.Attached : AttachState.Detached;
+        this._globalAttachState = dataStoreContext.attachState;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -388,10 +393,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public attachGraph() {
-        if (this.graphAttachState !== AttachState.Detached) {
+        if (this.localAttachState !== AttachState.Detached) {
             return;
         }
-        this.graphAttachState = AttachState.Attaching;
+        this.localAttachState = AttachState.Attaching;
         if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
                 handle.attachGraph();
@@ -399,37 +404,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.boundhandles = undefined;
         }
 
-        // Flush the queue to set any pre-existing channels to local
-        this.localChannelContextQueue.forEach((channel) => {
-            // When we are attaching the data store we don't need to send attach for the registered services.
-            // This is because they will be captured as part of the Attach data store snapshot
-            channel.markAttached();
-        });
-
-        this.localChannelContextQueue.clear();
-        this.bindToContext();
-        this.graphAttachState = AttachState.Attached;
-    }
-
-    /**
-     * Binds this runtime to the container
-     * This includes the following:
-     * 1. Sending an Attach op that includes all existing state
-     * 2. Attaching the graph if the data store becomes attached.
-     */
-     public bindToContext() {
-        if (this.bindState !== BindState.NotBound) {
-            return;
-        }
-        this.bindState = BindState.Binding;
         this.dataStoreContext.bindToContext();
-        this.bindState = BindState.Bound;
+        this.localAttachState = AttachState.Attached;
     }
 
     public bind(handle: IFluidHandle): void {
-        // If the data store is already attached or its graph is already in attaching or attached state,
-        // then attach the incoming handle too.
-        if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
+        // If locally attached, attach the incoming handle locally as well. Otherwise, store it and it will be attached
+        // when we are locally attached.
+        if (this.localAttachState !== AttachState.Detached) {
             handle.attachGraph();
             return;
         }
@@ -695,8 +677,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public getAttachSummary(): ISummaryTreeWithStats {
-        this.attachGraph();
-
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
@@ -756,9 +736,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         channel.handle.attachGraph();
 
         assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
-        // Get the object snapshot only if the data store is Bound and its graph is attached too,
-        // because if the graph is attaching, then it would get included in the data store snapshot.
-        if (this.bindState === BindState.Bound && this.graphAttachState === AttachState.Attached) {
+        // Get the snapshot only if it is locally attached. If it is attaching then it would get included in the
+        // data store's snapshot.
+        if (this.localAttachState === AttachState.Attached) {
             const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
             // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
             const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
@@ -851,17 +831,28 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private attachListener() {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.dataStoreContext.once("attaching", () => {
-            assert(this.bindState !== BindState.NotBound,
-                0x186 /* "Data store attaching should not occur if it is not bound" */);
-            this._attachState = AttachState.Attaching;
+            assert(
+                this.localAttachState !== AttachState.Detached,
+                "Data store should not globally attach if it's locally detached",
+            );
+            this._globalAttachState = AttachState.Attaching;
             // This promise resolution will be moved to attached event once we fix the scheduler.
             this.deferredAttached.resolve();
+
+            // Mark all the child contexts as attached.
+            this.localChannelContextQueue.forEach((channel) => {
+                channel.markAttached();
+            });
+            this.localChannelContextQueue.clear();
+
             this.emit("attaching");
         });
         this.dataStoreContext.once("attached", () => {
-            assert(this.bindState === BindState.Bound,
-                0x187 /* "Data store should only be attached after it is bound" */);
-            this._attachState = AttachState.Attached;
+            assert(
+                this.localAttachState === AttachState.Attached,
+                "Data store should be globally attached only after it's locally attached",
+            );
+            this._globalAttachState = AttachState.Attached;
             this.emit("attached");
         });
     }

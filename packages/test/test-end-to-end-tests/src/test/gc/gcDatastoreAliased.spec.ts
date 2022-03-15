@@ -90,7 +90,7 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         const containerRuntime1 = mainDataStore1.containerRuntime;
         const aliasableDataStore1 = await containerRuntime1.createDataStore("TestDataObject");
 
-        (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
+        (aliasableDataStore1 as any).fluidDataStoreChannel.attachGraph();
         await provider.ensureSynchronized();
 
         // We run the summary so await this.getInitialSnapshotDetails() is called before the datastore is aliased

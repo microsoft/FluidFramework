@@ -496,7 +496,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create another dataStore
             const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
-            peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
+            peerDataStore.peerDataStoreRuntimeChannel.attachGraph();
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
             sharedMap1.set("0", "A");
             const snapshotTree = container.serialize();
@@ -541,7 +541,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create another dataStore
             const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
             const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
-            peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
+            peerDataStore.peerDataStoreRuntimeChannel.attachGraph();
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
             sharedMap1.set("0", "A");
             const snapshotTree = container.serialize();

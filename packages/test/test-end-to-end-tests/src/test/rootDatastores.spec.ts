@@ -460,7 +460,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const aliasedDataStore1 = aliasedDataStoreResponse1.value as ITestFluidObject;
             // Casting any to repro a race condition where bindToContext is called before summarization,
             // but aliasing happens afterwards
-            (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
+            aliasedDataStore1.channel.attachGraph();
             await provider.ensureSynchronized();
 
             const containerRuntime2 = runtimeOf(dataObject2) as ContainerRuntime;

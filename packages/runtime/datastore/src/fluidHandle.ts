@@ -13,9 +13,11 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements IFluidHandle {
-    // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
-    private graphAttachState: AttachState = AttachState.Detached;
-    private bound: Set<IFluidHandle> | undefined;
+    // Tracks whether this object is locally attached to the root object graph.
+    private localAttachState: AttachState = AttachState.Detached;
+    // A list of handles that are bound to this handle. The graph for these will be attached when this handle's graph
+    // is attached.
+    private boundHandles: Set<IFluidHandle> | undefined;
     public readonly absolutePath: string;
 
     public get IFluidHandle(): IFluidHandle { return this; }
@@ -36,6 +38,9 @@ export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements 
         public readonly routeContext: IFluidHandleContext,
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
+        if (this.isAttached) {
+            this.localAttachState = AttachState.Attached;
+        }
     }
 
     public async get(): Promise<any> {
@@ -43,33 +48,30 @@ export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements 
     }
 
     public attachGraph(): void {
-        // If this handle is already in attaching state in the graph or attached, no need to attach again.
-        if (this.graphAttachState !== AttachState.Detached) {
+        if (this.localAttachState !== AttachState.Detached) {
             return;
         }
-        this.graphAttachState = AttachState.Attaching;
-        if (this.bound !== undefined) {
-            for (const handle of this.bound) {
+        this.localAttachState = AttachState.Attaching;
+        if (this.boundHandles !== undefined) {
+            for (const handle of this.boundHandles) {
                 handle.attachGraph();
             }
-
-            this.bound = undefined;
+            this.boundHandles = undefined;
         }
         this.routeContext.attachGraph();
-        this.graphAttachState = AttachState.Attached;
+        this.localAttachState = AttachState.Attached;
     }
 
     public bind(handle: IFluidHandle) {
-        // If the dds is already attached or its graph is already in attaching or attached state,
-        // then attach the incoming handle too.
-        if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
+        // If locally attached, attach the incoming handle locally as well. Otherwise, store it and it will be attached
+        // when this object is locally attached.
+        if (this.localAttachState !== AttachState.Detached) {
             handle.attachGraph();
             return;
         }
-        if (this.bound === undefined) {
-            this.bound = new Set<IFluidHandle>();
+        if (this.boundHandles === undefined) {
+            this.boundHandles = new Set<IFluidHandle>();
         }
-
-        this.bound.add(handle);
+        this.boundHandles.add(handle);
     }
 }

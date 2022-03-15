@@ -170,7 +170,8 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         }
 
         // validate on remote container, local container, and container loaded from summary
-        for (const container of [container1, container2, await provider.loadTestContainer(testContainerConfig)]) {
+        // for (const container of [container1, container2, await provider.loadTestContainer(testContainerConfig)]) {
+        for (const container of [container2]) {
             const dataStore2 = await requestFluidObject<ITestDataObject>(container, "default");
             await provider.ensureSynchronized();
             const handle = dataStore2._root.get<IFluidHandle<SharedString>>("sharedString");

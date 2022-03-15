@@ -126,8 +126,6 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;
     readonly attachState: AttachState;
-    // @deprecated (undocumented)
-    bindToContext(): void;
     getAttachSummary(): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
@@ -377,6 +375,7 @@ export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRe
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
+
 
 // (No @packageDocumentation comment for this package)
 

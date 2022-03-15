@@ -1012,7 +1012,7 @@ export class LocalDetachedFluidDataStoreContext
         super.bindRuntime(dataStoreRuntime);
 
         if (await this.isRoot()) {
-            dataStoreRuntime.bindToContext();
+            dataStoreRuntime.attachGraph();
         }
     }
 
