@@ -12,7 +12,6 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IDirectory } from '@fluidframework/map';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
@@ -23,11 +22,7 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
-    migrations?: DataMigrationRoutine | DataMigrationRoutine[];
 }
-
-// @public
-export type DataMigrationRoutine = (snapshot: LoadableObjectRecord, createObject: ObjectFactory) => Promise<LoadableObjectRecord | undefined>;
 
 // @public
 export type DataObjectClass<T extends IFluidLoadable> = {
@@ -110,35 +105,25 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
 // @public
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
-// @public
-export type ObjectFactory = (objectType: LoadableObjectClass<any>, props?: any) => Promise<IFluidLoadable>;
-
 // @public (undocumented)
 export class RootDataObject extends DataObject<{
     InitialState: RootDataObjectProps;
 }> {
     // (undocumented)
-    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>, props?: any): Promise<T>;
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     // (undocumented)
     protected hasInitialized(): Promise<void>;
     // (undocumented)
     protected initializingFirstTime(props: RootDataObjectProps): Promise<void>;
     // (undocumented)
     get initialObjects(): LoadableObjectRecord;
-    // (undocumented)
-    protected get initialObjectsDir(): IDirectory;
-    // (undocumented)
-    protected loadInitialObjects(): Promise<void>;
-}
+    }
 
 // @public (undocumented)
 export interface RootDataObjectProps {
     // (undocumented)
     initialObjects: LoadableObjectClassRecord;
 }
-
-// @public (undocumented)
-export const rootDataStoreId = "rootDOId";
 
 // @public
 export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {
@@ -160,9 +145,6 @@ export abstract class ServiceAudience<M extends IMember = IMember> extends Typed
 export type SharedObjectClass<T extends IFluidLoadable> = {
     readonly getFactory: () => IChannelFactory;
 } & LoadableObjectCtor<T>;
-
-// @public
-export type VersionInfo = never;
 
 
 // (No @packageDocumentation comment for this package)

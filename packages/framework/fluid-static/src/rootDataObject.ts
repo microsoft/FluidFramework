@@ -3,19 +3,23 @@
  * Licensed under the MIT License.
  */
 import {
+    BaseContainerRuntimeFactory,
     DataObject,
+    DataObjectFactory,
+    defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IDirectory } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
+    ContainerSchema,
     DataObjectClass,
     LoadableObjectClass,
     LoadableObjectClassRecord,
     LoadableObjectRecord,
     SharedObjectClass,
 } from "./types";
-import { isDataObjectClass, isSharedObjectClass } from "./utils";
+import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
 
 export interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
@@ -25,7 +29,7 @@ export class RootDataObject extends DataObject<{InitialState: RootDataObjectProp
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
 
-    protected get initialObjectsDir(): IDirectory {
+    private get initialObjectsDir() {
         const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
         if (dir === undefined) {
             throw new Error("InitialObjects sub-directory was not initialized");
@@ -51,10 +55,6 @@ export class RootDataObject extends DataObject<{InitialState: RootDataObjectProp
 
     protected async hasInitialized() {
         // We will always load the initial objects so they are available to the developer
-        await this.loadInitialObjects();
-    }
-
-    protected async loadInitialObjects() {
         const loadInitialObjectsP: Promise<void>[] = [];
         for (const [key, value] of Array.from(this.initialObjectsDir.entries())) {
             const loadDir = async () => {
@@ -76,7 +76,6 @@ export class RootDataObject extends DataObject<{InitialState: RootDataObjectProp
 
     public async create<T extends IFluidLoadable>(
         objectClass: LoadableObjectClass<T>,
-        props?: any,
     ): Promise<T> {
         if (isDataObjectClass(objectClass)) {
             return this.createDataObject<T>(objectClass);
@@ -99,5 +98,38 @@ export class RootDataObject extends DataObject<{InitialState: RootDataObjectProp
         const factory = sharedObjectClass.getFactory();
         const obj = this.runtime.createChannel(undefined, factory.type);
         return obj as unknown as T;
+    }
+}
+
+const rootDataStoreId = "rootDOId";
+
+/**
+ * The DOProviderContainerRuntimeFactory is container code that provides a single RootDataObject.  This data object is
+ * dynamically customized (registry and initial objects) based on the schema provided to the container runtime factory.
+ */
+export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+    private readonly rootDataObjectFactory; // type is DataObjectFactory
+    private readonly initialObjects: LoadableObjectClassRecord;
+    constructor(schema: ContainerSchema) {
+        const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
+        const rootDataObjectFactory =
+            new DataObjectFactory(
+                "rootDO",
+                RootDataObject,
+                sharedObjects,
+                {},
+                registryEntries,
+            );
+        super([rootDataObjectFactory.registryEntry], undefined, [defaultRouteRequestHandler(rootDataStoreId)]);
+        this.rootDataObjectFactory = rootDataObjectFactory;
+        this.initialObjects = schema.initialObjects;
+    }
+
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+        // The first time we create the container we create the RootDataObject
+        await this.rootDataObjectFactory.createRootInstance(
+            rootDataStoreId,
+            runtime,
+            { initialObjects: this.initialObjects });
     }
 }

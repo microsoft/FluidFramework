@@ -45,27 +45,7 @@ export type SharedObjectClass<T extends IFluidLoadable>
  * An object with a constructor that will return an `IFluidLoadable`.
  * @typeParam T - The class of the loadable object
  */
-export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
-
-/** Object factory function allowing a data migration routine to instantiate new objects. */
-export type ObjectFactory = (objectType: LoadableObjectClass<any>, props?: any) => Promise<IFluidLoadable>;
-
-/** Document version info. The concrete shape of the version object is TBD */
-export type VersionInfo = never;
-
-/**
- * Application provided callback to apply data changes necessary to migrate to the next schema version.
- * The migration routine is responsible for inspecting data objects in the given container's snapshot,
- * and, when needed, perform necessary data manipulation over the cloned snapshot and return it as
- * a new revision.
- * @param snapshot - A record representing `initialObjects` in current revision.
- * @param createObject - A factory method responsible for creating new objects.
- * @returns New data record.
- */
-export type DataMigrationRoutine = (
-    snapshot: LoadableObjectRecord,
-    createObject: ObjectFactory
-) => Promise<LoadableObjectRecord | undefined>;
+export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
 
 /**
  * The ContainerSchema declares the Fluid objects that will be available in the container.  It includes both the
@@ -99,9 +79,6 @@ export interface ContainerSchema {
      * included via initialObjects.
      */
     dynamicObjectTypes?: LoadableObjectClass<any>[];
-
-    /** Optional code-first data schema migration routine(s) */
-    migrations?: DataMigrationRoutine | DataMigrationRoutine[];
 }
 
 /**
