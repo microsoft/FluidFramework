@@ -815,7 +815,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcOptions,
                 loadSequenceNumberVerification,
                 useDataStoreAliasing,
-                defaultFlushMode,
+                flushMode,
             },
             containerScope,
             logger,

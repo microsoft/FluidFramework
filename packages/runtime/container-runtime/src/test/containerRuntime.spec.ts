@@ -21,7 +21,7 @@ import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
-        describe("flushMode", () => {
+        describe("flushMode setting", () => {
             let containerRuntime: ContainerRuntime;
             const getMockContext = ((): Partial<IContainerContext> => {
                 return {
@@ -39,7 +39,7 @@ describe("Runtime", () => {
                     getMockContext() as IContainerContext,
                     [],
                     undefined, // requestHandler
-                    { }, // runtimeOptions
+                    {}, // runtimeOptions
                 );
 
                 assert.strictEqual(containerRuntime.flushMode, FlushMode.TurnBased);

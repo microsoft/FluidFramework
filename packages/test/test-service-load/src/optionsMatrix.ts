@@ -79,6 +79,7 @@ export function generateRuntimeOptions(
         summaryOptions: [undefined, ...summaryOptions],
         loadSequenceNumberVerification: [undefined],
         useDataStoreAliasing: [undefined],
+        flushMode: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(
