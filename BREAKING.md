@@ -1,8 +1,12 @@
-## Adding breaking change notes
+# Adding breaking and upcoming change notes
 
-Notes on breaking and otherwise interesting changes go here.  They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
+Notes on breaking, upcoming, and otherwise interesting changes go here.  They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
 
-### Writing a change note
+Upcoming changes include anything expected to become a breaking change in the future.  It can include deprecations, optional to required transitions, etc.  They should be added to the section for the version in which they are being announced.
+
+Breaking changes include anything that a consumer upgrading to the specified version must account for as part of the upgrade process.  It can include expected compile time breaks, runtime compatibility breaks, etc.  They should typically be announced as an upcoming change in an earlier version before becoming a breaking change.
+
+## Writing a change note
 
 There are a few steps you can take to write a good change note and avoid needing to followup for clarification.
 - Provide a concise title.  It should make clear what the topic of the change is.
@@ -10,11 +14,16 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 0.58
+
+## 0.58 Upcoming changes
+
 ## 0.58 Breaking changes
 - [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from-merge-tree-to-sequence-package)
 - [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
 - [Set raiseContainerWarning property as optional parameter on IContainerContext](#Set-raiseContainerWarning-property-as-optional-parameter-on-IContainerContext)
 - [Consolidate fluidErrorCode and message on FF Errors](#Consolidate-fluidErrorCode-and-message-on-FF-Errors)
+- [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
 
 ### Move IntervalType from merge-tree to sequence package
 Move the type from the merge-tree package where it isn't used to the sequence package where it is used
@@ -35,6 +44,15 @@ This was present in many error constructors, and exposed in the type `IFluidErro
 Previously, the fluidErrorCode value (a pascaleCased term) was often used as the error message itself.
 Now all error messages can be expected to be easily-read sentences,
 sometimes followed by a colon and an inner error message when applicable.
+
+
+### Doing operations not allowed on deleted sub directory
+Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory
+will throw `UsageError` exception now.
+
+# 0.57
+
+## 0.57 Upcoming changes
 
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
