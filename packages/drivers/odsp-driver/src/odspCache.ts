@@ -24,12 +24,12 @@ export interface IPersistedFileCache {
  * Default local-only implementation of IPersistedCache,
  * used if no persisted cache is provided by the host
  */
- export class LocalPersistentCache implements IPersistedCache {
+export class LocalPersistentCache implements IPersistedCache {
     private readonly cache = new Map<string, any>();
     // For every document id there will be a single expiration entry inspite of the number of cache entries.
     private readonly docIdExpirationMap = new Map<string, ReturnType<typeof setTimeout>>();
 
-    public constructor(private readonly snapshotExpiryPolicy = 3600 * 1000) {}
+    public constructor(private readonly snapshotExpiryPolicy = 3600 * 1000) { }
 
     async get(entry: ICacheEntry): Promise<any> {
         const key = this.keyFromEntry(entry);
@@ -48,17 +48,17 @@ export interface IPersistedFileCache {
     }
 
     private removeDocIdEntriesFromCache(docId: string) {
-         return Array.from(this.cache)
-         .filter(([cachekey]) => {
-            const docIdFromKey = cachekey.split("_");
-            if (docIdFromKey[0] === docId) {
-                return true;
-            }
-        })
-        .map(([cachekey]) => {
-            this.cache.delete(cachekey);
-        });
-     }
+        return Array.from(this.cache)
+            .filter(([cachekey]) => {
+                const docIdFromKey = cachekey.split("_");
+                if (docIdFromKey[0] === docId) {
+                    return true;
+                }
+            })
+            .map(([cachekey]) => {
+                this.cache.delete(cachekey);
+            });
+    }
 
     private removeExpirationEntry(docId: string) {
         const timeout = this.docIdExpirationMap.get(docId);
@@ -99,7 +99,8 @@ export interface INonPersistentCache {
     /**
      * Cache of joined/joining session info
      */
-    readonly sessionJoinCache: PromiseCache<string, { entryTime: number, joinSessionResponse: ISocketStorageDiscovery }>;
+    readonly sessionJoinCache: PromiseCache<string,
+        { entryTime: number, joinSessionResponse: ISocketStorageDiscovery }>;
 
     /**
      * Cache of resolved/resolving file URLs
