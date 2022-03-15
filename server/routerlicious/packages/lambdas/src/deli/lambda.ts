@@ -180,7 +180,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     private canClose = false;
 
     // mapping of enabled nack message types. messages will be nacked based on the provided info
-    private nackMessages: Map<NackMessagesType, INackMessagesControlMessageContents>;
+    private readonly nackMessages: Map<NackMessagesType, INackMessagesControlMessageContents>;
 
     // Session level properties
     private serviceSummaryGenerated: boolean = false;
