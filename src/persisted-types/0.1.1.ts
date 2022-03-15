@@ -119,14 +119,6 @@ export interface EditHandle {
 }
 
 /**
- * A sequence of edits that may or may not to be downloaded into the EditLog from an external service
- */
-export interface EditChunk<TChange> {
-	handle?: EditHandle;
-	edits?: EditWithoutId<TChange>[];
-}
-
-/**
  * Compressed change format type.
  * Encodes the same information as a {@link ChangeInternal}, but uses a more compact object format for `build` changes.
  */

@@ -46,6 +46,7 @@ export {
 	SharedTreeSummaryBase,
 	SharedTreeSummary,
 	EditWithoutId,
+	PlaceholderTree,
 	CompressedPlaceholderTree,
 	EditBase,
 	HasTraits,
@@ -106,7 +107,7 @@ export {
 	FailingTransactionState,
 	ChangeResult,
 } from './Transaction';
-export { SharedTreeSummarizer, EditLogSummarizer, SummaryContents } from './Summary';
+export { SummaryContents } from './Summary';
 export {
 	NodeInTrait,
 	PlaceIndex,
@@ -119,7 +120,6 @@ export {
 } from './TreeView';
 export { RevisionView, TransactionView } from './RevisionView';
 export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
-export type { SharedTreeEncoder } from './SharedTreeEncoder';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package

@@ -42,28 +42,18 @@
 							{
 								"destination": 0,
 								"source": [
-									{
-										"definition": "node",
-										"identifier": "25de3875-9537-47ec-8699-8a85e772a509",
-										"traits": {
-											"left": [
-												{
-													"definition": "node",
-													"identifier": "a083857d-a8e1-447a-ba7c-92fd0be9db2b",
-													"traits": {}
-												}
-											],
-											"right": [
-												{
-													"definition": "node",
-													"identifier": "78849e85-cb7f-4b93-9fdc-18439c60fe30",
-													"traits": {}
-												}
-											]
-										}
-									}
+									[
+										"25de3875-9537-47ec-8699-8a85e772a509",
+										2,
+										[
+											3,
+											[["a083857d-a8e1-447a-ba7c-92fd0be9db2b", 2]],
+											4,
+											[["78849e85-cb7f-4b93-9fdc-18439c60fe30", 2]]
+										]
+									]
 								],
-								"type": 2
+								"type": 5
 							},
 							{
 								"destination": {

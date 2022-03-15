@@ -22,7 +22,7 @@ import {
 	PlaceholderTree,
 	SetValueInternal,
 } from '../persisted-types';
-import { makeEditCompressor } from '../EditCompression';
+import { compressEdit, decompressEdit, makeChangeCompressor } from '../ChangeCompression';
 import { StablePlace, StableRange } from '../ChangeTypes';
 import { newEdit, newEditId } from '../EditUtilities';
 import { setUpTestTree } from './utilities/TestUtilities';
@@ -30,7 +30,7 @@ import { setUpTestTree } from './utilities/TestUtilities';
 // CompressedChange type for this test suite. It aligns with CompressedChangeInternal but doesn't actually compress trees.
 type TestCompressedChange = CompressedChangeInternal<PlaceholderTree<DetachedSequenceId>>;
 
-describe('EditCompression', () => {
+describe('ChangeCompression', () => {
 	const compressTreeCalls: [PlaceholderTree<DetachedSequenceId>, StringInterner][] = [];
 	const decompressTreeCalls: [PlaceholderTree<DetachedSequenceId>, StringInterner][] = [];
 
@@ -50,7 +50,7 @@ describe('EditCompression', () => {
 		decompressTreeCalls.length = 0;
 	});
 
-	const editCompressor = makeEditCompressor(treeCompressor);
+	const compressor = makeChangeCompressor(treeCompressor);
 
 	/**
 	 * Verifies an edit can round-trip through compression/decompression. Optionally also asserts the compressed state
@@ -61,7 +61,7 @@ describe('EditCompression', () => {
 	 */
 	function testCompression(edit: Edit<ChangeInternal>, compressed?: Edit<TestCompressedChange>): void {
 		const interner = new StringInterner();
-		const compressedEdit = editCompressor.compress(edit, interner);
+		const compressedEdit = compressEdit(compressor, interner, edit);
 		if (compressed !== undefined) {
 			expect(compressedEdit).to.deep.equal(compressed);
 		}
@@ -84,7 +84,7 @@ describe('EditCompression', () => {
 
 		const internedStrings = interner.getSerializable();
 		const newInterner = new StringInterner(internedStrings);
-		const decompressedEdit = editCompressor.decompress(compressedEdit, newInterner);
+		const decompressedEdit = decompressEdit(compressor, newInterner, compressedEdit);
 
 		const compressedBuildChanges = compressedEdit.changes.filter<
 			CompressedBuildInternal<PlaceholderTree<DetachedSequenceId>>

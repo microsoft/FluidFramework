@@ -40,7 +40,6 @@ import {
 	ConstraintInternal,
 	DetachInternal,
 	Edit,
-	EditLogSummary,
 	EditStatus,
 	EditWithoutId,
 	SharedTreeEditOp,
@@ -238,8 +237,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	protected readonly logger: ITelemetryLogger;
-	protected readonly sequencedEditAppliedLogger: ITelemetryLogger;
-	protected encoder: SharedTreeEncoder<ChangeInternal>;
+	private readonly sequencedEditAppliedLogger: ITelemetryLogger;
+	private encoder: SharedTreeEncoder<ChangeInternal>;
 
 	/** Indicates if the client is the oldest member of the quorum. */
 	private currentIsOldest: boolean;
@@ -281,13 +280,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		private readonly expensiveValidation = false,
-		protected readonly summarizeHistory = true,
-		protected writeFormat = WriteFormat.v0_0_2,
+		private readonly summarizeHistory = true,
+		private writeFormat = WriteFormat.v0_0_2,
 		private readonly uploadEditChunks = false
 	) {
 		super(id, runtime, SharedTreeFactory.Attributes);
 		this.expensiveValidation = expensiveValidation;
-		this.encoder = getSharedTreeEncoder(writeFormat);
+		this.encoder = getSharedTreeEncoder(writeFormat, this.summarizeHistory);
 
 		// This code is somewhat duplicated from OldestClientObserver because it currently depends on the container runtime
 		// which SharedTree does not have access to.
@@ -511,18 +510,16 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		}
 
 		assert(this.editLog.numberOfLocalEdits === 0, 'generateSummary must not be called with local edits');
-		return this.generateSummary((useHandles = false) => this.editLog.getEditLogSummary(useHandles));
+		return this.generateSummary();
 	}
 
 	/**
 	 * Generates a SharedTree summary for the current state of the tree.
 	 * Will never be called when local edits are present.
 	 */
-	private generateSummary(
-		summarizeLog: (useHandles?: boolean) => EditLogSummary<ChangeInternal>
-	): SharedTreeSummaryBase {
+	private generateSummary(): SharedTreeSummaryBase {
 		try {
-			return this.encoder.encodeSummary(summarizeLog, this.currentView, this, this.summarizeHistory);
+			return this.encoder.encodeSummary(this.editLog, this.currentView, this);
 		} catch (error) {
 			this.logger?.sendErrorEvent({
 				eventName: 'UnsupportedSummaryWriteFormat',
@@ -546,7 +543,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			this.changeWriteFormat(loadedSummaryVersion);
 		}
 
-		const decoder = getSharedTreeEncoder(loadedSummaryVersion);
+		const decoder = getSharedTreeEncoder(loadedSummaryVersion, this.summarizeHistory);
 		const convertedSummary = decoder.decodeSummary(summary);
 
 		if (compareSummaryFormatVersions(loadedSummaryVersion, WriteFormat.v0_1_1) < 0) {
@@ -777,7 +774,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	private parseSequencedEdit(op: SharedTreeEditOp<unknown>): Edit<ChangeInternal> {
 		// TODO:Type Safety: Improve type safety around op sending/parsing (e.g. discriminated union over version field somehow)
-		const decoder = getSharedTreeEncoder(op.version ?? WriteFormat.v0_0_2);
+		const decoder = getSharedTreeEncoder(op.version ?? WriteFormat.v0_0_2, this.summarizeHistory);
 		return decoder.decodeEditOp(op, (semiSerializedEdit) => {
 			// semiSerializedEdit may have handles which have been replaced by `serializer.encode`.
 			// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
@@ -852,7 +849,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				const oldSummary = this.saveSummary();
 
 				if (compareSummaryFormatVersions(version, WriteFormat.v0_1_1) >= 0) {
-					const decoder = getSharedTreeEncoder(oldSummary.version);
+					const decoder = getSharedTreeEncoder(oldSummary.version, this.summarizeHistory);
 					const summaryContents = decoder.decodeSummary(oldSummary);
 
 					this.initializeNewEditLogFromSummary(
@@ -1076,7 +1073,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 	private changeWriteFormat(newFormat: WriteFormat): void {
 		this.writeFormat = newFormat;
-		this.encoder = getSharedTreeEncoder(newFormat);
+		this.encoder = getSharedTreeEncoder(newFormat, this.summarizeHistory);
 		this.emit(SharedTreeDiagnosticEvent.WriteVersionChanged, newFormat);
 	}
 }

@@ -73,7 +73,7 @@ export function runSharedTreeOperationsTests(
 	const setUpTestSharedTree: typeof setUpTestSharedTreeWithDefaultVersion = (options) =>
 		setUpTestSharedTreeWithDefaultVersion({ writeFormat, ...options });
 
-	const encoder = getSharedTreeEncoder(writeFormat);
+	const encoder = getSharedTreeEncoder(writeFormat, true);
 	/**
 	 * Convenience bundling of test components.
 	 * Like {@link SharedTreeTestingComponents}, but contains both the {@link SimpleTestTree} and

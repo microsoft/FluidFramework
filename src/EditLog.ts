@@ -8,8 +8,11 @@ import { IsoBuffer, TypedEventEmitter } from '@fluidframework/common-utils';
 import { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { assert, assertNotUndefined, compareArrays, compareFiniteNumbers, fail } from './Common';
 import { EditId } from './Identifiers';
-import { Edit, EditChunk, EditHandle, EditLogSummary, EditWithoutId } from './persisted-types';
+import { ChangeCompressor } from './Compression';
+import { StringInterner } from './StringInterner';
+import { Edit, EditHandle, EditLogSummary, EditWithoutId } from './persisted-types';
 import { SharedTreeDiagnosticEvent } from './EventTypes';
+import { compressEdit } from './ChangeCompression';
 
 /**
  * An ordered set of Edits associated with a SharedTree.
@@ -111,6 +114,28 @@ export interface LocalOrderedEditId {
  * Metadata for an edit.
  */
 export type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
+
+/**
+ * Compressor+interner pair used for encoding an {@link EditLog} into a summary.
+ * @internal
+ */
+export interface EditLogEncoder<TChange, TCompressedChange> {
+	compressor: ChangeCompressor<TChange, TCompressedChange>;
+	interner: StringInterner;
+}
+
+const noopEncoder: EditLogEncoder<any, any> = {
+	compressor: { compress: <T>(change: T) => change, decompress: <T>(change: T) => change },
+	interner: new StringInterner(),
+};
+
+/**
+ * A sequence of edits that may or may not need to be downloaded into the EditLog from an external service
+ */
+export interface EditChunk<TChange> {
+	handle?: EditHandle;
+	edits?: EditWithoutId<TChange>[];
+}
 
 /**
  * Returns an object that separates an Edit into two fields, id and editWithoutId.
@@ -609,17 +634,27 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 	/**
 	 * @param useHandles - By default, false. If true, returns handles instead of edit chunks where possible.
-	 * 					   TODO:#49901: This parameter is used for testing and should be removed once format version 0.1.0 is written.
+	 * 					   TODO:#49901: This parameter is used for testing and should be removed once format version 0.1.1 is written.
 	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
 	 * @internal
 	 */
-	public getEditLogSummary(useHandles = false): EditLogSummary<TChange> {
+	public getEditLogSummary<TCompressedChange>(
+		useHandles = false,
+		encoder: {
+			compressor: ChangeCompressor<TChange, TCompressedChange>;
+			interner: StringInterner;
+		} = noopEncoder
+	): EditLogSummary<TCompressedChange> {
+		const { compressor, interner } = encoder;
 		if (useHandles) {
 			return {
 				editChunks: this.editChunks.toArray().map(([startRevision, { handle, edits }]) => {
 					return {
 						startRevision,
-						chunk: handle ?? edits ?? fail('An edit chunk must have either a handle or a list of edits.'),
+						chunk:
+							handle ??
+							edits?.map((edit) => compressEdit(compressor, interner, edit)) ??
+							fail('An edit chunk must have either a handle or a list of edits.'),
 					};
 				}),
 				editIds: this.sequencedEditIds,
@@ -632,7 +667,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			editChunks: this.editChunks.toArray().map(([startRevision, { edits, handle }]) => {
 				return {
 					startRevision,
-					chunk: edits ?? handle ?? fail('An edit chunk must have either a handle or a list of edits.'),
+					chunk:
+						edits?.map((edit) => compressEdit(compressor, interner, edit)) ??
+						handle ??
+						fail('An edit chunk must have either a handle or a list of edits.'),
 				};
 			}),
 			editIds: this.sequencedEditIds,

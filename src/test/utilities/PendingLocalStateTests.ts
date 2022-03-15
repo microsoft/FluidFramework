@@ -76,7 +76,7 @@ export function runPendingLocalStateTests(
 						)
 					);
 
-					const encoder = getSharedTreeEncoder(version);
+					const encoder = getSharedTreeEncoder(version, true);
 					const op = encoder.encodeEditOp(edit, (semiSerialized) => semiSerialized);
 					tree.applyStashedOp(op);
 

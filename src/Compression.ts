@@ -4,12 +4,13 @@
  */
 
 import type { DetachedSequenceId } from './Identifiers';
-import { Edit, PlaceholderTree } from './persisted-types';
+import { PlaceholderTree } from './persisted-types';
 import type { StringInterner } from './StringInterner';
 
 /**
  * Encapsulates knowledge of how to compress/decompress a {@link PlaceholderTree} into some `TCompressed` format.
  * Compression and decompression each take in a {@link StringInterner} for deduplicating shared strings.
+ * @internal
  */
 export interface TreeCompressor<TPlaceholder extends DetachedSequenceId | never, TCompressed> {
 	/**
@@ -25,10 +26,11 @@ export interface TreeCompressor<TPlaceholder extends DetachedSequenceId | never,
 }
 
 /**
- * Encapsulates knowledge of how to compress/decompress an {@link Edit} into some `TCompressed` format.
+ * Encapsulates knowledge of how to compress/decompress a {@link TChange} into some `TCompressed` format.
  * Compression and decompression each take in a {@link StringInterner} for deduplicating shared strings.
+ * @internal
  */
-export interface EditCompressor<TChange, TCompressed> {
-	compress(edit: Edit<TChange>, interner: StringInterner): TCompressed;
-	decompress(edit: TCompressed, interner: StringInterner): Edit<TChange>;
+export interface ChangeCompressor<TChange, TCompressed> {
+	compress(change: TChange, interner: StringInterner): TCompressed;
+	decompress(change: TCompressed, interner: StringInterner): TChange;
 }

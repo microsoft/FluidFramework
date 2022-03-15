@@ -47,7 +47,11 @@ const noHistorySupportedEncoders: {
 	encoder: SharedTreeEncoder<ChangeInternal>;
 }[] = [WriteFormat.v0_0_2, WriteFormat.v0_1_1].map((version) => ({
 	version,
-	encoder: getSharedTreeEncoder(version, (edit) => uuidv5(JSON.stringify(edit.changes), uuidNamespace) as EditId),
+	encoder: getSharedTreeEncoder(
+		version,
+		false,
+		(edit) => uuidv5(JSON.stringify(edit.changes), uuidNamespace) as EditId
+	),
 }));
 
 const supportedSummaryWriteFormats: WriteFormat[] = [WriteFormat.v0_0_2, WriteFormat.v0_1_1];
@@ -191,12 +195,7 @@ export function runSummaryFormatCompatibilityTests(
 
 						// Save a new summary with the expected tree and use it to load a new SharedTree
 						const editLog = expectedTree.edits as EditLog<ChangeInternal>;
-						const newSummary = encoder.encodeSummary(
-							(useHandles = false) => editLog.getEditLogSummary(useHandles),
-							expectedTree.currentView,
-							expectedTree,
-							false
-						);
+						const newSummary = encoder.encodeSummary(editLog, expectedTree.currentView, expectedTree);
 
 						// Check that the new summary is equivalent to the saved one
 						const serializedSummary = assertNotUndefined(noHistorySummaryByVersion.get(version));
