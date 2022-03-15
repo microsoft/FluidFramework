@@ -383,7 +383,7 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const storageRoutingId: string = request.get("Storage-Routing-Id");
-        const [,documentId] = storageRoutingId.split(":");
+        const [tenantId,documentId] = storageRoutingId.split(":");
         if (!documentId) {
             handleResponse(Promise.reject(new NetworkError(400, "Invalid Storage-Routing-Id header")), response);
             return;
@@ -414,6 +414,7 @@ export function create(
                     // This read is for Historian caching purposes, so it should be ignored on failure.
                     winston.error("Failed to read latest summary after writing container summary", {
                         documentId,
+                        tenantId,
                     });
                 }
             }
