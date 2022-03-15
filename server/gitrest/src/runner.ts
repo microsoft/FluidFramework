@@ -9,6 +9,7 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
 import { IExternalStorageManager } from "./externalStorageManager";
+import { IFileSystemManager } from "./utils";
 
 export class GitrestRunner implements IRunner {
     private server: IWebServer;
@@ -18,13 +19,14 @@ export class GitrestRunner implements IRunner {
         private readonly serverFactory: IWebServerFactory,
         private readonly config: Provider,
         private readonly port: string | number,
+        private readonly fileSystemManager: IFileSystemManager,
         private readonly externalStorageManager: IExternalStorageManager) {
     }
 
     public async start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
         // Create the gitrest app
-        const gitrest = app.create(this.config, this.externalStorageManager);
+        const gitrest = app.create(this.config, this.fileSystemManager, this.externalStorageManager);
         gitrest.set("port", this.port);
 
         this.server = this.serverFactory.create(gitrest);

@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import fsPromises from "fs/promises";
 import { Provider } from "nconf";
 import * as services from "@fluidframework/server-services-shared";
 import * as core from "@fluidframework/server-services-core";
 import { normalizePort } from "@fluidframework/server-services-utils";
 import { ExternalStorageManager, IExternalStorageManager } from "./externalStorageManager";
 import { GitrestRunner } from "./runner";
+import { IFileSystemManager } from "./utils";
 
 export class GitrestResources implements core.IResources {
     public webServerFactory: core.IWebServerFactory;
@@ -16,6 +18,7 @@ export class GitrestResources implements core.IResources {
     constructor(
         public readonly config: Provider,
         public readonly port: string | number,
+        public readonly fileSystemManager: IFileSystemManager,
         public readonly externalStorageManager: IExternalStorageManager) {
         this.webServerFactory = new services.BasicWebServerFactory();
     }
@@ -28,9 +31,10 @@ export class GitrestResources implements core.IResources {
 export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestResources> {
     public async create(config: Provider): Promise<GitrestResources> {
         const port = normalizePort(process.env.PORT || "3000");
+        const localFileSystemManager = fsPromises;
         const externalStorageManager = new ExternalStorageManager(config);
 
-        return new GitrestResources(config, port, externalStorageManager);
+        return new GitrestResources(config, port, localFileSystemManager, externalStorageManager);
     }
 }
 
@@ -40,6 +44,7 @@ export class GitrestRunnerFactory implements core.IRunnerFactory<GitrestResource
             resources.webServerFactory,
             resources.config,
             resources.port,
+            resources.fileSystemManager,
             resources.externalStorageManager);
     }
 }

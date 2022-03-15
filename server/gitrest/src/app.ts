@@ -13,7 +13,7 @@ import winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { IExternalStorageManager } from "./externalStorageManager";
 import * as routes from "./routes";
-import { NodegitRepositoryManagerFactory } from "./utils";
+import { IFileSystemManager, NodegitRepositoryManagerFactory } from "./utils";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -24,6 +24,7 @@ const stream = split().on("data", (message) => {
 
 export function create(
     store: nconf.Provider,
+    fileSystemManager: IFileSystemManager,
     externalStorageManager: IExternalStorageManager,
 ) {
     // Express app configuration
@@ -55,7 +56,11 @@ export function create(
     app.use(bindCorrelationId());
 
     app.use(cors());
-    const repoManagerFactory = new NodegitRepositoryManagerFactory(store.get("storageDir"), externalStorageManager);
+    const repoManagerFactory = new NodegitRepositoryManagerFactory(
+        store.get("storageDir"),
+        fileSystemManager,
+        externalStorageManager,
+    );
     const apiRoutes = routes.create(store, repoManagerFactory);
     app.use(apiRoutes.git.blobs);
     app.use(apiRoutes.git.refs);

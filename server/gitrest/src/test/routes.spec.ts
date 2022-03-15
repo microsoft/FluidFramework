@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import fsPromises from "fs/promises";
 import {
     ICreateBlobParams,
     ICreateBlobResponse,
@@ -154,7 +155,7 @@ describe("GitRest", () => {
         // Create the git repo before and after each test
         let supertest: request.SuperTest<request.Test>;
         beforeEach(() => {
-            const testApp = app.create(testUtils.defaultProvider, externalStorageManager);
+            const testApp = app.create(testUtils.defaultProvider, fsPromises, externalStorageManager);
             supertest = request(testApp);
         });
 
@@ -419,6 +420,7 @@ describe("GitRest", () => {
                 await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                 const repoManagerFactory = new NodegitRepositoryManagerFactory(
                     testUtils.defaultProvider.get("storageDir"),
+                    fsPromises,
                     externalStorageManager,
                 );
                 const repoManager = await repoManagerFactory.open(testOwnerName, testRepoName);
