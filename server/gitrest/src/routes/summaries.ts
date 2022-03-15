@@ -24,6 +24,7 @@ import {
 } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import { Provider } from "nconf";
+import winston from "winston";
 import { getExternalWriterParams, IRepositoryManager, IRepositoryManagerFactory } from "../utils";
 import { handleResponse } from "./utils";
 
@@ -220,7 +221,6 @@ export class WholeSummaryWriteGitManager {
                 { enabled: this.externalStorageEnabled },
             );
         }
-        // TODO: precompute latest summary and return, or cache locally
         return {
             id: commit.sha,
         };
@@ -392,12 +392,33 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then(async (repoManager) => createSummary(
-            repoManager,
-            wholeSummaryPayload,
-            documentId,
-            getExternalWriterParams(request.query?.config as string | undefined)?.enabled ?? false,
-        ));
+        ).then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => {
+            const externalStorageEnabled =
+                getExternalWriterParams(request.query?.config as string | undefined)?.enabled ?? false;
+            const writeSummaryResponse = await createSummary(
+                repoManager,
+                wholeSummaryPayload,
+                documentId,
+                externalStorageEnabled,
+            );
+            if (wholeSummaryPayload.type === "container") {
+                try {
+                    const wholeFlatSummary = await getSummary(
+                        repoManager,
+                        writeSummaryResponse.id,
+                        documentId,
+                        externalStorageEnabled,
+                    );
+                    return wholeFlatSummary;
+                } catch (e) {
+                    // This read is for Historian caching purposes, so it should be ignored on failure.
+                    winston.error("Failed to read latest summary after writing container summary", {
+                        documentId,
+                    });
+                }
+            }
+            return writeSummaryResponse;
+        });
         handleResponse(resultP, response, 201);
     });
 
