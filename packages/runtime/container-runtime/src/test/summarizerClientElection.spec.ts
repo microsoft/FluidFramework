@@ -10,13 +10,13 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "../orderedClientElection";
 import { ISummaryCollectionOpEvents } from "../summaryCollection";
 import { SummarizerClientElection, summarizerClientType } from "../summarizerClientElection";
-import { TestQuorum } from "./testQuorum";
 import { IConnectedEvents, IConnectedState, SummaryManager } from "../summaryManager";
 import {
     ISummarizer,
     ISummarizerEvents,
     SummarizerStopReason,
 } from "../summarizerTypes";
+import { TestQuorum } from "./testQuorum";
 
 describe("Summarizer Client Election", () => {
     const maxOps = 1000;
