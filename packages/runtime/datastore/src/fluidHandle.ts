@@ -48,10 +48,10 @@ export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements 
     }
 
     public attachGraph(): void {
-        if (this.localAttachState !== AttachState.Detached) {
+        if (this.localAttachState === AttachState.Attached) {
             return;
         }
-        this.localAttachState = AttachState.Attaching;
+        this.localAttachState = AttachState.Attached;
         if (this.boundHandles !== undefined) {
             for (const handle of this.boundHandles) {
                 handle.attachGraph();
@@ -59,13 +59,12 @@ export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements 
             this.boundHandles = undefined;
         }
         this.routeContext.attachGraph();
-        this.localAttachState = AttachState.Attached;
     }
 
     public bind(handle: IFluidHandle) {
         // If locally attached, attach the incoming handle locally as well. Otherwise, store it and it will be attached
         // when this object is locally attached.
-        if (this.localAttachState !== AttachState.Detached) {
+        if (this.localAttachState === AttachState.Attached) {
             handle.attachGraph();
             return;
         }

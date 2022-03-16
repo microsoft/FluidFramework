@@ -393,10 +393,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public attachGraph() {
-        if (this.localAttachState !== AttachState.Detached) {
+        if (this.localAttachState === AttachState.Attached) {
             return;
         }
-        this.localAttachState = AttachState.Attaching;
+        this.localAttachState = AttachState.Attached;
         if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
                 handle.attachGraph();
@@ -405,7 +405,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         this.dataStoreContext.bindToContext();
-        this.localAttachState = AttachState.Attached;
     }
 
     public bind(handle: IFluidHandle): void {
@@ -832,10 +831,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.dataStoreContext.once("attaching", () => {
             assert(
-                this.localAttachState !== AttachState.Detached,
-                "Data store should not globally attach if it's locally detached",
+                this.localAttachState === AttachState.Attached,
+                "Data store should not globally attach if it's not locally attached",
             );
-            this._globalAttachState = AttachState.Attaching;
+            this._globalAttachState = AttachState.Attached;
             // This promise resolution will be moved to attached event once we fix the scheduler.
             this.deferredAttached.resolve();
 
@@ -845,14 +844,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             });
             this.localChannelContextQueue.clear();
 
-            this.emit("attaching");
-        });
-        this.dataStoreContext.once("attached", () => {
-            assert(
-                this.localAttachState === AttachState.Attached,
-                "Data store should be globally attached only after it's locally attached",
-            );
-            this._globalAttachState = AttachState.Attached;
             this.emit("attached");
         });
     }

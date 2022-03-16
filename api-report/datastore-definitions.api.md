@@ -123,7 +123,7 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
 // @public (undocumented)
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     // (undocumented)
-    (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void): any;
+    (event: "disconnected" | "dispose" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     // (undocumented)

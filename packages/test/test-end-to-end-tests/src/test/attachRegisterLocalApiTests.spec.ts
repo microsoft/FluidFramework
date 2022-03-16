@@ -523,17 +523,9 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
             dataStoreContextAttachState = AttachState.Attached;
         });
 
-        defaultDataStore.runtime.once("attaching", () => {
-            assert.strictEqual(dataStoreRuntimeAttachState, AttachState.Detached,
-                "Should be fire from Detached state for runtime");
-            assert.strictEqual(defaultDataStore.runtime.attachState, AttachState.Attaching,
-                "Data store runtime should be attaching at this stage");
-            dataStoreRuntimeAttachState = AttachState.Attaching;
-        });
-
         defaultDataStore.runtime.once("attached", () => {
-            assert.strictEqual(dataStoreRuntimeAttachState, AttachState.Attaching,
-                "Should be fire from attaching state for runtime");
+            assert.strictEqual(dataStoreRuntimeAttachState, AttachState.Detached,
+                "Should be fired from detached state for runtime");
             assert.strictEqual(defaultDataStore.runtime.attachState, AttachState.Attached,
                 "Data store runtime should be attached at this stage");
             dataStoreRuntimeAttachState = AttachState.Attached;

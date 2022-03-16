@@ -140,7 +140,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     private attachListeners() {
         // Only listen to these events if not attached.
         if (!this.isAttached()) {
-            this.runtime.once("attaching", () => {
+            this.runtime.once("attached", () => {
                 // Calling this will let the dds to do any custom processing based on attached
                 // like starting generating ops.
                 this.didAttach();
