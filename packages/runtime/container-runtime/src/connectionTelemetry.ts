@@ -9,6 +9,7 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
+    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 
@@ -16,6 +17,8 @@ import { assert, performance } from "@fluidframework/common-utils";
  * We report various latency-related errors when waiting for op roundtrip takes longer than that amout of time.
  */
 export const latencyThreshold = 5000;
+
+export const numOpsToThrottle = 500;
 
 class OpPerfTelemetry {
     private pongCount: number = 0;
@@ -27,6 +30,9 @@ class OpPerfTelemetry {
     // To track round trip time for every %1000 client message.
     private opSendTimeForLatencyStatistics: number | undefined;
     private clientSequenceNumberForLatencyStatistics: number | undefined;
+
+    private opTimeSittingInInboundQueue: number | undefined;
+    private clientSequenceNumberForSittingInProcessingQueue: number | undefined;
 
     private firstConnection = true;
     private connectionOpSeqNumber: number | undefined;
@@ -63,9 +69,39 @@ class OpPerfTelemetry {
         this.deltaManager.on("disconnect", () => {
             this.opSendTimeForLatencyStatisticsForMsnStatistics = undefined;
             this.clientSequenceNumberForLatencyStatistics = undefined;
+            this.clientSequenceNumberForSittingInProcessingQueue = undefined;
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;
         });
+
+        this.deltaManager.outbound.on("push", (messages) => {
+            for (const msg of messages) {
+                if (msg.type === MessageType.Operation && msg.clientSequenceNumber % numOpsToThrottle === 1) {
+                        this.clientSequenceNumberForSittingInProcessingQueue = msg.clientSequenceNumber;
+                        this.opTimeSittingInInboundQueue = Date.now();
+                }
+            }
+        });
+
+        this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
+            if (message.type === MessageType.Operation) {
+                if (this.clientId === message.clientId &&
+                    this.clientSequenceNumberForSittingInProcessingQueue === message.clientSequenceNumber &&
+                    this.opTimeSittingInInboundQueue !== undefined) {
+                    const durationSittingInInboundQueue = Date.now() - this.opTimeSittingInInboundQueue;
+                    this.clientSequenceNumberForSittingInProcessingQueue = undefined;
+                    this.opTimeSittingInInboundQueue = undefined;
+                    this.logger.sendPerformanceEvent({
+                        eventName: "OpSittingInBoundQueue",
+                        sequenceNumber: message.clientSequenceNumber,
+                        referenceSequenceNumber: message.referenceSequenceNumber,
+                        duration: durationSittingInInboundQueue,
+                        category: "performance",
+                    });
+                }
+            }
+        });
+
 
         this.deltaManager.inbound.on("idle", (count: number, duration: number) => {
             // Do not want to log zero for sure.
@@ -113,7 +149,8 @@ class OpPerfTelemetry {
 
     private beforeOpSubmit(message: IDocumentMessage) {
         // start with first client op and measure latency every 500 client ops
-        if (this.clientSequenceNumberForLatencyStatistics === undefined && message.clientSequenceNumber % 500 === 1) {
+        if (this.clientSequenceNumberForLatencyStatistics === undefined &&
+            message.clientSequenceNumber % numOpsToThrottle === 1) {
             this.opSendTimeForLatencyStatistics = Date.now();
             this.clientSequenceNumberForLatencyStatistics = message.clientSequenceNumber;
         }
@@ -161,7 +198,7 @@ class OpPerfTelemetry {
                 referenceSequenceNumber: message.referenceSequenceNumber,
                 duration,
                 category,
-                pingLatency: this.pingLatency,
+                pingLatency: this.pingLatency
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
         }
