@@ -69,7 +69,7 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 // @public (undocumented)
 export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(Base: TBase) => {
     new (...args: any[]): {
-        blobsWriter: Map<string, ArrayBufferLike>;
+        blobsWriter: Map<string, ArrayBuffer | SharedArrayBuffer>;
         latestWriterTree?: api.ISnapshotTree | undefined;
         docId?: string | undefined;
         reset(): void;
@@ -82,7 +82,7 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
         repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
         write(root: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion>;
-        createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
+        createBlob(file: ArrayBuffer | SharedArrayBuffer): Promise<api.ICreateBlobResponse>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
         readonly disposed?: boolean | undefined;
         dispose?: ((error?: Error | undefined) => void) | undefined;
@@ -106,7 +106,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
 // @public (undocumented)
 export const FluidFetchReaderFileSnapshotWriter: {
     new (...args: any[]): {
-        blobsWriter: Map<string, ArrayBufferLike>;
+        blobsWriter: Map<string, ArrayBuffer | SharedArrayBuffer>;
         latestWriterTree?: api.ISnapshotTree | undefined;
         docId?: string | undefined;
         reset(): void;
@@ -119,7 +119,7 @@ export const FluidFetchReaderFileSnapshotWriter: {
         repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
         write(root: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion>;
-        createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
+        createBlob(file: ArrayBuffer | SharedArrayBuffer): Promise<api.ICreateBlobResponse>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
         readonly disposed?: boolean | undefined;
         dispose?: ((error?: Error | undefined) => void) | undefined;
