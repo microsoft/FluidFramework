@@ -1456,7 +1456,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (this.garbageCollector.writeDataAtRoot) {
-            const gcSummary = this.garbageCollector.summarize();
+            const gcSummary = this.garbageCollector.getSummaryTree();
             if (gcSummary !== undefined) {
                 addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
             }

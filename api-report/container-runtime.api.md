@@ -346,6 +346,8 @@ export interface IGCRuntimeOptions {
 // @public
 export interface IGCStats {
     dataStoreCount: number;
+    gcBlobNodeCount?: number;
+    gcTotalBlobSize?: number;
     nodeCount: number;
     unrefDataStoreCount: number;
     unrefNodeCount: number;
