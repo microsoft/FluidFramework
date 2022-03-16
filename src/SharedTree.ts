@@ -845,7 +845,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				// The edit log may contain some local edits submitted after the version update op was submitted but
 				// before we receive the message it has been sequenced. Since these edits must be sequenced after the version
 				// update op (and therefore will be discarded), by current design they should be removed from the edit log.
-				this.editLog.clearLocalEdits();
+				// These edits are then re-submitted using the new format.
+				const previousLocalEdits = this.editLog.clearLocalEdits();
 				const oldSummary = this.saveSummary();
 
 				if (compareSummaryFormatVersions(version, WriteFormat.v0_1_1) >= 0) {
@@ -863,6 +864,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				}
 
 				this.changeWriteFormat(version);
+				for (const edit of previousLocalEdits) {
+					this.applyEditInternal(edit);
+				}
+
 				if (this.currentIsOldest) {
 					this.uploadCatchUpBlobs();
 				}

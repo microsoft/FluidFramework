@@ -6,11 +6,13 @@
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
+import { Move, StableRange, StablePlace } from '../../ChangeTypes';
 import { EditLog } from '../../EditLog';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
 import { SharedTreeOp, SharedTreeOpType, WriteFormat } from '../../persisted-types';
 import { SharedTree } from '../../SharedTree';
-import { applyNoop, SharedTreeTestingComponents, SharedTreeTestingOptions } from './TestUtilities';
+import { TreeNodeHandle } from '../../TreeNodeHandle';
+import { applyNoop, setUpTestTree, SharedTreeTestingComponents, SharedTreeTestingOptions } from './TestUtilities';
 
 /**
  * Spies on all future ops submitted to `containerRuntimeFactory`. When ops are submitted
@@ -65,6 +67,44 @@ export function runSharedTreeVersioningTests(
 			// The newer tree should have ignored the first edit
 			expect(tree.edits.length).to.equal(1);
 			expect(newerTree.edits.length).to.equal(0);
+		});
+
+		it('resubmits ops concurrent to an update op using the new format', () => {
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
+			const { tree: newerTree } = setUpTestSharedTree({
+				...treeOptions,
+				containerRuntimeFactory,
+				writeFormat: newVersion,
+			});
+
+			const testTree = setUpTestTree(tree);
+			containerRuntimeFactory.processAllMessages();
+			const summary = tree.saveSummary();
+			const ops = spyOnSubmittedOps(containerRuntimeFactory);
+			newerTree.loadSummary(summary);
+			tree.applyEdit(
+				...Move.create(StableRange.only(testTree.left.stable), StablePlace.after(testTree.right.stable))
+			);
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify even though one edit was applied, 2 edit ops were sent due to the version upgrade.
+			expect(ops.length).to.equal(3);
+			expect(ops.map((op) => op.type)).to.eql([
+				SharedTreeOpType.Update,
+				SharedTreeOpType.Edit,
+				SharedTreeOpType.Edit,
+			]);
+
+			expect(ops[1].version).to.equal(oldVersion);
+			expect(ops[2].version).to.equal(newVersion);
+
+			// Verify both trees apply the updated op.
+			const handle = new TreeNodeHandle(tree.currentView, testTree.identifier);
+			expect(handle.traits[testTree.left.traitLabel]).to.equal(undefined);
+			expect(handle.traits[testTree.right.traitLabel].length).to.equal(2);
+			const handle2 = new TreeNodeHandle(newerTree.currentView, testTree.identifier);
+			expect(handle2.traits[testTree.left.traitLabel]).to.equal(undefined);
+			expect(handle2.traits[testTree.right.traitLabel].length).to.equal(2);
 		});
 
 		it('throws if an edit op with a newer version than the write version is received', () => {
@@ -170,9 +210,10 @@ export function runSharedTreeVersioningTests(
 			newerContainerRuntimeFactory.processAllMessages();
 			applyNoop(newerTree);
 
-			expect(ops.length).to.equal(3);
+			expect(ops.length).to.equal(4);
 			expect(ops.map((op) => op.type)).to.eql([
 				SharedTreeOpType.Update,
+				SharedTreeOpType.Edit,
 				SharedTreeOpType.Edit,
 				SharedTreeOpType.Edit,
 			]);
@@ -180,6 +221,7 @@ export function runSharedTreeVersioningTests(
 			// the same write format as the loaded summary.
 			expect(ops[1].version).to.equal(oldVersion);
 			expect(ops[2].version).to.equal(newVersion);
+			expect(ops[3].version).to.equal(newVersion);
 		});
 
 		it('can update to a write version higher than the initialized write version', () => {

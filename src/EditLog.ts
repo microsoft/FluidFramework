@@ -510,14 +510,17 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	}
 
 	/**
-	 * Removes all local edits from this EditLog. This is somewhat of a kludge to support edit ops concurrent to a version update op.
-	 * TODO:#73073: Remove this API after conversion of old local edits is supported.
+	 * Removes all local edits from this EditLog, and returns their contents.
+	 * This is useful for op format upgrades, which might warrant re-application of these ops using the new format.
+	 * See the breaking change documentation for more information.
 	 */
-	public clearLocalEdits(): void {
+	public clearLocalEdits(): Edit<TChange>[] {
 		for (const { id } of this.localEdits) {
 			this.allEditIds.delete(id);
 		}
+		const localEdits = this.localEdits.slice();
 		this.localEdits.length = 0;
+		return localEdits;
 	}
 
 	/**
