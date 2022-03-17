@@ -2,10 +2,10 @@
 
 # Definitions
 
--   `container data` : data stored in the fluid container by the shared tree dds.
+-   `container data` : data stored in the Fluid container by the shared tree dds.
 -   `container schema` : a set of constraints it is valid to assume the `container data` meets, and that must be maintained when editing (including through conflicts)
     All users of the container must agree on this if they are editors
-    Any changes to this must be sequenced as fluid ops.
+    Any changes to this must be sequenced as Fluid ops.
 -   `application schema` : a set of constraints the application wants to make about the data
     Different clients may have differing application schema, even at the same time (ex: due to multiple apps using the same document, or different versions of an app during a rollout): restrictions on how to stage/manage changes to application schema may vary from app to app (ex: some apps could update all clients concurrently, some could use document semantic versions, some could just rely on best effort schema on read)
 -   `contextual schema` : when which schema to use depends on the parent and not just the type.
@@ -26,7 +26,7 @@ Places we can store container schema information:
 -   Inline in whatever place is referring to it (see list below)
 -   As container data
 -   Hard coded into shared tree (constraints like the tree being a tree not a DAG fall into this)
--   Injected via a shared-tree subclass or other fluid configuration (schema data / constraints shipped as code)
+-   Injected via a shared-tree subclass or other Fluid configuration (schema data / constraints shipped as code)
 -   In some external repository: the repository defines an append only namespace of schema
     This repository is known about by shared-tree somehow (any of the other items in this list could contain the reference to the repository)
 
