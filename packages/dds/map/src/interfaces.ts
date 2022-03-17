@@ -315,11 +315,6 @@ export interface ISubDirectoryCreated extends IDirectoryCreated {
      * The key storing the directory which is deleted.
      */
     key: string;
-
-    /**
-     * The sub directory which was stored at the key prior to deletion.
-     */
-    previousValue: IDirectory;
 }
 
 /**

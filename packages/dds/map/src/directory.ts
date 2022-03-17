@@ -1553,10 +1553,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             const event: ISubDirectoryDeleted = {
                 key: subdirName,
                 path: this.absolutePath,
-                previousValue,
             };
             this.directory.emit("subDirectoryDeleted", event, local, this.directory);
-            const containedEvent: IDirectoryDeleted = { key: subdirName, previousValue };
+            const containedEvent: IDirectoryDeleted = { key: subdirName };
             this.emit("containedDirectoryDeleted", containedEvent, local, this);
         }
         return successfullyRemoved;

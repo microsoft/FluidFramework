@@ -70,7 +70,6 @@ export interface IDirectoryDataObject {
 // @public
 export interface IDirectoryDeleted {
     key: string;
-    previousValue: IDirectory;
 }
 
 // @public
