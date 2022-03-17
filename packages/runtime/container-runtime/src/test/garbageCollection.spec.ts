@@ -100,7 +100,7 @@ describe("Garbage Collection Tests", () => {
             closeCalled = false;
             const settings = { "Fluid.GarbageCollection.RunSessionExpiry": "true" };
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            sessionStorageConfigProvider.value.getRawConfig = (name: string) => settings[name];
+            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
         });
         afterEach(() => {
             sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
@@ -475,18 +475,9 @@ describe("Garbage Collection Tests", () => {
             return nodeTimestamps;
         }
 
-        const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
         beforeEach(() => {
-            closeCalled = false;
-            const settings = { "Fluid.GarbageCollection.WriteDataAtRoot": "true" };
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            sessionStorageConfigProvider.value.getRawConfig = (name: string) => settings[name];
             defaultGCData.gcNodes = {};
             garbageCollector = createGarbageCollector();
-        });
-
-        afterEach(() => {
-            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
         });
 
         /**
