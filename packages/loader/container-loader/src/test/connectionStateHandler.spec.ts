@@ -82,7 +82,7 @@ describe("ConnectionStateHandler Tests", () => {
             new TelemetryNullLogger(),
         );
         addMember = (id: string) => { (connectionStateHandler as any).receivedAddMemberEvent(id); };
-        removeMember = (id: string) => { (connectionStateHandler as any).receivedRecievedMemberEvent(id); };
+        removeMember = (id: string) => { (connectionStateHandler as any).receivedRemoveMemberEvent(id); };
     });
 
     it("Should move to connected state on normal flow for read client", async () => {
