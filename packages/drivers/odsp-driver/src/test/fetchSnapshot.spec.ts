@@ -54,7 +54,6 @@ describe("Tests for snapshot fetch headers", () => {
         snapshotTree: {
             id: "id",
             blobs: {},
-            commits: {},
             trees: {},
         },
         blobs: new Map(),

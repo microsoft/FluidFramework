@@ -62,7 +62,6 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
         blobs: {},
         blobsContents: {},
         trees: {},
-        commits: {},
         id: uuid(),
         unreferenced: summary.unreferenced,
     };

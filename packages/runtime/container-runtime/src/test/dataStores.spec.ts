@@ -22,18 +22,15 @@ describe("Runtime", () => {
             const emptyTree = (id: string): ISnapshotTree => ({
                 id,
                 blobs: {},
-                commits: {},
                 trees: {},
             });
             const testSnapshot: ISnapshotTree = {
                 id: "root-id",
                 blobs: {},
-                commits: {},
                 trees: {
                     [channelsTreeName]: {
                         id: "channels-id",
                         blobs: {},
-                        commits: {},
                         trees: {
                             [nonDataStorePaths[0]]: emptyTree("lower-non-datastore-1"),
                             "some-datastore": emptyTree("lower-datastore-1"),

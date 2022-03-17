@@ -36,7 +36,6 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
     const treeNode: ISnapshotTree = {
         blobs: {},
         trees: {},
-        commits: {},
         unreferenced: summary.unreferenced,
     };
     const keys = Object.keys(summary.tree);

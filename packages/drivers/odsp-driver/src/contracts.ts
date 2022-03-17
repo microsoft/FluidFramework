@@ -107,7 +107,7 @@ export type OdspSummaryTreeEntry = IOdspSummaryTreeValueEntry | IOdspSummaryTree
 
 export interface IOdspSummaryTreeBaseEntry {
     path: string;
-    type: "blob" | "tree" | "commit";
+    type: "blob" | "tree";
 }
 
 export interface IOdspSummaryTreeValueEntry extends IOdspSummaryTreeBaseEntry {
