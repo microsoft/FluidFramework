@@ -24,6 +24,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Set raiseContainerWarning property as optional parameter on IContainerContext](#Set-raiseContainerWarning-property-as-optional-parameter-on-IContainerContext)
 - [Consolidate fluidErrorCode and message on FF Errors](#Consolidate-fluidErrorCode-and-message-on-FF-Errors)
 - [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
+ - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntre-and-commits-from-SnapShotTree)
 
 ### Move IntervalType from merge-tree to sequence package
 Move the type from the merge-tree package where it isn't used to the sequence package where it is used
@@ -49,6 +50,9 @@ sometimes followed by a colon and an inner error message when applicable.
 ### Doing operations not allowed on deleted sub directory
 Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory
 will throw `UsageError` exception now.
+
+### Removing Commit from TreeEntry and commits from SnapShotTree
+TreeEntry will no longer contain the property Commit and the same goes for commits from ISnapshotTree.
 
 # 0.57
 

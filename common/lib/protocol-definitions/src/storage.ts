@@ -24,7 +24,6 @@ export enum FileMode {
     File = "100644",
     Executable = "100755",
     Directory = "040000",
-    Commit = "160000",
     Symlink = "120000",
 }
 
@@ -61,9 +60,6 @@ export type ITreeEntry = {
     type: TreeEntry.Blob;
     value: IBlob;
 } | {
-    type: TreeEntry.Commit;
-    value: string;
-} | {
     type: TreeEntry.Tree;
     value: ITree;
 } | {
@@ -76,7 +72,6 @@ export type ITreeEntry = {
  */
 export enum TreeEntry {
     Blob = "Blob",
-    Commit = "Commit",
     Tree = "Tree",
     Attachment = "Attachment",
 }
@@ -93,8 +88,6 @@ export interface ITree {
 export interface ISnapshotTree {
     id?: string;
     blobs: { [path: string]: string };
-    // TODO: Commits should be removed from here to ISnapshotTreeEx once ODSP snapshots move away from commits
-    commits: { [path: string]: string };
     trees: { [path: string]: ISnapshotTree };
     // Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
     unreferenced?: true;
