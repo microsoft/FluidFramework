@@ -9,7 +9,12 @@ import nodegit from "nodegit";
 import winston from "winston";
 import safeStringify from "json-stringify-safe";
 import type * as resources from "@fluidframework/gitresources";
-import { NetworkError } from "@fluidframework/server-services-client";
+import {
+    IWholeFlatSummary,
+    IWholeSummaryPayload,
+    IWriteSummaryResponse,
+    NetworkError,
+} from "@fluidframework/server-services-client";
 import { IExternalStorageManager } from "../externalStorageManager";
 import * as helpers from "./helpers";
 import * as conversions from "./nodegitConversions";
@@ -20,6 +25,18 @@ import {
     IRepositoryManager,
     IFileSystemManager,
 } from "./definitions";
+import { latestSummarySha, WholeSummaryReadGitManager, WholeSummaryWriteGitManager } from "./wholeSummaryManagers";
+
+export interface INodeGitOptions {
+    /**
+     * When true, each documents latest "full summary" is persisted in storage.
+     * Helps avoid making many small storage requests when reading a summary in a critical path.
+     * Especially relevant when there is significant overhead for accessing storage.
+     */
+    persistLatestFullSummary: boolean;
+}
+
+const latestFullSummaryFilename = "latestFullSummary";
 
 const exists = async (fileSystemManager: IFileSystemManager, fileOrDirectoryPath: PathLike): Promise<boolean> => {
     try {
@@ -35,7 +52,9 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         private readonly repoOwner: string,
         private readonly repoName: string,
         private readonly repo: nodegit.Repository,
+        private readonly fileSystemManager: IFileSystemManager,
         private readonly externalStorageManager: IExternalStorageManager,
+        private readonly options: INodeGitOptions,
     ) {}
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
@@ -331,6 +350,117 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         );
         return conversions.tagToITag(await nodegit.Tag.lookup(this.repo, tagOid));
     }
+
+    public async getSummary(
+        sha: string,
+        documentId: string,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<IWholeFlatSummary> {
+        if (sha === latestSummarySha) {
+            try {
+                const latestFullSummaryFromStorage = await this.retrieveLatestFullSummaryFromStorage(documentId);
+                if (latestFullSummaryFromStorage !== undefined) {
+                    return latestFullSummaryFromStorage;
+                }
+            } catch (e) {
+                // TODO: Don't log as error if a persisted full summary simply does not exist yet
+                winston.error(`Failed to read latest full summary from storage: ${safeStringify(e)}`, {
+                    documentId,
+                    tenantId: this.repoName,
+                });
+            }
+        }
+
+        const wholeSummaryReadGitManager = new WholeSummaryReadGitManager(
+            documentId,
+            this,
+            externalWriterConfig?.enabled ?? false,
+        );
+        return wholeSummaryReadGitManager.readSummary(sha);
+    }
+
+    public async createSummary(
+        payload: IWholeSummaryPayload,
+        documentId: string,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
+        const wholeSummaryWriteGitManager = new WholeSummaryWriteGitManager(
+            documentId,
+            this,
+            externalWriterConfig?.enabled ?? false,
+        );
+        const writeSummaryResponse = await wholeSummaryWriteGitManager.writeSummary(payload);
+
+        if (payload.type === "container") {
+            // TODO: For new documents, waiting to pre-compute latest and persist it will slow down document creation.
+            const latestFullSummary: IWholeFlatSummary | undefined = await this.getSummary(
+                writeSummaryResponse.id,
+                documentId,
+                externalWriterConfig,
+            ).catch((err) => {
+                // This read is for Historian caching purposes, so it should be ignored on failure.
+                winston.error(`Failed to read latest summary after writing container summary: ${safeStringify(err)}`, {
+                    documentId,
+                    tenantId: this.repoName,
+                });
+                return undefined;
+            });
+            if (latestFullSummary) {
+                try {
+                    // TODO: Could this fail due to file being open and still being written to from a previous request?
+                    await this.persistLatestFullSummaryInStorage(documentId, latestFullSummary);
+                } catch(e) {
+                    winston.error(`Failed to persist latest full summary to storage: ${safeStringify(e)}`, {
+                        documentId,
+                        tenantId: this.repoName,
+                    });
+                    // TODO: Find and add more information about this failure so that Scribe can retry as necessary.
+                    throw new NetworkError(500, "Failed to persist latest full summary to storage");
+                }
+                return latestFullSummary;
+            }
+        }
+
+        return writeSummaryResponse;
+    }
+
+    public async deleteSummary(documentId: string, softDelete: boolean): Promise<boolean> {  
+        throw new NetworkError(501, "Not Implemented");
+    }
+
+    private async persistLatestFullSummaryInStorage(
+        documentId: string,
+        latestFullSummary: IWholeFlatSummary,
+    ): Promise<void> {
+        if (!this.options.persistLatestFullSummary) {
+            return;
+        }
+        const documentStorageDirectory = this.getDocumentStorageDirectory(documentId);
+        const directoryExists = await exists(this.fileSystemManager, documentStorageDirectory);
+        if (!directoryExists) {
+            await this.fileSystemManager.mkdir(documentStorageDirectory);
+        }
+        await this.fileSystemManager.writeFile(
+            `${documentStorageDirectory}/${latestFullSummaryFilename}`,
+            JSON.stringify(latestFullSummary),
+        );
+    }
+
+    private async retrieveLatestFullSummaryFromStorage(documentId: string): Promise<IWholeFlatSummary | undefined> {
+        if (!this.options.persistLatestFullSummary) {
+            return undefined
+        };
+        const summaryFile = await this.fileSystemManager.readFile(
+            `${this.getDocumentStorageDirectory(documentId)}/${latestFullSummaryFilename}`,
+        );
+        // TODO: This will be converted back to a JSON string for the HTTP response
+        const summary: IWholeFlatSummary = JSON.parse(summaryFile.toString());
+        return summary;
+    }
+
+    private getDocumentStorageDirectory(documentId: string): string {
+        return `${this.repo.path()}/${documentId}`;
+    }
 }
 
 export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactory {
@@ -338,9 +468,10 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
     private repositoryPCache: { [key: string]: Promise<nodegit.Repository> } = {};
 
     constructor(
-        private readonly baseDir,
+        private readonly baseDir: string,
         private readonly fileSystemManager: IFileSystemManager,
         private readonly externalStorageManager: IExternalStorageManager,
+        private readonly options: INodeGitOptions,
     ) {
     }
 
@@ -358,7 +489,9 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
             owner,
             name,
             repository,
-            this.externalStorageManager);
+            this.fileSystemManager,
+            this.externalStorageManager,
+            this.options);
         winston.info(`Created a new repo for owner ${owner} reponame: ${name}`);
 
         return repoManager;
@@ -385,7 +518,9 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
             owner,
             name,
             repository,
-            this.externalStorageManager);
+            this.fileSystemManager,
+            this.externalStorageManager,
+            this.options);
         return repoManager;
     }
 

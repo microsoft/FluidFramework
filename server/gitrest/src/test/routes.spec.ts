@@ -152,6 +152,7 @@ describe("GitRest", () => {
             testUtils.defaultProvider.get("storageDir"),
             fsPromises,
             externalStorageManager,
+            { persistLatestFullSummary: true }
         );
 
         testUtils.initializeBeforeAfterTestHooks(testUtils.defaultProvider);

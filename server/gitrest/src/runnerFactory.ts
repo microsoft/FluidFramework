@@ -32,11 +32,24 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
         const port = normalizePort(process.env.PORT || "3000");
         const fileSystemManager = fsPromises;
         const externalStorageManager = new ExternalStorageManager(config);
-        const repositoryManagerFactory = new NodegitRepositoryManagerFactory(
-            config.get("storageDir"),
-            fileSystemManager,
-            externalStorageManager,
-        );
+        const storageDirectory = config.get("storageDir");
+        const gitLibrary: string | undefined = config.get("git:lib:name");
+        const persistLatestFullSummary: boolean =
+            config.get("git:lib:persistLatestFullSummary") ?? false;
+        const getRepositoryManagerFactory = () => {
+            if (!gitLibrary || gitLibrary === "nodegit") {
+                return new NodegitRepositoryManagerFactory(
+                    storageDirectory,
+                    fileSystemManager,
+                    externalStorageManager,
+                    {
+                        persistLatestFullSummary,
+                    },
+                );
+            }
+            throw new Error("Invalid git library name.");
+        }
+        const repositoryManagerFactory = getRepositoryManagerFactory();
 
         return new GitrestResources(config, port, repositoryManagerFactory);
     }
