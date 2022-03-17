@@ -42,12 +42,13 @@ const ensureContainerConnected = async (container: IContainer) => {
     if (!container.connected) {
         return new Promise<void>((resolve) => container.once("connected", () => resolve()));
     }
-}
+};
 
-const getPendingStateWithoutClose = (container: IContainer) => {
+const getPendingStateWithoutClose = (container: IContainer): string => {
     const containerClose = container.close;
     container.close = (message) => assert(message === undefined);
     const pendingState = (container as any).closeAndGetPendingLocalState();
+    assert(typeof pendingState === "string");
     container.close = containerClose;
     return pendingState;
 };
