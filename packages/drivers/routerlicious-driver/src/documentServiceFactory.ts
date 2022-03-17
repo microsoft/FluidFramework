@@ -92,6 +92,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             resolvedUrl.endpoints.ordererUrl,
         );
 
+        const documentPostCreateCallback = this.tokenProvider.documentPostCreateCallback;
+
         // the backend responds with the actual document ID associated with the new container.
         const res = await ordererRestWrapper.post<{ id: string, token?: string } | string>(
             `/documents/${tenantId}`,
@@ -99,7 +101,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 summary: convertSummaryToCreateNewSummary(appSummary),
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
-                generateToken: true,
+                generateToken: documentPostCreateCallback !== undefined,
             },
         );
 
@@ -116,12 +118,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             token = res.token;
         }
 
-        if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
-            try {
-                await this.tokenProvider.documentPostCreateCallback(documentId, token);
-            } catch (error) {
-                logger2.sendErrorEvent({ eventName: "catchDocumentPostCreateCallback" }, error);
-            }
+        if (token && documentPostCreateCallback !== undefined) {
+            await documentPostCreateCallback(documentId, token);
         }
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
