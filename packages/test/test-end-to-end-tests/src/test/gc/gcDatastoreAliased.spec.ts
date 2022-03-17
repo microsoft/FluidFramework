@@ -52,7 +52,7 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
     );
 
     // Enable config provider setting to write GC data at the root.
-    const settings = { "Fluid.GarbageCollection.LogUnknownOutboundRoutes": "true" };
+    const settings = { "Fluid.GarbageCollection.LogUnknownOutboundReferences": "true" };
     const configProvider = mockConfigProvider(settings);
 
     let container1: IContainer;
@@ -87,7 +87,7 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
     // where a remote datastore is summarized before the alias op arrives when trySetAlias is called.
     // TODO: Remove the itExpects once this issue is fixed https://github.com/microsoft/FluidFramework/issues/8859
     itExpects("GC is notified when datastores are aliased.",
-    [{ eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:gcUnknownOutboundRoute" }],
+    [{ eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:gcUnknownOutboundReferences" }],
     async () => {
         await summarizeOnContainer(container2);
         const containerRuntime1 = mainDataStore1.containerRuntime;

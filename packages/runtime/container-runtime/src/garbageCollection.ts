@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
@@ -67,7 +67,7 @@ const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
 const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
 // Feature gate key to log error messages if gc route validation fails.
-// const logUnknownOutboundRoutesKey = "Fluid.GarbageCollection.LogUnknownOutboundRoutes";
+const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -97,6 +97,11 @@ interface IUnreferencedEvent {
     lastSummaryTime?: number;
     externalRequest?: boolean;
     viaHandle?: boolean;
+}
+
+interface IGCReference {
+    parent: string;
+    route: string;
 }
 
 /** Defines the APIs for the runtime object to be passed to the garbage collector. */
@@ -206,6 +211,12 @@ class UnreferencedStateTracker {
 /**
  * The garbage collector for the container runtime. It consolidates the garbage collection functionality and maintains
  * its state across summaries.
+ *
+ * Node - represented as nodeId, it's a node on the GC graph
+ * Reference - a route with a parent, think `nodeId` & `Route`
+ * Route - a node that is reachable from another node, think `nodeId`
+ * Outbound - a route or reference going from parent to child
+ * Graph - all nodes with their respective routes
  */
 export class GarbageCollector implements IGarbageCollector {
     public static create(
@@ -823,12 +834,26 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         // Find any references that haven't been identified correctly.
-        this.findMissingRoutes(
+        const missingExplicitReferences = this.findMissingExplicitReferences(
             currentGCData,
             this.previousGCData,
             this.newReferencesSinceLastRun,
         );
-        // TODO: Log all missing new routes
+
+        // The following log will be enabled once this issue is resolved:
+        // https://github.com/microsoft/FluidFramework/issues/8878.
+        if(this.mc.config.getBoolean(logUnknownOutboundReferencesKey) === true) {
+            const event: ITelemetryPerformanceEvent = {
+                eventName: "gcUnknownOutboundReferences",
+                missingExplicitReferences: missingExplicitReferences.length,
+            };
+
+            missingExplicitReferences.forEach((missingExplicitReference, index) => {
+                event[index] = `${missingExplicitReference.parent} -> ${missingExplicitReference.route}`;
+            });
+
+            this.mc.logger.sendPerformanceEvent(event);
+        }
 
         // No references were added since the last run so we don't need to run garbage collection
         if (this.newReferencesSinceLastRun.size === 0) {
@@ -877,92 +902,60 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Finds Missing Routes and logs a Performance event everytime a missing route is found
+     * Finds outbound references to datastores in the current GC graph that aren't in the previous GC graph and returns
+     * them if they are not added by GC's `addedOutboundReference`.
      *
-     * Expected Routes = Routes in Current datastore graph and not in Previous datastore graph
-     * New Routes = New routes added by GC when a handle was added or root datastores
-     * Missing Routes = Expected Routes not in New Routes
+     * In more simple terms:
+     * Missing Explicit References = Current References - Previous References - Explicitly Added References;
      *
-     * Node - represented as nodeId, it's a node on the GC graph
-     * Route - a reference with a parent, think `nodeId` & `reference`
-     * Reference - a node that is reachable from another node, think `nodeId`
-     * Outbound - a route or reference going from parent to child
-     * Graph - all nodes with their respective references
-     * Currently we are only filtering to get datastore references and routes
+     * Currently outbound references are references from a parent node to child datastore node
      *
      * @param currentGCData - The GC data (reference graph) from the current GC run.
      * @param previousGCData - The GC data (reference graph) from the previous GC run.
-     * @param newRoutes - New references added by GC from the previous to the current run.
-     * @returns - a list of missing routes
+     * @param explicitReferences - New references added by GC explicity between the previous and the current run.
+     * @returns - a list of missing explicit references
      */
-    private findMissingRoutes(
+    private findMissingExplicitReferences(
         currentGCData: IGarbageCollectionData,
         previousGCData: IGarbageCollectionData,
-        newRoutes: Map<string, string[]>,
-    ): [string, string[]][] {
+        explicitReferences: Map<string, string[]>,
+    ): IGCReference[] {
         assert(
             previousGCData !== undefined,
             0x2b7, /* "Can't validate correctness without GC data from last run" */
         );
 
-        const getOutboundReferences = (nodeId: string, references: string[]): string[] => {
-            if (references === undefined) {
-                return [];
-            }
-            return references.filter((reference) => !nodeId.startsWith(reference) && isDataStoreNode(reference));
+        const getOutboundRoutes = (nodeId: string, routes: string[]): string[] => {
+            // Outbound routes are routes to datastore nodes that come from a parent node.
+            // There are routes added by gc from a datastore's dds to the datastore which were added implicitly
+            return routes.filter((route) => !nodeId.startsWith(route) && isDataStoreNode(route));
         };
 
-        const getOutboundGraph = (routes: [string, string[]][]) => {
-            const outboundGraph: [string, string[]][] = [];
-            for (const [nodeId, references] of routes) {
-                const outboundReferences: string[] = getOutboundReferences(nodeId, references);
-                if (outboundReferences.length > 0) {
-                    outboundGraph.push([nodeId, outboundReferences]);
-                }
+        const convertGraphToOutboundReferences = (graph: [string, string[]][]) => {
+            const outboundReferences: IGCReference[] = [];
+            for(const [nodeId, routes] of graph) {
+                const outboundRoutes: string[] = getOutboundRoutes(nodeId, routes);
+                const outboundReferencesForNode = outboundRoutes.map((route): IGCReference => {
+                    return { parent: nodeId, route };
+                });
+                outboundReferences.push(...outboundReferencesForNode);
             }
-            return outboundGraph;
+            return outboundReferences;
         };
 
-        // Get Current and Previous graphs
-        const currentGraph = getOutboundGraph(Object.entries(currentGCData.gcNodes));
-        const previousGraph = previousGCData.gcNodes;
+        const currentReferences = convertGraphToOutboundReferences(Object.entries(currentGCData.gcNodes));
 
-        // Expected Routes = Routes in the Current Graph and not in the Previous Graph
-        const expectedRoutes: [string, string[]][] = [];
-        for(const [nodeId, currentReferences] of currentGraph) {
-            const prevOutboundReferences = getOutboundReferences(nodeId, previousGraph[nodeId]);
-            const expectedReferences: string[] =
-                currentReferences.filter((currentRef) => !prevOutboundReferences.includes(currentRef));
-            if(expectedReferences.length > 0) {
-                expectedRoutes.push([nodeId, expectedReferences]);
-            }
-        }
+        // Missing Explicit References str Current References not in the previous graph and not in explicit references
+        const missingExplicitReferences: IGCReference[] = currentReferences.filter((reference) => {
+            const previousReferences = previousGCData.gcNodes[reference.parent] ?? [];
+            const notInPreviousGraph = !previousReferences.includes(reference.route);
+            const explicitRoutesForNode = explicitReferences.get(reference.parent) ?? [];
+            const notExplicitlyNotified = !explicitRoutesForNode.includes(reference.route);
+            return notInPreviousGraph && notExplicitlyNotified;
+        });
 
-        // Missing Routes = Expected Routes not in New Routes
-        const missingRoutes: [string, string[]][] = [];
-        for (const [nodeId, expectedReferences] of expectedRoutes) {
-            const newReferences = newRoutes.get(nodeId);
-            const missingReferences: string[] = [];
-            expectedReferences.forEach((expectedRef) => {
-                // Every time an expected route is found, there should be a log of the error.
-                // Eventually a data corruption assert should be thrown and the client should fail fast
-                if (newReferences === undefined || !newReferences.includes(expectedRef)) {
-                    this.mc.logger.sendPerformanceEvent({
-                        eventName: "gcUnknownOutboundRoute",
-                        reference: expectedRef,
-                        parentNode: nodeId,
-                    });
-                    missingReferences.push(expectedRef);
-                }
-            });
-
-            if (missingReferences.length > 0) {
-                missingRoutes.push([nodeId, missingReferences]);
-            }
-        }
-
-        // Ideally missingRoutes should always have a size 0
-        return missingRoutes;
+        // Ideally missingExplicitReferences should always have a size 0
+        return missingExplicitReferences;
     }
 
     /**
