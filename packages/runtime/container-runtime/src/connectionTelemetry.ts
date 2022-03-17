@@ -31,7 +31,6 @@ class OpPerfTelemetry {
     private clientSequenceNumberForLatencyStatistics: number | undefined;
 
     private opTimeSittingInInboundQueue: number | undefined;
-    private durationRoundtripTime: number | undefined;
     private durationSittingInInboundQueue: number | undefined;
 
     private firstConnection = true;
@@ -69,6 +68,8 @@ class OpPerfTelemetry {
         this.deltaManager.on("disconnect", () => {
             this.opSendTimeForLatencyStatisticsForMsnStatistics = undefined;
             this.clientSequenceNumberForLatencyStatistics = undefined;
+            this.opTimeSittingInInboundQueue = undefined;
+            this.durationSittingInInboundQueue = undefined;
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;
         });
@@ -76,6 +77,10 @@ class OpPerfTelemetry {
         this.deltaManager.outbound.on("push", (messages) => {
             for (const msg of messages) {
                 if (this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber) {
+                    assert(this.opTimeSittingInInboundQueue === undefined,
+                        "OpTimeSittingInboundQueue should be undefined");
+                    assert(this.durationSittingInInboundQueue === undefined,
+                        "durationSittingInInboundQueue should be undefined");
                      this.opTimeSittingInInboundQueue = Date.now();
                 }
             }
@@ -138,6 +143,9 @@ class OpPerfTelemetry {
         // start with first client op and measure latency every 500 client ops
         if (this.clientSequenceNumberForLatencyStatistics === undefined &&
             message.clientSequenceNumber % numOpsToThrottle === 1) {
+            assert(this.opTimeSittingInInboundQueue === undefined, "OpTimeSittingInboundQueue should be undefined");
+            assert(this.durationSittingInInboundQueue === undefined,
+                "durationSittingInInboundQueue should be undefined");
             this.opSendTimeForLatencyStatistics = Date.now();
             this.clientSequenceNumberForLatencyStatistics = message.clientSequenceNumber;
         }
@@ -168,7 +176,7 @@ class OpPerfTelemetry {
             assert(this.opSendTimeForLatencyStatistics !== undefined,
                 0x120 /* "Undefined latency statistics (op send time)" */);
 
-            this.durationRoundtripTime = Date.now() - this.opSendTimeForLatencyStatistics;
+            const duration = Date.now() - this.opSendTimeForLatencyStatistics;
 
             // One of the core expectations for Fluid service is to be fast.
             // When it's not the case, we want to learn about it and be able to investigate, so
@@ -177,13 +185,13 @@ class OpPerfTelemetry {
             // that results in overwhelming ordering service and thus starting to see long latencies.
             // The threshold could be adjusted, but ideally it stays  workload-agnostic, as service
             // performance impacts all workloads relying on service.
-            const category = this.durationRoundtripTime > latencyThreshold ? "error" : "performance";
+            const category = duration > latencyThreshold ? "error" : "performance";
 
             this.logger.sendPerformanceEvent({
                 eventName: "OpRoundtripTime",
                 sequenceNumber,
                 referenceSequenceNumber: message.referenceSequenceNumber,
-                duration: this.durationRoundtripTime,
+                duration,
                 category,
                 pingLatency: this.pingLatency,
                 durationInboundQueue: this.durationSittingInInboundQueue ?? 0,
