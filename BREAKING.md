@@ -23,7 +23,7 @@ There are a few steps you can take to write a good change note and avoid needing
 
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
-TreeEntry will no longer contain the property Commit and the same goes for commits from ISnapshotTree.
+Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
 
 
 # 0.58
