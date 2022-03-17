@@ -334,8 +334,6 @@ interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedL
     taggedLogger: undefined;
 }
 
-// Local storage key to set the default flush mode to TurnBased
-const turnBasedFlushModeKey = "Fluid.ContainerRuntime.FlushModeTurnBased";
 const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
@@ -782,6 +780,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
                 // "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber"
                 const error = new DataCorruptionError(
+                    // pre-0.58 error message: SummaryMetadataMismatch
                     "Summary metadata mismatch",
                     { runtimeSequenceNumber, protocolSequenceNumber },
                 );
@@ -910,7 +909,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly defaultMaxConsecutiveReconnects = 15;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode: FlushMode;
+    private _flushMode: FlushMode = FlushMode.TurnBased;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -1030,10 +1029,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
 
-        this._flushMode =
-            this.mc.config.getBoolean(turnBasedFlushModeKey) ?? false
-            ? FlushMode.TurnBased : FlushMode.Immediate;
-
         this._aliasingEnabled =
             (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
             (runtimeOptions.useDataStoreAliasing ?? false);
@@ -1134,6 +1129,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.pendingStateManager = new PendingStateManager(
             this,
             async (type, content) => this.applyStashedOp(type, content),
+            this._flushMode,
             context.pendingLocalState as IPendingLocalState);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1585,6 +1581,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.context.pendingLocalState = undefined;
             if (!this.shouldContinueReconnecting()) {
                 this.closeFn(new GenericError(
+                    // pre-0.58 error message: MaxReconnectsWithNoProgress
                     "Runtime detected too many reconnects with no progress syncing local ops",
                     undefined, // error
                     { attempts: this.consecutiveReconnects }));
@@ -1768,6 +1765,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls++;
             callback();
         } catch (error) {
+            // pre-0.58 error message: orderSequentiallyCallbackException
             this.closeFn(new GenericError("orderSequentially callback exception", error));
             throw error; // throw the original error for the consumer of the runtime
         } finally {
@@ -1814,10 +1812,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param props - Properties for the data store
      * @returns - An aliased data store which can can be found / loaded by alias.
      */
-    private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IFluidRouter> {
+    private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
         const internalId = uuid();
         const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
-        const aliasedDataStore = channelToDataStore(dataStore, internalId, this,this.dataStores, this.mc.logger);
+        const aliasedDataStore = channelToDataStore(dataStore, internalId, this, this.dataStores, this.mc.logger);
         const result = await aliasedDataStore.trySetAlias(alias);
         if (result !== "Success") {
             throw new GenericError(
@@ -1861,13 +1859,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         props?: any,
         id = uuid(),
         isRoot = false,
-    ): Promise<IFluidRouter> {
+    ): Promise<IDataStore> {
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {
             fluidDataStore.bindToContext();
         }
-        return fluidDataStore;
+        return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
     }
 
     public async _createDataStoreWithProps(
@@ -1875,7 +1873,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         props?: any,
         id = uuid(),
         isRoot = false,
-    ): Promise<IFluidRouter> {
+    ): Promise<IDataStore> {
         return this._aliasingEnabled === true && isRoot ?
             this.createAndAliasDataStore(pkg, id, props) :
             this._createDataStoreWithPropsLegacy(pkg, props, id, isRoot);
@@ -2153,7 +2151,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (summaryRefSeqNum !== this.deltaManager.lastMessage?.sequenceNumber) {
                 summaryLogger.sendErrorEvent({
                     eventName: "LastSequenceMismatch",
-                    message,
+                    error: message,
                 });
             }
 

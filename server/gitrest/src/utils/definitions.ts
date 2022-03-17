@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import fsPromises from "fs/promises";
 import * as git from "@fluidframework/gitresources";
 
 export interface IExternalWriterConfig {
@@ -26,6 +27,24 @@ export interface IRepositoryManager {
     deleteRef(refId: string): Promise<void>;
     getTag(tagId: string): Promise<git.ITag>;
     createTag(tagParams: git.ICreateTagParams): Promise<git.ITag>;
+}
+
+/**
+ * Subset of Node.js `fs/promises` API.
+ */
+export interface IFileSystemManager {
+    readFile: typeof fsPromises.readFile;
+    writeFile: typeof fsPromises.writeFile;
+    unlink: typeof fsPromises.unlink;
+    readdir: typeof fsPromises.readdir;
+    mkdir: typeof fsPromises.mkdir;
+    rmdir: typeof fsPromises.rmdir;
+    stat: typeof fsPromises.stat;
+    lstat: typeof fsPromises.lstat;
+    readlink: typeof fsPromises.readlink;
+    symlink: typeof fsPromises.symlink;
+    chmod: typeof fsPromises.chmod;
+    rm: typeof fsPromises.rm;
 }
 
 export interface IRepositoryManagerFactory {

@@ -8,7 +8,7 @@ import { IWebServer, IWebServerFactory, IRunner } from "@fluidframework/server-s
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
-import { IExternalStorageManager } from "./externalStorageManager";
+import { IRepositoryManagerFactory } from "./utils";
 
 export class GitrestRunner implements IRunner {
     private server: IWebServer;
@@ -18,13 +18,13 @@ export class GitrestRunner implements IRunner {
         private readonly serverFactory: IWebServerFactory,
         private readonly config: Provider,
         private readonly port: string | number,
-        private readonly externalStorageManager: IExternalStorageManager) {
+        private readonly repositoryManagerFactory: IRepositoryManagerFactory) {
     }
 
-    public start(): Promise<void> {
+    public async start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
         // Create the gitrest app
-        const gitrest = app.create(this.config, this.externalStorageManager);
+        const gitrest = app.create(this.config, this.repositoryManagerFactory);
         gitrest.set("port", this.port);
 
         this.server = this.serverFactory.create(gitrest);
@@ -38,7 +38,7 @@ export class GitrestRunner implements IRunner {
         return this.runningDeferred.promise;
     }
 
-    public stop(): Promise<void> {
+    public async stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
         this.server.close().then(
             () => {

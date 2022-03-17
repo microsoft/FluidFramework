@@ -4,14 +4,12 @@
  */
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import { DataObject } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     MergeTreeDeltaType,
     TextSegment,
 } from "@fluidframework/merge-tree";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
-import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unresolved
 import * as monaco from "monaco-editor";
 
@@ -51,25 +49,8 @@ const defaultCompilerOptions = {
     allowNonTsExtensions: true,
 };
 
-/**
- * Component for using the Monaco text editor.
- */
-export class MonacoRunner extends DataObject implements IFluidHTMLView {
+export class MonacoRunnerView implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
-    public get IFluidLoadable() { return this; }
-
-    /**
-     * The chart probably has a preferred aspect ratio - but it can also fill any bounds
-     */
-    public aspectRatio?: number;
-    public minimumWidth?: number;
-    public minimumHeight?: number;
-    public readonly canInline = true;
-
-    /**
-     * Not used
-     */
-    public readonly preferInline = false;
 
     /**
      * Root HTML element of the component.
@@ -86,7 +67,9 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
      */
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
 
-    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
+    public constructor(private readonly sharedString: SharedString) { }
+
+    public render(elm: HTMLElement): void {
         if (!this.mapHost) {
             this.mapHost = document.createElement("div");
             elm.appendChild(this.mapHost);
@@ -97,16 +80,6 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
                 elm.appendChild(this.mapHost);
             }
         }
-    }
-
-    /**
-     * Creates the SharedString and inserts some sample text. create() is called only once
-     * per component.
-     */
-    protected async initializingFirstTime() {
-        const codeString = SharedString.create(this.runtime);
-        codeString.insertText(0, 'console.log("Hello, world!");');
-        this.root.set("text", codeString.handle);
     }
 
     /**
@@ -124,12 +97,6 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
         // outputDiv.style.width = "50%";
         // hostWrapper.appendChild(outputDiv);
 
-        const textHandle = this.root.get<IFluidHandle<SharedString>>("text");
-        if (textHandle === undefined) {
-            throw new Error("Text improperly initialized");
-        }
-        const text = await textHandle.get();
-
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
         if (hostDts) {
             let disposer = monaco.languages.typescript.typescriptDefaults.addExtraLib(
@@ -145,7 +112,7 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
                 });
         }
 
-        this.codeModel = monaco.editor.createModel(text.getText(), "typescript");
+        this.codeModel = monaco.editor.createModel(this.sharedString.getText(), "typescript");
         const outputModel = monaco.editor.createModel("", "javascript");
 
         this.codeEditor = monaco.editor.create(
@@ -184,17 +151,21 @@ export class MonacoRunner extends DataObject implements IFluidHTMLView {
             for (const change of e.changes) {
                 if (change.text) {
                     if (change.rangeLength === 0) {
-                        text.insertText(change.rangeOffset, change.text);
+                        this.sharedString.insertText(change.rangeOffset, change.text);
                     } else {
-                        text.replaceText(change.rangeOffset, change.rangeOffset + change.rangeLength, change.text);
+                        this.sharedString.replaceText(
+                            change.rangeOffset,
+                            change.rangeOffset + change.rangeLength,
+                            change.text,
+                        );
                     }
                 } else {
-                    text.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
+                    this.sharedString.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
                 }
             }
         });
 
-        text.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
+        this.sharedString.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
             if (ev.isLocal) {
                 return;
             }

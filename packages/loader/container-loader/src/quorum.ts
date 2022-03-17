@@ -4,7 +4,6 @@
  */
 import { EventForwarder, doIfNotDisposed } from "@fluidframework/common-utils";
 import {
-    ICommittedProposal,
     IQuorum,
     IQuorumEvents,
     ISequencedClient,
@@ -17,7 +16,6 @@ export class QuorumProxy extends EventForwarder<IQuorumEvents> implements IQuoru
     public readonly propose: (key: string, value: any) => Promise<void>;
     public readonly has: (key: string) => boolean;
     public readonly get: (key: string) => any;
-    public readonly getApprovalData: (key: string) => ICommittedProposal | undefined;
     public readonly getMembers: () => Map<string, ISequencedClient>;
     public readonly getMember: (clientId: string) => ISequencedClient | undefined;
 
@@ -30,7 +28,6 @@ export class QuorumProxy extends EventForwarder<IQuorumEvents> implements IQuoru
         this.propose = doIfNotDisposed(this, quorum.propose.bind(quorum));
         this.has = doIfNotDisposed(this, quorum.has.bind(quorum));
         this.get = doIfNotDisposed(this, quorum.get.bind(quorum));
-        this.getApprovalData = doIfNotDisposed(this, quorum.getApprovalData.bind(quorum));
         this.getMembers = doIfNotDisposed(this, quorum.getMembers.bind(quorum));
         this.getMember = doIfNotDisposed(this, quorum.getMember.bind(quorum));
     }

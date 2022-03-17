@@ -24,6 +24,7 @@ import {
 } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import { Provider } from "nconf";
+import winston from "winston";
 import { getExternalWriterParams, IRepositoryManager, IRepositoryManagerFactory } from "../utils";
 import { handleResponse } from "./utils";
 
@@ -173,7 +174,7 @@ export class WholeSummaryWriteGitManager {
             `refs/heads/${this.documentId}`,
             { enabled: this.externalStorageEnabled },
         ).catch(() => undefined);
-        let commitParams: ICreateCommitParams
+        let commitParams: ICreateCommitParams;
         if (!existingRef && payload.sequenceNumber === 0) {
             // Create new document
             commitParams = {
@@ -209,7 +210,7 @@ export class WholeSummaryWriteGitManager {
                     force: true,
                     sha: commit.sha,
                 },
-                { enabled: this.externalStorageEnabled }
+                { enabled: this.externalStorageEnabled },
             );
         } else {
             await this.repoManager.createRef(
@@ -220,7 +221,6 @@ export class WholeSummaryWriteGitManager {
                 { enabled: this.externalStorageEnabled },
             );
         }
-        // TODO: precompute latest summary and return, or cache locally
         return {
             id: commit.sha,
         };
@@ -369,7 +369,7 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => getSummary(
+        ).then(async (repoManager) => getSummary(
             repoManager,
             request.params.sha,
             documentId,
@@ -383,7 +383,7 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const storageRoutingId: string = request.get("Storage-Routing-Id");
-        const [,documentId] = storageRoutingId.split(":");
+        const [tenantId,documentId] = storageRoutingId.split(":");
         if (!documentId) {
             handleResponse(Promise.reject(new NetworkError(400, "Invalid Storage-Routing-Id header")), response);
             return;
@@ -392,12 +392,34 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => createSummary(
-            repoManager,
-            wholeSummaryPayload,
-            documentId,
-            getExternalWriterParams(request.query?.config as string | undefined)?.enabled ?? false,
-        ));
+        ).then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => {
+            const externalStorageEnabled =
+                getExternalWriterParams(request.query?.config as string | undefined)?.enabled ?? false;
+            const writeSummaryResponse = await createSummary(
+                repoManager,
+                wholeSummaryPayload,
+                documentId,
+                externalStorageEnabled,
+            );
+            if (wholeSummaryPayload.type === "container") {
+                try {
+                    const wholeFlatSummary = await getSummary(
+                        repoManager,
+                        writeSummaryResponse.id,
+                        documentId,
+                        externalStorageEnabled,
+                    );
+                    return wholeFlatSummary;
+                } catch (e) {
+                    // This read is for Historian caching purposes, so it should be ignored on failure.
+                    winston.error("Failed to read latest summary after writing container summary", {
+                        documentId,
+                        tenantId,
+                    });
+                }
+            }
+            return writeSummaryResponse;
+        });
         handleResponse(resultP, response, 201);
     });
 
@@ -410,7 +432,7 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then((repoManager) => deleteSummary(repoManager, softDelete));
+        ).then(async (repoManager) => deleteSummary(repoManager, softDelete));
         handleResponse(resultP, response, 204);
     });
 

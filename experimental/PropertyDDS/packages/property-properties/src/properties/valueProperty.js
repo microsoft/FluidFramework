@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const { BaseProperty } = require('./baseProperty');
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
 const { MSG } = require('@fluid-experimental/property-common').constants;
+const { BaseProperty } = require('./baseProperty');
 
 /**
  * This class serves as a view to read, write and listen to changes in an
@@ -13,7 +13,6 @@ const { MSG } = require('@fluid-experimental/property-common').constants;
  * present this property will fail constructing.
  */
 export class ValueProperty extends BaseProperty {
-
     /**
      * @virtual
      * @param {Object=} in_params - the parameters
@@ -33,8 +32,7 @@ export class ValueProperty extends BaseProperty {
     constructor(in_params) {
         super(in_params);
         this._data = undefined;
-    };
-
+    }
 
     /**
      * Is this property a leaf node with regard to flattening?
@@ -45,8 +43,7 @@ export class ValueProperty extends BaseProperty {
      */
     _isFlattenLeaf() {
         return true;
-    };
-
+    }
 
     /**
      * returns the current value of ValueProperty
@@ -54,7 +51,7 @@ export class ValueProperty extends BaseProperty {
      */
     getValue() {
         return this._data;
-    };
+    }
 
     /**
      * Ensure the array dirty mask is also cleaned when cleaning the tree.
@@ -64,7 +61,7 @@ export class ValueProperty extends BaseProperty {
      */
     cleanDirty(in_flags) {
         this._cleanDirty(in_flags);
-    };
+    }
 
     /**
      * @param {*} in_value the new value
@@ -73,7 +70,7 @@ export class ValueProperty extends BaseProperty {
     setValue(in_value) {
         this._checkIsNotReadOnly(true);
         this._setValue(in_value, true);
-    };
+    }
 
     /**
      * Internal function to update the value of a property
@@ -97,7 +94,7 @@ export class ValueProperty extends BaseProperty {
             this._setDirty(in_reportToView);
         }
         return changed;
-    };
+    }
 
     /**
      * @inheritdoc
@@ -111,7 +108,7 @@ export class ValueProperty extends BaseProperty {
             var changed = this._setValue(in_serializedObj, in_reportToView);
             return changed ? this._data : undefined;
         }
-    };
+    }
 
     /**
      * @inheritdoc
@@ -124,7 +121,7 @@ export class ValueProperty extends BaseProperty {
             }
             this._setValue(newVal, in_reportToView);
         }
-    };
+    }
 
     /**
      * @inheritdoc
@@ -137,8 +134,7 @@ export class ValueProperty extends BaseProperty {
         if (flags) {
             this._setDirty(false, this, flags);
         }
-    };
-
+    }
 
     /**
      * Serialize the property
@@ -168,7 +164,7 @@ export class ValueProperty extends BaseProperty {
         } else {
             return this._data;
         }
-    };
+    }
 
     /**
      * Calls back the given function with a human-readable string
@@ -180,7 +176,7 @@ export class ValueProperty extends BaseProperty {
      */
     _prettyPrint(indent, externalId, printFct) {
         printFct(indent + externalId + this.getId() + ' (' + this.getTypeid() + '): ' + this.value);
-    };
+    }
 
     /**
      * Return a JSON representation of the property.
@@ -193,10 +189,9 @@ export class ValueProperty extends BaseProperty {
             context: this._context,
             typeid: this.getTypeid(),
             isConstant: this._isConstant,
-            value: this.getValue()
+            value: this.getValue(),
         };
-    };
-
+    }
 
     get value() {
         return this.getValue.apply(this, arguments);

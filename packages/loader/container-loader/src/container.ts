@@ -258,6 +258,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
+                    // pre-0.58 error message: containerClosedWithoutErrorDuringLoad
                     reject(err ?? new GenericError("Container closed without error during load"));
                 };
                 container.on("closed", onClosed);
@@ -780,6 +781,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public async attach(request: IRequest): Promise<void> {
         await PerformanceEvent.timedExecAsync(this.mc.logger, { eventName: "Attach" }, async () => {
             if (this._lifecycleState !== "loaded") {
+                // pre-0.58 error message: containerNotValidForAttach
                 throw new UsageError(`The Container is not in a valid state for attach [${this._lifecycleState}]`);
             }
 
@@ -1014,6 +1016,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
+        // pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
         this.close(new GenericError("Existing context does not satisfy incoming proposal"));
     }
 
@@ -1322,8 +1325,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             proposals,
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-            // Quorum proposal rejection removed, delete when protocol-base 0.1035 is integrated.
-            () => {});
+        );
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1641,8 +1643,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const client: ILocalSequencedClient | undefined =
                 this.getQuorum().getMember(message.clientId);
             if (client === undefined && message.type !== MessageType.ClientJoin) {
+                // pre-0.58 error message: messageClientIdMissingFromQuorum
                 errorMsg = "Remote message's clientId is missing from the quorum";
             } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
+                // pre-0.58 error message: messageClientIdShouldHaveLeft
                 errorMsg = "Remote message's clientId already should have left";
             }
             if (errorMsg !== undefined) {

@@ -5,42 +5,42 @@
 
 import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils";
 import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
 
-
-function createExpectsTest(orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc){
-    return async function (this:Context){
+function createExpectsTest(orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) {
+    return async function(this: Context) {
         const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
-        if(provider === undefined){
+        if (provider === undefined) {
             throw new Error("Expected __fluidTestProvider on this");
         }
-        try{
+        try {
             provider.logger.registerExpectedEvent(... orderedExpectedEvents);
             await test.bind(this)();
-        }catch(error){
+        } catch(error) {
             // only use TestException if the event is provided.
             // it must be last, as the events are ordered, so all other events must come first
-            if(orderedExpectedEvents[orderedExpectedEvents.length -1]?.eventName === "TestException"){
-                provider.logger.sendErrorEvent({eventName:"TestException"},error)
-            }else{
+            if (orderedExpectedEvents[orderedExpectedEvents.length - 1]?.eventName === "TestException") {
+                provider.logger.sendErrorEvent({ eventName:"TestException" }, error);
+            } else {
                 throw error;
             }
         }
         const err = getUnexpectedLogErrorException(provider.logger);
-        if(err !== undefined){
+        if (err !== undefined) {
             throw err;
         }
     };
 }
 
 export type ExpectsTest =
-    (name: string, orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) => Mocha.Test
+    (name: string, orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc) => Mocha.Test;
 
 /**
  * Similar to mocha's it function, but allow specifying expected events.
  * That must occur during the execution of the test.
  */
-export const itExpects: ExpectsTest & Record<"only" |"skip", ExpectsTest> =
+export const itExpects: ExpectsTest & Record<"only" | "skip", ExpectsTest> =
     (name: string, orderedExpectedEvents: ITelemetryGenericEvent[], test: Mocha.AsyncFunc): Mocha.Test =>
         it(name, createExpectsTest(orderedExpectedEvents, test));
 
