@@ -9,7 +9,6 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 
@@ -18,7 +17,7 @@ import { assert, performance } from "@fluidframework/common-utils";
  */
 export const latencyThreshold = 5000;
 
-export const numOpsToThrottle = 500;
+export const numOpsToThrottle = 100;
 
 class OpPerfTelemetry {
     private pongCount: number = 0;
@@ -32,7 +31,8 @@ class OpPerfTelemetry {
     private clientSequenceNumberForLatencyStatistics: number | undefined;
 
     private opTimeSittingInInboundQueue: number | undefined;
-    private clientSequenceNumberForSittingInProcessingQueue: number | undefined;
+    private durationRoundtripTime: number | undefined;
+    private durationSittingInInboundQueue: number | undefined;
 
     private firstConnection = true;
     private connectionOpSeqNumber: number | undefined;
@@ -69,39 +69,26 @@ class OpPerfTelemetry {
         this.deltaManager.on("disconnect", () => {
             this.opSendTimeForLatencyStatisticsForMsnStatistics = undefined;
             this.clientSequenceNumberForLatencyStatistics = undefined;
-            this.clientSequenceNumberForSittingInProcessingQueue = undefined;
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;
         });
 
         this.deltaManager.outbound.on("push", (messages) => {
             for (const msg of messages) {
-                if (msg.type === MessageType.Operation && msg.clientSequenceNumber % numOpsToThrottle === 1) {
-                        this.clientSequenceNumberForSittingInProcessingQueue = msg.clientSequenceNumber;
-                        this.opTimeSittingInInboundQueue = Date.now();
+                if (this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber) {
+                     this.opTimeSittingInInboundQueue = Date.now();
                 }
             }
         });
 
         this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
-            if (message.type === MessageType.Operation) {
-                if (this.clientId === message.clientId &&
-                    this.clientSequenceNumberForSittingInProcessingQueue === message.clientSequenceNumber &&
-                    this.opTimeSittingInInboundQueue !== undefined) {
-                    const durationSittingInInboundQueue = Date.now() - this.opTimeSittingInInboundQueue;
-                    this.clientSequenceNumberForSittingInProcessingQueue = undefined;
-                    this.opTimeSittingInInboundQueue = undefined;
-                    this.logger.sendPerformanceEvent({
-                        eventName: "OpSittingInBoundQueue",
-                        sequenceNumber: message.clientSequenceNumber,
-                        referenceSequenceNumber: message.referenceSequenceNumber,
-                        duration: durationSittingInInboundQueue,
-                        category: "performance",
-                    });
-                }
+            if (this.clientId === message.clientId &&
+                this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber &&
+                this.opTimeSittingInInboundQueue !== undefined) {
+                this.durationSittingInInboundQueue = Date.now() - this.opTimeSittingInInboundQueue;
+                this.opTimeSittingInInboundQueue = undefined;
             }
         });
-
 
         this.deltaManager.inbound.on("idle", (count: number, duration: number) => {
             // Do not want to log zero for sure.
@@ -181,7 +168,7 @@ class OpPerfTelemetry {
             assert(this.opSendTimeForLatencyStatistics !== undefined,
                 0x120 /* "Undefined latency statistics (op send time)" */);
 
-            const duration = Date.now() - this.opSendTimeForLatencyStatistics;
+            this.durationRoundtripTime = Date.now() - this.opSendTimeForLatencyStatistics;
 
             // One of the core expectations for Fluid service is to be fast.
             // When it's not the case, we want to learn about it and be able to investigate, so
@@ -190,15 +177,16 @@ class OpPerfTelemetry {
             // that results in overwhelming ordering service and thus starting to see long latencies.
             // The threshold could be adjusted, but ideally it stays  workload-agnostic, as service
             // performance impacts all workloads relying on service.
-            const category = duration > latencyThreshold ? "error" : "performance";
+            const category = this.durationRoundtripTime > latencyThreshold ? "error" : "performance";
 
             this.logger.sendPerformanceEvent({
                 eventName: "OpRoundtripTime",
                 sequenceNumber,
                 referenceSequenceNumber: message.referenceSequenceNumber,
-                duration,
+                duration: this.durationRoundtripTime,
                 category,
-                pingLatency: this.pingLatency
+                pingLatency: this.pingLatency,
+                durationInboundQueue: this.durationSittingInInboundQueue ?? 0,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
         }
