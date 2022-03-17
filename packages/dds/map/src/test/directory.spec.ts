@@ -118,7 +118,6 @@ describe("Directory", () => {
 
                     assert.equal(changed.key, "rock");
                     assert.equal(changed.path, directory.absolutePath);
-                    assert.equal(changed.previousValue, previousValue);
 
                     assert.equal(local, true, "local should be true for local action for subDirectoryDeleted event");
                     assert.equal(target, directory, "target should be the directory for subDirectoryDeleted event");
