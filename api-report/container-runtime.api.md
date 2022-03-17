@@ -40,6 +40,7 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryConfiguration } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -118,8 +119,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getAudience(): IAudience;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    // Warning: (ae-forgotten-export) The symbol "IPendingRuntimeState" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    getPendingLocalState(): IPendingLocalState | undefined;
+    getPendingLocalState(): Promise<IPendingRuntimeState>;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)

@@ -28,6 +28,7 @@ import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
+import { IProtocolState } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/core-interfaces';
 import { IProxyLoaderFactory } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -64,6 +65,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     close(error?: ICriticalContainerError): void;
     // (undocumented)
     closeAndGetPendingLocalState(): string;
+    // (undocumented)
+    closeAndGetPendingLocalStateAsync(): Promise<string>;
     // (undocumented)
     get closed(): boolean;
     // (undocumented)

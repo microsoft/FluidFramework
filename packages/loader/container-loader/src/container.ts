@@ -63,6 +63,7 @@ import {
     IDocumentAttributes,
     IDocumentMessage,
     IProcessMessageResult,
+    IProtocolState,
     IQuorumClients,
     IQuorumProposals,
     ISequencedClient,
@@ -230,6 +231,8 @@ const getCodeProposal =
 export interface IPendingContainerState {
     pendingRuntimeState: unknown;
     url: string;
+    protocol: IProtocolState;
+    term: number;
     clientId?: string;
 }
 
@@ -755,6 +758,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public closeAndGetPendingLocalState(): string {
+        return "a string";
+    }
+
+    public async closeAndGetPendingLocalStateAsync(): Promise<string> {
         // runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
         // container at the same time we get pending state, otherwise this container could reconnect and resubmit with
         // a new clientId and a future container using stale pending state without the new clientId would resubmit them
@@ -762,9 +769,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
+        assert(!!this._protocolHandler, "no protocol handler");
         const pendingState: IPendingContainerState = {
-            pendingRuntimeState: this.context.getPendingLocalState(),
+            pendingRuntimeState: await this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
+            protocol: this._protocolHandler.getProtocolState(),
+            term: this._protocolHandler.term,
             clientId: this.clientId,
         };
 
@@ -1092,10 +1102,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot.
-        const { snapshot, versionId } = await this.fetchSnapshotTree(specifiedVersion);
-        assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
+        const { snapshot, versionId } = pendingLocalState === undefined
+            ? await this.fetchSnapshotTree(specifiedVersion)
+            : { snapshot: undefined, versionId: undefined };
+        assert(snapshot !== undefined || pendingLocalState !== undefined, 0x237 /* "Snapshot should exist" */);
 
-        const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
+        const attributes: IDocumentAttributes = pendingLocalState === undefined
+            ? await this.getDocumentAttributes(this.storageService, snapshot)
+            : { sequenceNumber: pendingLocalState.protocol.sequenceNumber,
+                minimumSequenceNumber: pendingLocalState.protocol.minimumSequenceNumber,
+                term: pendingLocalState.term,
+            };
 
         let opsBeforeReturnP: Promise<void> | undefined;
 
@@ -1119,8 +1136,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // ...load in the existing quorum
         // Initialize the protocol handler
-        this._protocolHandler =
-            await this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
+        this._protocolHandler = pendingLocalState === undefined
+            ? await this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot)
+            : await this.initializeProtocolState(
+                attributes,
+                pendingLocalState.protocol.members,
+                pendingLocalState.protocol.proposals,
+                pendingLocalState.protocol.values);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(

@@ -554,8 +554,8 @@ describe("Runtime", () => {
                 return {
                     replayPendingStates: () => { },
                     hasPendingMessages: () => hasPendingMessages,
-                    processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
-                        return { localAck: false, localOpMetadata: undefined };
+                    processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
+                        return undefined;
                     },
                 } as PendingStateManager;
             };

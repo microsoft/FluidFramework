@@ -11,7 +11,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
     ChannelFactoryRegistry,
-    createAndAttachContainer,
     ITestFluidObject,
     ITestContainerConfig,
     ITestObjectProvider,
@@ -19,6 +18,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 
 const mapId = "map";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -44,6 +44,14 @@ const ensureContainerConnected = async (container: IContainer) => {
     }
 };
 
+const getPendingStateWithoutClose = async (container: IContainer) => {
+    const containerClose = container.close;
+    container.close = (message) => assert(message === undefined);
+    const pendingState = await (container as any).closeAndGetPendingLocalStateAsync();
+    container.close = containerClose;
+    return pendingState;
+}
+
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
 
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
@@ -63,19 +71,22 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 
     let pendingState: string;
     if (send) {
-        const pendingRuntimeState = (container as any).context.runtime.getPendingLocalState();
+        pendingState = await getPendingStateWithoutClose(container);
         await args.ensureSynchronized();
-        const p = container.closeAndGetPendingLocalState();
-        assert.strictEqual(JSON.parse(p).pendingRuntimeState, undefined);
+        container.close();
+        // const pendingRuntimeState = await (container as any).context.runtime.getPendingLocalState();
+        // await args.ensureSynchronized();
+        // const p = await (container as any).closeAndGetPendingLocalStateAsync();
+        // assert.strictEqual(JSON.parse(p).pendingRuntimeState, undefined);
         // if we sent the ops successfully the pending state should have a clientId. if not they will be resent anyway
-        assert(pendingRuntimeState.clientId !== undefined, "no clientId for successful ops");
-        assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
-        pendingState = JSON.stringify({
-            url: container.resolvedUrl.url,
-            pendingRuntimeState,
-        });
+        // assert(pendingRuntimeState.clientId !== undefined, "no clientId for successful ops");
+        // assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
+        // pendingState = JSON.stringify({
+        //     url: container.resolvedUrl.url,
+        //     pendingRuntimeState,
+        // });
     } else {
-        pendingState = container.closeAndGetPendingLocalState();
+        pendingState = await (container as any).closeAndGetPendingLocalStateAsync();
     }
 
     args.opProcessingController.resumeProcessing();
@@ -96,14 +107,75 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     beforeEach(async () => {
         provider = getTestObjectProvider();
         loader = provider.makeTestLoader(testContainerConfig);
-        container1 = await createAndAttachContainer(
-            provider.defaultCodeDetails,
-            loader,
-            provider.driver.createCreateNewRequest(provider.documentId));
-        provider.updateDocumentId(container1.resolvedUrl);
-        url = await container1.getAbsoluteUrl("");
+        container1 = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        // container1 = await createAndAttachContainer(
+        //     provider.defaultCodeDetails,
+        //     loader,
+        //     provider.driver.createCreateNewRequest(provider.documentId));
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
+
+        map1.set("some initial key", "some value");
+
+        await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        provider.updateDocumentId(container1.resolvedUrl);
+        url = await container1.getAbsoluteUrl("");
+    });
+
+    it("rehydrates and does some stuff", async function() {
+        const loader2 = provider.makeTestLoader(testContainerConfig);
+        const container = await loader2.resolve({ url });
+        await ensureContainerConnected(container);
+        const pendingOps = await (container as any).closeAndGetPendingLocalStateAsync();
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+
+        [...Array(lots).keys()].map((i) => map2.set(i.toString(), i));
+        [...Array(lots).keys()].map((i) => map1.set((lots + i).toString(), lots + i));
+
+        await provider.ensureSynchronized();
+
+        [...Array(lots * 2).keys()].map((i) =>
+            assert.strictEqual(map1.get(i.toString()), i, `map 1 ${map1.get(i.toString())} !== ${i}`));
+        [...Array(lots * 2).keys()].map((i) =>
+            assert.strictEqual(map2.get(i.toString()), i, `map 2 ${map2.get(i.toString())} !== ${i}`));
+    });
+
+    it("rehydrates and does some more stuff", async function() {
+        const loader2 = provider.makeTestLoader(testContainerConfig);
+        const container = await loader2.resolve({ url });
+        await ensureContainerConnected(container);
+        const pendingOps = await (container as any).closeAndGetPendingLocalStateAsync();
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+
+        const newDataStore = await (container2 as any).context.runtime.createDataStore("default");
+        const newDataObj = await requestFluidObject<ITestFluidObject>(newDataStore, "/");
+        map2.set("new data store", newDataObj.handle);
+        [...Array(lots).keys()].map((i) => newDataObj.root.set(i.toString(), i));
+
+        await provider.ensureSynchronized();
+
+        // const newDataStore2 = await requestFluidObject<ITestFluidObject>(container1, "newdatastore");
+        const handle = map1.get("new data store");
+        const newDataStore2 = await handle.get();
+        [...Array(lots).keys()].map((i) => newDataStore2.root.set((lots + i).toString(), lots + i));
+
+        await provider.ensureSynchronized();
+
+        [...Array(lots * 2).keys()].map((i) =>
+            assert.strictEqual(newDataObj.root.get(i.toString()), i, `map 1 ${newDataObj.root.get(i.toString())} !== ${i}`));
+        [...Array(lots * 2).keys()].map((i) =>
+            assert.strictEqual(newDataStore2.root.get(i.toString()), i, `map 2 ${newDataStore2.root.get(i.toString())} !== ${i}`));
+
+        newDataObj.root.set("blob handle", await newDataObj.runtime.uploadBlob(stringToBuffer("some random text", "utf-8")));
+        newDataStore2.root.set("another blob handle", await newDataObj.runtime.uploadBlob(stringToBuffer("some different text", "utf-8")));
+        await provider.ensureSynchronized();
+        const blob = await newDataStore2.root.get("blob handle").get();
+        assert.strictEqual(bufferToString(blob, "utf8"), "some random text");
+        assert.strictEqual(bufferToString(await newDataObj.root.get("another blob handle").get(), "utf8"), "some different text");
     });
 
     it("resends op", async function() {
@@ -377,14 +449,15 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         [...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
-        const pendingRuntimeState = (container as any).context.runtime.getPendingLocalState();
-        assert(pendingRuntimeState.clientId !== undefined, "no clientId for stashed ops");
-        assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
-        const pendingState = JSON.stringify({
-            url: container.resolvedUrl.url,
-            clientId: serializedClientId,
-            pendingRuntimeState,
-        });
+        // const pendingRuntimeState = (container as any).context.runtime.getPendingLocalState();
+        // assert(pendingRuntimeState.clientId !== undefined, "no clientId for stashed ops");
+        // assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
+        // const pendingState = JSON.stringify({
+        //     url: container.resolvedUrl.url,
+        //     clientId: serializedClientId,
+        //     pendingRuntimeState,
+        // });
+        const pendingState = await getPendingStateWithoutClose(container);
 
         const container2 = await loader.resolve({ url }, pendingState);
 
