@@ -127,6 +127,24 @@
         "TypeAliasDeclaration_FluidDataStoreRegistryEntry": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
+          "forwardCompat": false
         }
       },
       "0.52.0": {
@@ -168,6 +186,24 @@
         },
         "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
           "backCompat": false,
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
           "forwardCompat": false
         }
       },
@@ -211,6 +247,24 @@
         "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
+          "forwardCompat": false
         }
       },
       "0.54.0": {
@@ -252,6 +306,24 @@
         },
         "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
           "backCompat": false,
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
           "forwardCompat": false
         }
       },
@@ -339,6 +411,24 @@
           "forwardCompat": false
         }
       },
+      "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_InboundAttachMessage": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISummarizerNode": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummarizerNodeWithGC": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IAttachMessage": {
+        "forwardCompat": false
+      },
       "0.57.0": {
         "InterfaceDeclaration_IContainerRuntimeBase": {
           "backCompat": false,
@@ -378,6 +468,24 @@
         },
         "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
           "backCompat": false,
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
           "forwardCompat": false
         }
       }

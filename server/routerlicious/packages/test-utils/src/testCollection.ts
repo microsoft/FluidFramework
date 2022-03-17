@@ -8,7 +8,7 @@ import { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-co
 import * as _ from "lodash";
 
 export class TestCollection implements ICollection<any> {
-    constructor(public collection: any[]) {
+    constructor(public readonly collection: any[]) {
     }
 
     public async aggregate(group: any, options?: any) {

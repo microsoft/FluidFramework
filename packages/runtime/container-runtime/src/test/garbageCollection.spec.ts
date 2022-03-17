@@ -150,7 +150,6 @@ describe("Garbage Collection Tests", () => {
         const getDummySnapshotTree = (): ISnapshotTree => {
             return {
                 blobs: {},
-                commits: {},
                 trees: {},
             };
         };

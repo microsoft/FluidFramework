@@ -195,12 +195,8 @@ describe("Summary Utils", () => {
                                 },
                                 trees: {
                                 },
-                                commits: {
-                                },
                                 unreferenced: true,
                             },
-                        },
-                        commits: {
                         },
                     },
                     unref: {
@@ -208,12 +204,8 @@ describe("Summary Utils", () => {
                         },
                         trees: {
                         },
-                        commits: {
-                        },
                         unreferenced: true,
                     },
-                },
-                commits: {
                 },
             };
         });

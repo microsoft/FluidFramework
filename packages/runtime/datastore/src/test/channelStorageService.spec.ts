@@ -14,7 +14,6 @@ describe("ChannelStorageService", () => {
     it("Empty Tree", async () => {
         const tree: ISnapshotTree = {
             blobs: {},
-            commits: {},
             trees: {},
         };
         const storage: Pick<IDocumentStorageService, "readBlob"> = {
@@ -33,7 +32,6 @@ describe("ChannelStorageService", () => {
             blobs: {
                 foo: "bar",
             },
-            commits: {},
             trees: {},
         };
         const storage: Pick<IDocumentStorageService, "readBlob"> = {
@@ -51,13 +49,11 @@ describe("ChannelStorageService", () => {
     it("Nested Blob", async () => {
         const tree: ISnapshotTree = {
             blobs: {},
-            commits: {},
             trees: {
                 nested: {
                     blobs: {
                         foo: "bar",
                     },
-                    commits: {},
                     trees: {},
                 },
             },
