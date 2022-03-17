@@ -48,7 +48,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
                 );
             }
             throw new Error("Invalid git library name.");
-        }
+        };
         const repositoryManagerFactory = getRepositoryManagerFactory();
 
         return new GitrestResources(config, port, repositoryManagerFactory);

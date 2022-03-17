@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IGetRefParamsExternal, IWholeFlatSummary } from "@fluidframework/server-services-client";
 import { PathLike } from "fs";
+import { IGetRefParamsExternal, IWholeFlatSummary } from "@fluidframework/server-services-client";
 import { IExternalWriterConfig, IFileSystemManager } from "./definitions";
 
 /**
@@ -43,10 +43,10 @@ export async function exists(fileSystemManager: IFileSystemManager, fileOrDirect
         }
         throw error;
     }
-};
+}
 
 const latestFullSummaryFilename = "latestFullSummary";
-const getLatestFullSummaryFilePath = (dir: string) => `${dir}/${latestFullSummaryFilename}`
+const getLatestFullSummaryFilePath = (dir: string) => `${dir}/${latestFullSummaryFilename}`;
 
 export async function persistLatestFullSummaryInStorage(
     fileSystemManager: IFileSystemManager,
@@ -77,7 +77,7 @@ export async function retrieveLatestFullSummaryFromStorage(
     } catch (error) {
         if (error?.code === "ENOENT") {
             // File does not exist.
-            return undefined
+            return undefined;
         }
         throw error;
     }

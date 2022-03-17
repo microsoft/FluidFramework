@@ -354,6 +354,8 @@ export class NodegitRepositoryManager implements IRepositoryManager {
                     return latestFullSummaryFromStorage;
                 }
             } catch (e) {
+                // This read is for optimization purposes, so on failure
+                // we can try to read the summary in typical fashion.
                 winston.error(`Failed to read latest full summary from storage: ${safeStringify(e)}`, {
                     documentId,
                     tenantId: this.repoName,
@@ -379,10 +381,11 @@ export class NodegitRepositoryManager implements IRepositoryManager {
             this,
             externalWriterConfig?.enabled ?? false,
         );
-        const writeSummaryResponse = await wholeSummaryWriteGitManager.writeSummary(payload);
+        const {isNew, writeSummaryResponse} = await wholeSummaryWriteGitManager.writeSummary(payload);
 
-        if (payload.type === "container") {
-            // TODO: For new documents, waiting to pre-compute latest and persist it will slow down document creation.
+        // Waiting to pre-compute and persist latest summary would slow down document creation,
+        // so skip this step if it is a new document.
+        if (!isNew && payload.type === "container") {
             const latestFullSummary: IWholeFlatSummary | undefined = await this.getSummary(
                 writeSummaryResponse.id,
                 documentId,
@@ -395,24 +398,24 @@ export class NodegitRepositoryManager implements IRepositoryManager {
                 });
                 return undefined;
             });
-            if (this.options.persistLatestFullSummary) {
-                try {
-                    // TODO: Could this fail due to file being open and still being written to from a previous request?
-                    await helpers.persistLatestFullSummaryInStorage(
-                        this.fileSystemManager,
-                        this.getDocumentStorageDirectory(documentId),
-                        latestFullSummary,
-                    );
-                } catch(e) {
-                    winston.error(`Failed to persist latest full summary to storage: ${safeStringify(e)}`, {
-                        documentId,
-                        tenantId: this.repoName,
-                    });
-                    // TODO: Find and add more information about this failure so that Scribe can retry as necessary.
-                    throw new NetworkError(500, "Failed to persist latest full summary to storage");
-                }
-            }
             if (latestFullSummary) {
+                if (this.options.persistLatestFullSummary) {
+                    try {
+                        // TODO: does this fail if file is open and still being written to from a previous request?
+                        await helpers.persistLatestFullSummaryInStorage(
+                            this.fileSystemManager,
+                            this.getDocumentStorageDirectory(documentId),
+                            latestFullSummary,
+                        );
+                    } catch(e) {
+                        winston.error(`Failed to persist latest full summary to storage: ${safeStringify(e)}`, {
+                            documentId,
+                            tenantId: this.repoName,
+                        });
+                        // TODO: Find and add more information about this failure so that Scribe can retry as necessary.
+                        throw new NetworkError(500, "Failed to persist latest full summary to storage");
+                    }
+                }
                 return latestFullSummary;
             }
         }
@@ -420,7 +423,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         return writeSummaryResponse;
     }
 
-    public async deleteSummary(documentId: string, softDelete: boolean): Promise<boolean> {  
+    public async deleteSummary(documentId: string, softDelete: boolean): Promise<boolean> {
         throw new NetworkError(501, "Not Implemented");
     }
 

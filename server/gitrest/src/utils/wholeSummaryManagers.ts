@@ -134,6 +134,16 @@ function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry)
     throw new NetworkError(400, `Unknown entry type: ${entry.type}`);
 }
 
+interface IWriteSummaryInfo {
+    /**
+     * True if this is an initial summary for a new document.
+     */
+    isNew: boolean;
+    /**
+     * Response containing commit sha for "container" write or tree sha for "channel" write.
+     */
+     writeSummaryResponse: IWriteSummaryResponse;
+}
 export class WholeSummaryWriteGitManager {
     private readonly entryHandleToObjectShaCache: Map<string, string> = new Map();
 
@@ -143,16 +153,19 @@ export class WholeSummaryWriteGitManager {
         private readonly externalStorageEnabled = true,
     ) {}
 
-    public async writeSummary(payload: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+    public async writeSummary(payload: IWholeSummaryPayload): Promise<IWriteSummaryInfo> {
         if (payload.type === "channel") {
             const summaryTreeHandle = await this.writeChannelSummary(payload);
             return {
-                id: summaryTreeHandle,
+                isNew: false,
+                writeSummaryResponse: {
+                    id: summaryTreeHandle,
+                },
             };
         }
         if (payload.type === "container") {
-            const writeSummaryResponse = await this.writeContainerSummary(payload);
-            return writeSummaryResponse;
+            const writeSummaryInfo = await this.writeContainerSummary(payload);
+            return writeSummaryInfo;
         }
         throw new NetworkError(400, `Unknown Summary Type: ${payload.type}`);
     }
@@ -161,7 +174,7 @@ export class WholeSummaryWriteGitManager {
         return this.writeSummaryTreeCore(payload.entries);
     }
 
-    private async writeContainerSummary(payload: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+    private async writeContainerSummary(payload: IWholeSummaryPayload): Promise<IWriteSummaryInfo> {
         const treeHandle = await this.writeSummaryTreeCore(
             payload.entries,
             "",
@@ -171,6 +184,7 @@ export class WholeSummaryWriteGitManager {
             { enabled: this.externalStorageEnabled },
         ).catch(() => undefined);
         let commitParams: ICreateCommitParams;
+        let isNew = false;
         if (!existingRef && payload.sequenceNumber === 0) {
             // Create new document
             commitParams = {
@@ -183,6 +197,7 @@ export class WholeSummaryWriteGitManager {
                 parents: [],
                 tree: treeHandle,
             };
+            isNew = true;
         } else {
             // Update existing document
             commitParams = {
@@ -218,7 +233,10 @@ export class WholeSummaryWriteGitManager {
             );
         }
         return {
-            id: commit.sha,
+            isNew,
+            writeSummaryResponse: {
+                id: commit.sha,
+            },
         };
     }
 
