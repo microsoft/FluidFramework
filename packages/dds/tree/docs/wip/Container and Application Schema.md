@@ -87,6 +87,7 @@ enum Multiplicity {
 }
 
 enum Value {
+    Nothing,
     Number,
     String,
     Boolean,
@@ -107,12 +108,25 @@ interface Type {
     name: string;
     fields: Field[];
     extraFields: FieldContent;
+    value: Value;
 }
 ```
 
 These `Types` can be added as `container schema` as part of an edit op, which is considered conflicted if it tries to add a type that has a conflicting `name` and is not equal to the existing one.
 
 This intentionally does not support any concept of versioning or name-spacing: users of it can include versions and namespaces in the `name` if they want, or features for them could be added later.
+
+While a schema must be added to the document as a container schema to use the type
+(otherwise adding a new type could break existing data which might not even be downloaded on the current client),
+it's possible to add a schema that is compatible with all possible data.
+Applications which wish to rely entirely on schema-on-read for some or all of their data can use this pattern for all `container schema` and only use their actual developer authored schema as `application schema`:
+
+```typescript
+const anyField: FieldContent = { multiplicity: Multiplicity.sequence };
+function makeAnyType(name: string): Type {
+    return { name, extraFields: anyField };
+}
+```
 
 ## Use as `Container Schema`
 
