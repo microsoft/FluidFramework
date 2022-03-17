@@ -24,6 +24,7 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
+These should not be used and there is no replacement provided.
 
 
 # 0.58
