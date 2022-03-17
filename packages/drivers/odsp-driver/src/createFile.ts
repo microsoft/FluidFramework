@@ -61,6 +61,7 @@ export async function createNewFluidFile(
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throw new NonRetryableError(
+            // pre-0.58 error message: Invalid filename
             "Invalid filename for createNew", OdspErrorType.invalidFileNameError, { driverVersion });
     }
 
@@ -154,6 +155,7 @@ export async function createNewEmptyFluidFile(
                 const content = fetchResponse.content;
                 if (!content || !content.id) {
                     throw new NonRetryableError(
+                        // pre-0.58 error message: ODSP CreateFile call returned no item ID
                         "ODSP CreateFile call returned no item ID (for empty file)",
                         DriverErrorType.incorrectServerResponse,
                         { driverVersion });

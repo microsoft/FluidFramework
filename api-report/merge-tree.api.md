@@ -120,7 +120,7 @@ export class Client {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number): {
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage): {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -367,7 +367,7 @@ export interface IInterval {
     // (undocumented)
     compareStart(b: IInterval): number;
     // (undocumented)
-    modify(label: string, start: number, end: number): IInterval | undefined;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
     // (undocumented)

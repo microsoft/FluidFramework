@@ -1,9 +1,13 @@
 {
   "name": "@fluid-experimental/schemas",
-  "version": "0.58.1000",
+  "version": "0.58.2000",
   "description": "Centralized package for storing schemas used by the samples.",
   "homepage": "https://fluidframework.com",
-  "repository": "https://github.com/microsoft/FluidFramework",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "experimental/PropertyDDS/examples/schemas"
+  },
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/index.js",

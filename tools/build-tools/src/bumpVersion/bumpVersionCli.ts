@@ -124,7 +124,7 @@ function parseOptions(argv: string[]) {
         if (arg === "--branch") {
             paramBranch = true;
             paramClean = true;
-            break;
+            continue;
         }
         if (arg === "--local") {
             paramLocal = false;
