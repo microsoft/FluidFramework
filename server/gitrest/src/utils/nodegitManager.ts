@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { PathLike } from "fs";
 import * as path from "path";
 import nodegit from "nodegit";
 import winston from "winston";
@@ -35,17 +34,6 @@ export interface INodeGitOptions {
      */
     persistLatestFullSummary: boolean;
 }
-
-const latestFullSummaryFilename = "latestFullSummary";
-
-const exists = async (fileSystemManager: IFileSystemManager, fileOrDirectoryPath: PathLike): Promise<boolean> => {
-    try {
-        await fileSystemManager.stat(fileOrDirectoryPath);
-        return true;
-    } catch (e) {
-        return false;
-    }
-};
 
 export class NodegitRepositoryManager implements IRepositoryManager {
     constructor(
@@ -356,14 +344,16 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         documentId: string,
         externalWriterConfig?: IExternalWriterConfig,
     ): Promise<IWholeFlatSummary> {
-        if (sha === latestSummarySha) {
+        if (this.options.persistLatestFullSummary && sha === latestSummarySha) {
             try {
-                const latestFullSummaryFromStorage = await this.retrieveLatestFullSummaryFromStorage(documentId);
+                const latestFullSummaryFromStorage = await helpers.retrieveLatestFullSummaryFromStorage(
+                    this.fileSystemManager,
+                    this.getDocumentStorageDirectory(documentId),
+                );
                 if (latestFullSummaryFromStorage !== undefined) {
                     return latestFullSummaryFromStorage;
                 }
             } catch (e) {
-                // TODO: Don't log as error if a persisted full summary simply does not exist yet
                 winston.error(`Failed to read latest full summary from storage: ${safeStringify(e)}`, {
                     documentId,
                     tenantId: this.repoName,
@@ -405,10 +395,14 @@ export class NodegitRepositoryManager implements IRepositoryManager {
                 });
                 return undefined;
             });
-            if (latestFullSummary) {
+            if (this.options.persistLatestFullSummary) {
                 try {
                     // TODO: Could this fail due to file being open and still being written to from a previous request?
-                    await this.persistLatestFullSummaryInStorage(documentId, latestFullSummary);
+                    await helpers.persistLatestFullSummaryInStorage(
+                        this.fileSystemManager,
+                        this.getDocumentStorageDirectory(documentId),
+                        latestFullSummary,
+                    );
                 } catch(e) {
                     winston.error(`Failed to persist latest full summary to storage: ${safeStringify(e)}`, {
                         documentId,
@@ -417,6 +411,8 @@ export class NodegitRepositoryManager implements IRepositoryManager {
                     // TODO: Find and add more information about this failure so that Scribe can retry as necessary.
                     throw new NetworkError(500, "Failed to persist latest full summary to storage");
                 }
+            }
+            if (latestFullSummary) {
                 return latestFullSummary;
             }
         }
@@ -426,36 +422,6 @@ export class NodegitRepositoryManager implements IRepositoryManager {
 
     public async deleteSummary(documentId: string, softDelete: boolean): Promise<boolean> {  
         throw new NetworkError(501, "Not Implemented");
-    }
-
-    private async persistLatestFullSummaryInStorage(
-        documentId: string,
-        latestFullSummary: IWholeFlatSummary,
-    ): Promise<void> {
-        if (!this.options.persistLatestFullSummary) {
-            return;
-        }
-        const documentStorageDirectory = this.getDocumentStorageDirectory(documentId);
-        const directoryExists = await exists(this.fileSystemManager, documentStorageDirectory);
-        if (!directoryExists) {
-            await this.fileSystemManager.mkdir(documentStorageDirectory);
-        }
-        await this.fileSystemManager.writeFile(
-            `${documentStorageDirectory}/${latestFullSummaryFilename}`,
-            JSON.stringify(latestFullSummary),
-        );
-    }
-
-    private async retrieveLatestFullSummaryFromStorage(documentId: string): Promise<IWholeFlatSummary | undefined> {
-        if (!this.options.persistLatestFullSummary) {
-            return undefined
-        };
-        const summaryFile = await this.fileSystemManager.readFile(
-            `${this.getDocumentStorageDirectory(documentId)}/${latestFullSummaryFilename}`,
-        );
-        // TODO: This will be converted back to a JSON string for the HTTP response
-        const summary: IWholeFlatSummary = JSON.parse(summaryFile.toString());
-        return summary;
     }
 
     private getDocumentStorageDirectory(documentId: string): string {
@@ -503,7 +469,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         if (!(repoPath in this.repositoryPCache)) {
             const directory = `${this.baseDir}/${repoPath}`;
 
-            const repoExists = await exists(this.fileSystemManager, directory);
+            const repoExists = await helpers.exists(this.fileSystemManager, directory);
             if (!repoExists) {
                 winston.info(`Repo does not exist ${directory}`);
                 // services-client/getOrCreateRepository depends on a 400 response code
