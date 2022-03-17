@@ -5,12 +5,10 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        "@fluidframework/eslint-config-fluid/strict"
     ],
     "parserOptions": {
         "project": ["./tsconfig.json"]
     },
-    "rules": {
-        "@typescript-eslint/strict-boolean-expressions": "off"
-    }
+    "rules": {}
 }

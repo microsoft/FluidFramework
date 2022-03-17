@@ -1537,7 +1537,19 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though?
         const successfullyRemoved = this._subdirectories.delete(subdirName);
-        previousValue?.dispose();
+        this.disposeSubDirectoryTree(previousValue);
         return successfullyRemoved;
+    }
+
+    private disposeSubDirectoryTree(directory: IDirectory | undefined) {
+        if (!directory) {
+            return;
+        }
+        // Dispose the subdirectory tree. This will dispose the subdirectories from bottom to top.
+        const subDirectories = directory.subdirectories();
+        for (const [_, subDirectory] of subDirectories) {
+            this.disposeSubDirectoryTree(subDirectory);
+        }
+        directory.dispose();
     }
 }

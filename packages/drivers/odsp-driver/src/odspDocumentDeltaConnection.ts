@@ -16,6 +16,7 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
+import type { Socket, io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
 import { EpochTracker } from "./epochTracker";
@@ -42,7 +43,7 @@ export interface ISocketEvents extends IEvent {
 class SocketReference extends TypedEventEmitter<ISocketEvents> {
     private references: number = 1;
     private delayDeleteTimeout: ReturnType<typeof setTimeout> | undefined;
-    private _socket: SocketIOClient.Socket | undefined;
+    private _socket: Socket | undefined;
 
     // When making decisions about socket reuse, we do not reuse disconnected socket.
     // But we want to differentiate the following case from disconnected case:
@@ -106,7 +107,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
         return this._socket;
     }
 
-    public constructor(public readonly key: string, socket: SocketIOClient.Socket) {
+    public constructor(public readonly key: string, socket: Socket) {
         super();
 
         this._socket = socket;
@@ -198,7 +199,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         tenantId: string,
         documentId: string,
         token: string | null,
-        io: SocketIOClientStatic,
+        io: typeof SocketIOClientStatic,
         client: IClient,
         url: string,
         telemetryLogger: ITelemetryLogger,
@@ -300,7 +301,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * Gets or create a socket io connection for the given key
      */
     private static getOrCreateSocketIoReference(
-        io: SocketIOClientStatic,
+        io: typeof SocketIOClientStatic,
         timeoutMs: number,
         key: string,
         url: string,
@@ -337,7 +338,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * @param enableMultiplexing - If the websocket is multiplexing multiple documents
      */
     private constructor(
-        socket: SocketIOClient.Socket,
+        socket: Socket,
         documentId: string,
         socketReference: SocketReference,
         logger: ITelemetryLogger,

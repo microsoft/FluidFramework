@@ -33,6 +33,7 @@ import {
     InstrumentedStorageTokenFetcher,
     OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
+import type { io as SocketIOClientStatic } from "socket.io-client";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
@@ -73,7 +74,7 @@ export class OdspDocumentService implements IDocumentService {
         getStorageToken: InstrumentedStorageTokenFetcher,
         getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
-        socketIoClientFactory: () => Promise<SocketIOClientStatic>,
+        socketIoClientFactory: () => Promise<typeof SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         epochTracker: EpochTracker,
@@ -123,7 +124,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
-        private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
+        private readonly socketIoClientFactory: () => Promise<typeof SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
@@ -423,7 +424,7 @@ export class OdspDocumentService implements IDocumentService {
         tenantId: string,
         documentId: string,
         token: string | null,
-        io: SocketIOClientStatic,
+        io: typeof SocketIOClientStatic,
         client: IClient,
         webSocketUrl: string,
     ): Promise<OdspDocumentDeltaConnection> {
