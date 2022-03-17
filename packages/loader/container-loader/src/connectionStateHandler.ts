@@ -106,7 +106,7 @@ export class ConnectionStateHandler {
         }
     }
 
-    public receivedAddMemberEvent(clientId: string) {
+    private receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
             if (this.joinOpTimer.hasTimer) {
@@ -165,7 +165,7 @@ export class ConnectionStateHandler {
         }
     }
 
-    public receivedRemoveMemberEvent(clientId: string) {
+    private receivedRemoveMemberEvent(clientId: string) {
         // If the client which has left was us, then finish the timer.
         if (this.clientId === clientId) {
             this.prevClientLeftTimer.clear();

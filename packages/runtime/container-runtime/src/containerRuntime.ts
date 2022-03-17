@@ -1623,6 +1623,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             message = this.processRemoteChunkedMessage(message);
 
             // Call the PendingStateManager to process messages.
+            // if localAck is true, this is a pending op (from this container or a previous one). If it's false, it
+            // means this is a remote op or a local op sent by a previous container and ACKed before it was closed,
+            // which means it should be treated as remote.
             const { localAck, localOpMetadata } = this.pendingStateManager.processMessage(message, local);
 
             // If there are no more pending messages after processing a local message,
