@@ -100,6 +100,7 @@ import {
     requestFluidObject,
     responseToException,
     seqFromTree,
+    calculateStats,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -1456,7 +1457,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (this.garbageCollector.writeDataAtRoot) {
-            const gcSummary = this.garbageCollector.getSummaryTree();
+            const gcSummary = this.garbageCollector.summarize();
             if (gcSummary !== undefined) {
                 addTreeToSummary(summaryTree, gcTreeKey, gcSummary);
             }
@@ -2214,6 +2215,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
             }
             const { summary: summaryTree, stats: partialStats } = summarizeResult;
+            const gcSummaryTreeStats = summaryTree.tree.gc
+                ? calculateStats((summaryTree.tree.gc as ISummaryTree))
+                : undefined;
 
             // Now that we have generated the summary, update the message at last summary to the last message processed.
             this.messageAtLastSummary = this.deltaManager.lastMessage;
@@ -2231,6 +2235,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 dataStoreCount: this.dataStores.size,
                 summarizedDataStoreCount: this.dataStores.size - handleCount,
                 gcStateUpdatedDataStoreCount: summarizeResult.gcStats?.updatedDataStoreCount,
+                gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
+                gcTotalBlobSize: gcSummaryTreeStats?.totalBlobSize,
                 ...partialStats,
             };
             const generateSummaryData = {

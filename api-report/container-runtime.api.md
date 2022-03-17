@@ -346,8 +346,6 @@ export interface IGCRuntimeOptions {
 // @public
 export interface IGCStats {
     dataStoreCount: number;
-    gcBlobNodeCount?: number;
-    gcTotalBlobSize?: number;
     nodeCount: number;
     unrefDataStoreCount: number;
     unrefNodeCount: number;
@@ -358,7 +356,9 @@ export interface IGCStats {
 // @public
 export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly dataStoreCount: number;
+    readonly gcBlobNodeCount?: number;
     readonly gcStateUpdatedDataStoreCount?: number;
+    readonly gcTotalBlobSize?: number;
     readonly summarizedDataStoreCount: number;
 }
 

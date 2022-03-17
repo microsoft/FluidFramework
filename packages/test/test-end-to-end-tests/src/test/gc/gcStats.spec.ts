@@ -14,7 +14,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { TestDataObject } from "./mockSummarizerClient";
 import { mockConfigProvider } from "./mockConfigProivder";
 
@@ -22,7 +22,7 @@ import { mockConfigProvider } from "./mockConfigProivder";
  * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
  * nodes, number of unreferenced data stores, etc.
  */
-describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
+describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
@@ -42,16 +42,11 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         runtimeOptions,
     );
 
-    // Enable config provider settings.
-    const settings = { "Fluid.GarbageCollection.WriteDataAtRoot": "true" };
-    const configProvider = mockConfigProvider(settings);
-    const fakeGCTotalBlobSize = 100;
-
     let provider: ITestObjectProvider;
     let containerRuntime: ContainerRuntime;
     let defaultDataStore: TestDataObject;
 
-    const createContainer = async () => provider.createContainer(runtimeFactory, { configProvider });
+    const createContainer = async () => provider.createContainer(runtimeFactory);
 
     /**
      * Returns the summary stats in the summary for the data stores with the gives ids.
@@ -109,8 +104,6 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
-            gcBlobNodeCount: 1,
-            gcTotalBlobSize: fakeGCTotalBlobSize,
         };
 
         // Add both data store handles in root component to mark them referenced.
@@ -120,8 +113,6 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 
         // Nothing should be unreferenced.
         const gcStats = await containerRuntime.collectGarbage({});
-        assert(gcStats.gcTotalBlobSize !== undefined && gcStats.gcTotalBlobSize > 0, "Expected gcTotalBlobSize");
-        gcStats.gcTotalBlobSize = fakeGCTotalBlobSize; // we do this because blob size varies for compat
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
         const summarizeResult = await containerRuntime.summarize({ trackState: false });
@@ -138,8 +129,6 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
-            gcBlobNodeCount: 1,
-            gcTotalBlobSize: fakeGCTotalBlobSize,
         };
 
         // Add both data store handles in root component to mark them referenced.
@@ -159,8 +148,6 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         expectedGCStats.updatedDataStoreCount = 1;
 
         let gcStats = await containerRuntime.collectGarbage({});
-        assert(gcStats.gcTotalBlobSize !== undefined && gcStats.gcTotalBlobSize > 0, "Expected gcTotalBlobSize");
-        gcStats.gcTotalBlobSize = fakeGCTotalBlobSize; // we do this because blob size varies for compat
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
         let summarizeResult = await containerRuntime.summarize({ trackState: false });
@@ -183,8 +170,6 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         expectedGCStats.updatedDataStoreCount = 1;
 
         gcStats = await containerRuntime.collectGarbage({});
-        assert(gcStats.gcTotalBlobSize !== undefined && gcStats.gcTotalBlobSize > 0, "Expected gcTotalBlobSize");
-        gcStats.gcTotalBlobSize = fakeGCTotalBlobSize; // we do this because blob size varies for compat
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
         summarizeResult = await containerRuntime.summarize({ trackState: false });
@@ -206,8 +191,6 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
-            gcBlobNodeCount: 1,
-            gcTotalBlobSize: fakeGCTotalBlobSize,
         };
 
         // Add both data store handles in root component to mark them referenced.
@@ -227,8 +210,6 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 
         // Nothing should be unreferenced.
         const gcStats = await containerRuntime.collectGarbage({});
-        assert(gcStats.gcTotalBlobSize !== undefined && gcStats.gcTotalBlobSize > 0, "Expected gcTotalBlobSize");
-        gcStats.gcTotalBlobSize = fakeGCTotalBlobSize; // we do this because blob size varies for compat
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
         const summarizeResult = await containerRuntime.summarize({ trackState: false });
@@ -245,8 +226,6 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
-            gcBlobNodeCount: 1,
-            gcTotalBlobSize: fakeGCTotalBlobSize,
         };
 
         // Add both data store handles in root component to mark them referenced.
@@ -256,8 +235,6 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 
         // Nothins should be unreferenced.
         let gcStats = await containerRuntime.collectGarbage({});
-        assert(gcStats.gcTotalBlobSize !== undefined && gcStats.gcTotalBlobSize > 0, "Expected gcTotalBlobSize");
-        gcStats.gcTotalBlobSize = fakeGCTotalBlobSize; // we do this because blob size varies for compat
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
         // Remove both data store handles to mark them unreferenced.
@@ -273,8 +250,6 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         expectedGCStats.updatedDataStoreCount = 2;
 
         gcStats = await containerRuntime.collectGarbage({});
-        assert(gcStats.gcTotalBlobSize !== undefined && gcStats.gcTotalBlobSize > 0, "Expected gcTotalBlobSize");
-        gcStats.gcTotalBlobSize = fakeGCTotalBlobSize; // we do this because blob size varies for compat
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
         // Add their handle back to re-reference them.
@@ -288,8 +263,6 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         expectedGCStats.unrefDataStoreCount = 0;
 
         gcStats = await containerRuntime.collectGarbage({});
-        assert(gcStats.gcTotalBlobSize !== undefined && gcStats.gcTotalBlobSize > 0, "Expected gcTotalBlobSize");
-        gcStats.gcTotalBlobSize = fakeGCTotalBlobSize; // we do this because blob size varies for compat
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
     });
 });

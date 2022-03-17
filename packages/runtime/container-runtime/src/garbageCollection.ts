@@ -84,10 +84,6 @@ export interface IGCStats {
     updatedNodeCount: number;
     /** The number of data stores whose reference state updated since last GC run. */
     updatedDataStoreCount: number;
-    /** The size of blobs in the summary. */
-    gcTotalBlobSize?: number;
-    /** The number of blobs in the summary. */
-    gcBlobNodeCount?: number;
 }
 
 /** The event that is logged when unreferenced node is used after a certain time. */
@@ -133,8 +129,8 @@ export interface IGarbageCollector {
     collectGarbage(
         options: { logger?: ITelemetryLogger, runGC?: boolean, runSweep?: boolean, fullGC?: boolean },
     ): Promise<IGCStats>;
-    /** Returns the GC summary tree. */
-    getSummaryTree(): ISummaryTreeWithStats | undefined;
+    /** Summarizes the GC data and returns it as a summary tree. */
+    summarize(): ISummaryTreeWithStats | undefined;
     /** Returns a map of each data store id to its GC details in the base summary. */
     getDataStoreBaseGCDetails(): Promise<Map<string, IGarbageCollectionDetailsBase>>;
     /** Called when the latest summary of the system has been refreshed. */
@@ -326,8 +322,6 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly loggedUnreferencedEvents: Set<string> = new Set();
     // Queue for unreferenced events that should be logged the next time GC runs.
     private readonly pendingEventsQueue: IUnreferencedEvent[] = [];
-    // GC summary tree
-    private gcSummaryTree: ISummaryTreeWithStats | undefined;
 
     protected constructor(
         private readonly provider: IGarbageCollectionRuntime,
@@ -620,21 +614,10 @@ export class GarbageCollector implements IGarbageCollector {
             if (this.testMode) {
                 this.deleteUnusedRoutes(gcResult.deletedNodeIds);
             }
-
-            if(this.writeDataAtRoot) {
-                this.gcSummaryTree = this.summarize();
-                gcStats.gcBlobNodeCount = this.gcSummaryTree?.stats.blobNodeCount;
-                gcStats.gcTotalBlobSize = this.gcSummaryTree?.stats.totalBlobSize;
-            }
-
             event.end({ ...gcStats });
             return gcStats;
         },
         { end: true, cancel: "error" });
-    }
-
-    public getSummaryTree(): ISummaryTreeWithStats | undefined {
-        return this.gcSummaryTree;
     }
 
     /**
@@ -642,7 +625,7 @@ export class GarbageCollector implements IGarbageCollector {
      * We current write the entire GC state in a single blob. This can be modified later to write multiple
      * blobs. All the blob keys should start with `gcBlobPrefix`.
      */
-    private summarize(): ISummaryTreeWithStats | undefined {
+    public summarize(): ISummaryTreeWithStats | undefined {
         if (!this.shouldRunGC || this.gcDataFromLastRun === undefined) {
             return;
         }

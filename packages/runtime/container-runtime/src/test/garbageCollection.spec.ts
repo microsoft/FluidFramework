@@ -452,7 +452,7 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
 
-            const summaryTree = garbageCollector.getSummaryTree()?.summary;
+            const summaryTree = garbageCollector.summarize()?.summary;
             assert(summaryTree !== undefined, "Nothing to summarize after running GC");
 
             let rootGCState: IGarbageCollectionState = { gcNodes: {} };
