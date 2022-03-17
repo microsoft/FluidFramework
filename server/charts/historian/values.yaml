@@ -39,7 +39,7 @@ gitrest:
   git:
     lib:
       name: nodegit
-      persistLatestFullSummary: false
+    persistLatestFullSummary: false
 
 gitssh:
   name: gitssh

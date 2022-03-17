@@ -35,7 +35,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
         const storageDirectory = config.get("storageDir");
         const gitLibrary: string | undefined = config.get("git:lib:name");
         const persistLatestFullSummary: boolean =
-            config.get("git:lib:persistLatestFullSummary") ?? false;
+            config.get("git:persistLatestFullSummary") ?? false;
         const getRepositoryManagerFactory = () => {
             if (!gitLibrary || gitLibrary === "nodegit") {
                 return new NodegitRepositoryManagerFactory(

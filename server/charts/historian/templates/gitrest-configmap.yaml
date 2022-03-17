@@ -26,8 +26,8 @@ data:
         },
         "git": {
             "lib": {
-                "name": "{{ .Values.gitrest.git.lib.name }}",
-                "persistLatestFullSummary": {{ .Values.gitrest.git.lib.persistLatestFullSummary }}
-            }
+                "name": "{{ .Values.gitrest.git.lib.name }}"
+            },
+            "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }}
         }
     }

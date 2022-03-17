@@ -14,8 +14,8 @@
     },
     "git": {
         "lib": {
-            "name": "nodegit",
-            "persistLatestFullSummary": false
-        }
+            "name": "nodegit"
+        },
+        "persistLatestFullSummary": false
     }
 }
