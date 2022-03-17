@@ -9,7 +9,7 @@ import replace from "replace-in-file";
 import path from "path";
 import { pathExistsSync } from "fs-extra";
 import { NpmPackageJsonLint } from "npm-package-json-lint";
-import { merge } from "lodash";
+import merge from "lodash.merge";
 import sortPackageJson from "sort-package-json";
 import {
     Handler,
