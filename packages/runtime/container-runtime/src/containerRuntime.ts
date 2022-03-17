@@ -934,7 +934,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private _connected: boolean;
 
-    private readonly savedOps: ISequencedDocumentMessage[] = [];
+    private readonly savedOps: ISequencedDocumentMessage[];
 
     private consecutiveReconnects = 0;
 
@@ -1057,6 +1057,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
+        this.savedOps = pendingRuntimeState?.savedOps ?? [];
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
         this.garbageCollector = GarbageCollector.create(
@@ -1161,7 +1162,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
         this.dirtyContainer = this.context.attachState !== AttachState.Attached
-            || pendingRuntimeState?.pending !== undefined;
+            || !this.pendingStateManager.hasPendingMessages;
         this.context.updateDirtyContainerState(this.dirtyContainer);
 
         // Map the deprecated generateSummaries flag to disableSummaries.
@@ -2668,6 +2669,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getPendingLocalState(): Promise<IPendingRuntimeState> {
+        const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
+        if (previousPendingState) {
+            return {
+                pending: this.pendingStateManager.getLocalState(),
+                snapshotBlobs: previousPendingState.snapshotBlobs,
+                baseSnapshot: previousPendingState.baseSnapshot,
+                savedOps: this.savedOps,
+            };
+        }
         assert(!!this.context.baseSnapshot, "no base snapshot");
         return {
             pending: this.pendingStateManager.getLocalState(),

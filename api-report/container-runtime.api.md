@@ -402,7 +402,6 @@ export interface IPendingFlushMode {
 
 // @public (undocumented)
 export interface IPendingLocalState {
-    clientId?: string;
     pendingStates: IPendingState[];
 }
 

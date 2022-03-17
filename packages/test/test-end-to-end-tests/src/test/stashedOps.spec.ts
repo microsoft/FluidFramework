@@ -44,13 +44,14 @@ const ensureContainerConnected = async (container: IContainer) => {
     }
 };
 
-const getPendingStateWithoutClose = async (container: IContainer) => {
+const getPendingStateWithoutClose = async (container: IContainer): Promise<string> => {
     const containerClose = container.close;
     container.close = (message) => assert(message === undefined);
     const pendingState = await (container as any).closeAndGetPendingLocalStateAsync();
+    assert(typeof pendingState === "string");
     container.close = containerClose;
     return pendingState;
-}
+};
 
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
 
@@ -74,17 +75,6 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
         pendingState = await getPendingStateWithoutClose(container);
         await args.ensureSynchronized();
         container.close();
-        // const pendingRuntimeState = await (container as any).context.runtime.getPendingLocalState();
-        // await args.ensureSynchronized();
-        // const p = await (container as any).closeAndGetPendingLocalStateAsync();
-        // assert.strictEqual(JSON.parse(p).pendingRuntimeState, undefined);
-        // if we sent the ops successfully the pending state should have a clientId. if not they will be resent anyway
-        // assert(pendingRuntimeState.clientId !== undefined, "no clientId for successful ops");
-        // assert(container.resolvedUrl !== undefined && container.resolvedUrl.type === "fluid");
-        // pendingState = JSON.stringify({
-        //     url: container.resolvedUrl.url,
-        //     pendingRuntimeState,
-        // });
     } else {
         pendingState = await (container as any).closeAndGetPendingLocalStateAsync();
     }
