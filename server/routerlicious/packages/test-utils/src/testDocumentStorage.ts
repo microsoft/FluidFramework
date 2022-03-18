@@ -4,7 +4,7 @@
  */
 
 import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
-import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
+import { IGitCache, IGitManager, ISession } from "@fluidframework/server-services-client";
 import {
     IDatabaseManager,
     IDeliState,
@@ -12,7 +12,6 @@ import {
     IDocumentDetails,
     IDocumentStorage,
     IScribe,
-    ISession,
     ITenantManager,
 } from "@fluidframework/server-services-core";
 import {
@@ -132,7 +131,7 @@ export class TestDocumentStorage implements IDocumentStorage {
 
         const collection = await this.databaseManager.getDocumentCollection();
 
-        const session: ISession = {
+        const sessionP: ISession = {
             ordererUrl,
             historianUrl,
             isSessionAlive: true,
@@ -147,7 +146,7 @@ export class TestDocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
-                session: JSON.stringify(session),
+                session: sessionP,
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",

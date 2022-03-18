@@ -15,6 +15,7 @@ import {
     IGitCache,
     SummaryTreeUploadManager,
     WholeSummaryUploadManager,
+    ISession,
 } from "@fluidframework/server-services-client";
 import {
     ICollection,
@@ -27,7 +28,6 @@ import {
     SequencedOperationType,
     IDocument,
     ISequencedOperationMessage,
-    ISession,
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";
@@ -190,7 +190,7 @@ export class DocumentStorage implements IDocumentStorage {
             lastSummarySequenceNumber: 0,
         };
 
-        const session: ISession = {
+        const sessionP: ISession = {
             ordererUrl,
             historianUrl,
             isSessionAlive: true,
@@ -206,7 +206,7 @@ export class DocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
-                session: JSON.stringify(session),
+                session: sessionP,
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
@@ -293,7 +293,7 @@ export class DocumentStorage implements IDocumentStorage {
         documentId: string,
         deli?: string,
         scribe?: string,
-        session?: string): Promise<IDocument> {
+        session?: ISession): Promise<IDocument> {
         const value: IDocument = {
             createTime: Date.now(),
             deli,
@@ -330,7 +330,7 @@ export class DocumentStorage implements IDocumentStorage {
 
             // Setting an empty string to deli and scribe denotes that the checkpoints should be loaded from summary.
             const value = inSummary ?
-                await this.createObject(collection, tenantId, documentId, "", "", "") :
+                await this.createObject(collection, tenantId, documentId, "", "", null) :
                 await this.createObject(collection, tenantId, documentId);
 
             return {

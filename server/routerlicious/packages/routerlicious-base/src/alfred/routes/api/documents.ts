@@ -6,7 +6,6 @@
 import * as crypto from "crypto";
 import {
     IDocumentStorage,
-    IDocumentSession,
     IThrottler,
     ITenantManager,
     ICache,
@@ -20,10 +19,10 @@ import {
 } from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import winston from "winston";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IAlfredTenant, IDocumentSession } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
-import { Constants, convertUrls, handleResponse, getSession } from "../../../utils";
+import { Constants, handleResponse, getSession } from "../../../utils";
 
 export function create(
     storage: IDocumentStorage,
@@ -85,7 +84,9 @@ export function create(
             // Summary information
             const summary = request.body.summary;
 
-            const [ordererUrl, historianUrl] = convertUrls(request.headers.host);
+            // Session information
+            const ordererUrl = config.get("worker:serverUrl");
+            const historianUrl = config.get("worker:blobStorageUrl");
             const documentSession: IDocumentSession = {
                 documentId: id,
                 hasSessionLocationChanged: false,
@@ -125,7 +126,8 @@ export function create(
     async (request, response, next) => {
         const documentId = getParam(request.params, "id");
         const tenantId = getParam(request.params, "tenantId");
-        const [ordererUrl, historianUrl] = convertUrls(request.headers.host);
+        const ordererUrl = config.get("worker:serverUrl");
+        const historianUrl = config.get("worker:blobStorageUrl");
         const documentSessionP = getSession(globalDbMongoManager, documentId, ordererUrl, historianUrl, tenantId);
         handleResponse(documentSessionP, response, undefined, 201);
     });

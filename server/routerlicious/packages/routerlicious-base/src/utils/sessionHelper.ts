@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager, IDocument, IDocumentSession, ISession } from "@fluidframework/server-services-core";
+import { ISession, IDocumentSession } from "@fluidframework/server-services-client";
+import { MongoManager, IDocument } from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export async function getSession(globalDbMongoManager: MongoManager,
@@ -33,7 +34,7 @@ export async function getSession(globalDbMongoManager: MongoManager,
     const db = await globalDbMongoManager.getDatabase();
     const collection = db.collection("documents");
     const result = await collection.findOne({ documentId });
-    const session = JSON.parse((result as IDocument).session) as ISession;
+    const session = (result as IDocument).session;
     const deli = JSON.parse((result as IDocument).deli);
     const isScribeEmpty = (result as IDocument).scribe === "";
     const scribe = isScribeEmpty ? "" : JSON.parse((result as IDocument).scribe);
@@ -55,7 +56,7 @@ export async function getSession(globalDbMongoManager: MongoManager,
         session.isSessionAlive = true;
         (result as IDocument).deli = JSON.stringify(deli);
         (result as IDocument).scribe = isScribeEmpty ? "" : JSON.stringify(scribe);
-        (result as IDocument).session = JSON.stringify(session);
+        (result as IDocument).session = session;
         await collection.upsert({
             documentId,
         }, {
@@ -69,7 +70,7 @@ export async function getSession(globalDbMongoManager: MongoManager,
     const documentSession: IDocumentSession = {
         documentId,
         hasSessionLocationChanged,
-        session: JSON.parse((result as IDocument).session) as ISession,
+        session: (result as IDocument).session,
     };
     Lumberjack.info(`Return the documentSession: ${JSON.stringify(documentSession)}`, lumberjackProperties);
     return documentSession;

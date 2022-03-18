@@ -18,7 +18,6 @@ import {
     IPartitionLambdaFactory,
     IProducer,
     IServiceConfiguration,
-    ISession,
     ITenantManager,
     LambdaCloseType,
     MongoManager,
@@ -126,7 +125,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
                     context.log?.info(`Deli checkpoint from summary:
-                        ${ JSON.stringify(lastCheckpoint)}`, { messageMetaData });
+                        ${JSON.stringify(lastCheckpoint)}`, { messageMetaData });
                 }
             } else {
                 lastCheckpoint = JSON.parse(dbObject.deli);
@@ -167,26 +166,26 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             sessionMetric,
             sessionStartMetric);
 
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        deliLambda.on("close", async (closeType) => {
-            if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)
-                && this.globalDbMongoManager !== undefined) {
-                const db = await this.globalDbMongoManager.getDatabase();
-                const collection = db.collection("documents");
-                const result = await collection.findOne({ documentId });
-                if (result !== undefined) {
-                    const session = JSON.parse((result as IDocument).session) as ISession;
-                    session.isSessionAlive = false;
-                    await collection.update(
-                        {
-                            documentId,
-                        },
-                        {
-                            session: JSON.stringify(session),
-                        },
-                        {});
+        deliLambda.on("close", (closeType) => {
+            const handler = async () => {
+                if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)
+                    && this.globalDbMongoManager !== undefined) {
+                    const result = await this.collection.findOne({ documentId });
+                    const sessionP = result?.session;
+                    if (sessionP !== undefined) {
+                        sessionP.isSessionAlive = false;
+                        await this.collection.update(
+                            {
+                                documentId,
+                            },
+                            {
+                                session: sessionP,
+                            },
+                            {});
+                    }
                 }
-            }
+            };
+            void handler();
         });
 
         return deliLambda;
@@ -196,8 +195,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
         sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
         errMsg: string) {
-            sessionMetric?.error(errMsg);
-            sessionStartMetric?.error(errMsg);
+        sessionMetric?.error(errMsg);
+        sessionStartMetric?.error(errMsg);
     }
 
     public async dispose(): Promise<void> {
