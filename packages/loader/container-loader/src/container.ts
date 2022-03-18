@@ -946,6 +946,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private connectInternal(args: IConnectionArgs) {
         assert(!this.closed, "Attempting to connect() a closed DeltaManager");
+        assert(this._attachState === AttachState.Attached, "Attempting to connect() a container that is not attached");
 
         // Resume processing ops
         if (!this.resumedOpProcessingAfterLoad) {
