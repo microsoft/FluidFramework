@@ -22,16 +22,58 @@ import {
     NetworkError,
     WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
-import { IRepositoryManager } from "../utils";
+import { IRepositoryManager } from "./definitions";
 
 interface ISummaryVersion {
     id: string;
     treeId: string;
 }
 
+interface IWriteSummaryInfo {
+    /**
+     * True if this is an initial summary for a new document.
+     */
+    isNew: boolean;
+    /**
+     * Response containing commit sha for "container" write or tree sha for "channel" write.
+     */
+     writeSummaryResponse: IWriteSummaryResponse;
+}
+
+function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry): SummaryObject {
+    if ((entry as IWholeSummaryTreeHandleEntry).id !== undefined) {
+        return {
+            type: SummaryType.Handle,
+            handleType: entry.type === "tree" ? SummaryType.Tree : SummaryType.Blob,
+            handle: (entry as IWholeSummaryTreeHandleEntry).id,
+        };
+    }
+    if (entry.type === "blob") {
+        return {
+            type: SummaryType.Blob,
+            // We don't use this in the code below. We mostly just care about summaryObject for type inference.
+            content: "",
+        };
+    }
+    if (entry.type === "tree") {
+        return {
+            type: SummaryType.Tree,
+            // We don't use this in the code below. We mostly just care about summaryObject for type inference.
+            tree: {},
+            unreferenced: (entry as IWholeSummaryTreeValueEntry).unreferenced,
+        };
+    }
+    throw new NetworkError(400, `Unknown entry type: ${entry.type}`);
+}
+
 export const latestSummarySha = "latest";
 
-export class WholeSummaryReadGitManager {
+export const isContainerSummary = (payload: IWholeSummaryPayload) => payload.type === "container";
+export const isChannelSummary = (payload: IWholeSummaryPayload) => payload.type === "channel";
+
+export class GitWholeSummaryManager {
+    private readonly entryHandleToObjectShaCache: Map<string, string> = new Map();
+
     constructor(
         private readonly documentId: string,
         private readonly repoManager: IRepositoryManager,
@@ -106,55 +148,9 @@ export class WholeSummaryReadGitManager {
             treeId: commitDetails[0].commit.tree.sha,
         };
     }
-}
-
-function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry): SummaryObject {
-    if ((entry as IWholeSummaryTreeHandleEntry).id !== undefined) {
-        return {
-            type: SummaryType.Handle,
-            handleType: entry.type === "tree" ? SummaryType.Tree : SummaryType.Blob,
-            handle: (entry as IWholeSummaryTreeHandleEntry).id,
-        };
-    }
-    if (entry.type === "blob") {
-        return {
-            type: SummaryType.Blob,
-            // We don't use this in the code below. We mostly just care about summaryObject for type inference.
-            content: "",
-        };
-    }
-    if (entry.type === "tree") {
-        return {
-            type: SummaryType.Tree,
-            // We don't use this in the code below. We mostly just care about summaryObject for type inference.
-            tree: {},
-            unreferenced: (entry as IWholeSummaryTreeValueEntry).unreferenced,
-        };
-    }
-    throw new NetworkError(400, `Unknown entry type: ${entry.type}`);
-}
-
-interface IWriteSummaryInfo {
-    /**
-     * True if this is an initial summary for a new document.
-     */
-    isNew: boolean;
-    /**
-     * Response containing commit sha for "container" write or tree sha for "channel" write.
-     */
-     writeSummaryResponse: IWriteSummaryResponse;
-}
-export class WholeSummaryWriteGitManager {
-    private readonly entryHandleToObjectShaCache: Map<string, string> = new Map();
-
-    constructor(
-        private readonly documentId: string,
-        private readonly repoManager: IRepositoryManager,
-        private readonly externalStorageEnabled = true,
-    ) {}
 
     public async writeSummary(payload: IWholeSummaryPayload): Promise<IWriteSummaryInfo> {
-        if (payload.type === "channel") {
+        if (isChannelSummary(payload)) {
             const summaryTreeHandle = await this.writeChannelSummary(payload);
             return {
                 isNew: false,
@@ -163,7 +159,7 @@ export class WholeSummaryWriteGitManager {
                 },
             };
         }
-        if (payload.type === "container") {
+        if (isContainerSummary(payload)) {
             const writeSummaryInfo = await this.writeContainerSummary(payload);
             return writeSummaryInfo;
         }
@@ -183,6 +179,7 @@ export class WholeSummaryWriteGitManager {
             `refs/heads/${this.documentId}`,
             { enabled: this.externalStorageEnabled },
         ).catch(() => undefined);
+
         let commitParams: ICreateCommitParams;
         let isNew = false;
         if (!existingRef && payload.sequenceNumber === 0) {
@@ -232,6 +229,7 @@ export class WholeSummaryWriteGitManager {
                 { enabled: this.externalStorageEnabled },
             );
         }
+
         return {
             isNew,
             writeSummaryResponse: {

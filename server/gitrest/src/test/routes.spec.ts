@@ -152,7 +152,6 @@ describe("GitRest", () => {
             testUtils.defaultProvider.get("storageDir"),
             fsPromises,
             externalStorageManager,
-            { persistLatestFullSummary: true },
         );
 
         testUtils.initializeBeforeAfterTestHooks(testUtils.defaultProvider);
@@ -161,7 +160,7 @@ describe("GitRest", () => {
         let supertest: request.SuperTest<request.Test>;
         beforeEach(() => {
             const repoManagerFactory = getRepoManagerFactory();
-            const testApp = app.create(testUtils.defaultProvider, repoManagerFactory);
+            const testApp = app.create(testUtils.defaultProvider, fsPromises, repoManagerFactory);
             supertest = request(testApp);
         });
 

@@ -5,13 +5,13 @@
 
 import fsPromises from "fs/promises";
 import * as git from "@fluidframework/gitresources";
-import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "@fluidframework/server-services-client";
 
 export interface IExternalWriterConfig {
     enabled: boolean;
 }
 
 export interface IRepositoryManager {
+    path: string;
     getCommit(sha: string): Promise<git.ICommit>;
     getCommits(sha: string, count: number, externalWriterConfig?: IExternalWriterConfig): Promise<git.ICommitDetails[]>;
     getTree(root: string, recursive: boolean): Promise<git.ITree>;
@@ -28,11 +28,6 @@ export interface IRepositoryManager {
     deleteRef(refId: string): Promise<void>;
     getTag(tagId: string): Promise<git.ITag>;
     createTag(tagParams: git.ICreateTagParams): Promise<git.ITag>;
-    // eslint-disable-next-line max-len
-    getSummary(sha: string, documentId: string, externalWriterConfig?: IExternalWriterConfig): Promise<IWholeFlatSummary>;
-    // eslint-disable-next-line max-len
-    createSummary(payload: IWholeSummaryPayload, documentId: string, externalWriterConfig?: IExternalWriterConfig): Promise<IWriteSummaryResponse | IWholeFlatSummary>;
-    deleteSummary(documentId: string, softDelete: boolean): Promise<boolean>;
 }
 
 /**
