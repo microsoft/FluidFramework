@@ -88,7 +88,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     beforeEach(async () => {
     });
 
-    it("should generate correct container load stats with two summarizer containers", async () => {
+    it.skip("should generate correct container load stats with two summarizer containers", async () => {
         provider = getTestObjectProvider();
         // Create a Container for the first client.
         mainContainer = await createContainer(mockLogger);

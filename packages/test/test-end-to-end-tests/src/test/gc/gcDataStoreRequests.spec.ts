@@ -109,7 +109,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger());
     });
 
-    it("should fail requests with externalRequest flag for unreferenced data stores", async () => {
+    it.skip("should fail requests with externalRequest flag for unreferenced data stores", async () => {
         const directoryKey = "dataStore2";
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.

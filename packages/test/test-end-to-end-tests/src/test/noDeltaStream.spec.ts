@@ -120,7 +120,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
     }
 
     for(const testConfig of testConfigs) {
-        it(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
+        it.skip(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
             const provider = getTestObjectProvider();
             switch(provider.driver.type) {
                 case "local":
