@@ -226,10 +226,10 @@ export class OdspDocumentService implements IDocumentService {
         );
     }
 
-    /** Annotate the given error indicated which connection step failed */
+    /** Annotate the given error indicating which connection step failed */
     private annotateConnectionError(error: any, step: string): IFluidErrorBase {
         const normalizedError = normalizeError(error, { props: {
-            failedStep: step,
+            failedConnectionStep: step,
         }});
 
         // We need to preserve these properties which are used in a non-typesafe way throughout driver code
@@ -268,10 +268,13 @@ export class OdspDocumentService implements IDocumentService {
 
             const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
             if (finalWebsocketToken === null) {
-                throw new NonRetryableError(
-                    "Websocket token is null",
-                    OdspErrorType.fetchTokenError,
-                    { driverVersion });
+                throw this.annotateConnectionError(
+                    new NonRetryableError(
+                        "Websocket token is null",
+                        OdspErrorType.fetchTokenError,
+                        { driverVersion },
+                    ),
+                    "getWebsocketToken");
             }
             try {
                 const connection = await this.connectToDeltaStreamWithRetry(
