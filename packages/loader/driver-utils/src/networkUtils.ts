@@ -6,33 +6,24 @@
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { isOnline, OnlineStatus, canRetryOnError } from "./network";
 
-export function checkConnectionType() {
+export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
+    const newEvent = { ...event };
+
+    const errorOnlineProp = error.online;
+    newEvent.online = typeof errorOnlineProp === "string"
+        ? errorOnlineProp
+        : OnlineStatus[isOnline()];
+
     if (typeof navigator === "object" && navigator !== null) {
         const nav = navigator as any;
         const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
         if (connection !== null && typeof connection === "object") {
-            return String(connection.type);
+            newEvent.connectionType = connection.type;
         }
     }
-    return undefined;
-}
 
-export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
-    const newEvent = { ...event };
-    newEvent.online = isOnline();
-    if (error?.online !== undefined) {
-        newEvent.online = error.online as string;
-    }
-    const connectionType = checkConnectionType();
-    if (connectionType !== undefined) {
-        newEvent.connectionType = connectionType;
-    }
-
-    // If we are online, log it as an error, such that we look at it ASAP.
-    // But if we are offline, log non-error event - we will remove
-    // it in the future once confident it's right thing to do.
-    // Note: Unfortunately false positives happen in here (i.e. cable disconnected, but it reports true)!
-    newEvent.category = (newEvent.online === OnlineStatus.Online || !canRetryOnError(error)) ? "error" : "generic";
+    // non-retryable errors are fatal and should be logged as errors
+    newEvent.category = canRetryOnError(error) ? "generic" : "error";
     logger.sendTelemetryEvent(newEvent, error);
 }
 
