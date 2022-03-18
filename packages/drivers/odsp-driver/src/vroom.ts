@@ -47,20 +47,21 @@ export async function fetchJoinSession(
 ): Promise<ISocketStorageDiscovery> {
     const token = await getStorageToken(options, "JoinSession");
 
+    const tokenRefreshProps = options.refresh
+        ? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
+        : {};
     const details: ITelemetryProperties = {
         refreshedToken: options.refresh,
         requestSocketToken,
+        ...tokenRefreshProps,
     };
-    if (options.refresh) {
-        details.hasClaims = !!options.claims;
-        details.hasTenantId = !!options.tenantId;
-    }
 
     return PerformanceEvent.timedExecAsync(
         logger, {
             eventName: "JoinSession",
             attempts: options.refresh ? 2 : 1,
             details: JSON.stringify(details),
+            ...tokenRefreshProps,
         },
         async (event) => {
             const siteOrigin = getOrigin(urlParts.siteUrl);
