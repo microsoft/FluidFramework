@@ -7,6 +7,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
+    IFluidErrorBase,
     loggerToMonitoringContext,
     MonitoringContext,
     normalizeError,
@@ -225,6 +226,19 @@ export class OdspDocumentService implements IDocumentService {
         );
     }
 
+    /** Annotate the given error indicated which connection step failed */
+    private annotateConnectionError(error: any, step: string): IFluidErrorBase {
+        const normalizedError = normalizeError(error, { props: {
+            failedStep: step,
+        }});
+
+        // We need to preserve these properties which are used in a non-typesafe way throughout driver code
+        const { canRetry, retryAfterSeconds } = error;
+        Object.assign(normalizeError, { canRetry, retryAfterSeconds });
+
+        return normalizedError;
+    }
+
     /**
      * Connects to a delta stream endpoint for emitting ops.
      *
@@ -240,25 +254,16 @@ export class OdspDocumentService implements IDocumentService {
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
 
-            // Annotates the error with the given step and then rethrows, preserving canRetry and retryAfterSeconds
-            const annotateConnectionError = (step: string) => (error: any) => {
-                const normalizedError = normalizeError(error, { props: {
-                    failedStep: step,
-                }});
-
-                // We need to preserve these properties which are used in a non-typesafe way throughout driver code
-                const { canRetry, retryAfterSeconds } = error;
-                Object.assign(normalizeError, { canRetry, retryAfterSeconds });
-
-                throw normalizedError;
+            const annotateAndRethrowConnectionError = (step: string) => (error: any) => {
+                throw this.annotateConnectionError(error, step);
             };
 
             const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options);
             const [websocketEndpoint, websocketToken, io] =
                 await Promise.all([
-                    joinSessionPromise.catch(annotateConnectionError("joinSession")),
-                    websocketTokenPromise.catch(annotateConnectionError("getWebsocketToken")),
-                    this.socketIoClientFactory().catch(annotateConnectionError("socketIoClientFactory")),
+                    joinSessionPromise.catch(annotateAndRethrowConnectionError("joinSession")),
+                    websocketTokenPromise.catch(annotateAndRethrowConnectionError("getWebsocketToken")),
+                    this.socketIoClientFactory().catch(annotateAndRethrowConnectionError("socketIoClientFactory")),
                 ]);
 
             const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
@@ -293,10 +298,12 @@ export class OdspDocumentService implements IDocumentService {
                 return connection;
             } catch (error) {
                 this.cache.sessionJoinCache.remove(this.joinSessionKey);
+
+                const normalizedError = this.annotateConnectionError(error, "connectToDeltaStreamWithRetry");
                 if (typeof error === "object" && error !== null) {
-                    error.socketDocumentId = websocketEndpoint.id;
+                    normalizedError.addTelemetryProperties({socketDocumentId: websocketEndpoint.id});
                 }
-                throw error;
+                throw normalizedError;
             }
         });
     }
