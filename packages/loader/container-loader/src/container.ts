@@ -105,6 +105,7 @@ import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
+import { abort } from "process";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -812,7 +813,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
 
                 const abortController = new AbortController();
-                abortController.signal.addEventListener("abort", (event: Event) => { this.close(); });
+                // When container closes, runWithRetry should abort
+                this.addListener("closed", (event: Event) => { abortController.abort(); });
+
                 // Actually go and create the resolved document
                 const createNewResolvedUrl = await this.urlResolver.resolve(request);
                 ensureFluidResolvedUrl(createNewResolvedUrl);
