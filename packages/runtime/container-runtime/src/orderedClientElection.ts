@@ -221,12 +221,12 @@ export interface ISerializedElection {
 export interface IOrderedClientElection extends IEventProvider<IOrderedClientElectionEvents> {
     /** Count of eligible clients in the collection. */
     readonly eligibleCount: number;
-    /** Currently elected client id. This is either:
+    /** Currently elected client. This is either:
      * 1. the interactive elected parent client, in which case electedClientId === electedParentId,
      *  and the SummaryManager on the elected client will spawn a summarizer client, or
      * 2. the non-interactive summarizer client itself. */
     readonly electedClient: ITrackedClient | undefined;
-    /** Currently elected parent client id. This is always an interactive client. */
+    /** Currently elected parent client. This is always an interactive client. */
     readonly electedParent: ITrackedClient | undefined;
     /** Sequence number of most recent election. */
     readonly electionSequenceNumber: number;
@@ -314,6 +314,11 @@ export class OrderedClientElection
             if (typeof initialState !== "number") {
                 if (client.clientId === initialState.electedClientId) {
                     initialClient = client;
+                    if (initialState.electedParentId === undefined &&
+                        client.client.details.type !== summarizerClientType) {
+                        // If there was no elected parent in the serialized data, use this one.
+                        initialParent = client;
+                    }
                 }
                 if (client.clientId === initialState.electedParentId) {
                     initialParent = client;
@@ -352,17 +357,22 @@ export class OrderedClientElection
         }
     }
 
-    /** Tries changing the elected client, raising an event if it is different. */
+    /** Tries changing the elected client, raising an event if it is different.
+     * Note that this function does no eligibility or suitability checks. If we get here, then
+     * we will set _electedClient, and we will set _electedParent if this is an interactive client.
+     */
     private tryElectingClient(client: ILinkedClient | undefined, sequenceNumber: number): void {
         let change = false;
         const isSummarizerClient = client?.client.details.type === summarizerClientType;
         const prevClient = this._electedClient;
         if (this._electedClient !== client) {
+            // Changing the elected client. Record the sequence number and note that we have to fire an event.
             this._electionSequenceNumber = sequenceNumber;
             this._electedClient = client;
             change = true;
         }
         if (this._electedParent !== client && !isSummarizerClient) {
+            // Changing the elected parent as well.
             this._electedParent = client;
             change = true;
         }
@@ -379,7 +389,7 @@ export class OrderedClientElection
     }
 
     /**
-     * Helper function to find the first eligible client starting with the passed in client,
+     * Helper function to find the first eligible parent client starting with the passed in client,
      * or undefined if none are eligible.
      * @param client - client to start checking
      * @returns oldest eligible client starting with passed in client or undefined if none.
@@ -402,13 +412,13 @@ export class OrderedClientElection
     private addClient(client: ILinkedClient, sequenceNumber: number): void {
         if (this.isEligibleFn(client)) {
             this._eligibleCount++;
-            const isSummarizer = client.client.details.type === summarizerClientType;
+            const newClientIsSummarizer = client.client.details.type === summarizerClientType;
             const electedClientIsSummarizer = this._electedClient?.client.details.type === summarizerClientType;
             // Note that we allow a summarizer client to supercede an interactive client as elected client.
-            if (this._electedClient === undefined || (isSummarizer && !electedClientIsSummarizer)) {
+            if (this._electedClient === undefined || (!electedClientIsSummarizer && newClientIsSummarizer)) {
                 this.tryElectingClient(client, sequenceNumber);
             }
-            else if (this._electedParent === undefined && !isSummarizer) {
+            else if (this._electedParent === undefined && !newClientIsSummarizer) {
                 // This is an odd case. If the _electedClient is set, the _electedParent should be as well.
                 this.tryElectingParent(client, sequenceNumber);
             }
@@ -443,7 +453,8 @@ export class OrderedClientElection
                 }
             }
             else if (this._electedParent === client) {
-                // Removing the _electedParent. Shift to the next oldest one, but do not replace the _electedClient,
+                // Removing the _electedParent (but not _electedClient).
+                // Shift to the next oldest parent, but do not replace the _electedClient,
                 // which is a summarizer that is still doing work.
                 if (this._electedClient?.client.details.type !== summarizerClientType) {
                     throw new UsageError("Elected client should be a summarizer client 2");
@@ -459,6 +470,9 @@ export class OrderedClientElection
         return this.orderedClientCollection.getAllClients().filter(this.isEligibleFn);
     }
 
+    /** Advance election to the next-oldest client. This is called if the current parent is leaving the quorum,
+     * or if the current summarizer is not responsive and we want to stop it and spawn a new one.
+     */
     public incrementElectedClient(sequenceNumber: number): void {
         const nextClient = this.findFirstEligibleParent(this._electedParent?.youngerClient) ??
             this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
@@ -472,6 +486,9 @@ export class OrderedClientElection
         }
     }
 
+    /** (Re-)start election with the oldest client in the quorum. This is called if we need to summarize
+     * and no client has been elected.
+     */
     public resetElectedClient(sequenceNumber: number): void {
         const firstClient = this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
         if (this._electedClient === undefined || this._electedClient === this._electedParent) {
