@@ -8,10 +8,6 @@
     Any changes to this must be sequenced as Fluid ops.
 -   `application schema` : a set of constraints the application wants to make about the data
     Different clients may have differing application schema, even at the same time (ex: due to multiple apps using the same document, or different versions of an app during a rollout): restrictions on how to stage/manage changes to application schema may vary from app to app (ex: some apps could update all clients concurrently, some could use document semantic versions, some could just rely on best effort schema on read)
--   `contextual schema` : when which schema to use depends on the parent and not just the type.
-    For example, if we have a "Canvas" type, you could restrict the "Canvas" to only contain notes in one place, but allow it to contain images as well in another place.
-    We can think about this like generic types: here "Canvas<T>" is the logical generic type, but we only record the non-parametric part as the actual type identifier on the node.
-    For this example, if you actually wrote out "Canvas<Note>" as the type of the node in the document, it would not be a contextual schema, and it fully describes the constraints.
 
 # The Design Space
 
@@ -75,58 +71,16 @@ Features not needed for minimal strongly typed application use or the JSON and X
 
 ## Schema Representation
 
-Include a simple non-contextual schema system, usable as a MVP for both `container schema` and `application schema`.
+Include a simple schema system, usable as a MVP for both `container schema` and `application schema`.
 
-We can start with:
-
-```typescript
-enum Multiplicity {
-    Value,
-    Optional,
-    Sequence,
-}
-
-enum Value {
-    Nothing,
-    Number,
-    String,
-    Boolean,
-    Serializable,
-}
-
-interface FieldContent {
-    multiplicity: Multiplicity;
-    types?: Type[];
-}
-
-interface Field {
-    content: FieldContent;
-    name: string;
-}
-
-interface Type {
-    name: string;
-    fields: Field[];
-    extraFields: FieldContent;
-    value: Value;
-}
-```
+On possible such schema system is included in [Schema.ts](./Schema.ts)
 
 These `Types` can be added as `container schema` as part of an edit op, which is considered conflicted if it tries to add a type that has a conflicting `name` and is not equal to the existing one.
 
-This intentionally does not support any concept of versioning or name-spacing: users of it can include versions and namespaces in the `name` if they want, or features for them could be added later.
-
 While a schema must be added to the document as a container schema to use the type
 (otherwise adding a new type could break existing data which might not even be downloaded on the current client),
-it's possible to add a schema that is compatible with all possible data.
+it's possible to add a schema that is compatible with all possible data (assuming the children themselves are compatible with their own types).
 Applications which wish to rely entirely on schema-on-read for some or all of their data can use this pattern for all `container schema` and only use their actual developer authored schema as `application schema`:
-
-```typescript
-const anyField: FieldContent = { multiplicity: Multiplicity.sequence };
-function makeAnyType(name: string): Type {
-    return { name, extraFields: anyField };
-}
-```
 
 ## Use as `Container Schema`
 
