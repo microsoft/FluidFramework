@@ -51,7 +51,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
         }
     });
     for (const testConfig of testConfigs) {
-        it(`Validate attach orders: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
+        it.skip(`Validate attach orders: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
             // setup shared states
             const provider = getTestObjectProvider();
             const timeoutDurationMs = this.timeout() / 2;
