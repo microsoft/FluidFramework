@@ -227,9 +227,14 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     /** Annotate the given error indicating which connection step failed */
-    private annotateConnectionError(error: any, step: string): IFluidErrorBase {
+    private annotateConnectionError(
+        error: any,
+        failedConnectionStep: string,
+        separateTokenRequest: boolean,
+    ): IFluidErrorBase {
         const normalizedError = normalizeError(error, { props: {
-            failedConnectionStep: step,
+            failedConnectionStep,
+            separateTokenRequest,
         }});
 
         // We need to preserve these properties which are used in a non-typesafe way throughout driver code
@@ -255,7 +260,7 @@ export class OdspDocumentService implements IDocumentService {
                 : this.getWebsocketToken!(options);
 
             const annotateAndRethrowConnectionError = (step: string) => (error: any) => {
-                throw this.annotateConnectionError(error, step);
+                throw this.annotateConnectionError(error, step, !requestWebsocketTokenFromJoinSession);
             };
 
             const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options);
@@ -274,10 +279,11 @@ export class OdspDocumentService implements IDocumentService {
                         OdspErrorType.fetchTokenError,
                         { driverVersion },
                     ),
-                    "getWebsocketToken");
+                    "getWebsocketToken",
+                    !requestWebsocketTokenFromJoinSession);
             }
             try {
-                const connection = await this.connectToDeltaStreamWithRetry(
+                const connection = await this.createDeltaConnection(
                     websocketEndpoint.tenantId,
                     websocketEndpoint.id,
                     finalWebsocketToken,
@@ -302,7 +308,10 @@ export class OdspDocumentService implements IDocumentService {
             } catch (error) {
                 this.cache.sessionJoinCache.remove(this.joinSessionKey);
 
-                const normalizedError = this.annotateConnectionError(error, "connectToDeltaStreamWithRetry");
+                const normalizedError = this.annotateConnectionError(
+                    error,
+                    "createDeltaConnection",
+                    !requestWebsocketTokenFromJoinSession);
                 if (typeof error === "object" && error !== null) {
                     normalizedError.addTelemetryProperties({socketDocumentId: websocketEndpoint.id});
                 }
@@ -434,17 +443,16 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     /**
-     * Connects to a delta stream endpoint
-     * If url #1 fails to connect, tries url #2 if applicable
+     * Creats a connection to the given delta stream endpoint
      *
      * @param tenantId - the ID of the tenant
      * @param documentId - document ID
-     * @param token - authorization token for storage service
+     * @param token - authorization token for delta service
      * @param io - websocket library
      * @param client - information about the client
      * @param webSocketUrl - websocket URL
      */
-    private async connectToDeltaStreamWithRetry(
+    private async createDeltaConnection(
         tenantId: string,
         documentId: string,
         token: string | null,
