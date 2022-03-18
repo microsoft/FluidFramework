@@ -219,9 +219,11 @@ export class LocalReferenceCollection {
             this.refsByOffset[lref.offset] = {
                 at: [lref],
             };
-        } else {
+        } else if (refsAtOffset.at === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            refsAtOffset.at!.push(lref);
+            this.refsByOffset[lref.offset]!.at = [lref];
+        } else {
+            refsAtOffset.at.push(lref);
         }
 
         if (lref.hasRangeLabels() || lref.hasTileLabels()) {
