@@ -106,6 +106,7 @@ export function create(
             const tenantKeyP = tenantManager.getKey(tenantId);
 
             handleResponse(Promise.all([createP, tenantKeyP]).then(([_, key]) => {
+                // @TODO: Modify it to return an object only, it returns string for back-compat.
                 return generateToken
                     ? {
                         id,
