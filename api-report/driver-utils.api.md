@@ -107,6 +107,9 @@ export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, Ar
 // @public
 export const canRetryOnError: (error: any) => boolean;
 
+// @public (undocumented)
+export function checkConnectionType(): string | undefined;
+
 // @public
 export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): ISummaryTree;
 

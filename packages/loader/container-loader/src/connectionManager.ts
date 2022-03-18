@@ -25,11 +25,11 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
     canRetryOnError,
+    checkConnectionType,
     createWriteError,
     createGenericNetworkError,
     getRetryDelayFromError,
     IAnyDriverError,
-    logNetworkFailure,
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
 } from "@fluidframework/driver-utils";
@@ -490,13 +490,13 @@ export class ConnectionManager implements IConnectionManager {
                     throw error;
                 }
 
-                logNetworkFailure(
-                    this.logger,
+                this.logger.sendTelemetryEvent(
                     {
                         attempts: connectRepeatCount,
                         delay: delayMs, // milliseconds
                         eventName: "DeltaConnectionFailureToConnect",
                         duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                        connectionType: checkConnectionType(),
                     },
                     origError);
 
@@ -519,6 +519,7 @@ export class ConnectionManager implements IConnectionManager {
                     eventName: "MultipleDeltaConnectionFailures",
                     attempts: connectRepeatCount,
                     duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                    connectionType: checkConnectionType(),
                 },
                 lastError,
             );

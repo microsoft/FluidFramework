@@ -6,18 +6,26 @@
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { isOnline, OnlineStatus, canRetryOnError } from "./network";
 
+export function checkConnectionType() {
+    if (typeof navigator === "object" && navigator !== null) {
+        const nav = navigator as any;
+        const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
+        if (connection !== null && typeof connection === "object") {
+            return String(connection.type);
+        }
+    }
+    return undefined;
+}
+
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
     const newEvent = { ...event };
     newEvent.online = isOnline();
     if (error?.online !== undefined) {
         newEvent.online = error.online as string;
     }
-    if (typeof navigator === "object" && navigator !== null) {
-        const nav = navigator as any;
-        const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
-        if (connection !== null && typeof connection === "object") {
-            newEvent.connectionType = connection.type;
-        }
+    const connectionType = checkConnectionType();
+    if (connectionType !== undefined) {
+        newEvent.connectionType = connectionType;
     }
 
     // If we are online, log it as an error, such that we look at it ASAP.
