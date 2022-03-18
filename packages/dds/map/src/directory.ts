@@ -1515,15 +1515,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     private createSubDirectoryCore(subdirName: string, local: boolean) {
         if (!this._subdirectories.has(subdirName)) {
+            const path = posix.join(this.absolutePath, subdirName); 
             this._subdirectories.set(
                 subdirName,
                 new SubDirectory(
                     this.directory,
                     this.runtime,
                     this.serializer,
-                    posix.join(this.absolutePath, subdirName)),
+                    path),
             );
-            const path = posix.join(this.absolutePath, subdirName);
             this.directory.emit("subDirectoryCreated", path, local, this.directory);
             this.emit("containedDirectoryCreated", subdirName, local, this);
         }
