@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PathLike } from "fs";
-import { IGetRefParamsExternal, IWholeFlatSummary } from "@fluidframework/server-services-client";
+import { PathLike, Stats } from "fs";
+import { IGetRefParamsExternal, IWholeFlatSummary, NetworkError } from "@fluidframework/server-services-client";
 import { IExternalWriterConfig, IFileSystemManager } from "./definitions";
 
 /**
@@ -32,10 +32,13 @@ export function getExternalWriterParams(params: string | undefined): IExternalWr
     return undefined;
 }
 
-export async function exists(fileSystemManager: IFileSystemManager, fileOrDirectoryPath: PathLike): Promise<boolean> {
+export async function exists(
+    fileSystemManager: IFileSystemManager,
+    fileOrDirectoryPath: PathLike,
+): Promise<Stats | false> {
     try {
-        await fileSystemManager.stat(fileOrDirectoryPath);
-        return true;
+        const fileOrDirectoryStats = await fileSystemManager.stat(fileOrDirectoryPath);
+        return fileOrDirectoryStats;
     } catch (error) {
         if (error?.code === "ENOENT") {
             // File/Directory does not exist.
@@ -54,8 +57,10 @@ export async function persistLatestFullSummaryInStorage(
     latestFullSummary: IWholeFlatSummary,
 ): Promise<void> {
     const directoryExists = await exists(fileSystemManager, storageDirectoryPath);
-    if (!directoryExists) {
-        await fileSystemManager.mkdir(storageDirectoryPath);
+    if (directoryExists === false) {
+        await fileSystemManager.mkdir(storageDirectoryPath, { recursive: true });
+    } else if (!directoryExists.isDirectory()) {
+        throw new NetworkError(400, "Document storage directory path is not a directory");
     }
     await fileSystemManager.writeFile(
         getLatestFullSummaryFilePath(storageDirectoryPath),
