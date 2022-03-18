@@ -166,7 +166,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
     });
 
     const tests = () => {
-        it("Dehydrated container snapshot", async () => {
+        it.skip("Dehydrated container snapshot", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
             const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);

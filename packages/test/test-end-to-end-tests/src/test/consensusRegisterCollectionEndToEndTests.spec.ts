@@ -64,7 +64,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
         });
 
-        it("Basic functionality", async () => {
+        it.skip("Basic functionality", async () => {
             const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
             await collection1.write("key1", "value1");

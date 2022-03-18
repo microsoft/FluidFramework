@@ -177,7 +177,7 @@ describeFullCompat("GC unreferenced flag in downloaded snapshot", (getTestObject
         latestUploadedSummary = undefined;
     });
 
-    it("should return the unreferenced flag correctly in snapshot for deleted data stores", async () => {
+    it.skip("should return the unreferenced flag correctly in snapshot for deleted data stores", async () => {
         const deletedDataStoreIds: string[] = [];
         const summarizerClient = await getNewSummarizer();
 

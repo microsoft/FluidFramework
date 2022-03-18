@@ -42,7 +42,7 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
         sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
     });
 
-    it("can sync SharedString across multiple containers", async () => {
+    it.skip("can sync SharedString across multiple containers", async () => {
         const text = "syncSharedString";
         sharedString1.insertText(0, text);
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");

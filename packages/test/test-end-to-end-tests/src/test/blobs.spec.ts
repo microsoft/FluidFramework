@@ -59,7 +59,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         }
     });
 
-    it("attach sends an op", async function() {
+    it.skip("attach sends an op", async function() {
         const container = await provider.makeTestContainer(testContainerConfig);
 
         const blobOpP = new Promise<void>((resolve, reject) => container.on("op", (op) => {
@@ -97,7 +97,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), testString);
     });
 
-    it("loads from snapshot", async function() {
+    it.skip("loads from snapshot", async function() {
         const container1 = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container1, "default");
 
@@ -230,7 +230,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         }
     });
 
-    itExpects("works in detached container", [
+    itExpects.skip("works in detached container", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
@@ -281,7 +281,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await rehydratedDataStore._root.get("my blob").get(), "utf-8"), text);
     });
 
-    itExpects("redirect table saved in snapshot",[
+    itExpects.skip("redirect table saved in snapshot",[
         { eventName: "fluid:telemetry:Container:ContainerClose", message: "0x202" },
     ], async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
@@ -345,7 +345,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
     });
 
-    itExpects("serialize/rehydrate multiple times then attach", [
+    itExpects.skip("serialize/rehydrate multiple times then attach", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
         const loader = provider.makeTestLoader(
