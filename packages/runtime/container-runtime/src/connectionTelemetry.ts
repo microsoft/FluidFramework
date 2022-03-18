@@ -9,6 +9,7 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
+    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 
@@ -76,7 +77,8 @@ class OpPerfTelemetry {
 
         this.deltaManager.outbound.on("push", (messages) => {
             for (const msg of messages) {
-                if (this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber) {
+                if (msg.type === MessageType.Operation &&
+                    this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber) {
                     assert(this.opTimeSittingInInboundQueue === undefined,
                         "OpTimeSittingInboundQueue should be undefined");
                     assert(this.durationSittingInInboundQueue === undefined,
@@ -88,6 +90,7 @@ class OpPerfTelemetry {
 
         this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
             if (this.clientId === message.clientId &&
+                message.type === MessageType.Operation &&
                 this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
                 assert(this.opTimeSittingInInboundQueue !== undefined, "opTimeSittingInInboundQueue should be defined");
                 this.durationSittingInInboundQueue = Date.now() - this.opTimeSittingInInboundQueue;
