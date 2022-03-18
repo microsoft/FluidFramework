@@ -101,7 +101,7 @@ Applications which wish to rely entirely on schema-on-read for some or all of th
 
 ## Design-pattern apps can use to handle schema migrations
 
-If existing data is compatible with the new schema:
+If existing will always be compatible with the new schema: (new schema permits a superset of what the old one did)
 
     - Author new more flexible schema.
     Use this as applications schema for reading.
@@ -110,7 +110,7 @@ If existing data is compatible with the new schema:
     - Wait for above to be deployed to most users.
     - Update or configure app such that it writes the new schema to the document's schema list.
 
-If the existing data is compatible with the new schema:
+If existing data could be incompatible with the new schema:
 
     - Author new schema.
     - Add support for it in the application.
