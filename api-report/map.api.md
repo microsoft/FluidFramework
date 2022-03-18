@@ -51,11 +51,6 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
 }
 
 // @public
-export interface IDirectoryCreated {
-    key: string;
-}
-
-// @public
 export interface IDirectoryDataObject {
     // (undocumented)
     storage?: {
@@ -68,18 +63,13 @@ export interface IDirectoryDataObject {
 }
 
 // @public
-export interface IDirectoryDeleted {
-    key: string;
-}
-
-// @public
 export interface IDirectoryEvents extends IEvent {
     // (undocumented)
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
-    (event: "containedDirectoryCreated", listener: (changed: IDirectoryCreated, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "containedDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
-    (event: "containedDirectoryDeleted", listener: (changed: IDirectoryDeleted, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "containedDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
     (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
@@ -130,9 +120,9 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
-    (event: "subDirectoryCreated", listener: (changed: ISubDirectoryCreated, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
-    (event: "subDirectoryDeleted", listener: (changed: ISubDirectoryDeleted, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public
@@ -147,16 +137,6 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
-}
-
-// @public
-export interface ISubDirectoryCreated extends IDirectoryCreated {
-    path: string;
-}
-
-// @public
-export interface ISubDirectoryDeleted extends IDirectoryDeleted {
-    path: string;
 }
 
 // @public

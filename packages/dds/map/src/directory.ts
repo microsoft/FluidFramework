@@ -23,16 +23,12 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import * as path from "path-browserify";
 import {
     IDirectory,
-    IDirectoryCreated,
-    IDirectoryDeleted,
     IDirectoryEvents,
     IDirectoryValueChanged,
     ISerializableValue,
     ISerializedValue,
     ISharedDirectory,
     ISharedDirectoryEvents,
-    ISubDirectoryCreated,
-    ISubDirectoryDeleted,
     IValueChanged,
 } from "./interfaces";
 import {
@@ -1527,13 +1523,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                     this.serializer,
                     posix.join(this.absolutePath, subdirName)),
             );
-            const event: ISubDirectoryCreated = {
-                key: subdirName,
-                path: this.absolutePath,
-            };
-            this.directory.emit("subDirectoryCreated", event, local, this.directory);
-            const containedEvent: IDirectoryCreated = { key: subdirName };
-            this.emit("containedDirectoryCreated", containedEvent, local, this);
+            const path = posix.join(this.absolutePath, subdirName);
+            this.directory.emit("subDirectoryCreated", path, local, this.directory);
+            this.emit("containedDirectoryCreated", subdirName, local, this);
         }
     }
 
@@ -1550,13 +1542,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         const successfullyRemoved = this._subdirectories.delete(subdirName);
         if (previousValue !== undefined) {
             this.disposeSubDirectoryTree(previousValue);
-            const event: ISubDirectoryDeleted = {
-                key: subdirName,
-                path: this.absolutePath,
-            };
-            this.directory.emit("subDirectoryDeleted", event, local, this.directory);
-            const containedEvent: IDirectoryDeleted = { key: subdirName };
-            this.emit("containedDirectoryDeleted", containedEvent, local, this);
+            const path = posix.join(this.absolutePath, subdirName);
+            this.directory.emit("subDirectoryDeleted", path, local, this.directory);
+            this.emit("containedDirectoryDeleted", subdirName, local, this);
         }
         return successfullyRemoved;
     }
