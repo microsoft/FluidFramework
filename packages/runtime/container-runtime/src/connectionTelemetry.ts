@@ -88,8 +88,8 @@ class OpPerfTelemetry {
 
         this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
             if (this.clientId === message.clientId &&
-                this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber &&
-                this.opTimeSittingInInboundQueue !== undefined) {
+                this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
+                assert(this.opTimeSittingInInboundQueue !== undefined, "opTimeSittingInInboundQueue should be defined");
                 this.durationSittingInInboundQueue = Date.now() - this.opTimeSittingInInboundQueue;
                 this.opTimeSittingInInboundQueue = undefined;
             }
@@ -194,9 +194,10 @@ class OpPerfTelemetry {
                 duration,
                 category,
                 pingLatency: this.pingLatency,
-                durationInboundQueue: this.durationSittingInInboundQueue ?? 0,
+                durationInboundQueue: this.durationSittingInInboundQueue,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
+            this.durationSittingInInboundQueue = undefined;
         }
     }
 }
