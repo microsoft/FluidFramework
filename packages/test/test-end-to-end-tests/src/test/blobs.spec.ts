@@ -315,7 +315,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
     });
 
-    itExpects("serialize/rehydrate then attach", [
+    itExpects.skip("serialize/rehydrate then attach", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
         const loader = provider.makeTestLoader(

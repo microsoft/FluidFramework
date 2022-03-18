@@ -180,7 +180,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(testDataStore.context.attachState, AttachState.Attached, "DataStore should be attached!!");
     });
 
-    it("can create DDS in detached container and attach / update it", async () => {
+    it.skip("can create DDS in detached container and attach / update it", async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         const dsClient1 = await requestFluidObject<ITestFluidObject>(container, "/");
 

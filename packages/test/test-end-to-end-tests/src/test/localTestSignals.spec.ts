@@ -111,7 +111,7 @@ describeFullCompat("TestSignals", (getTestObjectProvider) => {
         });
     });
 
-    it("Validate signal events are raised on the correct runtime", async () => {
+    it.skip("Validate signal events are raised on the correct runtime", async () => {
         let user1HostSignalReceivedCount = 0;
         let user2HostSignalReceivedCount = 0;
         let user1CompSignalReceivedCount = 0;

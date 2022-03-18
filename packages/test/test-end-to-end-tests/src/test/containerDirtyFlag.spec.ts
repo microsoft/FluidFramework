@@ -128,7 +128,7 @@ describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
             await verifyDirtyStateTransitions(container2);
         });
 
-        it("handles container with pending ops not to be sent out", async function() {
+        it.skip("handles container with pending ops not to be sent out", async function() {
             const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
                 [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
             });

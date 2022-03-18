@@ -181,7 +181,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
         latestAckedSummary = undefined;
     });
 
-    it("should regenerate summary and GC data when GC version updates", async () => {
+    it.skip("should regenerate summary and GC data when GC version updates", async () => {
         // Stores the ids of data stores whose summary tree should be handles.
         let dataStoresAsHandles: string[] = [];
 

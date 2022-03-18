@@ -282,7 +282,7 @@ function generate(
             assert.equal(await acquireAndComplete(collection1), "testValue", "testValue should still be there");
         });
 
-        it("Events", async () => {
+        it.skip("Events", async () => {
             const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
             await provider.ensureSynchronized();

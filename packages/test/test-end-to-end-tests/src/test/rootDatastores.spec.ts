@@ -335,7 +335,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
-        itExpects("Creating a root data store with an existing alias as an id breaks the container", [
+        itExpects.skip("Creating a root data store with an existing alias as an id breaks the container", [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
         ], async () => {
             const dataCorruption = anyDataCorruption([container1, container2]);
@@ -353,7 +353,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.equal((aliasResult as Error).message, "malformedDataStoreAliasMessage");
         });
 
-        itExpects("Receiving a bad alias message breaks the container", [
+        itExpects.skip("Receiving a bad alias message breaks the container", [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
         ], async () => {
