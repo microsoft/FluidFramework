@@ -202,11 +202,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.messageBuffer.push(message);
 
+        this.emit("submitOp", message);
+
         if (!batch) {
             this.flush();
         }
 
-        this.emit("submitOp", message);
         return message.clientSequenceNumber;
     }
 
