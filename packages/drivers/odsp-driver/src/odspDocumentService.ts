@@ -232,16 +232,10 @@ export class OdspDocumentService implements IDocumentService {
         failedConnectionStep: string,
         separateTokenRequest: boolean,
     ): IFluidErrorBase {
-        const normalizedError = normalizeError(error, { props: {
+        return normalizeError(error, { props: {
             failedConnectionStep,
             separateTokenRequest,
         }});
-
-        // We need to preserve these properties which are used in a non-typesafe way throughout driver code
-        const { canRetry, retryAfterSeconds } = error;
-        Object.assign(normalizeError, { canRetry, retryAfterSeconds });
-
-        return normalizedError;
     }
 
     /**
