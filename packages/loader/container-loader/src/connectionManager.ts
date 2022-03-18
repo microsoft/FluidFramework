@@ -490,18 +490,15 @@ export class ConnectionManager implements IConnectionManager {
                     throw error;
                 }
 
-                // Log error once - we get too many errors in logs when we are offline,
-                // and unfortunately there is no reliable way to detect that.
-                if (connectRepeatCount === 1) {
-                    logNetworkFailure(
-                        this.logger,
-                        {
-                            delay: delayMs, // milliseconds
-                            eventName: "DeltaConnectionFailureToConnect",
-                            duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
-                        },
-                        origError);
-                }
+                logNetworkFailure(
+                    this.logger,
+                    {
+                        attempts: connectRepeatCount,
+                        delay: delayMs, // milliseconds
+                        eventName: "DeltaConnectionFailureToConnect",
+                        duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                    },
+                    origError);
 
                 lastError = origError;
 
