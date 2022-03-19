@@ -10,8 +10,6 @@ import { NetworkError } from "@fluidframework/server-services-client";
 type IsomorphicGitTreeEntryType = "commit" | "blob" | "tree";
 type IsomorphicGitTagObjectType = IsomorphicGitTreeEntryType | "tag";
 
-
-
 function ensureIsomorphicGitTreeEntryType(originalITreeEntryType: string): IsomorphicGitTreeEntryType {
     if (!["commit", "blob", "tree"].includes(originalITreeEntryType)) {
         throw new NetworkError(400, "Invalid TreeEntry type.");
@@ -42,13 +40,11 @@ export function commitToICommit(commitResult: isomorphicGit.ReadCommitResult): r
             email: commitResult.commit.author.email,
             name: commitResult.commit.author.name,
         },
-        //author:// authorToIAuthor(commit.author(), commit.date()),
         committer: {
             date: new Date(commitResult.commit.committer.timestamp * 1000).toISOString(),
             email: commitResult.commit.committer.email,
             name: commitResult.commit.committer.name,
         },
-        //committer: committerToICommitter(commit.committer(), commit.date()),
         message: commitResult.commit.message,
         parents: commitResult.commit.parent && commitResult.commit.parent.length > 0 ?
             commitResult.commit.parent.map((parent) => oidToCommitHash(parent)) : null,
@@ -70,7 +66,7 @@ export function iCreateCommitParamsToCommitObject(
 
     // Date.parse() returns a value in milliseconds, and Isomorphic-Git expects
     // a timestamp number time in seconds (UTC Unix timestamp)
-    const timestamp = Math.floor(date/1000);
+    const timestamp = Math.floor(date / 1000);
     const parent = commitParams.parents && commitParams.parents.length > 0 ? commitParams.parents : null;
 
     return {
@@ -81,14 +77,14 @@ export function iCreateCommitParamsToCommitObject(
             name: commitParams.author.name,
             email: commitParams.author.email,
             timestamp,
-            timezoneOffset: 0
+            timezoneOffset: 0,
         },
         committer: {
             name: commitParams.author.name,
             email: commitParams.author.email,
             timestamp,
-            timezoneOffset: 0
-        }
+            timezoneOffset: 0,
+        },
     };
 }
 
@@ -176,7 +172,7 @@ export function iCreateTagParamsToTagObject(
 
     // Date.parse() returns a value in milliseconds, and Isomorphic-Git expects
     // a timestamp number time in seconds (UTC Unix timestamp)
-    const timestamp = Math.floor(date/1000);
+    const timestamp = Math.floor(date / 1000);
 
     return {
         object: tagParams.object,
@@ -187,7 +183,7 @@ export function iCreateTagParamsToTagObject(
             name: tagParams.tagger.name,
             email: tagParams.tagger.email,
             timestamp,
-            timezoneOffset: 0
+            timezoneOffset: 0,
         },
     };
 }

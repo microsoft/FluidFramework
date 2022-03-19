@@ -6,7 +6,6 @@
 import { PathLike } from "fs";
 import * as path from "path";
 import * as isomorphicGit from "isomorphic-git";
-import nodegit from "nodegit";
 import winston from "winston";
 import safeStringify from "json-stringify-safe";
 import type * as resources from "@fluidframework/gitresources";
@@ -39,6 +38,10 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         private readonly externalStorageManager: IExternalStorageManager,
     ) {}
 
+    public get path(): string {
+        return this.directory;
+    }
+
     public async getCommit(sha: string): Promise<resources.ICommit> {
         const commit = await isomorphicGit.readCommit({
                 fs: this.fileSystemManager,
@@ -62,7 +65,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                     depth: count,
                 });
 
-            const detailedCommits = commits.map( (rawCommit) => {
+            const detailedCommits = commits.map((rawCommit) => {
                 const gitCommit = conversions.commitToICommit(rawCommit);
                 const result: resources.ICommitDetails =
                 {
@@ -110,8 +113,8 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
     }
 
     private async getTreeInternalRecursive(sha: string): Promise<resources.ITree> {
-        const mapFunction: isomorphicGit.WalkerMap = async (path, [walkerEntry]) => {
-            if (path !== "." && path !== "..") {
+        const mapFunction: isomorphicGit.WalkerMap = async (filepath, [walkerEntry]) => {
+            if (filepath !== "." && filepath !== "..") {
                 const type = await walkerEntry.type();
                 const mode = (await walkerEntry.mode()).toString(8);
                 const oid = await walkerEntry.oid();
@@ -119,10 +122,10 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                     type,
                     mode,
                     oid,
-                    path,
-                }
+                    path: filepath,
+                };
             }
-        }
+        };
         const root = isomorphicGit.TREE({ ref: sha });
         const results = await isomorphicGit.walk({
             fs: this.fileSystemManager,
@@ -188,7 +191,6 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
             url: `/repos/${this.repoOwner}/${this.repoName}/git/blobs/${blobOid}`,
         };
     }
-
 
     public async createTree(params: resources.ICreateTreeParams): Promise<resources.ITree> {
         const isoGitTreeObject: isomorphicGit.TreeObject = [];
@@ -259,7 +261,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                 ]);
                 return {
                     resolvedRef,
-                    expandedRef
+                    expandedRef,
                 };
         }));
 
@@ -282,7 +284,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                     fs: this.fileSystemManager,
                     gitdir: this.directory,
                     ref: refId,
-                })
+                }),
             ]);
             return conversions.refToIRef(resolvedRef, expandedRef);
         } catch (err) {
@@ -317,7 +319,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
             fs: this.fileSystemManager,
             gitdir: this.directory,
             ref: createRefParams.ref,
-            value: createRefParams.sha
+            value: createRefParams.sha,
         });
 
         if (externalWriterConfig?.enabled) {
@@ -341,7 +343,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
             gitdir: this.directory,
             ref: refId,
             value: patchRefParams.sha,
-            force: true // Isomorphic-Git requires force to be always true if we want to overwrite a ref.
+            force: true, // Isomorphic-Git requires force to be always true if we want to overwrite a ref.
         });
 
         if (externalWriterConfig?.enabled) {
@@ -357,7 +359,6 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
     }
 
     public async deleteRef(refId: string): Promise<void> {
-
         try {
             await isomorphicGit.deleteRef({
                 fs: this.fileSystemManager,
@@ -385,13 +386,13 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
             gitdir: this.directory,
             tag: tagObject,
         });
-        return await this.getTag(tagOid);
+        return this.getTag(tagOid);
     }
 }
 
 export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
     // Cache repositories to allow for reuse
-    private repositoryCache: Set<string> = new Set();
+    private readonly repositoryCache: Set<string> = new Set();
 
     constructor(
         private readonly baseDir: string,
@@ -408,7 +409,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
         await isomorphicGit.init({
             fs: this.fileSystemManager,
             gitdir: `${this.baseDir}/${repoPath}`,
-            bare: true
+            bare: true,
         });
 
         this.repositoryCache.add(repoPath);
