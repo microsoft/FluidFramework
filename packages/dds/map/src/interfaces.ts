@@ -169,16 +169,11 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
-    (event: "subDirectoryCreated", listener: (
+    (event: `"subDirectoryCreated" | "subDirectoryDeleted"`, listener: (
         path: string,
         local: boolean,
         target: IEventThisPlaceHolder,
-    ) => void);
-    (event: "subDirectoryDeleted", listener: (
-        path: string,
-        local: boolean,
-        target: IEventThisPlaceHolder,
-    ) => void);
+    ) => void)
 }
 
 /**
@@ -248,12 +243,7 @@ export interface IDirectoryEvents extends IEvent {
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
-    (event: "containedDirectoryCreated", listener: (
-        path: string,
-        local: boolean,
-        target: IEventThisPlaceHolder,
-    ) => void);
-    (event: "containedDirectoryDeleted", listener: (
+    (event: `"containedDirectoryCreated" | "containedDirectoryDeleted"`, listener: (
         path: string,
         local: boolean,
         target: IEventThisPlaceHolder,

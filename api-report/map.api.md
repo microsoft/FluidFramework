@@ -67,9 +67,7 @@ export interface IDirectoryEvents extends IEvent {
     // (undocumented)
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
-    (event: "containedDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
-    (event: "containedDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: `"containedDirectoryCreated" | "containedDirectoryDeleted"`, listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
     (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
@@ -120,9 +118,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
-    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
-    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: `"subDirectoryCreated" | "subDirectoryDeleted"`, listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public

@@ -1515,16 +1515,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     private createSubDirectoryCore(subdirName: string, local: boolean) {
         if (!this._subdirectories.has(subdirName)) {
-            const path = posix.join(this.absolutePath, subdirName); 
+            const pathFromRoot = posix.join(this.absolutePath, subdirName);
             this._subdirectories.set(
                 subdirName,
                 new SubDirectory(
                     this.directory,
                     this.runtime,
                     this.serializer,
-                    path),
+                    pathFromRoot),
             );
-            this.directory.emit("subDirectoryCreated", path, local, this.directory);
+            this.directory.emit("subDirectoryCreated", pathFromRoot, local, this.directory);
             this.emit("containedDirectoryCreated", subdirName, local, this);
         }
     }
@@ -1542,8 +1542,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         const successfullyRemoved = this._subdirectories.delete(subdirName);
         if (previousValue !== undefined) {
             this.disposeSubDirectoryTree(previousValue);
-            const path = posix.join(this.absolutePath, subdirName);
-            this.directory.emit("subDirectoryDeleted", path, local, this.directory);
+            const pathFromRoot = posix.join(this.absolutePath, subdirName);
+            this.directory.emit("subDirectoryDeleted", pathFromRoot, local, this.directory);
             this.emit("containedDirectoryDeleted", subdirName, local, this);
         }
         return successfullyRemoved;
