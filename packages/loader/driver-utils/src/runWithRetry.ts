@@ -65,12 +65,12 @@ export async function runWithRetry<T>(
                 throw err;
             }
 
-            if (progress.cancel?.aborted){
+            if (progress.cancel?.aborted === true) {
                 throw new NonRetryableError(
                     "runWithRetryAborted",
                     undefined,
                     DriverErrorType.genericError,
-                    { driverVersion: pkgVersion },
+                    { eventName: `runWithRetryAborted_${fetchCallName}`, driverVersion: pkgVersion },
                 );
             }
 
