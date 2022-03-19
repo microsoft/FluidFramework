@@ -10,7 +10,6 @@ import winston from "winston";
 import safeStringify from "json-stringify-safe";
 import type * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
-import { IExternalStorageManager } from "../externalStorageManager";
 import * as helpers from "./helpers";
 import * as conversions from "./isomorphicgitConversions";
 import {
@@ -35,7 +34,6 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         private readonly repoOwner: string,
         private readonly repoName: string,
         private readonly directory: string,
-        private readonly externalStorageManager: IExternalStorageManager,
     ) {}
 
     public get path(): string {
@@ -288,24 +286,6 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
             ]);
             return conversions.refToIRef(resolvedRef, expandedRef);
         } catch (err) {
-            // Lookup external storage if commit does not exist.
-            const fileName = refId.substring(refId.lastIndexOf("/") + 1);
-            // If file does not exist or error trying to look up commit, return the original error.
-            if (externalWriterConfig?.enabled) {
-                try {
-                    const result = await this.externalStorageManager.read(this.repoName, fileName);
-                    if (!result) {
-                        winston.error(`getRef error: ${
-                            safeStringify(err, undefined, 2)} repo: ${this.repoName} ref: ${refId}`);
-                        return Promise.reject(err);
-                    }
-                    return this.getRef(refId, externalWriterConfig);
-                } catch (bridgeError) {
-                    winston.error(`Giving up on creating ref. BridgeError: ${
-                        safeStringify(bridgeError, undefined, 2)}`);
-                    return Promise.reject(err);
-                }
-            }
             winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${this.repoName} ref: ${refId}`);
             return Promise.reject(err);
         }
@@ -321,15 +301,6 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
             ref: createRefParams.ref,
             value: createRefParams.sha,
         });
-
-        if (externalWriterConfig?.enabled) {
-            try {
-                await this.externalStorageManager.write(this.repoName, createRefParams.ref, createRefParams.sha, false);
-            } catch (e) {
-                winston.error(`Error writing to file ${e}`);
-            }
-        }
-
         return conversions.refToIRef(createRefParams.sha, createRefParams.ref);
     }
 
@@ -345,16 +316,6 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
             value: patchRefParams.sha,
             force: true, // Isomorphic-Git requires force to be always true if we want to overwrite a ref.
         });
-
-        if (externalWriterConfig?.enabled) {
-            try {
-                await this.externalStorageManager.write(this.repoName, refId, patchRefParams.sha, true);
-            } catch (error) {
-                winston.error(`External storage write failed while trying to update file
-                ${safeStringify(error, undefined, 2)}, ${this.repoName} / ${refId}`);
-            }
-        }
-
         return conversions.refToIRef(patchRefParams.sha, refId);
     }
 
@@ -397,7 +358,6 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
     constructor(
         private readonly baseDir: string,
         private readonly fileSystemManager: IFileSystemManager,
-        private readonly externalStorageManager: IExternalStorageManager,
     ) { }
 
     public async create(owner: string, name: string): Promise<IsomorphicGitRepositoryManager> {
@@ -417,8 +377,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
             this.fileSystemManager,
             owner,
             name,
-            directoryPath,
-            this.externalStorageManager);
+            directoryPath);
         winston.info(`Created a new repo for owner ${owner} reponame: ${name}`);
 
         return repoManager;
@@ -443,8 +402,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
             this.fileSystemManager,
             owner,
             name,
-            directoryPath,
-            this.externalStorageManager);
+            directoryPath);
         return repoManager;
     }
 
