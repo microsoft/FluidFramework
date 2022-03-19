@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { PathLike } from "fs";
 import * as path from "path";
 import nodegit from "nodegit";
 import winston from "winston";
@@ -21,15 +20,6 @@ import {
     IFileSystemManager,
 } from "./definitions";
 
-const exists = async (fileSystemManager: IFileSystemManager, fileOrDirectoryPath: PathLike): Promise<boolean> => {
-    try {
-        await fileSystemManager.stat(fileOrDirectoryPath);
-        return true;
-    } catch (e) {
-        return false;
-    }
-};
-
 export class NodegitRepositoryManager implements IRepositoryManager {
     constructor(
         private readonly repoOwner: string,
@@ -37,6 +27,10 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         private readonly repo: nodegit.Repository,
         private readonly externalStorageManager: IExternalStorageManager,
     ) {}
+
+    public get path(): string {
+        return this.repo.path();
+    }
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
         const commit = await this.repo.getCommit(sha);
@@ -338,7 +332,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
     private repositoryPCache: { [key: string]: Promise<nodegit.Repository> } = {};
 
     constructor(
-        private readonly baseDir,
+        private readonly baseDir: string,
         private readonly fileSystemManager: IFileSystemManager,
         private readonly externalStorageManager: IExternalStorageManager,
     ) {
@@ -370,7 +364,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         if (!(repoPath in this.repositoryPCache)) {
             const directory = `${this.baseDir}/${repoPath}`;
 
-            const repoExists = await exists(this.fileSystemManager, directory);
+            const repoExists = await helpers.exists(this.fileSystemManager, directory);
             if (!repoExists) {
                 winston.info(`Repo does not exist ${directory}`);
                 // services-client/getOrCreateRepository depends on a 400 response code
