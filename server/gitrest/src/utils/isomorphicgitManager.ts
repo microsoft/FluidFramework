@@ -1,0 +1,465 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { PathLike } from "fs";
+import * as path from "path";
+import * as isomorphicGit from "isomorphic-git";
+import nodegit from "nodegit";
+import winston from "winston";
+import safeStringify from "json-stringify-safe";
+import type * as resources from "@fluidframework/gitresources";
+import { NetworkError } from "@fluidframework/server-services-client";
+import { IExternalStorageManager } from "../externalStorageManager";
+import * as helpers from "./helpers";
+import * as conversions from "./isomorphicgitConversions";
+import {
+    IRepositoryManagerFactory,
+    IExternalWriterConfig,
+    IRepositoryManager,
+    IFileSystemManager,
+} from "./definitions";
+
+const exists = async (fileSystemManager: IFileSystemManager, fileOrDirectoryPath: PathLike): Promise<boolean> => {
+    try {
+        await fileSystemManager.stat(fileOrDirectoryPath);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+export class IsomorphicGitRepositoryManager implements IRepositoryManager {
+    constructor(
+        private readonly fileSystemManager: IFileSystemManager,
+        private readonly repoOwner: string,
+        private readonly repoName: string,
+        private readonly directory: string,
+        private readonly externalStorageManager: IExternalStorageManager,
+    ) {}
+
+    public async getCommit(sha: string): Promise<resources.ICommit> {
+        const commit = await isomorphicGit.readCommit({
+                fs: this.fileSystemManager,
+                gitdir: this.directory,
+                oid: sha,
+            });
+        const result = conversions.commitToICommit(commit);
+        return result;
+    }
+
+    public async getCommits(
+        sha: string,
+        count: number,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<resources.ICommitDetails[]> {
+        try {
+            const commits = await isomorphicGit.log({
+                    fs: this.fileSystemManager,
+                    gitdir: this.directory,
+                    ref: sha,
+                    depth: count,
+                });
+
+            const detailedCommits = commits.map( (rawCommit) => {
+                const gitCommit = conversions.commitToICommit(rawCommit);
+                const result: resources.ICommitDetails =
+                {
+                    commit: {
+                        author: gitCommit.author,
+                        committer: gitCommit.committer,
+                        message: gitCommit.message,
+                        tree: gitCommit.tree,
+                        url: gitCommit.url,
+                    },
+                    parents: gitCommit.parents,
+                    sha: gitCommit.sha,
+                    url: "",
+
+                };
+                return result;
+            });
+
+            return detailedCommits;
+        } catch (err) {
+            winston.info(`getCommits error: ${err}`);
+            return Promise.reject(err);
+        }
+    }
+
+    private async getTreeInternal(sha: string): Promise<resources.ITree> {
+        const readTreeResult = await isomorphicGit.readTree({
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            oid: sha,
+        });
+
+        const entries = readTreeResult.tree;
+        const outputEntries: resources.ITreeEntry[] = [];
+        for (const entry of entries) {
+            const output = conversions.treeEntryToITreeEntry(entry);
+            outputEntries.push(output);
+        }
+
+        return {
+            sha: readTreeResult.oid,
+            tree: outputEntries,
+            url: "",
+        };
+    }
+
+    private async getTreeInternalRecursive(sha: string): Promise<resources.ITree> {
+        const mapFunction: isomorphicGit.WalkerMap = async (path, [walkerEntry]) => {
+            if (path !== "." && path !== "..") {
+                const type = await walkerEntry.type();
+                const mode = (await walkerEntry.mode()).toString(8);
+                const oid = await walkerEntry.oid();
+                return {
+                    type,
+                    mode,
+                    oid,
+                    path,
+                }
+            }
+        }
+        const root = isomorphicGit.TREE({ ref: sha });
+        const results = await isomorphicGit.walk({
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            trees: [root],
+            map: mapFunction,
+        });
+
+        const entries = results as isomorphicGit.TreeEntry[];
+        const outputEntries: resources.ITreeEntry[] = [];
+
+        for (const entry of entries) {
+            const output = conversions.treeEntryToITreeEntry(entry);
+            outputEntries.push(output);
+        }
+
+        return {
+            sha,
+            tree: outputEntries,
+            url: "",
+        };
+    }
+
+    public async getTree(rootSha: string, recursive: boolean): Promise<resources.ITree> {
+        if (recursive) {
+            return this.getTreeInternalRecursive(rootSha);
+        }
+        return this.getTreeInternal(rootSha);
+    }
+
+    public async getBlob(sha: string): Promise<resources.IBlob> {
+        const blob = await isomorphicGit.readBlob({
+                fs: this.fileSystemManager,
+                gitdir: this.directory,
+                oid: sha,
+            });
+        return conversions.blobToIBlob(blob, this.repoOwner, this.repoName);
+    }
+
+    public async getContent(commit: string, contentPath: string): Promise<resources.IBlob> {
+        const blob = await isomorphicGit.readBlob({
+                fs: this.fileSystemManager,
+                gitdir: this.directory,
+                oid: commit,
+                filepath: contentPath,
+            });
+        return conversions.blobToIBlob(blob, this.repoOwner, this.repoName);
+    }
+
+    public async createBlob(createBlobParams: resources.ICreateBlobParams): Promise<resources.ICreateBlobResponse> {
+        if (!helpers.validateBlobContent(createBlobParams.content) ||
+            !helpers.validateBlobEncoding(createBlobParams.encoding)) {
+            throw new NetworkError(400, "Invalid blob");
+        }
+        const blobOid = await isomorphicGit.writeBlob({
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            blob: Buffer.from(createBlobParams.content, createBlobParams.encoding),
+        });
+
+        return {
+            sha: blobOid,
+            url: `/repos/${this.repoOwner}/${this.repoName}/git/blobs/${blobOid}`,
+        };
+    }
+
+
+    public async createTree(params: resources.ICreateTreeParams): Promise<resources.ITree> {
+        const isoGitTreeObject: isomorphicGit.TreeObject = [];
+
+        // build up the tree
+        for (const node of params.tree) {
+            isoGitTreeObject.push(conversions.iCreateTreeEntryToTreeEntry(node));
+        }
+
+        const id = await isomorphicGit.writeTree({
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            tree: isoGitTreeObject,
+        });
+        return this.getTreeInternal(id);
+    }
+
+    public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
+        const commitObject = conversions.iCreateCommitParamsToCommitObject(commit);
+
+        const commitOid = await isomorphicGit.writeCommit({
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            commit: commitObject,
+        });
+
+        return {
+            author: commit.author,
+            committer: commit.author,
+            message: commit.message,
+            parents: commitObject.parent ? commit.parents.map((parent) => ({ sha: parent, url: "" })) : [],
+            sha: commitOid,
+            tree: {
+                sha: commit.tree,
+                url: "",
+            },
+            url: "",
+        };
+    }
+
+    public async getRefs(): Promise<resources.IRef[]> {
+        const refIds: string[] = [];
+        const [branches, tags] = await Promise.all([
+            isomorphicGit.listBranches({
+                fs: this.fileSystemManager,
+                gitdir: this.directory,
+            }),
+            isomorphicGit.listTags({
+                fs: this.fileSystemManager,
+                gitdir: this.directory,
+            }),
+        ]);
+        refIds.push(...branches, ...tags);
+
+        const resolvedAndExpandedRefs = await Promise.all(refIds.map(
+            async (refId) => {
+                const [resolvedRef, expandedRef] = await Promise.all([
+                    isomorphicGit.resolveRef({
+                        fs: this.fileSystemManager,
+                        gitdir: this.directory,
+                        ref: refId,
+                    }),
+                    isomorphicGit.expandRef({
+                        fs: this.fileSystemManager,
+                        gitdir: this.directory,
+                        ref: refId,
+                    }),
+                ]);
+                return {
+                    resolvedRef,
+                    expandedRef
+                };
+        }));
+
+        return resolvedAndExpandedRefs.map(
+            (resolvedAndExpandedRef) =>
+                conversions.refToIRef(
+                    resolvedAndExpandedRef.resolvedRef,
+                    resolvedAndExpandedRef.expandedRef));
+    }
+
+    public async getRef(refId: string, externalWriterConfig?: IExternalWriterConfig): Promise<resources.IRef> {
+        try {
+            const [resolvedRef, expandedRef] = await Promise.all([
+                isomorphicGit.resolveRef({
+                    fs: this.fileSystemManager,
+                    gitdir: this.directory,
+                    ref: refId,
+                }),
+                isomorphicGit.expandRef({
+                    fs: this.fileSystemManager,
+                    gitdir: this.directory,
+                    ref: refId,
+                })
+            ]);
+            return conversions.refToIRef(resolvedRef, expandedRef);
+        } catch (err) {
+            // Lookup external storage if commit does not exist.
+            const fileName = refId.substring(refId.lastIndexOf("/") + 1);
+            // If file does not exist or error trying to look up commit, return the original error.
+            if (externalWriterConfig?.enabled) {
+                try {
+                    const result = await this.externalStorageManager.read(this.repoName, fileName);
+                    if (!result) {
+                        winston.error(`getRef error: ${
+                            safeStringify(err, undefined, 2)} repo: ${this.repoName} ref: ${refId}`);
+                        return Promise.reject(err);
+                    }
+                    return this.getRef(refId, externalWriterConfig);
+                } catch (bridgeError) {
+                    winston.error(`Giving up on creating ref. BridgeError: ${
+                        safeStringify(bridgeError, undefined, 2)}`);
+                    return Promise.reject(err);
+                }
+            }
+            winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${this.repoName} ref: ${refId}`);
+            return Promise.reject(err);
+        }
+    }
+
+    public async createRef(
+        createRefParams: resources.ICreateRefParams,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<resources.IRef> {
+        await isomorphicGit.writeRef({
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            ref: createRefParams.ref,
+            value: createRefParams.sha
+        });
+
+        if (externalWriterConfig?.enabled) {
+            try {
+                await this.externalStorageManager.write(this.repoName, createRefParams.ref, createRefParams.sha, false);
+            } catch (e) {
+                winston.error(`Error writing to file ${e}`);
+            }
+        }
+
+        return conversions.refToIRef(createRefParams.sha, createRefParams.ref);
+    }
+
+    public async patchRef(
+        refId: string,
+        patchRefParams: resources.IPatchRefParams,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<resources.IRef> {
+        await isomorphicGit.writeRef({
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            ref: refId,
+            value: patchRefParams.sha,
+            force: true // Isomorphic-Git requires force to be always true if we want to overwrite a ref.
+        });
+
+        if (externalWriterConfig?.enabled) {
+            try {
+                await this.externalStorageManager.write(this.repoName, refId, patchRefParams.sha, true);
+            } catch (error) {
+                winston.error(`External storage write failed while trying to update file
+                ${safeStringify(error, undefined, 2)}, ${this.repoName} / ${refId}`);
+            }
+        }
+
+        return conversions.refToIRef(patchRefParams.sha, refId);
+    }
+
+    public async deleteRef(refId: string): Promise<void> {
+
+        try {
+            await isomorphicGit.deleteRef({
+                fs: this.fileSystemManager,
+                gitdir: this.directory,
+                ref: refId,
+            });
+        } catch (e: any) {
+            throw new NetworkError(500, `Failed to delete ref. Error: ${e}`);
+        }
+    }
+
+    public async getTag(tagId: string): Promise<resources.ITag> {
+        const readTagResult = await isomorphicGit.readTag({
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            oid: tagId,
+        });
+        return conversions.tagToITag(readTagResult);
+    }
+
+    public async createTag(tagParams: resources.ICreateTagParams): Promise<resources.ITag> {
+        const tagObject = conversions.iCreateTagParamsToTagObject(tagParams);
+        const tagOid = await isomorphicGit.writeTag({
+            fs: this.fileSystemManager,
+            gitdir: this.directory,
+            tag: tagObject,
+        });
+        return await this.getTag(tagOid);
+    }
+}
+
+export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
+    // Cache repositories to allow for reuse
+    private repositoryCache: Set<string> = new Set();
+
+    constructor(
+        private readonly baseDir: string,
+        private readonly fileSystemManager: IFileSystemManager,
+        private readonly externalStorageManager: IExternalStorageManager,
+    ) { }
+
+    public async create(owner: string, name: string): Promise<IsomorphicGitRepositoryManager> {
+        // Verify that both inputs are valid folder names
+        const repoPath = this.getRepoPath(owner, name);
+        const directoryPath = `${this.baseDir}/${repoPath}`;
+
+        // Create and then cache the repository
+        await isomorphicGit.init({
+            fs: this.fileSystemManager,
+            gitdir: `${this.baseDir}/${repoPath}`,
+            bare: true
+        });
+
+        this.repositoryCache.add(repoPath);
+        const repoManager = new IsomorphicGitRepositoryManager(
+            this.fileSystemManager,
+            owner,
+            name,
+            directoryPath,
+            this.externalStorageManager);
+        winston.info(`Created a new repo for owner ${owner} reponame: ${name}`);
+
+        return repoManager;
+    }
+
+    public async open(owner: string, name: string): Promise<IsomorphicGitRepositoryManager> {
+        const repoPath = this.getRepoPath(owner, name);
+        const directoryPath = `${this.baseDir}/${repoPath}`;
+
+        if (!(this.repositoryCache.has(repoPath))) {
+            const repoExists = await exists(this.fileSystemManager, directoryPath);
+            if (!repoExists) {
+                winston.info(`Repo does not exist ${directoryPath}`);
+                // services-client/getOrCreateRepository depends on a 400 response code
+                throw new NetworkError(400, `Repo does not exist ${directoryPath}`);
+            }
+
+            this.repositoryCache.add(repoPath);
+        }
+
+        const repoManager = new IsomorphicGitRepositoryManager(
+            this.fileSystemManager,
+            owner,
+            name,
+            directoryPath,
+            this.externalStorageManager);
+        return repoManager;
+    }
+
+    /**
+     * Retrieves the full repository path. Or throws an error if not valid.
+     */
+    private getRepoPath(owner: string, name: string) {
+        // Verify that both inputs are valid folder names
+        const parsedOwner = path.parse(owner);
+        const parsedName = path.parse(name);
+        const repoPath = `${owner}/${name}`;
+
+        if (parsedName.dir !== "" || parsedOwner.dir !== "") {
+            throw new NetworkError(400, `Invalid repo name ${repoPath}`);
+        }
+
+        return repoPath;
+    }
+}
