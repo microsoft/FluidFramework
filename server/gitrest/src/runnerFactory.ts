@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import fsPromises from "fs/promises";
+import fs from "fs";
 import { Provider } from "nconf";
 import * as services from "@fluidframework/server-services-shared";
 import * as core from "@fluidframework/server-services-core";
@@ -36,7 +36,7 @@ export class GitrestResources implements core.IResources {
 export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestResources> {
     public async create(config: Provider): Promise<GitrestResources> {
         const port = normalizePort(process.env.PORT || "3000");
-        const fileSystemManager = fsPromises;
+        const fileSystemManager = fs;
         const externalStorageManager = new ExternalStorageManager(config);
         const storageDirectory = config.get("storageDir");
         const gitLibrary: string | undefined = config.get("git:lib:name");

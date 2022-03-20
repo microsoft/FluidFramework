@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import fsPromises from "fs/promises";
+import fs from "fs";
 import {
     ICreateBlobParams,
     ICreateBlobResponse,
@@ -150,7 +150,7 @@ describe("GitRest", () => {
         const externalStorageManager = new ExternalStorageManager(testUtils.defaultProvider);
         const getRepoManagerFactory = () => new NodegitRepositoryManagerFactory(
             testUtils.defaultProvider.get("storageDir"),
-            fsPromises,
+            fs,
             externalStorageManager,
         );
 
@@ -160,7 +160,7 @@ describe("GitRest", () => {
         let supertest: request.SuperTest<request.Test>;
         beforeEach(() => {
             const repoManagerFactory = getRepoManagerFactory();
-            const testApp = app.create(testUtils.defaultProvider, fsPromises, repoManagerFactory);
+            const testApp = app.create(testUtils.defaultProvider, fs, repoManagerFactory);
             supertest = request(testApp);
         });
 

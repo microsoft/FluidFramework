@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { PathLike } from "fs";
 import * as path from "path";
 import * as isomorphicGit from "isomorphic-git";
 import winston from "winston";
@@ -18,15 +17,6 @@ import {
     IRepositoryManager,
     IFileSystemManager,
 } from "./definitions";
-
-const exists = async (fileSystemManager: IFileSystemManager, fileOrDirectoryPath: PathLike): Promise<boolean> => {
-    try {
-        await fileSystemManager.stat(fileOrDirectoryPath);
-        return true;
-    } catch (e) {
-        return false;
-    }
-};
 
 export class IsomorphicGitRepositoryManager implements IRepositoryManager {
     constructor(
@@ -388,7 +378,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
         const directoryPath = `${this.baseDir}/${repoPath}`;
 
         if (!(this.repositoryCache.has(repoPath))) {
-            const repoExists = await exists(this.fileSystemManager, directoryPath);
+            const repoExists = await helpers.exists(this.fileSystemManager, directoryPath);
             if (!repoExists) {
                 winston.info(`Repo does not exist ${directoryPath}`);
                 // services-client/getOrCreateRepository depends on a 400 response code
