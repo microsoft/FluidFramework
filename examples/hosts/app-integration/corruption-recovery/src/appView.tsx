@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 import React, { useEffect, useState } from "react";
 import { Alert, Button, Stack } from "react-bootstrap";
 import { DataController } from "./dataController";
