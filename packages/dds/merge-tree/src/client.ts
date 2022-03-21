@@ -966,9 +966,19 @@ export class Client {
         }
     }
 
-    getContainingSegment<T extends ISegment>(pos: number) {
-        const segWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getContainingSegment<T>(pos, segWindow.currentSeq, segWindow.clientId);
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage) {
+        let seq: number;
+        let clientId: number;
+        if (op) {
+            clientId = this.getOrAddShortClientId(op.clientId);
+            seq = op.sequenceNumber;
+        }
+        else {
+            const segWindow = this.mergeTree.getCollabWindow();
+            seq = segWindow.currentSeq;
+            clientId = segWindow.clientId;
+        }
+        return this.mergeTree.getContainingSegment<T>(pos, seq, clientId);
     }
 
     getPropertiesAtPosition(pos: number) {

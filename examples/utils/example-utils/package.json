@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/example-utils",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "Shared utilities used by examples.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -32,16 +32,16 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.58.2000",
-    "@fluidframework/container-runtime-definitions": "^0.58.2000",
-    "@fluidframework/request-handler": "^0.58.2000",
-    "@fluidframework/runtime-definitions": "^0.58.2000",
-    "@fluidframework/runtime-utils": "^0.58.2000",
-    "@fluidframework/view-adapters": "^0.58.2000"
+    "@fluidframework/aqueduct": "^0.58.3000",
+    "@fluidframework/container-runtime-definitions": "^0.58.3000",
+    "@fluidframework/request-handler": "^0.58.3000",
+    "@fluidframework/runtime-definitions": "^0.58.3000",
+    "@fluidframework/runtime-utils": "^0.58.3000",
+    "@fluidframework/view-adapters": "^0.58.3000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",

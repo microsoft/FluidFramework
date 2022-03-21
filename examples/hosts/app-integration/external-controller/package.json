@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/app-integration-external-controller",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "Minimal Fluid Container & Data Object sample to implement a collaborative dice roller as a standalone app.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -38,16 +38,16 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluidframework/azure-client": "^0.58.2000",
+    "@fluidframework/azure-client": "^0.58.3000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/test-client-utils": "^0.58.2000",
-    "fluid-framework": "^0.58.2000"
+    "@fluidframework/test-client-utils": "^0.58.3000",
+    "fluid-framework": "^0.58.3000"
   },
   "devDependencies": {
-    "@fluid-experimental/get-container": "^0.58.2000",
+    "@fluid-experimental/get-container": "^0.58.3000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
-    "@fluidframework/fluid-static": "^0.58.2000",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/fluid-static": "^0.58.3000",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/expect-puppeteer": "2.2.1",

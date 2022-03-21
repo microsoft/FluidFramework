@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/undo-redo",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "Undo Redo",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -59,16 +59,16 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/map": "^0.58.2000",
-    "@fluidframework/matrix": "^0.58.2000",
-    "@fluidframework/merge-tree": "^0.58.2000",
-    "@fluidframework/sequence": "^0.58.2000"
+    "@fluidframework/map": "^0.58.3000",
+    "@fluidframework/matrix": "^0.58.3000",
+    "@fluidframework/merge-tree": "^0.58.3000",
+    "@fluidframework/sequence": "^0.58.3000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
-    "@fluidframework/mocha-test-setup": "^0.58.2000",
-    "@fluidframework/test-runtime-utils": "^0.58.2000",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/mocha-test-setup": "^0.58.3000",
+    "@fluidframework/test-runtime-utils": "^0.58.3000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",

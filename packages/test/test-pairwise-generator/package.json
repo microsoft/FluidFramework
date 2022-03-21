@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-pairwise-generator",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "End to end tests",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -55,8 +55,8 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
-    "@fluidframework/mocha-test-setup": "^0.58.2000",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/mocha-test-setup": "^0.58.3000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",
