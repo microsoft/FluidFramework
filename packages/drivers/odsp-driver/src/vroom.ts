@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { InstrumentedStorageTokenFetcher, IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
@@ -47,14 +47,21 @@ export async function fetchJoinSession(
 ): Promise<ISocketStorageDiscovery> {
     const token = await getStorageToken(options, "JoinSession");
 
-    const extraProps = options.refresh
+    const tokenRefreshProps = options.refresh
         ? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
         : {};
+    const details: ITelemetryProperties = {
+        refreshedToken: options.refresh,
+        requestSocketToken,
+        ...tokenRefreshProps,
+    };
+
     return PerformanceEvent.timedExecAsync(
         logger, {
             eventName: "JoinSession",
             attempts: options.refresh ? 2 : 1,
-            ...extraProps,
+            details: JSON.stringify(details),
+            ...tokenRefreshProps,
         },
         async (event) => {
             const siteOrigin = getOrigin(urlParts.siteUrl);

@@ -62,7 +62,11 @@ export interface IJSONSegmentWithMergeInfo {
     json: IJSONSegment;
     client?: string;
     seq?: number;
+    /**
+     * @deprecated - use removedClientIds instead. this only exists for back-compat
+     */
     removedClient?: string;
+    removedClientIds?: string[];
     removedSeq?: number;
 }
 

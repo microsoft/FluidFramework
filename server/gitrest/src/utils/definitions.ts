@@ -11,6 +11,7 @@ export interface IExternalWriterConfig {
 }
 
 export interface IRepositoryManager {
+    path: string;
     getCommit(sha: string): Promise<git.ICommit>;
     getCommits(sha: string, count: number, externalWriterConfig?: IExternalWriterConfig): Promise<git.ICommitDetails[]>;
     getTree(root: string, recursive: boolean): Promise<git.ITree>;
@@ -32,7 +33,7 @@ export interface IRepositoryManager {
 /**
  * Subset of Node.js `fs/promises` API.
  */
-export interface IFileSystemManager {
+export interface IFileSystemPromises {
     readFile: typeof fsPromises.readFile;
     writeFile: typeof fsPromises.writeFile;
     unlink: typeof fsPromises.unlink;
@@ -45,6 +46,13 @@ export interface IFileSystemManager {
     symlink: typeof fsPromises.symlink;
     chmod: typeof fsPromises.chmod;
     rm: typeof fsPromises.rm;
+}
+
+/**
+ * A filesystem representation.
+ */
+export interface IFileSystemManager {
+    promises: IFileSystemPromises;
 }
 
 export interface IRepositoryManagerFactory {
