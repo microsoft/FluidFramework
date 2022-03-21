@@ -197,6 +197,7 @@ class Document {
         this.container = await loadContainer(
             documentServiceFactory,
             FileStorageDocumentName,
+            this.args.strictChannels,
             this.docLogger,
         );
 
