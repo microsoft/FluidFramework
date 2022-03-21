@@ -30,21 +30,45 @@ function oidToCommitHash(oid: string): resources.ICommitHash {
     return { sha: oid, url: "" };
 }
 
+function getIAuthorOrICommitterOrITaggerFromIsoGitData(
+    isoGitObjectData: isomorphicGit.CommitObject["author"]
+                    | isomorphicGit.CommitObject["committer"]
+                    | isomorphicGit.TagObject["tagger"],
+): resources.IAuthor | resources.ICommitter | resources.ITagger {
+    return {
+        date: new Date(isoGitObjectData.timestamp * 1000).toISOString(),
+        email: isoGitObjectData.email,
+        name: isoGitObjectData.name,
+    };
+}
+
+function getIsoGitAuthorOrCommitterOrTaggerFromCommitOrTag(
+    data: resources.IAuthor | resources.ICommitter | resources.ITagger,
+): isomorphicGit.CommitObject["author"] | isomorphicGit.CommitObject["committer"] | isomorphicGit.TagObject["tagger"] {
+    const date = Date.parse(data.date);
+    if (isNaN(date)) {
+        throw new NetworkError(400, "Invalid input");
+    }
+
+    // Date.parse() returns a value in milliseconds, and Isomorphic-Git expects
+    // a timestamp number time in seconds (UTC Unix timestamp)
+    const timestamp = Math.floor(date / 1000);
+
+    return {
+        name: data.name,
+        email: data.email,
+        timestamp,
+        timezoneOffset: 0,
+    };
+}
+
 /**
  * Helper function to convert an `isomorphic-git` ReadCommitResult to our resource representation
  */
 export function commitToICommit(commitResult: isomorphicGit.ReadCommitResult): resources.ICommit {
     return {
-        author: {
-            date: new Date(commitResult.commit.author.timestamp * 1000).toISOString(),
-            email: commitResult.commit.author.email,
-            name: commitResult.commit.author.name,
-        },
-        committer: {
-            date: new Date(commitResult.commit.committer.timestamp * 1000).toISOString(),
-            email: commitResult.commit.committer.email,
-            name: commitResult.commit.committer.name,
-        },
+        author: getIAuthorOrICommitterOrITaggerFromIsoGitData(commitResult.commit.author),
+        committer: getIAuthorOrICommitterOrITaggerFromIsoGitData(commitResult.commit.committer),
         message: commitResult.commit.message,
         parents: commitResult.commit.parent && commitResult.commit.parent.length > 0 ?
             commitResult.commit.parent.map((parent) => oidToCommitHash(parent)) : null,
@@ -63,32 +87,13 @@ export function commitToICommit(commitResult: isomorphicGit.ReadCommitResult): r
  */
 export function iCreateCommitParamsToCommitObject(
     commitParams: resources.ICreateCommitParams): isomorphicGit.CommitObject {
-    const date = Date.parse(commitParams.author.date);
-    if (isNaN(date)) {
-        throw new NetworkError(400, "Invalid input");
-    }
-
-    // Date.parse() returns a value in milliseconds, and Isomorphic-Git expects
-    // a timestamp number time in seconds (UTC Unix timestamp)
-    const timestamp = Math.floor(date / 1000);
     const parent = commitParams.parents && commitParams.parents.length > 0 ? commitParams.parents : null;
-
     return {
         message: commitParams.message,
         tree: commitParams.tree,
         parent,
-        author: {
-            name: commitParams.author.name,
-            email: commitParams.author.email,
-            timestamp,
-            timezoneOffset: 0,
-        },
-        committer: {
-            name: commitParams.author.name,
-            email: commitParams.author.email,
-            timestamp,
-            timezoneOffset: 0,
-        },
+        author: getIsoGitAuthorOrCommitterOrTaggerFromCommitOrTag(commitParams.author),
+        committer: getIsoGitAuthorOrCommitterOrTaggerFromCommitOrTag(commitParams.author),
     };
 }
 
@@ -102,7 +107,6 @@ export function blobToIBlob(
     ): resources.IBlob {
     const buffer = Buffer.from(readBlobResponse.blob).toString("base64");
     const sha = readBlobResponse.oid;
-
     return {
         content: buffer,
         encoding: "base64",
@@ -167,11 +171,7 @@ export async function tagToITag(tagResult: isomorphicGit.ReadTagResult): Promise
         },
         sha: tagResult.oid,
         tag: tagResult.tag.tag,
-        tagger: {
-            date: new Date(tagResult.tag.tagger.timestamp * 1000).toISOString(),
-            email: tagResult.tag.tagger.email,
-            name: tagResult.tag.tagger.name,
-        },
+        tagger: getIAuthorOrICommitterOrITaggerFromIsoGitData(tagResult.tag.tagger),
         url: "",
     };
 }
@@ -181,25 +181,11 @@ export async function tagToITag(tagResult: isomorphicGit.ReadTagResult): Promise
  */
 export function iCreateTagParamsToTagObject(
     tagParams: resources.ICreateTagParams): isomorphicGit.TagObject {
-    const date = Date.parse(tagParams.tagger.date);
-    if (isNaN(date)) {
-        throw new NetworkError(400, "Invalid input");
-    }
-
-    // Date.parse() returns a value in milliseconds, and Isomorphic-Git expects
-    // a timestamp number time in seconds (UTC Unix timestamp)
-    const timestamp = Math.floor(date / 1000);
-
     return {
         object: tagParams.object,
         type: ensureIsomorphicGitTagObjectType(tagParams.type),
         tag: tagParams.tag,
         message: tagParams.message,
-        tagger: {
-            name: tagParams.tagger.name,
-            email: tagParams.tagger.email,
-            timestamp,
-            timezoneOffset: 0,
-        },
+        tagger: getIsoGitAuthorOrCommitterOrTaggerFromCommitOrTag(tagParams.tagger),
     };
 }

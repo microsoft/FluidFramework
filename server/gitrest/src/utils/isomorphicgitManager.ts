@@ -45,13 +45,13 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
     ): Promise<resources.ICommitDetails[]> {
         try {
             const commits = await isomorphicGit.log({
-                    fs: this.fileSystemManager,
-                    gitdir: this.directory,
-                    ref: sha,
-                    depth: count,
-                });
+                fs: this.fileSystemManager,
+                gitdir: this.directory,
+                ref: sha,
+                depth: count,
+            });
 
-             return commits.map((rawCommit) => {
+            return commits.map((rawCommit) => {
                 const gitCommit = conversions.commitToICommit(rawCommit);
                 const result: resources.ICommitDetails =
                 {
@@ -71,7 +71,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
             });
         } catch (err) {
             winston.info(`getCommits error: ${err}`);
-            return Promise.reject(err);
+            throw new NetworkError(500, "Unable to get commits.");
         }
     }
 
@@ -274,7 +274,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
             return conversions.refToIRef(resolvedRef, expandedRef);
         } catch (err) {
             winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${this.repoName} ref: ${refId}`);
-            return Promise.reject(err);
+            throw new NetworkError(500, "Unable to get ref.");
         }
     }
 
@@ -375,7 +375,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
 
         if (!(this.repositoryCache.has(repoPath))) {
             const repoExists = await helpers.exists(this.fileSystemManager, directoryPath);
-            if (!repoExists) {
+            if (!repoExists || !repoExists.isDirectory()) {
                 winston.info(`Repo does not exist ${directoryPath}`);
                 // services-client/getOrCreateRepository depends on a 400 response code
                 throw new NetworkError(400, `Repo does not exist ${directoryPath}`);
