@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/request-handler",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "A simple request handling library for Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -60,16 +60,16 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-runtime-definitions": "^0.58.2000",
+    "@fluidframework/container-runtime-definitions": "^0.58.3000",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/runtime-definitions": "^0.58.2000",
-    "@fluidframework/runtime-utils": "^0.58.2000"
+    "@fluidframework/runtime-definitions": "^0.58.3000",
+    "@fluidframework/runtime-utils": "^0.58.3000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
-    "@fluidframework/mocha-test-setup": "^0.58.2000",
-    "@fluidframework/test-runtime-utils": "^0.58.2000",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/mocha-test-setup": "^0.58.3000",
+    "@fluidframework/test-runtime-utils": "^0.58.3000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/clicker-react",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "Minimal Fluid object sample to implement a collaborative counter.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -41,19 +41,19 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/example-utils": "^0.58.2000",
-    "@fluid-experimental/react": "^0.58.2000",
-    "@fluidframework/aqueduct": "^0.58.2000",
+    "@fluid-example/example-utils": "^0.58.3000",
+    "@fluid-experimental/react": "^0.58.3000",
+    "@fluidframework/aqueduct": "^0.58.3000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/counter": "^0.58.2000",
+    "@fluidframework/counter": "^0.58.3000",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.58.2000",
+    "@fluid-tools/webpack-fluid-loader": "^0.58.3000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@fluidframework/test-utils": "^0.58.2000",
+    "@fluidframework/test-utils": "^0.58.3000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",

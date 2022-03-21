@@ -160,8 +160,10 @@ export function createGenericNetworkError(
  */
 export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
 
+/** Check retryAfterSeconds property on error */
 export const getRetryDelaySecondsFromError = (error: any): number | undefined =>
     error?.retryAfterSeconds as number | undefined;
 
+/** Check retryAfterSeconds property on error and convert to ms */
 export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds !== undefined ?
     error.retryAfterSeconds * 1000 : undefined;

@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
     "@fluidframework/server-test-utils": "^0.1035.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/amqplib": "^0.5.17",
