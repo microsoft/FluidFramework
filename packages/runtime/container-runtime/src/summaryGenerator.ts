@@ -26,6 +26,7 @@ import {
     SubmitSummaryResult,
     SummarizeResultPart,
     ISummaryCancellationToken,
+    ISummarizeTelemetryProperties,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
@@ -53,6 +54,40 @@ export async function raceTimer<T>(
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
 const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
+
+type SummaryGeneratorRequiredTelemetryProperties =
+    /** True to generate the full tree with no handle reuse optimizations */
+    "fullTree" |
+    /** Time since we last attempted to generate a summary */
+    "timeSinceLastAttempt" |
+    /** Time since we last successfully generated a summary */
+    "timeSinceLastSummary";
+type SummaryGeneratorOptionalTelemetryProperties =
+    /** Reference sequence number as of the generate summary attempt. */
+    "referenceSequenceNumber" |
+    /** Delta between the current reference sequence number and the reference sequence number of the last attempt */
+    "opsSinceLastAttempt" |
+    /** Delta between the current reference sequence number and the reference sequence number of the last summary */
+    "opsSinceLastSummary" |
+    /** Time it took to generate the summary tree and stats. */
+    "generateDuration" |
+    /** The handle returned by storage pointing to the uploaded summary tree. */
+    "handle" |
+    /** Time it took to upload the summary tree to storage. */
+    "uploadDuration" |
+    /** The client sequence number of the summarize op submitted for the summary. */
+    "clientSequenceNumber" |
+    /** Time it took for this summary to be acked after it was generated */
+    "ackWaitDuration" |
+    /** Reference sequence number of the ack/nack message */
+    "ackNackSequenceNumber" |
+    /** Actual sequence number of the summary op proposal. */
+    "summarySequenceNumber" |
+    /** Optional Retry-After time in seconds. If specified, the client should wait this many seconds before retrying. */
+     "nackRetryAfter";
+type SummaryGeneratorTelemetry =
+    Pick<ITelemetryProperties, SummaryGeneratorRequiredTelemetryProperties> &
+    Partial<Pick<ITelemetryProperties, SummaryGeneratorOptionalTelemetryProperties>>;
 
 export type SummarizeReason =
     /**
@@ -152,7 +187,7 @@ export class SummaryGenerator {
         private readonly pendingAckTimer: IPromiseTimer,
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
-        private readonly raiseSummarizingError: (errorCode: string) => void,
+        private readonly raiseSummarizingError: (errorMessage: string) => void,
         private readonly successfulSummaryCallback: () => void,
         private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
         private readonly logger: ITelemetryLogger,
@@ -171,7 +206,7 @@ export class SummaryGenerator {
      * fullTree to generate tree without any summary handles even if unchanged
      */
     public summarize(
-        summarizeProps: ITelemetryProperties,
+        summarizeProps: ISummarizeTelemetryProperties,
         options: ISummarizeOptions,
         cancellationToken: ISummaryCancellationToken,
         resultsBuilder = new SummarizeResultBuilder(),
@@ -187,7 +222,7 @@ export class SummaryGenerator {
     }
 
     private async summarizeCore(
-        summarizeProps: ITelemetryProperties,
+        summarizeProps: ISummarizeTelemetryProperties,
         options: ISummarizeOptions,
         resultsBuilder: SummarizeResultBuilder,
         cancellationToken: ISummaryCancellationToken,
@@ -197,11 +232,11 @@ export class SummaryGenerator {
 
         const timeSinceLastAttempt = Date.now() - this.heuristicData.lastAttempt.summaryTime;
         const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
-        let summarizeTelemetryProps: Record<string, string | number | boolean | undefined> = {
+        let summarizeTelemetryProps: SummaryGeneratorTelemetry = {
             fullTree,
             timeSinceLastAttempt,
             timeSinceLastSummary,
-        }
+        };
 
         const summarizeEvent = PerformanceEvent.start(logger, {
             eventName: "Summarize",
@@ -215,7 +250,7 @@ export class SummaryGenerator {
         const fail = (
             errorCode: keyof typeof summarizeErrors,
             error?: any,
-            properties?: ITelemetryProperties,
+            properties?: SummaryGeneratorTelemetry,
             nackSummaryResult?: INackSummaryResult,
         ) => {
             this.raiseSummarizingError(summarizeErrors[errorCode]);
@@ -394,7 +429,8 @@ export class SummaryGenerator {
                 const message = summaryNack?.message;
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
-                const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });
+                // pre-0.58 error message prefix: summaryNack
+                const error = new LoggingError(`Received summaryNack: ${message}`, { retryAfterSeconds });
                 logger.sendErrorEvent(
                     { eventName: "SummaryNack", ...summarizeTelemetryProps, retryAfterSeconds }, error);
 

@@ -21,8 +21,7 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IntervalType } from "@fluidframework/merge-tree";
-import { SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { IntervalType, SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -34,6 +33,7 @@ import { describeFullCompat, itExpects } from "@fluidframework/test-version-util
 import {
     getSnapshotTreeFromSerializedContainer,
     ISnapshotTreeWithBlobContents,
+// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/dist/utils";
 
 const detachedContainerRefSeqNumber = 0;

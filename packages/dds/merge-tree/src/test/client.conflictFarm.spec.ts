@@ -66,7 +66,6 @@ describe("MergeTree.Client", () => {
     // Generate a list of single character client names, support up to 69 clients
     const clientNames = generateClientNames();
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
         it(`ConflictFarm_${minLength}`, async () => {
             const mt = random.engines.mt19937();

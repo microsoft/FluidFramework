@@ -11,12 +11,8 @@ import {
     RestLessClient,
     RestWrapper,
 } from "@fluidframework/server-services-client";
-import {
-    default as nodeFetch,
-    RequestInfo as FetchRequestInfo,
-    RequestInit as FetchRequestInit,
-} from "node-fetch";
-import type { AxiosRequestConfig } from "axios";
+import fetch from "cross-fetch";
+import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
 import { throwR11sNetworkError } from "./errorUtils";
@@ -24,20 +20,15 @@ import { ITokenProvider } from "./tokens";
 
 type AuthorizationHeaderGetter = (refresh?: boolean) => Promise<string | undefined>;
 
-// Borrowed from @fluidframework/odsp-driver's fetch.ts
-// The only purpose of this helper is to work around the slight misalignments between the
-// Browser's fetch API and the 'node-fetch' package by wrapping the call to the 'node-fetch' API
-// in the browser's types from 'lib.dom.d.ts'.
-export const fetch = async (request: RequestInfo, config?: RequestInit): Promise<Response> =>
-    nodeFetch(request as FetchRequestInfo, config as FetchRequestInit) as unknown as Response;
-
 const axiosRequestConfigToFetchRequestConfig = (requestConfig: AxiosRequestConfig): [RequestInfo, RequestInit] => {
     const requestInfo: string = requestConfig.baseURL !== undefined
         ? `${requestConfig.baseURL}${requestConfig.url ?? ""}`
         : requestConfig.url ?? "";
     const requestInit: RequestInit = {
         method: requestConfig.method,
-        headers: requestConfig.headers,
+        // NOTE: I believe that although the Axios type permits non-string values in the header, here we are
+        // guaranteed the requestConfig only has string values in its header.
+        headers: requestConfig.headers as Record<string, string>,
         body: requestConfig.data,
     };
     return [requestInfo, requestInit];
@@ -73,10 +64,9 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
         const response: Response = await this.rateLimiter.schedule(async () => fetch(...fetchRequestConfig)
             .catch(async (error) => {
-                // Fetch throws a TypeError on network error
-                const isNetworkError = error instanceof TypeError;
+                // Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
+                const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
                 throwR11sNetworkError(
-                    "r11sFetchError",
                     isNetworkError ? `NetworkError: ${error.message}` : safeStringify(error));
             }));
 
@@ -102,23 +92,25 @@ export class RouterliciousRestWrapper extends RestWrapper {
             }, responseBody.retryAfter * 1000));
         }
 
+        const responseSummary = responseBody !== undefined
+            ? typeof responseBody === "string" ? responseBody : safeStringify(responseBody)
+            : response.statusText;
         throwR11sNetworkError(
-            "r11sFetchError",
-            responseBody !== undefined
-                ? typeof responseBody === "string" ? responseBody : safeStringify(responseBody)
-                : response.statusText,
+            `R11s fetch error: ${responseSummary}`,
             response.status,
             responseBody?.retryAfter,
         );
     }
 
-    private generateHeaders(requestHeaders?: Record<string, unknown>): Record<string, unknown> {
+    private generateHeaders(requestHeaders?: AxiosRequestHeaders | undefined): Record<string, string> {
         const correlationId = requestHeaders?.["x-correlation-id"] || uuid();
 
         return {
             ...requestHeaders,
-            "x-correlation-id": correlationId,
-            "Authorization": this.authorizationHeader,
+            // NOTE: Can correlationId actually be number | true?
+            "x-correlation-id": correlationId as string,
+            // NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?
+            "Authorization": this.authorizationHeader!,
         };
     }
 }

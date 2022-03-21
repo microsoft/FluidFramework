@@ -122,7 +122,7 @@ export class ProtocolOpHandler {
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
-        immediateNoOp = this.quorum.updateMinimumSequenceNumber(message) || immediateNoOp;
+        this.quorum.updateMinimumSequenceNumber(message);
 
         return { immediateNoOp };
     }

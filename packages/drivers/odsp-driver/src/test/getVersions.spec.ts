@@ -24,7 +24,7 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache(2000);
+const createUtLocalCache = () => new LocalPersistentCache();
 
 describe("Tests for snapshot fetch", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -120,6 +120,10 @@ describe("Tests for snapshot fetch", () => {
             );
     });
 
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
+    });
+
     it("cache fetch throws and network fetch succeeds", async () => {
         // overwriting get() to make cache fetch throw
         localCache.get = async () => {
@@ -154,18 +158,13 @@ describe("Tests for snapshot fetch", () => {
             throw new Error("testing");
         };
 
-        let isCaught = false;
-        try { await mockFetchSingle(
-            async () => service.getVersions(null,1),
-            // 404 response expected so network fetch throws
-            notFound,
-        );
-        } catch (error) {
-            isCaught = true;
-            assert.strictEqual(error.message, "odspFetchError [404] (undefined)", "incorrect error message");
-        }
-        // making sure network fetch did throw and catch block was executed
-        assert(isCaught, "catch block was not executed");
+        await assert.rejects(async () => {
+            await mockFetchSingle(
+                async () => service.getVersions(null,1),
+                // 404 response expected so network fetch throws
+                notFound,
+            );
+        }, /404/, "Expected 404 error to be thrown");
     });
 
     it("cache fetch succeeds and network fetch throws", async () => {
@@ -184,19 +183,13 @@ describe("Tests for snapshot fetch", () => {
     });
 
     it("empty cache and network fetch throws", async () => {
-        let isCaught = false;
-        try {
+        await assert.rejects(async () => {
             await mockFetchSingle(
                 async () => service.getVersions(null,1),
                 // 404 response expected so network fetch throws
                 notFound,
             );
-        } catch (error) {
-            isCaught = true;
-            assert.strictEqual(error.message, "odspFetchError [404] (undefined)", "incorrect error message");
-        }
-        // making sure network fetch did throw and catch block was executed
-        assert(isCaught, "catch block was not executed");
+        }, /404/, "Expected 404 error to be thrown");
     });
 
     it("cache expires and network fetch succeeds", async () => {
@@ -214,24 +207,18 @@ describe("Tests for snapshot fetch", () => {
     });
 
     it("cache expires and network fetch throws", async () => {
-        let isCaught = false;
         const cacheEntry: ICacheEntry = {
             key:"",
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         await localCache.put(cacheEntry, valueWithExpiredCache);
 
-        try {
+        await assert.rejects(async () => {
             await mockFetchSingle(
                 async () => service.getVersions(null,1),
                 // 404 response expected so network fetch throws
                 notFound,
             );
-        } catch (error) {
-            isCaught = true;
-            assert.strictEqual(error.message, "odspFetchError [404] (undefined)", "incorrect error message");
-        }
-        // making sure network fetch did throw and catch block was executed
-        assert(isCaught, "catch block was not executed");
+        }, /404/, "Expected 404 error to be thrown");
     });
 });

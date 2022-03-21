@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import fsPromises from "fs/promises";
 import {
     ICreateBlobParams,
     ICreateBlobResponse,
@@ -17,19 +18,18 @@ import {
 } from "@fluidframework/server-services-client";
 import * as async from "async";
 import lorem from "lorem-ipsum";
-import * as moniker from "moniker";
+import sillyname from "sillyname";
 import request from "supertest";
 import * as app from "../app";
 import { ExternalStorageManager } from "../externalStorageManager";
-import * as testUtils from "./utils";
 import { NodegitRepositoryManagerFactory } from "../utils";
+import * as testUtils from "./utils";
 
 // TODO: (issue logged): replace email & name
 const commitEmail = "kurtb@microsoft.com";
 const commitName = "Kurt Berglund";
 
 async function createRepo(supertest: request.SuperTest<request.Test>, owner: string, name: string) {
-    console.log("Entered create repo");
     return supertest
         .post(`/${owner}/repos`)
         .set("Accept", "application/json")
@@ -148,13 +148,19 @@ describe("GitRest", () => {
         };
 
         const externalStorageManager = new ExternalStorageManager(testUtils.defaultProvider);
+        const getRepoManagerFactory = () => new NodegitRepositoryManagerFactory(
+            testUtils.defaultProvider.get("storageDir"),
+            fsPromises,
+            externalStorageManager,
+        );
 
         testUtils.initializeBeforeAfterTestHooks(testUtils.defaultProvider);
 
         // Create the git repo before and after each test
         let supertest: request.SuperTest<request.Test>;
         beforeEach(() => {
-            const testApp = app.create(testUtils.defaultProvider, externalStorageManager);
+            const repoManagerFactory = getRepoManagerFactory();
+            const testApp = app.create(testUtils.defaultProvider, fsPromises, repoManagerFactory);
             supertest = request(testApp);
         });
 
@@ -417,10 +423,7 @@ describe("GitRest", () => {
                 const MaxParagraphs = 200;
 
                 await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
-                const repoManagerFactory = new NodegitRepositoryManagerFactory(
-                    testUtils.defaultProvider.get("storageDir"),
-                    externalStorageManager,
-                );
+                const repoManagerFactory = getRepoManagerFactory();
                 const repoManager = await repoManagerFactory.open(testOwnerName, testRepoName);
 
                 let lastCommit;
@@ -443,7 +446,7 @@ describe("GitRest", () => {
                     const files = blobs.map((blob) => {
                         return {
                             mode: "100644",
-                            path: `${moniker.choose()}.txt`,
+                            path: `${(sillyname() as string).toLowerCase().split(" ").join("-")}.txt`,
                             sha: blob.sha,
                             type: "blob",
                         };

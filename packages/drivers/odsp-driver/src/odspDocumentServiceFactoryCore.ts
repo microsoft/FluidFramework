@@ -22,7 +22,9 @@ import {
     IPersistedCache,
     HostStoragePolicy,
     IFileEntry,
+    IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
+import type { io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import {
     LocalPersistentCache,
@@ -57,6 +59,11 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         ensureFluidResolvedUrl(createNewResolvedUrl);
 
         let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
+        const resolvedUrlData: IOdspUrlParts = {
+            siteUrl: odspResolvedUrl.siteUrl,
+            driveId: odspResolvedUrl.driveId,
+            itemId: odspResolvedUrl.itemId,
+        };
         const [, queryString] = odspResolvedUrl.url.split("?");
 
         const searchParams = new URLSearchParams(queryString);
@@ -94,7 +101,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 odspResolvedUrl = await createNewFluidFile(
                     toInstrumentedOdspTokenFetcher(
                         odspLogger,
-                        odspResolvedUrl,
+                        resolvedUrlData,
                         this.getStorageToken,
                         true /* throwOnNullToken */,
                     ),
@@ -127,7 +134,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     constructor(
         private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
         private readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
-        private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
+        private readonly getSocketIOClient: () => Promise<typeof SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
     ) {
@@ -150,6 +157,11 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         cacheAndTrackerArg?: ICacheAndTracker,
     ): Promise<IDocumentService> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+        const resolvedUrlData: IOdspUrlParts = {
+            siteUrl: odspResolvedUrl.siteUrl,
+            driveId: odspResolvedUrl.driveId,
+            itemId: odspResolvedUrl.itemId,
+        };
         const cacheAndTracker = cacheAndTrackerArg ?? createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,
@@ -158,7 +170,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
         const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
             odspLogger,
-            odspResolvedUrl,
+            resolvedUrlData,
             this.getStorageToken,
             true /* throwOnNullToken */,
         );
@@ -167,7 +179,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             ? undefined
             : async (options: TokenFetchOptions) => toInstrumentedOdspTokenFetcher(
                 odspLogger,
-                odspResolvedUrl,
+                resolvedUrlData,
                 this.getWebsocketToken!,
                 false /* throwOnNullToken */,
             )(options, "GetWebsocketToken");

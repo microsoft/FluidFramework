@@ -89,7 +89,10 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
     registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]): void;
     // (undocumented)
     reportAndClearTrackedEvents(): {
-        expectedNotFound: (ITelemetryGenericEvent | undefined)[];
+        expectedNotFound: ({
+            index: number;
+            event: ITelemetryGenericEvent | undefined;
+        } | undefined)[];
         unexpectedErrors: ITelemetryBaseEvent[];
     };
     // (undocumented)
@@ -98,6 +101,9 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
 
 // @public (undocumented)
 export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
+
+// @public (undocumented)
+export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
 // @public (undocumented)
 export interface IOpProcessingController {
@@ -192,6 +198,9 @@ export class LocalCodeLoader implements ICodeLoader {
     constructor(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, runtimeOptions?: IContainerRuntimeOptions);
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
+
+// @public
+export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
 // @public (undocumented)
 export type SupportedExportInterfaces = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IProvideFluidDataStoreRegistry & IProvideFluidCodeDetailsComparer>;

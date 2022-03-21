@@ -31,12 +31,12 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
     itExpects(
     "Failure to Load in Shared String",
     [
-        {eventName: "fluid:telemetry:FluidDataStoreRuntime:RemoteChannelContext:ChannelStorageBlobError"},
+        { eventName: "fluid:telemetry:FluidDataStoreRuntime:RemoteChannelContext:ChannelStorageBlobError" },
         // eslint-disable-next-line max-len
-        {eventName: "fluid:telemetry:FluidDataStoreRuntime:SharedSegmentSequence.MergeTreeClient:SnapshotLoader:CatchupOpsLoadFailure"},
-        {eventName: "fluid:telemetry:FluidDataStoreRuntime:SequenceLoadFailed"},
-        {eventName: "fluid:telemetry:FluidDataStoreRuntime:GetChannelFailedInRequest"},
-        {eventName: "TestException"}
+        { eventName: "fluid:telemetry:FluidDataStoreRuntime:SharedSegmentSequence.MergeTreeClient:SnapshotLoader:CatchupOpsLoadFailure" },
+        { eventName: "fluid:telemetry:FluidDataStoreRuntime:SequenceLoadFailed" },
+        { eventName: "fluid:telemetry:FluidDataStoreRuntime:GetChannelFailedInRequest" },
+        { eventName: "TestException" },
     ],
     async () => {
         const stringId = "sharedStringKey";
@@ -109,7 +109,6 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                             // throw when trying to load the header blob
                             if (blobObj.headerMetadata !== undefined) {
                                 throw new NonRetryableError(
-                                    "notFound",
                                     "Not Found",
                                     "someErrorType",
                                     { statusCode: 404, driverVersion: pkgVersion });
