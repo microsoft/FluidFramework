@@ -15,6 +15,11 @@ export const gcBlobPrefix = "__gc";
 export interface ISnapshotNormalizerConfig {
     // The paths of blobs whose contents should be normalized.
     blobsToNormalize?: string[];
+    /**
+     * channel types who's content (non-attribute) blobs will be excluded.
+     * this is used to exclude the content of channels who's content cannot be compared
+     * as the content is non-deterministic between snapshot at the same sequence number.
+     */
     excludedChannelContentTypes?: string[];
 }
 
