@@ -28,6 +28,7 @@ import {
     SequencedOperationType,
     IDocument,
     ISequencedOperationMessage,
+    ISession,
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";

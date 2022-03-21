@@ -129,3 +129,19 @@ export interface IDocument {
     // The document is soft deleted if a scheduled deletion timestamp is present.
     scheduledDeletionTime?: string;
 }
+
+export interface IDocumentSession {
+    documentId: string;
+
+    hasSessionLocationChanged: boolean;
+
+    session: ISession;
+}
+
+export interface ISession {
+    ordererUrl: string;
+
+    historianUrl: string;
+
+    isSessionAlive: boolean;
+}
