@@ -97,7 +97,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
      * This is tracked here - https://github.com/microsoft/FluidFramework/issues/7275. Once this is fixed, the tests
      * should be updated as per the new expectations.
      */
-    it.skip("should add clients in audience as expected", async () => {
+    it("should add clients in audience as expected", async () => {
         // Create a client - client1 and wait for it to be connected.
         const client1Container = await createContainer();
         await ensureContainerConnected(client1Container);
