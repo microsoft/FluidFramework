@@ -419,6 +419,7 @@ async function getSingleOpBatch(
 
             const retryAfter = getRetryDelayFromError(error);
 
+            // This will log to error table only if the error is non-retryable
             logNetworkFailure(
                 logger,
                 {

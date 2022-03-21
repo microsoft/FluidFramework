@@ -11,6 +11,7 @@ export interface IExternalWriterConfig {
 }
 
 export interface IRepositoryManager {
+    path: string;
     getCommit(sha: string): Promise<git.ICommit>;
     getCommits(sha: string, count: number, externalWriterConfig?: IExternalWriterConfig): Promise<git.ICommitDetails[]>;
     getTree(root: string, recursive: boolean): Promise<git.ITree>;

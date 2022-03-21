@@ -36,6 +36,10 @@ gitrest:
     storageClass: managed-premium
     size: 4094Gi
     accessMode: ReadWriteOnce
+  git:
+    lib:
+      name: nodegit
+    persistLatestFullSummary: false
 
 gitssh:
   name: gitssh

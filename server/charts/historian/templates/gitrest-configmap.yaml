@@ -23,5 +23,11 @@ data:
         "externalStorage": {
           "enabled": false,
           "endpoint": "http://externalStorage:3005"
+        },
+        "git": {
+            "lib": {
+                "name": "{{ .Values.gitrest.git.lib.name }}"
+            },
+            "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }}
         }
     }

@@ -4,356 +4,141 @@
  */
 
 import {
-    ICreateCommitParams,
-    ICreateTreeEntry,
-} from "@fluidframework/gitresources";
-import { getGitMode, getGitType } from "@fluidframework/protocol-base";
-import { SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
-import {
     IWholeFlatSummary,
-    IWholeFlatSummaryBlob,
-    IWholeFlatSummaryTreeEntry,
-    IWholeSummaryBlob,
     IWholeSummaryPayload,
-    IWholeSummaryTree,
-    IWholeSummaryTreeHandleEntry,
-    IWholeSummaryTreeValueEntry,
     IWriteSummaryResponse,
     NetworkError,
-    WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
-import { getExternalWriterParams, IRepositoryManager, IRepositoryManagerFactory } from "../utils";
+import safeStringify from "json-stringify-safe";
+import {
+    getExternalWriterParams,
+    IExternalWriterConfig,
+    IRepositoryManagerFactory,
+    latestSummarySha,
+    GitWholeSummaryManager,
+    retrieveLatestFullSummaryFromStorage,
+    persistLatestFullSummaryInStorage,
+    isContainerSummary,
+    IRepositoryManager,
+    IFileSystemManager,
+} from "../utils";
 import { handleResponse } from "./utils";
 
-interface ISummaryVersion {
-    id: string;
-    treeId: string;
+function getDocumentStorageDirectory(repoManager: IRepositoryManager, documentId: string): string {
+    return `${repoManager.path}/${documentId}`;
 }
 
-export class WholeSummaryReadGitManager {
-    constructor(
-        private readonly documentId: string,
-        private readonly repoManager: IRepositoryManager,
-        private readonly externalStorageEnabled = true,
-    ) {}
-
-    public async readSummary(sha: string): Promise<IWholeFlatSummary> {
-        let version: ISummaryVersion;
-        if (sha === "latest") {
-            version = await this.getLatestVersion();
-        } else {
-            const commit = await this.repoManager.getCommit(sha);
-            version = { id: commit.sha, treeId: commit.tree.sha };
-        }
-        const rawTree = await this.repoManager.getTree(version.treeId, true /* recursive */);
-        const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];
-        const wholeFlatSummaryBlobPs: Promise<IWholeFlatSummaryBlob>[] = [];
-        rawTree.tree.forEach((treeEntry) => {
-            if (treeEntry.type === "blob") {
-                wholeFlatSummaryTreeEntries.push({
-                    type: "blob",
-                    id: treeEntry.sha,
-                    path: treeEntry.path,
-                });
-                wholeFlatSummaryBlobPs.push(
-                    this.getBlob(
-                        treeEntry.sha,
-                    ),
-                );
-            } else {
-                wholeFlatSummaryTreeEntries.push({
-                    type: "tree",
-                    path: treeEntry.path,
-                });
-            }
-        });
-        const wholeFlatSummaryBlobs = await Promise.all(wholeFlatSummaryBlobPs);
-        return {
-            id: version.id,
-            trees: [
-                {
-                    id: rawTree.sha,
-                    entries: wholeFlatSummaryTreeEntries,
-                    // We don't store sequence numbers in git
-                    sequenceNumber: undefined,
-                },
-            ],
-            blobs: wholeFlatSummaryBlobs,
-        };
-    }
-
-    private async getBlob(sha: string): Promise<IWholeFlatSummaryBlob> {
-        const blob = await this.repoManager.getBlob(
-            sha,
-        );
-        return {
-            content: blob.content,
-            encoding: blob.encoding === "base64" ? "base64" : "utf-8",
-            id: blob.sha,
-            size: blob.size,
-        };
-    }
-
-    private async getLatestVersion(): Promise<ISummaryVersion> {
-        const commitDetails = await this.repoManager.getCommits(
-            this.documentId,
-            1,
-            { enabled: this.externalStorageEnabled },
-        );
-        return {
-            id: commitDetails[0].sha,
-            treeId: commitDetails[0].commit.tree.sha,
-        };
-    }
-}
-
-function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry): SummaryObject {
-    if ((entry as IWholeSummaryTreeHandleEntry).id !== undefined) {
-        return {
-            type: SummaryType.Handle,
-            handleType: entry.type === "tree" ? SummaryType.Tree : SummaryType.Blob,
-            handle: (entry as IWholeSummaryTreeHandleEntry).id,
-        };
-    }
-    if (entry.type === "blob") {
-        return {
-            type: SummaryType.Blob,
-            // We don't use this in the code below. We mostly just care about summaryObject for type inference.
-            content: "",
-        };
-    }
-    if (entry.type === "tree") {
-        return {
-            type: SummaryType.Tree,
-            // We don't use this in the code below. We mostly just care about summaryObject for type inference.
-            tree: {},
-            unreferenced: (entry as IWholeSummaryTreeValueEntry).unreferenced,
-        };
-    }
-    throw new NetworkError(400, `Unknown entry type: ${entry.type}`);
-}
-
-export class WholeSummaryWriteGitManager {
-    private readonly entryHandleToObjectShaCache: Map<string, string> = new Map();
-
-    constructor(
-        private readonly documentId: string,
-        private readonly repoManager: IRepositoryManager,
-        private readonly externalStorageEnabled = true,
-    ) {}
-
-    public async writeSummary(payload: IWholeSummaryPayload): Promise<IWholeFlatSummary | IWriteSummaryResponse> {
-        if (payload.type === "channel") {
-            const summaryTreeHandle = await this.writeChannelSummary(payload);
-            return {
-                id: summaryTreeHandle,
-            };
-        }
-        if (payload.type === "container") {
-            const wholeFlatSummary = await this.writeContainerSummary(payload);
-            return wholeFlatSummary;
-        }
-        throw new NetworkError(400, `Unknown Summary Type: ${payload.type}`);
-    }
-
-    private async writeChannelSummary(payload: IWholeSummaryPayload): Promise<string> {
-        return this.writeSummaryTreeCore(payload.entries);
-    }
-
-    private async writeContainerSummary(
-        payload: IWholeSummaryPayload,
-    ): Promise<IWriteSummaryResponse> {
-        const treeHandle = await this.writeSummaryTreeCore(
-            payload.entries,
-            "",
-        );
-        const existingRef = await this.repoManager.getRef(
-            `refs/heads/${this.documentId}`,
-            { enabled: this.externalStorageEnabled },
-        ).catch(() => undefined);
-        let commitParams: ICreateCommitParams;
-        if (!existingRef && payload.sequenceNumber === 0) {
-            // Create new document
-            commitParams = {
-                author: {
-                    date: new Date().toISOString(),
-                    email: "dummy@microsoft.com",
-                    name: "GitRest Service",
-                },
-                message: "New document",
-                parents: [],
-                tree: treeHandle,
-            };
-        } else {
-            // Update existing document
-            commitParams = {
-                author: {
-                    date: new Date().toISOString(),
-                    email: "dummy@microsoft.com",
-                    name: "GitRest Service",
-                },
-                // TODO: How to know if Service/Client Summary?
-                // .app handle embedded=true looks to be an indicator. Is it worth checking?
-                message: `Service/Client Summary @${payload.sequenceNumber}`,
-                parents: existingRef ? [existingRef.object.sha] : [],
-                tree: treeHandle,
-            };
-        }
-        const commit = await this.repoManager.createCommit(commitParams);
-        if (existingRef) {
-            await this.repoManager.patchRef(
-                `refs/heads/${this.documentId}`,
-                {
-                    force: true,
-                    sha: commit.sha,
-                },
-                { enabled: this.externalStorageEnabled },
-            );
-        } else {
-            await this.repoManager.createRef(
-                {
-                    ref: `refs/heads/${this.documentId}`,
-                    sha: commit.sha,
-                },
-                { enabled: this.externalStorageEnabled },
-            );
-        }
-        return {
-            id: commit.sha,
-        };
-    }
-
-    private async writeSummaryTreeCore(
-        wholeSummaryTreeEntries: WholeSummaryTreeEntry[],
-        currentPath: string = "",
-    ): Promise<string> {
-        const entries: ICreateTreeEntry[] = await Promise.all(wholeSummaryTreeEntries.map(async (entry) => {
-            const summaryObject = getSummaryObjectFromWholeSummaryTreeEntry(entry);
-            const type = getGitType(summaryObject);
-            const path = entry.path;
-            const fullPath = currentPath ? `${currentPath}/${entry.path}` : entry.path;
-            const pathHandle = await this.writeSummaryTreeObject(
-                entry,
-                summaryObject,
-                fullPath,
-            );
-            return {
-                mode: getGitMode(summaryObject),
-                path,
-                sha: pathHandle,
-                type,
-            };
-        }));
-
-        const createdTree = await this.repoManager.createTree(
-            { tree: entries },
-        );
-        return createdTree.sha;
-    }
-
-    private async writeSummaryTreeObject(
-        wholeSummaryTreeEntry: WholeSummaryTreeEntry,
-        summaryObject: SummaryObject,
-        currentPath: string,
-    ): Promise<string> {
-        switch(summaryObject.type) {
-            case SummaryType.Blob:
-                return this.writeSummaryBlob(
-                    ((wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryBlob),
-                );
-            case SummaryType.Tree:
-                return this.writeSummaryTreeCore(
-                    ((wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryTree).entries ?? [],
-                    currentPath,
-                );
-            case SummaryType.Handle:
-                return this.getShaFromTreeHandleEntry(wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry);
-            default:
-                throw new NetworkError(501, "Not Implemented");
-        }
-    }
-
-    private async writeSummaryBlob(blob: IWholeSummaryBlob): Promise<string> {
-        const blobResponse = await this.repoManager.createBlob(
-            {
-                content: blob.content,
-                encoding: blob.encoding,
-            },
-        );
-        return blobResponse.sha;
-    }
-
-    private async getShaFromTreeHandleEntry(entry: IWholeSummaryTreeHandleEntry): Promise<string> {
-        if (!entry.id) {
-            throw new NetworkError(400, `Empty summary tree handle`);
-        }
-        if (entry.id.split("/").length === 1) {
-            // The entry id is already a sha, so just return it
-            return entry.id;
-        }
-
-        const cachedSha = this.entryHandleToObjectShaCache.get(entry.id);
-        if (cachedSha) {
-            return cachedSha;
-        }
-
-        // The entry id is in the format { id: `<parent commit sha>/<tree path>`, path: `<tree path>` }
-        const parentHandle = entry.id.split("/")[0];
-        const parentCommit = await this.repoManager.getCommit(parentHandle);
-        const parentTree = await this.repoManager.getTree(parentCommit.tree.sha, true /* recursive */);
-        for (const treeEntry of parentTree.tree) {
-            this.entryHandleToObjectShaCache.set(`${parentHandle}/${treeEntry.path}`, treeEntry.sha);
-        }
-        const sha = this.entryHandleToObjectShaCache.get(entry.id);
-        if (!sha) {
-            throw new NetworkError(404, `Summary tree handle object not found: id: ${entry.id}, path: ${entry.path}`);
-        }
-        return sha;
-    }
-}
-
-export async function getSummary(
+async function getSummary(
     repoManager: IRepositoryManager,
+    fileSystemManager: IFileSystemManager,
     sha: string,
     documentId: string,
-    externalStorageEnabled: boolean,
+    tenantId: string,
+    externalWriterConfig?: IExternalWriterConfig,
+    persistLatestFullSummary = false,
 ): Promise<IWholeFlatSummary> {
-    const wholeSummaryReadGitManager = new WholeSummaryReadGitManager(
+    if (persistLatestFullSummary && sha === latestSummarySha) {
+        try {
+            const latestFullSummaryFromStorage = await retrieveLatestFullSummaryFromStorage(
+                fileSystemManager,
+                getDocumentStorageDirectory(repoManager, documentId),
+            );
+            if (latestFullSummaryFromStorage !== undefined) {
+                return latestFullSummaryFromStorage;
+            }
+        } catch (e) {
+            // This read is for optimization purposes, so on failure
+            // we can try to read the summary in typical fashion.
+            winston.error(`Failed to read latest full summary from storage: ${safeStringify(e)}`, {
+                documentId,
+                tenantId,
+            });
+        }
+    }
+
+    const wholeSummaryManager = new GitWholeSummaryManager(
         documentId,
         repoManager,
-        externalStorageEnabled,
+        externalWriterConfig?.enabled ?? false,
     );
-    return wholeSummaryReadGitManager.readSummary(sha);
+    return wholeSummaryManager.readSummary(sha);
 }
 
-export async function createSummary(
+async function createSummary(
     repoManager: IRepositoryManager,
+    fileSystemManager: IFileSystemManager,
     payload: IWholeSummaryPayload,
     documentId: string,
-    externalStorageEnabled: boolean,
-): Promise<IWholeFlatSummary | IWriteSummaryResponse> {
-    const wholeSummaryWriteGitManager = new WholeSummaryWriteGitManager(
+    tenantId: string,
+    externalWriterConfig?: IExternalWriterConfig,
+    persistLatestFullSummary = false,
+): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
+    const wholeSummaryManager = new GitWholeSummaryManager(
         documentId,
         repoManager,
-        externalStorageEnabled,
+        externalWriterConfig?.enabled ?? false,
     );
-    return wholeSummaryWriteGitManager.writeSummary(payload);
+    const {isNew, writeSummaryResponse} = await wholeSummaryManager.writeSummary(payload);
+
+    // Waiting to pre-compute and persist latest summary would slow down document creation,
+    // so skip this step if it is a new document.
+    if (!isNew && isContainerSummary(payload)) {
+        const latestFullSummary: IWholeFlatSummary | undefined = await wholeSummaryManager.readSummary(
+            writeSummaryResponse.id,
+        ).catch((err) => {
+            // This read is for Historian caching purposes, so it should be ignored on failure.
+            winston.error(`Failed to read latest summary after writing container summary: ${safeStringify(err)}`, {
+                documentId,
+                tenantId,
+            });
+            return undefined;
+        });
+        if (latestFullSummary) {
+            if (persistLatestFullSummary) {
+                try {
+                    // TODO: does this fail if file is open and still being written to from a previous request?
+                    await persistLatestFullSummaryInStorage(
+                        fileSystemManager,
+                        getDocumentStorageDirectory(repoManager, documentId),
+                        latestFullSummary,
+                    );
+                } catch(e) {
+                    winston.error(`Failed to persist latest full summary to storage: ${safeStringify(e)}`, {
+                        documentId,
+                        tenantId,
+                    });
+                    // TODO: Find and add more information about this failure so that Scribe can retry as necessary.
+                    throw new NetworkError(500, "Failed to persist latest full summary to storage");
+                }
+            }
+            return latestFullSummary;
+        }
+    }
+
+    return writeSummaryResponse;
 }
 
-export async function deleteSummary(
+async function deleteSummary(
     repoManager: IRepositoryManager,
-    softDelete: boolean): Promise<boolean> {
+    fileSystemManager: IFileSystemManager,
+    documentId: string,
+    tenantId: string,
+    softDelete: boolean,
+    externalWriterConfig?: IExternalWriterConfig,
+    persistLatestFullSummary = false): Promise<boolean> {
     throw new NetworkError(501, "Not Implemented");
 }
 
 export function create(
     store: Provider,
+    fileSystemManager: IFileSystemManager,
     repoManagerFactory: IRepositoryManagerFactory,
 ): Router {
     const router: Router = Router();
+    const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
 
     /**
      * Retrieves a summary.
@@ -361,7 +146,7 @@ export function create(
      */
     router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
         const storageRoutingId: string = request.get("Storage-Routing-Id");
-        const [,documentId] = storageRoutingId.split(":");
+        const [tenantId,documentId] = storageRoutingId.split(":");
         if (!documentId) {
             handleResponse(Promise.reject(new NetworkError(400, "Invalid Storage-Routing-Id header")), response);
             return;
@@ -371,9 +156,12 @@ export function create(
             request.params.repo,
         ).then(async (repoManager) => getSummary(
             repoManager,
+            fileSystemManager,
             request.params.sha,
             documentId,
-            getExternalWriterParams(request.query?.config as string | undefined)?.enabled ?? false,
+            tenantId,
+            getExternalWriterParams(request.query?.config as string | undefined),
+            persistLatestFullSummary,
         ));
         handleResponse(resultP, response);
     });
@@ -392,47 +180,42 @@ export function create(
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => {
-            const externalStorageEnabled =
-                getExternalWriterParams(request.query?.config as string | undefined)?.enabled ?? false;
-            const writeSummaryResponse = await createSummary(
-                repoManager,
-                wholeSummaryPayload,
-                documentId,
-                externalStorageEnabled,
-            );
-            if (wholeSummaryPayload.type === "container") {
-                try {
-                    const wholeFlatSummary = await getSummary(
-                        repoManager,
-                        writeSummaryResponse.id,
-                        documentId,
-                        externalStorageEnabled,
-                    );
-                    return wholeFlatSummary;
-                } catch (e) {
-                    // This read is for Historian caching purposes, so it should be ignored on failure.
-                    winston.error("Failed to read latest summary after writing container summary", {
-                        documentId,
-                        tenantId,
-                    });
-                }
-            }
-            return writeSummaryResponse;
-        });
+        ).then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => createSummary(
+            repoManager,
+            fileSystemManager,
+            wholeSummaryPayload,
+            documentId,
+            tenantId,
+            getExternalWriterParams(request.query?.config as string | undefined),
+            persistLatestFullSummary,
+        ));
         handleResponse(resultP, response, 201);
     });
 
     /**
-     * Deletes the latest summary for the owner/repo.
+     * Deletes the latest summary for the given document.
      * If header Soft-Delete="true", only flags summary as deleted.
      */
-    router.delete("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
+    router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
+        const storageRoutingId: string = request.get("Storage-Routing-Id");
+        const [tenantId,documentId] = storageRoutingId.split(":");
+        if (!documentId) {
+            handleResponse(Promise.reject(new NetworkError(400, "Invalid Storage-Routing-Id header")), response);
+            return;
+        }
         const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
         const resultP = repoManagerFactory.open(
             request.params.owner,
             request.params.repo,
-        ).then(async (repoManager) => deleteSummary(repoManager, softDelete));
+        ).then(async (repoManager) => deleteSummary(
+            repoManager,
+            fileSystemManager,
+            documentId,
+            tenantId,
+            softDelete,
+            getExternalWriterParams(request.query?.config as string | undefined),
+            persistLatestFullSummary,
+        ));
         handleResponse(resultP, response, 204);
     });
 
