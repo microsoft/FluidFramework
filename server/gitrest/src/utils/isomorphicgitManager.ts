@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import * as isomorphicGit from "isomorphic-git";
 import winston from "winston";
 import safeStringify from "json-stringify-safe";
@@ -36,8 +35,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                 gitdir: this.directory,
                 oid: sha,
             });
-        const result = conversions.commitToICommit(commit);
-        return result;
+        return conversions.commitToICommit(commit);
     }
 
     public async getCommits(
@@ -53,7 +51,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                     depth: count,
                 });
 
-            const detailedCommits = commits.map((rawCommit) => {
+             return commits.map((rawCommit) => {
                 const gitCommit = conversions.commitToICommit(rawCommit);
                 const result: resources.ICommitDetails =
                 {
@@ -71,8 +69,6 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                 };
                 return result;
             });
-
-            return detailedCommits;
         } catch (err) {
             winston.info(`getCommits error: ${err}`);
             return Promise.reject(err);
@@ -198,7 +194,6 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
 
     public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
         const commitObject = conversions.iCreateCommitParamsToCommitObject(commit);
-
         const commitOid = await isomorphicGit.writeCommit({
             fs: this.fileSystemManager,
             gitdir: this.directory,
@@ -231,27 +226,29 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                 gitdir: this.directory,
             }),
         ]);
+
         refIds.push(...branches, ...tags);
 
-        const resolvedAndExpandedRefs = await Promise.all(refIds.map(
-            async (refId) => {
-                const [resolvedRef, expandedRef] = await Promise.all([
-                    isomorphicGit.resolveRef({
-                        fs: this.fileSystemManager,
-                        gitdir: this.directory,
-                        ref: refId,
-                    }),
-                    isomorphicGit.expandRef({
-                        fs: this.fileSystemManager,
-                        gitdir: this.directory,
-                        ref: refId,
-                    }),
-                ]);
-                return {
-                    resolvedRef,
-                    expandedRef,
-                };
-        }));
+        const resolvedAndExpandedRefs = await Promise.all(
+            refIds.map(
+                async (refId) => {
+                    const [resolvedRef, expandedRef] = await Promise.all([
+                        isomorphicGit.resolveRef({
+                            fs: this.fileSystemManager,
+                            gitdir: this.directory,
+                            ref: refId,
+                        }),
+                        isomorphicGit.expandRef({
+                            fs: this.fileSystemManager,
+                            gitdir: this.directory,
+                            ref: refId,
+                        }),
+                    ]);
+                    return {
+                        resolvedRef,
+                        expandedRef,
+                    };
+                }));
 
         return resolvedAndExpandedRefs.map(
             (resolvedAndExpandedRef) =>
@@ -342,7 +339,6 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
 }
 
 export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
-    // Cache repositories to allow for reuse
     private readonly repositoryCache: Set<string> = new Set();
 
     constructor(
@@ -352,7 +348,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
 
     public async create(owner: string, name: string): Promise<IsomorphicGitRepositoryManager> {
         // Verify that both inputs are valid folder names
-        const repoPath = this.getRepoPath(owner, name);
+        const repoPath = helpers.getRepoPath(owner, name);
         const directoryPath = `${this.baseDir}/${repoPath}`;
 
         // Create and then cache the repository
@@ -374,7 +370,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
     }
 
     public async open(owner: string, name: string): Promise<IsomorphicGitRepositoryManager> {
-        const repoPath = this.getRepoPath(owner, name);
+        const repoPath = helpers.getRepoPath(owner, name);
         const directoryPath = `${this.baseDir}/${repoPath}`;
 
         if (!(this.repositoryCache.has(repoPath))) {
@@ -394,21 +390,5 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
             name,
             directoryPath);
         return repoManager;
-    }
-
-    /**
-     * Retrieves the full repository path. Or throws an error if not valid.
-     */
-    private getRepoPath(owner: string, name: string) {
-        // Verify that both inputs are valid folder names
-        const parsedOwner = path.parse(owner);
-        const parsedName = path.parse(name);
-        const repoPath = `${owner}/${name}`;
-
-        if (parsedName.dir !== "" || parsedOwner.dir !== "") {
-            throw new NetworkError(400, `Invalid repo name ${repoPath}`);
-        }
-
-        return repoPath;
     }
 }

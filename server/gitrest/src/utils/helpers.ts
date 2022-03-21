@@ -4,6 +4,7 @@
  */
 
 import { PathLike, Stats } from "fs";
+import * as path from "path";
 import { IGetRefParamsExternal, IWholeFlatSummary, NetworkError } from "@fluidframework/server-services-client";
 import { IExternalWriterConfig, IFileSystemManager } from "./definitions";
 
@@ -86,4 +87,20 @@ export async function retrieveLatestFullSummaryFromStorage(
         }
         throw error;
     }
+}
+
+/**
+ * Retrieves the full repository path. Or throws an error if not valid.
+ */
+export function getRepoPath(owner: string, name: string) {
+    // Verify that both inputs are valid folder names
+    const parsedOwner = path.parse(owner);
+    const parsedName = path.parse(name);
+    const repoPath = `${owner}/${name}`;
+
+    if (parsedName.dir !== "" || parsedOwner.dir !== "") {
+        throw new NetworkError(400, `Invalid repo name ${repoPath}`);
+    }
+
+    return repoPath;
 }

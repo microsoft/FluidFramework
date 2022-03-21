@@ -31,7 +31,7 @@ function oidToCommitHash(oid: string): resources.ICommitHash {
 }
 
 /**
- * Helper function to convert from a nodegit commit to our resource representation
+ * Helper function to convert an `isomorphic-git` ReadCommitResult to our resource representation
  */
 export function commitToICommit(commitResult: isomorphicGit.ReadCommitResult): resources.ICommit {
     return {
@@ -57,6 +57,10 @@ export function commitToICommit(commitResult: isomorphicGit.ReadCommitResult): r
     };
 }
 
+/**
+ * Helper function to convert our Create Commit parameters to
+ * `isomorphic-git`'s CommitObject type.
+ */
 export function iCreateCommitParamsToCommitObject(
     commitParams: resources.ICreateCommitParams): isomorphicGit.CommitObject {
     const date = Date.parse(commitParams.author.date);
@@ -88,6 +92,9 @@ export function iCreateCommitParamsToCommitObject(
     };
 }
 
+/**
+ * Helper function to convert an `isomorphic-git` ReadBlobResult to our resource representation
+ */
 export function blobToIBlob(
     readBlobResponse: isomorphicGit.ReadBlobResult,
     owner: string,
@@ -105,6 +112,9 @@ export function blobToIBlob(
     };
 }
 
+/**
+ * Helper function to convert reference-related parameters into our resource representation.
+ */
 export function refToIRef(resolvedRef: string, expandedRef: string): resources.IRef {
     return {
         object: {
@@ -118,7 +128,7 @@ export function refToIRef(resolvedRef: string, expandedRef: string): resources.I
 }
 
 /**
- * Helper function to convert from an isomorphic-git TreeEntry to our ITreeEntry
+ * Helper function to convert an `isomorphic-git` TreeEntry to our resource representation ITreeEntry
  */
 export function treeEntryToITreeEntry(treeEntry: isomorphicGit.TreeEntry): resources.ITreeEntry {
     return {
@@ -133,7 +143,7 @@ export function treeEntryToITreeEntry(treeEntry: isomorphicGit.TreeEntry): resou
 }
 
 /**
- * Helper function to convert from our ICreateTreeEntry to an isomorphic-git TreeEntry
+ * Helper function to convert our Create Tree Entry to an `isomorphic-git` TreeEntry
  */
 export function iCreateTreeEntryToTreeEntry(createTreeEntry: resources.ICreateTreeEntry): isomorphicGit.TreeEntry {
     return {
@@ -144,6 +154,9 @@ export function iCreateTreeEntryToTreeEntry(createTreeEntry: resources.ICreateTr
     };
 }
 
+/**
+ * Helper function to convert an `isomorphic-git` ReadTagResult to our resource representation of a tag
+ */
 export async function tagToITag(tagResult: isomorphicGit.ReadTagResult): Promise<resources.ITag> {
     return {
         message: tagResult.tag.message,
@@ -163,6 +176,9 @@ export async function tagToITag(tagResult: isomorphicGit.ReadTagResult): Promise
     };
 }
 
+/**
+ * Helper function to convert our Create Tag parameters to an `isomorphic-git` TagObject
+ */
 export function iCreateTagParamsToTagObject(
     tagParams: resources.ICreateTagParams): isomorphicGit.TagObject {
     const date = Date.parse(tagParams.tagger.date);
