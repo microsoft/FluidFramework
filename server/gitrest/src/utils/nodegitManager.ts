@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
 import * as path from "path";
-import * as util from "util";
 import nodegit from "nodegit";
 import winston from "winston";
 import safeStringify from "json-stringify-safe";
@@ -14,9 +12,13 @@ import { NetworkError } from "@fluidframework/server-services-client";
 import { IExternalStorageManager } from "../externalStorageManager";
 import * as helpers from "./helpers";
 import * as conversions from "./nodegitConversions";
-import { IRepositoryManagerFactory, GitObjectType, IExternalWriterConfig, IRepositoryManager } from "./definitions";
-
-const exists = util.promisify(fs.exists);
+import {
+    IRepositoryManagerFactory,
+    GitObjectType,
+    IExternalWriterConfig,
+    IRepositoryManager,
+    IFileSystemManager,
+} from "./definitions";
 
 export class NodegitRepositoryManager implements IRepositoryManager {
     constructor(
@@ -25,6 +27,10 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         private readonly repo: nodegit.Repository,
         private readonly externalStorageManager: IExternalStorageManager,
     ) {}
+
+    public get path(): string {
+        return this.repo.path();
+    }
 
     public async getCommit(sha: string): Promise<resources.ICommit> {
         const commit = await this.repo.getCommit(sha);
@@ -325,7 +331,11 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
     // Cache repositories to allow for reuse
     private repositoryPCache: { [key: string]: Promise<nodegit.Repository> } = {};
 
-    constructor(private readonly baseDir, private readonly externalStorageManager: IExternalStorageManager) {
+    constructor(
+        private readonly baseDir: string,
+        private readonly fileSystemManager: IFileSystemManager,
+        private readonly externalStorageManager: IExternalStorageManager,
+    ) {
     }
 
     public async create(owner: string, name: string): Promise<NodegitRepositoryManager> {
@@ -338,7 +348,11 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         this.repositoryPCache[repoPath] = repositoryP;
 
         const repository = await this.repositoryPCache[repoPath];
-        const repoManager = new NodegitRepositoryManager(owner, name, repository, this.externalStorageManager);
+        const repoManager = new NodegitRepositoryManager(
+            owner,
+            name,
+            repository,
+            this.externalStorageManager);
         winston.info(`Created a new repo for owner ${owner} reponame: ${name}`);
 
         return repoManager;
@@ -350,7 +364,8 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         if (!(repoPath in this.repositoryPCache)) {
             const directory = `${this.baseDir}/${repoPath}`;
 
-            if (!await exists(directory)) {
+            const repoExists = await helpers.exists(this.fileSystemManager, directory);
+            if (!repoExists) {
                 winston.info(`Repo does not exist ${directory}`);
                 // services-client/getOrCreateRepository depends on a 400 response code
                 throw new NetworkError(400, `Repo does not exist ${directory}`);
@@ -360,7 +375,11 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         }
 
         const repository = await this.repositoryPCache[repoPath];
-        const repoManager = new NodegitRepositoryManager(owner, name, repository, this.externalStorageManager);
+        const repoManager = new NodegitRepositoryManager(
+            owner,
+            name,
+            repository,
+            this.externalStorageManager);
         return repoManager;
     }
 

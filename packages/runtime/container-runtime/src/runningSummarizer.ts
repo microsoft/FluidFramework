@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import {
@@ -26,6 +26,7 @@ import {
     SubmitSummaryResult,
     ISummaryCancellationToken,
     ISummarizeResults,
+    ISummarizeTelemetryProperties,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -131,6 +132,7 @@ export class RunningSummarizer implements IDisposable {
         this.pendingAckTimer = new PromiseTimer(
             maxAckWaitTime,
             () => {
+                // pre-0.58 error message: summaryAckWaitTimeout
                 this.raiseSummarizingError("Pending summary ack not received in time");
                 // Note: summarizeCount (from ChildLogger definition) may be 0,
                 // since this code path is hit when RunningSummarizer first starts up,
@@ -303,7 +305,7 @@ export class RunningSummarizer implements IDisposable {
      * @returns ISummarizeResult - result of running a summary.
      */
     private trySummarizeOnce(
-        summarizeProps: ITelemetryProperties,
+        summarizeProps: ISummarizeTelemetryProperties,
         options: ISummarizeOptions,
         cancellationToken = this.cancellationToken,
         resultsBuilder = new SummarizeResultBuilder()): ISummarizeResults
@@ -362,7 +364,7 @@ export class RunningSummarizer implements IDisposable {
                 const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[summaryAttemptPhase];
                 const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
 
-                const summarizeProps: ITelemetryProperties = {
+                const summarizeProps: ISummarizeTelemetryProperties = {
                     summarizeReason,
                     summaryAttempts,
                     summaryAttemptsPerPhase,
@@ -385,7 +387,6 @@ export class RunningSummarizer implements IDisposable {
                 const result = await resultSummarize.receivedSummaryAckOrNack;
 
                 if (result.success) {
-                    this.totalSuccessfulAttempts++;
                     return;
                 }
                 // Check for retryDelay that can come from summaryNack or upload summary flow.

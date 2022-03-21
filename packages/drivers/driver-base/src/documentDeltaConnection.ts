@@ -28,6 +28,7 @@ import {
     loggerToMonitoringContext,
     MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion";
 
@@ -107,7 +108,7 @@ export class DocumentDeltaConnection
      * @param enableLongPollingDowngrades - allow connection to be downgraded to long-polling on websocket failure
      */
     protected constructor(
-        protected readonly socket: SocketIOClient.Socket,
+        protected readonly socket: Socket,
         public documentId: string,
         logger: ITelemetryLogger,
         private readonly enableLongPollingDowngrades: boolean = false,
@@ -305,6 +306,7 @@ export class DocumentDeltaConnection
         this.disposeCore(
             false, // socketProtocolError
             createGenericNetworkError(
+                // pre-0.58 error message: clientClosingConnection
                 "Client closing delta connection", { canRetry: true }, { driverVersion }));
     }
 

@@ -82,7 +82,9 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         const testTenantManager = new TestTenantManager(undefined, undefined, testDbFactory.testDatabase);
 
         const databaseManager = new MongoDatabaseManager(
+            false,
             mongoManager,
+            null,
             nodesCollectionName,
             documentsCollectionName,
             deltasCollectionName,
