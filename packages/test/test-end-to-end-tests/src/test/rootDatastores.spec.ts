@@ -335,9 +335,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
-        itExpects.skip("Creating a root data store with an existing alias as an id breaks the container", [
+        itExpects("Creating a root data store with an existing alias as an id breaks the container", [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
-        ], async () => {
+        ], async function() {
+            // GitHub issue: #9534
+            if(provider.driver.type === "tinylicious") {
+                this.skip();
+            }
             const dataCorruption = anyDataCorruption([container1, container2]);
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             assert.equal(await ds1.trySetAlias(alias), "Success");
@@ -353,10 +357,13 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.equal((aliasResult as Error).message, "malformedDataStoreAliasMessage");
         });
 
-        itExpects.skip("Receiving a bad alias message breaks the container", [
+        itExpects("Receiving a bad alias message breaks the container", [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
         ], async () => {
+            if(provider.driver.type === "tinylicious") {
+                this.skip();
+            }
             const dataCorruption = allDataCorruption([container1, container2]);
             await corruptedAliasOp(runtimeOf(dataObject1), alias);
             assert(await dataCorruption);
