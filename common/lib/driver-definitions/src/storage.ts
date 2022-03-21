@@ -306,8 +306,8 @@ export interface IDocumentServiceFactory {
      */
      createDocumentService(
         resolvedUrl: IResolvedUrl,
+        clientIsSummarizer: boolean,
         logger?: ITelemetryBaseLogger,
-        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService>;
 
     /**
@@ -318,8 +318,8 @@ export interface IDocumentServiceFactory {
     createContainer(
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
+        clientIsSummarizer: boolean,
         logger?: ITelemetryBaseLogger,
-        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService>;
 }
 
