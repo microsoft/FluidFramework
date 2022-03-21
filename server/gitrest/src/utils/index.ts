@@ -6,3 +6,4 @@
 export * from "./definitions";
 export * from "./helpers";
 export * from "./nodegitManager";
+export * from "./gitWholeSummaryManager";

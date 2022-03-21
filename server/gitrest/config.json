@@ -11,5 +11,11 @@
     "externalStorage": {
         "enabled": false,
         "endpoint": "http://externalStorage:3005"
+    },
+    "git": {
+        "lib": {
+            "name": "nodegit"
+        },
+        "persistLatestFullSummary": false
     }
 }
