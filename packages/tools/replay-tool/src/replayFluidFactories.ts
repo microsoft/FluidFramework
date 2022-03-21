@@ -71,15 +71,17 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
         );
     }
 }
-
-export const nonComparableDdsFactories: IChannelFactory[] = [
+// these dds don't have deterministic content, or the
+// factories are unavailable to us. they will be excluded
+// from comparison
+export const excludeChannelContentDdsFactories: IChannelFactory[] = [
     SharedMatrix.getFactory(),
     SharedSummaryBlock.getFactory(),
     new UnknownChannelFactory("https://graph.microsoft.com/types/SharedArray"),
     new UnknownChannelFactory("https://graph.microsoft.com/types/signal"),
 ];
 const allDdsFactories: IChannelFactory[] = [
-    ... nonComparableDdsFactories,
+    ... excludeChannelContentDdsFactories,
     SharedMap.getFactory(),
     SharedString.getFactory(),
     Ink.getFactory(),

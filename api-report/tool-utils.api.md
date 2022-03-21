@@ -53,7 +53,6 @@ export interface IResources {
 export interface ISnapshotNormalizerConfig {
     // (undocumented)
     blobsToNormalize?: string[];
-    // (undocumented)
     excludedChannelContentTypes?: string[];
 }
 

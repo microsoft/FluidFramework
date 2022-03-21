@@ -19,7 +19,7 @@ import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
 import {
-    nonComparableDdsFactories,
+    excludeChannelContentDdsFactories,
     ReplayDataStoreFactory,
     ReplayRuntimeFactory,
 } from "./replayFluidFactories";
@@ -27,7 +27,7 @@ import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
 
 const normalizeOpts: ISnapshotNormalizerConfig =
-    {excludedChannelContentTypes: nonComparableDdsFactories.map((f)=>f.type)};
+    {excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f)=>f.type)};
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.
@@ -46,7 +46,7 @@ export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapsho
 export function compareWithReferenceSnapshot(
     snapshot: IFileSnapshot,
     referenceSnapshotFilename: string,
-    errorHandler: (desciption: string, error?: any) => void,
+    errorHandler: (description: string, error?: any) => void,
 ) {
     // Read the reference snapshot and covert it to normalized IFileSnapshot.
     const referenceSnapshotString = fs.readFileSync(`${referenceSnapshotFilename}.json`, "utf-8");
