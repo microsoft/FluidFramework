@@ -42,7 +42,7 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
     });
 
-    it.skip("should generate the absolute path for ContainerRuntime correctly", () => {
+    it("should generate the absolute path for ContainerRuntime correctly", () => {
         // The expected absolute path for the ContainerRuntime is empty string.
         const absolutePath = "";
 

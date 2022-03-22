@@ -73,7 +73,7 @@ function generate(
             sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
         });
 
-        it.skip("Should initialize after attach", async () => {
+        it("Should initialize after attach", async () => {
             const collection1 = ctor.create(dataStore1.runtime);
             for (const item of input) {
                 await collection1.add(item);

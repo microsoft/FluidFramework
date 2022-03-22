@@ -80,7 +80,7 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
         assert.equal(user3Empty, value3, `Incorrect value ${user3Empty} instead of ${value3} in container 3`);
     }
 
-    it.skip("can create the cell in 3 containers correctly", async () => {
+    it("can create the cell in 3 containers correctly", async () => {
         // Cell was created and populated in beforeEach
         assert.ok(sharedCell1, `Couldn't find the cell in container1, instead got ${sharedCell1}`);
         assert.ok(sharedCell2, `Couldn't find the cell in container2, instead got ${sharedCell2}`);
