@@ -59,7 +59,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         }
     });
 
-    it.skip("attach sends an op", async function() {
+    it("attach sends an op", async function() {
         const container = await provider.makeTestContainer(testContainerConfig);
 
         const blobOpP = new Promise<void>((resolve, reject) => container.on("op", (op) => {

@@ -93,7 +93,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
      * 3 = data stores.
      * 3 = 1 DDS for each data store.
      */
-    it.skip("can correctly generate GC stats without unreferenced nodes", async () => {
+    it("can correctly generate GC stats without unreferenced nodes", async () => {
         const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
         const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
         const expectedGCStats: IGCStats = {

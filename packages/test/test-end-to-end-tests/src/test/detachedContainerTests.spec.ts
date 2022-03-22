@@ -83,7 +83,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         loader = provider.makeTestLoader(testContainerConfig) as Loader;
     });
 
-    it.skip("Create detached container", async () => {
+    it("Create detached container", async () => {
         const container: IContainer = (await loader.createDetachedContainer(provider.defaultCodeDetails));
         assert.strictEqual(container.attachState, AttachState.Detached, "Container should be detached");
         assert.strictEqual(container.closed, false, "Container should be open");
