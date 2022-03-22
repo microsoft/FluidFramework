@@ -7,7 +7,7 @@ import * as path from "path";
 import winston from "winston";
 import { runService } from "@fluidframework/server-services-shared";
 import { configureLogging } from "@fluidframework/server-services-utils";
-import { GitrestResourcesFactory, GitrestRunnerFactory } from "./runnerFactory";
+import { GitrestResourcesFactory, GitrestRunnerFactory } from "@fluidframework/gitrest-base";
 
 const configPath = path.join(__dirname, "../config.json");
 
