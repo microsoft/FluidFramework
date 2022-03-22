@@ -338,10 +338,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         itExpects("Creating a root data store with an existing alias as an id breaks the container", [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "Duplicate DataStore created with existing id" },
         ], async function() {
-            // GitHub issue: #9534
-            if(provider.driver.type === "tinylicious") {
-                this.skip();
-            }
             const dataCorruption = anyDataCorruption([container1, container2]);
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             assert.equal(await ds1.trySetAlias(alias), "Success");
