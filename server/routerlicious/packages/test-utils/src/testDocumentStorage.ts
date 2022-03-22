@@ -12,7 +12,6 @@ import {
     IDocumentDetails,
     IDocumentStorage,
     IScribe,
-    ISession,
     ITenantManager,
 } from "@fluidframework/server-services-core";
 import {

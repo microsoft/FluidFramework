@@ -39,11 +39,11 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                 options.bearerSecret);
 
         case "r11s":
-            if (options.fluidHost.includes("azurefd.net")) {
+            if (options.discoveryEndpoint !== undefined) {
                 return new InsecureUrlResolver(
                     "",
-                    options.fluidHost,
-                    options.fluidHost,
+                    options.discoveryEndpoint,
+                    "",
                     options.tenantId,
                     options.bearerSecret);
             }

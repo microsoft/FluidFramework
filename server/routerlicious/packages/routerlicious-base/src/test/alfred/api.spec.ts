@@ -9,7 +9,7 @@ import request from "supertest";
 import nconf from "nconf";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import { TestTenantManager, TestThrottler, TestDocumentStorage, TestDbFactory, TestProducer, TestKafka } from "@fluidframework/server-test-utils";
-import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
+import { IDocument, MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import * as alfredApp from "../../alfred/app";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
@@ -49,7 +49,7 @@ if (!Lumberjack.isSetupCompleted())
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
-        describe("API", () => {
+        describe("API", async () => {
             const defaultTenantManager = new TestTenantManager();
             const document1 = {
                 _id: "doc-1",
@@ -88,6 +88,8 @@ describe("Routerlicious", () => {
             const tenantToken1 =`Basic ${generateToken(appTenant1.id, document1._id, appTenant1.key, scopes)}`;
             const tenantToken2 =`Basic ${generateToken(appTenant2.id, document1._id, appTenant2.key, scopes)}`;
             const defaultProducer = new TestProducer(new TestKafka());
+            const defaultDb = await defaultMongoManager.getDatabase();
+            const defaultDocumentsCollection = defaultDb.collection<IDocument>(documentsCollectionName);
             let app: express.Application;
             let supertest: request.SuperTest<request.Test>;
             describe("throttling", () => {
@@ -102,7 +104,8 @@ describe("Routerlicious", () => {
                         defaultStorage,
                         defaultAppTenants,
                         defaultMongoManager,
-                        defaultProducer);
+                        defaultProducer,
+                        defaultDocumentsCollection);
                     supertest = request(app);
                 });
 
@@ -193,7 +196,8 @@ describe("Routerlicious", () => {
                         defaultStorage,
                         defaultAppTenants,
                         defaultMongoManager,
-                        defaultProducer);
+                        defaultProducer,
+                        defaultDocumentsCollection);
                     supertest = request(app);
                 });
 
@@ -258,7 +262,8 @@ describe("Routerlicious", () => {
                         defaultStorage,
                         defaultAppTenants,
                         defaultMongoManager,
-                        defaultProducer);
+                        defaultProducer,
+                        defaultDocumentsCollection);
                     supertest = request(app);
                 });
 
@@ -319,7 +324,8 @@ describe("Routerlicious", () => {
                         defaultStorage,
                         defaultAppTenants,
                         defaultMongoManager,
-                        defaultProducer);
+                        defaultProducer,
+                        defaultDocumentsCollection);
                     supertest = request(app);
                 });
                 describe("/documents", () => {

@@ -148,26 +148,24 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         let hasSessionLocationChanged: boolean = false;
         let isSessionAlive: boolean = false;
 
-        if (resolvedUrl.endpoints.ordererUrl.includes("azurefd.net")) {
-            const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-            const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-                tenantId,
-                documentId,
-                this.tokenProvider,
-                logger2,
-                rateLimiter,
-                this.driverPolicies.enableRestLess,
-                resolvedUrl.endpoints.ordererUrl,
-            );
-            // the backend responds with the actual document session associated with the container.
-            const documentSession: IDocumentSession = await ordererRestWrapper.get<IDocumentSession>(
-                `/documents/${tenantId}/session/${documentId}`,
-            );
-            const session = documentSession.session;
-            hasSessionLocationChanged = documentSession.hasSessionLocationChanged;
-            isSessionAlive = documentSession.session.isSessionAlive;
-            replaceFluidUrl(resolvedUrl, session, parsedUrl);
-        }
+        const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+            tenantId,
+            documentId,
+            this.tokenProvider,
+            logger2,
+            rateLimiter,
+            this.driverPolicies.enableRestLess,
+            resolvedUrl.endpoints.ordererUrl,
+        );
+        // the backend responds with the actual document session associated with the container.
+        const documentSession: IDocumentSession = await ordererRestWrapper.get<IDocumentSession>(
+            `/documents/${tenantId}/session/${documentId}`,
+        );
+        const session = documentSession.session;
+        hasSessionLocationChanged = documentSession.hasSessionLocationChanged;
+        isSessionAlive = documentSession.session.isSessionAlive;
+        replaceFluidUrl(resolvedUrl, session, parsedUrl);
 
         const fluidResolvedUrl = resolvedUrl;
         const storageUrl = fluidResolvedUrl.endpoints.storageUrl;

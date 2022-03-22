@@ -10,6 +10,7 @@ The following environment variables can be defined when running webpack-dev-serv
 | ---------| ----------- |
 | `mode` | Specify the mode to run in. See modes below. |
 | `single` | Load Fluid object normally when using local mode for ordering, etc. |
+| `discoveryEndpoint` | Host url to discovery endpoint while testing. If you supply this, you must supply a tenant ID and secret |
 | `fluidHost` | Host url to target while testing. If you supply this, you must supply a tenant ID and secret |
 | `tenantId` | Tenant ID for your host. If you supply this you must supply a tenant secret |
 | `tenantSecret` | Secret for your tenant |
@@ -41,10 +42,12 @@ provided in the following ways (looked for in the following order):
 
 ### command line:
 ```
+npm run start -- --env.discoveryEndpoint https://discoveryEndpoint.com --env.tenantId my_tenant --env.tenantSecret my_secret --env.bearerSecret bear_secret --env.npm npm.com
 npm run start -- --env.fluidHost https://fluidhost.com --env.tenantId my_tenant --env.tenantSecret my_secret --env.bearerSecret bear_secret --env.npm npm.com
 ```
 
 ### environment variables:
+- `fluid__webpack__discoveryEndpoint`
 - `fluid__webpack__fluidHost`
 - `fluid__webpack__tenantId`
 - `fluid__webpack__tenantSecret`
@@ -58,6 +61,7 @@ or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid
 {
     "fluid": {
         "webpack": {
+            "discoveryEndpoint": "https://discoveryEndpoint.com",
             "fluidHost": "https://fluidhost.com",
             "tenantId": "my_tenant",
             "tenantSecret": "my_secret",

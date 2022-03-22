@@ -61,6 +61,7 @@ export interface IDockerRouteOptions extends IBaseRouteOptions {
 
 export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
     mode: "r11s";
+    discoveryEndpoint?: string;
     fluidHost?: string;
     tenantId?: string;
     tenantSecret?: string;

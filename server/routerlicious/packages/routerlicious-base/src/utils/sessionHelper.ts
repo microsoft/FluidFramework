@@ -3,74 +3,73 @@
  * Licensed under the MIT License.
  */
 
-import { ISession, IDocumentSession } from "@fluidframework/server-services-client";
-import { MongoManager, IDocument } from "@fluidframework/server-services-core";
+// import { ISession, IDocumentSession } from "@fluidframework/server-services-client";
+// import { MongoManager, IDocument, ICollection } from "@fluidframework/server-services-core";
+// import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+
+import { IDocumentSession, ISession } from "@fluidframework/server-services-client";
+import { IDocument, ICollection } from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
-export async function getSession(globalDbMongoManager: MongoManager,
-    documentId: string,
+export async function getSession(documentId: string,
     ordererUrl: string,
     historianUrl: string,
-    tenantId: string): Promise<IDocumentSession> {
+    tenantId: string,
+    documentsCollection: ICollection<IDocument>): Promise<IDocumentSession> {
     const lumberjackProperties = {
         [BaseTelemetryProperties.tenantId]: tenantId,
         [BaseTelemetryProperties.documentId]: documentId,
     };
-    if (globalDbMongoManager === undefined) {
-        const sessionP: ISession = {
-            ordererUrl,
-            historianUrl,
-            isSessionAlive: null,
-        };
-        const documentSessionP: IDocumentSession = {
-            documentId,
-            hasSessionLocationChanged: false,
-            session: sessionP,
-        };
-        Lumberjack.info(`Return the documentSessionP: ${JSON.stringify(documentSessionP)}`, lumberjackProperties);
-        return documentSessionP;
-    }
+    // if (globalDbMongoManager === undefined) {
+    //     const sessionP: ISession = {
+    //         ordererUrl,
+    //         historianUrl,
+    //         isSessionAlive: null,
+    //     };
+    //     const documentSessionP: IDocumentSession = {
+    //         documentId,
+    //         hasSessionLocationChanged: false,
+    //         session: sessionP,
+    //     };
+    //     Lumberjack.info(`Return the documentSessionP: ${JSON.stringify(documentSessionP)}`, lumberjackProperties);
+    //     return documentSessionP;
+    // }
 
-    const db = await globalDbMongoManager.getDatabase();
-    const collection = db.collection("documents");
-    const result = await collection.findOne({ documentId });
-    const session = (result as IDocument).session;
-    const deli = JSON.parse((result as IDocument).deli);
-    const isScribeEmpty = (result as IDocument).scribe === "";
-    const scribe = isScribeEmpty ? "" : JSON.parse((result as IDocument).scribe);
+    const tempDocument: IDocument = await documentsCollection.findOne({ documentId });
+    const tempSession: ISession = tempDocument.session;
+    const deli = JSON.parse(tempDocument.deli);
+    const isScribeEmpty = tempDocument.scribe === "";
+    const scribe = isScribeEmpty ? "" : JSON.parse(tempDocument.scribe);
     let hasSessionLocationChanged: boolean = false;
-    const isSessionAlive: boolean = session.isSessionAlive;
-    if (!session.isSessionAlive) {
+    const isSessionAlive: boolean = tempSession.isSessionAlive;
+    if (!tempSession.isSessionAlive) {
         // Reset logOffset, ordererUrl, and historianUrl when switching cluster.
-        if (session.ordererUrl !== ordererUrl) {
+        if (tempSession.ordererUrl !== ordererUrl) {
             const ms: string = `Reset logOffset, ordererUrl, and historianUrl when switching cluster.`;
             Lumberjack.info(ms, lumberjackProperties);
             deli.logOffset = -1;
-            session.ordererUrl = ordererUrl;
-            session.historianUrl = historianUrl;
+            tempSession.ordererUrl = ordererUrl;
+            tempSession.historianUrl = historianUrl;
             hasSessionLocationChanged = true;
             if (!isScribeEmpty) {
                 scribe.logOffset = -1;
             }
         }
-        session.isSessionAlive = true;
-        (result as IDocument).deli = JSON.stringify(deli);
-        (result as IDocument).scribe = isScribeEmpty ? "" : JSON.stringify(scribe);
-        (result as IDocument).session = session;
-        await collection.upsert({
+        tempSession.isSessionAlive = true;
+        await documentsCollection.upsert({
             documentId,
         }, {
-            deli: (result as IDocument).deli,
-            scribe: (result as IDocument).scribe,
-            session: (result as IDocument).session,
+            deli: JSON.stringify(deli),
+            scribe: isScribeEmpty ? "" : JSON.stringify(scribe),
+            session: tempSession,
         }, {
         });
     }
-    session.isSessionAlive = isSessionAlive;
+    tempSession.isSessionAlive = isSessionAlive;
     const documentSession: IDocumentSession = {
         documentId,
         hasSessionLocationChanged,
-        session: (result as IDocument).session,
+        session: tempSession,
     };
     Lumberjack.info(`Return the documentSession: ${JSON.stringify(documentSession)}`, lumberjackProperties);
     return documentSession;

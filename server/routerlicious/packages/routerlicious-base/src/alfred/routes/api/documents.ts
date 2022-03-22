@@ -5,12 +5,12 @@
 
 import * as crypto from "crypto";
 import {
+    IDocument,
     IDocumentStorage,
-    IDocumentSession,
     IThrottler,
     ITenantManager,
     ICache,
-    MongoManager,
+    ICollection,
 } from "@fluidframework/server-services-core";
 import {
     verifyStorageToken,
@@ -25,7 +25,6 @@ import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import { Constants, handleResponse, getSession } from "../../../utils";
 
-
 export function create(
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
@@ -33,7 +32,7 @@ export function create(
     singleUseTokenCache: ICache,
     config: Provider,
     tenantManager: ITenantManager,
-    globalDbMongoManager?: MongoManager): Router {
+    documentsCollection: ICollection<IDocument>): Router {
     const router: Router = Router();
 
     // Whether to enforce server-generated document ids in create doc flow
@@ -62,7 +61,7 @@ export function create(
                 (error) => {
                     response.status(400).json(error);
                 });
-    });
+        });
 
     /**
      * Creates a new document with initial summary.
@@ -122,16 +121,16 @@ export function create(
      * Get the session information.
      */
     router.get(
-    "/:tenantId/session/:id",
-    verifyStorageToken(tenantManager, config),
-    throttle(throttler, winston, commonThrottleOptions),
-    async (request, response, next) => {
-        const documentId = getParam(request.params, "id");
-        const tenantId = getParam(request.params, "tenantId");
-        const ordererUrl = config.get("worker:serverUrl");
-        const historianUrl = config.get("worker:blobStorageUrl");
-        const documentSessionP = getSession(globalDbMongoManager, documentId, ordererUrl, historianUrl, tenantId);
-        handleResponse(documentSessionP, response, undefined, 201);
-    });
+        "/:tenantId/session/:id",
+        verifyStorageToken(tenantManager, config),
+        throttle(throttler, winston, commonThrottleOptions),
+        async (request, response, next) => {
+            const documentId = getParam(request.params, "id");
+            const tenantId = getParam(request.params, "tenantId");
+            const ordererUrl = config.get("worker:serverUrl");
+            const historianUrl = config.get("worker:blobStorageUrl");
+            const documentSessionP = getSession(documentId, ordererUrl, historianUrl, tenantId, documentsCollection);
+            handleResponse(documentSessionP, response, undefined, 201);
+        });
     return router;
 }

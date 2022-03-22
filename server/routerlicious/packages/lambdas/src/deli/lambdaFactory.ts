@@ -18,7 +18,6 @@ import {
     IPartitionLambdaFactory,
     IProducer,
     IServiceConfiguration,
-    ISession,
     ITenantManager,
     LambdaCloseType,
     MongoManager,
