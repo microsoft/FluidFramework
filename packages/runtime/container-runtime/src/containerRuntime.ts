@@ -337,7 +337,7 @@ interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedL
 
 export interface IPendingRuntimeState {
     pending?: IPendingLocalState;
-    baseSnapshot?: ISnapshotTree;
+    baseSnapshot: ISnapshotTree;
     snapshotBlobs: ISerializedBaseSnapshotBlobs;
     savedOps: ISequencedDocumentMessage[];
 }

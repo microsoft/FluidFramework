@@ -64,7 +64,7 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
         return this._storage;
     }
 
-    public get repositoryUrl(): string { return this.storage.repositoryUrl; };
+    public get repositoryUrl(): string { return this.storage.repositoryUrl; }
 
     /**
      * Reads the object with the given ID, returns content in arrayBufferLike
