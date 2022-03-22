@@ -18,7 +18,7 @@ import {
     createAndAttachContainer,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState, Container } from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 
@@ -43,7 +43,7 @@ const ensureContainerConnected = async (container: IContainer) => {
 const getPendingStateWithoutClose = async (container: IContainer): Promise<string> => {
     const containerClose = container.close;
     container.close = (message) => assert(message === undefined);
-    const pendingState = await (container as any).closeAndGetPendingLocalStateAsync();
+    const pendingState = await (container as Container).closeAndGetPendingLocalStateAsync();
     assert(typeof pendingState === "string");
     container.close = containerClose;
     return pendingState;
@@ -72,7 +72,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
         await args.ensureSynchronized();
         container.close();
     } else {
-        pendingState = await (container as any).closeAndGetPendingLocalStateAsync();
+        pendingState = await (container as Container).closeAndGetPendingLocalStateAsync();
     }
 
     args.opProcessingController.resumeProcessing();
@@ -464,7 +464,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         [...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
         // get stashed ops from this container without connecting
-        const morePendingOps = await (container2.container as any).closeAndGetPendingLocalStateAsync();
+        const morePendingOps = await (container2.container as Container).closeAndGetPendingLocalStateAsync();
 
         const container3 = await loadOffline(provider, { url }, morePendingOps);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3.container, "default");
@@ -536,7 +536,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     it("offline blob upload", async function() {
         // load offline container
         const offlineState = await loader.resolve({ url, headers: { "fluid-cache": false } })
-            .then((c) => (c as any).closeAndGetPendingLocalStateAsync() as string);
+            .then(async (c) => (c as Container).closeAndGetPendingLocalStateAsync());
         const container = await loadOffline(provider, { url }, offlineState);
         const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
 
