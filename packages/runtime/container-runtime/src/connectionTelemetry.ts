@@ -91,8 +91,8 @@ class OpPerfTelemetry {
         this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
             if (this.clientId === message.clientId &&
                 message.type === MessageType.Operation &&
-                this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
-                assert(this.opTimeSittingInInboundQueue !== undefined, "opTimeSittingInInboundQueue should be defined");
+                this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber &&
+                this.opTimeSittingInInboundQueue !== undefined) {
                 this.durationSittingInInboundQueue = Date.now() - this.opTimeSittingInInboundQueue;
                 this.opTimeSittingInInboundQueue = undefined;
             }
