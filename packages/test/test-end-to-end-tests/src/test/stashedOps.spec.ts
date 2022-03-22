@@ -130,11 +130,10 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             provider.defaultCodeDetails,
             loader,
             provider.driver.createCreateNewRequest(provider.documentId));
-        const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-        map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
-
         provider.updateDocumentId(container1.resolvedUrl);
         url = await container1.getAbsoluteUrl("");
+        const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
     });
 
     it("resends op", async function() {
@@ -391,13 +390,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         { eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
     ], async () => {
         const container = await provider.loadTestContainer(testContainerConfig);
-        await new Promise<void>((resolve) => {
-            if ((container as any).connected) {
-                resolve();
-            } else {
-                container.on("connected", () => resolve());
-            }
-        });
+        await ensureContainerConnected(container);
         const serializedClientId = container.clientId;
         assert.ok(serializedClientId);
         const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");

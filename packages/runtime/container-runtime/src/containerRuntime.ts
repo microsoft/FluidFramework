@@ -1648,7 +1648,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.processAliasMessage(message, localOpMetadata, local);
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
-                    // if localAck === true, treat this as a local op because it's one we sent on a previous container
                     this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
