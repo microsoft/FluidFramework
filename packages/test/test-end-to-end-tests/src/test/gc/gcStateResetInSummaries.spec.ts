@@ -209,7 +209,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
         latestUploadedSummary = undefined;
     });
 
-    it.skip("removes GC state and marks all objects as referenced on disabling GC", async () => {
+    it("removes GC state and marks all objects as referenced on disabling GC", async () => {
         // Create a document with GC enabled.
         mainContainer = await createContainer(true /* gcAllowed */);
         const mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
