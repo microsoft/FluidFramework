@@ -283,7 +283,7 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
                 verifyBatchMetadata(dataObject2BatchMessages);
             });
 
-            it("can send and receive consecutive batches that are flushed on JS turn", async () => {
+            it.skip("can send and receive consecutive batches that are flushed on JS turn", async () => {
                 /**
                  * This test verifies that among other things, the PendingStateManager's algorithm of handling
                  * consecutive batches is correct.
