@@ -728,7 +728,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
         let storage = context.storage;
-        if (baseSnapshot) {
+        if (context.baseSnapshot && !pendingRuntimeState) {
             // This will patch snapshot in place!
             // If storage is provided, it will wrap storage with BlobAggregationStorage that can
             // pack & unpack aggregated blobs.
@@ -744,15 +744,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     undefined /* allowPacking */,
                     packingLevel,
                 );
-                await aggrStorage.unpackSnapshot(baseSnapshot);
+                await aggrStorage.unpackSnapshot(context.baseSnapshot);
                 storage = aggrStorage;
             } else {
-                await BlobAggregationStorage.unpackSnapshot(baseSnapshot);
+                await BlobAggregationStorage.unpackSnapshot(context.baseSnapshot);
             }
         }
 
         if (pendingRuntimeState) {
-            storage = new SerializedSnapshotStorage(storage, pendingRuntimeState.snapshotBlobs);
+            storage = new SerializedSnapshotStorage(() => {
+                // we still want to write aggegrated blobs
+                return BlobAggregationStorage.wrap(
+                    context.storage,
+                    logger,
+                    undefined /* allowPacking */,
+                    packingLevel,
+                );
+            }, pendingRuntimeState.snapshotBlobs);
         }
 
         const registry = new FluidDataStoreRegistry(registryEntries);
@@ -934,7 +942,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private _connected: boolean;
 
-    private readonly savedOps: ISequencedDocumentMessage[];
+    private readonly savedOps: ISequencedDocumentMessage[] = [];
 
     private consecutiveReconnects = 0;
 
@@ -1057,7 +1065,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
-        this.savedOps = pendingRuntimeState?.savedOps ?? [];
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
         this.garbageCollector = GarbageCollector.create(

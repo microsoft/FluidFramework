@@ -126,10 +126,6 @@ export class ConnectionStateHandler {
             }
             this.applyForConnectedState("addMemberEvent");
         }
-        if (clientId === this.clientId) {
-            // This is our previous container's join message. This won't happen once #9242 is completed.
-            this.prevClientLeftTimer.restart();
-        }
     }
 
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved") {

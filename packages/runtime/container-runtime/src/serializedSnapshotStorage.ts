@@ -24,7 +24,7 @@ export interface ISerializedBaseSnapshotBlobs {
  */
 export class SerializedSnapshotStorage implements IDocumentStorageService {
     constructor(
-        private readonly actualStorage: IDocumentStorageService,
+        private readonly storageGetter: () => IDocumentStorageService,
         private readonly blobs: ISerializedBaseSnapshotBlobs,
     ) { }
 
@@ -53,7 +53,18 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
         return Promise.all(treePs);
     }
 
-    public repositoryUrl: string = this.actualStorage.repositoryUrl;
+    private _storage?: IDocumentStorageService;
+    private get storage(): IDocumentStorageService {
+        // avoid calling it until we need it since it will be undefined if we're not connected
+        // and we shouldn't need it in this case anyway
+        if (this._storage) {
+            return this._storage;
+        }
+        this._storage = this.storageGetter();
+        return this._storage;
+    }
+
+    public get repositoryUrl(): string { return this.storage.repositoryUrl; };
 
     /**
      * Reads the object with the given ID, returns content in arrayBufferLike
@@ -62,35 +73,35 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
         if (this.blobs[id] !== undefined) {
             return stringToBuffer(this.blobs[id], "utf8");
         }
-        return this.actualStorage.readBlob(id);
+        return this.storage.readBlob(id);
     }
 
     /**
      * Returns the snapshot tree.
      */
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        return this.actualStorage.getSnapshotTree(version);
+        return this.storage.getSnapshotTree(version);
     }
 
     /**
      * Retrieves all versions of the document starting at the specified versionId - or null if from the head
      */
     public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
-        return this.actualStorage.getVersions(versionId, count);
+        return this.storage.getVersions(versionId, count);
     }
 
     /**
      * Writes to the object with the given ID
      */
     public async write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return this.actualStorage.write(root, parents, message, ref);
+        return this.storage.write(root, parents, message, ref);
     }
 
     /**
      * Creates a blob out of the given buffer
      */
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        return this.actualStorage.createBlob(file);
+        return this.storage.createBlob(file);
     }
 
     /**
@@ -100,7 +111,7 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
      * Returns the uploaded summary handle.
      */
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        return this.actualStorage.uploadSummaryWithContext(summary, context);
+        return this.storage.uploadSummaryWithContext(summary, context);
     }
 
     /**
@@ -108,6 +119,6 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
      * server has deleted it this call may result in a broken promise.
      */
     public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-        return this.actualStorage.downloadSummary(handle);
+        return this.storage.downloadSummary(handle);
     }
 }

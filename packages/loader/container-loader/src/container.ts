@@ -268,7 +268,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
                 assert(pendingLocalState === undefined || loadOptions.loadMode === undefined,
                     0x1e1 /* "pending state requires immediate connection!" */);
-                const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
+                const mode: IContainerLoadMode = !pendingLocalState ? loadOptions.loadMode ?? defaultMode : {};
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // pre-0.58 error message: containerClosedWithoutErrorDuringLoad
@@ -1098,7 +1098,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.connectToDeltaStream(connectionArgs);
         }
 
-        await this.connectStorageService();
+        if (!pendingLocalState) {
+            await this.connectStorageService();
+        } else {
+            this.connectStorageService().catch((error) => this.close(error));
+        }
+
         this._attachState = AttachState.Attached;
 
         // Fetch specified snapshot.
