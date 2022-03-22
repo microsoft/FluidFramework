@@ -67,8 +67,10 @@ export function wrapDocumentServiceFactory(
     outerDocServiceFactory.createDocumentService = async (
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> => {
-        const documentService = await innerDocServiceFactory.createDocumentService(resolvedUrl, logger);
+        const documentService = await innerDocServiceFactory.createDocumentService(
+            resolvedUrl, logger, clientIsSummarizer);
         return wrapDocumentService(documentService, uploadSummaryCb);
     };
     return outerDocServiceFactory;

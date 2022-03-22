@@ -84,7 +84,7 @@ async function initializeODSPCore(
             opsBatchSize: 20000,
             concurrentOpsBatches: 4,
         });
-    return odspDocumentServiceFactory.createDocumentService(odspResolvedUrl);
+    return odspDocumentServiceFactory.createDocumentService(odspResolvedUrl, undefined, false);
 }
 
 async function initializeR11s(server: string, pathname: string, r11sResolvedUrl: IFluidResolvedUrl) {
@@ -115,7 +115,7 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
     console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
     const tokenProvider = new r11s.DefaultTokenProvider(paramJWT);
     const r11sDocumentServiceFactory = new r11s.RouterliciousDocumentServiceFactory(tokenProvider);
-    return r11sDocumentServiceFactory.createDocumentService(r11sResolvedUrl);
+    return r11sDocumentServiceFactory.createDocumentService(r11sResolvedUrl, undefined, false);
 }
 
 async function initializeAzure(resolvedUrl: IFluidResolvedUrl, tenantId: string) {
@@ -128,7 +128,7 @@ async function initializeAzure(resolvedUrl: IFluidResolvedUrl, tenantId: string)
     const user = generateTestUser();
     const tokenProvider = new InsecureTokenProvider(paramAzureKey, user);
     const r11sDocumentServiceFactory = new r11s.RouterliciousDocumentServiceFactory(tokenProvider);
-    return r11sDocumentServiceFactory.createDocumentService(resolvedUrl);
+    return r11sDocumentServiceFactory.createDocumentService(resolvedUrl, undefined, false);
 }
 
 async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {

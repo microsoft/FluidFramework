@@ -90,6 +90,7 @@ import {
     MonitoringContext,
     loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { summarizerClientType } from "@fluidframework/container-runtime";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import { ReconnectMode, IConnectionManagerFactoryArgs } from "./contracts";
@@ -818,12 +819,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const createNewResolvedUrl = await this.urlResolver.resolve(request);
                 ensureFluidResolvedUrl(createNewResolvedUrl);
                 if (this.service === undefined) {
+                    assert(this.client.details.type !== summarizerClientType,
+                        "client should not be summarizer before container is created");
                     this.service = await runWithRetry(
                         async () => this.serviceFactory.createContainer(
                             summary,
                             createNewResolvedUrl,
                             this.subLogger,
-                            !this.client.details.capabilities.interactive,
+                            false,
                         ),
                         "containerAttach",
                         this.mc.logger,
@@ -1058,7 +1061,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
-        this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl, this.subLogger);
+        this.service = await this.serviceFactory.createDocumentService(
+            this._resolvedUrl,
+            this.subLogger,
+            this.client.details.type === summarizerClientType,
+        );
 
         // Ideally we always connect as "read" by default.
         // Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
