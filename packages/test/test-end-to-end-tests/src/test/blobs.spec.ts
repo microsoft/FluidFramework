@@ -237,6 +237,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     itExpects("works in detached container", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
+        // GitHub issue: #9534
         if(provider.driver.type === "odsp" || provider.driver.type === "tinylicious") {
             this.skip();
         }
@@ -253,11 +254,12 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await (dataStore._root.get("my blob")).get(), "utf-8"), text);
 
         const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-        if (provider.driver.type !== "odsp") {
-            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
-            return assert.rejects(attachP,
-                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
-        }
+        // Remove the comments once GitHub issue: #9534 is closed
+        // if (provider.driver.type !== "odsp") {
+        //     // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+        //     return assert.rejects(attachP,
+        //         (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
+        // }
         await attachP;
 
         // make sure we're getting the blob from actual storage
@@ -291,7 +293,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     itExpects("redirect table saved in snapshot",[
         { eventName: "fluid:telemetry:Container:ContainerClose", message: "0x202" },
     ], async function() {
-        if(provider.driver.type === "odsp" || provider.driver.type === "tinylicious") {
+        if(provider.driver.type === "tinylicious") {
             this.skip();
         }
         const detachedBlobStorage = new MockDetachedBlobStorage();
@@ -328,7 +330,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     itExpects("serialize/rehydrate then attach", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
-        if(provider.driver.type === "odsp" || provider.driver.type === "tinylicious") {
+        if(provider.driver.type === "tinylicious") {
             this.skip();
         }
         const loader = provider.makeTestLoader(
@@ -361,6 +363,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     itExpects("serialize/rehydrate multiple times then attach", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
+        // GitHub issue: #9534
         if(provider.driver.type === "odsp" || provider.driver.type === "tinylicious") {
             this.skip();
         }
@@ -380,11 +383,12 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         }
 
         const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-        if (provider.driver.type !== "odsp") {
-            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
-            return assert.rejects(attachP,
-                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
-        }
+        // Remove the comments once GitHub issue: #9534 is closed
+        // if (provider.driver.type !== "odsp") {
+        //     // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+        //     return assert.rejects(attachP,
+        //         (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
+        // }
         await attachP;
 
         const url = getUrlFromItemId((container.resolvedUrl as IOdspResolvedUrl).itemId, provider);
