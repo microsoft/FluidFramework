@@ -360,7 +360,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         itExpects("Receiving a bad alias message breaks the container", [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
-        ], async () => {
+        ], async function() {
             if(provider.driver.type === "tinylicious") {
                 this.skip();
             }
