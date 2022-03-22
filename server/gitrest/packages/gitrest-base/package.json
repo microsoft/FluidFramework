@@ -1,7 +1,6 @@
 {
   "name": "@fluidframework/gitrest-base",
   "version": "0.1.0",
-  "private": true,
   "description": "Git REST API base components",
   "homepage": "https://fluidframework.com",
   "repository": {

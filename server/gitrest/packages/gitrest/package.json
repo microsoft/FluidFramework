@@ -1,7 +1,6 @@
 {
   "name": "@fluidframework/gitrest",
   "version": "0.1.0",
-  "private": true,
   "description": "Entry point of the GitRest core services",
   "homepage": "https://fluidframework.com",
   "repository": {
