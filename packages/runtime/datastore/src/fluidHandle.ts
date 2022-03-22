@@ -8,13 +8,10 @@ import {
     IFluidHandleContext,
     FluidObject,
 } from "@fluidframework/core-interfaces";
-import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
-    // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
-    private graphAttachState: AttachState = AttachState.Detached;
-    private bound: Set<IFluidHandle> | undefined;
+    private boundHandles: Set<IFluidHandle> | undefined;
     public readonly absolutePath: string;
 
     public get IFluidHandle(): IFluidHandle { return this; }
@@ -22,6 +19,22 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
     public get isAttached(): boolean {
         return this.routeContext.isAttached;
     }
+
+    /**
+     * Tells whether the object of this handle is visible in the container.
+     */
+    private get visible(): boolean {
+        /**
+         * If the object of this handle is attached, it is visible in the container. This is a work around the scenario
+         * where the object becomes visible but the handle does not get this notification. For example, handles to a DDS
+         * other than the default handle won't know if the DDS becomes visible after the handle was created.
+         */
+        if (this.isAttached) {
+            this._visible = true;
+        }
+        return this._visible;
+    }
+    private _visible: boolean = false;
 
     /**
      * Creates a new FluidObjectHandle.
@@ -35,6 +48,9 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
         public readonly routeContext: IFluidHandleContext,
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
+        if (this.isAttached) {
+            this._visible = true;
+        }
     }
 
     public async get(): Promise<any> {
@@ -42,33 +58,31 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
     }
 
     public attachGraph(): void {
-        // If this handle is already in attaching state in the graph or attached, no need to attach again.
-        if (this.graphAttachState !== AttachState.Detached) {
+        if (this.visible) {
             return;
         }
-        this.graphAttachState = AttachState.Attaching;
-        if (this.bound !== undefined) {
-            for (const handle of this.bound) {
+
+        this._visible = true;
+        if (this.boundHandles !== undefined) {
+            for (const handle of this.boundHandles) {
                 handle.attachGraph();
             }
 
-            this.bound = undefined;
+            this.boundHandles = undefined;
         }
         this.routeContext.attachGraph();
-        this.graphAttachState = AttachState.Attached;
     }
 
     public bind(handle: IFluidHandle) {
-        // If the dds is already attached or its graph is already in attaching or attached state,
-        // then attach the incoming handle too.
-        if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
+        // If this handle is visible, attach the graph of the incoming handle as well.
+        if (this.visible) {
             handle.attachGraph();
             return;
         }
-        if (this.bound === undefined) {
-            this.bound = new Set<IFluidHandle>();
-        }
 
-        this.bound.add(handle);
+        if (this.boundHandles === undefined) {
+            this.boundHandles = new Set<IFluidHandle>();
+        }
+        this.boundHandles.add(handle);
     }
 }

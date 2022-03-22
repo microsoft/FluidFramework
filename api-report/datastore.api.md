@@ -44,7 +44,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get absolutePath(): string;
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
-    // (undocumented)
     attachGraph(): void;
     // (undocumented)
     get attachState(): AttachState;
@@ -88,6 +87,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): this;
     // (undocumented)
@@ -139,7 +139,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
     readonly routeContext: IFluidHandleContext;
     // (undocumented)
     protected readonly value: T;
-}
+    }
 
 // @public (undocumented)
 export interface ISharedObjectRegistry {

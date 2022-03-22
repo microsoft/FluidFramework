@@ -18,7 +18,6 @@ import {
     CreateSummarizerNodeSource,
     IAttachMessage,
     IEnvelope,
-    IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
@@ -157,7 +156,7 @@ export class DataStores implements IDisposable {
                         key,
                         { type: CreateSummarizerNodeSource.FromSummary },
                     ),
-                    bindChannelFn: (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+                    makeVisibleFn: () => this.makeDataStoreVisible(key),
                     snapshotTree,
                     isRootDataStore: undefined,
                     writeGCDataAtRoot: this.writeGCDataAtRoot,
@@ -291,14 +290,20 @@ export class DataStores implements IDisposable {
         return this.aliasMap.get(id) !== undefined || this.contexts.get(id) !== undefined;
     }
 
-    public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
-        const id = fluidDataStoreRuntime.id;
+    /**
+     * Makes the data store with the given id visible in the container graph by moving the data store context from
+     * unbound to bound list. This data store can now be reached from the root.
+     * @param id - The id of the data store context to make visible.
+     */
+    public makeDataStoreVisible(id: string): void {
         const localContext = this.contexts.getUnbound(id);
         assert(!!localContext, 0x15f /* "Could not find unbound context to bind" */);
 
-        // If the container is detached, we don't need to send OP or add to pending attach because
-        // we will summarize it while uploading the create new summary and make it known to other
-        // clients.
+        /**
+         * If the container is not detached, it is globally visible to all clients. This data store should also be
+         * globally visible. Move it to attaching state and send an "attach" op for it.
+         * If the container is detached, this data store will be part of the summary that makes the container attached.
+         */
         if (this.runtime.attachState !== AttachState.Detached) {
             localContext.emit("attaching");
             const message = localContext.generateAttachMessage();
@@ -308,7 +313,7 @@ export class DataStores implements IDisposable {
             this.attachOpFiredForDataStore.add(id);
         }
 
-        this.contexts.bind(fluidDataStoreRuntime.id);
+        this.contexts.bind(id);
     }
 
     public createDetachedDataStoreCore(
@@ -326,7 +331,7 @@ export class DataStores implements IDisposable {
                 id,
                 { type: CreateSummarizerNodeSource.Local },
             ),
-            bindChannelFn: (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            makeVisibleFn: () => this.makeDataStoreVisible(id),
             snapshotTree: undefined,
             isRootDataStore: isRoot,
             writeGCDataAtRoot: this.writeGCDataAtRoot,
@@ -347,7 +352,7 @@ export class DataStores implements IDisposable {
                 id,
                 { type: CreateSummarizerNodeSource.Local },
             ),
-            bindChannelFn: (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            makeVisibleFn: () => this.makeDataStoreVisible(id),
             snapshotTree: undefined,
             isRootDataStore: isRoot,
             writeGCDataAtRoot: this.writeGCDataAtRoot,

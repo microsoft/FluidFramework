@@ -125,6 +125,7 @@ export interface IEnvelope {
 export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
+    // @deprecated (undocumented)
     attachGraph(): void;
     readonly attachState: AttachState;
     // @deprecated (undocumented)
@@ -133,6 +134,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;
+    makeVisibleAndAttachGraph?(): void;
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: any, local: boolean): void;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
@@ -147,6 +149,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
+    // @deprecated (undocumented)
     bindToContext(): void;
     // (undocumented)
     readonly clientDetails: IClientDetails;
@@ -175,6 +178,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly isLocalDataStore: boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
+    makeVisible?(): void;
     // (undocumented)
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];
@@ -186,6 +190,8 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     submitSignal(type: string, content: any): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    // (undocumented)
+    readonly visibilityState?: VisibilityState_2;
 }
 
 // @public (undocumented)
@@ -378,6 +384,16 @@ export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRe
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
+
+// @public
+enum VisibilityState_2 {
+    CompatGraphAttached = "CompatGraphAttached",
+    GloballyVisible = "GloballyVisible",
+    LocallyVisible = "LocallyVisible",
+    NotVisible = "NotVisible"
+}
+
+export { VisibilityState_2 as VisibilityState }
 
 
 // (No @packageDocumentation comment for this package)

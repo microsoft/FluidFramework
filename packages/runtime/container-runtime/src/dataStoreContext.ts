@@ -58,6 +58,7 @@ import {
     ISummarizeResult,
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
+    VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -132,7 +133,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
     readonly pkg: Readonly<string[]> | undefined;
     readonly snapshotTree: ISnapshotTree | undefined;
     readonly isRootDataStore: boolean | undefined;
-    readonly bindChannelFn: (channel: IFluidDataStoreChannel) => void;
+    readonly makeVisibleFn: () => void;
     /**
      * @deprecated 0.16 Issue #1635, #3631
      */
@@ -243,6 +244,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
+    public visibilityState: VisibilityState = VisibilityState.NotVisible;
 
     // The used state of this node as per the last GC run. This is used to update the used state of the channel
     // if it realizes after GC is run.
@@ -261,7 +263,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         private readonly existing: boolean,
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
-        bindChannelFn: (channel: IFluidDataStoreChannel) => void,
+        private readonly makeVisibleFn: () => void,
     ) {
         super();
 
@@ -280,11 +282,23 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && this.existing ?
             this.containerRuntime.attachState : AttachState.Detached;
 
+        /**
+         * The existing flag can be true in two conditions:
+         * 1. It's a local data store that is created when a detached container is rehydrated. In this case, the data
+         *    store is locally visible because the snapshot it is loaded from contains locally visible data stores only.
+         * 2. It's a remote data store that is created when an attached container is loaded is loaded from snapshot or
+         *    when an attach op comes in. In both these cases, the data store is already globally visible.
+         */
+        if (existing) {
+            this.visibilityState = this.containerRuntime.attachState === AttachState.Detached
+                ? VisibilityState.LocallyVisible : VisibilityState.GloballyVisible;
+        }
+
         this.bindToContext = () => {
             assert(this.bindState === BindState.NotBound, 0x13b /* "datastore context is already in bound state" */);
             this.bindState = BindState.Binding;
             assert(this.channel !== undefined, 0x13c /* "undefined channel on datastore context" */);
-            bindChannelFn(this.channel);
+            makeVisibleFn();
             this.bindState = BindState.Bound;
         };
 
@@ -627,6 +641,17 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
+    /**
+     * This is called by the data store channel when it becomes locally visible. We need to notify our parent to make
+     * us visible in the container.
+     */
+    public makeVisible() {
+        assert(this.visibilityState === VisibilityState.NotVisible, "datastore context is already visible");
+        assert(this.channel !== undefined, "undefined channel on datastore context");
+        this.visibilityState = VisibilityState.LocallyVisible;
+        this.makeVisibleFn();
+    }
+
     protected bindRuntime(channel: IFluidDataStoreChannel) {
         if (this.channel) {
             throw new Error("Runtime already bound");
@@ -864,7 +889,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             props.snapshotTree !== undefined ? true : false /* existing */,
             props.snapshotTree ? BindState.Bound : BindState.NotBound,
             true /* isLocalDataStore */,
-            props.bindChannelFn,
+            props.makeVisibleFn,
         );
 
         this.snapshotTree = props.snapshotTree;
@@ -879,6 +904,16 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         this.once("attaching", () => {
             assert(this.attachState === AttachState.Detached, 0x14d /* "Should move from detached to attaching" */);
             this._attachState = AttachState.Attaching;
+
+            assert(
+                this.visibilityState !== VisibilityState.GloballyVisible,
+                "Data store should not already be globally visible",
+            );
+            /**
+             * Once the data store moves to attaching state, its existence has been notified to the server which will
+             * notify all clients. The data store is now globally visible.
+             */
+            this.visibilityState = VisibilityState.GloballyVisible;
         });
         this.once("attached", () => {
             assert(this.attachState === AttachState.Attaching, 0x14e /* "Should move from attaching to attached" */);
@@ -993,7 +1028,7 @@ export class LocalDetachedFluidDataStoreContext
 
     public async attachRuntime(
         registry: IProvideFluidDataStoreFactory,
-        dataStoreRuntime: IFluidDataStoreChannel)
+        dataStoreChannel: IFluidDataStoreChannel)
     {
         assert(this.detachedRuntimeCreation, 0x154 /* "runtime creation is already attached" */);
         assert(this.channelDeferred === undefined, 0x155 /* "channel deferral is already set" */);
@@ -1009,10 +1044,16 @@ export class LocalDetachedFluidDataStoreContext
         this.detachedRuntimeCreation = false;
         this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
 
-        super.bindRuntime(dataStoreRuntime);
+        super.bindRuntime(dataStoreChannel);
 
         if (await this.isRoot()) {
-            dataStoreRuntime.bindToContext();
+            // back-compat 0.58.2000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
+            // For older versions, we still have to call bindToContext.
+            if (dataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
+                dataStoreChannel.makeVisibleAndAttachGraph();
+            } else {
+                dataStoreChannel.bindToContext();
+            }
         }
     }
 
