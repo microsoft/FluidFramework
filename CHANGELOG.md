@@ -1,5 +1,11 @@
 # Change Log
 
+## 30.6.0
+
+* improvement: Resubmit old-versioned ops concurrent to an upgrade op
+  * Associated pull request: [38689](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/38689)
+  * Commit: [f76b42bc47da485aeddc2ce2a7f96f5e60460b64](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f76b42bc47da485aeddc2ce2a7f96f5e60460b64)
+
 ## 30.1.0
 
 * feat: Compress edit log in 0.1.1
