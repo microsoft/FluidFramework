@@ -826,7 +826,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                             summary,
                             createNewResolvedUrl,
                             this.subLogger,
-                            false,
+                            false, // clientIsSummarizer
                         ),
                         "containerAttach",
                         this.mc.logger,
