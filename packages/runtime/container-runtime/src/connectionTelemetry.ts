@@ -18,8 +18,6 @@ import { assert, performance } from "@fluidframework/common-utils";
  */
 export const latencyThreshold = 5000;
 
-export const numOpsToThrottle = 100;
-
 class OpPerfTelemetry {
     private pongCount: number = 0;
     private pingLatency: number | undefined;
@@ -145,7 +143,7 @@ class OpPerfTelemetry {
     private beforeOpSubmit(message: IDocumentMessage) {
         // start with first client op and measure latency every 500 client ops
         if (this.clientSequenceNumberForLatencyStatistics === undefined &&
-            message.clientSequenceNumber % numOpsToThrottle === 1) {
+            message.clientSequenceNumber % 500 === 1) {
             assert(this.opTimeSittingInInboundQueue === undefined, "OpTimeSittingInboundQueue should be undefined");
             assert(this.durationSittingInInboundQueue === undefined,
                 "durationSittingInInboundQueue should be undefined");
