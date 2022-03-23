@@ -983,6 +983,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
     private summaryCount: number | undefined;
+    private opSizesSinceLastSummary: number = 0;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -2298,10 +2299,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ...uploadData,
                 clientSequenceNumber,
                 submitOpDuration: trace.trace().duration,
+                opsSizesSinceLastSummary: this.opSizesSinceLastSummary,
             } as const;
 
             this.summarizerNode.completeSummary(handle);
 
+            this.opSizesSinceLastSummary = 0;
             return submitData;
         } finally {
             // Cleanup wip summary in case of failure
@@ -2431,6 +2434,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 maxOpSize,
                 this._flushMode === FlushMode.TurnBased,
                 opMetadataInternal);
+            opSizesSinceLastSummary += serializedContent.length;
         }
 
         // Let the PendingStateManager know that a message was submitted.

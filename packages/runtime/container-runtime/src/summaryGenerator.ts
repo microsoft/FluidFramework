@@ -69,6 +69,9 @@ type SummaryGeneratorOptionalTelemetryProperties =
     "opsSinceLastAttempt" |
     /** Delta between the current reference sequence number and the reference sequence number of the last summary */
     "opsSinceLastSummary" |
+    /** Delta in sum of op sizes between the current reference sequence number and the reference
+     * sequence number of the last summary */
+    "opsSizesSinceLastSummary" |
     /** Time it took to generate the summary tree and stats. */
     "generateDuration" |
     /** The handle returned by storage pointing to the uploaded summary tree. */
@@ -84,7 +87,7 @@ type SummaryGeneratorOptionalTelemetryProperties =
     /** Actual sequence number of the summary op proposal. */
     "summarySequenceNumber" |
     /** Optional Retry-After time in seconds. If specified, the client should wait this many seconds before retrying. */
-     "nackRetryAfter";
+    "nackRetryAfter";
 type SummaryGeneratorTelemetry =
     Pick<ITelemetryProperties, SummaryGeneratorRequiredTelemetryProperties> &
     Partial<Pick<ITelemetryProperties, SummaryGeneratorOptionalTelemetryProperties>>;
@@ -319,6 +322,7 @@ export class SummaryGenerator {
                         summarizeTelemetryProps = {
                             ...summarizeTelemetryProps,
                             clientSequenceNumber: summaryData.clientSequenceNumber,
+                            opsSizesSinceLastSummary: summaryData.opsSizesSinceLastSummary,
                         };
                     }
                 }
