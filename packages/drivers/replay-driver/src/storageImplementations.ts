@@ -173,6 +173,7 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
 
     public async createDocumentService(
         fileURL: IResolvedUrl,
+        logger?: ITelemetryLogger,
         clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         return new StaticStorageDocumentService(this.storage);
