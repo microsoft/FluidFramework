@@ -387,7 +387,6 @@ export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Pr
 
 // @public
 enum VisibilityState_2 {
-    CompatGraphAttached = "CompatGraphAttached",
     GloballyVisible = "GloballyVisible",
     LocallyVisible = "LocallyVisible",
     NotVisible = "NotVisible"

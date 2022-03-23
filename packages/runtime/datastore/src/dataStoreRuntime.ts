@@ -391,13 +391,21 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         if (this.isAttached) {
             this.attachChannel(channel);
             return;
-        } else {
-            this.bind(channel.handle);
+        }
 
-            // If our data store is local then add the channel to the queue
-            if (!this.localChannelContextQueue.has(channel.id)) {
-                this.localChannelContextQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContextBase);
-            }
+        /**
+         * If this channel has already been bound, do nothing. This can happen during attachGraph() when a channel's
+         * graph is attached. It calls bindToContext on the shared object which will end up back here.
+         */
+        if (this.boundhandles !== undefined && this.boundhandles.has(channel.handle)) {
+            return;
+        }
+
+        this.bind(channel.handle);
+
+        // If our data store is local then add the channel to the queue
+        if (!this.localChannelContextQueue.has(channel.id)) {
+            this.localChannelContextQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContextBase);
         }
     }
 
@@ -421,7 +429,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             });
             this.boundhandles = undefined;
         }
-        this.dataStoreContext.makeVisible?.();
+        this.bindToContext();
     }
 
     /**
@@ -429,27 +437,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      */
     public attachGraph() {
         this.makeVisibleAndAttachGraph();
-
-        /**
-         * back-compat 0.58.2000 - Older versions of data store context will call attachGraph() at the time of attaching
-         * the data store in getAttachSummary(). So, we have to mark each of its child channels visible. Note that we
-         * cannot do this on getting the "attaching" event like we do for current version. This is because it may
-         * happen before attachGraph() is called and we cannot make channels visible before attaching their graph.
-         */
-        if (this.dataStoreContext.makeVisible === undefined) {
-            // Flush the queue to set any pre-existing channels to local
-            this.localChannelContextQueue.forEach((channel) => {
-                // When we are attaching the data store we don't need to send attach for the registered services.
-                // This is because they will be captured as part of the Attach data store snapshot
-                channel.makeVisible();
-            });
-
-            this.localChannelContextQueue.clear();
-            this.bindToContext();
-            // This is needed so we don't send out attach ops for child channels that are attached while attaching the
-            // data store. This is possible because attachGraph() may be called after the "attaching" event is emitted.
-            this.visibilityState = VisibilityState.CompatGraphAttached;
-        }
     }
 
     /**
@@ -473,10 +460,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             handle.attachGraph();
             return;
         }
+
         if (this.boundhandles === undefined) {
             this.boundhandles = new Set<IFluidHandle>();
         }
-
         this.boundhandles.add(handle);
     }
 
@@ -737,13 +724,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public getAttachSummary(): ISummaryTreeWithStats {
         /**
          * back-compat 0.58.2000 - getAttachSummary() is called when making a data store globally visible (previously
-         * attached state). Ideally, attachGraph() should have already be called which happens when making it locally
-         * visible. However, before visibility state was added, attachGraph() was called here and we have to keep this
-         * around for backwards compatibility.
+         * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
+         * before visibility state was added, this may not have been the case and getAttachSummary() could be called:
+         * 1) Before attaching the data store - When a detached container is attached.
+         * 2) After attaching the data store - When a data store is created and bound in an attached container.
+         *
+         * The basic idea is that all local object should become locally visible before they are globally visible.
          */
-        if (this.dataStoreContext.visibilityState === undefined) {
-            this.attachGraph();
-        }
+        this.attachGraph();
 
         const summaryBuilder = new SummaryTreeBuilder();
 
@@ -804,32 +792,18 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         channel.handle.attachGraph();
 
         assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
-        /**
-         * back-compat 0.58.2000 - Ideally, attachChannel should only be called when the data store is globally
-         * visible (previously attached). However, before visibilityState was added, this could have been called while
-         * attaching a data store via the following sequence of events:
-         * 1. In an attached container, a root data store is created with a DDS.
-         * 2. The create API on container runtime calls bindToContext on the data store runtime.
-         * 3. This calls DataStores::bindFluidDataStore which moves the data store runtime to "attaching" state.
-         * 4. bindFluidDataStore then calls getAttachSummary on data store runtime to generates the initial summary.
-         * 5. getAttachSummary calls attachGraph which attaches the DDS and attachChannel is called.
-         * In this case, we don't want to generate an attach message for this DDS because its summary will be part of
-         * the data store's summary in its attach message.
-         */
-        if (this.dataStoreContext.visibilityState !== undefined
-            || (this.bindState === BindState.Bound && this.visibilityState === VisibilityState.CompatGraphAttached)) {
-            const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
-            // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
-            const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
 
-            const message: IAttachMessage = {
-                id: channel.id,
-                snapshot,
-                type: channel.attributes.type,
-            };
-            this.pendingAttach.set(channel.id, message);
-            this.submit(DataStoreMessageType.Attach, message);
-        }
+        const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
+        // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
+        const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
+
+        const message: IAttachMessage = {
+            id: channel.id,
+            snapshot,
+            type: channel.attributes.type,
+        };
+        this.pendingAttach.set(channel.id, message);
+        this.submit(DataStoreMessageType.Attach, message);
 
         const context = this.contexts.get(channel.id) as LocalChannelContextBase;
         context.makeVisible();
@@ -910,25 +884,28 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private attachListener() {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.dataStoreContext.once("attaching", () => {
+            /**
+             * back-compat 0.58.2000 - Ideally, attachGraph() should have already been called making the data store
+             * locally visible. However, before visibility state was added, this may not have been the case and data
+             * store can move to "attaching" state in 2 scenarios:
+             * 1) Before attachGraph() is called - When a data store is created and bound in an attached container.
+             * 2) After attachGraph() is called - When a detached container is attached.
+             *
+             * The basic idea is that all local object should become locally visible before they are globally visible.
+             */
+            this.attachGraph();
+
             this._attachState = AttachState.Attaching;
 
-            /**
-             * back-compat 0.58.2000 - Before visibilityState was added, data store may move to "attaching" state before
-             * attachGraph() is called from getAttachSummary(). In those cases, we cannot make the channels visible
-             * without first attaching their graphs.
-             */
-            if (this.dataStoreContext.visibilityState === undefined) {
-                this.attachGraph();
-            } else {
-                assert(this.visibilityState === VisibilityState.LocallyVisible,
-                    "Data store should not attach if is not locally visible");
-            }
+            assert(this.visibilityState === VisibilityState.LocallyVisible,
+                `Data store should not attach if is not locally visible - ${this.visibilityState}`);
 
             // Mark the data store globally visible and make its child channels visible as well.
             this.visibilityState = VisibilityState.GloballyVisible;
             this.localChannelContextQueue.forEach((channel) => {
                 channel.makeVisible();
             });
+            this.localChannelContextQueue.clear();
 
             // This promise resolution will be moved to attached event once we fix the scheduler.
             this.deferredAttached.resolve();

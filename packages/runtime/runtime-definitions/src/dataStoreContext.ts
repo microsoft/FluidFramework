@@ -80,13 +80,6 @@ export enum VisibilityState {
      *    visible.
      */
     GloballyVisible = "GloballyVisible",
-
-    /**
-     * back-compat - In older versions, this state is used to track the state of an object when it is transitioning from
-     * not visible to locally visible. See FluidDataStoreRuntime::attachChannel for more details of the scenario that
-     * requires this.
-     */
-    CompatGraphAttached = "CompatGraphAttached",
 }
 
 export interface IContainerRuntimeBaseEvents extends IEvent{
