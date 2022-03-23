@@ -16,9 +16,15 @@ RUN apt-get update && apt-get install -y \
 
 # Copy over and build the server
 WORKDIR /home/node/server
-COPY package.json .
-COPY package-lock.json .
-RUN BUILD_ONLY=true npm install
+
+COPY package*.json ./
+COPY lerna.json .
+COPY lerna-package-lock.json .
+
+COPY packages/gitrest/package*.json packages/gitrest/
+COPY packages/gitrest-base/package*.json packages/gitrest-base/
+
+RUN npm install --unsafe-perm
 COPY . .
 RUN npm run build
 
@@ -40,4 +46,4 @@ EXPOSE 3000
 ENTRYPOINT ["/tini", "--"]
 
 # And set the default command to start the server
-CMD ["node", "dist/www.js"]
+CMD ["node", "packages/gitrest/dist/www.js"]
