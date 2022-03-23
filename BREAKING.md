@@ -14,6 +14,19 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 0.59
+
+## 0.59 Upcoming changes
+
+## 0.59 Breaking changes
+- [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
+
+
+### Removing Commit from TreeEntry and commits from SnapShotTree
+Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
+These should not be used and there is no replacement provided.
+
+
 # 0.58
 
 ## 0.58 Upcoming changes
