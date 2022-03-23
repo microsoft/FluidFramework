@@ -72,10 +72,5 @@
     "@types/webpack": "^4.41.22",
     "mocha": "^8.4.0",
     "typescript": "~4.1.3"
-  },
-  "peerDependencies": {
-    "@rushstack/eslint-config": "^2.5.1",
-    "eslint": "~8.6.0",
-    "typescript": "~4.1.3"
   }
 }
