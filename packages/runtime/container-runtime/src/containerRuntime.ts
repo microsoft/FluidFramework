@@ -1169,7 +1169,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
         this.dirtyContainer = this.context.attachState !== AttachState.Attached
-            || !this.pendingStateManager.hasPendingMessages;
+            || this.pendingStateManager.hasPendingMessages();
         this.context.updateDirtyContainerState(this.dirtyContainer);
 
         // Map the deprecated generateSummaries flag to disableSummaries.

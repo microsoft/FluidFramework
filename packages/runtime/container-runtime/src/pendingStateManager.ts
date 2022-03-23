@@ -98,7 +98,7 @@ export class PendingStateManager implements IDisposable {
      * @returns A boolean indicating whether there are messages or not.
      */
     public hasPendingMessages(): boolean {
-        return this.pendingMessagesCount !== 0 && this.initialStates.isEmpty();
+        return this.pendingMessagesCount !== 0 || !this.initialStates.isEmpty();
     }
 
     public getLocalState(): IPendingLocalState | undefined {
