@@ -132,6 +132,10 @@ export class LocalReferenceCollection {
         if (seg2.localRefs && !seg2.localRefs.empty) {
             if (!seg1.localRefs) {
                 seg1.localRefs = new LocalReferenceCollection(seg1);
+            } else if (seg1.cachedLength > seg1.localRefs.refsByOffset.length) {
+                // Since creating the LocalReferenceCollection, we may have appended
+                // segments that had no local references. Account for them now by padding the array.
+                seg1.localRefs.refsByOffset.length = seg1.cachedLength;
             }
             seg1.localRefs.append(seg2.localRefs);
         }
