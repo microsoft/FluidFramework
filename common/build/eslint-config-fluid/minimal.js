@@ -98,7 +98,7 @@ module.exports = {
         ],
 
         // Catches a common coding mistake where "resolve" and "reject" are confused.
-        "promise/param-names": "error",
+        "promise/param-names": "warn",
 
         "unicorn/better-regex": "error",
         "unicorn/filename-case": [
