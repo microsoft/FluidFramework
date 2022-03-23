@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "console";
+import { assert } from "@fluidframework/common-utils";
 import { Client } from "./client";
 import {
     ISegment,
