@@ -11,7 +11,9 @@ module.exports = {
     },
     "extends": [
         "./eslint7",
-        "@rushstack/eslint-config/profile/web-app",
+        "plugin:eslint-comments/recommended",
+        // "plugin:react/recommended",
+        // "@rushstack/eslint-config/profile/web-app",
         "plugin:eslint-comments/recommended",
         "plugin:import/errors",
         "plugin:import/warnings",
@@ -31,11 +33,24 @@ module.exports = {
         "project": "./tsconfig.json",
     },
     "plugins": [
+        // Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin
+        "@rushstack/eslint-plugin",
+        // Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin-security
+        "@rushstack/eslint-plugin-security",
+        // Plugin documentation: https://www.npmjs.com/package/@typescript-eslint/eslint-plugin
+        "@typescript-eslint/eslint-plugin",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-promise
+        "eslint-plugin-promise",
         "react",
         "unicorn",
     ],
     "reportUnusedDisableDirectives": true,
     "rules": {
+
+        // The @rushstack rules are documented in the package README:
+        // https://www.npmjs.com/package/@rushstack/eslint-plugin
+        "@rushstack/no-new-null": "warn",
+
         // RATIONALE: Harmless.  Our guideline is to only use leading underscores on private members
         //            when required to avoid a conflict between private fields and a public property.
         // Docs: https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/naming-convention.md
@@ -57,6 +72,8 @@ module.exports = {
         ],
 
         // ENABLED INTENTIONALLY
+        // Disabled because we don't require that all variable declarations be explicitly typed.
+        "@rushstack/typedef-var": "off",
         "@typescript-eslint/ban-types": "error",
         "@typescript-eslint/dot-notation": "error",
         "@typescript-eslint/no-non-null-assertion": "error",
@@ -73,7 +90,16 @@ module.exports = {
                 "code": 120
             }
         ],
-        "no-multi-spaces": ["error", {"ignoreEOLComments": true}],
+        "no-multi-spaces": [
+            "error",
+            {
+                "ignoreEOLComments": true
+            }
+        ],
+
+        // Catches a common coding mistake where "resolve" and "reject" are confused.
+        "promise/param-names": "error",
+
         "unicorn/better-regex": "error",
         "unicorn/filename-case": [
             "error",
@@ -88,7 +114,6 @@ module.exports = {
         "unicorn/no-unsafe-regex": "error",
 
         // DISABLED INTENTIONALLY
-        "@rushstack/typedef-var": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/explicit-member-accessibility": "off",
         "@typescript-eslint/indent": "off", // Off because it conflicts with typescript-formatter

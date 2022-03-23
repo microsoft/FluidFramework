@@ -12,7 +12,6 @@ module.exports = {
     "extends": [
         "eslint:recommended",
         "plugin:eslint-comments/recommended",
-        "plugin:react/recommended",
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
@@ -34,8 +33,6 @@ module.exports = {
         "project": "./tsconfig.json"
     },
     "plugins": [
-        "@typescript-eslint",
-        "react",
         "unicorn",
     ],
     "reportUnusedDisableDirectives": true,
