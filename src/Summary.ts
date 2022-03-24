@@ -6,6 +6,7 @@
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-object-base';
 import { assertNotUndefined } from './Common';
+import type { EditHandle } from './EditLog';
 import { EditLogSummary, SharedTreeSummaryBase, ChangeNode, WriteFormat } from './persisted-types';
 
 /**
@@ -26,7 +27,7 @@ export interface SummaryContents<TChange> {
 	/**
 	 * Information that can populate an edit log.
 	 */
-	readonly editHistory: EditLogSummary<TChange>;
+	readonly editHistory: EditLogSummary<TChange, EditHandle<TChange>>;
 }
 
 /**

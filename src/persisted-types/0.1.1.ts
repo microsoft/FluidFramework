@@ -13,6 +13,7 @@ import type {
 	TraitLocationInternal_0_0_2,
 	TreeNode,
 	TreeNodeSequence,
+	WriteFormat,
 } from './0.0.2';
 
 /**
@@ -75,7 +76,7 @@ export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {
 	/**
 	 * Information that can populate an edit log.
 	 */
-	readonly editHistory?: EditLogSummary<TChange>;
+	readonly editHistory?: EditLogSummary<TChange, FluidEditHandle>;
 
 	/**
 	 * List of interned strings to retrieve interned summaries with.
@@ -85,9 +86,13 @@ export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {
 
 /**
  * Information used to populate an edit log.
+ * In 0.1.1, this is a persisted type only for `EditLogSummary<CompressedChangeInternal, FluidEditHandle>`,
+ * where calling `FluidEditHandle.get` returns an array buffer of compressed `editChunk` contents.
+ * The type is parameterized to avoid nearly identical type definitions for uncompressed forms of the edit
+ * log, and abstracting away the fact that handle fetching needs to invoke decompression.
  * @public
  */
-export interface EditLogSummary<TChange> {
+export interface EditLogSummary<TChange, THandle> {
 	/**
 	 * A of list of serialized chunks and their corresponding keys.
 	 * Start revision is the index of the first edit in the chunk in relation to the edit log.
@@ -97,7 +102,7 @@ export interface EditLogSummary<TChange> {
 		/**
 		 * Either a chunk of edits or a handle that can be used to load that chunk.
 		 */
-		readonly chunk: EditHandle | readonly EditWithoutId<TChange>[];
+		readonly chunk: THandle | readonly EditWithoutId<TChange>[];
 	}[];
 
 	/**
@@ -107,15 +112,24 @@ export interface EditLogSummary<TChange> {
 }
 
 /**
- * EditHandles are used to load edit chunks stored outside of the EditLog.
+ * FluidEditHandles are used to load edit chunks stored outside of the EditLog.
  * Can be satisfied by IFluidHandle<ArrayBufferLike>.
  * Note that though this is in `PersistedTypes`, it isn't directly serializable (e.g. `get` is a function).
  * Its serialization relies on being encoded via an IFluidSerializer.
  * @public
  */
-export interface EditHandle {
-	readonly get: () => Promise<ArrayBufferLike>;
+export interface FluidEditHandle {
+	readonly get: () => Promise<ArrayBuffer>;
 	readonly absolutePath: string;
+}
+
+// Future write formats should make this a union type and append to it (e.g. `EditChunkContents_0_1_1 | EditChunkContents_2_0_0`).
+export type EditChunkContents = EditChunkContents_0_1_1;
+
+export interface EditChunkContents_0_1_1 {
+	version: WriteFormat.v0_1_1;
+	edits: readonly EditWithoutId<CompressedChangeInternal>[];
+	internedStrings: readonly string[];
 }
 
 /**

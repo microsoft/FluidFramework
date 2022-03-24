@@ -15,12 +15,12 @@ import {
 	serializeHandles,
 	SharedObject,
 } from '@fluidframework/shared-object-base';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { v4 } from 'uuid';
 import { assert, assertNotUndefined, fail, copyPropertyIfDefined } from './Common';
-import { EditLog, getNumberOfHandlesFromEditLogSummary, OrderedEditSet } from './EditLog';
+import { EditHandle, EditLog, getNumberOfHandlesFromEditLogSummary, OrderedEditSet } from './EditLog';
 import { EditId, NodeId, StableNodeId, DetachedSequenceId, isDetachedSequenceId } from './Identifiers';
 import { initialTree } from './InitialTree';
 import {
@@ -40,6 +40,7 @@ import {
 	ConstraintInternal,
 	DetachInternal,
 	Edit,
+	EditChunkContents,
 	EditStatus,
 	EditWithoutId,
 	SharedTreeEditOp,
@@ -444,7 +445,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		const blobUploadSizeLimit = 4194304;
 
 		try {
-			const buffer = IsoBuffer.from(JSON.stringify({ edits }));
+			const chunkContents = this.encoder.encodeEditChunk(edits);
+			const serializedContents = serializeHandles(chunkContents, this.serializer, this.handle);
+			const buffer = IsoBuffer.from(serializedContents);
 			const bufferSize = buffer.byteLength;
 			assert(
 				bufferSize <= blobUploadSizeLimit,
@@ -492,7 +495,18 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	/**
-	 * Saves this SharedTree into a summary.
+	 * Initialize shared tree with a serialized summary. This is used for testing.
+	 * @returns - statistics about the loaded summary.
+	 * @internal
+	 */
+	public loadSerializedSummary(blobData: string): ITelemetryProperties {
+		const summary = deserialize(blobData, this.serializer);
+		this.loadSummary(summary);
+		return getSummaryStatistics(summary);
+	}
+
+	/**
+	 * Saves this SharedTree into a deserialized summary.
 	 * @internal
 	 */
 	public saveSummary(): SharedTreeSummaryBase {
@@ -530,7 +544,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	/**
-	 * Initialize shared tree with a summary.
+	 * Initialize shared tree with a deserialized summary.
 	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummaryBase): void {
@@ -709,10 +723,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			const newBlob = await storage.readBlob(snapshotFileName);
 			const blobData = bufferToString(newBlob, 'utf8');
 
-			const summary = deserialize(blobData, this.serializer);
-			this.loadSummary(summary);
+			const stats = this.loadSerializedSummary(blobData);
 
-			summaryLoadPerformanceEvent.end(getSummaryStatistics(summary));
+			summaryLoadPerformanceEvent.end(stats);
 		} catch (error) {
 			summaryLoadPerformanceEvent.cancel({ eventName: 'SummaryLoadFailure' }, error);
 			throw error;
@@ -734,7 +747,17 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		if (sameVersion) {
 			if (type === SharedTreeOpType.Handle) {
 				const { editHandle, startRevision } = op;
-				this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), startRevision);
+				const baseHandle = this.deserializeHandle(editHandle);
+				const decodedHandle: EditHandle<ChangeInternal> = {
+					get: async () => {
+						const contents = await baseHandle.get();
+						const parsedContents: EditChunkContents = JSON.parse(IsoBuffer.from(contents).toString());
+						const decoder = getSharedTreeEncoder(parsedContents.version, this.summarizeHistory);
+						return decoder.decodeEditChunk(parsedContents);
+					},
+					baseHandle,
+				};
+				this.editLog.processEditChunkHandle(decodedHandle, startRevision);
 			} else if (type === SharedTreeOpType.Edit) {
 				const edit = this.parseSequencedEdit(op);
 				this.processSequencedEdit(edit, message);

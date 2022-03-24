@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IsoBuffer } from '@fluidframework/common-utils';
 import { assert, fail } from './Common';
 import { ChangeCompressor } from './Compression';
 import { compressEdit, decompressEdit, makeChangeCompressor } from './ChangeCompression';
@@ -25,8 +26,11 @@ import {
 	SharedTreeOpType,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
-	EditHandle,
+	FluidEditHandle,
 	EditWithoutId,
+	EditChunkContents,
+	EditChunkContents_0_1_1,
+	EditLogSummary,
 } from './persisted-types';
 import { RevisionView } from './RevisionView';
 import { StringInterner } from './StringInterner';
@@ -76,6 +80,16 @@ export interface SharedTreeEncoder<TChangeInternal> {
 	 * Decodes an encoded summary.
 	 */
 	decodeSummary(summary: SharedTreeSummaryBase): SummaryContents<TChangeInternal>;
+
+	/**
+	 * Encodes a chunk of edits.
+	 */
+	encodeEditChunk(edits: readonly EditWithoutId<TChangeInternal>[]): EditChunkContents;
+
+	/**
+	 * Decodes the contents of a FluidEditHandle
+	 */
+	decodeEditChunk(contents: EditChunkContents): EditWithoutId<TChangeInternal>[];
 }
 
 class SharedTreeEncoder_0_1_1 implements SharedTreeEncoder<ChangeInternal> {
@@ -146,10 +160,20 @@ class SharedTreeEncoder_0_1_1 implements SharedTreeEncoder<ChangeInternal> {
 		const decompressedTree: ChangeNode | undefined =
 			compressedTree !== undefined ? this.treeCompressor.decompress(compressedTree, interner) : undefined;
 		const { editChunks, editIds } = editHistory;
+
 		const uncompressedChunks = editChunks.map(({ startRevision, chunk }) => ({
 			startRevision,
 			chunk: isEditHandle(chunk)
-				? chunk
+				? {
+						get: async () => {
+							const baseHandle = chunk;
+							const contents: EditChunkContents = JSON.parse(
+								IsoBuffer.from(await baseHandle.get()).toString()
+							);
+							return this.decodeEditChunk(contents);
+						},
+						baseHandle: chunk,
+				  }
 				: chunk.map((edit) => decompressEdit(this.changeCompressor, interner, edit)),
 		}));
 		assert(editChunks !== undefined, 'Missing editChunks on 0.1.1 summary.');
@@ -214,9 +238,28 @@ class SharedTreeEncoder_0_1_1 implements SharedTreeEncoder<ChangeInternal> {
 			internedStrings: interner.getSerializable(),
 		};
 	}
+
+	public encodeEditChunk(edits: readonly EditWithoutId<ChangeInternal>[]): EditChunkContents_0_1_1 {
+		const interner = new StringInterner();
+		const compressedEdits = edits.map((edit) => compressEdit(this.changeCompressor, interner, edit));
+		return {
+			version: WriteFormat.v0_1_1,
+			edits: compressedEdits,
+			internedStrings: interner.getSerializable(),
+		};
+	}
+
+	public decodeEditChunk(contents: EditChunkContents): EditWithoutId<ChangeInternal>[] {
+		assert(
+			contents.version === WriteFormat.v0_1_1,
+			`Invalid editChunk to decode: ${contents.version}. Expected 0.1.1.`
+		);
+		const interner = new StringInterner(contents.internedStrings);
+		return contents.edits.map((edit) => decompressEdit(this.changeCompressor, interner, edit));
+	}
 }
 
-function isEditHandle(chunk: EditHandle | readonly EditWithoutId<unknown>[]): chunk is EditHandle {
+function isEditHandle(chunk: FluidEditHandle | readonly EditWithoutId<unknown>[]): chunk is FluidEditHandle {
 	return !Array.isArray(chunk);
 }
 
@@ -280,7 +323,8 @@ class SharedTreeEncoder_0_0_2 implements SharedTreeEncoder<ChangeInternal> {
 
 		return {
 			currentTree,
-			editHistory: temporaryLog.getEditLogSummary(),
+			// This cast is valid because we just constructed this log and gave it only in-session edits.
+			editHistory: temporaryLog.getEditLogSummary() as EditLogSummary<ChangeInternal, never>,
 		};
 	}
 
@@ -364,6 +408,14 @@ class SharedTreeEncoder_0_0_2 implements SharedTreeEncoder<ChangeInternal> {
 			sequencedEdits,
 			version: WriteFormat.v0_0_2,
 		};
+	}
+
+	public encodeEditChunk(): never {
+		fail('encodeEditChunk should not be invoked for 0.0.2.');
+	}
+
+	public decodeEditChunk(): never {
+		fail('decodeEditChunk should not be invoked for 0.0.2.');
 	}
 }
 

@@ -135,6 +135,7 @@ export function runSummaryFormatCompatibilityTests(
 	}
 
 	describe(title, () => {
+		// Note: this test serializer doesn't handle blobs properly (it just uses JSON.stringify/JSON.parse).
 		const testSerializer = new TestFluidSerializer();
 
 		let expectedTree: SharedTree;
@@ -219,10 +220,9 @@ export function runSummaryFormatCompatibilityTests(
 						await applyEdits(expectedTree, testObjectProvider, history);
 
 						const serializedSummary = assertNotUndefined(summaryByVersion.get(version));
-						const summary = deserialize(serializedSummary, testSerializer);
 
 						const { tree } = setUpTestSharedTree();
-						tree.loadSummary(summary);
+						tree.loadSerializedSummary(serializedSummary);
 
 						expect(tree.equals(expectedTree)).to.be.true;
 					});
@@ -272,8 +272,7 @@ export function runSummaryFormatCompatibilityTests(
 						it(`version ${firstVersion} and version ${version} summaries produce identical trees`, async () => {
 							// Load the first summary into the expected tree.
 							const firstSerializedSummary = assertNotUndefined(summaryByVersion.get(firstVersion));
-							const firstSummary = deserialize(firstSerializedSummary, testSerializer);
-							expectedTree.loadSummary(firstSummary);
+							expectedTree.loadSerializedSummary(firstSerializedSummary);
 
 							// Wait for the ops to to be submitted and processed across the containers.
 							await testObjectProvider.ensureSynchronized();
@@ -281,8 +280,7 @@ export function runSummaryFormatCompatibilityTests(
 							// Create a tree that loads the current summary version.
 							const { tree, containerRuntimeFactory } = setUpTestSharedTree();
 							const serializedSummary = assertNotUndefined(summaryByVersion.get(version));
-							const summary = deserialize(serializedSummary, testSerializer);
-							tree.loadSummary(summary);
+							tree.loadSerializedSummary(serializedSummary);
 
 							containerRuntimeFactory.processAllMessages();
 
@@ -293,8 +291,7 @@ export function runSummaryFormatCompatibilityTests(
 					// Test that the current format version can be loaded and produce the correct change node tree.
 					it(`version ${version} produces the correct change node`, async () => {
 						const serializedSummary = assertNotUndefined(summaryByVersion.get(version));
-						const summary = deserialize(serializedSummary, testSerializer);
-						expectedTree.loadSummary(summary);
+						expectedTree.loadSerializedSummary(serializedSummary);
 
 						// Wait for the ops to to be submitted and processed across the containers.
 						await testObjectProvider.ensureSynchronized();
@@ -335,11 +332,10 @@ export function runSummaryFormatCompatibilityTests(
 
 								// Load the summary to be read
 								const serializedSummary = assertNotUndefined(summaryByVersion.get(readVersion));
-								const summary = deserialize(serializedSummary, testSerializer);
 
 								// Wait for the ops to to be submitted and processed across the containers.
 								await testObjectProvider.ensureSynchronized();
-								tree.loadSummary(summary);
+								tree.loadSerializedSummary(serializedSummary);
 
 								await testObjectProvider.ensureSynchronized();
 
@@ -378,11 +374,10 @@ export function runSummaryFormatCompatibilityTests(
 								});
 
 								const serializedSummary = assertNotUndefined(summaryByVersion.get(loadVersion));
-								const summary = deserialize(serializedSummary, testSerializer);
 
 								// Wait for the ops to to be submitted and processed across the containers.
 								await testObjectProvider.ensureSynchronized();
-								tree.loadSummary(summary);
+								tree.loadSerializedSummary(serializedSummary);
 
 								await testObjectProvider.ensureSynchronized();
 
@@ -421,7 +416,7 @@ export function runSummaryFormatCompatibilityTests(
  */
 function expectBlobsByVersion(summary: SharedTreeSummaryBase, blobs: string, history: Edit<ChangeInternal>[]): void {
 	const { version } = summary;
-	const storedBlobs: UploadedEditChunkContents<ChangeInternal>[] = JSON.parse(blobs);
+	const storedBlobs: UploadedEditChunkContents[] = JSON.parse(blobs);
 
 	switch (version) {
 		case WriteFormat.v0_1_1: {
@@ -434,7 +429,9 @@ function expectBlobsByVersion(summary: SharedTreeSummaryBase, blobs: string, his
 					if (!Array.isArray(chunk)) {
 						const storedBlob = storedBlobs.shift();
 						expect(storedBlob).to.not.be.undefined;
-						const { absolutePath, chunkContents } = assertNotUndefined(storedBlob);
+						const { absolutePath, chunkContents: encodedChunkContents } = assertNotUndefined(storedBlob);
+						const decoder = getSharedTreeEncoder(encodedChunkContents.version ?? WriteFormat.v0_0_2, false);
+						const chunkContents = decoder.decodeEditChunk(encodedChunkContents);
 
 						// TestSerializer doesn't replace serialized handles with actual handles so the absolutePath is found under 'url'.
 						expect(absolutePath).to.equal((chunk as any).url);

@@ -12,7 +12,7 @@ import { SharedTree } from '../SharedTree';
 import {
 	ChangeInternal,
 	Edit,
-	EditHandle,
+	FluidEditHandle,
 	SharedTreeSummary,
 	SharedTreeSummary_0_0_2,
 	WriteFormat,
@@ -92,7 +92,7 @@ describe('SharedTree history virtualization', () => {
 		const { editHistory } = summary;
 		const { editChunks } = assertNotUndefined(editHistory);
 		expect(editChunks.length).to.equal(1);
-		expect(typeof (editChunks[0].chunk as EditHandle).get).to.equal('function');
+		expect(typeof (editChunks[0].chunk as FluidEditHandle).get).to.equal('function');
 
 		// Load a second tree using the summary
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
@@ -123,7 +123,7 @@ describe('SharedTree history virtualization', () => {
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary<Change>;
 		const { editChunks } = assertNotUndefined(editHistory);
 		expect(editChunks.length).to.equal(1);
-		expect(typeof (editChunks[0].chunk as EditHandle).get).to.equal('function');
+		expect(typeof (editChunks[0].chunk as FluidEditHandle).get).to.equal('function');
 	});
 
 	it('only uploads catchup blobs from one client', async () => {
@@ -187,7 +187,7 @@ describe('SharedTree history virtualization', () => {
 		// Make sure each starting revision is correct and each chunk in the summary is a handle
 		editChunks.forEach(({ startRevision, chunk }, index) => {
 			expect(startRevision).to.equal(index * (sharedTree.edits as EditLog).editsPerChunk);
-			expect(typeof (chunk as EditHandle).get).to.equal('function');
+			expect(typeof (chunk as FluidEditHandle).get).to.equal('function');
 		});
 	});
 
@@ -219,7 +219,7 @@ describe('SharedTree history virtualization', () => {
 		const sharedTree3Chunk = assertNotUndefined(sharedTree3Summary.editHistory).editChunks[0].chunk;
 
 		// Make sure the chunk of the first shared tree is a handle
-		expect(typeof (sharedTreeChunk as EditHandle).get).to.equal('function');
+		expect(typeof (sharedTreeChunk as FluidEditHandle).get).to.equal('function');
 
 		const sharedTreeHandleRoute = (sharedTreeChunk as any).absolutePath;
 		const sharedTree2HandleRoute = (sharedTree2Chunk as any).absolutePath;

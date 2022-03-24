@@ -21,7 +21,7 @@ export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta, Forest, ForestNode, ParentData } from './Forest';
 export { sharedTreeAssertionErrorType, isSharedTreeEvent, Result } from './Common';
 export * from './Identifiers';
-export type { OrderedEditSet } from './EditLog';
+export type { OrderedEditSet, EditHandle } from './EditLog';
 export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
 export { LazyCheckout } from './LazyCheckout';
@@ -43,6 +43,7 @@ export {
 	ChangeNode_0_0_2,
 	SharedTreeEditOp,
 	EditLogSummary,
+	FluidEditHandle,
 	SharedTreeSummaryBase,
 	SharedTreeSummary,
 	EditWithoutId,
@@ -64,7 +65,6 @@ export {
 	NodeData,
 	CompressedTraits,
 	CompressedChangeNode,
-	EditHandle,
 	TraitMap,
 	ChangeTypeInternal,
 	TraitLocationInternal_0_0_2,
@@ -125,9 +125,9 @@ export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtiliti
  * TODO:#61413: Publish test utilities from a separate test package
  */
 export {
-	getUploadedEditChunkContents,
-	saveUploadedEditChunkContents,
-	UploadedEditChunkContents,
+	/** @deprecated Use `getSerializedUploadedEditChunkContents` instead. */
+	getSerializedUploadedEditChunkContents as getUploadedEditChunkContents,
+	getSerializedUploadedEditChunkContents,
 } from './SummaryTestUtilities';
 
 export * from './ChangeTypes';
