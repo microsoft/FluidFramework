@@ -3,8 +3,8 @@
 This is a package for writing and setting up Fluid end to end tests using `mocha` that will generate variants with
 a specific driver and different version combinations of Fluid API between layers via `TestObjectProvider` provided
 to the test. The different layers are loader, driver, container runtime and data runtime (includes DDS).  Version
-combinations and driver selection can be controlled via the command line for test set up using the provided
- `describe*` functions.  For advanced usage, test suite can bypass the setup and command line and directly call our
+combinations and driver selection can be controlled via the `mocha` command line, assuming your test uses the provided
+ `describe*` functions.  For advanced usage, a test can bypass this mechanism and directly call our
 exports to get the versioned Fluid APIs.
 
 ## Versioned combination test generation
@@ -46,8 +46,8 @@ There are three compat `describe*` to generate different combinations, depending
 - Test combination generated: [CompatKind.None]
 
 These compat `describe*` functions will also load the APIs with appropriate version and provide the test with a
-`TestObjectProvider` object, where the test can use to access Fluid functionality.  Even compat testing not
-necessary, `TestObjectProvider` provide functionalities that help writing Fluid tests, and it allows the test
+`TestObjectProvider` object, where the test can use to access Fluid functionality.  Even when compat testing
+is not necessary, `TestObjectProvider` provide functionalities that help writing Fluid tests, and it allows the test
 to enable compat testing easily in the future just by changing the `describe*`.
 
 ### Legacy version defaults and installation
@@ -64,7 +64,7 @@ driver selection, versions for compat testing, and compat kind combinations.
 ```text
 --compatKind <CompatKind> - filter to the compat variant. See above table. Can specify multiple times.
                                 Default: undefined (no filter)
---compatVersion <version> - specify the old version. Relative (to base) or specific version. Can specify multiple times.
+--compatVersion <version> - specify the old version. Relative (to base) or specific version. Can specify multiple versions.
                                 Default: -1, -2, LTS (hard coded in src/compatConfig.ts)
 --baseVersion <version>   - specify the base (new) version. Allow the test to run against any version combinations.
                                 Default: <current> (same version of the test package)
@@ -102,7 +102,7 @@ We also accept some of the flags via environment variables.
 
 ## Advanced usage
 
-This bypass any configuration of version and direct access to the versions.
+This bypasses any configuration of version used by the describe* functions and provides direct access to the versioned APIs.
 
 First make sure to call `ensurePackageInstalled` before running the tests to make sure the necessary legacy version are
 installed.
