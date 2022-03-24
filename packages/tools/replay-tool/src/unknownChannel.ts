@@ -71,13 +71,14 @@ class UnknownChannel implements IChannel {
     }
 }
 
-class UnknownChannelFactory implements IChannelFactory {
-    readonly type = "Unknown DDS";
+export class UnknownChannelFactory implements IChannelFactory {
     readonly attributes: IChannelAttributes = {
-        type: "Unknown DDS",
+        type: this.type,
         snapshotFormatVersion: "1.0",
         packageVersion: "1.0",
     };
+
+    constructor(public readonly type: string) {}
 
     async load(
         runtime: IFluidDataStoreRuntime,
@@ -106,7 +107,7 @@ class ObjectRegistryWithUnknownChannels implements ISharedObjectRegistry {
             ObjectRegistryWithUnknownChannels.types.add(name);
             console.error(`DDS of type ${name} can't be created`);
         }
-        return new UnknownChannelFactory();
+        return new UnknownChannelFactory(name);
     }
 }
 

@@ -5,7 +5,7 @@
 
 import { Router } from "express";
 import nconf from "nconf";
-import { IRepositoryManagerFactory } from "../utils";
+import { IFileSystemManager, IRepositoryManagerFactory } from "../utils";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
@@ -36,6 +36,7 @@ export interface IRoutes {
 
 export function create(
     store: nconf.Provider,
+    fileSystemManager: IFileSystemManager,
     repoManagerFactory: IRepositoryManagerFactory,
 ): IRoutes {
     return {
@@ -51,6 +52,6 @@ export function create(
             commits: repositoryCommits.create(store, repoManagerFactory),
             contents: contents.create(store, repoManagerFactory),
         },
-        summaries: summaries.create(store, repoManagerFactory),
+        summaries: summaries.create(store, fileSystemManager, repoManagerFactory),
     };
 }
