@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import nodegit from "nodegit";
 import winston from "winston";
 import safeStringify from "json-stringify-safe";
@@ -340,7 +339,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
 
     public async create(owner: string, name: string): Promise<NodegitRepositoryManager> {
         // Verify that both inputs are valid folder names
-        const repoPath = this.getRepoPath(owner, name);
+        const repoPath = helpers.getRepoPath(owner, name);
 
         // Create and then cache the repository
         const isBare = 1;
@@ -359,7 +358,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
     }
 
     public async open(owner: string, name: string): Promise<NodegitRepositoryManager> {
-        const repoPath = this.getRepoPath(owner, name);
+        const repoPath = helpers.getRepoPath(owner, name);
 
         if (!(repoPath in this.repositoryPCache)) {
             const directory = `${this.baseDir}/${repoPath}`;
@@ -381,21 +380,5 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
             repository,
             this.externalStorageManager);
         return repoManager;
-    }
-
-    /**
-     * Retrieves the full repository path. Or throws an error if not valid.
-     */
-    private getRepoPath(owner: string, name: string) {
-        // Verify that both inputs are valid folder names
-        const parsedOwner = path.parse(owner);
-        const parsedName = path.parse(name);
-        const repoPath = `${owner}/${name}`;
-
-        if (parsedName.dir !== "" || parsedOwner.dir !== "") {
-            throw new NetworkError(400, `Invalid repo name ${repoPath}`);
-        }
-
-        return repoPath;
     }
 }

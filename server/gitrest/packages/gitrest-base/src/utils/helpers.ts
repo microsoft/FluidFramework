@@ -4,6 +4,7 @@
  */
 
 import { PathLike, Stats } from "fs";
+import * as path from "path";
 import { IGetRefParamsExternal, IWholeFlatSummary, NetworkError } from "@fluidframework/server-services-client";
 import { IExternalWriterConfig, IFileSystemManager } from "./definitions";
 
@@ -37,7 +38,7 @@ export async function exists(
     fileOrDirectoryPath: PathLike,
 ): Promise<Stats | false> {
     try {
-        const fileOrDirectoryStats = await fileSystemManager.stat(fileOrDirectoryPath);
+        const fileOrDirectoryStats = await fileSystemManager.promises.stat(fileOrDirectoryPath);
         return fileOrDirectoryStats;
     } catch (error) {
         if (error?.code === "ENOENT") {
@@ -58,11 +59,11 @@ export async function persistLatestFullSummaryInStorage(
 ): Promise<void> {
     const directoryExists = await exists(fileSystemManager, storageDirectoryPath);
     if (directoryExists === false) {
-        await fileSystemManager.mkdir(storageDirectoryPath, { recursive: true });
+        await fileSystemManager.promises.mkdir(storageDirectoryPath, { recursive: true });
     } else if (!directoryExists.isDirectory()) {
         throw new NetworkError(400, "Document storage directory path is not a directory");
     }
-    await fileSystemManager.writeFile(
+    await fileSystemManager.promises.writeFile(
         getLatestFullSummaryFilePath(storageDirectoryPath),
         JSON.stringify(latestFullSummary),
     );
@@ -73,7 +74,7 @@ export async function retrieveLatestFullSummaryFromStorage(
     storageDirectoryPath: string,
 ): Promise<IWholeFlatSummary | undefined> {
     try {
-        const summaryFile = await fileSystemManager.readFile(
+        const summaryFile = await fileSystemManager.promises.readFile(
             getLatestFullSummaryFilePath(storageDirectoryPath),
         );
         // TODO: This will be converted back to a JSON string for the HTTP response
@@ -86,4 +87,20 @@ export async function retrieveLatestFullSummaryFromStorage(
         }
         throw error;
     }
+}
+
+/**
+ * Retrieves the full repository path. Or throws an error if not valid.
+ */
+export function getRepoPath(owner: string, name: string) {
+    // Verify that both inputs are valid folder names
+    const parsedOwner = path.parse(owner);
+    const parsedName = path.parse(name);
+    const repoPath = `${owner}/${name}`;
+
+    if (parsedName.dir !== "" || parsedOwner.dir !== "") {
+        throw new NetworkError(400, `Invalid repo name ${repoPath}`);
+    }
+
+    return repoPath;
 }
