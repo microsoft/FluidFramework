@@ -1,0 +1,21 @@
+{
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true
+    },
+    "requestSizeLimit": "1gb",
+    "storageDir": "/home/node/documents",
+    "externalStorage": {
+        "enabled": false,
+        "endpoint": "http://externalStorage:3005"
+    },
+    "git": {
+        "lib": {
+            "name": "nodegit"
+        },
+        "persistLatestFullSummary": false
+    }
+}

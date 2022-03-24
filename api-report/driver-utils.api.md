@@ -188,10 +188,10 @@ export function getDocAttributesFromProtocolSummary(protocolSummary: ISummaryTre
 // @public
 export function getQuorumValuesFromProtocolSummary(protocolSummary: ISummaryTree): [string, ICommittedProposal][];
 
-// @public (undocumented)
+// @public
 export const getRetryDelayFromError: (error: any) => number | undefined;
 
-// @public (undocumented)
+// @public
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
 // @public

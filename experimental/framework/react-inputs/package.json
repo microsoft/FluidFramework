@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/react-inputs",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "React support for the Aqueduct framework.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -32,16 +32,16 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/cell": "^0.58.2000",
+    "@fluidframework/cell": "^0.58.3000",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/merge-tree": "^0.58.2000",
-    "@fluidframework/sequence": "^0.58.2000",
+    "@fluidframework/merge-tree": "^0.58.3000",
+    "@fluidframework/sequence": "^0.58.3000",
     "react": "^16.10.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",

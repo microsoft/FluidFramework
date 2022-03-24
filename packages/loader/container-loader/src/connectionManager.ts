@@ -29,9 +29,9 @@ import {
     createGenericNetworkError,
     getRetryDelayFromError,
     IAnyDriverError,
-    logNetworkFailure,
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
+    logNetworkFailure,
 } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
@@ -490,18 +490,15 @@ export class ConnectionManager implements IConnectionManager {
                     throw error;
                 }
 
-                // Log error once - we get too many errors in logs when we are offline,
-                // and unfortunately there is no reliable way to detect that.
-                if (connectRepeatCount === 1) {
-                    logNetworkFailure(
-                        this.logger,
-                        {
-                            delay: delayMs, // milliseconds
-                            eventName: "DeltaConnectionFailureToConnect",
-                            duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
-                        },
-                        origError);
-                }
+                logNetworkFailure(
+                    this.logger,
+                    {
+                        attempts: connectRepeatCount,
+                        delay: delayMs, // milliseconds
+                        eventName: "DeltaConnectionFailureToConnect",
+                        duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                    },
+                    origError);
 
                 lastError = origError;
 
@@ -515,9 +512,10 @@ export class ConnectionManager implements IConnectionManager {
             }
         }
 
-        // If we retried more than once, log an event about how long it took
+        // If we retried more than once, log an event about how long it took (this will not log to error table)
         if (connectRepeatCount > 1) {
-            this.logger.sendTelemetryEvent(
+            logNetworkFailure(
+                this.logger,
                 {
                     eventName: "MultipleDeltaConnectionFailures",
                     attempts: connectRepeatCount,
