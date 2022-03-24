@@ -27,6 +27,9 @@ const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
+    runtimeOptions: {
+        enableOfflineLoad: true,
+    },
 };
 
 const lots = 30;
@@ -621,7 +624,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await rehydratedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
         const pendingOps = await (rehydratedContainer as Container).closeAndGetPendingLocalStateAsync();
 
-        const url2 = await container1.getAbsoluteUrl("");
+        const url2 = await rehydratedContainer.getAbsoluteUrl("");
         assert.ok(url2);
 
         const container3 = await loader2.resolve({ url: url2 }, pendingOps);

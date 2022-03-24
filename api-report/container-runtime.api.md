@@ -314,6 +314,7 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    enableOfflineLoad?: boolean;
     // (undocumented)
     gcOptions?: IGCRuntimeOptions;
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
