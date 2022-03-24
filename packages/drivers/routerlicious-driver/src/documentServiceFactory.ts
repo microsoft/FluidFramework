@@ -61,6 +61,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         createNewSummary: ISummaryTree | undefined,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         assert(!!createNewSummary, 0x204 /* "create empty file not supported" */);
@@ -118,7 +119,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                     deltaStorageUrl: parsedDeltaStorageUrl.toString(),
                 },
             },
-            logger);
+            logger,
+            clientIsSummarizer,
+        );
     }
 
     /**
@@ -130,6 +133,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 

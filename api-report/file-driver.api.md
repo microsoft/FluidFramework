@@ -60,8 +60,8 @@ export class FileDocumentService implements api_2.IDocumentService {
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(storage: IDocumentStorageService, deltaStorage: FileDeltaStorageService, deltaConnection: IDocumentDeltaConnection);
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
-    createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "fluid-file:";
     }

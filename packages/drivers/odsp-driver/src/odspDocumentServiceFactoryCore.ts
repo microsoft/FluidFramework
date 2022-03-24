@@ -55,6 +55,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
 
@@ -113,7 +114,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     this.hostPolicy.cacheCreateNewSummary ?? true,
                     !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                 );
-                const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger, cacheAndTracker);
+                const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
+                    cacheAndTracker, clientIsSummarizer);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -147,14 +149,16 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
-        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger));
+        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger), undefined, clientIsSummarizer);
     }
 
     private async createDocumentServiceCore(
         resolvedUrl: IResolvedUrl,
         odspLogger: TelemetryLogger,
         cacheAndTrackerArg?: ICacheAndTracker,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
         const resolvedUrlData: IOdspUrlParts = {
@@ -194,6 +198,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.hostPolicy,
             cacheAndTracker.epochTracker,
             this.socketReferenceKeyPrefix,
+            clientIsSummarizer,
         );
     }
 }
