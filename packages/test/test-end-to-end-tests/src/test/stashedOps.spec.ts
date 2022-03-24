@@ -535,7 +535,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
     it("offline blob upload", async function() {
         // load offline container
-        const offlineState = await loader.resolve({ url, headers: { "fluid-cache": false } })
+        const offlineState = await loader.resolve({ url })
             .then(async (c) => (c as Container).closeAndGetPendingLocalStateAsync());
         const container = await loadOffline(provider, { url }, offlineState);
         const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
@@ -582,6 +582,51 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container1, id);
         const map3 = await requestFluidObject<SharedMap>(dataStore3.runtime, newMapId);
         await provider.ensureSynchronized();
+        assert.strictEqual(map3.get(testKey), testValue);
+        assert.strictEqual(map3.get(testKey2), testValue);
+    });
+
+    it("works for detached container", async function() {
+        const loader2 = provider.makeTestLoader(testContainerConfig);
+        const detachedContainer = await loader2.createDetachedContainer(provider.defaultCodeDetails);
+        const dataStore = await requestFluidObject<ITestFluidObject>(detachedContainer, "default");
+        const map = await dataStore.getSharedObject<SharedMap>(mapId);
+        map.set(testKey, testValue);
+
+        await detachedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        const pendingOps = await (detachedContainer as Container).closeAndGetPendingLocalStateAsync();
+
+        const url2 = await detachedContainer.getAbsoluteUrl("");
+        assert.ok(url2);
+        const container2 = await loader2.resolve({ url: url2 }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        assert.strictEqual(map2.get(testKey), testValue);
+    });
+
+    it("works for rehydrated container", async function() {
+        const loader2 = provider.makeTestLoader(testContainerConfig);
+        const detachedContainer = await loader2.createDetachedContainer(provider.defaultCodeDetails);
+        const dataStore = await requestFluidObject<ITestFluidObject>(detachedContainer, "default");
+        const map = await dataStore.getSharedObject<SharedMap>(mapId);
+        map.set(testKey, testValue);
+
+        const summary = detachedContainer.serialize();
+        detachedContainer.close();
+        const rehydratedContainer = await loader2.rehydrateDetachedContainerFromSnapshot(summary);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(rehydratedContainer, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        map2.set(testKey2, testValue);
+
+        await rehydratedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        const pendingOps = await (rehydratedContainer as Container).closeAndGetPendingLocalStateAsync();
+
+        const url2 = await container1.getAbsoluteUrl("");
+        assert.ok(url2);
+
+        const container3 = await loader2.resolve({ url: url2 }, pendingOps);
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
         assert.strictEqual(map3.get(testKey), testValue);
         assert.strictEqual(map3.get(testKey2), testValue);
     });

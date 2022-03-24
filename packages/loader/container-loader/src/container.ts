@@ -833,7 +833,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     // starting to attach the container to storage.
                     // Also, this should only be fired in detached container.
                     this._attachState = AttachState.Attaching;
-                    this.context.notifyAttaching();
+                    this.context.notifyAttaching(getSnapshotTreeFromSerializedContainer(summary));
                 }
 
                 // Actually go and create the resolved document
@@ -880,7 +880,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
                     this._attachState = AttachState.Attaching;
-                    this.context.notifyAttaching();
+                    this.context.notifyAttaching(getSnapshotTreeFromSerializedContainer(summary));
 
                     await this.storageService.uploadSummaryWithContext(summary, {
                         referenceSequenceNumber: 0,
@@ -1753,7 +1753,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async instantiateContextDetached(
         existing: boolean,
         snapshot?: ISnapshotTree,
-        pendingLocalState?: unknown,
     ) {
         const codeDetails = this.getCodeDetailsFromQuorum();
         if (codeDetails === undefined) {
@@ -1764,7 +1763,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             existing,
             codeDetails,
             snapshot,
-            pendingLocalState,
         );
     }
 

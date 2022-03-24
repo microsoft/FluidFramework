@@ -286,7 +286,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
         const container = await localTestObjectProvider.makeTestContainer() as Container;
 
-        const pendingLocalState: IPendingLocalState = JSON.parse(container.closeAndGetPendingLocalState());
+        const pendingLocalState: IPendingLocalState = JSON.parse(await container.closeAndGetPendingLocalStateAsync());
         assert.strictEqual(container.closed, true);
         assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IFluidResolvedUrl).url);
     });

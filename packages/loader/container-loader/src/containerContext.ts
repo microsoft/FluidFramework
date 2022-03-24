@@ -162,7 +162,7 @@ export class ContainerContext implements IContainerContext {
         public readonly scope: IFluidObject & FluidObject,
         private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
         private readonly _codeDetails: IFluidCodeDetails,
-        private readonly _baseSnapshot: ISnapshotTree | undefined,
+        private _baseSnapshot: ISnapshotTree | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         public readonly loader: ILoader,
@@ -291,7 +291,8 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
-    public notifyAttaching() {
+    public notifyAttaching(snapshot: ISnapshotTree) {
+        this._baseSnapshot = snapshot;
         this.runtime.setAttachState(AttachState.Attaching);
     }
 

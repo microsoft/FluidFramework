@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
     ICreateBlobResponse,
@@ -47,8 +47,16 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
             treePs.push(this.serializeCore(subTree, blobs, storage));
         }
         for (const id of Object.values(tree.blobs)) {
+            let blob;
+            if ((tree as any).blobsContents) {
+                // ISnapshotTreeWithBlobContents
+                blob = (tree as any).blobsContents[id];
+            } else {
+                blob = await storage.readBlob(id);
+            }
+            assert(blob, "unable to serialize blob");
             // ArrayBufferLike will not survive JSON.stringify()
-            blobs[id] = bufferToString(await storage.readBlob(id), "utf8");
+            blobs[id] = bufferToString(blob, "utf8");
         }
         return Promise.all(treePs);
     }

@@ -118,7 +118,7 @@ export class BlobManager {
             await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
         }
 
-        if (!this.runtime.connected) {
+        if (!this.runtime.connected && this.runtime.attachState === AttachState.Attached) {
             // see #8246
             // Avoid getting storage if we are offline since it might be undefined. In the future we will return
             // handles immediately while offline
