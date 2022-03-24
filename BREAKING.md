@@ -23,7 +23,6 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
 - [Set raiseContainerWarning property as optional parameter on IContainerContext](#Set-raiseContainerWarning-property-as-optional-parameter-on-IContainerContext)
 - [Consolidate fluidErrorCode and message on FF Errors](#Consolidate-fluidErrorCode-and-message-on-FF-Errors)
-- [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
 
 ### Move IntervalType from merge-tree to sequence package
 Move the type from the merge-tree package where it isn't used to the sequence package where it is used
@@ -44,11 +43,6 @@ This was present in many error constructors, and exposed in the type `IFluidErro
 Previously, the fluidErrorCode value (a pascaleCased term) was often used as the error message itself.
 Now all error messages can be expected to be easily-read sentences,
 sometimes followed by a colon and an inner error message when applicable.
-
-
-### Doing operations not allowed on deleted sub directory
-Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory
-will throw `UsageError` exception now.
 
 # 0.57
 
