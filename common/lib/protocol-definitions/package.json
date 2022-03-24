@@ -48,6 +48,7 @@
     "@fluidframework/protocol-definitions-0.1025.1": "npm:@fluidframework/protocol-definitions@0.1025.1",
     "@fluidframework/protocol-definitions-0.1026.0": "npm:@fluidframework/protocol-definitions@0.1026.0",
     "@fluidframework/protocol-definitions-0.1027.0": "npm:@fluidframework/protocol-definitions@0.1027.0",
+    "@fluidframework/protocol-definitions-0.1027.1000": "npm:@fluidframework/protocol-definitions@0.1027.1000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
@@ -66,7 +67,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.1027.2000",
+    "version": "0.1028.1000",
     "broken": {
       "0.1024.0": {
         "InterfaceDeclaration_IBlob": {
@@ -211,6 +212,14 @@
         "EnumDeclaration_FileMode": {
           "forwardCompat": false
         }
+      },
+      "0.1027.1000":{
+        "EnumDeclaration_FileMode": {"forwardCompat": false},
+        "InterfaceDeclaration_ISnapshotTree": {"backCompat": false},
+        "InterfaceDeclaration_ISnapshotTreeEx": {"backCompat": false},
+        "InterfaceDeclaration_ITree": {"forwardCompat": false},
+        "TypeAliasDeclaration_ITreeEntry": {"forwardCompat": false},
+        "EnumDeclaration_TreeEntry": {"forwardCompat": false}
       }
     }
   }
