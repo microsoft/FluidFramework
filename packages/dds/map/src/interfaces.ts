@@ -6,7 +6,6 @@
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 
-
 /**
  * Type of "valueChanged" event parameter.
  */
