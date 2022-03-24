@@ -86,9 +86,8 @@ driver selection, versions for compat testing, and compat kind combinations.
 - If it is a semver range, the latest in that range will be picked.
 - If it is an integer, the value will be apply to the minor version of the `baseVersion`, and create a `^` range
 including prerelease versions. The latest in that range will be picked.
-  - i.e. if `baseVersion` is `1.2.3`, and `compatVersion` is `-1`, the resulting range
-will be `^1.1.3-0`
-
+  - i.e. if `baseVersion` is `0.2.3`, and `compatVersion` is `-1`, the resulting range
+will be `^0.1.3-0`
 
 We also accept some of the flags via environment variables.
 
