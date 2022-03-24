@@ -10,8 +10,16 @@ jobs:
     steps:
     - uses: actions/labeler@v3
       with:
+        configuration-path: ".github/actions-labeler.yml"
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         sync-labels: true # add/remove labels as modified paths in the PR change
+  branches_label:
+    runs-on: ubuntu-latest
+    name: Label base branches
+    steps:
+    - uses: srvaroa/labeler@v0.9
+      with:
+        GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
   external_label:
     runs-on: ubuntu-latest
     name: Label external PRs
