@@ -46,8 +46,8 @@ There are three compat `describe*` to generate different combinations, depending
 - Test combination generated: [CompatKind.None]
 
 These compat `describe*` functions will also load the APIs with appropriate version and provide the test with a
-`TestObjectProvider` object, where the test can use to access Fluid functionality.  Even compat testing not
-necessary, `TestObjectProvider` provide convenience function and tracking capability, and it allows the test
+`TestObjectProvider` object, where the test can use to access Fluid functionality.  Even when compat testing
+is not necessary, `TestObjectProvider` provides convenience function and tracking capability, and it allows the test
 to enable compat testing easily in the future just by changing the `describe*`.
 
 ### Legacy version defaults and installation
