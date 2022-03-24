@@ -18,6 +18,7 @@ import {
 
 /*
  * Generate configuration combinations for a particular compat version
+ * NOTE: Please update this packages README.md if the default versions and config combination changes
  */
 interface CompatConfig {
     name: string,
