@@ -90,7 +90,6 @@ import {
     MonitoringContext,
     loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { summarizerClientType } from "@fluidframework/container-runtime";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import { ReconnectMode, IConnectionManagerFactoryArgs } from "./contracts";
@@ -224,6 +223,8 @@ export async function waitContainerToCatchUp(container: IContainer) {
 const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
+
+const summarizerClientType = "summarizer";
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
