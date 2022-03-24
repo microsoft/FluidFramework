@@ -4,7 +4,6 @@
  */
 
 import { assert,TypedEventEmitter } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
@@ -425,14 +424,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         return this;
     }
 
-    public dispose(error?: Error): void {
-        this.root.dispose(error);
-    }
-
-    public get disposed(): boolean {
-        return this.root.disposed;
-    }
-
     /**
      * Deletes the given key from within this IDirectory.
      * @param key - The key to delete
@@ -812,11 +803,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
  */
 class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirectory {
     /**
-     * Tells if the sub directory is disposed or not.
-     */
-    private _disposed = false;
-
-    /**
      * String representation for the class.
      */
     public [Symbol.toStringTag]: string = "SubDirectory";
@@ -868,28 +854,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         super();
     }
 
-    public dispose(error?: Error): void {
-        this._disposed = true;
-        this.emit("disposed", this);
-    }
-
-    public get disposed(): boolean {
-        return this._disposed;
-    }
-
-    private throwIfDisposed() {
-        if (this._disposed) {
-            throw new UsageError("Cannot access Disposed subDirectory");
-        }
-    }
-
     /**
      * Checks whether the given key exists in this IDirectory.
      * @param key - The key to check
      * @returns True if the key exists, false otherwise
      */
     public has(key: string): boolean {
-        this.throwIfDisposed();
         return this._storage.has(key);
     }
 
@@ -897,7 +867,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * {@inheritDoc IDirectory.get}
      */
     public get<T = any>(key: string): T | undefined {
-        this.throwIfDisposed();
         return this._storage.get(key)?.value as T | undefined;
     }
 
@@ -905,7 +874,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * {@inheritDoc IDirectory.set}
      */
     public set<T = any>(key: string, value: T): this {
-        this.throwIfDisposed();
         // Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
         if (key === undefined || key === null) {
             throw new Error("Undefined and null keys are not supported");
@@ -944,7 +912,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * {@inheritDoc IDirectory.createSubDirectory}
      */
     public createSubDirectory(subdirName: string): IDirectory {
-        this.throwIfDisposed();
         // Undefined/null subdirectory names can't be serialized to JSON in the manner we currently snapshot.
         if (subdirName === undefined || subdirName === null) {
             throw new Error("SubDirectory name may not be undefined or null");
@@ -979,7 +946,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * {@inheritDoc IDirectory.getSubDirectory}
      */
     public getSubDirectory(subdirName: string): IDirectory | undefined {
-        this.throwIfDisposed();
         return this._subdirectories.get(subdirName);
     }
 
@@ -987,7 +953,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * {@inheritDoc IDirectory.hasSubDirectory}
      */
     public hasSubDirectory(subdirName: string): boolean {
-        this.throwIfDisposed();
         return this._subdirectories.has(subdirName);
     }
 
@@ -995,7 +960,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * {@inheritDoc IDirectory.deleteSubDirectory}
      */
     public deleteSubDirectory(subdirName: string): boolean {
-        this.throwIfDisposed();
         // Delete the sub directory locally first.
         const successfullyRemoved = this.deleteSubDirectoryCore(subdirName, true);
 
@@ -1018,7 +982,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * {@inheritDoc IDirectory.subdirectories}
      */
     public subdirectories(): IterableIterator<[string, IDirectory]> {
-        this.throwIfDisposed();
         return this._subdirectories.entries();
     }
 
@@ -1026,7 +989,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * {@inheritDoc IDirectory.getWorkingDirectory}
      */
     public getWorkingDirectory(relativePath: string): IDirectory | undefined {
-        this.throwIfDisposed();
         return this.directory.getWorkingDirectory(this.makeAbsolute(relativePath));
     }
 
@@ -1036,7 +998,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @returns True if the key existed and was deleted, false if it did not exist
      */
     public delete(key: string): boolean {
-        this.throwIfDisposed();
         // Delete the key locally first.
         const successfullyRemoved = this.deleteCore(key, true);
 
@@ -1059,7 +1020,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Deletes all keys from within this IDirectory.
      */
     public clear(): void {
-        this.throwIfDisposed();
         // Clear the data locally first.
         this.clearCore(true);
 
@@ -1080,7 +1040,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param callback - Callback to issue
      */
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
-        this.throwIfDisposed();
         this._storage.forEach((localValue, key, map) => {
             callback(localValue.value, key, map);
         });
@@ -1090,7 +1049,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * The number of entries under this IDirectory.
      */
     public get size(): number {
-        this.throwIfDisposed();
         return this._storage.size;
     }
 
@@ -1099,7 +1057,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @returns The iterator
      */
     public entries(): IterableIterator<[string, any]> {
-        this.throwIfDisposed();
         const localEntriesIterator = this._storage.entries();
         const iterator = {
             next(): IteratorResult<[string, any]> {
@@ -1123,7 +1080,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @returns The iterator
      */
     public keys(): IterableIterator<string> {
-        this.throwIfDisposed();
         return this._storage.keys();
     }
 
@@ -1132,7 +1088,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @returns The iterator
      */
     public values(): IterableIterator<any> {
-        this.throwIfDisposed();
         const localValuesIterator = this._storage.values();
         const iterator = {
             next(): IteratorResult<any> {
@@ -1156,7 +1111,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @returns The iterator
      */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
-        this.throwIfDisposed();
         return this.entries();
     }
 
@@ -1174,7 +1128,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         local: boolean,
         localOpMetadata: unknown,
     ): void {
-        this.throwIfDisposed();
         if (local) {
             assert(localOpMetadata !== undefined,
                 0x00f /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
@@ -1202,7 +1155,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         local: boolean,
         localOpMetadata: unknown,
     ): void {
-        this.throwIfDisposed();
         if (!this.needProcessStorageOperation(op, local, localOpMetadata)) {
             return;
         }
@@ -1224,7 +1176,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         local: boolean,
         localOpMetadata: unknown,
     ): void {
-        this.throwIfDisposed();
         if (!this.needProcessStorageOperation(op, local, localOpMetadata)) {
             return;
         }
@@ -1250,7 +1201,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         local: boolean,
         localOpMetadata: unknown,
     ): void {
-        this.throwIfDisposed();
         if (!this.needProcessSubDirectoryOperations(op, local, localOpMetadata)) {
             return;
         }
@@ -1271,7 +1221,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         local: boolean,
         localOpMetadata: unknown,
     ): void {
-        this.throwIfDisposed();
         if (!this.needProcessSubDirectoryOperations(op, local, localOpMetadata)) {
             return;
         }
@@ -1284,7 +1233,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public submitClearMessage(op: IDirectoryClearOperation): void {
-        this.throwIfDisposed();
         const pendingMessageId = ++this.pendingMessageId;
         this.directory.submitDirectoryMessage(op, pendingMessageId);
         this.pendingClearMessageId = pendingMessageId;
@@ -1296,7 +1244,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public submitKeyMessage(op: IDirectoryKeyOperation): void {
-        this.throwIfDisposed();
         const pendingMessageId = ++this.pendingMessageId;
         this.directory.submitDirectoryMessage(op, pendingMessageId);
         this.pendingKeys.set(op.key, pendingMessageId);
@@ -1308,7 +1255,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public submitSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
-        this.throwIfDisposed();
         const pendingMessageId = ++this.pendingMessageId;
         this.directory.submitDirectoryMessage(op, pendingMessageId);
         this.pendingSubDirectories.set(op.subdirName, pendingMessageId);
@@ -1321,7 +1267,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public *getSerializedStorage(serializer: IFluidSerializer) {
-        this.throwIfDisposed();
         for (const [key, localValue] of this._storage) {
             const value = localValue.makeSerialized(serializer, this.directory.handle);
             const res: [string, ISerializedValue] = [key, value];
@@ -1336,7 +1281,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public populateStorage(key: string, localValue: ILocalValue): void {
-        this.throwIfDisposed();
         this._storage.set(key, localValue);
     }
 
@@ -1347,7 +1291,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public populateSubDirectory(subdirName: string, newSubDir: SubDirectory): void {
-        this.throwIfDisposed();
         this._subdirectories.set(subdirName, newSubDir);
     }
 
@@ -1359,7 +1302,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public getLocalValue<T extends ILocalValue = ILocalValue>(key: string): T {
-        this.throwIfDisposed();
         return this._storage.get(key) as T;
     }
 
@@ -1533,23 +1475,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param op - The message if from a remote delete, or null if from a local delete
      */
     private deleteSubDirectoryCore(subdirName: string, local: boolean) {
-        const previousValue = this.getSubDirectory(subdirName);
         // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
         // Might want to consider cleaning out the structure more exhaustively though?
-        const successfullyRemoved = this._subdirectories.delete(subdirName);
-        this.disposeSubDirectoryTree(previousValue);
-        return successfullyRemoved;
-    }
-
-    private disposeSubDirectoryTree(directory: IDirectory | undefined) {
-        if (!directory) {
-            return;
-        }
-        // Dispose the subdirectory tree. This will dispose the subdirectories from bottom to top.
-        const subDirectories = directory.subdirectories();
-        for (const [_, subDirectory] of subDirectories) {
-            this.disposeSubDirectoryTree(subDirectory);
-        }
-        directory.dispose();
+        return this._subdirectories.delete(subdirName);
     }
 }
