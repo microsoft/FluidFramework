@@ -25,12 +25,8 @@ export enum CompatKind {
 }
 
 /*
- * Parse the command line argument and environment variables.  Arguments take precedent.
- *   --compat <index> - choose a config to run (default: -1 for all)
- *   --reinstall      - force reinstallation of legacy versions
- *
- * Env:
- *   fluid__test__compat - same as --compat
+ * Parse the command line argument and environment variables.  Arguments take precedent over environment variable
+ * NOTE: Please update this packages README.md if the default versions and config combination changes
  */
 const options = {
     compatKind: {
@@ -118,7 +114,6 @@ nconf.argv({
     {
         fluid: {
             test: {
-                compat: undefined,
                 driver: "local",
                 baseVersion: pkgVersion,
                 r11sEndpointName: "r11s",
