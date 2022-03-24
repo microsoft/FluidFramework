@@ -44,6 +44,10 @@ Previously, the fluidErrorCode value (a pascaleCased term) was often used as the
 Now all error messages can be expected to be easily-read sentences,
 sometimes followed by a colon and an inner error message when applicable.
 
+# 0.57
+
+## 0.57 Upcoming changes
+
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
 - [Driver error constructors' signatures have changed](#driver-error-constructors-signatures-have-changed)
