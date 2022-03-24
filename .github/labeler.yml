@@ -54,7 +54,7 @@
 "area: server":
   - server/**
 
-"area: test":
+"area: tests":
   - packages/test/**
 
 "area: tools":
