@@ -64,7 +64,7 @@ driver selection, versions for compat testing, and compat kind combinations.
 ```text
 --compatKind <CompatKind> - filter to the compat variant. See above table. Can specify multiple times.
                                 Default: undefined (no filter)
---compatVersion <version> - specify the old version. Relative (to base) or specific version. Can specify multiple times.
+--compatVersion <version> - specify the old version. Relative (to base) or specific version. Can specify multiple versions.
                                 Default: -1, -2, LTS (hard coded in src/compatConfig.ts)
 --baseVersion <version>   - specify the base (new) version. Allow the test to run against any version combinations.
                                 Default: <current> (same version of the test package)
