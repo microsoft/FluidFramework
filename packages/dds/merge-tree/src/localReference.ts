@@ -134,7 +134,8 @@ export class LocalReferenceCollection {
             if (!seg1.localRefs) {
                 seg1.localRefs = new LocalReferenceCollection(seg1);
             }
-            assert(seg1.localRefs.refsByOffset.length === seg1.cachedLength, 0x2be /* "LocalReferences array contains a gap" */);
+            assert(seg1.localRefs.refsByOffset.length === seg1.cachedLength,
+                0x2be /* "LocalReferences array contains a gap" */);
             seg1.localRefs.append(seg2.localRefs);
         }
         else if (seg1.localRefs) {
