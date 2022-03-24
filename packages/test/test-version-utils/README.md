@@ -62,17 +62,17 @@ Tests using the compat `describe*` will be controllable using the command line o
 driver selection, versions for compat testing, and compat kind combinations.
 
 ```text
---compatKind <CompatKind> - filter to the compat variant. See above table. Can specify multiple times.
+--compatKind <CompatKind> - filter to the compat variant. See above table. Can be specified multiple times.
                                 Default: undefined (no filter)
---compatVersion <version> - specify the old version. Relative (to base) or specific version. Can specify multiple versions.
+--compatVersion <version> - specify the old version. Relative (to base) or specific version. Can be specified multiple times.
                                 Default: -1, -2, LTS (hard coded in src/compatConfig.ts)
 --baseVersion <version>   - specify the base (new) version. Allow the test to run against any version combinations.
                                 Default: <current> (same version of the test package)
 --driver <driverType>     - <driverType> = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local"
                                 Default: "local"
---r11sEndpointName <name> - Determine the environment variable name to look for r11s service information to run against
+--r11sEndpointName <name> - Determine the environment variable name to look for r11s service information to target.
                                 Default: "r11s"
---tenantIndex <number>    - The index into the tenant list to look for odsp server information to run against
+--tenantIndex <number>    - Index into the tenant list, modulo the number of tenant available, for odsp server info to target.
                                 Default: 0
 --reinstall               - Force reinstall any required versions.  Default: reuse if a version is already installed.
 ```
