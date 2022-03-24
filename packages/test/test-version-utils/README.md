@@ -3,8 +3,8 @@
 This is a package for writing and setting up Fluid end to end tests using `mocha` that will generate variants with
 a specific driver and different version combinations of Fluid API between layers via `TestObjectProvider` provided
 to the test. The different layers are loader, driver, container runtime and data runtime (includes DDS).  Version
-combinations and driver selection can be controlled via the command line for test set up using the provided
- `describe*` functions.  For advanced usage, test suite can bypass the setup and command line and directly call our
+combinations and driver selection can be controlled via the `mocha` command line, assuming your test uses the provided
+ `describe*` functions.  For advanced usage, a test can bypass this mechanism and directly call our
 exports to get the versioned Fluid APIs.
 
 ## Versioned combination test generation
