@@ -373,6 +373,76 @@ describe("SharedString", () => {
             }
         });
 
+        it("can maintain consistency of LocalReference's when segments are packed", async () => {
+            // sharedString.insertMarker(0, ReferenceType.Tile, { nodeType: "Paragraph" });
+
+            const collection1 = sharedString.getIntervalCollection("test2");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test2");
+
+            sharedString.insertText(0, "a");
+            sharedString.insertText(1, "b");
+            sharedString.insertText(2, "c");
+            sharedString.insertText(3, "d");
+            sharedString.insertText(4, "e");
+            sharedString.insertText(5, "f");
+
+            containerRuntimeFactory.processAllMessages();
+
+            assert.strictEqual(sharedString.getText(), "abcdef", "incorrect text 1");
+            assert.strictEqual(sharedString2.getText(), "abcdef", "incorrect text 2");
+
+            const interval1 = collection1.add(2, 2, IntervalType.SlideOnRemove);
+            const id1 = interval1.getIntervalId();
+
+            containerRuntimeFactory.processAllMessages();
+
+            assert.notStrictEqual(collection2.getIntervalById(id1), undefined, "interval not found 1");
+            assert.strictEqual(collection2.getIntervalById(id1).start.toPosition(), 2, "1");
+            assert.strictEqual(collection2.getIntervalById(id1).end.toPosition(), 2, "2");
+
+            sharedString.insertText(0, "a");
+            sharedString.insertText(1, "b");
+            sharedString.insertText(2, "c");
+            sharedString.insertText(3, "d");
+            sharedString.insertText(4, "e");
+            sharedString.insertText(5, "f");
+
+            containerRuntimeFactory.processAllMessages();
+
+            assert.strictEqual(sharedString.getText(), "abcdefabcdef", "incorrect text 2");
+            assert.strictEqual(sharedString2.getText(), "abcdefabcdef", "incorrect text 3");
+
+            const interval2 = collection1.add(5, 5, IntervalType.SlideOnRemove);
+            const id2 = interval2.getIntervalId();
+
+            const interval3 = collection1.add(2, 2, IntervalType.SlideOnRemove);
+            const id3 = interval3.getIntervalId();
+
+            containerRuntimeFactory.processAllMessages();
+
+            assert.strictEqual(collection2.getIntervalById(id1).start.toPosition(), 8, "5");
+            assert.strictEqual(collection2.getIntervalById(id1).end.toPosition(), 8, "6");
+
+            assert.strictEqual(collection2.getIntervalById(id2).start.toPosition(), 5, "3");
+            assert.strictEqual(collection2.getIntervalById(id2).end.toPosition(), 5, "4");
+
+            assert.strictEqual(collection2.getIntervalById(id3).start.toPosition(), 2, "5");
+            assert.strictEqual(collection2.getIntervalById(id3).end.toPosition(), 2, "6");
+
+            // Summarize to cause Zamboni to pack segments. Confirm consistency after packing.
+            await sharedString2.summarize();
+
+            assert.strictEqual(collection2.getIntervalById(id1).start.toPosition(), 8, "5");
+            assert.strictEqual(collection2.getIntervalById(id1).end.toPosition(), 8, "6");
+
+            assert.strictEqual(collection2.getIntervalById(id2).start.toPosition(), 5, "3");
+            assert.strictEqual(collection2.getIntervalById(id2).end.toPosition(), 5, "4");
+
+            assert.strictEqual(collection2.getIntervalById(id3).start.toPosition(), 2, "5");
+            assert.strictEqual(collection2.getIntervalById(id3).end.toPosition(), 2, "6");
+        });
+
         it("can insert text", async () => {
             // Insert text in first shared string.
             sharedString.insertText(0, "hello");
