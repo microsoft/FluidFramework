@@ -63,11 +63,10 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     static wrap(
         error: unknown,
         retryAfterSeconds: number,
-        logger: ITelemetryLogger,
     ): IThrottlingWarning {
         const newErrorFn =
             (errMsg: string) => new ThrottlingWarning(errMsg, retryAfterSeconds);
-        return wrapErrorAndLog(error, newErrorFn, logger);
+        return wrapError(error, newErrorFn);
     }
 }
 

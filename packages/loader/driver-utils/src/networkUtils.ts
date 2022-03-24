@@ -6,6 +6,7 @@
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { isOnline, OnlineStatus, canRetryOnError } from "./network";
 
+//* UTs
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
     const newEvent = { ...event };
 

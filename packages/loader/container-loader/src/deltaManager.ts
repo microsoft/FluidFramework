@@ -588,7 +588,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             const throttlingWarning: IThrottlingWarning = ThrottlingWarning.wrap(
                 error,
                 delayMs / 1000 /* retryAfterSeconds */,
-                this.logger,
             );
             this.emit("throttled", throttlingWarning);
         }
