@@ -12,7 +12,13 @@ import {
 	hasOngoingSession,
 	sharedTreeInitialTreeId,
 } from '../id-compressor/IdCompressor';
-import { LocalCompressedId, FinalCompressedId, SessionSpaceCompressedId, OpSpaceCompressedId } from '../Identifiers';
+import {
+	LocalCompressedId,
+	FinalCompressedId,
+	SessionSpaceCompressedId,
+	OpSpaceCompressedId,
+	SessionId,
+} from '../Identifiers';
 import { assert, assertNotUndefined, fail } from '../Common';
 import {
 	assertIsStableId,
@@ -116,11 +122,64 @@ describe('IdCompressor', () => {
 			// Client1 compresses a uuid
 			compressor.generateCompressedId();
 			const localId2 = compressor.generateCompressedId();
-			const stableId2 = stableIdFromNumericUuid(
-				numericUuidFromStableId(assertIsStableId(compressor.decompress(localId2)))
-			);
+			const stableId2 = assertIsStableId(compressor.decompress(localId2));
 			const localId3 = compressor.generateCompressedId(stableId2);
 			expect(localId3).to.equal(localId2, 'only one local ID should be allocated for the same sequential uuid');
+		});
+
+		it('unifies overrides with sequential local IDs that sort before the reserved session UUID', () => {
+			// This is a regression test for an issue where passing a sequential UUID that sorted before the reserved UUID
+			// as an override created duplicate overrides in the compressor.
+			const newSession = `0${sharedTreeInitialTreeId.slice(1)}` as SessionId;
+			const compressor = new IdCompressor(newSession, 1 /* just needs to be > 0 */);
+
+			// Client1 compresses a uuid
+			compressor.generateCompressedId();
+			const localId2 = compressor.generateCompressedId();
+			const stableId2 = assertIsStableId(compressor.decompress(localId2));
+			const localId3 = compressor.generateCompressedId(stableId2);
+			expect(localId3).to.equal(localId2, 'only one local ID should be allocated for the same sequential uuid');
+		});
+
+		it('unifies overrides with sequential local IDs that sort after an existing override', () => {
+			// This is a regression test for an issue where passing a sequential UUID that sorted after an existing override
+			// as an override created duplicate overrides in the compressor.
+			const newSession = `b${v4().slice(1)}` as SessionId;
+			const compressor = new IdCompressor(newSession, 0);
+
+			// Client1 compresses a uuid with some override that will sort before the session uuid
+			compressor.generateCompressedId(`a${v4().slice(1)}`);
+			const localId2 = compressor.generateCompressedId();
+			const stableId2 = assertIsStableId(compressor.decompress(localId2));
+			const localId3 = compressor.generateCompressedId(stableId2);
+			expect(localId3).to.equal(localId2, 'only one local ID should be allocated for the same sequential uuid');
+		});
+
+		it('unifies overrides with sequential local IDs that sort after an existing cluster', () => {
+			// This is a regression test for an issue where passing a sequential UUID that sorted after an existing cluster
+			// as an override created duplicate overrides in the compressor.
+			const newSession1 = `c${v4().slice(1)}` as SessionId;
+			const newSession2 = `b${v4().slice(1)}` as SessionId;
+			const compressor1 = new IdCompressor(newSession1, 0);
+			const compressor2 = new IdCompressor(newSession2, 0);
+			compressor1.clusterCapacity = 5;
+			compressor2.clusterCapacity = 5;
+
+			compressor1.finalizeRange(compressor2.takeNextRange(1 /* one ID, enough to make a cluster */));
+
+			const localId = compressor1.generateCompressedId();
+			const stableId2 = assertIsStableId(compressor1.decompress(localId));
+			const localId3 = compressor1.generateCompressedId(stableId2);
+			expect(localId3).to.equal(localId, 'only one local ID should be allocated for the same sequential uuid');
+		});
+
+		it('unifies overrides with sequential local IDs that have been finalized', () => {
+			const compressor = createCompressor(Client.Client1);
+			const id = compressor.generateCompressedId();
+			compressor.finalizeRange(compressor.takeNextRange(0));
+			const stableId = assertIsStableId(compressor.decompress(id));
+			const localId2 = compressor.generateCompressedId(stableId);
+			expect(localId2).to.equal(id, 'only one local ID should be allocated for the same sequential uuid');
 		});
 
 		it('cannot create negative amounts of implicit IDs', () => {
@@ -549,39 +608,15 @@ describe('IdCompressor', () => {
 
 	// No validation, as these leave the network in a broken state
 	describeNetworkNoValidation('detects UUID collision', (itNetwork) => {
-		itNetwork('when an override collides with a finalized sequentially-allocated UUID', 2, (network) => {
-			network.allocateAndSendIds(Client.Client1, 1);
-			network.deliverOperations(Client.Client1);
-			const compressor1 = network.getCompressor(Client.Client1);
-			const id = network.getIdLog(Client.Client1)[0].id;
-			const uuid = compressor1.decompress(id);
-			expect(() => network.allocateAndSendIds(Client.Client1, 1, { 0: uuid })).to.throw(
-				`Override '${uuid}' collides with another allocated UUID.`
-			);
-		});
-
-		itNetwork('when an override collides with a local sequentially-allocated UUID', 3, (network) => {
-			const compressor2 = network.getCompressor(Client.Client2);
-			const range1 = network.allocateAndSendIds(Client.Client1, 2);
-			network.deliverOperations(DestinationClient.All);
-			const localId2_2 = compressor2.getImplicitIdsFromRange(range1).get(1);
-			const uuid = assertIsStableId(compressor2.decompress(localId2_2));
-			expect(() => {
-				network.allocateAndSendIds(Client.Client2, 1, {
-					0: stableIdFromNumericUuid(numericUuidFromStableId(uuid)),
-				});
-			}).to.throw(`Override '${uuid}' collides with another allocated UUID.`);
-		});
-
 		itNetwork(
 			'when a client requests an override that is an UUID reserved for later allocation by a cluster',
 			2,
 			(network) => {
-				network.allocateAndSendIds(Client.Client1, 1);
+				network.allocateAndSendIds(Client.Client2, 1);
 				network.deliverOperations(Client.Client1);
-				const compressor1 = network.getCompressor(Client.Client1);
-				const id = network.getIdLog(Client.Client1)[0].id;
-				const uuid = assertIsStableId(compressor1.decompress(id));
+				const compressor2 = network.getCompressor(Client.Client2);
+				const id = network.getIdLog(Client.Client2)[0].id;
+				const uuid = assertIsStableId(compressor2.decompress(id));
 				const nextUuid = stableIdFromNumericUuid(numericUuidFromStableId(uuid), 1);
 				expect(() => network.allocateAndSendIds(Client.Client1, 1, { 0: nextUuid })).to.throw(
 					`Override '${nextUuid}' collides with another allocated UUID.`

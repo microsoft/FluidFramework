@@ -771,7 +771,7 @@ export class IdCompressor {
 				cluster.overrides ??= new Map();
 
 				const inversionKey = IdCompressor.createInversionKey(override);
-				const existingIds = this.getExistingIdsForNewOverride(inversionKey);
+				const existingIds = this.getExistingIdsForNewOverride(inversionKey, true);
 				let overrideForCluster: string | FinalCompressedId;
 				let associatedLocal: LocalCompressedId | undefined;
 				if (existingIds !== undefined) {
@@ -883,7 +883,8 @@ export class IdCompressor {
 	 * Returns an existing ID associated with an override, or undefined if none exists.
 	 */
 	private getExistingIdsForNewOverride(
-		inversionKey: InversionKey
+		inversionKey: InversionKey,
+		isFinalOverride: boolean
 	): SessionSpaceCompressedId | [LocalCompressedId, FinalCompressedId] | undefined {
 		const closestMatch = this.clustersAndOverridesInversion.getPairOrNextLower(inversionKey, reusedArray);
 		let numericOverride: NumericUuid | undefined;
@@ -891,31 +892,43 @@ export class IdCompressor {
 		if (closestMatch !== undefined) {
 			const [key, compressionMapping] = closestMatch;
 			if (!IdCompressor.isClusterInfo(compressionMapping)) {
-				if (key !== inversionKey) {
-					return undefined;
+				if (key === inversionKey) {
+					if (IdCompressor.isUnfinalizedOverride(compressionMapping)) {
+						return compressionMapping;
+					}
+					const finalizedOverride = compressionMapping;
+					return finalizedOverride.associatedLocalId !== undefined
+						? [finalizedOverride.associatedLocalId, finalizedOverride.originalOverridingFinal]
+						: (finalizedOverride.originalOverridingFinal as SessionSpaceCompressedId);
 				}
-				if (IdCompressor.isUnfinalizedOverride(compressionMapping)) {
-					return compressionMapping;
-				}
-				const finalizedOverride = compressionMapping;
-				return finalizedOverride.associatedLocalId !== undefined
-					? [finalizedOverride.associatedLocalId, finalizedOverride.originalOverridingFinal]
-					: (finalizedOverride.originalOverridingFinal as SessionSpaceCompressedId);
 			} else if (IdCompressor.isStableInversionKey(inversionKey)) {
 				stableOverride = inversionKey;
 				const cluster = compressionMapping.cluster;
-				if (!IdCompressor.uuidsMightCollide(inversionKey, stableOverride, cluster.capacity)) {
-					return undefined;
-				}
-				numericOverride = numericUuidFromStableId(stableOverride);
-				const delta = getPositiveDelta(numericOverride, cluster.baseUuid, cluster.capacity - 1);
-				if (delta !== undefined) {
-					IdCompressor.failWithCollidingOverride(inversionKey);
+				if (IdCompressor.uuidsMightCollide(inversionKey, key as StableId, cluster.capacity)) {
+					numericOverride = numericUuidFromStableId(stableOverride);
+					const delta = getPositiveDelta(numericOverride, cluster.baseUuid, cluster.capacity - 1);
+					if (delta !== undefined) {
+						if (isFinalOverride) {
+							IdCompressor.failWithCollidingOverride(inversionKey);
+						} else {
+							if (delta < cluster.count) {
+								return this.normalizeToSessionSpace(
+									(compressionMapping.clusterBase + delta) as FinalCompressedId
+								);
+							} else {
+								IdCompressor.failWithCollidingOverride(inversionKey);
+							}
+						}
+					}
 				}
 			}
 		}
 
-		const override = numericOverride ?? stableOverride;
+		const override =
+			numericOverride ??
+			stableOverride ??
+			(IdCompressor.isStableInversionKey(inversionKey) ? inversionKey : undefined);
+
 		if (override !== undefined) {
 			const localId = this.getLocalIdForStableId(override);
 			if (localId !== undefined) {
@@ -968,7 +981,7 @@ export class IdCompressor {
 		// If any ID exists for this override (locally or remotely allocated), return it (after ensuring it is in session-space).
 		if (override !== undefined) {
 			const inversionKey = IdCompressor.createInversionKey(override);
-			const existingIds = this.getExistingIdsForNewOverride(inversionKey);
+			const existingIds = this.getExistingIdsForNewOverride(inversionKey, false);
 			if (existingIds !== undefined) {
 				return typeof existingIds === 'number' ? existingIds : existingIds[0];
 			} else {
@@ -1103,7 +1116,7 @@ export class IdCompressor {
 						// another session having an identical override (see `IdCluster` for more).
 						targetFinalId = override.originalOverridingFinal;
 					}
-					return this.normalizeToSessionSpace(targetFinalId, this.localSessionId);
+					return this.normalizeToSessionSpace(targetFinalId);
 				}
 			}
 		}
@@ -1155,11 +1168,20 @@ export class IdCompressor {
 	 * @param id the ID to normalize. If it is a local ID, it is assumed to have been created by the session corresponding
 	 * to `sessionId`.
 	 * @param originSessionId the session from which `id` originated
-	 * @returns the final ID corresponding to `id`, which might not have been a final ID if the client that created it had not yet
+	 * @returns the session-space ID corresponding to `id`, which might not have been a final ID if the client that created it had not yet
 	 * finalized it. This can occur when a client references an ID during the window of time in which it is waiting to receive the ordered
 	 * range that contained it from the server.
 	 */
-	public normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId {
+	public normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
+
+	/**
+	 * Normalizes a final ID into session space.
+	 * @param id the final ID to normalize.
+	 * @returns the session-space ID corresponding to `id`.
+	 */
+	public normalizeToSessionSpace(id: FinalCompressedId): SessionSpaceCompressedId;
+
+	public normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId?: SessionId): SessionSpaceCompressedId {
 		const isLocalSession = originSessionId === this.localSessionId;
 		if (isLocalId(id)) {
 			if (isLocalSession) {
@@ -1169,7 +1191,7 @@ export class IdCompressor {
 				}
 				return id;
 			} else {
-				const session = this.tryGetSession(originSessionId);
+				const session = this.tryGetSession(originSessionId ?? fail());
 				if (session === undefined) {
 					fail('No IDs have ever been finalized by the supplied session.');
 				}
