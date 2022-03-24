@@ -43,6 +43,7 @@ declare function get_old_EnumDeclaration_FileMode():
 declare function use_current_EnumDeclaration_FileMode(
     use: current.FileMode);
 use_current_EnumDeclaration_FileMode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_FileMode());
 
 /*
@@ -1021,6 +1022,7 @@ declare function get_current_InterfaceDeclaration_ISnapshotTree():
 declare function use_old_InterfaceDeclaration_ISnapshotTree(
     use: old.ISnapshotTree);
 use_old_InterfaceDeclaration_ISnapshotTree(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISnapshotTree());
 
 /*
@@ -1045,6 +1047,7 @@ declare function get_current_InterfaceDeclaration_ISnapshotTreeEx():
 declare function use_old_InterfaceDeclaration_ISnapshotTreeEx(
     use: old.ISnapshotTreeEx);
 use_old_InterfaceDeclaration_ISnapshotTreeEx(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISnapshotTreeEx());
 
 /*
@@ -1442,6 +1445,7 @@ declare function get_old_InterfaceDeclaration_ITree():
 declare function use_current_InterfaceDeclaration_ITree(
     use: current.ITree);
 use_current_InterfaceDeclaration_ITree(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITree());
 
 /*
@@ -1466,6 +1470,7 @@ declare function get_old_TypeAliasDeclaration_ITreeEntry():
 declare function use_current_TypeAliasDeclaration_ITreeEntry(
     use: current.ITreeEntry);
 use_current_TypeAliasDeclaration_ITreeEntry(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_ITreeEntry());
 
 /*
@@ -1731,6 +1736,7 @@ declare function get_old_EnumDeclaration_TreeEntry():
 declare function use_current_EnumDeclaration_TreeEntry(
     use: current.TreeEntry);
 use_current_EnumDeclaration_TreeEntry(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_TreeEntry());
 
 /*

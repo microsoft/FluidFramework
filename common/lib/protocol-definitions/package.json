@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.56910",
+    "@fluidframework/build-tools": "^0.2.58041",
     "@fluidframework/eslint-config-fluid": "^0.27.0",
     "@fluidframework/protocol-definitions-0.1024.0": "npm:@fluidframework/protocol-definitions@0.1024.0",
     "@fluidframework/protocol-definitions-0.1025.1": "npm:@fluidframework/protocol-definitions@0.1025.1",
@@ -97,6 +97,18 @@
         "RemovedInterfaceDeclaration_IPendingProposal": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTree": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTreeEx": {
+          "backCompat": false
+        },
+        "EnumDeclaration_TreeEntry": {
+          "forwardCompat": false
+        },
+        "EnumDeclaration_FileMode": {
+          "forwardCompat": false
         }
       },
       "0.1025.1": {
@@ -121,6 +133,24 @@
         },
         "InterfaceDeclaration_IQuorumProposals": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTree": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTreeEx": {
+          "backCompat": false
+        },
+        "EnumDeclaration_TreeEntry": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ITree": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_ITreeEntry": {
+          "forwardCompat": false
+        },
+        "EnumDeclaration_FileMode": {
+          "forwardCompat": false
         }
       },
       "0.1026.0": {
@@ -142,6 +172,44 @@
         },
         "InterfaceDeclaration_IQuorumProposals": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTree": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTreeEx": {
+          "backCompat": false
+        },
+        "EnumDeclaration_TreeEntry": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ITree": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_ITreeEntry": {
+          "forwardCompat": false
+        },
+        "EnumDeclaration_FileMode": {
+          "forwardCompat": false
+        }
+      },
+      "0.1027.0": {
+        "InterfaceDeclaration_ISnapshotTree": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTreeEx": {
+          "backCompat": false
+        },
+        "EnumDeclaration_TreeEntry": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ITree": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_ITreeEntry": {
+          "forwardCompat": false
+        },
+        "EnumDeclaration_FileMode": {
+          "forwardCompat": false
         }
       }
     }

@@ -14,8 +14,6 @@ export type ConnectionMode = "write" | "read";
 // @public (undocumented)
 export enum FileMode {
     // (undocumented)
-    Commit = "160000",
-    // (undocumented)
     Directory = "040000",
     // (undocumented)
     Executable = "100755",
@@ -379,10 +377,6 @@ export interface ISnapshotTree {
         [path: string]: string;
     };
     // (undocumented)
-    commits: {
-        [path: string]: string;
-    };
-    // (undocumented)
     id?: string;
     // (undocumented)
     trees: {
@@ -577,9 +571,6 @@ export type ITreeEntry = {
     type: TreeEntry.Blob;
     value: IBlob;
 } | {
-    type: TreeEntry.Commit;
-    value: string;
-} | {
     type: TreeEntry.Tree;
     value: ITree;
 } | {
@@ -699,8 +690,6 @@ export enum TreeEntry {
     Attachment = "Attachment",
     // (undocumented)
     Blob = "Blob",
-    // (undocumented)
-    Commit = "Commit",
     // (undocumented)
     Tree = "Tree"
 }
