@@ -102,7 +102,7 @@ We also accept some of the flags via environment variables.
 
 ## Advanced usage
 
-This bypass any configuration of version and direct access to the versions.
+This bypasses any configuration of version used by the describe* functions and provides direct access to the versioned APIs.
 
 First make sure to call `ensurePackageInstalled` before running the tests to make sure the necessary legacy version are
 installed.
