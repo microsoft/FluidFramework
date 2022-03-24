@@ -46,7 +46,7 @@ There are three compat `describe*` to generate different combinations, depending
 - Test combination generated: [CompatKind.None]
 
 These compat `describe*` functions will also load the APIs with appropriate version and provide the test with a
-`TestObjectProvider` object, where the test can use to access fluid functionality.  Even compat testing not
+`TestObjectProvider` object, where the test can use to access Fluid functionality.  Even compat testing not
 necessary, `TestObjectProvider` provide convenience function and tracking capability, and it allows the test
 to enable compat testing easily in the future just by changing the `describe*`.
 
@@ -86,7 +86,7 @@ driver selection, versions for compat testing, and compat kind combinations.
 - If it is a semver range, the latest in that range will be picked.
 - If it is an integer, the value will be apply to the minor version of the `baseVersion`, and create a `^` range
 including prerelease versions. The latest in that range will be picked.
-    - i.e. if `baseVersion` is `1.2.3`, and `compatVersion` is `-1`, the resulting range
+  - i.e. if `baseVersion` is `1.2.3`, and `compatVersion` is `-1`, the resulting range
 will be `^1.1.3-0`
 
 
