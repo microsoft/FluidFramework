@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import base64js from 'base64-js';
+import base64js from "base64-js";
 
 /**
  * @fileoverview Utility class to compute an hash for a given set of variables
@@ -282,7 +282,7 @@ export class HashCalculator {
         break;
 
       default:
-        throw new Error('_finalizeHash: We should never get into the default case.');
+        throw new Error("_finalizeHash: We should never get into the default case.");
     }
     /* eslint-enable no-fallthrough, no-multi-spaces */
 
@@ -318,7 +318,7 @@ export class HashCalculator {
 }
 
 var toUrlBase64 = function(base64) {
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').split('=')[0];
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").split("=")[0];
 };
 
 var uint32x4ToGUID = function(in_guidArray) {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from 'react';
+import * as React from "react";
 
 type showModalSignature = <T>(component: React.ComponentType<T>, props: T, closeHandler?: () => void) => void;
 interface IModalContext<P = any> {

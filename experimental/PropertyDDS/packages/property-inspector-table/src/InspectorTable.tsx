@@ -2,148 +2,148 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ExpiryModal } from './ExpiryModal';
-import { ModalConsumer } from './ModalManager';
-import { BaseProperty, ContainerProperty, ReferenceMapProperty, ReferenceProperty } from '@fluid-experimental/property-properties';
-import '@hig/fonts/build/ArtifaktElement.css';
-import Button from '@material-ui/core/Button';
-import { createStyles, Theme, withStyles, WithStyles } from '@material-ui/core/styles';
-import Tooltip from '@material-ui/core/Tooltip';
-import classNames from 'classnames';
-import debounce from 'lodash.debounce';
-import * as React from 'react';
-import BaseTable, { SortOrder } from 'react-base-table';
-import 'react-base-table/styles.css';
-import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
-import { InspectorMessages, minRows, minRowWidth, rowWidthInterval } from './constants';
-import { EditableValueCell } from './EditableValueCell';
-import { EditReferencePath } from './EditReferencePath';
-import { computeIconSize, Empty } from './Empty';
-import { getDefaultInspectorTableIcons } from './icons';
-import { InspectorTableFooter } from './InspectorTableFooter';
-import { InspectorTableHeader } from './InspectorTableHeader';
+import { ExpiryModal } from "./ExpiryModal";
+import { ModalConsumer } from "./ModalManager";
+import { BaseProperty, ContainerProperty, ReferenceMapProperty, ReferenceProperty } from "@fluid-experimental/property-properties";
+import "@hig/fonts/build/ArtifaktElement.css";
+import Button from "@material-ui/core/Button";
+import { createStyles, Theme, withStyles, WithStyles } from "@material-ui/core/styles";
+import Tooltip from "@material-ui/core/Tooltip";
+import classNames from "classnames";
+import debounce from "lodash.debounce";
+import * as React from "react";
+import BaseTable, { SortOrder } from "react-base-table";
+import "react-base-table/styles.css";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
+import { InspectorMessages, minRows, minRowWidth, rowWidthInterval } from "./constants";
+import { EditableValueCell } from "./EditableValueCell";
+import { EditReferencePath } from "./EditReferencePath";
+import { computeIconSize, Empty } from "./Empty";
+import { getDefaultInspectorTableIcons } from "./icons";
+import { InspectorTableFooter } from "./InspectorTableFooter";
+import { InspectorTableHeader } from "./InspectorTableHeader";
 import { IColumns, IDataGetterParameter, IInspectorRow, IInspectorSearchCallback,
   IInspectorSearchMatch, IInspectorSearchMatchMap, IInspectorTableProps,
-  IInspectorTableState } from './InspectorTableTypes';
-import { NameCell } from './NameCell';
-import { NewDataForm } from './NewDataForm';
-import { NewDataRow } from './NewDataRow';
-import { TypeColumn } from './TypeColumn';
-import { Utils } from './typeUtils';
+  IInspectorTableState } from "./InspectorTableTypes";
+import { NameCell } from "./NameCell";
+import { NewDataForm } from "./NewDataForm";
+import { NewDataRow } from "./NewDataRow";
+import { TypeColumn } from "./TypeColumn";
+import { Utils } from "./typeUtils";
 import { expandAll, fillExpanded, getReferenceValue, IInspectorSearchControls, isPrimitive, search, showNextResult,
-  toTableRows } from './utils';
+  toTableRows } from "./utils";
 
-const defaultSort = { key: 'name', order: SortOrder.ASC };
+const defaultSort = { key: "name", order: SortOrder.ASC };
 
 const footerHeight = 32;
 
 const styles = (theme: Theme) => createStyles({
   currentMatch: {
-    backgroundColor: 'rgba(250,162,27,0.5)',
-    display: 'flex',
-    width: '100%',
+    backgroundColor: "rgba(250,162,27,0.5)",
+    display: "flex",
+    width: "100%",
   },
   dataForm: {
-    height: '100%',
-    width: '100%',
+    height: "100%",
+    width: "100%",
   },
   dataFormContainer: {
-    alignItems: 'center',
-    display: 'flex',
+    alignItems: "center",
+    display: "flex",
     flexGrow: 1,
-    height: '100%',
+    height: "100%",
   },
   editReference: {
-    flexBasis: '60%',
+    flexBasis: "60%",
     marginBottom: theme.spacing(1),
-    maxWidth: '600px',
+    maxWidth: "600px",
     zIndex: 200,
   },
   editReferenceContainer: {
     bottom: footerHeight,
-    display: 'flex',
-    justifyContent: 'center',
-    position: 'absolute',
-    width: '100%',
+    display: "flex",
+    justifyContent: "center",
+    position: "absolute",
+    width: "100%",
   },
   evenRow: {
-    backgroundColor: '#FFFFFF',
-    color: '#3c3c3c',
+    backgroundColor: "#FFFFFF",
+    color: "#3c3c3c",
   },
   expiredNotice: {
-    display: 'flex',
-    flexDirection: 'column',
+    display: "flex",
+    flexDirection: "column",
   },
   expiryButton: {
-    alignSelf: 'center',
-    marginTop: '16px',
+    alignSelf: "center",
+    marginTop: "16px",
   },
   header: {
-    'background-color': '#FFFFFF',
-    'color': '#3c3c3c',
-    'font-size': '12px',
-    'font-weight': '700',
-    'text-transform': 'none',
+    "background-color": "#FFFFFF",
+    "color": "#3c3c3c",
+    "font-size": "12px",
+    "font-weight": "700",
+    "text-transform": "none",
   },
   isConstFlag: {
-    color: '#3C3C3C',
-    display: 'flex',
-    fontFamily: 'ArtifaktElement, Helvetica, Arial',
-    fontSize: '11px',
-    fontStyle: 'normal',
-    fontWeight: 'normal',
-    justifyContent: 'flex-end',
-    lineHeight: '20px',
-    marginLeft: 'auto',
-    marginRight: '5px',
-    minWidth: '97.5px',
+    color: "#3C3C3C",
+    display: "flex",
+    fontFamily: "ArtifaktElement, Helvetica, Arial",
+    fontSize: "11px",
+    fontStyle: "normal",
+    fontWeight: "normal",
+    justifyContent: "flex-end",
+    lineHeight: "20px",
+    marginLeft: "auto",
+    marginRight: "5px",
+    minWidth: "97.5px",
   },
   match: {
-    backgroundColor: 'rgba(250,162,27,0.2)',
-    display: 'flex',
-    width: '100%',
+    backgroundColor: "rgba(250,162,27,0.2)",
+    display: "flex",
+    width: "100%",
   },
   oddRow: {
-    backgroundColor: '#F9F9F9',
-    color: '#3c3c3c',
+    backgroundColor: "#F9F9F9",
+    color: "#3c3c3c",
   },
   root: {
-    'font-family': 'ArtifaktElement, Helvetica, Arial',
-    'font-size': '14px',
+    "font-family": "ArtifaktElement, Helvetica, Arial",
+    "font-size": "14px",
   },
   row: {
-    '&:hover, &.NameCell__hovered': {
-      backgroundColor: 'rgb(243,243,243)',
+    "&:hover, &.NameCell__hovered": {
+      backgroundColor: "rgb(243,243,243)",
     },
-    'border': '0',
+    "border": "0",
   },
   searchBoxContainer: {
-    height: '70%',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    width: '50%',
+    height: "70%",
+    marginLeft: "auto",
+    marginRight: "auto",
+    width: "50%",
   },
   skeletonLoading: {
-    paddingRight: '15px',
+    paddingRight: "15px",
   },
   table: {
-    boxShadow: 'none',
+    boxShadow: "none",
   },
   tooltip: {
-    backgroundColor: 'black',
+    backgroundColor: "black",
   },
   typeIdRow: {
-    display: 'flex',
-    flexBasis: '100%',
-    flexWrap: 'nowrap',
-    height: '100%',
-    justifyContent: 'space-between',
+    display: "flex",
+    flexBasis: "100%",
+    flexWrap: "nowrap",
+    height: "100%",
+    justifyContent: "space-between",
     minWidth: 0,
   },
   typeIdRowLeft: {
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
 });
 
@@ -210,7 +210,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
   IInspectorTableState> {
     public static defaultProps: Partial<IInspectorTableProps> = {
       childGetter: defaultInspectorTableChildGetter,
-      expandColumnKey: 'name',
+      expandColumnKey: "name",
       followReferences: true,
       nameGetter: defaultInspectorTableNameGetter,
       rowHeight: 32,
@@ -241,14 +241,14 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       currentResult: -1,
       editReferenceRowData: null,
       expanded: {},
-      expandedRepoGuid: '',
+      expandedRepoGuid: "",
       expandedRepoMap: {},
       foundMatches: [],
       matchesMap: {},
       searchDone: false,
-      searchExpression: '',
+      searchExpression: "",
       searchInProgress: false,
-      showFormRowID: '0',
+      showFormRowID: "0",
       sortBy: defaultSort,
       tableRows: [],
     };
@@ -267,8 +267,8 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         depth: 0, followReferences};
 
       this.debouncedSearchChange = debounce((searchExpression: string) => {
-        const newState: Pick<IInspectorTableState, 'currentResult' | 'foundMatches' | 'matchesMap' |
-        'searchAbortHandler' | 'searchInProgress' | 'searchState' | 'childToParentMap' | 'searchDone'> = {
+        const newState: Pick<IInspectorTableState, "currentResult" | "foundMatches" | "matchesMap" |
+        "searchAbortHandler" | "searchInProgress" | "searchState" | "childToParentMap" | "searchDone"> = {
             childToParentMap: {}, currentResult: undefined, foundMatches: [], matchesMap: {},
             searchAbortHandler: undefined, searchDone: false, searchInProgress: false, searchState: undefined,
           };
@@ -306,7 +306,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       const { data } = this.props;
       const { expanded } = this.state;
       if (data && data.getProperty() && data.getProperty().getRoot().getWorkspace()) {
-        const updatedTableRows = toTableRows({ data, id: ''} as IInspectorRow, this.props,
+        const updatedTableRows = toTableRows({ data, id: ""} as IInspectorRow, this.props,
           this.toTableRowOptions);
         fillExpanded(expanded, updatedTableRows, this.props,
           this.toTableRowOptions);
@@ -319,8 +319,8 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       const { currentResult, expanded, tableRows, searchExpression, sortBy } = this.state;
       let { foundMatches, childToParentMap } = this.state;
       this.toTableRowOptions.followReferences = followReferences;
-      const newState = {} as Pick<IInspectorTableState, 'currentResult' | 'expanded' | 'foundMatches' | 'matchesMap' |
-        'searchAbortHandler' | 'searchDone' | 'searchInProgress' | 'searchState' | 'tableRows' | 'childToParentMap' >;
+      const newState = {} as Pick<IInspectorTableState, "currentResult" | "expanded" | "foundMatches" | "matchesMap" |
+        "searchAbortHandler" | "searchDone" | "searchInProgress" | "searchState" | "tableRows" | "childToParentMap" >;
       let forceUpdateRequired = false;
 
       // Cancel all search activity and clear the search field when checking out a new repo.
@@ -333,7 +333,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       // This has the undesired side effect that we also restart search when the browser window is resized, for example.
       if ((prevProps !== this.props || prevState.sortBy.order !== sortBy.order) && !checkoutInProgress) {
         if (data) {
-          const updatedTableRows = toTableRows({ data, id: ''} as IInspectorRow, this.props,
+          const updatedTableRows = toTableRows({ data, id: ""} as IInspectorRow, this.props,
             this.toTableRowOptions);
           fillExpanded(expanded, updatedTableRows, this.props, this.toTableRowOptions);
           // We need to update the table rows directly, because they might be used in the search call below.
@@ -519,18 +519,18 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
                     )}
                   </ModalConsumer>
                 </div>}
-              iconId={'expired'}
+              iconId={"expired"}
               iconSize={computeIconSize(width)}
-              message={'This repository is expired'}
+              message={"This repository is expired"}
             />
           );
         } else {
           return (
             <Empty
               description={emptyDescription}
-              iconId={'no-data'}
+              iconId={"no-data"}
               iconSize={computeIconSize(width)}
-              message={'There is no data to show'}
+              message={"There is no data to show"}
             />
           );
         }
@@ -548,7 +548,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
             headerRenderer={getHeader}
             rowClassName={({rowIndex}) => classNames(classes.row,
               (rowIndex % 2 === 0) ? classes.evenRow : classes.oddRow)}
-            gridStyle={{outline: 'none'}}
+            gridStyle={{outline: "none"}}
             onRowExpand={this.handleRowExpanded}
             expandedRowKeys={expandedKeys}
             height={height}
@@ -563,7 +563,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
           />
           {
             editReferenceRowData &&
-            <div style={{position: 'relative', width}}>
+            <div style={{position: "relative", width}}>
               <div className={classes.editReferenceContainer}>
                 <EditReferencePath
                   className={classes.editReference}
@@ -588,13 +588,13 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
           dataKey: currentId,
           key: currentId,
           resizable: true,
-          sortable: currentId === 'name',
+          sortable: currentId === "name",
           title: currentId[0].toUpperCase() + currentId.slice(1), // Capitalize title
           width,
         };
-        if (currentId === 'name') { newColumn.cellRenderer = this.nameCellRenderer; }
-        if (currentId === 'value') { newColumn.cellRenderer = this.valueCellRenderer; }
-        if (currentId === 'type') { newColumn.cellRenderer = this.typeCellRenderer; }
+        if (currentId === "name") { newColumn.cellRenderer = this.nameCellRenderer; }
+        if (currentId === "value") { newColumn.cellRenderer = this.valueCellRenderer; }
+        if (currentId === "type") { newColumn.cellRenderer = this.typeCellRenderer; }
         columns.push(newColumn);
       }
       return columns;
@@ -608,13 +608,13 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     private async handleCreateData(rowData: IInspectorRow, name: string, type: string, context: string) {
       if (this.dataCreation) {
         this.props.dataCreationHandler!(rowData, name, type, context);
-        this.setState({showFormRowID: '0'});
+        this.setState({showFormRowID: "0"});
         this.forceUpdateBaseTable();
       }
     }
 
     private handleCancelCreate = () => {
-      this.setState({showFormRowID: '0'});
+      this.setState({showFormRowID: "0"});
       this.forceUpdateBaseTable();
     };
 
@@ -637,8 +637,8 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         } catch (e) {
           // if maximum call stack size is exceeded, user probably created cyclic reference
           // we can't delete cyclic references so we need set reference path to some other value
-          if (e.message.includes('Maximum call stack size exceeded')) {
-            parentProp.setValues({[rowData.name]: 'Could not resolve the reference'});
+          if (e.message.includes("Maximum call stack size exceeded")) {
+            parentProp.setValues({[rowData.name]: "Could not resolve the reference"});
           }
         }
       } else {
@@ -649,8 +649,8 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         try {
           unresolvedProperty.isReferenceValid();
         } catch (e) {
-          if (e.message.includes('Maximum call stack size exceeded')) {
-            unresolvedProperty.setValue('Could not resolve the reference');
+          if (e.message.includes("Maximum call stack size exceeded")) {
+            unresolvedProperty.setValue("Could not resolve the reference");
           }
         }
       }
@@ -664,7 +664,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         this.state.searchAbortHandler();
       }
       this.setState({ currentResult: undefined, foundMatches: [], matchesMap: {}, searchAbortHandler: undefined,
-        searchDone: false, searchExpression: '', searchInProgress: false, searchState: undefined });
+        searchDone: false, searchExpression: "", searchInProgress: false, searchState: undefined });
       this.forceUpdateBaseTable();
     };
 
@@ -682,7 +682,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
 
     private continueSearchOnDemand = () => {
-      const newState: Pick<IInspectorTableState, 'searchAbortHandler' | 'searchInProgress' | 'searchState'> = {
+      const newState: Pick<IInspectorTableState, "searchAbortHandler" | "searchInProgress" | "searchState"> = {
         searchInProgress: true,
       };
       const { searchExpression } = this.state;
@@ -754,7 +754,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         tableRows.forEach(item => {
             this.traverseTree(item, (item) => {
                 if (item.children && !item.isReference) {
-                    if (item.children[0].context === 'd') {
+                    if (item.children[0].context === "d") {
                       fillExpanded({[item.id]: true}, [item], this.props, this.toTableRowOptions);
                      }
                     }
@@ -810,10 +810,10 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       const {foundMatches, matchesMap, currentResult} = this.state;
       const highlightedResult: IInspectorSearchMatch = (
         currentResult !== -1 && currentResult !== undefined && foundMatches.length! > 0
-        ? foundMatches[currentResult] : {indexOfColumn: -1, rowId: ''});
+        ? foundMatches[currentResult] : {indexOfColumn: -1, rowId: ""});
       return highlightedResult.rowId === rowData.id && highlightedResult.indexOfColumn === columnIndex ?
         classes.currentMatch : (matchesMap[rowData.id] && matchesMap[rowData.id][columnIndex] ?
-          classes.match : '');
+          classes.match : "");
     };
 
     private nameCellRenderer = ({rowData, cellData, columnIndex}:
@@ -845,7 +845,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         }
         if (cellData && dataGetter && rowData.context) { // cell data comes from data getter
           return cellData;
-        } else if (isPrimitive(rowData.typeid) && rowData.context === 'single') {
+        } else if (isPrimitive(rowData.typeid) && rowData.context === "single") {
           return (
             <EditableValueCell
               className={this.determineCellClassName(rowData, columnIndex)}
@@ -901,7 +901,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       const idInExpanded = rowData.id in newExpanded;
       if (newExpandedFlag && !idInExpanded) {
         newExpanded[rowData.id] = true;
-        if (rowData.children && rowData.children![0].id === 'd') {
+        if (rowData.children && rowData.children![0].id === "d") {
           fillExpanded(newExpanded, this.state.tableRows, this.props, this.toTableRowOptions);
         }
       } else if (!newExpandedFlag && idInExpanded) {
@@ -916,8 +916,8 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
 
     private generateForm = (rowData: IInspectorRow) => {
-      if (rowData.parent!.getContext() === 'array' && rowData.parent!.isPrimitiveType()) {
-        this.handleCreateData(rowData, '', rowData.parent!.getTypeid(), 'single');
+      if (rowData.parent!.getContext() === "array" && rowData.parent!.isPrimitiveType()) {
+        this.handleCreateData(rowData, "", rowData.parent!.getTypeid(), "single");
         return false;
       }
       return true;
@@ -925,9 +925,9 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
 
     private updateSearchState = (foundMatches: IInspectorSearchMatch[], matchesMap: IInspectorSearchMatchMap,
                                  done: boolean, childToParentMap: {[key: string]: string}) => {
-      const newState = {} as Pick<IInspectorTableState, 'currentResult' | 'foundMatches' | 'matchesMap' |
-        'searchInProgress' | 'searchAbortHandler' | 'searchExpression' | 'childToParentMap' | 'searchDone' |
-        'searchState'>;
+      const newState = {} as Pick<IInspectorTableState, "currentResult" | "foundMatches" | "matchesMap" |
+        "searchInProgress" | "searchAbortHandler" | "searchExpression" | "childToParentMap" | "searchDone" |
+        "searchState">;
 
       newState.searchInProgress = false;
       if ((this.state.currentResult === -1 || this.state.currentResult === undefined) && foundMatches.length > 0) {
@@ -954,5 +954,5 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
   }
 
-const StyledInspectorTable = withStyles(styles, {name: 'InspectorTable'})(InspectorTable);
+const StyledInspectorTable = withStyles(styles, {name: "InspectorTable"})(InspectorTable);
 export { StyledInspectorTable as InspectorTable };

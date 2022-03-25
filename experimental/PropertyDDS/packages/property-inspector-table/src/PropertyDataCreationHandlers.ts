@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PropertyProxy } from '@fluid-experimental/property-proxy';
-import { InputValidator } from './InputValidator';
-import { PropertyFactory } from '@fluid-experimental/property-properties';
+import { PropertyProxy } from "@fluid-experimental/property-proxy";
+import { InputValidator } from "./InputValidator";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
-import { IDataCreationOptions, IInspectorRow } from './InspectorTableTypes';
+import { IDataCreationOptions, IInspectorRow } from "./InspectorTableTypes";
 
-const EXCLUDE_PROPS = ['BaseProperty', 'Enum', 'ContainerProperty'];
+const EXCLUDE_PROPS = ["BaseProperty", "Enum", "ContainerProperty"];
 
 export const fetchRegisteredTemplates = () => {
   const toTemplateList = (x: string) => ({ value: x, label: x });
@@ -25,8 +25,8 @@ export const fetchRegisteredTemplates = () => {
     }
   });
   const templates = [
-    ['Primitives', primitiveLocalTemplates.map(toTemplateList)],
-    ['Custom', customLocalTemplates.map(toTemplateList)],
+    ["Primitives", primitiveLocalTemplates.map(toTemplateList)],
+    ["Custom", customLocalTemplates.map(toTemplateList)],
   ];
   return templates;
 };
@@ -34,10 +34,10 @@ export const fetchRegisteredTemplates = () => {
 export const handlePropertyDataCreationOptionGeneration =
   (rowData: IInspectorRow, nameOnly: boolean): IDataCreationOptions => {
     if (nameOnly) {
-      return { name: 'property' };
+      return { name: "property" };
     }
     const templates = fetchRegisteredTemplates();
-    return { name: 'property', options: templates };
+    return { name: "property", options: templates };
   };
 
 /**
@@ -51,7 +51,7 @@ export const handlePropertyDataCreationOptionGeneration =
  *               If it not any of those types (TODO: What happens then?).
  */
 const createProperty = (name: string, typeid: string, context: string, parent: any) => {
-  if (!(['set', 'array'].includes(parent.getProperty().getContext()))) {
+  if (!(["set", "array"].includes(parent.getProperty().getContext()))) {
     InputValidator.validateNotEmpty(name);
   }
 
@@ -61,7 +61,7 @@ const createProperty = (name: string, typeid: string, context: string, parent: a
     parent.push(newProp);
   } else if (parent instanceof Map) {
     if (parent.has(name)) {
-      throw new Error('Key already exists in the map: ' + name);
+      throw new Error("Key already exists in the map: " + name);
     } else {
       parent.set(name, newProp);
     }
@@ -69,7 +69,7 @@ const createProperty = (name: string, typeid: string, context: string, parent: a
     parent.add(newProp);
   } else {
     if (parent.getProperty().has(name)) {
-      throw new Error('Key already exists in this property: ' + name);
+      throw new Error("Key already exists in this property: " + name);
     } else {
       parent[name] = newProp;
     }

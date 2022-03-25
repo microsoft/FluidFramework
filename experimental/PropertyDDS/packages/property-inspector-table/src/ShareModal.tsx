@@ -3,64 +3,64 @@
  * Licensed under the MIT License.
  */
 
-import { WithStyles } from '@material-ui/core';
-import Button from '@material-ui/core/Button';
-import { withStyles } from '@material-ui/core/styles';
-import Tooltip from '@material-ui/core/Tooltip';
-import * as React from 'react';
-import { FloatingLabelTextField } from './FloatingLabelTextField';
-import { InspectorModal } from './InspectorModal';
-import { ErrorPopup } from './ErrorPopup';
-import { SvgIcon } from './SVGIcon';
+import { WithStyles } from "@material-ui/core";
+import Button from "@material-ui/core/Button";
+import { withStyles } from "@material-ui/core/styles";
+import Tooltip from "@material-ui/core/Tooltip";
+import * as React from "react";
+import { FloatingLabelTextField } from "./FloatingLabelTextField";
+import { InspectorModal } from "./InspectorModal";
+import { ErrorPopup } from "./ErrorPopup";
+import { SvgIcon } from "./SVGIcon";
 
 const styles = () => ({
   contentContainer: {
-    'display': 'flex',
-    'flex-direction': 'column',
-    'justify-content': 'space-between',
+    "display": "flex",
+    "flex-direction": "column",
+    "justify-content": "space-between",
   },
   copyLinkButton: {
-    '&:hover': {
-      background: 'transparent',
+    "&:hover": {
+      background: "transparent",
     },
-    'margin-left': '10px',
+    "margin-left": "10px",
   },
   floatingLabelTextField: {
-    'flex-grow': 1,
+    "flex-grow": 1,
   },
   horizontalContainer: {
-    'align-items': 'center',
-    'display': 'flex',
-    'justify-content': 'space-between',
+    "align-items": "center",
+    "display": "flex",
+    "justify-content": "space-between",
   },
   info: {
-    'flex-grow': 1,
+    "flex-grow": 1,
   },
   infoContainer: {
-    'display': 'flex',
-    'flex-direction': 'column',
-    'justify-content': 'space-between',
+    "display": "flex",
+    "flex-direction": "column",
+    "justify-content": "space-between",
   },
   infoIcon: {
-    padding: '12px 24px 12px 0px',
+    padding: "12px 24px 12px 0px",
   },
   popper: {
-    'z-index': 10500,
+    "z-index": 10500,
     // must be that high as the InspectorModal component has a 'powerlevel' over 10000! (due to TopNav)
   },
   shareButton: {
-    '&:hover': {
-      background: 'transparent',
-      cursor: 'pointer',
+    "&:hover": {
+      background: "transparent",
+      cursor: "pointer",
     },
-    'align-self': 'flex-end',
-    'padding-bottom': '12px',
+    "align-self": "flex-end",
+    "padding-bottom": "12px",
   },
   spacer: {
-    'flex-basis': '3vh',
+    "flex-basis": "3vh",
   },
   tooltip: {
-    'background-color': 'black',
+    "background-color": "black",
   },
 });
 
@@ -140,7 +140,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
           <div className={classes!.horizontalContainer}>
             <FloatingLabelTextField
               id='shareModalUrnTextField'
-              label={'Link'}
+              label={"Link"}
               value={urn}
               className={classes.floatingLabelTextField}
             />
@@ -182,7 +182,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
     if (this.state.sharedWith) {
       // for now, we don't verify * permission, because we can only
       // give or remove them all at the same time
-      return '*' in this.state.sharedWith;
+      return "*" in this.state.sharedWith;
     }
     return false;
   }
@@ -220,23 +220,23 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
     return (
       <div className={classes.infoContainer}>
         <div className={classes.info}>
-          <SvgIcon className={classes.infoIcon} svgId={this.isPublic ? 'visible-16' : 'hidden-16'} />
-          Public access is <b>{this.isPublic ? 'enabled' : 'disabled'}</b>
+          <SvgIcon className={classes.infoIcon} svgId={this.isPublic ? "visible-16" : "hidden-16"} />
+          Public access is <b>{this.isPublic ? "enabled" : "disabled"}</b>
         </div>
       </div>
     );
   }
 
   private onCopyLink = () => {
-    const el = document.getElementById('shareModalUrnTextField') as HTMLInputElement;
+    const el = document.getElementById("shareModalUrnTextField") as HTMLInputElement;
     el!.select();
-    document.execCommand('copy');
+    document.execCommand("copy");
     this.setState({ toolTipsIsOpen: { copy: true } });
   };
 
   private disablePublicSharing = () => {
     this.updateSharing(() =>
-      ErrorPopup(this.props.options.unshareHandler!.bind(this, ['*'], [], { actions: ['read', 'write', 'delete'] }))
+      ErrorPopup(this.props.options.unshareHandler!.bind(this, ["*"], [], { actions: ["read", "write", "delete"] }))
         .then(() => {
           // In the future, we will update sharedWith with result of unshareHandler
           // For now, because we care only about * permission, we remove it
@@ -247,11 +247,11 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
 
   private enablePublicSharing = () => {
     this.updateSharing(() =>
-      ErrorPopup(this.props.options.shareHandler.bind(this, ['*'], [], { actions: ['read', 'write', 'delete'] }))
+      ErrorPopup(this.props.options.shareHandler.bind(this, ["*"], [], { actions: ["read", "write", "delete"] }))
         .then(() => {
           // In the future, we will update sharedWith with result of shareHandler
           // For now, because we care only about * permission, we add it
-          this.setState({ sharedWith: { '*': ['read', 'write', 'delete'] } });
+          this.setState({ sharedWith: { "*": ["read", "write", "delete"] } });
         }),
     );
   };
@@ -268,5 +268,5 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
   };
 }
 
-const StyledShareModal = withStyles(styles, { name: 'ShareModal' })(ShareModal);
+const StyledShareModal = withStyles(styles, { name: "ShareModal" })(ShareModal);
 export { StyledShareModal as ShareModal };

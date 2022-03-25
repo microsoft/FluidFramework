@@ -17,7 +17,6 @@
     "@rushstack/no-new-null": "off",
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/consistent-type-assertions": "off",
-    "@typescript-eslint/quotes": "off",
     "@typescript-eslint/no-duplicate-imports": "off",
     "@typescript-eslint/no-dynamic-delete": "off",
     "@typescript-eslint/no-extraneous-class": "off",

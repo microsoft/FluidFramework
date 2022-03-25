@@ -2,15 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ErrorPopup } from './ErrorPopup';
-import { SvgIcon } from './SVGIcon';
-import { LoadingButton } from './LoadingButton';
-import Button from '@material-ui/core/Button';
-import { makeStyles, Theme } from '@material-ui/core/styles';
-import TextField from '@material-ui/core/TextField';
-import classNames from 'classnames';
-import React from 'react';
-import { iconHeight, iconWidth } from './constants';
+import { ErrorPopup } from "./ErrorPopup";
+import { SvgIcon } from "./SVGIcon";
+import { LoadingButton } from "./LoadingButton";
+import Button from "@material-ui/core/Button";
+import { makeStyles, Theme } from "@material-ui/core/styles";
+import TextField from "@material-ui/core/TextField";
+import classNames from "classnames";
+import React from "react";
+import { iconHeight, iconWidth } from "./constants";
 
 const useStyles = makeStyles((theme: Theme) => ({
   bold: {
@@ -23,41 +23,41 @@ const useStyles = makeStyles((theme: Theme) => ({
     marginRight: theme.spacing(1),
   },
   container: {
-    backgroundColor: '#F5F5F5',
-    border: '1px solid #EEEEEE',
-    borderRadius: '4px',
-    display: 'flex',
-    flexDirection: 'column',
+    backgroundColor: "#F5F5F5",
+    border: "1px solid #EEEEEE",
+    borderRadius: "4px",
+    display: "flex",
+    flexDirection: "column",
     padding: theme.spacing(2),
   },
   horizontal: {
-    alignItems: 'center',
-    display: 'flex',
+    alignItems: "center",
+    display: "flex",
   },
   italic: {
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   root: {
-    '& .MuiOutlinedInput-root': {
-      '& input': {
-        fontWeight: 'normal',
-        padding: '5px',
+    "& .MuiOutlinedInput-root": {
+      "& input": {
+        fontWeight: "normal",
+        padding: "5px",
       },
     },
   },
   textField: {
     backgroundColor: theme.palette.background.default,
     flexGrow: 1,
-    height: '100%',
+    height: "100%",
     marginBottom: 0,
     marginRight: theme.spacing(2),
     marginTop: 0,
   },
   textFieldInput: {
-    fontSize: '12px',
-    height: '100%',
+    fontSize: "12px",
+    height: "100%",
   },
-}), { name: 'EditReferencePath' });
+}), { name: "EditReferencePath" });
 
 interface IEditReferencePathProps {
   onCancel: () => void;
@@ -106,7 +106,7 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
           id='outlined-bare'
           onChange={handleInputChange}
           onKeyPress={(event) => {
-            if (event.key === 'Enter') {
+            if (event.key === "Enter") {
               handleEdit();
             }
           }}
