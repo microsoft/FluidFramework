@@ -70,7 +70,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.2000-0",
     "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^8.2.2",
     "@types/nock": "^9.3.0",
