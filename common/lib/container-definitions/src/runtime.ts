@@ -25,7 +25,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
-import { ICriticalContainerError, ContainerWarning } from "./error";
+import { ICriticalContainerError } from "./error";
 import { ILoader, ILoaderOptions } from "./loader";
 
 /**
@@ -145,11 +145,6 @@ export interface IContainerContext extends IDisposable {
      * Ambient services provided with the context
      */
     readonly scope: IFluidObject & FluidObject;
-
-    /**
-     * @deprecated 0.56, will be removed in the next release
-     */
-    raiseContainerWarning?(warning: ContainerWarning): void;
 
     /**
      * Get an absolute url for a provided container-relative request.
