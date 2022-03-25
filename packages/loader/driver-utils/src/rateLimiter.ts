@@ -7,6 +7,8 @@ import { assert } from "@fluidframework/common-utils";
 
 export class RateLimiter {
     private readonly tasks: (() => void)[] = [];
+        // False positive?
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly
     constructor(private maxRequests: number) {
         assert(maxRequests > 0, 0x0ae /* "Tried to create rate limiter with 0 max requests!" */);
     }

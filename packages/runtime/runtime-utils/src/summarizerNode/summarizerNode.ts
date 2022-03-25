@@ -472,8 +472,12 @@ export class SummarizerNode implements IRootSummarizerNode {
         protected readonly defaultLogger: ITelemetryLogger,
         private readonly summarizeInternalFn: (fullTree: boolean) => Promise<ISummarizeInternalResult>,
         config: ISummarizerNodeConfig,
+        // False positive?
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly
         private _changeSequenceNumber: number,
         /** Undefined means created without summary */
+        // False positive?
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly
         private _latestSummary?: SummaryNode,
         private readonly initialSummary?: IInitialSummary,
         protected wipSummaryLogger?: ITelemetryLogger,

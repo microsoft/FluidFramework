@@ -44,6 +44,8 @@ export class ParallelRequests<T> {
 
     constructor(
         from: number,
+        // False positive?
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly
         private to: number | undefined,
         private readonly payloadSize: number,
         private readonly logger: ITelemetryLogger,
