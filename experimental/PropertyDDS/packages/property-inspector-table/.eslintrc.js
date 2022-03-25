@@ -31,8 +31,6 @@
     "no-bitwise": "off",
     "no-param-reassign": "off",
     "no-prototype-builtins": "off",
-    "no-useless-escape": "off",
-    "prefer-object-spread": "off",
     "prefer-template": "off",
     "react/no-direct-mutation-state": "off",
     "react/no-unescaped-entities": "off",

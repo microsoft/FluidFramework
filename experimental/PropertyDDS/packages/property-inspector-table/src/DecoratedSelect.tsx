@@ -72,16 +72,15 @@ const reactSelectStyles: StylesConfig = {
     marginBottom: "0px",
     marginTop: "5px",
   }),
-  option: (provided, state) => (Object.assign({
+  option: (provided, state) => ({
     ...provided,
     color: textDarkColor,
     display: "flex",
     fontSize: ".9rem",
     fontWeight: "bold",
-  },
-    state.isFocused ? { backgroundColor: backGroundLightBlueColor } : {},
-    !state.isFocused ? { backgroundColor: colorWhite } : {},
-  )),
+    ...(state.isFocused ? { backgroundColor: backGroundLightBlueColor } : {}),
+    ...(!state.isFocused ? { backgroundColor: colorWhite } : {}),
+  }),
   singleValue: (base) => ({
     ...base,
     alignItems: "center",

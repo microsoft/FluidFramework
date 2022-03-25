@@ -77,9 +77,9 @@ export const TypeColumn: React.FunctionComponent<ITypeColumn> = ({ rowData }) =>
   } else {
     [typeid, additionalType] = rowData.typeid.split("<");
   }
-  typeid = typeid.replace(/\>/g, "");
-  additionalType = additionalType && additionalType.replace(/\>/g, "") !== "Enum" ?
-    additionalType.replace(/\>/g, "") : undefined;
+  typeid = typeid.replace(/>/g, "");
+  additionalType = additionalType && additionalType.replace(/>/g, "") !== "Enum" ?
+    additionalType.replace(/>/g, "") : undefined;
   return (
     <Tooltip
       enterDelay={500}
