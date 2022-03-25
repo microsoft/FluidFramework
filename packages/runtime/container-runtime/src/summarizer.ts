@@ -45,7 +45,7 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
     readonly canRetry = true;
 
     /** Create a summarizingWarning caused by the given error */
-    static createFromError(error: any) {
+    static createFromError(error: unknown) {
         const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg);
         return wrapError<SummarizingWarning>(error, newErrorFn);
     }
