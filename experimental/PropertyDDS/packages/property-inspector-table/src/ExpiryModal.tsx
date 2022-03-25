@@ -374,7 +374,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     return (
       <div className={classes.contentContainer}>
         Are you sure you want to delete this repository?<br />
-        By deleting it, the Lifecycle State will change to 'Expired' for 30 days before being destroyed.
+        By deleting it, the Lifecycle State will change to &quot;Expired&quot; for 30 days before being destroyed.
         {
           isV1Urn && <span><br />
             Note: You are using a v1 branch urn. You will need to convert it into a v2 urn in order to

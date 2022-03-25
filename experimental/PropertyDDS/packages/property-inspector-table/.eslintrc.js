@@ -27,9 +27,6 @@
     "max-len": "off",
     "no-bitwise": "off",
     "no-param-reassign": "off",
-    "react/no-direct-mutation-state": "off",
-    "react/no-unescaped-entities": "off",
-    "react/prop-types": "off",
     "unicorn/better-regex": "off",
     "unicorn/filename-case": "off",
   }

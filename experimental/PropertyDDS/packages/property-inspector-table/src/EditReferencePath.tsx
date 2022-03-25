@@ -67,6 +67,7 @@ interface IEditReferencePathProps {
 }
 
 export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
+  // eslint-disable-next-line react/prop-types
   & React.HTMLAttributes<HTMLDivElement>> = ({onCancel, onEdit, name, path, className, ...restProps}) => {
   const classes = useStyles();
   const [newPath, setNewPath] = React.useState(path);
