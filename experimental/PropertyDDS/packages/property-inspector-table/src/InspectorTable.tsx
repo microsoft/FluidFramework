@@ -2,7 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { BaseProperty, ContainerProperty, ReferenceMapProperty, ReferenceProperty } from "@fluid-experimental/property-properties";
+import {
+  BaseProperty,
+  ContainerProperty,
+  ReferenceMapProperty,
+  ReferenceProperty,
+} from "@fluid-experimental/property-properties";
 import "@hig/fonts/build/ArtifaktElement.css";
 import Button from "@material-ui/core/Button";
 import { createStyles, Theme, withStyles, WithStyles } from "@material-ui/core/styles";
@@ -217,7 +222,10 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       rowIconRenderer: getDefaultInspectorTableIcons,
     };
 
-    public static getDerivedStateFromProps(props: IInspectorTableProps, state: IInspectorTableState): Partial<IInspectorTableState> {
+    public static getDerivedStateFromProps(
+      props: IInspectorTableProps,
+      state: IInspectorTableState,
+    ): Partial<IInspectorTableState> {
       let newState: Partial<IInspectorTableState> = {};
       if (props.checkoutInProgress) {
         newState = {editReferenceRowData: null};
@@ -695,7 +703,11 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       }
     };
 
-    private readonly startSearch = (searchExpression: string, callback: IInspectorSearchCallback, keepMatches = true): IInspectorSearchControls | undefined => {
+    private readonly startSearch = (
+      searchExpression: string,
+      callback: IInspectorSearchCallback,
+      keepMatches = true,
+    ): IInspectorSearchControls | undefined => {
       const { data } = this.props;
       const { searchState, tableRows } = this.state;
       const currentWorkspace = data && data.getProperty().getRoot().getWorkspace();
@@ -838,6 +850,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         }
       };
 
+    // eslint-disable-next-line max-len
     private readonly valueCellRenderer = ({rowData, cellData, columnIndex}: {rowData: IInspectorRow, cellData: React.ReactNode | undefined, columnIndex: number}) => {
         const {classes, checkoutInProgress, followReferences, rowIconRenderer, width, dataGetter, readOnly} =
           this.props;
@@ -897,6 +910,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
      * Maps the expanded row to either the filteredExpanded list or the whole dataset expanded list. This
      * allows the user to come back to the state before performing the filtering
      */
+    // eslint-disable-next-line max-len
     private readonly handleRowExpanded = ({rowData, expanded: newExpandedFlag}: {rowData: IInspectorRow, expanded: boolean}) => {
       const newExpanded = { ...this.state.expanded };
       const idInExpanded = rowData.id in newExpanded;

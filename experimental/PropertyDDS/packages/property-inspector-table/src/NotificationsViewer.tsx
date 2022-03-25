@@ -151,6 +151,7 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
     });
   };
 
+  // eslint-disable-next-line max-len
   private readonly removeNotificationByIndex: INotificationContext["removeNotificationByIndex"] = (notificationIndex) => {
     this.removeNotification(this.state.notificationList[notificationIndex].id);
   };

@@ -8,8 +8,6 @@
       "@fluidframework/eslint-config-fluid"
   ],
   "rules": {
-    "max-len": [2, 140, 2],
-
     "@rushstack/no-new-null": "off",
     "@typescript-eslint/consistent-type-assertions": "off",
     "@typescript-eslint/no-dynamic-delete": "off",
@@ -22,8 +20,6 @@
     "@typescript-eslint/strict-boolean-expressions": "off",
     "import/no-internal-modules": "off",
     "import/no-unassigned-import": "off",
-    "max-len": "off",
-    "no-bitwise": "off",
     "no-param-reassign": "off",
     "unicorn/better-regex": "off",
     "unicorn/filename-case": "off",
