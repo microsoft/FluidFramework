@@ -40,8 +40,7 @@ type anyFunction = (...args: any[]) => any;
  *  the original error object, depending on the `catchErr` flag.
  */
 export function ErrorPopup<T extends anyFunction = anyFunction,
-  K = ReturnType<T> extends Promise<infer R> ? R: ReturnType<T>>(anythingThatMightEmitError: T, catchErr = true)
-  : Promise<void | K> {
+  K = ReturnType<T> extends Promise<infer R> ? R: ReturnType<T>>(anythingThatMightEmitError: T, catchErr = true): Promise<void | K> {
   try {
     const result = anythingThatMightEmitError();
     if (isPromise<K, ReturnType<T>>(result)) {

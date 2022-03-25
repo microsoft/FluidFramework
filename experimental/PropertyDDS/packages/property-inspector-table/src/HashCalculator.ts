@@ -150,7 +150,7 @@ export class HashCalculator {
     this._h4 = in_seed;
     this.length = 0;
     this.finalized = false;
-  
+
     this.hashBuffer = new HashBuffer();
   }
 
@@ -162,7 +162,7 @@ export class HashCalculator {
   private pushUint16(in_value: number) {
     this.hashBuffer.dataView.setUint16(this.hashBuffer.pos, in_value);
     this.hashBuffer.pos += 2;
-  
+
     if (this.hashBuffer.pos >= 16) {
       this._computeHashFor16ByteBlock();
     }
@@ -189,7 +189,7 @@ export class HashCalculator {
     if (!this.finalized) {
       this._finalizeHash();
     }
-  
+
     // Convert the hash to a string
     return uint32x4ToGUID([this._h1, this._h2, this._h3, this._h4]);
   }
@@ -204,27 +204,27 @@ export class HashCalculator {
     var k3 = this.hashBuffer.Uint32HashArray[2];
     var k4 = this.hashBuffer.Uint32HashArray[3];
     this.hashBuffer.shiftBuffers();
-  
+
     k1 = imul(k1, c1) >>> 0; k1 = rotl32(k1, 15); k1 = imul(k1, c2) >>> 0; this._h1 = (this._h1 ^ k1) >>> 0;
     this._h1 = rotl32(this._h1, 19);
     this._h1 = (this._h1 + this._h2) >>> 0;
     this._h1 = ((imul(this._h1, 5) >>> 0) + 0x561ccd1b) >>> 0;
-  
+
     k2 = imul(k2, c2) >>> 0; k2 = rotl32(k2, 16); k2 = imul(k2, c3) >>> 0; this._h2 = (this._h2 ^ k2) >>> 0;
     this._h2 = rotl32(this._h2, 17);
     this._h2 = (this._h2 + this._h3) >>> 0;
     this._h2 = ((imul(this._h2, 5) >>> 0) + 0x0bcaa747) >>> 0;
-  
+
     k3 = imul(k3, c3) >>> 0; k3 = rotl32(k3, 17); k3 = imul(k3, c4) >>> 0; this._h3 = (this._h3 ^ k3) >>> 0;
     this._h3 = rotl32(this._h3, 15);
     this._h3 = (this._h3 + this._h4) >>> 0;
     this._h3 = ((imul(this._h3, 5) >>> 0) + 0x96cd1c35) >>> 0;
-  
+
     k4 = imul(k4, c4) >>> 0; k4 = rotl32(k4, 18); k4 = imul(k4, c1) >>> 0; this._h4 = (this._h4 ^ k4) >>> 0;
     this._h4 = rotl32(this._h4, 13);
     this._h4 = (this._h4 + this._h1) >>> 0;
     this._h4 = ((imul(this._h4, 5) >>> 0) + 0x32ac3b17) >>> 0;
-  
+
     this.length += 16;
   }
 
@@ -237,7 +237,7 @@ export class HashCalculator {
     var k2 = 0;
     var k3 = 0;
     var k4 = 0;
-  
+
     // Compute the hash for the remaining bytes in the buffer
     var buffer = this.hashBuffer.Uint8HashArray;
     /* eslint-disable no-fallthrough, no-multi-spaces */ // Allows cases to fallthrough without complaints.
@@ -249,7 +249,7 @@ export class HashCalculator {
         k4 = rotl32(k4, 18);
         k4 = imul(k4, c1) >>> 0;
         this._h4 = (this._h4 ^ k4) >>> 0;
-  
+
       case 12: k3 = (k3 ^ (buffer[11] << 24)) >>> 0;
       case 11: k3 = (k3 ^ (buffer[10] << 16)) >>> 0;
       case 10: k3 = (k3 ^ (buffer[ 9] << 8)) >>> 0;
@@ -258,7 +258,7 @@ export class HashCalculator {
         k3 = rotl32(k3, 17);
         k3 = imul(k3, c4) >>> 0;
         this._h3 = (this._h3 ^ k3) >>> 0;
-  
+
       case  8: k2 = (k2 ^ (buffer[ 7] << 24)) >>> 0;
       case  7: k2 = (k2 ^ (buffer[ 6] << 16)) >>> 0;
       case  6: k2 = (k2 ^ (buffer[ 5] << 8)) >>> 0;
@@ -267,7 +267,7 @@ export class HashCalculator {
         k2 = rotl32(k2, 16);
         k2 = imul(k2, c3) >>> 0;
         this._h2 = (this._h2 ^ k2) >>> 0;
-  
+
       case  4: k1 = (k1 ^ (buffer[ 3] << 24)) >>> 0;
       case  3: k1 = (k1 ^ (buffer[ 2] << 16)) >>> 0;
       case  2: k1 = (k1 ^ (buffer[ 1] << 8)) >>> 0;
@@ -280,39 +280,39 @@ export class HashCalculator {
       case  0:
         // Bug fix for previously unhandled condition
         break;
-  
+
       default:
         throw new Error('_finalizeHash: We should never get into the default case.');
     }
     /* eslint-enable no-fallthrough, no-multi-spaces */
-  
+
     // Perform the finalization
     var len = this.length + this.hashBuffer.pos;
     this._h1 = (this._h1 ^ len) >>> 0;
     this._h2 = (this._h2 ^ len) >>> 0;
     this._h3 = (this._h3 ^ len) >>> 0;
     this._h4 = (this._h4 ^ len) >>> 0;
-  
+
     this._h1 = (this._h1 + this._h2) >>> 0;
     this._h1 = (this._h1 + this._h3) >>> 0;
     this._h1 = (this._h1 + this._h4) >>> 0;
     this._h2 = (this._h2 + this._h1) >>> 0;
     this._h3 = (this._h3 + this._h1) >>> 0;
     this._h4 = (this._h4 + this._h1) >>> 0;
-  
+
     this._h1 = fmix32(this._h1);
     this._h2 = fmix32(this._h2);
     this._h3 = fmix32(this._h3);
     this._h4 = fmix32(this._h4);
-  
+
     this._h1 = (this._h1 + this._h2) >>> 0;
     this._h1 = (this._h1 + this._h3) >>> 0;
     this._h1 = (this._h1 + this._h4) >>> 0;
-  
+
     this._h2 = (this._h2 + this._h1) >>> 0;
     this._h3 = (this._h3 + this._h1) >>> 0;
     this._h4 = (this._h4 + this._h1) >>> 0;
-  
+
     this.finalized = true;
   }
 }

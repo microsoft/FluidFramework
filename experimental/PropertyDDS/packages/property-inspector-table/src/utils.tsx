@@ -48,8 +48,7 @@ interface IShowNextResultResult {
  */
 export const showNextResult = (
   data: IInspectorRow[], currentlyExpanded: IExpandedMap, allMatches: IInspectorSearchMatch[],
-  resultIndex: number, childToParentMap: {[key: string]: string})
-   : IShowNextResultResult => {
+  resultIndex: number, childToParentMap: {[key: string]: string}): IShowNextResultResult => {
   const desiredDataItem = allMatches[resultIndex];
   // sanity check
   if (!desiredDataItem) {
@@ -174,7 +173,7 @@ export const search = (
   // Check if search should be aborted.
   if (searchState.abort) {
     return {
-      abortHandler: () => { /*noop*/ },
+      abortHandler: () => { /* noop */ },
       state: searchState,
     };
   }
@@ -514,8 +513,7 @@ const createInvalidReference = (parentData: BaseProxifiedProperty, propertyId: s
  */
 export const singlePropertyTableRow = (parentData: BaseProxifiedProperty, propertyId: string, parentRowId: string,
                                        props: IToTableRowsProps, options: IPropertyToTableRowOptions,
-                                       pathPrefix: string)
-                                       : IInspectorRow => {
+                                       pathPrefix: string): IInspectorRow => {
   const { depth, addDummy, dataCreation, followReferences, ascending } = options;
   const parentIsConstant = !!options.parentIsConstant;
   const parentProperty = parentData.getProperty();

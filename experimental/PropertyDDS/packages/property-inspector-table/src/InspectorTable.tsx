@@ -217,8 +217,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       rowIconRenderer: getDefaultInspectorTableIcons,
     };
 
-    public static getDerivedStateFromProps(props: IInspectorTableProps, state: IInspectorTableState)
-     : Partial<IInspectorTableState> {
+    public static getDerivedStateFromProps(props: IInspectorTableProps, state: IInspectorTableState): Partial<IInspectorTableState> {
       let newState: Partial<IInspectorTableState> = {};
       if (props.checkoutInProgress) {
         newState = {editReferenceRowData: null};
@@ -322,11 +321,11 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       let { foundMatches, childToParentMap } = this.state;
       this.toTableRowOptions.followReferences = followReferences;
       const newState = {} as Pick<IInspectorTableState, 'currentResult' | 'expanded' | 'foundMatches' | 'matchesMap' |
-        'searchAbortHandler' | 'searchDone' | 'searchInProgress' | 'searchState' | 'tableRows' |'childToParentMap' >;
+        'searchAbortHandler' | 'searchDone' | 'searchInProgress' | 'searchState' | 'tableRows' | 'childToParentMap' >;
       let forceUpdateRequired = false;
 
       // Cancel all search activity and clear the search field when checking out a new repo.
-      if ( checkoutInProgress && searchExpression.length > 0 ) {
+      if (checkoutInProgress && searchExpression.length > 0) {
         this.handleOnClear();
       }
 
@@ -696,8 +695,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       }
     };
 
-    private startSearch = (searchExpression: string, callback: IInspectorSearchCallback, keepMatches = true)
-      : IInspectorSearchControls | undefined => {
+    private startSearch = (searchExpression: string, callback: IInspectorSearchCallback, keepMatches = true): IInspectorSearchControls | undefined => {
       const { data } = this.props;
       const { searchState, tableRows } = this.state;
       const currentWorkspace = data && data.getProperty().getRoot().getWorkspace();
@@ -840,8 +838,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         }
       };
 
-    private valueCellRenderer = ({rowData, cellData, columnIndex}
-      : {rowData: IInspectorRow, cellData: React.ReactNode | undefined, columnIndex: number}) => {
+    private valueCellRenderer = ({rowData, cellData, columnIndex}: {rowData: IInspectorRow, cellData: React.ReactNode | undefined, columnIndex: number}) => {
         const {classes, checkoutInProgress, followReferences, rowIconRenderer, width, dataGetter, readOnly} =
           this.props;
         if (checkoutInProgress) {
@@ -928,7 +925,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
 
     private updateSearchState = (foundMatches: IInspectorSearchMatch[], matchesMap: IInspectorSearchMatchMap,
-                                 done: boolean, childToParentMap: {[key: string]: string} ) => {
+                                 done: boolean, childToParentMap: {[key: string]: string}) => {
       const newState = {} as Pick<IInspectorTableState, 'currentResult' | 'foundMatches' | 'matchesMap' |
         'searchInProgress' | 'searchAbortHandler' | 'searchExpression' | 'childToParentMap' | 'searchDone' |
         'searchState'>;
