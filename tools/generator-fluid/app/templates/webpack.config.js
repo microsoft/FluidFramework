@@ -28,9 +28,11 @@ module.exports = env => {
             libraryTarget: "umd",
         },
         devServer: {
-            devMiddleware: { publicPath: '/dist' },
-            stats: "minimal",
-            before: (app, server) => fluidRoute.before(app, server),
+            devMiddleware: {
+                publicPath: '/dist',
+                stats: "minimal",
+            },
+            onBeforeSetupMiddleware: (devServer) => fluidRoute.before(devServer.app, devServer),
             onAfterSetupMiddleware: (devServer) => fluidRoute.after(devServer.app, devServer, __dirname, env),
         },
         // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
