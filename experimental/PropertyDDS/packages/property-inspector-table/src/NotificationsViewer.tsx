@@ -128,7 +128,7 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
     );
   }
 
-  private pushNotification: INotificationContext["pushNotification"] = (notificationObjToBePushed) => {
+  private readonly pushNotification: INotificationContext["pushNotification"] = (notificationObjToBePushed) => {
     let newArr;
     this.setState((prevState) => {
       let newState = {};
@@ -142,7 +142,7 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
     });
   };
 
-  private removeNotification: INotificationContext["removeNotification"] = (id) => {
+  private readonly removeNotification: INotificationContext["removeNotification"] = (id) => {
     this.setState((prevState) => {
       const index = prevState.notificationList.findIndex((notification: INotification) => (notification.id === id));
       prevState.notificationList.splice(index, 1);
@@ -151,18 +151,18 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
     });
   };
 
-  private removeNotificationByIndex: INotificationContext["removeNotificationByIndex"] = (notificationIndex) => {
+  private readonly removeNotificationByIndex: INotificationContext["removeNotificationByIndex"] = (notificationIndex) => {
     this.removeNotification(this.state.notificationList[notificationIndex].id);
   };
 
-  private handleClose = (event, reason?) => {
+  private readonly handleClose = (event, reason?) => {
     if (reason === "clickaway") {
       return;
     }
     this.setState({open: false});
   };
 
-  private processQueue = () => {
+  private readonly processQueue = () => {
     if (this.state.notificationList.length > 0) {
       this.setState((prevState) => {
         const notification = prevState.notificationList.shift()!;
@@ -176,7 +176,7 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
     }
   };
 
-  private handleExited = () => {
+  private readonly handleExited = () => {
     this.processQueue();
   };
 }

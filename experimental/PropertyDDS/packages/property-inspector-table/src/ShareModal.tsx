@@ -187,7 +187,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
     return false;
   }
 
-  private renderShareButton = () => {
+  private readonly renderShareButton = () => {
     const { classes } = this.props;
 
     if (this.isPublic) {
@@ -227,14 +227,14 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
     );
   }
 
-  private onCopyLink = () => {
+  private readonly onCopyLink = () => {
     const el = document.getElementById("shareModalUrnTextField") as HTMLInputElement;
     el!.select();
     document.execCommand("copy");
     this.setState({ toolTipsIsOpen: { copy: true } });
   };
 
-  private disablePublicSharing = () => {
+  private readonly disablePublicSharing = () => {
     this.updateSharing(() =>
       ErrorPopup(this.props.options.unshareHandler!.bind(this, ["*"], [], { actions: ["read", "write", "delete"] }))
         .then(() => {
@@ -245,7 +245,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
     );
   };
 
-  private enablePublicSharing = () => {
+  private readonly enablePublicSharing = () => {
     this.updateSharing(() =>
       ErrorPopup(this.props.options.shareHandler.bind(this, ["*"], [], { actions: ["read", "write", "delete"] }))
         .then(() => {
@@ -256,7 +256,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
     );
   };
 
-  private updateSharing = (handler) => {
+  private readonly updateSharing = (handler) => {
     this.setState({ progress: true });
     handler()
       .catch((e) => console.error(e))

@@ -111,7 +111,7 @@ class DeleteModal extends React.Component<IDeleteModalProps & WithStyles<typeof 
     );
   }
 
-  private deleteHandler = async () => {
+  private readonly deleteHandler = async () => {
     this.setState({ deleting: true });
     return ErrorPopup(this.props.options.handler, false).then(() => {
       this.props.onClosed();

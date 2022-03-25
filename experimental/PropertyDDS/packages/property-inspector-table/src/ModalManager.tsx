@@ -50,7 +50,7 @@ export class ModalManager extends React.Component<{}, IModalContext> {
     );
   }
 
-  private showModal = (component, props, closeHandler?) => {
+  private readonly showModal = (component, props, closeHandler?) => {
     this.setState({
       closeHandler,
       component,
@@ -58,7 +58,7 @@ export class ModalManager extends React.Component<{}, IModalContext> {
     });
   };
 
-  private hideModal = () => {
+  private readonly hideModal = () => {
     if (this.state.closeHandler) {
       this.state.closeHandler();
     }
