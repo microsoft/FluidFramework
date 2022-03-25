@@ -55,8 +55,8 @@ export class Pond extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     /**
-   * Do setup work here
-   */
+     * Do setup work here
+     */
     protected async initializingFirstTime() {
         const doubleCounterComponent = await DoubleCounter.getFactory().createChildInstance(this.context);
         this.root.set(DoubleCounter.ComponentName, doubleCounterComponent.handle);
@@ -85,37 +85,10 @@ export class Pond extends DataObject implements IFluidHTMLView {
     // start IFluidHTMLView
 
     public render(div: HTMLElement) {
-        // Pond wrapper component setup
-        // Set the border to green to denote components boundaries.
-        div.style.border = "1px dotted green";
-        div.style.padding = "5px";
-
-        const title = document.createElement("h1");
-        title.innerText = "Pond";
-
-        const index = document.createElement("h4");
-        index.innerText =
-            `dotted borders denote different component boundaries`;
-
-        div.appendChild(title);
-        div.appendChild(index);
-
-        // Sub-Component setup
-        const clicker2Div = document.createElement("div");
-        const clicker3Div = document.createElement("div");
-        div.appendChild(clicker2Div);
-        div.appendChild(clicker3Div);
-
         ReactDOM.render(
-            <DoubleCounterView counter1={ this.doubleCounter.counter1 } counter2={ this.doubleCounter.counter2 } />,
-            clicker2Div,
+            <PondView model={ this } />,
+            div,
         );
-        ReactDOM.render(
-            <ExampleUsingProvidersView userInfo={ this.exampleUsingProviders.userInformation } />,
-            clicker3Div,
-        );
-
-        return div;
     }
 
     // end IFluidHTMLView
@@ -135,6 +108,22 @@ export class Pond extends DataObject implements IFluidHTMLView {
         ]),
     );
 }
+
+interface IPondViewProps {
+    model: Pond;
+}
+
+const PondView: React.FC<IPondViewProps> = (props: IPondViewProps) => {
+    const { model } = props;
+    return (
+        <>
+            <h1>Pond</h1>
+            <h4>dotted borders denote different component boundaries</h4>
+            <DoubleCounterView counter1={ model.doubleCounter.counter1 } counter2={ model.doubleCounter.counter2 } />
+            <ExampleUsingProvidersView userInfo={ model.exampleUsingProviders.userInformation } />
+        </>
+    );
+};
 
 // ----- CONTAINER SETUP STUFF -----
 
