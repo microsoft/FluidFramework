@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { makeStyles } from "@material-ui/styles";
+import * as React from "react";
 import {
   icon24,
   iconBaseColor,
@@ -11,11 +13,7 @@ import {
 
 import { SvgIcon } from "./SVGIcon";
 
-import { makeStyles } from "@material-ui/styles";
-
 import { IInspectorTableProps } from "./InspectorTableTypes";
-
-import * as React from "react";
 
 const useStyles = makeStyles((theme) => ({
   footer: {

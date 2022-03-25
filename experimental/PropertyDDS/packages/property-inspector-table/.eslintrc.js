@@ -29,7 +29,6 @@
     "import/no-duplicates": "off",
     "import/no-internal-modules": "off",
     "import/no-unassigned-import": "off",
-    "import/order": "off",
     "max-len": "off",
     "no-bitwise": "off",
     "no-param-reassign": "off",

@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ExpiryModal } from "./ExpiryModal";
-import { ModalConsumer } from "./ModalManager";
 import { BaseProperty, ContainerProperty, ReferenceMapProperty, ReferenceProperty } from "@fluid-experimental/property-properties";
 import "@hig/fonts/build/ArtifaktElement.css";
 import Button from "@material-ui/core/Button";
@@ -19,12 +17,14 @@ import { InspectorMessages, minRows, minRowWidth, rowWidthInterval } from "./con
 import { EditableValueCell } from "./EditableValueCell";
 import { EditReferencePath } from "./EditReferencePath";
 import { computeIconSize, Empty } from "./Empty";
+import { ExpiryModal } from "./ExpiryModal";
 import { getDefaultInspectorTableIcons } from "./icons";
 import { InspectorTableFooter } from "./InspectorTableFooter";
 import { InspectorTableHeader } from "./InspectorTableHeader";
 import { IColumns, IDataGetterParameter, IInspectorRow, IInspectorSearchCallback,
   IInspectorSearchMatch, IInspectorSearchMatchMap, IInspectorTableProps,
   IInspectorTableState } from "./InspectorTableTypes";
+import { ModalConsumer } from "./ModalManager";
 import { NameCell } from "./NameCell";
 import { NewDataForm } from "./NewDataForm";
 import { NewDataRow } from "./NewDataRow";

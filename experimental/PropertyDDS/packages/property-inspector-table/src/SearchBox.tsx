@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import Fade from "@material-ui/core/Fade";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import TextField from "@material-ui/core/TextField";
+import { makeStyles } from "@material-ui/styles";
+import classNames from "classnames";
+import * as React from "react";
+import { SvgIcon } from "./SVGIcon";
 import {
   backGroundDarkColor,
   backGroundLightColor,
@@ -10,14 +17,6 @@ import {
   iconHoverColor,
   Omit,
 } from "./constants";
-
-import { SvgIcon } from "./SVGIcon";
-import Fade from "@material-ui/core/Fade";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import TextField from "@material-ui/core/TextField";
-import { makeStyles } from "@material-ui/styles";
-import classNames from "classnames";
-import * as React from "react";
 import { iconHeight, iconWidth } from "./constants";
 
 export interface ISearchBoxProps extends Omit<React.HTMLProps<HTMLInputElement>, "value"> {

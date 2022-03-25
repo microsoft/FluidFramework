@@ -2,17 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-  backGroundDarkGrayColor,
-  backGroundGrayColor,
-  backGroundLightBlueColor,
-  borderBlueColor,
-  colorWhite,
-  textDarkColor,
-  transparentShadowColor,
-} from "./constants";
-
-import {SvgIcon} from "./SVGIcon";
 
 import { makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
@@ -24,6 +13,16 @@ import SingleValue, { SingleValueProps } from "react-select/lib/components/Singl
 import { Props as SelectProps } from "react-select/lib/Select";
 import { StylesConfig } from "react-select/lib/styles";
 import { GroupedOptionsType, OptionsType, ValueType } from "react-select/lib/types";
+import {SvgIcon} from "./SVGIcon";
+import {
+  backGroundDarkGrayColor,
+  backGroundGrayColor,
+  backGroundLightBlueColor,
+  borderBlueColor,
+  colorWhite,
+  textDarkColor,
+  transparentShadowColor,
+} from "./constants";
 
 const useStyles = makeStyles({
 

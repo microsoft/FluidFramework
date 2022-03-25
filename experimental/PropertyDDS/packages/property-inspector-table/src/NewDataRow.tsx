@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SvgIcon } from "./SVGIcon";
 import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 
 import * as React from "react";
+import { SvgIcon } from "./SVGIcon";
 
 import { iconHeight, iconMarginRight, iconWidth, unit } from "./constants";
 

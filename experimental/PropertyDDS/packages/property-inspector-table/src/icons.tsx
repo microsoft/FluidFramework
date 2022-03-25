@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SvgIcon } from "./SVGIcon";
 import * as React from "react";
+import { SvgIcon } from "./SVGIcon";
 import { iconHeight, iconWidth } from "./constants";
 import { IInspectorRow } from "./InspectorTableTypes";
 

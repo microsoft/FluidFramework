@@ -3,15 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-  SvgIcon,
-} from "./SVGIcon";
-import {
-  backGroundGrayColor,
-  borderGrayColor,
-  colorWhite,
-} from "./constants";
-import { ErrorPopup } from "./ErrorPopup";
 import { ContainerProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 import Button from "@material-ui/core/Button";
 import InputAdornment from "@material-ui/core/InputAdornment";
@@ -20,6 +11,15 @@ import TextField from "@material-ui/core/TextField";
 import classNames from "classnames";
 import React, { useEffect, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
+import { ErrorPopup } from "./ErrorPopup";
+import {
+  backGroundGrayColor,
+  borderGrayColor,
+  colorWhite,
+} from "./constants";
+import {
+  SvgIcon,
+} from "./SVGIcon";
 import { iconMarginRight, unit } from "./constants";
 import {
   DecoratedSelect,
