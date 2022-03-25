@@ -34,10 +34,10 @@ const useStyles = makeStyles({
     marginBottom: "5px",
   },
   dropdownClosed: {
-    border: "2px solid " + backGroundGrayColor,
+    border: `2px solid ${ backGroundGrayColor }`,
   },
   dropdownOpen: {
-    border: "2px solid " + borderBlueColor,
+    border: `2px solid ${ borderBlueColor }`,
   },
   menuIndicatorIcon: {
     height: "16px",
@@ -54,9 +54,9 @@ const reactSelectStyles: StylesConfig = {
   }),
   control: (base) => ({
     ...base,
-    backgroundColor: backGroundDarkGrayColor + " !important",
+    backgroundColor: `${ backGroundDarkGrayColor } !important`,
     border: "none !important",
-    boxShadow: "1px 1px 10px 1px " + transparentShadowColor + " !important",
+    boxShadow: `1px 1px 10px 1px ${ transparentShadowColor } !important`,
   }),
   indicatorSeparator: (provided, state) => ({
     ...provided,
@@ -84,7 +84,7 @@ const reactSelectStyles: StylesConfig = {
   singleValue: (base) => ({
     ...base,
     alignItems: "center",
-    color: textDarkColor + " !important",
+    color: `${ textDarkColor } !important`,
     display: "flex",
     fontSize: ".9rem",
     fontWeight: "bold",

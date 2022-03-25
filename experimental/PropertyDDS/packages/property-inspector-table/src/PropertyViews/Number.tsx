@@ -46,6 +46,7 @@ export const NumberView: React.FunctionComponent<NumberProps> = (props) => {
     followReferences);
 
   return (
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     <TextField
       {...restProps}

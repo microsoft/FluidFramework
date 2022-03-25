@@ -67,7 +67,7 @@ export interface INotificationContext {
 }
 const notificationList: INotification[] = [];
 let idCounter = 0;
-const generateNotificationId = () => ("" + idCounter++);
+const generateNotificationId = () => (`${ idCounter++ }`);
 export const notificationContext: INotificationContext = {
   notificationList,
   pushNotification: (notification) => { notificationList.push({id: generateNotificationId(), ...notification}); },

@@ -101,7 +101,7 @@ const useStyles = makeStyles({
   },
   selectDropdownElevated: {
     background: backGroundGrayColor,
-    border: "1px solid " + borderGrayColor,
+    border: `1px solid ${ borderGrayColor }`,
     padding: "5px",
     position: "fixed",
     zIndex: 1,
@@ -331,7 +331,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
           variant='outlined'
           autoFocus={true}
           className={classes.inputBox}
-          placeholder={"Name of the " + selectedTypeOrCollectionLabel}
+          placeholder={`Name of the ${ selectedTypeOrCollectionLabel }`}
           value={inputName}
           inputProps={{ className: classes.inputText }}
           onChange={handleInputChange}

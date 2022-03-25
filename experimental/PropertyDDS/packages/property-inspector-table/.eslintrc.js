@@ -11,7 +11,6 @@
     "max-len": [2, 140, 2],
 
     "@rushstack/no-new-null": "off",
-    "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/consistent-type-assertions": "off",
     "@typescript-eslint/no-dynamic-delete": "off",
     "@typescript-eslint/no-extraneous-class": "off",
@@ -29,7 +28,6 @@
     "max-len": "off",
     "no-bitwise": "off",
     "no-param-reassign": "off",
-    "prefer-template": "off",
     "react/no-direct-mutation-state": "off",
     "react/no-unescaped-entities": "off",
     "react/prop-types": "off",

@@ -21,7 +21,7 @@ import { InspectorModal } from "./InspectorModal";
 
 const useStyles = makeStyles((theme: Theme) => ({
   annotation: {
-    color: textDarkColor + "b3", // 8 digit hex code with alpha 0.7
+    color: `${ textDarkColor }b3`, // 8 digit hex code with alpha 0.7
     fontSize: "12px",
   },
   cancelButton: {

@@ -72,7 +72,7 @@ const copyHandler = (rowData: IInspectorRow, ref: React.MutableRefObject<HTMLTex
   if (prop.getContext() === "single") {
     path += (!prop.isRoot() ? "." : "") + rowData.propertyId;
   } else {
-    path += "[" + rowData.propertyId + "]";
+    path += `[${ rowData.propertyId }]`;
   }
 
   const el = ref.current;

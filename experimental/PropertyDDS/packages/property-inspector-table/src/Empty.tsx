@@ -68,8 +68,8 @@ export const iconAspectRatio: number = parseFloat(defaultIconSize.width) /
 export const computeIconSize = (width: number): IIconSize => (width * 0.5 >= parseFloat(defaultIconSize.width) ?
   defaultIconSize :
     {
-      height: (width * 0.5) / iconAspectRatio + "px",
-      width: width * 0.5 + "px",
+      height: `${ (width * 0.5) / iconAspectRatio }px`,
+      width: `${ width * 0.5 }px`,
     }
 );
 

@@ -58,7 +58,7 @@ export const SvgIcon: React.FunctionComponent<ISvgIconProps> = (props) => {
 
   return (
     <svg {...otherProps} className={cx} width={width} height={height}>
-      <use xlinkHref={"#" + svgId} transform={transform} />
+      <use xlinkHref={`#${ svgId }`} transform={transform} />
     </svg>
   );
 };

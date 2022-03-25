@@ -369,7 +369,7 @@ const addAdditionalRow = (subRows, id, parentProperty) => {
   const undefinedRowData = {
     context: undefined,
     data: undefined,
-    id: id + "/Add",
+    id: `${ id }/Add`,
     name: "",
     parent: parentProperty,
     typeid: undefined,
@@ -753,10 +753,10 @@ const isPropertyProxy = (p: any): p is BaseProxifiedProperty => {
 };
 
 const invalidReference = (parentProxy: BaseProxifiedProperty, id: string | number) => {
-  return "Invalid Reference: " +
-    (isReferenceMapProperty(parentProxy.getProperty())
-      ? (parentProxy as any).get(id + "*")
-      : parentProxy[id + "*"]);
+  return `Invalid Reference: ${
+    isReferenceMapProperty(parentProxy.getProperty())
+      ? (parentProxy as any).get(`${ id }*`)
+      : parentProxy[`${ id }*`]}`;
 };
 
 /**
@@ -813,16 +813,16 @@ export const getPropertyValue = (parent: ContainerProperty | BaseProxifiedProper
   // If the property is a reference and we don't follow them, we store the reference path string instead.
   if (!followReferences && TypeIdHelper.isReferenceTypeId(typeid)) {
     if (parentContextIsSingle || isReferenceArrayProperty(parentProperty)) {
-      determinedValue = parentProxy[id + "*"];
+      determinedValue = parentProxy[`${ id }*`];
     } else {
-      determinedValue = (parentProxy as any).get(id + "*");
+      determinedValue = (parentProxy as any).get(`${ id }*`);
     }
   } else if (contextIsSingle && propertyProxy !== undefined && isPrimitive(typeid)) {
     try {
-      if (parentProxy[id + "^"] !== undefined) {
-        determinedValue = parentProxy[id + "^"];
-      } else if ((parentProxy as any).get(id + "^") !== undefined) {
-        determinedValue = (parentProxy as any).get(id + "^");
+      if (parentProxy[`${ id }^`] !== undefined) {
+        determinedValue = parentProxy[`${ id }^`];
+      } else if ((parentProxy as any).get(`${ id }^`) !== undefined) {
+        determinedValue = (parentProxy as any).get(`${ id }^`);
       } else {
         determinedValue = parentProxy;
       }

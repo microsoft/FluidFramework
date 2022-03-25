@@ -13,6 +13,7 @@ const EXCLUDE_PROPS = ["BaseProperty", "Enum", "ContainerProperty"];
 export const fetchRegisteredTemplates = () => {
   const toTemplateList = (x: string) => ({ value: x, label: x });
   // extract primitive templates
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const localTemplates = PropertyFactory._localPrimitivePropertiesAndTemplates.getItems();
   const primitiveLocalTemplates: string[] = [];
@@ -61,7 +62,7 @@ const createProperty = (name: string, typeid: string, context: string, parent: a
     parent.push(newProp);
   } else if (parent instanceof Map) {
     if (parent.has(name)) {
-      throw new Error("Key already exists in the map: " + name);
+      throw new Error(`Key already exists in the map: ${ name }`);
     } else {
       parent.set(name, newProp);
     }
@@ -69,7 +70,7 @@ const createProperty = (name: string, typeid: string, context: string, parent: a
     parent.add(newProp);
   } else {
     if (parent.getProperty().has(name)) {
-      throw new Error("Key already exists in this property: " + name);
+      throw new Error(`Key already exists in this property: ${ name }`);
     } else {
       parent[name] = newProp;
     }
