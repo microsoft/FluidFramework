@@ -213,29 +213,6 @@ export function wrapError<T extends LoggingError>(
     return newError;
 }
 
-/** The same as wrapError, but also logs the innerError, including the wrapping error's instance id */
-export function wrapErrorAndLog<T extends LoggingError>(
-    innerError: unknown,
-    newErrorFn: (message: string) => T,
-    logger: ITelemetryLogger,
-) {
-    const newError = wrapError(innerError, newErrorFn);
-
-    // This will match innerError.errorInstanceId if present (see wrapError)
-    const errorInstanceId = newError.errorInstanceId;
-
-    // For "back-compat" in the logs
-    const wrappedByErrorInstanceId = errorInstanceId;
-
-    logger.sendTelemetryEvent({
-        eventName: "WrapError",
-        errorInstanceId,
-        wrappedByErrorInstanceId,
-    }, innerError);
-
-    return newError;
-}
-
 function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
     // supposedly setting stack on an Error can throw.
     try {
