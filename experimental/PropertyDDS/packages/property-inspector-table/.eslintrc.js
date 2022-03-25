@@ -8,7 +8,6 @@
       "@fluidframework/eslint-config-fluid"
   ],
   "rules": {
-    "linebreak-style": 0,
     "prefer-const": ["warn"],
     "max-len": [2, 140, 2],
     "camelcase": 0,
@@ -18,7 +17,6 @@
     "arrow-parens": [2, "always"],
     "comma-dangle": [2, "never"],
     "indent": [2, 2, {"SwitchCase": 1, "VariableDeclarator": 2}],
-    "lines-between-class-members": ["error", "always"],
 
     "@rushstack/no-new-null": "off",
     "@typescript-eslint/ban-ts-comment": "off",
@@ -46,7 +44,6 @@
     "import/no-extraneous-dependencies": "off",
     "import/no-unassigned-import": "off",
     "import/order": "off",
-    "lines-between-class-members": "off",
     "max-len": "off",
     "no-bitwise": "off",
     "no-param-reassign": "off",
