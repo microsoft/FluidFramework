@@ -43,7 +43,7 @@ export const StringView: React.FunctionComponent<StringProps> = (props) => {
 
   return (
     <TextField
-      key={rowData.id + value}
+      key={`${rowData.id}${value}`}
       onBlur={onBlur}
       defaultValue={value}
       className={classes.textField}

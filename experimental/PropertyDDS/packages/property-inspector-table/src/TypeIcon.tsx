@@ -14,7 +14,7 @@ const useStyles = makeStyles({
     flexShrink: 0,
     height: iconHeight,
     marginLeft: "10px",
-    marginRight: iconMarginRight + unit,
+    marginRight: `${iconMarginRight}${unit}`,
     width: iconWidth,
   },
 }, { name: "TypeIcon" });

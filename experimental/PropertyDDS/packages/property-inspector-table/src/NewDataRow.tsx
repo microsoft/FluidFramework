@@ -18,7 +18,7 @@ const styles = () => createStyles({
     marginBottom: "5px",
   },
   svgIcon : {
-    marginRight: iconMarginRight + unit,
+    marginRight: `${iconMarginRight}${unit}`,
   },
 });
 

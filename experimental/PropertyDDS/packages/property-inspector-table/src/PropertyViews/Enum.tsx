@@ -52,7 +52,7 @@ export const EnumView: React.FunctionComponent<EnumProps> = (props) => {
 
   return (
     <Select
-      key={rowData.id + value}
+      key={`${rowData.id}${value}`}
       onChange={(event) => onSubmit(event.target.value as ValType, props)}
       value={value}
       disabled={rowData.isConstant || rowData.parentIsConstant || readOnly}

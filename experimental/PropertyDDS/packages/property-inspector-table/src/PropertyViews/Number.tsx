@@ -51,7 +51,7 @@ export const NumberView: React.FunctionComponent<NumberProps> = (props) => {
     <TextField
       {...restProps}
       type='number'
-      key={rowData.id + value}
+      key={`${rowData.id}${value}`}
       onBlur={onBlur}
       defaultValue={value}
       className={classes.textField}

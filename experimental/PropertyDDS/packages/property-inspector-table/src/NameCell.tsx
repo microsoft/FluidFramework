@@ -16,7 +16,7 @@ import { OverflowableCell } from "./OverflowableCell";
 const styles = () => createStyles({
   iconContainer: {
     height: iconWidth,
-    marginRight: iconMarginRight + unit, width: iconWidth,
+    marginRight: `${iconMarginRight}${unit}`, width: iconWidth,
   },
   menuGravity: {
     visibility: "hidden",

@@ -29,8 +29,8 @@ const styles = () => createStyles({
   input: {
     flexShrink: 0,
     height: iconWidth,
-    marginLeft: iconMarginRight + unit,
-    marginRight: iconMarginRight + unit,
+    marginLeft: `${iconMarginRight}${unit}`,
+    marginRight: `${iconMarginRight}${unit}`,
     width: iconWidth,
   },
   textField: {

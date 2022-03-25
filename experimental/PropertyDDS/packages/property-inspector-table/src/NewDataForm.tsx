@@ -48,7 +48,7 @@ const useStyles = makeStyles({
     display: "flex",
     justifyContent: "flex-start",
     marginBottom: "5px",
-    marginLeft: iconMarginRight + unit,
+    marginLeft: `${iconMarginRight}${unit}`,
   },
   cancelButton: {
     marginLeft: "auto",
