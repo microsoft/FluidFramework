@@ -38,9 +38,9 @@
   },
   "dependencies": {
     "@fluid-example/clicker": "^0.58.3000",
+    "@fluid-example/example-utils": "^0.58.3000",
     "@fluidframework/aqueduct": "^0.58.3000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/view-interfaces": "^0.58.3000",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
