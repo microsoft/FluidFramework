@@ -4,17 +4,19 @@
  */
 
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
+    BaseContainerRuntimeFactory,
     DataObject,
     DataObjectFactory,
+    mountableViewRequestHandler,
 } from "@fluidframework/aqueduct";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedDirectory } from "@fluidframework/map";
+import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { DependencyContainer } from "@fluidframework/synthesize";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+import { MountableView } from "@fluidframework/view-adapters";
 
 import React from "react";
-import ReactDOM from "react-dom";
 
 import {
     DoubleCounter,
@@ -35,7 +37,7 @@ export const PondName = "Pond";
  *  - Component creation with initial state
  *  - Component creation and storage using Handles
  */
-export class Pond extends DataObject implements IFluidHTMLView {
+export class Pond extends DataObject {
     private _doubleCounter: DoubleCounter | undefined;
     public get doubleCounter(): DoubleCounter {
         if (this._doubleCounter === undefined) {
@@ -51,8 +53,6 @@ export class Pond extends DataObject implements IFluidHTMLView {
         }
         return this._exampleUsingProviders;
     }
-
-    public get IFluidHTMLView() { return this; }
 
     /**
      * Do setup work here
@@ -82,22 +82,11 @@ export class Pond extends DataObject implements IFluidHTMLView {
         this._exampleUsingProviders = await exampleUsingProvidersHandle.get();
     }
 
-    // start IFluidHTMLView
-
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <PondView model={ this } />,
-            div,
-        );
-    }
-
-    // end IFluidHTMLView
-
     // ----- COMPONENT SETUP STUFF -----
 
     public static getFactory() { return Pond.factory; }
 
-    private static readonly factory = new DataObjectFactory(
+    public static readonly factory = new DataObjectFactory(
         PondName,
         Pond,
         [SharedDirectory.getFactory()],
@@ -130,10 +119,43 @@ const PondView: React.FC<IPondViewProps> = (props: IPondViewProps) => {
 const dependencyContainer = new DependencyContainer<FluidObject<IFluidUserInformation>>();
 dependencyContainer.register(IFluidUserInformation, async (dc) => userInfoFactory(dc));
 
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    Pond.getFactory(),
-    new Map([
-        Pond.getFactory().registryEntry,
-    ]),
-    dependencyContainer,
-);
+const dataStoreId = "modelDataStore";
+
+// This request handler responds to the default request by pairing the default Pond model with a PondView.
+const pondViewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
+    if (request.pathParts.length === 0) {
+        const objectRequest = RequestParser.create({
+            url: ``,
+            headers: request.headers,
+        });
+        const fluidObject = await requestFluidObject<Pond>(
+            await runtime.getRootDataStore(dataStoreId),
+            objectRequest);
+        const viewResponse = <PondView model={ fluidObject } />;
+        return { status: 200, mimeType: "fluid/view", value: viewResponse };
+    }
+};
+
+/**
+ * The Pond's container needs the dependencyContainer injected.  We can do this with a BaseContainerRuntimeFactory.
+ */
+class PondContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+    constructor() {
+        // We'll use a MountableView so webpack-fluid-loader can display us,
+        // and add our view request handler.
+        super(
+            new Map([[Pond.factory.type, Promise.resolve(Pond.factory)]]),
+            dependencyContainer,
+            [mountableViewRequestHandler(MountableView, [pondViewRequestHandler])],
+        );
+    }
+
+    /**
+     * Create the Pond model on the first load.
+     */
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+        await runtime.createRootDataStore(Pond.factory.type, dataStoreId);
+    }
+}
+
+export const fluidExport = new PondContainerRuntimeFactory();
