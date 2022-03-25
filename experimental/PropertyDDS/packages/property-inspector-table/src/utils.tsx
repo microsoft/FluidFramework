@@ -4,11 +4,18 @@
  */
 
 import { forEachProperty } from "@fluid-experimental/property-binder";
+import { TypeIdHelper } from "@fluid-experimental/property-changeset";
+import {
+  BaseProperty,
+  ContainerProperty,
+  MapProperty,
+  PropertyFactory,
+  ReferenceArrayProperty,
+  ReferenceProperty,
+  Workspace,
+} from "@fluid-experimental/property-properties";
 import { BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
-import { Workspace} from "@fluid-experimental/property-properties";
 
-import {TypeIdHelper} from "@fluid-experimental/property-changeset";
-import { BaseProperty, PropertyFactory,ReferenceArrayProperty, ReferenceProperty, ContainerProperty, MapProperty} from "@fluid-experimental/property-properties";
 import memoize from "memoize-one";
 import { HashCalculator } from "./HashCalculator";
 import { IColumns, IExpandedMap, IInspectorRow, IInspectorSearchAbortHandler, IInspectorSearchCallback,

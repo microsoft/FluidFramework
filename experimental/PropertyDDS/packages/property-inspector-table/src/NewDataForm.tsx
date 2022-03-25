@@ -11,16 +11,13 @@ import TextField from "@material-ui/core/TextField";
 import classNames from "classnames";
 import React, { useEffect, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { ErrorPopup } from "./ErrorPopup";
 import {
   backGroundGrayColor,
   borderGrayColor,
   colorWhite,
+  iconMarginRight,
+  unit,
 } from "./constants";
-import {
-  SvgIcon,
-} from "./SVGIcon";
-import { iconMarginRight, unit } from "./constants";
 import {
   DecoratedSelect,
   DecoratedSelectGroupedOptionsType,
@@ -28,8 +25,12 @@ import {
   DecoratedSelectValueType,
   IDecoratedSelectOptionType,
 } from "./DecoratedSelect";
+import { ErrorPopup } from "./ErrorPopup";
 import { ErrorTooltip } from "./ErrorTooltip";
 import { IInspectorRow } from "./InspectorTableTypes";
+import {
+  SvgIcon,
+} from "./SVGIcon";
 import { TypeIcon } from "./TypeIcon";
 
 const useStyles = makeStyles({
