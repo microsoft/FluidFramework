@@ -300,7 +300,6 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
           }
         });
       }, 250);
-
     }
 
     public componentDidMount() {

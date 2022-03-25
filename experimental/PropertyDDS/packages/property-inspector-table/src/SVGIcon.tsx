@@ -50,7 +50,6 @@ export interface ISvgIconProps extends React.SVGAttributes<any> {
  * A svg icon component which relies on svg file that exits in the SVGStore component
  */
 export const SvgIcon: React.FunctionComponent<ISvgIconProps> = (props) => {
-
   const classes = useStyles(props);
   const { active, activeClassName, className, hoverable = false, svgId, transform, width = '16px', height = '16px',
     ...otherProps } = props;

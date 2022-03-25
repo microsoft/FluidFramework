@@ -85,7 +85,6 @@ export const showNextResult = (
 function findMatchingElementIndexInDataSet(data: IInspectorRow[], currentlyExpanded: IExpandedMap,
                                            matchingElement: IInspectorSearchMatch, rowCounter = 0):
                                            {idx: number, found: boolean} {
-
   for (const row of data) {
     if (row.id === matchingElement.rowId) {
       return {idx: rowCounter, found: true};
@@ -169,7 +168,6 @@ export const search = (
   handleUpdate: IInspectorSearchCallback, toTableRowsProps: IToTableRowsProps, toTableRowsOptions: IToTableRowsOptions,
   searchState: IInspectorSearchState = { foundMatches: [], matchesMap: {}, childToParentMap: {} },
   chunkSize = 1000, recursive = false, entryPoint = true): IInspectorSearchControls => {
-
   // Check if search should be aborted.
   if (searchState.abort) {
     return {
@@ -443,7 +441,6 @@ export const toTableRows = (
   options: Partial<IToTableRowsOptions> = {},
   pathPrefix: string = '',
 ): IInspectorRow[] => {
-
   const { ascending, parentIsConstant } = {...OPTION_DEFAULTS, ...options};
   const dataCreation = (props.readOnly !== true) && !parentIsConstant &&
     !!props.dataCreationHandler && !!props.dataCreationOptionGenerationHandler;
@@ -711,7 +708,6 @@ export const expandAll = (workspace: Workspace) => {
   const root = (workspace as any).root;
 
   forEachProperty(root, (property) => {
-
     if (!isPrimitive(property.getFullTypeid())) {
       const newId = getShortId(property.getAbsolutePath());
       expanded[newId] = true;

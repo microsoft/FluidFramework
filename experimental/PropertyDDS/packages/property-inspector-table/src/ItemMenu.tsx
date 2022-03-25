@@ -91,7 +91,6 @@ const useStyles = makeStyles({
  */
 export const ItemMenu: React.FunctionComponent<IItemMenuProps> =
   ({ openHandler, closeHandler, name, urn, options, modalTextParameters, ...restProps }) => {
-
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const ref = React.useRef<HTMLTextAreaElement>(null);
     const classes = useStyles();

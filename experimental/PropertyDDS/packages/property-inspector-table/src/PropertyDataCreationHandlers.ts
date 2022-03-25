@@ -33,7 +33,6 @@ export const fetchRegisteredTemplates = () => {
 
 export const handlePropertyDataCreationOptionGeneration =
   (rowData: IInspectorRow, nameOnly: boolean): IDataCreationOptions => {
-
     if (nameOnly) {
       return { name: 'property' };
     }
