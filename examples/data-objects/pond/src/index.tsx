@@ -20,6 +20,7 @@ import {
     DoubleCounter,
     DoubleCounterView,
     ExampleUsingProviders,
+    ExampleUsingProvidersView,
 } from "./data-objects";
 import { IFluidUserInformation } from "./interfaces";
 import { userInfoFactory } from "./providers";
@@ -59,15 +60,19 @@ export class Pond extends DataObject implements IFluidHTMLView {
         }
         const doubleCounter = await doubleCounterHandle.get();
         this.doubleCounterView = new HTMLViewAdapter(
-            <DoubleCounterView counter1={doubleCounter.counter1} counter2={doubleCounter.counter2} />,
+            <DoubleCounterView counter1={ doubleCounter.counter1 } counter2={ doubleCounter.counter2 } />,
         );
 
-        const clickerUserProvidersHandle = this.root.get<IFluidHandle>(ExampleUsingProviders.ComponentName);
+        const clickerUserProvidersHandle = this.root.get<IFluidHandle<ExampleUsingProviders>>(
+            ExampleUsingProviders.ComponentName,
+        );
         if (!clickerUserProvidersHandle) {
             throw new Error("Pond not intialized correctly");
         }
         const clickerUsingProviders = await clickerUserProvidersHandle.get();
-        this.clickerUsingProvidersView = new HTMLViewAdapter(clickerUsingProviders);
+        this.clickerUsingProvidersView = new HTMLViewAdapter(
+            <ExampleUsingProvidersView userInfo={ clickerUsingProviders.userInformation } />,
+        );
     }
 
     // start IFluidHTMLView
