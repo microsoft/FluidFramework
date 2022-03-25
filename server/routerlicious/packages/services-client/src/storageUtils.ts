@@ -145,7 +145,7 @@ export function convertSummaryTreeToWholeSummaryTree(
 function buildHeirarchy(flatTree: IWholeFlatSummaryTree): ISnapshotTree {
     const lookup: { [path: string]: ISnapshotTree } = {};
     // Root tree id will be used to determine which version was downloaded.
-    const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {}, commits: {}};
+    const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.entries) {
@@ -160,7 +160,7 @@ function buildHeirarchy(flatTree: IWholeFlatSummaryTree): ISnapshotTree {
 
         // Add in either the blob or tree
         if (entry.type === "tree") {
-            const newTree: ISnapshotTree = { blobs: {}, commits: {}, trees: {}, unreferenced: entry.unreferenced };
+            const newTree: ISnapshotTree = { blobs: {}, trees: {}, unreferenced: entry.unreferenced };
             node.trees[decodeURIComponent(entryPathBase)] = newTree;
             lookup[entryPath] = newTree;
         } else if (entry.type === "blob") {
