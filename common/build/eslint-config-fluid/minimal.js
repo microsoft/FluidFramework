@@ -12,7 +12,6 @@ module.exports = {
     "extends": [
         "./eslint7",
         "plugin:eslint-comments/recommended",
-        "plugin:eslint-comments/recommended",
         "plugin:import/errors",
         "plugin:import/warnings",
         "plugin:import/typescript"
