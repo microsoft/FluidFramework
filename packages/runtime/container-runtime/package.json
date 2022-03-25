@@ -67,7 +67,7 @@
     "@fluidframework/container-utils": "^0.58.3000",
     "@fluidframework/core-interfaces": "^0.42.0",
     "@fluidframework/datastore": "^0.58.3000",
-    "@fluidframework/driver-definitions": "^0.45.1000",
+    "@fluidframework/driver-definitions": "^0.45.2000-0",
     "@fluidframework/driver-utils": "^0.58.3000",
     "@fluidframework/garbage-collector": "^0.58.3000",
     "@fluidframework/protocol-base": "^0.1035.1000",
