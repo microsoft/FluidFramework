@@ -600,7 +600,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         columns.push(newColumn);
       }
       return columns;
-    }
+    };
 
     private handleInitiateCreate(rowData: IInspectorRow) {
       this.setState({showFormRowID: rowData.id});
@@ -618,15 +618,15 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     private handleCancelCreate = () => {
       this.setState({showFormRowID: '0'});
       this.forceUpdateBaseTable();
-    }
+    };
 
     private handleInitialEditReference = (rowData: IInspectorRow) => {
       this.setState({editReferenceRowData: rowData});
-    }
+    };
 
     private handleCancelEditReference = () => {
       this.setState({editReferenceRowData: null});
-    }
+    };
 
     private handleEditReference = (newPath: string) => {
       const rowData = this.state.editReferenceRowData!;
@@ -659,7 +659,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
 
       this.removeIdFromExpanded(rowData.id);
       return parentProp!.getRoot().getWorkspace()!.commit().finally(() => this.handleCancelEditReference());
-    }
+    };
 
     private handleOnClear = () => {
       if (this.state.searchAbortHandler) {
@@ -668,7 +668,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       this.setState({ currentResult: undefined, foundMatches: [], matchesMap: {}, searchAbortHandler: undefined,
         searchDone: false, searchExpression: '', searchInProgress: false, searchState: undefined });
       this.forceUpdateBaseTable();
-    }
+    };
 
     private handleCurrentResultChange = (newResult: number) => {
       if (this.state.currentResult !== undefined &&
@@ -681,7 +681,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       } else {
         this.setState({currentResult: newResult});
       }
-    }
+    };
 
     private continueSearchOnDemand = () => {
       const newState: Pick<IInspectorTableState, 'searchAbortHandler' | 'searchInProgress' | 'searchState'> = {
@@ -694,7 +694,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         newState.searchState = searchControls.state;
         this.setState(newState);
       }
-    }
+    };
 
     private startSearch = (searchExpression: string, callback: IInspectorSearchCallback, keepMatches = true)
       : IInspectorSearchControls | undefined => {
@@ -710,13 +710,13 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       } else {
         return undefined;
       }
-    }
+    };
 
     private handleSearchExpressionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       const searchExpression = event.target.value;
       this.debouncedSearchChange(searchExpression);
       this.setState({ searchExpression });
-    }
+    };
 
     private footerRenderer = () => {
       return (
@@ -726,13 +726,13 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
           parentProps={this.props}
         />
       );
-    }
+    };
 
     private removeIdFromExpanded = (id: string) => {
       const newExpanded = {...this.state.expanded};
       delete newExpanded[id];
       this.setState({expanded: newExpanded});
-    }
+    };
 
     // @TODO: Add tests.
     private traverseTree(item: IInspectorRow, func: (item: IInspectorRow) => any) {
@@ -768,11 +768,11 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
           expanded: output,
         });
       }
-    }
+    };
 
     private handleCollapseAll = () => {
       this.setState({expanded: {}});
-    }
+    };
 
     private renderCreationRow(rowData: IInspectorRow) {
       const { dataCreationOptionGenerationHandler, classes} = this.props;
@@ -817,7 +817,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       return highlightedResult.rowId === rowData.id && highlightedResult.indexOfColumn === columnIndex ?
         classes.currentMatch : (matchesMap[rowData.id] && matchesMap[rowData.id][columnIndex] ?
           classes.match : '');
-    }
+    };
 
     private nameCellRenderer = ({rowData, cellData, columnIndex}:
       {rowData: IInspectorRow, cellData: React.ReactNode | undefined, columnIndex: number}) => {
@@ -838,7 +838,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
           );
           return rowData.context !== undefined ? nameCell : this.renderCreationRow(rowData);
         }
-      }
+      };
 
     private valueCellRenderer = ({rowData, cellData, columnIndex}
       : {rowData: IInspectorRow, cellData: React.ReactNode | undefined, columnIndex: number}) => {
@@ -864,7 +864,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
             ? this.renderTooltipedUneditableCell(InspectorMessages.CONSTANT_PROPERTY, classes, rowData)
             : this.renderUneditableCell(classes, rowData);
         }
-      }
+      };
 
     private typeCellRenderer = ({rowData}: {rowData: IInspectorRow}) => {
       const {checkoutInProgress, width} = this.props;
@@ -875,7 +875,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       } else {
         return (<TypeColumn rowData={rowData}/>);
       }
-    }
+    };
 
     private renderTooltipedUneditableCell = (message, classes, rowData) => (
       <Tooltip
@@ -888,13 +888,13 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       >
         {this.renderUneditableCell(classes, rowData)}
       </Tooltip>
-    )
+    );
 
     private renderUneditableCell = (classes, rowData) => (
       <div className={classes.typeIdRow}>
         <div className={classes.typeIdRowLeft}>{rowData.value}</div>
       </div>
-    )
+    );
 
     /**
      * Maps the expanded row to either the filteredExpanded list or the whole dataset expanded list. This
@@ -912,12 +912,12 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         delete newExpanded[rowData.id];
       }
       this.setState({expanded: newExpanded});
-    }
+    };
     private onColumnSort = (sortBy) => {
       this.setState({
         sortBy,
       });
-    }
+    };
 
     private generateForm = (rowData: IInspectorRow) => {
       if (rowData.parent!.getContext() === 'array' && rowData.parent!.isPrimitiveType()) {
@@ -925,7 +925,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         return false;
       }
       return true;
-    }
+    };
 
     private updateSearchState = (foundMatches: IInspectorSearchMatch[], matchesMap: IInspectorSearchMatchMap,
                                  done: boolean, childToParentMap: {[key: string]: string} ) => {
@@ -951,11 +951,11 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         newState.searchState = undefined;
       }
       this.setState(newState);
-    }
+    };
 
     private forceUpdateBaseTable = () => {
       (this.table.current as any).table.bodyRef.recomputeGridSize();
-    }
+    };
   }
 
 const StyledInspectorTable = withStyles(styles, {name: 'InspectorTable'})(InspectorTable);

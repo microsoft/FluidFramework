@@ -5,7 +5,7 @@
 
 import { BaseProxifiedProperty } from '@fluid-experimental/property-proxy';
 import { IRepoExpiryGetter, IRepoExpirySetter } from './CommonTypes';
-import { BaseProperty } from '@fluid-experimental/property-properties'
+import { BaseProperty } from '@fluid-experimental/property-properties';
 import { IInspectorSearchState } from './utils';
 
 export interface IColumns {

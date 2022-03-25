@@ -140,7 +140,7 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
       }
       return newState;
     });
-  }
+  };
 
   private removeNotification: INotificationContext['removeNotification'] = (id) => {
     this.setState((prevState) => {
@@ -149,18 +149,18 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
       const newArr = prevState.notificationList.slice();
       return { notificationList: newArr, open: newArr.length > 0 };
     });
-  }
+  };
 
   private removeNotificationByIndex: INotificationContext['removeNotificationByIndex'] = (notificationIndex) => {
     this.removeNotification(this.state.notificationList[notificationIndex].id);
-  }
+  };
 
   private handleClose = (event, reason?) => {
     if (reason === 'clickaway') {
       return;
     }
     this.setState({open: false});
-  }
+  };
 
   private processQueue = () => {
     if (this.state.notificationList.length > 0) {
@@ -174,11 +174,11 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
         };
       });
     }
-  }
+  };
 
   private handleExited = () => {
     this.processQueue();
-  }
+  };
 }
 
 const StyledNotificationViewer = withStyles(styles, {name: 'NotificationViewer'})(NotificationViewer);

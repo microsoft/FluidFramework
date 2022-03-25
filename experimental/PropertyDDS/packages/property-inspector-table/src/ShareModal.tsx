@@ -213,7 +213,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
         </Button>
       );
     }
-  }
+  };
 
   private renderPublicSharingStatus() {
     const { classes } = this.props;
@@ -232,7 +232,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
     el!.select();
     document.execCommand('copy');
     this.setState({ toolTipsIsOpen: { copy: true } });
-  }
+  };
 
   private disablePublicSharing = () => {
     this.updateSharing(() =>
@@ -243,7 +243,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
           this.setState({ sharedWith: {} });
         }),
     );
-  }
+  };
 
   private enablePublicSharing = () => {
     this.updateSharing(() =>
@@ -254,7 +254,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
           this.setState({ sharedWith: { '*': ['read', 'write', 'delete'] } });
         }),
     );
-  }
+  };
 
   private updateSharing = (handler) => {
     this.setState({ progress: true });
@@ -265,7 +265,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
           this.setState({ progress: false });
         }
       });
-  }
+  };
 }
 
 const StyledShareModal = withStyles(styles, { name: 'ShareModal' })(ShareModal);

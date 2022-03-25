@@ -619,7 +619,7 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
   if (!isReferenceCollection || (isReferenceCollection && followReferences)) {
     if (propertyProxy !== undefined && propertyProxy.getProperty &&
       PropertyFactory.instanceOf(propertyProxy.getProperty(), 'BaseProperty')) {
-      property = propertyProxy.getProperty() ;
+      property = propertyProxy.getProperty();
       currentTypeid = getTypeid(property);
       currentContext = property.getContext();
     } else if (isReferenceCollection) {

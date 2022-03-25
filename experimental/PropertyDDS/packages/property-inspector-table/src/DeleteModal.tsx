@@ -120,7 +120,7 @@ class DeleteModal extends React.Component<IDeleteModalProps & WithStyles<typeof 
       this.setState({ deleting: false });
       this.props.onClosed();
     });
-  }
+  };
 }
 
 const StyledDeleteModal = withStyles(styles, { name: 'DeleteModal' })(DeleteModal);

@@ -56,7 +56,7 @@ export class ModalManager extends React.Component<{}, IModalContext> {
       component,
       props,
     });
-  }
+  };
 
   private hideModal = () => {
     if (this.state.closeHandler) {
@@ -67,7 +67,7 @@ export class ModalManager extends React.Component<{}, IModalContext> {
       component: null,
       props: {},
     });
-  }
+  };
 }
 
 export const ModalConsumer = ModalContext.Consumer;
