@@ -26,8 +26,5 @@
   "devDependencies": {
     "eslint": ">=8.6.0",
     "typescript": ">=4.5.3"
-  },
-  "peerDependencies": {
-    "eslint": ">= 7 || >=8"
   }
 }

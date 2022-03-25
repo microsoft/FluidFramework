@@ -15,6 +15,12 @@ export const gcBlobPrefix = "__gc";
 export interface ISnapshotNormalizerConfig {
     // The paths of blobs whose contents should be normalized.
     blobsToNormalize?: string[];
+    /**
+     * channel types who's content (non-attribute) blobs will be excluded.
+     * this is used to exclude the content of channels who's content cannot be compared
+     * as the content is non-deterministic between snapshot at the same sequence number.
+     */
+    excludedChannelContentTypes?: string[];
 }
 
 /**
@@ -41,7 +47,7 @@ function getDeepSortedArray(array: any[]): any[] {
         const serializedElem2 = JSON.stringify(elem2);
         return serializedElem1.localeCompare(serializedElem2);
     };
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return sortedArray.sort(sortFn);
 }
 
@@ -63,7 +69,7 @@ function getDeepSortedObject(obj: any): any {
             sortedObj[key] = value;
         }
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return sortedObj;
 }
 
@@ -110,39 +116,54 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormalizerConfig): ITree {
     // Merge blobs to normalize in the config with runtime blobs to normalize. The contents of these blobs will be
     // parsed and deep sorted.
-    const blobsToNormalize = [ ...config?.blobsToNormalize ?? [] ];
     const normalizedEntries: ITreeEntry[] = [];
 
     for (const entry of snapshot.entries) {
-        switch (entry.type) {
-            case TreeEntry.Blob: {
-                let contents = entry.value.contents;
-                // If this blob has to be normalized or it's a GC blob, parse and sort the blob contents first.
-                if (blobsToNormalize.includes(entry.path) || entry.path.startsWith(gcBlobPrefix)) {
-                    contents = getNormalizedBlobContent(contents, entry.path);
-                }
-                normalizedEntries.push(new BlobTreeEntry(entry.path, contents));
-                break;
-            }
-            case TreeEntry.Tree: {
-                normalizedEntries.push(new TreeTreeEntry(entry.path, getNormalizedSnapshot(entry.value, config)));
-                break;
-            }
-            case TreeEntry.Attachment: {
-                normalizedEntries.push(new AttachmentTreeEntry(entry.path, (entry.value).id));
-                break;
-            }
-
-            default:
-                throw new Error("Unknown entry type");
-        }
+        normalizedEntries.push(normalizeEntry(entry, config));
     }
 
-    // Sory the tree entries based on their path.
+    // Sort the tree entries based on their path.
     normalizedEntries.sort((a, b) => a.path.localeCompare(b.path));
 
     return {
         entries: normalizedEntries,
         id: snapshot.id,
     };
+}
+
+function normalizeEntry(
+    entry: ITreeEntry,
+    config: ISnapshotNormalizerConfig | undefined,
+): ITreeEntry {
+    switch (entry.type) {
+        case TreeEntry.Blob: {
+            let contents = entry.value.contents;
+            // If this blob has to be normalized or it's a GC blob, parse and sort the blob contents first.
+            if (config?.blobsToNormalize?.includes(entry.path) || entry.path.startsWith(gcBlobPrefix)) {
+                contents = getNormalizedBlobContent(contents, entry.path);
+            }
+            return new BlobTreeEntry(entry.path, contents);
+        }
+        case TreeEntry.Tree: {
+            if(config?.excludedChannelContentTypes !== undefined) {
+                for(const maybeAttributes of entry.value.entries) {
+                    if(maybeAttributes.type === TreeEntry.Blob && maybeAttributes.path === ".attributes") {
+                        const parsed: {type?: string} = JSON.parse(maybeAttributes.value.contents);
+                        if(parsed.type !== undefined && config.excludedChannelContentTypes.includes(parsed.type)) {
+                            // remove everything to match the unknown channel
+                            return new TreeTreeEntry(entry.path, {entries:[maybeAttributes]});
+                        }
+                    }
+                }
+            }
+
+            return new TreeTreeEntry(entry.path, getNormalizedSnapshot(entry.value, config));
+        }
+        case TreeEntry.Attachment: {
+            return new AttachmentTreeEntry(entry.path, (entry.value).id);
+        }
+
+        default:
+            throw new Error("Unknown entry type");
+    }
 }

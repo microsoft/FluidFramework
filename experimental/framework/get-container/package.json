@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/get-container",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "Tool for getting a container for testing app scenarios",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -31,16 +31,16 @@
   },
   "dependencies": {
     "@fluidframework/container-definitions": "^0.47.1000",
-    "@fluidframework/container-loader": "^0.58.2000",
+    "@fluidframework/container-loader": "^0.58.3000",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.45.1000",
-    "@fluidframework/driver-utils": "^0.58.2000",
-    "@fluidframework/local-driver": "^0.58.2000",
+    "@fluidframework/driver-definitions": "^0.45.2000-0",
+    "@fluidframework/driver-utils": "^0.58.3000",
+    "@fluidframework/local-driver": "^0.58.3000",
     "@fluidframework/protocol-definitions": "^0.1027.1000",
-    "@fluidframework/routerlicious-driver": "^0.58.2000",
+    "@fluidframework/routerlicious-driver": "^0.58.3000",
     "@fluidframework/server-local-server": "^0.1035.1000",
-    "@fluidframework/test-runtime-utils": "^0.58.2000",
-    "@fluidframework/tinylicious-driver": "^0.58.2000",
+    "@fluidframework/test-runtime-utils": "^0.58.3000",
+    "@fluidframework/tinylicious-driver": "^0.58.3000",
     "jsonwebtoken": "^8.4.0"
   },
   "devDependencies": {
