@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/agent-scheduler",
-  "version": "0.58.2001",
+  "version": "0.58.2002",
   "description": "Built in runtime object for distributing agents across instances of a container",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -54,12 +54,12 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.47.1000",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/datastore": "^0.58.2001",
-    "@fluidframework/datastore-definitions": "^0.58.2001",
-    "@fluidframework/map": "^0.58.2001",
-    "@fluidframework/register-collection": "^0.58.2001",
-    "@fluidframework/runtime-definitions": "^0.58.2001",
-    "@fluidframework/runtime-utils": "^0.58.2001",
+    "@fluidframework/datastore": "^0.58.2002",
+    "@fluidframework/datastore-definitions": "^0.58.2002",
+    "@fluidframework/map": "^0.58.2002",
+    "@fluidframework/register-collection": "^0.58.2002",
+    "@fluidframework/runtime-definitions": "^0.58.2002",
+    "@fluidframework/runtime-utils": "^0.58.2002",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
