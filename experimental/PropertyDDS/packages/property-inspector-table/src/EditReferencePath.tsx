@@ -77,7 +77,7 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
    setNewPath(event.target.value);
   };
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     return ErrorPopup(onEdit.bind(null, newPath));
   };
 

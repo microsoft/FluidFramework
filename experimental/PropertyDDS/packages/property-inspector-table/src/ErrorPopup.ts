@@ -39,7 +39,7 @@ type anyFunction = (...args: any[]) => any;
  *  When an exception is thrown in the given function, we return a resolved Promise, or a Promise that is rejected with
  *  the original error object, depending on the `catchErr` flag.
  */
-export function ErrorPopup<T extends anyFunction = anyFunction,
+export async function ErrorPopup<T extends anyFunction = anyFunction,
   K = ReturnType<T> extends Promise<infer R> ? R: ReturnType<T>>(anythingThatMightEmitError: T, catchErr = true): Promise<void | K> {
   try {
     const result = anythingThatMightEmitError();

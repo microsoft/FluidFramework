@@ -20,7 +20,6 @@
     "@typescript-eslint/no-unnecessary-type-arguments": "off",
     "@typescript-eslint/no-unnecessary-type-assertion": "off",
     "@typescript-eslint/no-unsafe-return": "off",
-    "@typescript-eslint/promise-function-async": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",
     "import/no-internal-modules": "off",
     "import/no-unassigned-import": "off",

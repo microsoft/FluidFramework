@@ -154,7 +154,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
   const [policyState, setPolicyState] = useState<IModalPolicyState>({retentionStrategy: "temporary", updating: false});
 
   // Get a promise that resolves with the expiry information for the current repository.
-  const getExpiryInfo = (): Promise<IExpiryInfo | void> => {
+  const getExpiryInfo = async (): Promise<IExpiryInfo | void> => {
     return ErrorPopup(getRepoExpiry.bind(null, repositoryUrn!));
   };
 
@@ -195,7 +195,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
    * Set the expiry of the current repository to the provided retention policy
    * @param expiryTime The new retention policy/expiry time.
    */
-  const setExpiry = (expiryTime: ExpiryTimeType): Promise<void> => {
+  const setExpiry = async (expiryTime: ExpiryTimeType): Promise<void> => {
     setPolicyState({ ...policyState, updating: true });
     setModalExpiryState({ ...modalExpiryState, expiresIn: expiryPlaceHolder });
     return ErrorPopup(setRepoExpiry.bind(null, repositoryUrn!, expiryTime)).then(() => {
@@ -214,7 +214,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     setPolicyState({ ...policyState, retentionStrategy: event.target.value });
   };
 
-  const deleteRepository = (repoUrn: string) => {
+  const deleteRepository = async (repoUrn: string) => {
     setDeletionState({ deleting: true });
     setModalExpiryState({ ...modalExpiryState, expiresIn: expiryPlaceHolder });
     return ErrorPopup(deleteRepo.bind(null, repoUrn)).then(() => {
@@ -359,7 +359,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
           </Button>
           <LoadingButton
             color='primary'
-            onClick={() => setExpiry(policyState.retentionStrategy)}
+            onClick={async () => setExpiry(policyState.retentionStrategy)}
             variant='contained'
           >
             Update
@@ -393,7 +393,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
           </Button>
           <LoadingButton
             classes={{ contained: classes.deleteButton }}
-            onClick={() => deleteRepository(repositoryUrn!)}
+            onClick={async () => deleteRepository(repositoryUrn!)}
             variant='contained'
           >
             Yes, delete

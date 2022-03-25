@@ -235,7 +235,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
   };
 
   private readonly disablePublicSharing = () => {
-    this.updateSharing(() =>
+    this.updateSharing(async () =>
       ErrorPopup(this.props.options.unshareHandler!.bind(this, ["*"], [], { actions: ["read", "write", "delete"] }))
         .then(() => {
           // In the future, we will update sharedWith with result of unshareHandler
@@ -246,7 +246,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
   };
 
   private readonly enablePublicSharing = () => {
-    this.updateSharing(() =>
+    this.updateSharing(async () =>
       ErrorPopup(this.props.options.shareHandler.bind(this, ["*"], [], { actions: ["read", "write", "delete"] }))
         .then(() => {
           // In the future, we will update sharedWith with result of shareHandler
