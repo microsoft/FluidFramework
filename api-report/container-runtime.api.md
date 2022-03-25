@@ -511,8 +511,6 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 export interface ISummarizingWarning extends ContainerWarning {
     // (undocumented)
     readonly errorType: "summarizingError";
-    // (undocumented)
-    readonly logged: boolean;
 }
 
 // @public

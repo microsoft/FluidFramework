@@ -309,9 +309,6 @@ export class ThresholdCounter {
 // @public
 export function wrapError<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;
 
-// @public
-export function wrapErrorAndLog<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
-
 
 // (No @packageDocumentation comment for this package)
 

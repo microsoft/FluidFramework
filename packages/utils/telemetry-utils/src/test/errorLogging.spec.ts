@@ -16,13 +16,11 @@ import {
     normalizeError,
     IFluidErrorAnnotations,
     wrapError,
-    wrapErrorAndLog,
     extractLogSafeErrorProperties,
     isExternalError,
     originatedAsExternalError,
 } from "../errorLogging";
 import { hasErrorInstanceId, IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase";
-import { MockLogger } from "../mockLogger";
 
 describe("Error Logging", () => {
     describe("TelemetryLogger.prepareErrorObject", () => {
@@ -701,17 +699,6 @@ describe("wrapError", () => {
         const wrappedTrusted = wrapError(trustedError, (message) => new LoggingError(message));
         assert(wrappedTrusted.getTelemetryProperties().untrustedOrigin === undefined);
     });
-});
-describe("wrapErrorAndLog", () => {
-    const mockLogger = new MockLogger();
-    const innerError = new LoggingError("hello");
-    const newError = wrapErrorAndLog(innerError, (message) => new LoggingError(message), mockLogger);
-    assert(mockLogger.matchEvents([{
-        eventName: "WrapError",
-        wrappedByErrorInstanceId: newError.errorInstanceId,
-        errorInstanceId: newError.errorInstanceId,
-        error: "hello",
-     }]), "Expected the 'WrapError' event to be logged");
 });
 
 describe("Error Discovery", () => {

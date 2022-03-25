@@ -6,7 +6,6 @@
 import {
     ILoggingError,
     ITaggedTelemetryPropertyType,
-    ITelemetryLogger,
     ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
