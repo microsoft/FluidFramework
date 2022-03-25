@@ -13,8 +13,12 @@ import { SharedDirectory } from "@fluidframework/map";
 import { DependencyContainer } from "@fluidframework/synthesize";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
+
+import React from "react";
+
 import {
-    Clicker,
+    DoubleCounter,
+    DoubleCounterView,
     ExampleUsingProviders,
 } from "./data-objects";
 import { IFluidUserInformation } from "./interfaces";
@@ -31,7 +35,7 @@ export const PondName = "Pond";
  *  - Component creation and storage using Handles
  */
 export class Pond extends DataObject implements IFluidHTMLView {
-    private clickerView: HTMLViewAdapter | undefined;
+    private doubleCounterView: HTMLViewAdapter | undefined;
     private clickerUsingProvidersView: HTMLViewAdapter | undefined;
 
     public get IFluidHTMLView() { return this; }
@@ -40,8 +44,8 @@ export class Pond extends DataObject implements IFluidHTMLView {
    * Do setup work here
    */
     protected async initializingFirstTime() {
-        const clickerComponent = await Clicker.getFactory().createChildInstance(this.context);
-        this.root.set(Clicker.ComponentName, clickerComponent.handle);
+        const doubleCounterComponent = await DoubleCounter.getFactory().createChildInstance(this.context);
+        this.root.set(DoubleCounter.ComponentName, doubleCounterComponent.handle);
 
         const clickerComponentUsingProvider =
             await ExampleUsingProviders.getFactory().createChildInstance(this.context);
@@ -49,12 +53,14 @@ export class Pond extends DataObject implements IFluidHTMLView {
     }
 
     protected async hasInitialized() {
-        const clickerHandle = this.root.get<IFluidHandle>(Clicker.ComponentName);
-        if (!clickerHandle) {
+        const doubleCounterHandle = this.root.get<IFluidHandle<DoubleCounter>>(DoubleCounter.ComponentName);
+        if (!doubleCounterHandle) {
             throw new Error("Pond not intialized correctly");
         }
-        const clicker = await clickerHandle.get();
-        this.clickerView = new HTMLViewAdapter(clicker);
+        const doubleCounter = await doubleCounterHandle.get();
+        this.doubleCounterView = new HTMLViewAdapter(
+            <DoubleCounterView counter1={doubleCounter.counter1} counter2={doubleCounter.counter2} />,
+        );
 
         const clickerUserProvidersHandle = this.root.get<IFluidHandle>(ExampleUsingProviders.ComponentName);
         if (!clickerUserProvidersHandle) {
@@ -67,8 +73,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
     // start IFluidHTMLView
 
     public render(div: HTMLElement) {
-        if (this.clickerView === undefined ||
-            this.clickerUsingProvidersView === undefined) {
+        if (this.doubleCounterView === undefined || this.clickerUsingProvidersView === undefined) {
             throw new Error(`Pond not initialized correctly`);
         }
 
@@ -93,7 +98,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
         div.appendChild(clicker2Div);
         div.appendChild(clicker3Div);
 
-        this.clickerView.render(clicker2Div);
+        this.doubleCounterView.render(clicker2Div);
         this.clickerUsingProvidersView.render(clicker3Div);
 
         return div;
@@ -111,7 +116,7 @@ export class Pond extends DataObject implements IFluidHTMLView {
         [SharedDirectory.getFactory()],
         {},
         new Map([
-            Clicker.getFactory().registryEntry,
+            DoubleCounter.getFactory().registryEntry,
             ExampleUsingProviders.getFactory().registryEntry,
         ]),
     );
