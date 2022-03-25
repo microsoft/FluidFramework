@@ -4,12 +4,12 @@
  */
 
 import {
-  SvgIcon
+  SvgIcon,
 } from './SVGIcon';
 import {
   backGroundGrayColor,
   borderGrayColor,
-  colorWhite
+  colorWhite,
 } from './constants';
 import { ErrorPopup } from './ErrorPopup';
 import { ContainerProperty, PropertyFactory } from '@fluid-experimental/property-properties';

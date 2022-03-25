@@ -26,7 +26,7 @@ export const fetchRegisteredTemplates = () => {
   });
   const templates = [
     ['Primitives', primitiveLocalTemplates.map(toTemplateList)],
-    ['Custom', customLocalTemplates.map(toTemplateList)]
+    ['Custom', customLocalTemplates.map(toTemplateList)],
   ];
   return templates;
 };

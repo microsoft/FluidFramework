@@ -8,7 +8,7 @@ import {
   backGroundLightColor,
   iconBaseColor,
   iconHoverColor,
-  Omit
+  Omit,
 } from './constants';
 
 import { SvgIcon } from './SVGIcon';
