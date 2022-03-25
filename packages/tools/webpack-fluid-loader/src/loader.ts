@@ -33,6 +33,7 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { Port } from "webpack-dev-server";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
@@ -42,7 +43,7 @@ export interface IDevServerUser extends IUser {
 }
 
 export interface IBaseRouteOptions {
-    port: number;
+    port: Port;
     npm?: string;
 }
 

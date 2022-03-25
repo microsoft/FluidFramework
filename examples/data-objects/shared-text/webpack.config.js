@@ -75,10 +75,10 @@ module.exports = env => {
                 child_process: 'empty',
             },
             devServer: {
-                publicPath: '/dist',
+                devMiddleware: { publicPath: '/dist' },
                 stats: "minimal",
-                before: (app, server) => fluidRoute.before(app, server, env),
-                after: (app, server) => fluidRoute.after(app, server, __dirname, env),
+                onBeforeSetupMiddleware: (devServer) => fluidRoute.before(devServer.app, devServer, env),
+                onAfterSetupMiddleware: (devServer) => fluidRoute.after(devServer.app, devServer, __dirname, env),
                 watchOptions: {
                     ignored: "**/node_modules/**",
                 }

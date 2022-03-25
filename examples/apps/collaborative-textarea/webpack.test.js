@@ -38,7 +38,9 @@ module.exports = env => {
             libraryTarget: "umd"
         },
         devServer: {
-            contentBase: path.join(__dirname, 'tests')
+            static: {
+                directory: path.join(__dirname, 'tests')
+            }
         },
         plugins: [
             new HtmlWebpackPlugin({

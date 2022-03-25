@@ -73,6 +73,6 @@ or in an optional `config.json` file in the `baseDir` passed into `webpack-fluid
 ## SharePoint
 To use a SharePoint server, the Microsoft login clientId and secret environment variables must be set.  This can be done by running the getkeys tool.
 
-Sometimes the cached tokens are out of date or incorrect, and it will not automatically refresh them.  They can be manually refreshed by going navigating to http://localhost:8080/odspLogin (port may vary).  To force reauth on start, the env variable `odspForceReauth` can be set.  This can also be done by adding `--mode forceReauth true` to the end of the command.  For example: `npm run start:spo-df -- --mode forceReauth true`.
+Sometimes the cached tokens are out of date or incorrect, and it will not automatically refresh them.  They can be manually refreshed by going navigating to http://localhost:8080/odspLogin (port may vary).  To force reauth on start, the env variable `odspForceReauth` can be set.  This can also be done by adding `--env forceReauth` to the end of the command.  For example: `npm run start:spo-df -- --env forceReauth`.
 
 Use `spo-df` if your OneDrive is on the DogFood server, and `spo` if it is not.
