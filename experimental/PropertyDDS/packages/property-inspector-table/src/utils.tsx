@@ -323,7 +323,7 @@ export const getReferenceValue = (rowData: IInspectorRow) => {
     path = parentProp.getValue(rowData.propertyId) as string;
   } else {
     const unresolvedProperty =
-      parentProp.get([rowData.propertyId, BaseProperty.PATH_TOKENS.REF]) as unknown as  ReferenceProperty;
+      parentProp.get([rowData.propertyId, BaseProperty.PATH_TOKENS.REF]) as unknown as ReferenceProperty;
     path = unresolvedProperty.getValue() as string;
   }
 

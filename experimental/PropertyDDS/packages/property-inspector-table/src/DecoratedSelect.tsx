@@ -143,7 +143,7 @@ const CustomOption: React.FunctionComponent<OptionProps<IDecoratedSelectOptionTy
 const CustomSingleValue: React.FunctionComponent<SingleValueProps<IDecoratedSelectOptionType>> =
   ({ children, ...props }) => {
     return (
-      <SingleValue  {...props}>
+      <SingleValue {...props}>
         {props.data.icon}
         {children}
       </SingleValue>

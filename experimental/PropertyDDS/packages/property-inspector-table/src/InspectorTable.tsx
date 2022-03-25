@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ExpiryModal  } from './ExpiryModal';
+import { ExpiryModal } from './ExpiryModal';
 import { ModalConsumer } from './ModalManager';
 import { BaseProperty, ContainerProperty, ReferenceMapProperty, ReferenceProperty } from '@fluid-experimental/property-properties';
 import '@hig/fonts/build/ArtifaktElement.css';
@@ -635,7 +635,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       if (Utils.isReferenceArrayProperty(parentProp) || Utils.isReferenceMapProperty(parentProp)) {
         parentProp.setValues({[rowData.name]: newPath});
         try {
-          (parentProp as unknown as  ReferenceMapProperty).isReferenceValid(rowData.name);
+          (parentProp as unknown as ReferenceMapProperty).isReferenceValid(rowData.name);
         } catch (e) {
           // if maximum call stack size is exceeded, user probably created cyclic reference
           // we can't delete cyclic references so we need set reference path to some other value
@@ -646,7 +646,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       } else {
         const unresolvedProperty =
           (parentProp as ContainerProperty).get(
-            [rowData.name, BaseProperty.PATH_TOKENS.REF]) as unknown as  ReferenceProperty;
+            [rowData.name, BaseProperty.PATH_TOKENS.REF]) as unknown as ReferenceProperty;
         unresolvedProperty.setValue(newPath);
         try {
           unresolvedProperty.isReferenceValid();

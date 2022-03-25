@@ -60,7 +60,7 @@ const deletionHandler = (rowData: IInspectorRow) => {
     (rowData!.parent! as MapProperty).remove(rowData.name);
   } else if (parent instanceof Set) {
     (rowData!.parent! as any).remove(rowData.name); // TODO: Should be SetProperty, once the types package is fixed.
-  } else  {
+  } else {
     (rowData!.parent! as NodeProperty).remove(rowData.name);
   }
   return (parent as any).getProperty().getRoot().getWorkspace().commit();

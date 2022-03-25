@@ -61,7 +61,6 @@
     "lines-between-class-members": "off",
     "max-len": "off",
     "no-bitwise": "off",
-    "no-multi-spaces": "off",
     "no-param-reassign": "off",
     "no-prototype-builtins": "off",
     "no-trailing-spaces": "off",

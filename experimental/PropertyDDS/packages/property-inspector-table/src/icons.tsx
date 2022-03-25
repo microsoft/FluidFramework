@@ -77,7 +77,7 @@ export const getDefaultInspectorTableIcons = (rowData: IInspectorRow): React.Rea
     } else if (rowData.typeid in typeIdToColor) {
       color = typeIdToColor[rowData.typeid];
     }
-    icon = <SvgIcon svgId={'reference-24'} height={iconHeight}  width={iconWidth} fill={color} />;
+    icon = <SvgIcon svgId={'reference-24'} height={iconHeight} width={iconWidth} fill={color} />;
   } else {
     switch (rowData.context) {
       case 'array':
