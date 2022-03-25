@@ -28,7 +28,6 @@
     "@typescript-eslint/strict-boolean-expressions": "off",
     "import/no-duplicates": "off",
     "import/no-internal-modules": "off",
-    "import/no-extraneous-dependencies": "off",
     "import/no-unassigned-import": "off",
     "import/order": "off",
     "max-len": "off",
