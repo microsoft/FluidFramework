@@ -821,7 +821,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 ensureFluidResolvedUrl(createNewResolvedUrl);
                 if (this.service === undefined) {
                     assert(this.client.details.type !== summarizerClientType,
-                        "client should not be summarizer before container is created");
+                        0x2bf /* "client should not be summarizer before container is created" */);
                     this.service = await runWithRetry(
                         async () => this.serviceFactory.createContainer(
                             summary,
