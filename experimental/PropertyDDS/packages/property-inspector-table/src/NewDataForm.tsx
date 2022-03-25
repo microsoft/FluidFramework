@@ -228,7 +228,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 
   const handleCreateData = () => {
     setCreating(true);
-    ErrorPopup(onDataCreate.bind(null, inputName, selectedTypeOption.value, selectedContainerOption.value));
+    void ErrorPopup(onDataCreate.bind(null, inputName, selectedTypeOption.value, selectedContainerOption.value));
   };
 
   const cancelBtn = (

@@ -116,7 +116,7 @@ class DeleteModal extends React.Component<IDeleteModalProps & WithStyles<typeof 
     return ErrorPopup(this.props.options.handler, false).then(() => {
       this.props.onClosed();
     }).catch(() => {
-      ErrorPopup(() => { throw new Error("The property was deleted by a remote collaborator!"); });
+      void ErrorPopup(() => { throw new Error("The property was deleted by a remote collaborator!"); });
       this.setState({ deleting: false });
       this.props.onClosed();
     });

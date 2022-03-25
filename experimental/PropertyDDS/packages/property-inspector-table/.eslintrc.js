@@ -14,7 +14,6 @@
     "@typescript-eslint/consistent-type-assertions": "off",
     "@typescript-eslint/no-dynamic-delete": "off",
     "@typescript-eslint/no-extraneous-class": "off",
-    "@typescript-eslint/no-floating-promises": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-shadow": "off",
     "@typescript-eslint/no-unnecessary-type-arguments": "off",

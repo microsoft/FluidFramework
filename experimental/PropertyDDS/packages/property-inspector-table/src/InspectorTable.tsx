@@ -608,7 +608,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
 
     private async handleCreateData(rowData: IInspectorRow, name: string, type: string, context: string) {
       if (this.dataCreation) {
-        this.props.dataCreationHandler!(rowData, name, type, context);
+        void this.props.dataCreationHandler!(rowData, name, type, context);
         this.setState({showFormRowID: "0"});
         this.forceUpdateBaseTable();
       }
@@ -918,7 +918,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
 
     private readonly generateForm = (rowData: IInspectorRow) => {
       if (rowData.parent!.getContext() === "array" && rowData.parent!.isPrimitiveType()) {
-        this.handleCreateData(rowData, "", rowData.parent!.getTypeid(), "single");
+        void this.handleCreateData(rowData, "", rowData.parent!.getTypeid(), "single");
         return false;
       }
       return true;

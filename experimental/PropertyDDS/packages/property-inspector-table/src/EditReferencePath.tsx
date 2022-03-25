@@ -108,7 +108,7 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
           onChange={handleInputChange}
           onKeyPress={(event) => {
             if (event.key === "Enter") {
-              handleEdit();
+              void handleEdit();
             }
           }}
           placeholder={path}
