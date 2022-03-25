@@ -33,7 +33,7 @@ export interface INewDataRowProps {
   onClick: () => void;
 }
 
-class NewDataRow extends React.Component<INewDataRowProps & WithStyles<typeof styles>, {}> {
+class NewDataRow extends React.Component<INewDataRowProps & WithStyles<typeof styles>> {
   public render() {
     const {classes} = this.props;
     return (

@@ -336,9 +336,9 @@ export const getReferenceValue = (rowData: IInspectorRow) => {
 
 const getShortId = (parentPath: string, childId: string | undefined = undefined): string => {
   const sanitizer = [
-    { searchFor: /[.]|[[]/g, replaceWith: idSeparator },
-    { searchFor: /[\]]/g, replaceWith: "" },
-    { searchFor: /\/[/]+/g, replaceWith: idSeparator },
+    { searchFor: /[.[]/g, replaceWith: idSeparator },
+    { searchFor: /]/g, replaceWith: "" },
+    { searchFor: /\/\/+/g, replaceWith: idSeparator },
   ];
   const absolutePath =
     childId !== undefined ?
