@@ -590,7 +590,6 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
                                         options: IPropertyToTableRowOptions,
                                         pathPrefix: string): IInspectorRow => {
   const collectionProperty = collectionPropertyProxy.getProperty() as ContainerProperty;
-  let propertyProxy: BaseProxifiedProperty | undefined;
   let prop;
   // when we try to access an non-existing element of an array, the 'get' method throws which causes app crash
   try {
@@ -598,7 +597,7 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
   } catch {
     return createInvalidReference(collectionPropertyProxy, propertyId, parentRowId, props, options, pathPrefix);
   }
-  propertyProxy = (prop && PropertyFactory.instanceOf(prop, "BaseProperty") ?
+  const propertyProxy = (prop && PropertyFactory.instanceOf(prop, "BaseProperty") ?
     PropertyProxy.proxify(prop) : prop) as BaseProxifiedProperty;
   const { depth, addDummy, dataCreation, followReferences, ascending } = options;
   const parentIsConstant = !!options.parentIsConstant;
@@ -606,7 +605,6 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
   const isReferenceCollection = isReferenceCollectionTypeid(collectionTypeid);
   // Always start with the collection typeid, and fresh variables
   let determinedData;
-  let determinedValue;
   let currentTypeid = collectionTypeid;
   let currentContext = "single";
   let property: BaseProperty | BaseProxifiedProperty | undefined = propertyProxy;
@@ -642,7 +640,7 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
 
   // In case a set is processed there is no valid key, take the guid instead.
   propertyId = collectionProperty.getContext() === "set" ? (propertyProxy as any).guid : propertyId;
-  determinedValue = getPropertyValue(collectionPropertyProxy, propertyId, currentContext, currentTypeid,
+  const determinedValue = getPropertyValue(collectionPropertyProxy, propertyId, currentContext, currentTypeid,
     followReferences);
 
   if (propertyProxy && (followReferences || !TypeIdHelper.isReferenceTypeId(currentTypeid))) {

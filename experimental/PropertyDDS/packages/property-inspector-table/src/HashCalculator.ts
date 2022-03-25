@@ -59,11 +59,11 @@ class HashBuffer {
 //   No licensing notice is necessary, but if you need one, you can use:
 //   "Any copyright is dedicated to the Public Domain.
 //    http://creativecommons.org/publicdomain/zero/1.0/".
-let imul = Math.imul || function(a, b) {
-  let ah = (a >>> 16) & 0xffff;
-  let al = a & 0xffff;
-  let bh = (b >>> 16) & 0xffff;
-  let bl = b & 0xffff;
+const imul = Math.imul || function(a, b) {
+  const ah = (a >>> 16) & 0xffff;
+  const al = a & 0xffff;
+  const bh = (b >>> 16) & 0xffff;
+  const bl = b & 0xffff;
   // the shift by 0 fixes the sign on the high part
   // the final |0 converts the unsigned value into a signed value
   return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
@@ -77,7 +77,7 @@ let imul = Math.imul || function(a, b) {
  * @param {number} r - amount to shift
  * @return {number} Rotated 32-bit integer.
  */
-let rotl32 = function(x, r) {
+const rotl32 = function(x, r) {
   return (((x << r) >>> 0) | (x >>> (32 - r))) >>> 0;
 };
 
@@ -86,7 +86,7 @@ let rotl32 = function(x, r) {
  * @param {number} h - 32 bit integer
  * @return {number} The scrambled 32-bit integer.
  */
-let fmix32 = function(h) {
+const fmix32 = function(h) {
   h = (h ^ (h >>> 16)) >>> 0;
   h = imul(h, 0x85ebca6b) >>> 0;
   h = (h ^ (h >>> 13)) >>> 0;
@@ -97,10 +97,10 @@ let fmix32 = function(h) {
 };
 
 // Constants
-let c1 = 0x239b961b;
-let c2 = 0xab0e9789;
-let c3 = 0x38b34ae5;
-let c4 = 0xa1e38b93;
+const c1 = 0x239b961b;
+const c2 = 0xab0e9789;
+const c3 = 0x38b34ae5;
+const c4 = 0xa1e38b93;
 
 /**
  * Helper class which computes a Murmur3 hash for binary data. The user
@@ -239,7 +239,7 @@ export class HashCalculator {
     let k4 = 0;
 
     // Compute the hash for the remaining bytes in the buffer
-    let buffer = this.hashBuffer.Uint8HashArray;
+    const buffer = this.hashBuffer.Uint8HashArray;
     /* eslint-disable no-fallthrough, no-multi-spaces */ // Allows cases to fallthrough without complaints.
     switch (this.hashBuffer.pos) {
       case 15: k4 = (k4 ^ (buffer[14] << 16)) >>> 0;

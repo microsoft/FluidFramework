@@ -8,7 +8,6 @@
       "@fluidframework/eslint-config-fluid"
   ],
   "rules": {
-    "prefer-const": ["warn"],
     "max-len": [2, 140, 2],
 
     "@rushstack/no-new-null": "off",
@@ -37,7 +36,6 @@
     "no-param-reassign": "off",
     "no-prototype-builtins": "off",
     "no-useless-escape": "off",
-    "prefer-const": "off",
     "prefer-object-spread": "off",
     "prefer-template": "off",
     "react/no-direct-mutation-state": "off",
