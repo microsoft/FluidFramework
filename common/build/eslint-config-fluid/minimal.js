@@ -12,8 +12,6 @@ module.exports = {
     "extends": [
         "./eslint7",
         "plugin:eslint-comments/recommended",
-        // "plugin:react/recommended",
-        // "@rushstack/eslint-config/profile/web-app",
         "plugin:eslint-comments/recommended",
         "plugin:import/errors",
         "plugin:import/warnings",
@@ -41,7 +39,9 @@ module.exports = {
         "@typescript-eslint/eslint-plugin",
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-promise
         "eslint-plugin-promise",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
         "react",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
         "unicorn",
     ],
     "reportUnusedDisableDirectives": true,
@@ -72,8 +72,6 @@ module.exports = {
         ],
 
         // ENABLED INTENTIONALLY
-        // Disabled because we don't require that all variable declarations be explicitly typed.
-        "@rushstack/typedef-var": "off",
         "@typescript-eslint/ban-types": "error",
         "@typescript-eslint/dot-notation": "error",
         "@typescript-eslint/no-non-null-assertion": "error",
@@ -114,6 +112,8 @@ module.exports = {
         "unicorn/no-unsafe-regex": "error",
 
         // DISABLED INTENTIONALLY
+        // Disabled because we don't require that all variable declarations be explicitly typed.
+        "@rushstack/typedef-var": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/explicit-member-accessibility": "off",
         "@typescript-eslint/indent": "off", // Off because it conflicts with typescript-formatter
