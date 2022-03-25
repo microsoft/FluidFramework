@@ -33,7 +33,7 @@
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
     "webpack": "webpack --env production",
-    "webpack:dev": "webpack --env.development"
+    "webpack:dev": "webpack --env development"
   },
   "dependencies": {
     "@fluid-experimental/data-objects": "^0.58.3000",

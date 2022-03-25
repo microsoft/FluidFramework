@@ -23,7 +23,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
-    "start": "webpack-dev-server --config webpack.config.js",
+    "start": "webpack serve --config webpack.config.js",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",

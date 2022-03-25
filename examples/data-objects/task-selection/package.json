@@ -26,7 +26,7 @@
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
     "start": "webpack-dev-server",
-    "start:test": "webpack-dev-server --config webpack.test.js",
+    "start:test": "webpack serve --config webpack.test.js",
     "test": "npm run test:jest",
     "test:jest": "jest",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
@@ -34,7 +34,7 @@
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
     "webpack": "webpack --env production",
-    "webpack:dev": "webpack --env.development"
+    "webpack:dev": "webpack --env development"
   },
   "dependencies": {
     "@fluid-experimental/get-container": "^0.58.3000",

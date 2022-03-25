@@ -24,12 +24,12 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
-    "start": "webpack-dev-server --config webpack.config.js --env.mode local",
-    "start:docker": "webpack-dev-server --config webpack.config.js --env.mode docker",
-    "start:r11s": "webpack-dev-server --config webpack.config.js --env.mode r11s",
-    "start:spo": "webpack-dev-server --config webpack.config.js --env.mode spo",
-    "start:spo-df": "webpack-dev-server --config webpack.config.js --env.mode spo-df",
-    "start:tinylicious": "webpack-dev-server --config webpack.config.js --env.mode tinylicious",
+    "start": "webpack serve --config webpack.config.js --mode local",
+    "start:docker": "webpack serve --config webpack.config.js --mode docker",
+    "start:r11s": "webpack serve --config webpack.config.js --mode r11s",
+    "start:spo": "webpack serve --config webpack.config.js --mode spo",
+    "start:spo-df": "webpack serve --config webpack.config.js --mode spo-df",
+    "start:tinylicious": "webpack serve --config webpack.config.js --mode tinylicious",
     "test": "npm run test:jest",
     "test:jest": "jest",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
@@ -37,7 +37,7 @@
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
     "webpack": "webpack --env production",
-    "webpack:dev": "webpack --env.development"
+    "webpack:dev": "webpack --env development"
   },
   "dependencies": {
     "@fluid-example/multiview-coordinate-interface": "^0.58.3000",
