@@ -737,7 +737,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
             func(item);
             const tableRows = item.children;
             if (tableRows) {
-                tableRows.forEach(row => {
+                tableRows.forEach((row) => {
                     this.traverseTree(row, func);
                 });
             }
@@ -751,7 +751,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         const output = expandAll(workspace);
 
         const tableRows = this.state.tableRows;
-        tableRows.forEach(item => {
+        tableRows.forEach((item) => {
             this.traverseTree(item, (item) => {
                 if (item.children && !item.isReference) {
                     if (item.children[0].context === "d") {

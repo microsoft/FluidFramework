@@ -10,9 +10,6 @@
   "rules": {
     "prefer-const": ["warn"],
     "max-len": [2, 140, 2],
-    "camelcase": 0,
-    "one-var": 0,
-    "arrow-parens": [2, "always"],
 
     "@rushstack/no-new-null": "off",
     "@typescript-eslint/ban-ts-comment": "off",
@@ -30,7 +27,6 @@
     "@typescript-eslint/promise-function-async": "off",
     "@typescript-eslint/restrict-plus-operands": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",
-    "arrow-parens": "off",
     "import/no-duplicates": "off",
     "import/no-internal-modules": "off",
     "import/no-extraneous-dependencies": "off",
