@@ -37,7 +37,6 @@
     "no-param-reassign": "off",
     "no-prototype-builtins": "off",
     "no-useless-escape": "off",
-    "no-var": "off",
     "prefer-const": "off",
     "prefer-object-spread": "off",
     "prefer-template": "off",
