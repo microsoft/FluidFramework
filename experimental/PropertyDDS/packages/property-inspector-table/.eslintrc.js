@@ -29,7 +29,6 @@
     "max-len": "off",
     "no-bitwise": "off",
     "no-param-reassign": "off",
-    "no-prototype-builtins": "off",
     "prefer-template": "off",
     "react/no-direct-mutation-state": "off",
     "react/no-unescaped-entities": "off",

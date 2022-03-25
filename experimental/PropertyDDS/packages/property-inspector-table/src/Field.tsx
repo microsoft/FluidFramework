@@ -42,33 +42,6 @@ function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCe
     }
 }
 
-export const Field: React.FunctionComponent<IEditableValueCellProps> = ({ rowData, ...restProps }) => {
-    const parent = rowData.parent!;
-    let typeid = rowData.typeid;
-    let property;
-
-    try {
-        property = (rowData.parent! as ContainerProperty).get(rowData.name);
-    } catch {
-        typeid = "Reference";
-    }
-    if (Utils.isEnumProperty(property) || Utils.isEnumArrayProperty(parent!)) {
-        typeid = "enum";
-    }
-
-    const ViewComponent: React.ComponentType<any> = typeToViewMap.hasOwnProperty(typeid)
-        ? typeToViewMap[typeid]
-        : StringView;
-
-    return (
-        <ViewComponent
-            onSubmit={onInlineEditEnd}
-            rowData={rowData}
-            {...restProps}
-        />
-    );
-};
-
 const typeToViewMap = {
     Bool: BooleanView,
     String: StringView,
@@ -84,4 +57,32 @@ const typeToViewMap = {
     Uint32: NumberView,
     Uint64: NumberView,
     Uint8: NumberView,
+};
+
+export const Field: React.FunctionComponent<IEditableValueCellProps> = ({ rowData, ...restProps }) => {
+    const parent = rowData.parent!;
+    let typeid = rowData.typeid;
+    let property;
+
+    try {
+        property = (rowData.parent! as ContainerProperty).get(rowData.name);
+    } catch {
+        typeid = "Reference";
+    }
+    if (Utils.isEnumProperty(property) || Utils.isEnumArrayProperty(parent!)) {
+        typeid = "enum";
+    }
+
+    // eslint-disable-next-line no-prototype-builtins
+    const ViewComponent: React.ComponentType<any> = typeToViewMap.hasOwnProperty(typeid)
+        ? typeToViewMap[typeid]
+        : StringView;
+
+    return (
+        <ViewComponent
+            onSubmit={onInlineEditEnd}
+            rowData={rowData}
+            {...restProps}
+        />
+    );
 };
