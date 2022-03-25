@@ -2434,7 +2434,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 maxOpSize,
                 this._flushMode === FlushMode.TurnBased,
                 opMetadataInternal);
-            opSizesSinceLastSummary += serializedContent.length;
+            this.opSizesSinceLastSummary += serializedContent.length;
         }
 
         // Let the PendingStateManager know that a message was submitted.

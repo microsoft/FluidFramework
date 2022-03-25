@@ -158,6 +158,7 @@ describe("Runtime", () => {
                             generateDuration: 0,
                             uploadDuration: 0,
                             submitOpDuration: 0,
+                            opsSizesSinceLastSummary: 0,
                             summaryTree: { type: SummaryType.Tree, tree: {} },
                             summaryStats: {
                                 treeNodeCount: 0,

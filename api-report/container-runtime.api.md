@@ -441,6 +441,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 // @public
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
     readonly clientSequenceNumber: number;
+    readonly opsSizesSinceLastSummary: number;
     // (undocumented)
     readonly stage: "submit";
     readonly submitOpDuration: number;
