@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/task-selection",
-  "version": "0.58.2001",
+  "version": "0.58.2002",
   "description": "Example demonstrating selecting a unique task amongst connected Fluid clients",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -37,16 +37,16 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-experimental/get-container": "^0.58.2001",
-    "@fluid-experimental/task-manager": "^0.58.2001",
-    "@fluidframework/aqueduct": "^0.58.2001",
+    "@fluid-experimental/get-container": "^0.58.2002",
+    "@fluid-experimental/task-manager": "^0.58.2002",
+    "@fluidframework/aqueduct": "^0.58.2002",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.47.1000",
-    "@fluidframework/container-runtime-definitions": "^0.58.2001",
+    "@fluidframework/container-runtime-definitions": "^0.58.2002",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/request-handler": "^0.58.2001",
-    "@fluidframework/runtime-utils": "^0.58.2001",
+    "@fluidframework/request-handler": "^0.58.2002",
+    "@fluidframework/runtime-utils": "^0.58.2002",
     "css-loader": "^1.0.0",
     "style-loader": "^1.0.0"
   },

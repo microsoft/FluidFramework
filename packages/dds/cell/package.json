@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/cell",
-  "version": "0.58.2001",
+  "version": "0.58.2002",
   "description": "Distributed data structure for a single value",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -61,18 +61,18 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/datastore-definitions": "^0.58.2001",
-    "@fluidframework/driver-utils": "^0.58.2001",
+    "@fluidframework/datastore-definitions": "^0.58.2002",
+    "@fluidframework/driver-utils": "^0.58.2002",
     "@fluidframework/protocol-definitions": "^0.1027.1000",
-    "@fluidframework/runtime-definitions": "^0.58.2001",
-    "@fluidframework/shared-object-base": "^0.58.2001"
+    "@fluidframework/runtime-definitions": "^0.58.2002",
+    "@fluidframework/shared-object-base": "^0.58.2002"
   },
   "devDependencies": {
-    "@fluid-internal/test-dds-utils": "^0.58.2001",
+    "@fluid-internal/test-dds-utils": "^0.58.2002",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.27.0",
-    "@fluidframework/mocha-test-setup": "^0.58.2001",
-    "@fluidframework/test-runtime-utils": "^0.58.2001",
+    "@fluidframework/mocha-test-setup": "^0.58.2002",
+    "@fluidframework/test-runtime-utils": "^0.58.2002",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",

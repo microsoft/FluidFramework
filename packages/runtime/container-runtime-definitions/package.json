@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/container-runtime-definitions",
-  "version": "0.58.2001",
+  "version": "0.58.2002",
   "description": "Fluid Runtime definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -40,7 +40,7 @@
     "@fluidframework/core-interfaces": "^0.42.0",
     "@fluidframework/driver-definitions": "^0.45.1000",
     "@fluidframework/protocol-definitions": "^0.1027.1000",
-    "@fluidframework/runtime-definitions": "^0.58.2001",
+    "@fluidframework/runtime-definitions": "^0.58.2002",
     "@types/node": "^14.18.0"
   },
   "devDependencies": {
