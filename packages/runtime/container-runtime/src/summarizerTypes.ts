@@ -79,7 +79,6 @@ export interface ISummarizerOptions {
 
 export interface ISummarizingWarning extends ContainerWarning {
     readonly errorType: "summarizingError";
-    readonly logged: boolean;
 }
 
 export interface IConnectableRuntime {

@@ -43,8 +43,6 @@ const summarizingError = "summarizingError";
 export class SummarizingWarning extends LoggingError implements ISummarizingWarning, IFluidErrorBase {
     readonly errorType = summarizingError;
     readonly canRetry = true;
-    /** @deprecated - Unused now that Container Warning system is being decommissioned */
-    readonly logged: boolean = false;
 
     /** Create a summarizingWarning caused by the given error */
     static createFromError(error: any) {
