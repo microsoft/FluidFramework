@@ -1,9 +1,12 @@
-{
-  "parser": "@babel/eslint-parser",
-  "parserOptions": {
-    "requireConfigFile": false,
-    "sourceType": "module"
-  },
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+ module.exports = {
+  "extends": [
+      "@fluidframework/eslint-config-fluid"
+  ],
   "rules": {
     "linebreak-style": 0,
     "prefer-const": ["warn"],
