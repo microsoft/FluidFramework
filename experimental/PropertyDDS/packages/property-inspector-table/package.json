@@ -59,7 +59,6 @@
     "@fluid-experimental/property-properties": "^0.58.3000",
     "@fluid-experimental/property-proxy": "^0.58.3000",
     "@fluidframework/build-common": "^0.23.0",
-    "@rushstack/eslint-config": "^2.5.1",
     "@storybook/addon-actions": "^6.1.21",
     "@storybook/addon-essentials": "^6.1.21",
     "@storybook/addon-links": "^6.1.21",

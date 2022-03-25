@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
- module.exports = {
+ // This is a workaround for https://github.com/eslint/eslint/issues/3458
+require("@fluidframework/eslint-config-fluid/patch/modern-module-resolution");
+
+module.exports = {
 "extends": [
         "@fluidframework/eslint-config-fluid"
     ],

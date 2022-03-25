@@ -78,7 +78,6 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/test-runtime-utils": "^0.58.3000",
     "@fluidframework/test-utils": "^0.58.3000",
-    "@rushstack/eslint-config": "^2.5.1",
     "@types/jest": "22.2.3",
     "async": "^3.2.0",
     "babel-eslint": "^10.0.1",
