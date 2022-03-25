@@ -8,7 +8,6 @@
       "@fluidframework/eslint-config-fluid"
   ],
   "rules": {
-    "@rushstack/no-new-null": "off",
     "@typescript-eslint/consistent-type-assertions": "off",
     "@typescript-eslint/no-dynamic-delete": "off",
     "@typescript-eslint/no-extraneous-class": "off",
@@ -18,7 +17,6 @@
     "@typescript-eslint/no-unsafe-return": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",
     "import/no-internal-modules": "off",
-    "import/no-unassigned-import": "off",
     "no-param-reassign": "off",
     "unicorn/filename-case": "off",
   }

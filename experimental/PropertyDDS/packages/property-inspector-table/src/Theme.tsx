@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-unassigned-import
 import "@hig/fonts/build/ArtifaktElement.css";
 import { createTheme } from "@material-ui/core/styles";
 import { ToggleButtonClassKey } from "@material-ui/lab/ToggleButton";

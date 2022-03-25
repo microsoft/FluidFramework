@@ -8,6 +8,7 @@ import {
   ReferenceMapProperty,
   ReferenceProperty,
 } from "@fluid-experimental/property-properties";
+// eslint-disable-next-line import/no-unassigned-import
 import "@hig/fonts/build/ArtifaktElement.css";
 import Button from "@material-ui/core/Button";
 import { createStyles, Theme, withStyles, WithStyles } from "@material-ui/core/styles";
@@ -16,6 +17,7 @@ import classNames from "classnames";
 import debounce from "lodash.debounce";
 import * as React from "react";
 import BaseTable, { SortOrder } from "react-base-table";
+// eslint-disable-next-line import/no-unassigned-import
 import "react-base-table/styles.css";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import { InspectorMessages, minRows, minRowWidth, rowWidthInterval } from "./constants";
