@@ -68,6 +68,13 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
         return typeData
     }
 
+    if(Node.isIdentifier(node)){
+        const typeData: TypeData[]=[];
+        node.getDefinitionNodes().forEach(
+            (d)=>typeData.push(...getNodeTypeData(d, namespacePrefix)));
+        return typeData;
+    }
+
     if (Node.isClassDeclaration(node)
         || Node.isEnumDeclaration(node)
         || Node.isInterfaceDeclaration(node)
@@ -117,6 +124,7 @@ export function toTypeString(prefix: string, typeData: TypeData){
 
         case ts.SyntaxKind.VariableDeclaration:
         case ts.SyntaxKind.FunctionDeclaration:
+        case ts.SyntaxKind.Identifier:
             // turn variables and functions into types
             return `typeof ${typeStringBase}`;
 
@@ -137,40 +145,52 @@ function tryFindDependencyPath(packageDir: string, dependencyName: string) {
     return `${testPath}/node_modules/${dependencyName}`
 }
 
-export function generateTypeDataForProject(packageDir: string, dependencyName: string | undefined): PackageAndTypeData {
+export async function generateTypeDataForProject(packageDir: string, dependencyName: string | undefined): Promise<PackageAndTypeData> {
 
     const basePath = dependencyName === undefined
         ? packageDir
         : tryFindDependencyPath(packageDir, dependencyName);
 
-    const tsConfigPath =`${basePath}/tsconfig.json`;
-
-    if (!fs.existsSync(tsConfigPath)) {
-        throw new Error(`Tsconfig json does not exist: ${tsConfigPath}.\nYou may need to install the package via npm install in the package dir.`)
+    if (!fs.existsSync(`${basePath}/package.json`)) {
+        throw new Error(`package.json does not exist at ${basePath}.\nYou may need to install the package via npm install in the package dir.`)
     }
 
-    const packageDetails = getPackageDetails(basePath);
+    let tsConfigPath: string | undefined =`${basePath}/tsconfig.json`;
+
+    if (!fs.existsSync(tsConfigPath)) {
+        tsConfigPath = undefined;
+    }
+
+    const packageDetails = (await getPackageDetails(basePath))!;
 
     const project = new Project({
         skipFileDependencyResolution: true,
         tsConfigFilePath: tsConfigPath,
     });
-
-    const file = project.getSourceFile("index.ts")
-    if(file == undefined){
-        throw new Error("index.ts does not exist in package source.\nYou may need to install the package via npm install in the package dir.");
+    if(tsConfigPath === undefined){
+        project.addSourceFilesAtPaths(`${basePath}/dist/**/*.d.ts`)
     }
-    const typeData: TypeData[]=[];
 
+    const sourceFilePath = tsConfigPath !== undefined ? "index.ts" : "index.d.ts"
+    const file = project.getSourceFile(sourceFilePath);
+    if(file == undefined){
+        throw new Error(`${sourceFilePath} does not exist under ${basePath}.\nYou may need to install the package via npm install in the package dir.`);
+    }
+    const typeData = new Map<string, TypeData>();
     const exportedDeclarations = file.getExportedDeclarations();
     for(const declarations of exportedDeclarations.values()){
         for(const dec of declarations){
-            typeData.push(...getNodeTypeData(dec));
+           getNodeTypeData(dec).forEach((td)=> {
+               const fullName = getFullTypeName(td);
+               typeData.set(fullName, td);
+           })
         }
     }
+
+
     return {
         packageDetails,
-        typeData: typeData.sort((a,b)=>a.name.localeCompare(b.name)),
+        typeData: Array.from(typeData.values()).sort((a,b)=>a.name.localeCompare(b.name)),
         project,
     };
 }

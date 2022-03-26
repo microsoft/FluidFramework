@@ -147,15 +147,15 @@ export async function validateRepo(options?: IValidationOptions): Promise<RepoVa
     }
 
     for (let i = 0; packages.size > 0; i++) {
-        packages.forEach((buildPkg, pkgName) => {
+        packages.forEach(async (buildPkg, pkgName) => {
             if (buildPkg.level === i) {
-                const packageData = getPackageDetails(buildPkg.pkg.directory);
+                const packageData = (await getPackageDetails(buildPkg.pkg.directory))!;
                 const pkgJsonPath = path.join(buildPkg.pkg.directory, "package.json");
                 const pkgJsonRelativePath = path.relative(repoRoot, pkgJsonPath);
                 if (packageData.oldVersions.length > 0) {
                     log(`${pkgName}, ${buildPkg.level}`);
 
-                    let { increment, brokenTypes} = validatePackage(packageData, buildPkg.pkg.directory, allBrokenTypes);
+                    let { increment, brokenTypes} = await validatePackage(packageData, buildPkg.pkg.directory, allBrokenTypes);
 
                     brokenTypes.forEach((v, k) => allBrokenTypes.set(k, v));
 

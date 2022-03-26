@@ -4,7 +4,9 @@
  */
 
 import * as fs from "fs";
+import * as util  from "util";
 import child_process from "child_process";
+import { ConstructorDeclaration } from "ts-morph";
 
 export type PackageDetails ={
     readonly name: string;
@@ -25,6 +27,7 @@ export type BrokenCompatTypes = Partial<Record<string,Record<string, BrokenCompa
 interface PackageJson{
     name:string,
     version: string,
+    main: string | undefined,
     devDependencies: Record<string, string>;
     typeValidation?: {
         version: string,
@@ -41,14 +44,28 @@ function createSortedObject<T>(obj:Record<string,T>): Record<string,T>{
     return sortedDeps;
 }
 
-export function getPackageDetails(packageDir: string): PackageDetails {
+function safeParse(json: string, error: string){
+    try{
+        return JSON.parse(json);
+    }catch{
+        throw new Error(error);
+    }
+}
+
+export async function getPackageDetails(packageDir: string, updateOptions?: {cwd?: string}): Promise<PackageDetails | undefined> {
 
     const packagePath = `${packageDir}/package.json`;
-    if(!fs.existsSync(packagePath)){
+    if(!await util.promisify(fs.exists)(packagePath)){
         throw new Error(`Package json does not exist: ${packagePath}`)
     }
+    const content = await util.promisify(fs.readFile)(packagePath);
 
-    const pkgJson: PackageJson = JSON.parse(fs.readFileSync(packagePath).toString());
+    const pkgJson: PackageJson = safeParse(content.toString(), packagePath);
+
+    if(pkgJson.name.startsWith("@fluid-internal")
+        || pkgJson.main?.endsWith("index.js") !== true){
+        return undefined;
+    }
 
     // normalize the version to remove any pre-release version info,
     // as we shouldn't change the type validation version for pre-release versions
@@ -58,33 +75,50 @@ export function getPackageDetails(packageDir: string): PackageDetails {
             pkgJson.version;
 
     // if the packages has no type validation data, then initialize it
-    if(pkgJson.typeValidation === undefined){
-        pkgJson.typeValidation = {
-            version: normalizedVersion,
-            broken: {}
+   if(updateOptions !== undefined && normalizedVersion !== pkgJson.typeValidation?.version){
+        let normalizeParts = normalizedVersion.split(".").map((p)=>Number.parseInt(p));
+        const validationVersionParts = pkgJson.typeValidation?.version?.split(".").map((p)=>Number.parseInt(p)) ?? [0,0,0];
+        let semVer="^"
+        if(normalizeParts[0] !== validationVersionParts[0]){
+            normalizeParts= [normalizeParts[0] -1, 0, 0];
+        }else if(normalizeParts[1] !== validationVersionParts[1]){
+            normalizeParts= [normalizeParts[0], normalizeParts[1] -1, 0];
+        }else{
+            semVer="";
+            normalizeParts[2] = validationVersionParts[2];
         }
-        fs.writeFileSync(packagePath, JSON.stringify(pkgJson, undefined, 2));
-    }else if(normalizedVersion !== pkgJson.typeValidation?.version){
+        const previousVersion = normalizeParts.join(".");
+
         // check that the version exists on npm before trying to add the
         // dev dep and bumping the typeValidation version
         // if the version does not exist, we will defer updating the package
-        const packageDef = `${pkgJson.name}@${pkgJson.typeValidation.version}`
-        const args = ["view", packageDef,"--json"];
-        const result = child_process.execSync(`npm ${args.join(" ")}`,{cwd:packageDir})
-        const remotePackage: PackageJson | undefined = result.length >0 ? JSON.parse(result.toString()) : undefined;
+        const packageDef = `${pkgJson.name}@${semVer}${previousVersion}`
+        const args = ["view", `"${packageDef}"`, "version", "--json"];
+        const result = child_process.execSync(`npm ${args.join(" ")}`,{cwd: updateOptions.cwd ?? packageDir}).toString()
+        const maybeVersions =
+            result !== undefined
+            && result.length >0
+                ? safeParse(result, args.join(" "))
+                : undefined;
 
-        if(remotePackage?.name === pkgJson.name && remotePackage?.version === pkgJson.typeValidation.version){
+        const versionsArray =
+            typeof maybeVersions === "string"
+                ? [maybeVersions]
+                : Array.isArray(maybeVersions)
+                    ? maybeVersions
+                    : [];
 
-            pkgJson.devDependencies[`${pkgJson.name}-${pkgJson.typeValidation.version}`] =
-            `npm:${packageDef}`;
+
+        if(versionsArray.length > 0){
+            pkgJson.devDependencies[`${pkgJson.name}-previous`] = `npm:${packageDef}`;
 
             pkgJson.devDependencies = createSortedObject(pkgJson.devDependencies);
 
             pkgJson.typeValidation = {
                 version: normalizedVersion,
-                broken: pkgJson.typeValidation?.broken ?? {}
+                broken: {}
             }
-            fs.writeFileSync(packagePath, JSON.stringify(pkgJson, undefined, 2));
+            await util.promisify(fs.writeFile)(packagePath, JSON.stringify(pkgJson, undefined, 2));
         }
     }
 
@@ -100,12 +134,12 @@ export function getPackageDetails(packageDir: string): PackageDetails {
     }
 }
 
-export function findPackagesUnderPath(path: string) {
+export async function findPackagesUnderPath(path: string) {
     const searchPaths = [path];
     const packages: string[] = [];
     while(searchPaths.length > 0){
         const search = searchPaths.shift()!;
-        if(fs.existsSync(`${search}/package.json`)){
+        if(await util.promisify(fs.exists)(`${search}/package.json`)){
             packages.push(search);
         }else{
             searchPaths.push(
