@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-definitions",
-  "version": "0.45.2000-58205",
+  "version": "0.45.2000",
   "description": "Fluid driver definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
