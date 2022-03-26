@@ -63,7 +63,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/odsp-doclib-utils": "^0.59.1000",
     "@fluidframework/protocol-base": "^0.1035.1000",
-    "@fluidframework/protocol-definitions": "^0.1027.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
     "async-mutex": "^0.3.1",
     "debug": "^4.1.1",
     "jwt-decode": "^2.2.0",

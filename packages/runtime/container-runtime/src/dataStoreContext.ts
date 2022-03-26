@@ -101,7 +101,7 @@ export function createAttributesBlob(
     disableIsolatedChannels: boolean,
 ): ITreeEntry {
     const attributes = createAttributes(pkg, isRootDataStore, disableIsolatedChannels);
-    return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
+    return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes)) as ITreeEntry;
 }
 
 interface ISnapshotDetails {

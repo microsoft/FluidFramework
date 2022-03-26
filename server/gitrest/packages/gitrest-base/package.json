@@ -31,7 +31,7 @@
     "@fluidframework/gitresources": "^0.1035.1000",
     "@fluidframework/protocol-base": "^0.1035.1000",
     "@fluidframework/protocol-definitions": "^0.1027.1000",
-    "@fluidframework/server-services-client": "^0.1035.1000",
+    "@fluidframework/server-services-client": "^0.1036.1000-0",
     "@fluidframework/server-services-core": "^0.1035.1000",
     "@fluidframework/server-services-shared": "^0.1035.1000",
     "@fluidframework/server-services-telemetry": "^0.1035.1000",

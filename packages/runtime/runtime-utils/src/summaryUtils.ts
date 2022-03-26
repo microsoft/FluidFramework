@@ -4,7 +4,6 @@
  */
 
 import {
-    assert,
     bufferToString,
     fromBase64ToUtf8,
     IsoBuffer,
@@ -259,9 +258,6 @@ export function convertToSummaryTree(
 export function convertSnapshotTreeToSummaryTree(
     snapshot: ISnapshotTree,
 ): ISummaryTreeWithStats {
-    assert(Object.keys(snapshot.commits).length === 0,
-        0x19e /* "There should not be commit tree entries in snapshot" */);
-
     const builder = new SummaryTreeBuilder();
     for (const [path, id] of Object.entries(snapshot.blobs)) {
         let decoded: string | undefined;
@@ -307,17 +303,17 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
                     parsedContent = Uint8ArrayToString(value.content, "base64");
                     encoding = "base64";
                 }
-                entries.push(new BlobTreeEntry(key, parsedContent, encoding));
+                entries.push(new BlobTreeEntry(key, parsedContent, encoding) as ITreeEntry);
                 break;
             }
 
             case SummaryType.Tree: {
-                entries.push(new TreeTreeEntry(key, convertSummaryTreeToITree(value)));
+                entries.push(new TreeTreeEntry(key, convertSummaryTreeToITree(value)) as ITreeEntry);
                 break;
             }
 
             case SummaryType.Attachment: {
-                entries.push(new AttachmentTreeEntry(key, value.id));
+                entries.push(new AttachmentTreeEntry(key, value.id) as ITreeEntry);
                 break;
             }
 

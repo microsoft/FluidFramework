@@ -142,7 +142,7 @@ function normalizeEntry(
             if (config?.blobsToNormalize?.includes(entry.path) || entry.path.startsWith(gcBlobPrefix)) {
                 contents = getNormalizedBlobContent(contents, entry.path);
             }
-            return new BlobTreeEntry(entry.path, contents);
+            return new BlobTreeEntry(entry.path, contents) as ITreeEntry;
         }
         case TreeEntry.Tree: {
             if(config?.excludedChannelContentTypes !== undefined) {
@@ -151,16 +151,16 @@ function normalizeEntry(
                         const parsed: {type?: string} = JSON.parse(maybeAttributes.value.contents);
                         if(parsed.type !== undefined && config.excludedChannelContentTypes.includes(parsed.type)) {
                             // remove everything to match the unknown channel
-                            return new TreeTreeEntry(entry.path, {entries:[maybeAttributes]});
+                            return new TreeTreeEntry(entry.path, {entries:[maybeAttributes]}) as ITreeEntry;
                         }
                     }
                 }
             }
 
-            return new TreeTreeEntry(entry.path, getNormalizedSnapshot(entry.value, config));
+            return new TreeTreeEntry(entry.path, getNormalizedSnapshot(entry.value, config)) as ITreeEntry;
         }
         case TreeEntry.Attachment: {
-            return new AttachmentTreeEntry(entry.path, (entry.value).id);
+            return new AttachmentTreeEntry(entry.path, (entry.value).id) as ITreeEntry;
         }
 
         default:

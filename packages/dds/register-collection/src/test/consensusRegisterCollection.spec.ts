@@ -142,7 +142,7 @@ describe("ConsensusRegisterCollection", () => {
             });
 
             it("load", async () => {
-                const tree: ITree = buildTree(expectedSerialization);
+                const tree: ITree = buildTree(expectedSerialization) as ITree;
                 const services = {
                     deltaConnection: new MockEmptyDeltaConnection(),
                     objectStorage: new MockStorage(tree),
@@ -158,7 +158,7 @@ describe("ConsensusRegisterCollection", () => {
             });
 
             it("load with SharedObject not supported", async () => {
-                const tree: ITree = buildTree(legacySharedObjectSerialization);
+                const tree: ITree = buildTree(legacySharedObjectSerialization) as ITree;
                 const services = {
                     deltaConnection: new MockEmptyDeltaConnection(),
                     objectStorage: new MockStorage(tree),

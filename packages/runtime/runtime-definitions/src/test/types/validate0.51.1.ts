@@ -55,6 +55,7 @@ declare function get_current_TypeAliasDeclaration_CreateChildSummarizerNodeFn():
 declare function use_old_TypeAliasDeclaration_CreateChildSummarizerNodeFn(
     use: old.CreateChildSummarizerNodeFn);
 use_old_TypeAliasDeclaration_CreateChildSummarizerNodeFn(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_CreateChildSummarizerNodeFn());
 
 /*
@@ -67,6 +68,7 @@ declare function get_old_TypeAliasDeclaration_CreateChildSummarizerNodeParam():
 declare function use_current_TypeAliasDeclaration_CreateChildSummarizerNodeParam(
     use: current.CreateChildSummarizerNodeParam);
 use_current_TypeAliasDeclaration_CreateChildSummarizerNodeParam(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_CreateChildSummarizerNodeParam());
 
 /*
@@ -189,6 +191,7 @@ declare function get_old_InterfaceDeclaration_IAttachMessage():
 declare function use_current_InterfaceDeclaration_IAttachMessage(
     use: current.IAttachMessage);
 use_current_InterfaceDeclaration_IAttachMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAttachMessage());
 
 /*
@@ -559,6 +562,7 @@ declare function get_old_TypeAliasDeclaration_InboundAttachMessage():
 declare function use_current_TypeAliasDeclaration_InboundAttachMessage(
     use: current.InboundAttachMessage);
 use_current_TypeAliasDeclaration_InboundAttachMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_InboundAttachMessage());
 
 /*
@@ -719,6 +723,7 @@ declare function get_current_InterfaceDeclaration_ISummarizerNode():
 declare function use_old_InterfaceDeclaration_ISummarizerNode(
     use: old.ISummarizerNode);
 use_old_InterfaceDeclaration_ISummarizerNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerNode());
 
 /*
@@ -791,6 +796,7 @@ declare function get_current_InterfaceDeclaration_ISummarizerNodeWithGC():
 declare function use_old_InterfaceDeclaration_ISummarizerNodeWithGC(
     use: old.ISummarizerNodeWithGC);
 use_old_InterfaceDeclaration_ISummarizerNodeWithGC(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerNodeWithGC());
 
 /*

@@ -52,7 +52,7 @@ export function convertSummaryTreeToSnapshotITree(
                     parsedContent = Uint8ArrayToString(value.content, "base64");
                     encoding = "base64";
                 }
-                entries.push(new BlobTreeEntry(k, parsedContent, encoding));
+                entries.push(new BlobTreeEntry(k, parsedContent, encoding) as ITreeEntry);
                 break;
             }
 
@@ -61,13 +61,13 @@ export function convertSummaryTreeToSnapshotITree(
                     new TreeTreeEntry(
                         k,
                         convertSummaryTreeToSnapshotITree(value),
-                    ),
+                    ) as ITreeEntry,
                 );
                 break;
             }
 
             case SummaryType.Attachment: {
-                entries.push(new AttachmentTreeEntry(k, value.id));
+                entries.push(new AttachmentTreeEntry(k, value.id) as ITreeEntry);
                 break;
             }
 

@@ -17,6 +17,7 @@ import {
     SummaryType,
     ISnapshotTree,
     ITree,
+    ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
@@ -66,17 +67,17 @@ describe("Summary Utils", () => {
                             new TreeTreeEntry("tu", { entries: [], unreferenced: true}),
                         ],
                         unreferenced: undefined,
-                    }),
-                    new BlobTreeEntry("b", "test-blob"),
+                    }) as ITreeEntry,
+                    new BlobTreeEntry("b", "test-blob") as ITreeEntry,
                     new TreeTreeEntry("h", {
                         id: "test-handle", entries: [
                             new BlobTreeEntry("ignore", "this-should-be-ignored"),
                         ],
-                    }),
+                    }) as ITreeEntry,
                     new TreeTreeEntry("unref", {
                         entries: [],
                         unreferenced: true,
-                    }),
+                    }) as ITreeEntry,
                 ],
                 unreferenced: undefined,
             };
@@ -195,12 +196,8 @@ describe("Summary Utils", () => {
                                 },
                                 trees: {
                                 },
-                                commits: {
-                                },
                                 unreferenced: true,
                             },
-                        },
-                        commits: {
                         },
                     },
                     unref: {
@@ -208,12 +205,8 @@ describe("Summary Utils", () => {
                         },
                         trees: {
                         },
-                        commits: {
-                        },
                         unreferenced: true,
                     },
-                },
-                commits: {
                 },
             };
         });

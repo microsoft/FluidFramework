@@ -207,11 +207,11 @@ export class BlobManager {
         // to return an actual snapshot containing all the real storage IDs we know about.
         const attachingOrAttached = !!this.redirectTable || this.runtime.attachState !== AttachState.Detached;
         const blobIds = attachingOrAttached ? this.blobIds : this.detachedBlobIds;
-        const entries: ITreeEntry[] = [...blobIds].map((id) => new AttachmentTreeEntry(id, id));
+        const entries: ITreeEntry[] = [...blobIds].map((id) => new AttachmentTreeEntry(id, id) as ITreeEntry);
         if (this.redirectTable && this.redirectTable.size > 0) {
             entries.push(new BlobTreeEntry(
                 BlobManager.redirectTableBlobName,
-                JSON.stringify(Array.from(this.redirectTable.entries()))),
+                JSON.stringify(Array.from(this.redirectTable.entries()))) as ITreeEntry,
             );
         }
         return { entries };
