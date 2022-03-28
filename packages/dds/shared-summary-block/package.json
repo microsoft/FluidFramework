@@ -3,11 +3,7 @@
   "version": "0.56.10",
   "description": "A DDS that does not generate ops but is part of summary",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/dds/shared-summary-block"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,

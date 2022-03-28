@@ -3,11 +3,7 @@
   "version": "0.56.10",
   "description": "Fluid data store definitions",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/runtime/datastore-definitions"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,

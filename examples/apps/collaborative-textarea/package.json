@@ -3,11 +3,7 @@
   "version": "0.56.10",
   "description": "A minimal example using the react collaborative-textarea",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "examples/apps/collaborative-textarea"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/index.js",

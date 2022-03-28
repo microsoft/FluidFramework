@@ -3,11 +3,7 @@
   "version": "0.56.10",
   "description": "Mocks and other test utilities for the Fluid Framework Loader",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/loader/test-loader-utils"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,

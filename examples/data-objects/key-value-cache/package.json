@@ -3,11 +3,7 @@
   "version": "0.56.10",
   "description": "Key-value cache that runs in the node.js service",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "examples/data-objects/key-value-cache"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/index.js",

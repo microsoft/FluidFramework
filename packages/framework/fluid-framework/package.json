@@ -3,11 +3,7 @@
   "version": "0.56.10",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/framework/fluid-framework"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,

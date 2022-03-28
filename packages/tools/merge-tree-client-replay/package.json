@@ -4,11 +4,7 @@
   "private": true,
   "description": "A tool that lets the user to replay ops.",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/tools/merge-tree-client-replay"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,

@@ -3,11 +3,7 @@
   "version": "0.1035.0",
   "description": "Fluid server telemetry utilities",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "server/routerlicious/packages/services-telemetry"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,

@@ -3,11 +3,7 @@
   "version": "0.56.10",
   "description": "Tool for getting a container for testing app scenarios",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "experimental/framework/get-container"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/index.js",

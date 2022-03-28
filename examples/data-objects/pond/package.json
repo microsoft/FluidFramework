@@ -3,11 +3,7 @@
   "version": "0.56.10",
   "description": "Grab bag of Fluid scenarios in one Fluid Container.",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "examples/data-objects/pond"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/index.js",

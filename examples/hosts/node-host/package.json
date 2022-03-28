@@ -4,11 +4,7 @@
   "private": true,
   "description": "Fluid container host for Node.js environment",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "examples/hosts/node-host"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/index.js",

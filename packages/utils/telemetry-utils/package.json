@@ -3,11 +3,7 @@
   "version": "0.56.10",
   "description": "Collection of telemetry relates utilities for Fluid",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/utils/telemetry-utils"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,

@@ -3,11 +3,7 @@
   "version": "0.26.0",
   "description": "Shareable ESLint config for the Fluid Framework",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "common/build/eslint-config-fluid"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "index.js",

@@ -3,11 +3,7 @@
   "version": "0.56.10",
   "description": "Shared utility code for Flow-* packages.",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "examples/data-objects/flow-util-lib"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,

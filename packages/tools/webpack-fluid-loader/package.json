@@ -3,11 +3,7 @@
   "version": "0.56.10",
   "description": "Fluid object loader for webpack-dev-server",
   "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/tools/webpack-fluid-loader"
-  },
+  "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/index.js",
