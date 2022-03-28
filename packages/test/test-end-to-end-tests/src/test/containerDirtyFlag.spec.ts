@@ -24,10 +24,7 @@ const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
     runtimeOptions: {
-        summaryOptions: {
-            // currently these tests will break if we load from a summary that was too recent
-            disableSummaries: true,
-        },
+        enableOfflineLoad: true,
     },
 };
 
