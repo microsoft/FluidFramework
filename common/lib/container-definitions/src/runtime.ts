@@ -6,7 +6,6 @@
 import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     FluidObject,
-    IFluidCodeDetails,
     IFluidObject,
     IRequest,
     IResponse,
@@ -27,6 +26,7 @@ import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ILoader, ILoaderOptions } from "./loader";
+import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
