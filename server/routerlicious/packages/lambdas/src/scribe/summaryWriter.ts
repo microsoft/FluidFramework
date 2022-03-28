@@ -639,7 +639,7 @@ export class SummaryWriter implements ISummaryWriter {
                     break;
                 }
                 default: {
-                    throw new Error(`Unexpected TreeEntry type: ${treeEntry.type} when converting ITreeEntry.`);
+                    throw new Error(`Unexpected TreeEntry type when converting ITreeEntry.`);
                 }
             }
 

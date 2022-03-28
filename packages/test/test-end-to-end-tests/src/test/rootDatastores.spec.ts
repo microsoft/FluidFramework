@@ -356,7 +356,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         itExpects("Receiving a bad alias message breaks the container", [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
-        ], async () => {
+        ], async function() {
+            // GitHub issue: #9534
+            if(provider.driver.type === "tinylicious") {
+                this.skip();
+            }
             const dataCorruption = allDataCorruption([container1, container2]);
             await corruptedAliasOp(runtimeOf(dataObject1), alias);
             assert(await dataCorruption);

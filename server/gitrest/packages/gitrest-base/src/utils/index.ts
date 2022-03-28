@@ -5,4 +5,6 @@
 
 export * from "./definitions";
 export * from "./helpers";
+export * from "./isomorphicgitManager";
 export * from "./nodegitManager";
+export * from "./gitWholeSummaryManager";
