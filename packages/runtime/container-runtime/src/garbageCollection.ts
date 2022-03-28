@@ -842,7 +842,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // The following log will be enabled once this issue is resolved:
         // https://github.com/microsoft/FluidFramework/issues/8878.
-        if(this.mc.config.getBoolean(logUnknownOutboundReferencesKey) === true 
+        if(this.mc.config.getBoolean(logUnknownOutboundReferencesKey) === true
             && missingExplicitReferences.length > 0) {
             const event: ITelemetryPerformanceEvent = {
                 eventName: "gcUnknownOutboundReferences",
