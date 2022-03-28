@@ -50,9 +50,6 @@
         "enableWholeSummaryUpload": false,
         "storageUrl": "http://gitrest:3000"
     },
-    "db": {
-        "name": "mongo"
-    },
     "alfred": {
         "kafkaClientId": "alfred",
         "maxMessageSize": "16KB",

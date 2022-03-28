@@ -166,7 +166,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
         // Database connection for global db if enabled
         let globalDbMongoManager;
-        let globalDb;
         const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
         const factory = await services.getDbFactory(config);
         if (globalDbEnabled) {
@@ -178,8 +177,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
         // Create the index on the documents collection
-        const operationsDb = await operationsDbMongoManager.getDatabase();
-        const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
+        const dbManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
+        const db: core.IDb = await dbManager.getDatabase();
         const documentsCollection = db.collection<core.IDocument>(documentsCollectionName);
         await documentsCollection.createIndex(
             {

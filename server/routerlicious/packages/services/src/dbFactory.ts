@@ -17,6 +17,7 @@ interface IDBFactoryConfig {
 
 const creator = (dbFactoryConfig: IDBFactoryConfig) => async (): Promise<IDbFactory> => {
     debug(`Using ${dbFactoryConfig.name} Database`);
+    // Dynamically load the module
     const externalDbFactoryModule = await import (dbFactoryConfig.modulePathOrName);
     return new externalDbFactoryModule[dbFactoryConfig.dbFactoryConstructorName](
         dbFactoryConfig.dbConfig,
@@ -25,24 +26,30 @@ const creator = (dbFactoryConfig: IDBFactoryConfig) => async (): Promise<IDbFact
 
 export async function getDbFactory(config: Provider): Promise<IDbFactory> {
     const dbFactoryConfig = config.get("db") as IDBFactoryConfig;
+    // Default handling is Mongo
     if (!dbFactoryConfig || dbFactoryConfig.name === "mongo") {
-        // Taken from current ResourceFactories
         const mongoFactory = new services.MongoDbFactory(config.get("mongo"));
         return mongoFactory;
     }
 
+    // We enable extensions loading only when the flag is set to true.
+    // The idea behind the flag to have an additional security measure to avoid loading unwanted extensions.
+    // @TODO: in the initial proposal it was part of the config file, but perhaps it should be an
+    // environment variable instead ?
     if (config.get("loadExtensions") === true) {
         const EXTENSIONS = config.get("extensions:db") as IDBFactoryConfig[] || [];
         const extension = EXTENSIONS.find((ext) => ext.name === dbFactoryConfig.name);
 
         if (extension === undefined) {
-            throw Error(`The database ${dbFactoryConfig.name} is not found.`);
+            throw new Error(`The database ${dbFactoryConfig.name} is not found.`);
         }
 
+        // Instantiate the corresponding db factory
         const externalDbFactoryModule = creator(extension)();
 
         return externalDbFactoryModule;
     }
 
-    throw Error(`Couldn't load database: ${dbFactoryConfig.name}, perhaps you forgot to enable extensions loading?`);
+    throw new Error(
+        `Couldn't load database: ${dbFactoryConfig.name}, perhaps you forgot to enable extensions loading?`);
 }
