@@ -224,6 +224,8 @@ const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
+const summarizerClientType = "summarizer";
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -818,11 +820,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const createNewResolvedUrl = await this.urlResolver.resolve(request);
                 ensureFluidResolvedUrl(createNewResolvedUrl);
                 if (this.service === undefined) {
+                    assert(this.client.details.type !== summarizerClientType,
+                        "client should not be summarizer before container is created");
                     this.service = await runWithRetry(
                         async () => this.serviceFactory.createContainer(
                             summary,
                             createNewResolvedUrl,
                             this.subLogger,
+                            false, // clientIsSummarizer
                         ),
                         "containerAttach",
                         this.mc.logger,
@@ -1057,7 +1062,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
-        this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl, this.subLogger);
+        this.service = await this.serviceFactory.createDocumentService(
+            this._resolvedUrl,
+            this.subLogger,
+            this.client.details.type === summarizerClientType,
+        );
 
         // Ideally we always connect as "read" by default.
         // Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
