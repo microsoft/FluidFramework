@@ -43,7 +43,7 @@
     "@fluidframework/container-loader": "^0.59.1000",
     "@fluidframework/container-runtime-definitions": "^0.59.1000",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.45.1000",
+    "@fluidframework/driver-definitions": "^0.45.2000-0",
     "@fluidframework/driver-utils": "^0.59.1000",
     "@fluidframework/iframe-driver": "^0.59.1000",
     "@fluidframework/protocol-definitions": "^0.1027.1000",

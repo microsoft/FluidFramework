@@ -198,6 +198,17 @@
         "InterfaceDeclaration_IDocumentStorageService": {
           "backCompat": false
         }
+      },
+      "0.45.1000": {
+        "InterfaceDeclaration_IDocumentService": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentServiceFactory": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentStorageService": {
+          "backCompat": false
+        }
       }
     }
   }
