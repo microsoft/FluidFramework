@@ -64,7 +64,7 @@
     "@fluidframework/container-loader": "^0.58.3000",
     "@fluidframework/core-interfaces": "^0.42.0",
     "@fluidframework/counter": "^0.58.3000",
-    "@fluidframework/driver-definitions": "^0.45.1000",
+    "@fluidframework/driver-definitions": "^0.45.2000-0",
     "@fluidframework/driver-utils": "^0.58.3000",
     "@fluidframework/file-driver": "^0.58.3000",
     "@fluidframework/ink": "^0.58.3000",

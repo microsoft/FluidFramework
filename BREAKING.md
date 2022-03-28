@@ -17,13 +17,16 @@ There are a few steps you can take to write a good change note and avoid needing
 # 0.58
 
 ## 0.58 Upcoming changes
+- [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
+
+### raiseContainerWarning removed from IContainerContext
+`raiseContainerWarning` property will be removed from `IContainerContext` interface and `ContainerContext` class. Please refer to [raiseContainerWarning property](#Remove-raisecontainerwarning-property) for more details.
 
 ## 0.58 Breaking changes
 - [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from-merge-tree-to-sequence-package)
 - [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
 - [Set raiseContainerWarning property as optional parameter on IContainerContext](#Set-raiseContainerWarning-property-as-optional-parameter-on-IContainerContext)
 - [Consolidate fluidErrorCode and message on FF Errors](#Consolidate-fluidErrorCode-and-message-on-FF-Errors)
-- [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
 
 ### Move IntervalType from merge-tree to sequence package
 Move the type from the merge-tree package where it isn't used to the sequence package where it is used
@@ -36,7 +39,7 @@ Move the type from the merge-tree package where it isn't used to the sequence pa
 The logger property in IContainerContext became an optional parameter in [release 0.56](#Set-logger-property-as-optional-parameter-in-IContainerContext). This property has now been removed. The `taggedLogger` property is now set as a required parameter in `IContainerContext` interface.
 
 ## Set raiseContainerWarning property as optional parameter on IContainerContext
-`raiseContainerWarning` is set as an optional parameter on `IContainerContext` interface and would be removed from `IContainerContext` interface and `ContainerContext` class in the next release. Please see [#Remove-raiseContainerWarning-property] for more details.
+`raiseContainerWarning` is set as an optional parameter on `IContainerContext` interface and would be removed from `IContainerContext` interface and `ContainerContext` class in the next release. Please see [raiseContainerWarning property](#Remove-raisecontainerwarning-property) for more details.
 
 ### Consolidate fluidErrorCode and message on FF Errors
 Errors raised by the Fluid Framework will no longer contain the property `fluidErrorCode`.
@@ -44,11 +47,6 @@ This was present in many error constructors, and exposed in the type `IFluidErro
 Previously, the fluidErrorCode value (a pascaleCased term) was often used as the error message itself.
 Now all error messages can be expected to be easily-read sentences,
 sometimes followed by a colon and an inner error message when applicable.
-
-
-### Doing operations not allowed on deleted sub directory
-Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory
-will throw `UsageError` exception now.
 
 # 0.57
 
