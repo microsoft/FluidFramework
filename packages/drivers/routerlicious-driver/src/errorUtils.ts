@@ -71,6 +71,7 @@ export function createR11sNetworkError(
             return createGenericNetworkError(
                 errorMessage, { canRetry: true, retryAfterMs }, props);
         case 500:
+        case 502:
             return new GenericNetworkError(errorMessage, true, props);
         default:
             const retryInfo = { canRetry: retryAfterMs !== undefined, retryAfterMs };

@@ -68,7 +68,12 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
         }
     });
 
-    it("should fetch from cache when second client loads the container", async () => {
+    it("should fetch from cache when second client loads the container", async function() {
+        // GitHub issue: #9534
+        if(provider.driver.type === "odsp") {
+            this.skip();
+        }
+
         mockLogger = new MockLogger();
 
         // Create a container for the first client.
@@ -99,7 +104,11 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
             `second client fetched snapshot with ${fetchEvent.method} method instead of from cache`);
     });
 
-    it("should fetch from cache when second client loads the container in offline mode", async () => {
+    it("should fetch from cache when second client loads the container in offline mode", async function() {
+        // GitHub issue: #9534
+        if(provider.driver.type === "odsp") {
+            this.skip();
+        }
         mockLogger = new MockLogger();
 
         // Create a container for the first client. While attaching the odsp driver will cache the summary

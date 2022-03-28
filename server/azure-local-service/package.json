@@ -32,11 +32,11 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "tinylicious": "^0.4.45136"
+    "tinylicious": "^0.4.57763"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
