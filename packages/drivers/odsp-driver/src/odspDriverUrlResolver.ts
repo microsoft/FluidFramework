@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// Remove IFluidCodeDetails from driver layer
 import { assert } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
 import {

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// Remove IFluidCodeDetails from driver layer
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;

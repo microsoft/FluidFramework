@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// Remove IFluidCodeDetails from driver layer
 import { strict as assert } from "assert";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";

@@ -14,8 +14,6 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
-    IFluidCodeDetails,
-    isFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -30,6 +28,8 @@ import {
     IPendingLocalState,
     ReadOnlyInfo,
     IContainerLoadMode,
+    IFluidCodeDetails,
+    isFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,

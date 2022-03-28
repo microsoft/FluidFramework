@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// Remove IFluidCodeDetails from driver layer
 import * as Comlink from "comlink";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { IContainerPackageInfo, IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
