@@ -28,16 +28,10 @@ Potential causes are that a summary op was nacked then acked, double-acked, or t
 
 Logs right before attempting to spawn summarizer client.
 
-- `delayMs` - throttle delay in ms (does not include initial delay)
+- `throttlerDelay` - throttle delay in ms (does not include initial delay)
+- `initialDelay` - initial delay in ms
 - `opsSinceLastAck` - count of ops since last summary ack, reported by SummaryCollection. This can be relevant for the initial delay bypass logic.
-
-### CreateSummarizerError
-
-> Error
-
-Error encountered while creating the summarizer client.
-
-- `attempt` - number of attempts within the last time window, used for calculating the throttle delay.
+- `opsToBypassInitialDelay` - count of ops since last summary ack that allow us to bypass the initial delay
 
 ### RunningSummarizer
 
@@ -51,13 +45,19 @@ This event ends when that `run()` call's resulting promise is fulfilled. This ha
 
 - `attempt` - number of attempts within the last time window, used for calculating the throttle delay.
 
-### StopCalledWithoutRunningSummarizer
+### SummarizerException
 
-> Unexpected Error
+> Error
 
-Indicates that the state machine is broken, so this is unexpected. It should only be possible to call the private `stop()` function while the class has a defined running summarizer, which it would normally try to stop. Normally we would stay in the Stopping state while waiting for it to stop, but when this error case is encountered, we immediately synchronously proceed to the Off state.
+Exception raised during summarization.
 
-- `reason` - the SummarizerStopReason that was provided for this call.
+- `category` - string that categorizes the exception ("generic" or "error")
+
+### EndingSummarizer
+
+Logs after summarizer has stopped running, i.e., after the client has disconnected or stop has been requested
+
+- `reason` - the reason for stopping, returned by Summarizer.run
 
 ## Summarizer Client Election
 
@@ -73,6 +73,7 @@ When a client is elected the summarizer, this indicates that too many ops have p
 - `lastSummaryAckSeqForClient` - the sequence number of the last summary ack received during this client's election.
 - `electionSequenceNumber` - the sequence number at which this failing client was elected.
 - `nextElectedClientId` - the client ID of the next oldest client in the Quorum which is eligible to be elected as responsible for summaries. It may be undefined if the currently elected client is the youngest (or only) client in the Quorum.
+- `electionEnabled` - election of a new client on logging this error is enabled
 
 ### UnexpectedElectionSequenceNumber
 
@@ -114,7 +115,7 @@ When this error happens, the first eligible client that is younger than this cli
 
 ## Ordered Client Collection
 
-> Event Prefix: `OrderedClientElection:`
+> Event Prefix: `OrderedClientCollection:`
 
 ## ClientNotFound
 
@@ -136,19 +137,6 @@ This event fires when the Summarizer is stopped.
 - `reason` - reason code provided for stopping.
 - `onBehalfOf` - the last known client ID of the parent client which spawned this summarizer client.
 
-### NotStarted
-
-This event fires when the Summarizer is trying to start, but never gets running. It is caused by the client being disconnected or not being able to write. Because the summarizer client is never able to reconnect after disconnecting once, it closes immediately with this event if it knows it should never be able to start.
-
-- `reason` - code to indicate why it could never finish starting; possible values:
-  - `DisconnectedBeforeRun` - client was connected at some point, but then disconnected before the Summarizer started.
-  - `NeverConnectedBeforeRun` - client never became connected, but the Summarizer was stopped.
-  - `CannotWrite` - client became connected, but cannot write.
-  - `DifferentComputedSummarizer` - right before starting, the summarizer client verifies that its parent client is elected by this client's own calculations. If it doesn't match after connecting, it prevents this summarizer from starting.
-- `onBehalfOf` - the last known client ID of the parent client which spawned this summarizer client.
-- `computedSummarizer` - (`DifferentComputedSummarizer` only) client ID of the elected summarizer client by the summarizer client's calculations.
-- `clientId` - (`DifferentComputedSummarizer` only) client ID of this summarizer client.
-
 ### RunningSummarizer
 
 Summarizer has started running. This happens when the summarizer client becomes connected with write permissions, and `run()` has been called on it. At this point in time it will create a `RunningSummarizer` and start updating its state in response to summary ack ops.
@@ -162,7 +150,7 @@ Summarizer has started running. This happens when the summarizer client becomes 
 
 An error was encountered while watching for or handling an inbound summary ack op.
 
-- `refSequenceNumber` - reference sequence number of the summary ack we are handling if the error occurs during `refreshLatestSummaryAck` (most likely). It could be the reference sequence number of the previously handled one + 1 (defaulting to initial sequence number if this is the first) if the error occurs while waiting for the summary ack (indicating a bug in `SummaryCollection`), but that should be significantly less likely.
+- `referenceSequenceNumber` - reference sequence number of the summary ack we are handling if the error occurs during `refreshLatestSummaryAck` (most likely). It could be the reference sequence number of the previously handled one + 1 (defaulting to initial sequence number if this is the first) if the error occurs while waiting for the summary ack (indicating a bug in `SummaryCollection`), but that should be significantly less likely.
 
 ### HandleSummaryAckFatalError
 
@@ -175,6 +163,7 @@ This should not even be possible, but it means that an unhandled error was raise
 > Event Prefix: `Summarizer:Running:`
 
 - `summarizeCount` - the number of summarize attempts this client has made. This can be used to correlate events for individual summary attempts.
+- `summarizerSuccessfulAttempts` - the number of successful summaries this summarizer instance has performed. This property subtracted from the `summarizeCount` property equals the number of attempts that failed to produce a summary.
 
 ### SummaryAckWaitTimeout
 
@@ -182,7 +171,8 @@ This should not even be possible, but it means that an unhandled error was raise
 
 When a summary op is sent, the summarizer waits `summaryAckWaitTimeout` for a summary ack/nack op in response from the server. If a corresponding response is not seen within that time, this event is raised, and the client retries.
 
-- `refSequenceNumber` - last attempt summary op reference sequence number.
+- `maxAckWaitTime` - cap on the maximum amount of time client will wait for a summarize op ack
+- `referenceSequenceNumber` - last attempt summary op reference sequence number.
 - `summarySequenceNumber` - last attempt summary op sequence number.
 - `timePending` - time spent waiting for a summary ack/nack as computed by client.
 
@@ -190,19 +180,25 @@ When a summary op is sent, the summarizer waits `summaryAckWaitTimeout` for a su
 
 During first load, the wait for a summary ack/nack op in response to a summary op, can be bypassed by comparing the op timestamps. Normally a timer is used while running, but if the server-stamped op time difference exceeds the `maxAckWaitTimeout`, then raise this event, clear the timer and stop waiting to start.
 
-- `refSequenceNumber` - last attempt summary op reference sequence number.
+- `referenceSequenceNumber` - last attempt summary op reference sequence number.
 - `summarySequenceNumber` - last attempt summary op sequence number.
 
 ### SummarizeAttemptDelay
 
-- `retryAfterSeconds` - delay from `retryAfter` found in the summary nack response op. This will override any regular delay time.
-- `regularDelaySeconds` - delay from regular summarize attempt retry.
+Logs the presence of a delay before attempting summary. Note that the event is logged before waiting for the delay.
+
+- `duration` - duration delay in seconds. This is the `retryAfter` value found in the summary nack response op, if present.
+Otherwise, it's the delay from regular summarize attempt retry.
+- `reason` - "nack with retryAfter" if the `duration` value came from a summary nack response op. Undefined otherwise.
 
 ### FailToSummarize
 
 > Error
 
 All consecutive retry attempts to summarize by heuristics have failed. The summarizer client should stop itself with "failToSummarize" reason code, closing the container.
+
+- `summarizeReason` - reason for attempting to summarize
+- `message` - message returned with the last summarize result
 
 ### UnexpectedSummarizeError
 
@@ -215,16 +211,7 @@ This should not be possible, but it indicates an error was thrown in the code th
 > Event Prefix: `Summarizer:Running:`
 
 - `summarizeCount` - the number of summarize attempts this client has made. This can be used to correlate events for individual summary attempts.
-
-### ConcurrentSummarizeAttempt
-
-> Unexpected Error
-
-This indicates a problem in the state machine, so these errors should be addressed with priority. We use locking to prevent concurrent summarize attempts, but the lock checking occurs at a higher layer, so if it reaches this far in, then something is wrong.
-
-When this error occurs, it will immediately fail the attempt to summarize, so it's possible the client will recover itself.
-
-- `reason` - reason code for attempting to summarize.
+- `summarizerSuccessfulAttempts` - the number of successful summaries this summarizer instance has performed
 
 ### UnexpectedSummarizeError
 
@@ -252,22 +239,26 @@ The event cancels in response to a summary nack op for this attempt, an error al
 
 - `message` - message indicating result of summarize attempt; possible values:
 
+  - `disconnect` - the summary op was submitted but broadcast was cancelled.
   - `submitSummaryFailure` - the attempt failed to submit the summary op.
   - `summaryOpWaitTimeout` - timeout while waiting to receive the submitted summary op broadcasted.
   - `summaryAckWaitTimeout` - timeout while waiting to receive a summary ack/nack op in response to this attempt's summary op.
   - `summaryNack` - attempt was rejected by server via a summary nack op.
   - `summaryAck` - attempt was successful, and the summary ack op was received.
 
-- `timeWaiting` (ack/nack received only) - time in ms spent waiting for the summary ack/nack op after submitting the summary op.
-- `sequenceNumber` (ack/nack received only) - sequence number of the summary ack/nack op in response to this attempt's summary op.
+- `ackWaitDuration` (ack/nack received only) - time in ms spent waiting for the summary ack/nack op after submitting the summary op.
+- `ackNackSequenceNumber` (ack/nack received only) - sequence number of the summary ack/nack op in response to this attempt's summary op.
 - `summarySequenceNumber` (ack/nack received only) - sequence number of this attempt's summary op.
 - `handle` (ack only) - summary handle found on this attempt's summary ack op.
 
-### GenerateSummary
+### Summarize_generate
 
 This event fires during a summary attempt, as soon as the ContainerRuntime has finished its summarize work, which consists of: generating the tree, uploading to storage, and submitting the op. It should fire this event even if something goes wrong during those steps.
 
-- `refSequenceNumber` - reference sequence number at the time of this summary attempt.
+- `fullTree` - flag indicating whether the attempt should generate a full summary tree without any handles for unchanged subtrees.
+- `timeSinceLastAttempt` - time in ms since the last summary attempt (whether it failed or succeeded) for this client.
+- `timeSinceLastSummary` - time in ms since the last successful summary attempt for this client.
+- `referenceSequenceNumber` - reference sequence number at the time of this summary attempt.
 - `opsSinceLastAttempt` - number of ops that have elapsed since the the last summarize attempt for this client.
 - `opsSinceLastSummary` - number of ops that have elapsed since the last successful summarize attempt for this client.
 - several properties with summary stats (count of nodes in the tree, etc.)
@@ -275,16 +266,44 @@ This event fires during a summary attempt, as soon as the ContainerRuntime has f
 - `handle` (only if uploaded to storage) - proposed summary handle as returned by storage for this summary attempt.
 - `uploadDuration` (only if uploaded to storage) - time in ms it took to upload the summary tree to storage and receive back a handle.
 - `clientSequenceNumber` (only if summary op submitted) - client sequence number of summary op submitted for this attempt. This can be used to correlate the submit attempt with the received summary op after it is broadcasted.
-- `submitOpDuration` (only if summary op submitted) - time in ms it took to submit the summary op. This should be very low; perhaps not useful.
 
-### SummaryOp
+### IncrementalSummaryViolation
+
+> Error
+
+Fires if an incremental summary (i.e., not full tree) summarizes more data stores than the expected maximum number
+
+- `summarizedDataStoreCount` - number of data stores actually summarized
+- `gcStateUpdatedDataStoreCount` - number of data stores with an updated GC state since the last summary
+- `opsSinceLastSummary` - number of ops since the last summary
+
+### Summarize_Op
 
 This event fires during a summary attempt, as soon as the client observes its own summary op. This means that the summary op it submitted was sequenced and broadcasted by the server.
 
-- `timeWaiting` - time in ms spent waiting for the summary op to be broadcast after submitting it. This should be low; should represent the round-trip time for an op.
-- `refSequenceNumber` - reference sequence number of the summary op. This should match the reference sequence number of the Summarize event for this attempt as well.
+- `duration` - time in ms spent waiting for the summary op to be broadcast after submitting it. This should be low; should represent the round-trip time for an op.
+- `referenceSequenceNumber` - reference sequence number of the summary op. This should match the reference sequence number of the Summarize event for this attempt as well.
 - `summarySequenceNumber` - server-stamped sequence number of the summary op for this attempt.
 - `handle` - proposed summary tree handle on the summary op for this attempt, which was originally returned from storage.
+
+### SummaryNack
+
+> Error
+
+Fires if the summary receives a nack response
+
+- `fullTree` - flag indicating whether the attempt should generate a full summary tree without any handles for unchanged subtrees.
+- `timeSinceLastAttempt` - time in ms since the last summary attempt (whether it failed or succeeded) for this client.
+- `timeSinceLastSummary` - time in ms since the last successful summary attempt for this client.
+- `referenceSequenceNumber` - reference sequence number at the time of this summary attempt.
+- `opsSinceLastAttempt` - number of ops that have elapsed since the the last summarize attempt for this client.
+- `opsSinceLastSummary` - number of ops that have elapsed since the last successful summarize attempt for this client.
+- several properties with summary stats (count of nodes in the tree, etc.)
+- `generateDuration` (only if tree generated) - time in ms it took to generate the summary tree.
+- `handle` (only if uploaded to storage) - proposed summary handle as returned by storage for this summary attempt.
+- `uploadDuration` (only if uploaded to storage) - time in ms it took to upload the summary tree to storage and receive back a handle.
+- `clientSequenceNumber` (only if summary op submitted) - client sequence number of summary op submitted for this attempt. This can be used to correlate the submit attempt with the received summary op after it is broadcasted.
+- `retryAfterSeconds` - time in seconds to wait before retrying, as read from the nack message
 
 ### SummarizeTimeout
 
@@ -300,12 +319,6 @@ For example, after 20 seconds of summarizing this event might fire. Then after a
 ## SummarizerNode
 
 Should use the in-progress summarize attempt correlated logger.
-
-### SummarizingWithBasePlusOps
-
-> Unexpected Error
-
-This feature is disabled by code, so we shouldn't see this. It indicates that we are attempting to perform a differential summary. This event is just guarding that the disable feature is indeed working.
 
 ### DecodeSummaryMaxDepth
 
@@ -327,15 +340,35 @@ When organizing the outstanding ops from the `_outstandingOps` blobs of nested d
 
 Should use the in-progress summarize attempt correlated logger.
 
+### SequenceNumberMismatch
+
+> Error
+
+Fires during ContainerRuntime load from snapshot if the sequence number read from the snapshot does not match DeltaManager.initialSequenceNumber.
+
+### SummariesDisabled
+
+Fires during ContainerRuntime load if automatic summaries are disabled for the given Container
+
+### SummaryStatus:Behind
+
+> Error
+
+Fires if too many ops (7000 by default) have been processed since the last summary.
+
+### SummaryStatus:CaughtUp
+
+Fires if, after a previous `SummaryStatus:Behind` event, a summary ack is received
+
 ### RefreshLatestSummaryGetSnapshot
 
 > Performance
 
 This event fires while fetching a snapshot from storage during the summarizer refresh latest summary flow. This happens when `refreshLatestAck` parameter is passed to summarize, or a summary ack was received with a handle that the client does not have local state for.
 
+- `ackHandle` - handle of the summary ack
 - `fetchLatest` - true if triggered by `refreshLatestAck`, false if triggered by handling a summary ack handle.
-- `getVersionDuration` - time in ms of asking storage for the version ID.
-- `getSnapshotDuration` - time in ms of downloading the summary tree for storage.
+- `summaryRefSeq` - reference sequence number of the summary
 
 ### WaitingForSeq
 
@@ -348,6 +381,14 @@ Although this should be unlikely, it is possible only when `refreshLatestAck` is
 - `lastSequenceNumber` - last observed sequence number at the time of waiting.
 - `targetSequenceNumber` - sequence number that we are waiting for. This is the sequence number found in the latest summary that we are aware of.
 - `lastKnownSeqNumber` - last known sequence number by the DeltaManager. This can be relevant to give an idea of the current DeltaManager state vs. runtime state at the time of trying to summarize.
+
+### LastSequenceMismatch
+
+> Error
+
+Fires on summary submit if the summary sequence number does not match the sequence number of the last message processsed by the Delta Manager.
+
+- `error` - error message containing the mismatched sequence numbers
 
 ### GarbageCollection
 

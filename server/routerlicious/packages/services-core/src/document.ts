@@ -7,7 +7,7 @@ import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IProtocolState, ISummaryTree, ICommittedProposal } from "@fluidframework/protocol-definitions";
 import { IGitCache } from "@fluidframework/server-services-client";
 import { LambdaName } from "./lambdas";
-import { INackMessagesControlMessageContents } from "./messages";
+import { INackMessagesControlMessageContents, NackMessagesType } from "./messages";
 
 export interface IDocumentDetails {
     existing: boolean;
@@ -75,7 +75,8 @@ export interface IDeliState {
     lastSentMSN: number | undefined;
 
     // Nack messages state
-    nackMessages: INackMessagesControlMessageContents | undefined;
+    nackMessages: [NackMessagesType, INackMessagesControlMessageContents][] |
+    INackMessagesControlMessageContents | undefined;
 
     // List of successfully started lambdas at session start
     successfullyStartedLambdas: LambdaName[];

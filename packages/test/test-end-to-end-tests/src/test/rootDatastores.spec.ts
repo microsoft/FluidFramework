@@ -356,7 +356,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         itExpects("Receiving a bad alias message breaks the container", [
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
             { eventName: "fluid:telemetry:Container:ContainerClose", error: "malformedDataStoreAliasMessage" },
-        ], async () => {
+        ], async function() {
+            // GitHub issue: #9534
+            if(provider.driver.type === "tinylicious") {
+                this.skip();
+            }
             const dataCorruption = allDataCorruption([container1, container2]);
             await corruptedAliasOp(runtimeOf(dataObject1), alias);
             assert(await dataCorruption);
@@ -482,7 +486,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             // Should be able to retrieve root datastore from remote
             assert.doesNotThrow(async () =>
-                containerRuntime2.getRootDataStore(_alias), "An aliased datastore should be a root datastore");
+                containerRuntime2.getRootDataStore(_alias), "A remote aliased datastore should be a root datastore");
+
+            // Should be able to retrieve local root datastore
+            assert.doesNotThrow(async () =>
+                containerRuntime1.getRootDataStore(_alias), "A local aliased datastore should be a root datastore");
         });
     });
 });

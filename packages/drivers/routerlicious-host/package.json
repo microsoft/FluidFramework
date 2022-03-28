@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/routerlicious-host",
-  "version": "0.58.1000",
+  "version": "0.58.3000",
   "description": "Routerlicious host interfaces",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,13 +35,13 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.45.0-0",
+    "@fluidframework/driver-definitions": "^0.45.2000-0",
     "axios": "^0.26.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0-0",
-    "@fluidframework/protocol-definitions": "^0.1027.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/protocol-definitions": "^0.1027.1000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",

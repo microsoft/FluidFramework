@@ -59,7 +59,7 @@ export interface ISerializableInterval extends IInterval {
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     compareEnds(a: TInterval, b: TInterval): number;
     create(label: string, start: number, end: number,
-        client: Client, intervalType?: IntervalType): TInterval;
+        client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
 }
 
 export class Interval implements ISerializableInterval {
@@ -179,7 +179,7 @@ export class Interval implements ISerializableInterval {
         }
     }
 
-    public modify(label: string, start: number, end: number) {
+    public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
         const startPos = start ?? this.start;
         const endPos = end ?? this.end;
         if (this.start === startPos && this.end === endPos) {
@@ -294,16 +294,17 @@ export class SequenceInterval implements ISerializableInterval {
         return (endPos > bstart) && (startPos < bend);
     }
 
-    public modify(label: string, start: number, end: number) {
-        const startPos = start ?? this.start.getOffset();
-        const endPos = end ?? this.end.getOffset();
+    public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
+        const startPos = start ?? this.start.toPosition();
+        const endPos = end ?? this.end.toPosition();
 
-        if (this.start.getOffset() === startPos && this.end.getOffset() === endPos) {
+        if (this.start.toPosition() === startPos && this.end.toPosition() === endPos) {
             // Return undefined to indicate that no change is necessary.
             return;
         }
 
-        const newInterval = createSequenceInterval(label, startPos, endPos, this.start.getClient(), this.intervalType);
+        const newInterval =
+            createSequenceInterval(label, startPos, endPos, this.start.getClient(), this.intervalType, op);
         if (this.properties) {
             newInterval.addProperties(this.properties);
         }
@@ -314,8 +315,9 @@ export class SequenceInterval implements ISerializableInterval {
 function createPositionReference(
     client: Client,
     pos: number,
-    refType: ReferenceType): LocalReference {
-    const segoff = client.getContainingSegment(pos);
+    refType: ReferenceType,
+    op?: ISequencedDocumentMessage): LocalReference {
+    const segoff = client.getContainingSegment(pos, op);
     if (segoff && segoff.segment) {
         const lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
         if (refType !== ReferenceType.Transient) {
@@ -331,7 +333,8 @@ function createSequenceInterval(
     start: number,
     end: number,
     client: Client,
-    intervalType: IntervalType): SequenceInterval {
+    intervalType: IntervalType,
+    op?: ISequencedDocumentMessage): SequenceInterval {
     let beginRefType = ReferenceType.RangeBegin;
     let endRefType = ReferenceType.RangeEnd;
     if (intervalType === IntervalType.Nest) {
@@ -348,8 +351,8 @@ function createSequenceInterval(
         endRefType |= ReferenceType.SlideOnRemove;
     }
 
-    const startLref = createPositionReference(client, start, beginRefType);
-    const endLref = createPositionReference(client, end, endRefType);
+    const startLref = createPositionReference(client, start, beginRefType, op);
+    const endLref = createPositionReference(client, end, endRefType, op);
     if (startLref && endLref) {
         startLref.pairedRef = endLref;
         endLref.pairedRef = startLref;
@@ -570,16 +573,21 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         this.endIntervalTree.remove(interval);
     }
 
-    public createInterval(start: number, end: number, intervalType: IntervalType): TInterval {
-        return this.helpers.create(this.label, start, end, this.client, intervalType);
+    public createInterval(
+        start: number,
+        end: number,
+        intervalType: IntervalType,
+        op?: ISequencedDocumentMessage): TInterval {
+        return this.helpers.create(this.label, start, end, this.client, intervalType, op);
     }
 
     public addInterval(
         start: number,
         end: number,
         intervalType: IntervalType,
-        props?: PropertySet) {
-        const interval: TInterval = this.createInterval(start, end, intervalType);
+        props?: PropertySet,
+        op?: ISequencedDocumentMessage) {
+        const interval: TInterval = this.createInterval(start, end, intervalType, op);
         if (interval) {
             if (!interval.properties) {
                 interval.properties = createMap<any>();
@@ -619,8 +627,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return result;
     }
 
-    public changeInterval(interval: TInterval, start: number, end: number) {
-        const newInterval = interval.modify(this.label, start, end) as TInterval | undefined;
+    public changeInterval(interval: TInterval, start: number, end: number, op?: ISequencedDocumentMessage) {
+        const newInterval = interval.modify(this.label, start, end, op) as TInterval | undefined;
         if (newInterval) {
             this.removeExistingInterval(interval);
             this.add(newInterval);
@@ -1096,7 +1104,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 if (start !== undefined || end !== undefined) {
                     // If changeInterval gives us a new interval, work with that one. Otherwise keep working with
                     // the one we originally found in the tree.
-                    interval = this.localCollection.changeInterval(interval, start, end) ?? interval;
+                    interval = this.localCollection.changeInterval(interval, start, end, op) ?? interval;
                 }
                 const deltaProps = interval.addProperties(serializedInterval.properties, true, op.sequenceNumber);
                 if (this.onDeserialize) {
@@ -1144,7 +1152,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             serializedInterval.start,
             serializedInterval.end,
             serializedInterval.intervalType,
-            serializedInterval.properties);
+            serializedInterval.properties,
+            op);
 
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.
