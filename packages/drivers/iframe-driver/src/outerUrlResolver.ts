@@ -5,7 +5,7 @@
 
 // Remove IFluidCodeDetails from driver layer
 import * as Comlink from "comlink";
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerPackageInfo, IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { MakeThinProxy } from "./proxyUtils";
 
@@ -17,7 +17,7 @@ export interface IUrlResolverProxy {
     getAbsoluteUrl(
         resolvedUrlFn: () => Promise<IResolvedUrl>,
         relativeUrl: string,
-        packageInfoFn: () => Promise<IContainerPackageInfo | IFluidCodeDetails | undefined>,
+        packageInfoFn: () => Promise<IContainerPackageInfo | undefined>,
     ): Promise<string>,
 }
 
@@ -52,7 +52,7 @@ export class OuterUrlResolver {
     public async getAbsoluteUrl(
         resolvedUrlFn: () => Promise<IResolvedUrl>,
         relativeUrl: string,
-        packageInfoFn: () => Promise<IContainerPackageInfo | IFluidCodeDetails | undefined>,
+        packageInfoFn: () => Promise<IContainerPackageInfo | undefined>,
     ): Promise<string> {
         const resolvedUrl = await resolvedUrlFn();
         const packageInfo = await packageInfoFn();
