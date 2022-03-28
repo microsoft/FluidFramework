@@ -22,7 +22,7 @@ export async function createReleaseBranch(context: Context, virtualPatch: boolea
     // run policy check before creating release branch.
     // right now this only does assert short codes
     // but could also apply other fixups in the future
-    await runPolicyCheckWithFix(context.gitRepo);
+    await runPolicyCheckWithFix(context);
 
     const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
     if (!remote) {
