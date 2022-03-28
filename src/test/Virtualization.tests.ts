@@ -12,6 +12,7 @@ import { SharedTree } from '../SharedTree';
 import {
 	ChangeInternal,
 	Edit,
+	editsPerChunk,
 	FluidEditHandle,
 	SharedTreeSummary,
 	SharedTreeSummary_0_0_2,
@@ -27,13 +28,15 @@ describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
 	let testObjectProvider: TestObjectProvider;
 	let editChunksUploaded = 0;
+	const editCount = 250;
+	const expectedFullChunkCount = Math.floor(editCount / editsPerChunk);
 
 	// Create a summary used to test catchup blobbing
 	function createCatchUpSummary(): SharedTreeSummary_0_0_2<Change> {
 		return {
 			currentTree: initialTree,
 			version: WriteFormat.v0_0_2,
-			sequencedEdits: createStableEdits(250),
+			sequencedEdits: createStableEdits(editCount),
 		};
 	}
 
@@ -118,11 +121,11 @@ describe('SharedTree history virtualization', () => {
 		sharedTree.loadSummary(createCatchUpSummary());
 
 		await testObjectProvider.ensureSynchronized();
-		expect(catchUpBlobsUploaded).to.equal(1);
+		expect(catchUpBlobsUploaded).to.equal(expectedFullChunkCount);
 
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary<Change>;
 		const { editChunks } = assertNotUndefined(editHistory);
-		expect(editChunks.length).to.equal(1);
+		expect(editChunks.length).to.equal(expectedFullChunkCount + 1);
 		expect(typeof (editChunks[0].chunk as FluidEditHandle).get).to.equal('function');
 	});
 
@@ -160,7 +163,7 @@ describe('SharedTree history virtualization', () => {
 		// `ensureSynchronized` does not guarantee blob upload
 		await new Promise((resolve) => setImmediate(resolve));
 		await testObjectProvider.ensureSynchronized();
-		expect(catchUpBlobsUploaded).to.equal(1);
+		expect(catchUpBlobsUploaded).to.equal(expectedFullChunkCount);
 
 		// Make sure the trees are still the same
 		expect(sharedTree.equals(sharedTree2)).to.be.true;

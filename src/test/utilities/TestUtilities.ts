@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from 'fs';
-import { resolve, join } from 'path';
+import { resolve } from 'path';
 import { v4, v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
@@ -26,20 +25,18 @@ import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { assert } from '@fluidframework/common-utils';
 import type { IHostLoader } from '@fluidframework/container-definitions';
-import type { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import type { IFluidCodeDetails, IFluidHandle } from '@fluidframework/core-interfaces';
 import { DetachedSequenceId, EditId, NodeId, StableNodeId } from '../../Identifiers';
-import { assertNotUndefined, fail, identity } from '../../Common';
-import { EditLog } from '../../EditLog';
+import { fail, identity } from '../../Common';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
-import { getChangeNodeFromView, getChangeNodeFromViewNode } from '../../SerializationUtilities';
+import { getChangeNodeFromViewNode } from '../../SerializationUtilities';
 import { initialTree } from '../../InitialTree';
 import { ChangeInternal, ChangeNode, Edit, NodeData, Payload, WriteFormat } from '../../persisted-types';
 import { TraitLocation, TreeView } from '../../TreeView';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
 import { getNodeId, NodeIdContext, NodeIdConverter } from '../../NodeIdUtilities';
 import { newEdit, setTrait } from '../../EditUtilities';
-import { getUploadedEditChunkContents } from '../../SummaryTestUtilities';
 import { reservedIdCount, SharedTree } from '../../SharedTree';
 import { Change, StablePlace } from '../../ChangeTypes';
 import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
@@ -182,10 +179,14 @@ export interface LocalServerSharedTreeTestingComponents {
 	tree: SharedTree;
 	/** The container created and set up. */
 	container: Container;
+	/** Handles to any blobs uploaded via `blobs` */
+	uploadedBlobs: IFluidHandle<ArrayBufferLike>[];
 }
 
 /** Options used to customize setUpLocalServerTestSharedTree */
 export interface LocalServerSharedTreeTestingOptions {
+	/** Contents of blobs that should be uploaded to the runtime upon creation. Handles to these blobs will be returned. */
+	blobs?: ArrayBufferLike[];
 	/**
 	 * Id for the SharedTree to be created.
 	 * If two SharedTrees have the same id and the same testObjectProvider,
@@ -231,7 +232,7 @@ afterEach(() => {
 export async function setUpLocalServerTestSharedTree(
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents> {
-	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory, writeFormat, uploadEditChunks } =
+	const { blobs, id, initialTree, testObjectProvider, setupEditId, summarizeHistory, writeFormat, uploadEditChunks } =
 		options;
 
 	const treeId = id ?? 'test';
@@ -284,13 +285,16 @@ export async function setUpLocalServerTestSharedTree(
 	}
 
 	const dataObject = await requestFluidObject<ITestFluidObject>(container, '/');
+
+	const uploadedBlobs =
+		blobs === undefined ? [] : await Promise.all(blobs.map(async (blob) => dataObject.context.uploadBlob(blob)));
 	const tree = await dataObject.getSharedObject<SharedTree>(treeId);
 
 	if (initialTree !== undefined && testObjectProvider === undefined) {
 		setTestTree(tree, initialTree, setupEditId);
 	}
 
-	return { container, tree, testObjectProvider: provider };
+	return { container, tree, testObjectProvider: provider, uploadedBlobs };
 }
 
 /** Sets testTrait to contain `node`. */
@@ -397,159 +401,7 @@ export function areNodesEquivalent(...nodes: NodeData<unknown>[]): boolean {
 // resource path logic to a single place.
 export const testDocumentsPathBase = resolve(__dirname, '../../../src/test/documents/');
 
-/** ID used by summary compatibility tests to set up trees. */
-export const summaryCompatibilityTestSetupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
-
-export function getDocumentFiles(document: string): {
-	summaryByVersion: Map<string, string>;
-	noHistorySummaryByVersion: Map<string, string>;
-	denormalizedSummaryByVersion: Map<string, Map<string, string>>;
-	denormalizedHistoryByType: Map<string, string>;
-	blobsByVersion: Map<string, string>;
-	history: Edit<ChangeInternal>[];
-	changeNode: ChangeNode;
-	sortedVersions: WriteFormat[];
-} {
-	// Cache the contents of the relevant files here to avoid loading more than once.
-	// Map containing summary file contents, keys are summary versions, values have file contents
-	const summaryByVersion = new Map<string, string>();
-	const noHistorySummaryByVersion = new Map<string, string>();
-
-	// Denormalized files are indicated with ending suffixes that describe the type of denormalization.
-	// For each version key, this maps has a mapping from each type to its corresponding file.
-	// This allows us to test multiple types of denormalization on the same document type and version.
-	const denormalizedSummaryByVersion = new Map<string, Map<string, string>>();
-
-	// Map containing denormalized history files by type of denormalization.
-	const denormalizedHistoryByType = new Map<string, string>();
-
-	// Files of uploaded edit blob contents for summaries that support blobs.
-	const blobsByVersion = new Map<string, string>();
-
-	let historyOrUndefined: Edit<ChangeInternal>[] | undefined;
-	let changeNodeOrUndefined: ChangeNode | undefined;
-
-	const documentFiles = fs.readdirSync(join(testDocumentsPathBase, document));
-	for (const documentFile of documentFiles) {
-		const summaryFileRegex = /^summary-(?<version>\d+\.\d\.\d).json/;
-		const match = summaryFileRegex.exec(documentFile);
-
-		const denormalizedSummaryFileRegex = /summary-(?<version>\d+\.\d\.\d)-(?<type>[a-z-]+[a-z]+).json/;
-		const denormalizedSummaryMatch = denormalizedSummaryFileRegex.exec(documentFile);
-
-		const denormalizedHistoryFileRegex = /history-(?<type>[a-z-]+[a-z]+).json/;
-		const denormalizedHistoryMatch = denormalizedHistoryFileRegex.exec(documentFile);
-
-		const noHistorySummaryFileRegex = /^no-history-summary-(?<version>\d+\.\d\.\d).json/;
-		const noHistoryMatch = noHistorySummaryFileRegex.exec(documentFile);
-
-		const blobFileRegex = /blobs-(?<version>\d+\.\d\.\d).json/;
-		const blobsMatch = blobFileRegex.exec(documentFile);
-
-		const filePath = join(testDocumentsPathBase, document, documentFile);
-		const file = fs.readFileSync(filePath, 'utf8');
-
-		if (match && match.groups) {
-			summaryByVersion.set(match.groups.version, file);
-		} else if (denormalizedSummaryMatch && denormalizedSummaryMatch.groups) {
-			const typesByVersion = denormalizedSummaryByVersion.get(denormalizedSummaryMatch.groups.version);
-			if (typesByVersion !== undefined) {
-				typesByVersion.set(denormalizedSummaryMatch.groups.type, file);
-			} else {
-				denormalizedSummaryByVersion.set(
-					denormalizedSummaryMatch.groups.version,
-					new Map<string, string>().set(denormalizedSummaryMatch.groups.type, file)
-				);
-			}
-		} else if (denormalizedHistoryMatch && denormalizedHistoryMatch.groups) {
-			denormalizedHistoryByType.set(denormalizedHistoryMatch.groups.type, file);
-		} else if (noHistoryMatch && noHistoryMatch.groups) {
-			noHistorySummaryByVersion.set(noHistoryMatch.groups.version, file);
-		} else if (blobsMatch && blobsMatch.groups) {
-			blobsByVersion.set(blobsMatch.groups.version, file);
-		} else if (documentFile === 'history.json') {
-			historyOrUndefined = JSON.parse(file);
-		} else if (documentFile === 'change-node.json') {
-			changeNodeOrUndefined = JSON.parse(file);
-		}
-	}
-
-	const history = assertNotUndefined(historyOrUndefined);
-	const changeNode = assertNotUndefined(changeNodeOrUndefined);
-	const sortedVersions = Array.from(summaryByVersion.keys()).sort(versionComparator) as WriteFormat[];
-
-	return {
-		summaryByVersion,
-		noHistorySummaryByVersion,
-		denormalizedSummaryByVersion,
-		denormalizedHistoryByType,
-		blobsByVersion,
-		history,
-		changeNode,
-		sortedVersions,
-	};
-}
-
-/** Helper utility used to generate test documents based on a given history. */
-export async function createDocumentFiles(document: string, history: Edit<ChangeInternal>[]) {
-	const directory = join(testDocumentsPathBase, document);
-	try {
-		fs.accessSync(directory);
-	} catch {
-		fs.mkdirSync(directory);
-	}
-
-	const writeFormats = [WriteFormat.v0_0_2, WriteFormat.v0_1_1];
-
-	fs.writeFileSync(join(directory, 'history.json'), JSON.stringify(history));
-
-	// Load the history into the tree and save the change node
-	const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
-		setupEditId: summaryCompatibilityTestSetupEditId,
-	});
-
-	for (const edit of history) {
-		tree.applyEditInternal(edit);
-	}
-
-	await testObjectProvider.ensureSynchronized();
-	fs.writeFileSync(join(directory, 'change-node.json'), JSON.stringify(getChangeNodeFromView(tree.currentView)));
-
-	const summary = tree.saveSummary();
-	// Write summaries for each of the write formats supported. Each summary is taken after loading in the summary of the earliest supported write format.
-	for (const format of writeFormats) {
-		const { tree: tree2, testObjectProvider: testObjectProvider2 } = await setUpLocalServerTestSharedTree({
-			setupEditId: summaryCompatibilityTestSetupEditId,
-			writeFormat: format,
-		});
-
-		tree2.loadSummary(summary);
-		await testObjectProvider2.ensureSynchronized();
-
-		// Write full history summary
-		fs.writeFileSync(join(directory, `summary-${format}.json`), tree2.saveSerializedSummary());
-
-		// Write blob file
-		assert(tree2.edits instanceof EditLog, 'EditLog must support summaries');
-		const blobs = await getUploadedEditChunkContents(tree2);
-		if (blobs.length > 0) {
-			fs.writeFileSync(join(directory, `blobs-${format}.json`), JSON.stringify(blobs));
-		}
-
-		// Write no history summary
-		const { tree: tree3, testObjectProvider: testObjectProvider3 } = await setUpLocalServerTestSharedTree({
-			setupEditId: summaryCompatibilityTestSetupEditId,
-			summarizeHistory: false,
-			writeFormat: format,
-		});
-
-		tree3.loadSummary(summary);
-		await testObjectProvider3.ensureSynchronized();
-		fs.writeFileSync(join(directory, `no-history-summary-${format}.json`), tree3.saveSerializedSummary());
-	}
-}
-
-const versionComparator = (versionA: string, versionB: string): number => {
+export const versionComparator = (versionA: string, versionB: string): number => {
 	const versionASplit = versionA.split('.');
 	const versionBSplit = versionB.split('.');
 

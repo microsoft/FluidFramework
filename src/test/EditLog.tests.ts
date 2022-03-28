@@ -20,11 +20,7 @@ type DummyChange = never;
  * @param editsPerChunkOnEditLog - The number of edits per chunk that gets set for future edits to the edit log.
  * @returns The edit log created with handles.
  */
-function createEditLogWithHandles(
-	numberOfChunks = 2,
-	editsPerChunk = 5,
-	editsPerChunkOnEditLog = 100
-): EditLog<DummyChange> {
+function createEditLogWithHandles(numberOfChunks = 2, editsPerChunk = 5): EditLog<DummyChange> {
 	const editIds: EditId[] = [];
 	const editChunks: EditWithoutId<DummyChange>[][] = [];
 
@@ -69,7 +65,7 @@ function createEditLogWithHandles(
 		return handle;
 	});
 
-	const editLog = new EditLog({ editChunks: handlesWithKeys, editIds }, undefined, undefined, editsPerChunkOnEditLog);
+	const editLog = new EditLog({ editChunks: handlesWithKeys, editIds });
 
 	return editLog;
 }
@@ -336,7 +332,7 @@ describe('EditLog', () => {
 	it('can add edits to logs with varying edit chunk sizes', async () => {
 		const numberOfChunks = 2;
 		const editsPerChunk = 5;
-		const log = createEditLogWithHandles(numberOfChunks, editsPerChunk, 100);
+		const log = createEditLogWithHandles(numberOfChunks, editsPerChunk);
 
 		// Load the edits for the last edit chunk
 		await log.getEditAtIndex(numberOfChunks * editsPerChunk - 1);

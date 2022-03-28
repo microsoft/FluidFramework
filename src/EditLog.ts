@@ -10,7 +10,7 @@ import { assert, assertNotUndefined, compareArrays, compareFiniteNumbers, fail }
 import { EditId } from './Identifiers';
 import { ChangeCompressor } from './Compression';
 import { StringInterner } from './StringInterner';
-import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types';
+import { Edit, EditLogSummary, editsPerChunk, EditWithoutId, FluidEditHandle } from './persisted-types';
 import { SharedTreeDiagnosticEvent } from './EventTypes';
 import { compressEdit } from './ChangeCompression';
 
@@ -253,7 +253,6 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		summary: EditLogSummary<TChange, EditHandle<TChange>> = { editIds: [], editChunks: [] },
 		logger?: ITelemetryLogger,
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
-		editsPerChunk = 100,
 		indexOfFirstEditInSession = summary.editIds.length
 	) {
 		super();

@@ -310,13 +310,8 @@ class SharedTreeEncoder_0_0_2 implements SharedTreeEncoder<ChangeInternal> {
 		const { currentTree, sequencedEdits } = summary as SharedTreeSummary_0_0_2<ChangeInternal>;
 		assert(sequencedEdits !== undefined, '0.0.2 summary encountered with missing sequencedEdits field.');
 
-		/**
-		 * The number of edits that can safely fit in a blob upload.
-		 */
-		const maxChunkSize = 1000;
-
 		// This saves all of the edits in the summary as part of the first chunk.
-		const temporaryLog = new EditLog<ChangeInternal>(undefined, undefined, undefined, maxChunkSize);
+		const temporaryLog = new EditLog<ChangeInternal>();
 		sequencedEdits.forEach((edit) =>
 			temporaryLog.addSequencedEdit(edit, { sequenceNumber: 1, referenceSequenceNumber: 0 })
 		);

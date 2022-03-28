@@ -12,14 +12,14 @@
 										"side": 1,
 										"referenceTrait": {
 											"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
-											"label": "e276f382-fa99-49a1-ae81-42001791c733"
+											"label": "root"
 										}
 									},
 									"end": {
 										"side": 0,
 										"referenceTrait": {
 											"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
-											"label": "e276f382-fa99-49a1-ae81-42001791c733"
+											"label": "root"
 										}
 									}
 								},
@@ -29,16 +29,20 @@
 								"destination": 0,
 								"source": [
 									[
-										"25de3875-9537-47ec-8699-8a85e772a509",
+										"d5e0851e-bf85-5ca6-b57f-88aeb7e04d54",
 										0,
 										[
 											1,
 											[
-												["ae6b24eb-6fa8-42cc-abd2-48f250b7798f", 0, [], 248],
-												["a083857d-a8e1-447a-ba7c-92fd0be9db2b", 0]
+												["89483af1-a533-5667-8e9c-2d318600cf09", 2, [], 99],
+												[
+													"f02e8a74-1b75-58c8-9039-292a161a4305",
+													3,
+													[4, [["b4b23ada-c487-5583-b288-06f8d19960ee", 5, [], "payload"]]]
+												]
 											],
-											2,
-											[["78849e85-cb7f-4b93-9fdc-18439c60fe30", 0]]
+											6,
+											[["69b3fdda-9c11-590d-b336-3e97b18b0342", 7]]
 										]
 									]
 								],
@@ -49,7 +53,7 @@
 									"side": 1,
 									"referenceTrait": {
 										"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
-										"label": "e276f382-fa99-49a1-ae81-42001791c733"
+										"label": "root"
 									}
 								},
 								"source": 0,
@@ -60,8 +64,8 @@
 				]
 			}
 		],
-		"editIds": ["0e432267-79f5-598c-ac18-157e2e3964cf"]
+		"editIds": ["b34bcdb0-8062-4796-bb97-5cf1eefcb925"]
 	},
 	"version": "0.1.1",
-	"internedStrings": ["node", "left", "right"]
+	"internedStrings": ["Root", "left", "A", "C", "leaf", "E", "right", "B"]
 }

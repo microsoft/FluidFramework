@@ -641,7 +641,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			editHistory,
 			this.logger,
 			this.editLog?.editAddedHandlers,
-			undefined,
 			indexOfFirstEditInSession
 		);
 

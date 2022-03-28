@@ -1,0 +1,179 @@
+[
+	{
+		"absolutePath": "/_blobs/8c2bc0f29b7e1a586035d7094239ffb5d69048a2",
+		"chunkContents": {
+			"version": "0.1.1",
+			"edits": [
+				{
+					"changes": [
+						{
+							"destination": 0,
+							"source": [
+								[
+									"f02e8a74-1b75-58c8-9039-292a161a4305",
+									0,
+									[1, [["b4b23ada-c487-5583-b288-06f8d19960ee", 2, [], "payload"]]]
+								]
+							],
+							"type": 5
+						},
+						{
+							"destination": 1,
+							"source": [
+								[
+									"d5e0851e-bf85-5ca6-b57f-88aeb7e04d54",
+									3,
+									[
+										4,
+										[["89483af1-a533-5667-8e9c-2d318600cf09", 5]],
+										6,
+										[
+											["69b3fdda-9c11-590d-b336-3e97b18b0342", 7],
+											0,
+											["bc16321e-66f1-5de4-bbf4-41d3f7500c6b", 8]
+										]
+									]
+								]
+							],
+							"type": 5
+						},
+						{
+							"source": 1,
+							"destination": {
+								"side": 1,
+								"referenceTrait": { "label": "root", "parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6" }
+							},
+							"type": 0
+						}
+					]
+				},
+				{
+					"changes": [
+						{
+							"source": {
+								"start": { "side": 0, "referenceSibling": "f02e8a74-1b75-58c8-9039-292a161a4305" },
+								"end": { "side": 1, "referenceSibling": "f02e8a74-1b75-58c8-9039-292a161a4305" }
+							},
+							"type": 1,
+							"destination": 0
+						},
+						{
+							"source": 0,
+							"destination": { "side": 1, "referenceSibling": "89483af1-a533-5667-8e9c-2d318600cf09" },
+							"type": 0
+						}
+					]
+				},
+				{
+					"changes": [
+						{
+							"source": {
+								"start": { "side": 0, "referenceSibling": "bc16321e-66f1-5de4-bbf4-41d3f7500c6b" },
+								"end": { "side": 1, "referenceSibling": "bc16321e-66f1-5de4-bbf4-41d3f7500c6b" }
+							},
+							"type": 1
+						}
+					]
+				},
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 0, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 1, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 2, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 3, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 4, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 5, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 6, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 7, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 8, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 9, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 10, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 11, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 12, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 13, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 14, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 15, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 16, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 17, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 18, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 19, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 20, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 21, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 22, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 23, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 24, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 25, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 26, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 27, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 28, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 29, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 30, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 31, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 32, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 33, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 34, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 35, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 36, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 37, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 38, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 39, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 40, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 41, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 42, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 43, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 44, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 45, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 46, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 47, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 48, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 49, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 50, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 51, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 52, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 53, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 54, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 55, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 56, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 57, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 58, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 59, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 60, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 61, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 62, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 63, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 64, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 65, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 66, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 67, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 68, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 69, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 70, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 71, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 72, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 73, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 74, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 75, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 76, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 77, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 78, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 79, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 80, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 81, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 82, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 83, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 84, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 85, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 86, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 87, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 88, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 89, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 90, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 91, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 92, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 93, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 94, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 95, "type": 3 }] },
+				{ "changes": [{ "nodeToModify": "89483af1-a533-5667-8e9c-2d318600cf09", "payload": 96, "type": 3 }] }
+			],
+			"internedStrings": ["C", "leaf", "E", "Root", "left", "A", "right", "B", "D"]
+		}
+	}
+]
