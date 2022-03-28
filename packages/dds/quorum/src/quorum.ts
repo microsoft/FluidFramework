@@ -58,7 +58,7 @@ type QuorumValue =
  * Quorum operation format
  * TODO: Consider a delete operation
  */
-interface IQuorumOperation {
+interface IQuorumSetOperation {
     type: "set";
     key: string;
     value: any;
@@ -69,6 +69,13 @@ interface IQuorumOperation {
     // as client can ingest ops in between.
     refSeq: number;
 }
+
+interface IQuorumNoOpOperation {
+    type: "noop";
+}
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type IQuorumOperation = IQuorumSetOperation | IQuorumNoOpOperation;
 
 const snapshotFileName = "header";
 
@@ -167,6 +174,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         super(id, runtime, attributes);
 
         this.incomingOp.on("set", this.handleIncomingSet);
+        this.incomingOp.on("noop", this.handleNoOp);
 
         this.disconnectWatcher.on("disconnect", () => {
             assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
@@ -195,7 +203,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     public set(key: string, value: any): void {
         // TODO: handle detached scenario
 
-        const setOp: IQuorumOperation = {
+        const setOp: IQuorumSetOperation = {
             type: "set",
             key,
             value,
@@ -222,6 +230,30 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.values.set(key, { accepted, pending: { type: "set", value, sequenceNumber: setSequenceNumber }});
 
         this.emit("pending", key);
+
+        // Emit a noop upon a new key entering pending state, which is how we'll eventually advance it to accepted
+        // TODO: Doesn't work if there's a holdout client that disconnects prior to sending noop, since we aren't
+        // guaranteed to get any further message advancing the MSN.  Observing client disconnects could work.
+        const noOp: IQuorumNoOpOperation = { type: "noop" };
+        this.submitLocalMessage(noOp);
+    }
+
+    private handleNoOp(minimumSequenceNumber: number) {
+        for (const [key, value] of this.values) {
+            const pending = value.pending;
+            if (pending !== undefined && minimumSequenceNumber >= pending.sequenceNumber) {
+                // The pending value has settled
+                if (pending.type === "set") {
+                    this.values.set(key, {
+                        accepted: { value: pending.value, sequenceNumber: minimumSequenceNumber },
+                        pending: undefined,
+                    });
+                } else if (pending.type === "delete") {
+                    this.values.delete(key);
+                }
+                this.emit("accepted", key);
+            }
+        }
     }
 
     /**
@@ -282,6 +314,10 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
             switch (op.type) {
                 case "set":
                     this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber, localOpMetadata);
+                    break;
+
+                case "noop":
+                    this.incomingOp.emit("noop", message.minimumSequenceNumber);
                     break;
 
                 default:
