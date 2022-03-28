@@ -315,10 +315,17 @@ export class GarbageCollector implements IGarbageCollector {
             //     new ClientSessionExpiredError(`Client expired, it has lasted ${this.sessionExpiryTimeoutMs} ms.`,
             //     this.sessionExpiryTimeoutMs)),
             //     this.sessionExpiryTimeoutMs);
-            this.sessionExpiryTimer = setTimeout(() => this.closeFn({
-                errorType: "clientSessionExpiredError",
-                message: `The client has reached the expiry time of ${this.sessionExpiryTimeoutMs} ms.`,
-            }), this.sessionExpiryTimeoutMs);
+            const timeoutMs = this.sessionExpiryTimeoutMs;
+            setLongTimeout(timeoutMs, 
+                () => {
+                    this.closeFn({
+                        errorType: "clientSessionExpiredError",
+                        message: `The client has reached the expiry time of ${this.sessionExpiryTimeoutMs} ms.`,
+                    });
+                },
+                (timer) => {
+                    this.sessionExpiryTimer = timer;
+                });
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -831,4 +838,27 @@ async function getGCStateFromSnapshot(
         rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
     }
     return rootGCState;
+}
+
+/**
+ * setLongTimeout is used for timeouts longer than setTimeout's ~24.8 day max
+ * @param timeoutMs - the total time the timeout needs to last in ms
+ * @param timeoutFn - the function to execute when the timer ends
+ * @param setTimerFn - the function used to update your timer variable
+ */
+function setLongTimeout(
+    timeoutMs: number, 
+    timeoutFn: () => void, 
+    setTimerFn: (timer: ReturnType<typeof setTimeout>) => void,
+) {
+    // The setTimeout max is 24.8 days before looping occurs.
+    const maxTimeout = 2147483647;
+    let timer: ReturnType<typeof setTimeout>;
+    if (timeoutMs > maxTimeout) {
+        const newTimeoutMs = timeoutMs - maxTimeout;
+        timer = setTimeout(() => setLongTimeout(newTimeoutMs, timeoutFn, setTimerFn), maxTimeout);
+    } else {
+        timer = setTimeout(() => timeoutFn(), timeoutMs);
+    }
+    setTimerFn(timer);
 }
