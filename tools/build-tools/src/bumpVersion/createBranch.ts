@@ -14,25 +14,26 @@ import { Package } from "../common/npmPackage";
 import * as semver from "semver";
 
 /**
- * Create release branch based on the repo state, bump minor version immediately
+ * Create release bump branch based on the repo state for either main or next branches,bump minor version immediately
  * and push it to `main` and the new release branch to remote
  */
-export async function createReleaseBranch(context: Context, virtualPatch: boolean) {
-
-    // run policy check before creating release branch.
-    // right now this only does assert short codes
-    // but could also apply other fixups in the future
-    await runPolicyCheckWithFix(context);
+export async function createReleaseBump(context: Context, bumpTypeOverride: VersionBumpType | undefined, virtualPatch: boolean) {
+    if (context.originalBranchName === "main") {
+        // run policy check before creating release branch for main.
+        // right now this only does assert short codes
+        // but could also apply other fixups in the future
+        await runPolicyCheckWithFix(context);
+    }
 
     const remote = await context.gitRepo.getRemote(context.originRemotePartialUrl);
     if (!remote) {
         fatal(`Unable to find remote for '${context.originRemotePartialUrl}'`)
     }
 
-    if (context.originalBranchName !== "main") {
-        console.warn("WARNING: Bumping minor version outside of main branch is not normal!  Make sure you know what you are doing.")
-    } else if (!await context.gitRepo.isBranchUpToDate("main", remote)) {
-        fatal(`Local 'main' branch not up to date with remote. Please pull from '${remote}'.`);
+    if (context.originalBranchName !== "main" && context.originalBranchName !== "next") {
+        console.warn("WARNING: Release bumps outside of main/next branch are not normal!  Make sure you know what you are doing.")
+    } else if (!await context.gitRepo.isBranchUpToDate(context.originalBranchName, remote)) {
+        fatal(`Local main/next branch not up to date with remote. Please pull from '${remote}'.`);
     }
 
     const releasedPrereleaseDependencies = getReleasedPrereleaseDependencies(context);
@@ -51,7 +52,7 @@ export async function createReleaseBranch(context: Context, virtualPatch: boolea
         fatal(`Missing ${ releaseName } packages`);
     }
 
-    // creating the release branch and bump the version
+    // check the release branch does not already exist
     const releaseBranchVersion = `${ semver.major(releaseVersion) }.${ semver.minor(releaseVersion) }`;
     const releaseBranch = `release/${ releaseBranchVersion }`;
     const commit = await context.gitRepo.getShaForBranch(releaseBranch);
@@ -59,7 +60,7 @@ export async function createReleaseBranch(context: Context, virtualPatch: boolea
         fatal(`${ releaseBranch } already exists`);
     }
 
-    const bumpBranch = `minor_bump_${ releaseBranchVersion }_${ Date.now() }`;
+    const bumpBranch = `branch_bump_${ releaseBranchVersion }_${ Date.now() }`;
     console.log(`Creating branch ${ bumpBranch }`);
 
     await context.createBranch(bumpBranch);
@@ -70,8 +71,10 @@ export async function createReleaseBranch(context: Context, virtualPatch: boolea
     }
 
     // Bump the version
-    console.log(`Bumping minor version for development`)
-    console.log(await bumpCurrentBranch(context, "minor", releaseName, depVersions, virtualPatch));
+    const bumpType = bumpTypeOverride ?? context.originalBranchName === "next" ? "major" : "minor";
+
+    console.log(`Release bump: bumping ${bumpType} version for development`)
+    console.log(await bumpCurrentBranch(context, bumpType, releaseName, depVersions, virtualPatch));
 
     console.log("======================================================================================================");
     console.log(`Please create PR for branch ${ bumpBranch } targeting ${ context.originalBranchName } `);
