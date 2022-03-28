@@ -4,7 +4,7 @@
  */
 
 import { PromiseCache } from "@fluidframework/common-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
 import {
     IContainerPackageInfo,
     IResolvedUrl,
@@ -191,24 +191,20 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         dataStorePath: string,
-        packageInfoSource?: IContainerPackageInfo,
+        packageInfoSource?: IContainerPackageInfo | IFluidCodeDetails,
     ): Promise<string> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
         const shareLinkUrl = new URL(shareLink);
-        const isFluidPackage = (pkg: any) =>
-            typeof pkg === "object"
-            && typeof pkg?.name === "string"
-            && typeof pkg?.fluid === "object";
 
         // back-compat: IFluidCodeDetails usage to be removed in 0.58.0
         let containerPackageName;
         if (packageInfoSource && "name" in packageInfoSource) {
             containerPackageName = packageInfoSource.name;
-        } else if (isFluidPackage((packageInfoSource as any)?.package)) {
-            containerPackageName = (packageInfoSource as any)?.package.name;
+        } else if (isFluidPackage(packageInfoSource?.package)) {
+            containerPackageName = packageInfoSource?.package.name;
         } else {
-            containerPackageName = (packageInfoSource as any)?.package;
+            containerPackageName = packageInfoSource?.package;
         }
         containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 

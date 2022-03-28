@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidPackage, IRequest } from "@fluidframework/core-interfaces";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { getHashedDocumentId } from "../odspPublicUtils";
@@ -105,7 +105,7 @@ describe("Odsp Driver Resolver", () => {
 
     it("Should resolve url with a string in the codeDetails package", async () => {
         const resolvedUrl = await resolver.resolve(request);
-        const codeDetails = { name: packageName };
+        const codeDetails = { package: packageName };
         const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
 
         const [url, queryString] = response?.split("?") ?? [];
@@ -132,7 +132,11 @@ describe("Odsp Driver Resolver", () => {
 
     it("Should resolve url with a IFluidPackage in the codeDetails package", async () => {
         const resolvedUrl = await resolver.resolve(request);
-        const codeDetails = { name: packageName };
+        const fluidPackage: IFluidPackage = {
+            name: packageName,
+            fluid: {},
+        };
+        const codeDetails = { package: fluidPackage };
         const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
 
         const [url, queryString] = response?.split("?") ?? [];

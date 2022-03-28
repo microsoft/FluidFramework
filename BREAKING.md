@@ -14,25 +14,6 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
-# 0.59
-
-## 0.59 Upcoming changes
-
-## 0.59 Breaking changes
-- [Remove `@fluidframework/core-interface#fluidPackage.ts`](#Remove-@fluidframework-core-interface#fluidPackage.ts)
-
-### Remove `@fluidframework/core-interface#fluidPackage.ts`
-All the interfaces and const from `fluidPackage.ts` were moved to `@fluidframework/container-definitions` in previous release. Please refer to: [Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`](#Moved-fluidframeworkcore-interfacefluidPackagets-to-fluidframeworkcontainer-definitionfluidPackagets). It is now removed from `@fluidframework/core-interface#fluidPackage.ts`. Import the following interfaces and const from `@fluidframework/container-definitions`:
-- `IFluidPackageEnvironment`
-- `IFluidPackage`
-- `isFluidPackage`
-- `IFluidCodeDetailsConfig`
-- `IFluidCodeDetailsConfig`
-- `IFluidCodeDetails`
-- `IFluidCodeDetailsComparer`
-- `IProvideFluidCodeDetailsComparer`
-- `IFluidCodeDetailsComparer`
-
 # 0.58
 
 ## 0.58 Upcoming changes
