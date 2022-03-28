@@ -2215,9 +2215,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
             }
             const { summary: summaryTree, stats: partialStats } = summarizeResult;
-            const gcSummaryTreeStats = summaryTree.tree.gc
-                ? calculateStats((summaryTree.tree.gc as ISummaryTree))
-                : undefined;
 
             // Now that we have generated the summary, update the message at last summary to the last message processed.
             this.messageAtLastSummary = this.deltaManager.lastMessage;
@@ -2230,13 +2227,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
+            const gcSummaryTreeStats = summaryTree.tree[gcTreeKey]
+                ? calculateStats((summaryTree.tree[gcTreeKey] as ISummaryTree))
+                : undefined;
 
             const summaryStats: IGeneratedSummaryStats = {
                 dataStoreCount: this.dataStores.size,
                 summarizedDataStoreCount: this.dataStores.size - handleCount,
                 gcStateUpdatedDataStoreCount: summarizeResult.gcStats?.updatedDataStoreCount,
                 gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
-                gcTotalBlobSize: gcSummaryTreeStats?.totalBlobSize,
+                gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
                 ...partialStats,
             };
             const generateSummaryData = {
