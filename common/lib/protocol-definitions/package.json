@@ -213,13 +213,25 @@
           "forwardCompat": false
         }
       },
-      "0.1027.1000":{
-        "EnumDeclaration_FileMode": {"forwardCompat": false},
-        "InterfaceDeclaration_ISnapshotTree": {"backCompat": false},
-        "InterfaceDeclaration_ISnapshotTreeEx": {"backCompat": false},
-        "InterfaceDeclaration_ITree": {"forwardCompat": false},
-        "TypeAliasDeclaration_ITreeEntry": {"forwardCompat": false},
-        "EnumDeclaration_TreeEntry": {"forwardCompat": false}
+      "0.1027.1000": {
+        "EnumDeclaration_FileMode": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTree": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTreeEx": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ITree": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_ITreeEntry": {
+          "forwardCompat": false
+        },
+        "EnumDeclaration_TreeEntry": {
+          "forwardCompat": false
+        }
       }
     }
   }

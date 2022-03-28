@@ -52,5 +52,3 @@ To "navigate" the subdirectory structure, `IDirectory` provides a `getWorkingDir
 #### Eventing
 
 `valueChanged` events additionally provide the absolute path to the subdirectory storing the value that changed.
-
-`dispose` events are fired on sub directory which is deleted. Any access to this sub directory will throw an error once it is disposed.
