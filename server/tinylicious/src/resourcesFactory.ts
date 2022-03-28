@@ -17,7 +17,7 @@ import {
     PubSubPublisher,
     TaskMessageSender,
     TenantManager,
-    TinyliciousDbFactoryFactory,
+    getDbFactory,
     WebServerFactory,
 } from "./services";
 
@@ -31,9 +31,8 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
         const collectionNames = config.get("mongo:collectionNames");
 
         const tenantManager = new TenantManager(`http://localhost:${port}`);
-        const dbFactoryFactory = new TinyliciousDbFactoryFactory(config);
+        const dbFactory = await getDbFactory(config);
 
-        const dbFactory = await dbFactoryFactory.create();
         const taskMessageSender = new TaskMessageSender();
         const mongoManager = new MongoManager(dbFactory);
         const databaseManager = new MongoDatabaseManager(

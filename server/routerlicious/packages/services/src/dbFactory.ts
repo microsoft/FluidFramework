@@ -31,7 +31,7 @@ export async function getDbFactory(config: Provider): Promise<IDbFactory> {
         return mongoFactory;
     }
 
-    if (process.env.LOADEXTENSIONS) {
+    if (config.get("loadExtensions") === true) {
         const EXTENSIONS = config.get("extensions:db") as IDBFactoryConfig[] || [];
         const extension = EXTENSIONS.find((ext) => ext.name === dbFactoryConfig.name);
 

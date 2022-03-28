@@ -167,8 +167,7 @@ export class MongoDbFactory implements core.IDbFactory {
     private readonly operationsDbEndpoint: string;
     private readonly bufferMaxEntries?: number;
     private readonly globalDbEndpoint?: string;
-    constructor(config: IMongoDBConfig
-    ) {
+    constructor(config: IMongoDBConfig) {
         const {operationsDbEndpoint, bufferMaxEntries, globalDbEnabled, globalDbEndpoint} = config;
         if (globalDbEnabled) {
             this.globalDbEndpoint = globalDbEndpoint;
@@ -179,7 +178,7 @@ export class MongoDbFactory implements core.IDbFactory {
     }
 
     public async connect(global = false): Promise<core.IDb> {
-        assert(global && !this.globalDbEndpoint, `No global endpoint provided when trying to connect to global db`)
+        assert(global && !this.globalDbEndpoint, `No global endpoint provided when trying to connect to global db.`);
         // Need to cast to any before MongoClientOptions due to missing properties in d.ts
         const options: MongoClientOptions = {
             autoReconnect: true,
