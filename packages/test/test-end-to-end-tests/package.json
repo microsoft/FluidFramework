@@ -120,6 +120,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/test-end-to-end-tests-previous": "npm:@fluidframework/test-end-to-end-tests@^0.57.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/nock": "^9.3.0",
@@ -140,5 +141,9 @@
     "rimraf": "^2.6.2",
     "typescript": "~4.1.3",
     "typescript-formatter": "7.1.0"
+  },
+  "typeValidation": {
+    "version": "0.58.3000",
+    "broken": {}
   }
 }
