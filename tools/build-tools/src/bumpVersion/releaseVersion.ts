@@ -6,7 +6,8 @@
 import { Context, VersionBumpType } from "./context";
 import { bumpDependencies } from "./bumpDependencies";
 import { bumpVersion } from "./bumpVersion";
-import { fatal, runPolicyCheckWithFix } from "./utils";
+import { runPolicyCheckWithFix } from "./policyCheck";
+import { fatal } from "./utils";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 

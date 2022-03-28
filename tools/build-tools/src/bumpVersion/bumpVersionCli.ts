@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import * as semver from "semver";
+import { bumpDependencies, cleanPrereleaseDependencies } from "./bumpDependencies";
+import { bumpVersionCommand } from "./bumpVersion";
 import { commonOptionString, parseOption } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { MonoRepoKind } from "../common/monoRepo";
-import { GitRepo, fatal } from "./utils";
 import { Context, isVersionBumpType, VersionBumpType, VersionChangeType } from "./context";
-import { bumpVersionCommand } from "./bumpVersion";
 import { createReleaseBranch } from "./createBranch";
+import { GitRepo } from "./gitRepo";
 import { releaseVersion } from "./releaseVersion";
 import { showVersions } from "./showVersions";
-import { bumpDependencies, cleanPrereleaseDependencies } from "./bumpDependencies";
-import * as semver from "semver";
+import { fatal } from "./utils";
 
 function printUsage() {
     console.log(
