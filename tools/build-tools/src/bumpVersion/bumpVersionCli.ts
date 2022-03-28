@@ -10,7 +10,7 @@ import { commonOptionString, parseOption } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { MonoRepoKind } from "../common/monoRepo";
 import { Context, isVersionBumpType, VersionBumpType, VersionChangeType } from "./context";
-import { createReleaseBump } from "./createBranch";
+import { createReleaseBump } from "./createReleaseBump";
 import { GitRepo } from "./gitRepo";
 import { releaseVersion } from "./releaseVersion";
 import { showVersions } from "./showVersions";
