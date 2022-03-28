@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
-import { IBlob, ITree, ITreeEntry } from "@fluidframework/protocol-definitions";
+import { IBlob, ITree } from "@fluidframework/protocol-definitions";
 import { gcBlobPrefix, getNormalizedSnapshot, ISnapshotNormalizerConfig } from "../snapshotNormalizer";
 
 describe("Snapshot Normalizer", () => {
@@ -17,9 +17,9 @@ describe("Snapshot Normalizer", () => {
                 new TreeTreeEntry("entry2", {
                     id: "subTree",
                     entries: [],
-                }) as ITreeEntry,
-                new BlobTreeEntry("entry3", "blob3") as ITreeEntry,
-                new BlobTreeEntry("entry1", "blob1") as ITreeEntry,
+                }),
+                new BlobTreeEntry("entry3", "blob3"),
+                new BlobTreeEntry("entry1", "blob1"),
             ],
         };
         const normalizedSnapshot = getNormalizedSnapshot(snapshot);
@@ -54,8 +54,8 @@ describe("Snapshot Normalizer", () => {
                     entries: [
                         new BlobTreeEntry(gcBlobName1, JSON.stringify(gcDetails)),
                     ],
-                }) as ITreeEntry,
-                new BlobTreeEntry(gcBlobName2, JSON.stringify(gcDetails)) as ITreeEntry,
+                }),
+                new BlobTreeEntry(gcBlobName2, JSON.stringify(gcDetails)),
             ],
         };
 
@@ -85,8 +85,8 @@ describe("Snapshot Normalizer", () => {
             id: "root",
             entries: [
                 // Create a blob entry with normalized blob contents to make sure it remains normalized.
-                new BlobTreeEntry("normalized", JSON.stringify(normalizedBlobContents)) as ITreeEntry,
-                new BlobTreeEntry("custom", JSON.stringify(blobContents)) as ITreeEntry,
+                new BlobTreeEntry("normalized", JSON.stringify(normalizedBlobContents)),
+                new BlobTreeEntry("custom", JSON.stringify(blobContents)),
             ],
         };
 
@@ -118,8 +118,8 @@ describe("Snapshot Normalizer", () => {
             id: "root",
             entries: [
                 // Create a blob entry with normalized blob contents to make sure it remains normalized.
-                new BlobTreeEntry("normalized", JSON.stringify(normalizedBlobContents)) as ITreeEntry,
-                new BlobTreeEntry("custom", JSON.stringify(blobContents)) as ITreeEntry,
+                new BlobTreeEntry("normalized", JSON.stringify(normalizedBlobContents)),
+                new BlobTreeEntry("custom", JSON.stringify(blobContents)),
             ],
         };
 
@@ -141,9 +141,9 @@ describe("Snapshot Normalizer", () => {
             id: "root",
             entries: [
                 // Create blob entry whose content is a string so that it cannot be JSON parsed.
-                new BlobTreeEntry("custom1", "contents") as ITreeEntry,
+                new BlobTreeEntry("custom1", "contents"),
                 // Create another blob whose content is a JSON stringified string which is already normalized.
-                new BlobTreeEntry("custom2", JSON.stringify("contents")) as ITreeEntry,
+                new BlobTreeEntry("custom2", JSON.stringify("contents")),
             ],
         };
 

@@ -303,17 +303,17 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
                     parsedContent = Uint8ArrayToString(value.content, "base64");
                     encoding = "base64";
                 }
-                entries.push(new BlobTreeEntry(key, parsedContent, encoding) as ITreeEntry);
+                entries.push(new BlobTreeEntry(key, parsedContent, encoding));
                 break;
             }
 
             case SummaryType.Tree: {
-                entries.push(new TreeTreeEntry(key, convertSummaryTreeToITree(value)) as ITreeEntry);
+                entries.push(new TreeTreeEntry(key, convertSummaryTreeToITree(value)));
                 break;
             }
 
             case SummaryType.Attachment: {
-                entries.push(new AttachmentTreeEntry(key, value.id) as ITreeEntry);
+                entries.push(new AttachmentTreeEntry(key, value.id));
                 break;
             }
 
