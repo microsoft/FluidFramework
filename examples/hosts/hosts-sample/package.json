@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/hosts-sample",
-  "version": "0.56.10",
+  "version": "0.56.11",
   "private": true,
   "description": "Sample Fluid container host",
   "homepage": "https://fluidframework.com",
@@ -26,17 +26,17 @@
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
-    "@fluid-example/example-utils": "^0.56.10",
-    "@fluidframework/aqueduct": "^0.56.10",
+    "@fluid-example/example-utils": "^0.56.11",
+    "@fluidframework/aqueduct": "^0.56.11",
     "@fluidframework/container-definitions": "^0.45.0",
-    "@fluidframework/container-loader": "^0.56.10",
+    "@fluidframework/container-loader": "^0.56.11",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-utils": "^0.56.10",
+    "@fluidframework/driver-utils": "^0.56.11",
     "@fluidframework/protocol-definitions": "^0.1026.0",
-    "@fluidframework/routerlicious-driver": "^0.56.10",
-    "@fluidframework/test-runtime-utils": "^0.56.10",
-    "@fluidframework/view-interfaces": "^0.56.10",
-    "@fluidframework/web-code-loader": "^0.56.10",
+    "@fluidframework/routerlicious-driver": "^0.56.11",
+    "@fluidframework/test-runtime-utils": "^0.56.11",
+    "@fluidframework/view-interfaces": "^0.56.11",
+    "@fluidframework/web-code-loader": "^0.56.11",
     "react": "^16.10.2",
     "semver": "^7.3.4"
   },

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/diceroller",
-  "version": "0.56.10",
+  "version": "0.56.11",
   "description": "Minimal Fluid Container & Object sample to implement a collaborative dice roller.",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -37,15 +37,15 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/example-utils": "^0.56.10",
-    "@fluidframework/aqueduct": "^0.56.10",
+    "@fluid-example/example-utils": "^0.56.11",
+    "@fluidframework/aqueduct": "^0.56.11",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/map": "^0.56.10",
-    "@fluidframework/view-interfaces": "^0.56.10",
+    "@fluidframework/map": "^0.56.11",
+    "@fluidframework/view-interfaces": "^0.56.11",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.56.10",
+    "@fluid-tools/webpack-fluid-loader": "^0.56.11",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.25.0",
     "@fluidframework/test-tools": "^0.2.3074",
