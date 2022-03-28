@@ -115,6 +115,10 @@
         },
         "InterfaceDeclaration_IDocumentStorageService": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IUrlResolver": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.40.0": {
@@ -135,6 +139,10 @@
         },
         "InterfaceDeclaration_IDocumentStorageService": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IUrlResolver": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.41.0": {
@@ -155,6 +163,10 @@
         },
         "InterfaceDeclaration_IDocumentStorageService": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IUrlResolver": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.42.0": {
@@ -172,6 +184,10 @@
         },
         "InterfaceDeclaration_IDocumentStorageService": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IUrlResolver": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.43.0": {
@@ -186,6 +202,10 @@
         },
         "InterfaceDeclaration_IDocumentStorageService": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IUrlResolver": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       },
       "0.44.0": {
@@ -197,6 +217,10 @@
         },
         "InterfaceDeclaration_IDocumentStorageService": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IUrlResolver": {
+          "backCompat": false,
+          "forwardCompat": false
         }
       }
     }
