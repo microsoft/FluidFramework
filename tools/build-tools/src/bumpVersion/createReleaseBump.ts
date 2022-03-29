@@ -78,8 +78,10 @@ export async function createReleaseBump(context: Context, bumpTypeOverride: Vers
 
     console.log("======================================================================================================");
     console.log(`Please create PR for branch ${ bumpBranch } targeting ${ context.originalBranchName } `);
-    console.log(`After PR is merged, create branch ${ releaseBranch } one commit before the merged PR and push to the repo.`);
-    console.log(`Then--release can be use to start the release.`);
+    if (context.originalBranchName === "main") {
+        console.log(`After PR is merged, create branch ${ releaseBranch } one commit before the merged PR and push to the repo.`);
+    }
+    console.log(`Then --release can be use to start the release.`);
 }
 
 /**

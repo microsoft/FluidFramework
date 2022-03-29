@@ -126,6 +126,7 @@ function parseOptions(argv: string[]) {
             paramClean = true;
             const nextArg = process.argv[i + 1];
             if (nextArg !== undefined && isVersionBumpType(nextArg)) {
+                i++;
                 paramReleaseVersion = nextArg;
             }
             continue;
