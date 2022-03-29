@@ -1550,6 +1550,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         for (const [_, subDirectory] of subDirectories) {
             this.disposeSubDirectoryTree(subDirectory);
         }
-        directory.dispose();
+        if (typeof directory.dispose === "function") {
+            directory.dispose();
+        }
     }
 }
