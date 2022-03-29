@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { assert } from "@fluidframework/common-utils";
+// import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
@@ -176,7 +176,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.incomingOp.on("noop", this.handleIncomingNoOp);
 
         this.disconnectWatcher.on("disconnect", () => {
-            assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
+            // assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
             // TODO Handle appropriately
         });
     }
