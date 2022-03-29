@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-// Remove IFluidCodeDetails from driver layer
 import { PromiseCache } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
