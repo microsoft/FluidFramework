@@ -167,10 +167,10 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             typeof pkg === "object"
             && typeof pkg?.name === "string"
             && typeof pkg?.fluid === "object";
-        // back-compat: IFluidCodeDetails usage to be removed in 0.58.0
         let containerPackageName;
         if (packageInfoSource && "name" in packageInfoSource) {
             containerPackageName = packageInfoSource.name;
+            // packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
         } else if (isFluidPackage((packageInfoSource as any)?.package)) {
             containerPackageName = (packageInfoSource as any)?.package.name;
         } else {

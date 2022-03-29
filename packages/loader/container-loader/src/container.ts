@@ -980,7 +980,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.emit("warning", warning);
     }
 
-    public getPackageName(codeDetails: IFluidCodeDetails | undefined): IContainerPackageInfo {
+    private getPackageName(codeDetails: IFluidCodeDetails | undefined): IContainerPackageInfo {
         let containerPackageName;
         if (codeDetails && "name" in codeDetails) {
             containerPackageName = codeDetails;

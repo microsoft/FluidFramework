@@ -203,6 +203,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         let containerPackageName;
         if (packageInfoSource && "name" in packageInfoSource) {
             containerPackageName = packageInfoSource.name;
+            // packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
         } else if (isFluidPackage((packageInfoSource as any)?.package)) {
             containerPackageName = (packageInfoSource as any)?.package.name;
         } else {
