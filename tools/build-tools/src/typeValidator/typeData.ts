@@ -119,20 +119,14 @@ export function toTypeString(prefix: string, typeData: TypeData){
 
     const typeStringBase =`${prefix}.${typeData.name}${typeParams ?? ""}`;
     switch(node.getKind()){
-        case ts.SyntaxKind.ClassDeclaration:
-            // turn the class into a type by not omitting anything
-            // this will expose all public props, and validate the
-            // interfaces matches
-            return `Omit<${typeStringBase},"">`;
-
         case ts.SyntaxKind.VariableDeclaration:
         case ts.SyntaxKind.FunctionDeclaration:
         case ts.SyntaxKind.Identifier:
             // turn variables and functions into types
-            return `typeof ${typeStringBase}`;
+            return `TypeOnly<typeof ${typeStringBase}>`;
 
         default:
-            return typeStringBase;
+            return `TypeOnly<${typeStringBase}>`;
     }
 }
 
