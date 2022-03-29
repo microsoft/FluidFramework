@@ -31,6 +31,7 @@ interface PackageJson{
     typeValidation?: {
         version: string,
         broken: BrokenCompatTypes,
+        disabled?: boolean,
     },
 }
 
@@ -70,9 +71,11 @@ export async function getPackageDetails(packageDir: string, updateOptions?: {cwd
     const pkgJson: PackageJson = safeParse(content.toString(), packagePath);
 
     if(pkgJson.name.startsWith("@fluid-internal")){
-        return {error: "Skipping @fluid-internal package"}
+        return {error: "Skipping package: @fluid-internal "}
     }else if( pkgJson.main?.endsWith("index.js") !== true){
-        return  {error: "Skipping package without index.js main property"}
+        return  {error: "Skipping package: no index.js in main property"}
+    }else if(pkgJson.typeValidation?.disabled === true){
+        return  {error: "Skipping package: type validation disabled"}
     }
 
     // normalize the version to remove any pre-release version info,
