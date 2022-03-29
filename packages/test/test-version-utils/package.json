@@ -112,6 +112,11 @@
   },
   "typeValidation": {
     "version": "0.58.3000",
-    "broken": {}
+    "broken": {
+      "0.58.2000":{
+        "RemovedVariableDeclaration_pkgName": {"forwardCompat": false, "backCompat": false},
+        "RemovedVariableDeclaration_pkgVersion": {"forwardCompat": false, "backCompat": false}
+      }
+    }
   }
 }
