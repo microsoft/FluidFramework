@@ -40,7 +40,7 @@ All the interfaces and const from `fluidPackage.ts` were moved to `@fluidframewo
 - `IFluidCodeDetailsComparer`
 
 ### `getAbsoluteUrl()` argument type changed
-`packageInfoSource` argument is typed to `IContainerPackageInfo` interface.
+The `packageInfoSource` argument in `getAbsoluteUrl()` on `@fluidframework/odsp-driver`, `@fluidframework/iframe-driver`, and `@fluidframework/driver-definitions` is typed to `IContainerPackageInfo` interface only.
 
 ```diff
 - getAbsoluteUrl(
