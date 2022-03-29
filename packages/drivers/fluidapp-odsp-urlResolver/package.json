@@ -43,7 +43,7 @@
     "@fluidframework/odsp-driver-definitions": "^0.58.3000"
   },
   "devDependencies": {
-    "@fluid-tools/fluidapp-odsp-urlresolver-previous": "npm:@fluid-tools/fluidapp-odsp-urlresolver@^0.57.0",
+    "@fluid-tools/fluidapp-odsp-urlresolver-previous": "npm:@fluid-tools/fluidapp-odsp-urlresolver@0.58.2000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.27.0",
     "@fluidframework/mocha-test-setup": "^0.58.3000",
@@ -66,7 +66,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.58.2000",
+    "version": "0.58.3000",
     "broken": {}
   }
 }

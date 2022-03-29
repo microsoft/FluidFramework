@@ -74,7 +74,7 @@
     "@fluid-internal/test-dds-utils": "^0.58.3000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.27.0",
-    "@fluidframework/map-previous": "npm:@fluidframework/map@^0.57.0",
+    "@fluidframework/map-previous": "npm:@fluidframework/map@0.58.2000",
     "@fluidframework/mocha-test-setup": "^0.58.3000",
     "@fluidframework/test-runtime-utils": "^0.58.3000",
     "@microsoft/api-extractor": "^7.16.1",
@@ -100,7 +100,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.58.2000",
+    "version": "0.58.3000",
     "broken": {}
   }
 }

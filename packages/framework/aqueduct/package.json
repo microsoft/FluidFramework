@@ -80,7 +80,7 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@^0.57.0",
+    "@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@0.58.2000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.27.0",
     "@fluidframework/mocha-test-setup": "^0.58.3000",
@@ -108,7 +108,7 @@
   },
   "module:es5": "es5/index.js",
   "typeValidation": {
-    "version": "0.58.2000",
+    "version": "0.58.3000",
     "broken": {}
   }
 }
