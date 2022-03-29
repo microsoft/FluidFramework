@@ -70,12 +70,19 @@ interface IQuorumSetOperation {
     refSeq: number;
 }
 
+interface IQuorumDeleteOperation {
+    type: "delete";
+    key: string;
+    // Same as above for set.
+    refSeq: number;
+}
+
 interface IQuorumNoOpOperation {
     type: "noop";
 }
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type IQuorumOperation = IQuorumSetOperation | IQuorumNoOpOperation;
+type IQuorumOperation = IQuorumSetOperation | IQuorumDeleteOperation | IQuorumNoOpOperation;
 
 const snapshotFileName = "header";
 
@@ -168,7 +175,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         super(id, runtime, attributes);
 
         this.incomingOp.on("set", this.handleIncomingSet);
-        this.incomingOp.on("noop", this.handleNoOp);
+        this.incomingOp.on("delete", this.handleIncomingDelete);
+        this.incomingOp.on("noop", this.handleIncomingNoOp);
 
         this.disconnectWatcher.on("disconnect", () => {
             assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
@@ -180,13 +188,13 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         return this.values.get(key)?.accepted !== undefined;
     }
 
-    // TODO: have a separate method for getting the pending.
+    // TODO: have a separate method for getting the pending(?)
     public get(key: string): any {
         return this.values.get(key)?.accepted?.value;
     }
 
     public set(key: string, value: any): void {
-        // TODO: handle detached scenario
+        // TODO: handle detached scenario, just auto accept basically
 
         const setOp: IQuorumSetOperation = {
             type: "set",
@@ -196,6 +204,18 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         };
 
         this.submitLocalMessage(setOp);
+    }
+
+    public delete(key: string): void {
+        // TODO: handle detached scenario, just auto accept basically
+
+        const deleteOp: IQuorumDeleteOperation = {
+            type: "delete",
+            key,
+            refSeq: this.runtime.deltaManager.lastSequenceNumber,
+        };
+
+        this.submitLocalMessage(deleteOp);
     }
 
     private handleIncomingSet(key: string, value: any, refSeq: number, setSequenceNumber: number) {
@@ -223,7 +243,34 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.submitLocalMessage(noOp);
     }
 
-    private handleNoOp(minimumSequenceNumber: number) {
+    private handleIncomingDelete(key: string, refSeq: number, deleteSequenceNumber: number) {
+        const currentValue = this.values.get(key);
+        // A proposal is valid if the value is unknown
+        // or if it was made with knowledge of the most recently accepted value
+        const proposalValid =
+            currentValue === undefined
+            || (currentValue.pending === undefined && currentValue.accepted.sequenceNumber <= refSeq);
+        if (!proposalValid) {
+            // Drop invalid proposals on the ground.  If delete() returns a promise we will need to resolve it though.
+            return;
+        }
+
+        const accepted = currentValue?.accepted;
+
+        this.values.set(key, { accepted, pending: { type: "delete", sequenceNumber: deleteSequenceNumber }});
+
+        this.emit("pending", key);
+
+        // Emit a noop upon a new key entering pending state, which is how we'll eventually advance it to accepted
+        // TODO: Doesn't work if there's a holdout client that disconnects prior to sending noop, since we aren't
+        // guaranteed to get any further message advancing the MSN.  Observing client disconnects could work.
+        const noOp: IQuorumNoOpOperation = { type: "noop" };
+        this.submitLocalMessage(noOp);
+    }
+
+    private handleIncomingNoOp(minimumSequenceNumber: number) {
+        // Run through each of the values, find any pending that should now be considered settled because the MSN has
+        // passed when they were sequenced.
         for (const [key, value] of this.values) {
             const pending = value.pending;
             if (pending !== undefined && minimumSequenceNumber >= pending.sequenceNumber) {
@@ -297,8 +344,11 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
             switch (op.type) {
                 case "set":
-                    this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber, localOpMetadata);
+                    this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber);
                     break;
+
+                case "delete":
+                    this.incomingOp.emit("delete", op.key, op.refSeq, message.sequenceNumber);
 
                 case "noop":
                     this.incomingOp.emit("noop", message.minimumSequenceNumber);
