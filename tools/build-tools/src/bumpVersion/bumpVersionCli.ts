@@ -15,6 +15,7 @@ import { GitRepo } from "./gitRepo";
 import { releaseVersion } from "./releaseVersion";
 import { showVersions } from "./showVersions";
 import { fatal } from "./utils";
+import { writeReleaseVersions } from "./writeReleaseVersions";
 
 function printUsage() {
     console.log(
@@ -28,6 +29,7 @@ Options:
   -u --update                    Update prerelease dependencies for released packages
      --version [<pkg>[=<type>]]  Collect and show version of specified package or monorepo and dependencies (default: client)
      --virtualPatch              Use a virtual patch number for beta versioning (0.<major>.<minor>00<patch>)
+     --writeReleaseVersions      Write out the latest versions of packages if the repo were to be released in its current state to versions.json
 ${commonOptionString}
 `);
 }
@@ -45,6 +47,7 @@ let paramBumpName: string | undefined;
 let paramBumpVersion: VersionChangeType | undefined;
 let paramUpdate = false;
 let paramVirtualPatch = false;
+let paramWriteReleaseVersions = false;
 
 function parseNameVersion(arg: string | undefined) {
     let name = arg;
@@ -208,6 +211,11 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
+        if (arg === "--writeReleaseVersions") {
+            paramWriteReleaseVersions = true;
+            continue;
+        }
+
         console.error(`ERROR: Invalid arguments ${arg}`);
         error = true;
         break;
@@ -254,6 +262,12 @@ function checkFlagsConflicts() {
         }
         command = "update";
     }
+    if (paramWriteReleaseVersions) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --currentVersions and --${command}`);
+        }
+        command = "writeReleaseVersions";
+    }
     if (command === undefined) {
         fatal("Missing command flags --branch/--release/--dep/--bump/--version");
     }
@@ -297,6 +311,9 @@ async function main() {
                 break;
             case "update":
                 await cleanPrereleaseDependencies(context, paramLocal, paramCommit);
+                break;
+            case "writeReleaseVersions":
+                await writeReleaseVersions(context);
                 break;
         }
     } catch (e) {
