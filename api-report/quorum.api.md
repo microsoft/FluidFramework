@@ -37,6 +37,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     applyStashedOp(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): Quorum;
     // (undocumented)
+    delete(key: string): void;
+    // (undocumented)
     get(key: string): any;
     static getFactory(): IChannelFactory;
     // (undocumented)

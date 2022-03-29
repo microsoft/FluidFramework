@@ -22,6 +22,7 @@ import { IQuorum, IQuorumEvents } from "./interfaces";
 /**
  * The accepted value information, if any.
  */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type AcceptedQuorumValue = {
     /**
      * The accepted value.
@@ -81,7 +82,6 @@ interface IQuorumNoOpOperation {
     type: "noop";
 }
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type IQuorumOperation = IQuorumSetOperation | IQuorumDeleteOperation | IQuorumNoOpOperation;
 
 const snapshotFileName = "header";
@@ -349,6 +349,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
                 case "delete":
                     this.incomingOp.emit("delete", op.key, op.refSeq, message.sequenceNumber);
+                    break;
 
                 case "noop":
                     this.incomingOp.emit("noop", message.minimumSequenceNumber);
