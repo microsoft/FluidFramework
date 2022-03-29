@@ -21,6 +21,7 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
 - [Remove `@fluidframework/core-interface#fluidPackage.ts`](#Remove-fluidframeworkcore-interfacefluidPackagets)
+- [getAbsoluteUrl() argument type changed](#getAbsoluteUrl-argument-type-changed)
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
@@ -38,6 +39,29 @@ All the interfaces and const from `fluidPackage.ts` were moved to `@fluidframewo
 - `IProvideFluidCodeDetailsComparer`
 - `IFluidCodeDetailsComparer`
 
+### `getAbsoluteUrl()` argument type changed
+`packageInfoSource` argument is typed to `IContainerPackageInfo` interface.
+
+```diff
+- getAbsoluteUrl(
+-    resolvedUrl: IResolvedUrl,
+-    relativeUrl: string,
+-    packageInfoSource?: IFluidCodeDetails | IContainerPackageInfo,
+- ): Promise<string>;
+
++ interface IContainerPackageInfo {
++    /**
++     * Container package name.
++     */
++    name: string;
++ }
+
++ getAbsoluteUrl(
++    resolvedUrl: IResolvedUrl,
++    relativeUrl: string,
++    packageInfoSource?: IContainerPackageInfo,
++ ): Promise<string>;
+```
 
 # 0.58
 
