@@ -107,7 +107,7 @@
     "uuid": "^8.3.1"
   },
   "typeValidation": {
-    "version": "0.58.3000",
+    "version": "0.58.2000",
     "broken": {}
   }
 }

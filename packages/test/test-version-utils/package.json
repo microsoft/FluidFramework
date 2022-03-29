@@ -110,7 +110,7 @@
     "webpack-cli": "^3.3.11"
   },
   "typeValidation": {
-    "version": "0.58.3000",
+    "version": "0.58.2000",
     "broken": {}
   }
 }

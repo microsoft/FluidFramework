@@ -108,7 +108,7 @@
   },
   "module:es5": "es5/index.js",
   "typeValidation": {
-    "version": "0.58.3000",
+    "version": "0.58.2000",
     "broken": {}
   }
 }
