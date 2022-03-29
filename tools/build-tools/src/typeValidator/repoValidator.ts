@@ -9,7 +9,7 @@ import { IFluidRepoPackageEntry } from "../common/fluidRepo";
 import { getPackageManifest } from "../common/fluidUtils";
 import { FluidRepoBuild } from "../fluidBuild/fluidRepoBuild"
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { getPackageDetails } from "./packageJson";
+import { getPackageDetailsOrThrow } from "./packageJson";
 import { BrokenTypes, validatePackage } from "./packageValidator";
 import { BreakingIncrement, log } from "./validatorUtils";
 
@@ -149,7 +149,7 @@ export async function validateRepo(options?: IValidationOptions): Promise<RepoVa
     for (let i = 0; packages.size > 0; i++) {
         packages.forEach(async (buildPkg, pkgName) => {
             if (buildPkg.level === i) {
-                const packageData = (await getPackageDetails(buildPkg.pkg.directory))!;
+                const packageData = await getPackageDetailsOrThrow(buildPkg.pkg.directory);
                 const pkgJsonPath = path.join(buildPkg.pkg.directory, "package.json");
                 const pkgJsonRelativePath = path.relative(repoRoot, pkgJsonPath);
                 if (packageData.oldVersions.length > 0) {

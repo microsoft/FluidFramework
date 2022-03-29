@@ -6,7 +6,6 @@
 import * as fs from "fs";
 import * as util  from "util";
 import child_process from "child_process";
-import { ConstructorDeclaration } from "ts-morph";
 
 export type PackageDetails ={
     readonly name: string;
@@ -52,7 +51,15 @@ function safeParse(json: string, error: string){
     }
 }
 
-export async function getPackageDetails(packageDir: string, updateOptions?: {cwd?: string}): Promise<PackageDetails | undefined> {
+export async function getPackageDetailsOrThrow(packageDir: string, updateOptions?: {cwd?: string}):  Promise<PackageDetails> {
+    const result = await getPackageDetails(packageDir, updateOptions);
+    if(result.error !== undefined){
+        throw new Error(result.error);
+    }
+    return result;
+}
+
+export async function getPackageDetails(packageDir: string, updateOptions?: {cwd?: string}): Promise<PackageDetails & {error?: never} | {error: string}> {
 
     const packagePath = `${packageDir}/package.json`;
     if(!await util.promisify(fs.exists)(packagePath)){
@@ -62,9 +69,10 @@ export async function getPackageDetails(packageDir: string, updateOptions?: {cwd
 
     const pkgJson: PackageJson = safeParse(content.toString(), packagePath);
 
-    if(pkgJson.name.startsWith("@fluid-internal")
-        || pkgJson.main?.endsWith("index.js") !== true){
-        return undefined;
+    if(pkgJson.name.startsWith("@fluid-internal")){
+        return {error: "Skipping @fluid-internal package"}
+    }else if( pkgJson.main?.endsWith("index.js") !== true){
+        return  {error: "Skipping package without index.js main property"}
     }
 
     // normalize the version to remove any pre-release version info,

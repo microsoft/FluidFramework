@@ -48,8 +48,10 @@ async function run(): Promise<boolean>{
             const start = Date.now();
             const packageData = await getPackageDetails(packageDir, {cwd: program.monoRepoDir})
                 .finally(()=>output.push(`Loaded(${Date.now() - start}ms)`));
-            if(packageData
-                && packageData.oldVersions.length > 0
+            if(packageData.error !== undefined){
+                output.push(packageData.error)
+            }
+            else if(packageData.oldVersions.length > 0
                 && program.preinstallOnly === undefined){
                 const start = Date.now();
                 await generateTests(packageData)
