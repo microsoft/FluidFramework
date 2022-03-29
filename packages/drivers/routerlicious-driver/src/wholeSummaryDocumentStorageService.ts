@@ -251,8 +251,6 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         snapshot: ISnapshotTree,
         blobs: Map<string, ArrayBuffer>,
         ): ISummaryTree {
-        assert(Object.keys(snapshot.commits).length === 0,
-            0x19e /* "There should not be commit tree entries in snapshot" */);
         const builder = new SummaryTreeAssembler();
         for (const [path, id] of Object.entries(snapshot.blobs)) {
             const blob = blobs.get(id);
