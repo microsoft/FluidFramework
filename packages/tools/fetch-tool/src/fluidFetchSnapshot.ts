@@ -114,9 +114,9 @@ async function fetchBlobsFromSnapshotTree(
     storage: IDocumentStorageService,
     tree: ISnapshotTree,
     prefix: string = "/",
-    perCommitBlobIdMap?: Map<string, number>): Promise<IFetchedData[]> {
-    const commit = !perCommitBlobIdMap;
-    if (commit && dumpSnapshotTrees) {
+    parentBlobIdMap?: Map<string, number>): Promise<IFetchedData[]> {
+    const isTopLevel = !parentBlobIdMap;
+    if (isTopLevel && dumpSnapshotTrees) {
         console.log(tree);
     }
 
@@ -127,11 +127,11 @@ async function fetchBlobsFromSnapshotTree(
 
     // Create the tree info before fetching blobs (which will modify it)
     let commitBlob: IFetchedTree | undefined;
-    if (commit) {
+    if (isTopLevel) {
         commitBlob = createTreeBlob(tree, prefix, false);
     }
 
-    const blobIdMap = perCommitBlobIdMap ?? new Map<string, number>();
+    const blobIdMap = parentBlobIdMap ?? new Map<string, number>();
     let result: IFetchedData[] = fetchBlobs(prefix, tree, storage, blobIdMap);
 
     for (const subtreeId of Object.keys(tree.trees)) {
