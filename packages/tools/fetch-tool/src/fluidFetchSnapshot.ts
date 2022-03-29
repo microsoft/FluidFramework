@@ -126,9 +126,9 @@ async function fetchBlobsFromSnapshotTree(
     }
 
     // Create the tree info before fetching blobs (which will modify it)
-    let commitBlob: IFetchedTree | undefined;
+    let topLevelBlob: IFetchedTree | undefined;
     if (isTopLevel) {
-        commitBlob = createTreeBlob(tree, prefix, false);
+        topLevelBlob = createTreeBlob(tree, prefix, false);
     }
 
     const blobIdMap = parentBlobIdMap ?? new Map<string, number>();
@@ -143,8 +143,8 @@ async function fetchBlobsFromSnapshotTree(
         result = result.concat(dataStoreBlobs);
     }
 
-    if (commitBlob) {
-        result.push(commitBlob);
+    if (topLevelBlob) {
+        result.push(topLevelBlob);
         result.push(createTreeBlob(tree, prefix, true));
     }
     return result;
