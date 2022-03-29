@@ -92,7 +92,7 @@ export async function generateTests(packageDetails: PackageDetails) {
 
         stats.files ++;
         await util.promisify(fs.writeFile)(
-            `${testPath}/validate-${oldVersionNameForFile}.ts`,
+            `${testPath}/validate${oldVersionNameForFile.split("-").map((p)=>p[0].toUpperCase()+p.substring(1)).join("")}.ts`,
             testString.join("\n"));
     }
     return stats;
