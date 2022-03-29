@@ -70,6 +70,11 @@ describe("Quorum", () => {
                 const watchForPending = (pendingKey: string) => {
                     if (pendingKey === expectedKey) {
                         assert.strictEqual(
+                            quorum1.getPending(expectedKey),
+                            expectedValue,
+                            "Value in Quorum 1 should be pending now",
+                        );
+                        assert.strictEqual(
                             quorum1.get(expectedKey),
                             undefined,
                             "Value in Quorum 1 should not be accepted yet",
@@ -80,6 +85,11 @@ describe("Quorum", () => {
                         // us to pause after the set but before the noop.
                         const watchForAccepted = (acceptedKey: string) => {
                             if (acceptedKey === expectedKey) {
+                                assert.strictEqual(
+                                    quorum1.getPending(expectedKey),
+                                    undefined,
+                                    "Value in Quorum 1 should not be pending anymore",
+                                );
                                 assert.strictEqual(
                                     quorum1.get(expectedKey),
                                     expectedValue,
@@ -98,6 +108,11 @@ describe("Quorum", () => {
                 const watchForPending = (pendingKey: string) => {
                     if (pendingKey === expectedKey) {
                         assert.strictEqual(
+                            quorum2.getPending(expectedKey),
+                            expectedValue,
+                            "Value in Quorum 2 should be pending now",
+                        );
+                        assert.strictEqual(
                             quorum2.get(expectedKey),
                             undefined,
                             "Value in Quorum 2 should not be accepted yet",
@@ -108,6 +123,11 @@ describe("Quorum", () => {
                         // us to pause after the set but before the noop.
                         const watchForAccepted = (acceptedKey: string) => {
                             if (acceptedKey === expectedKey) {
+                                assert.strictEqual(
+                                    quorum2.getPending(expectedKey),
+                                    undefined,
+                                    "Value in Quorum 2 should not be pending anymore",
+                                );
                                 assert.strictEqual(
                                     quorum2.get(expectedKey),
                                     expectedValue,

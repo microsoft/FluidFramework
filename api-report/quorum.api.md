@@ -20,6 +20,8 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
     // (undocumented)
     get(key: string): any;
     // (undocumented)
+    getPending(key: string): any;
+    // (undocumented)
     has(key: string): boolean;
     // (undocumented)
     set(key: string, value: any): void;
@@ -41,6 +43,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     // (undocumented)
     get(key: string): any;
     static getFactory(): IChannelFactory;
+    // (undocumented)
+    getPending(key: string): any;
     // (undocumented)
     has(key: string): boolean;
     // @internal (undocumented)

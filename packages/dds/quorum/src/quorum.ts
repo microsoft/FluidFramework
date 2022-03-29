@@ -56,8 +56,7 @@ type QuorumValue =
     | { accepted: AcceptedQuorumValue; pending: PendingQuorumValue; };
 
 /**
- * Quorum operation format
- * TODO: Consider a delete operation
+ * Quorum operation formats
  */
 interface IQuorumSetOperation {
     type: "set";
@@ -124,8 +123,6 @@ const snapshotFileName = "header";
  * and the value becomes "accepted".  Once the value is accepted, it once again becomes possible to set the value,
  * again with consensus-like FWW resolution.
  *
- * TODO: Need another event to signal pending, need another method to permit read of pending.
- *
  * ### Eventing
  *
  * `Quorum` is an `EventEmitter`, and will emit events when a new value is accepted for a key.
@@ -188,9 +185,18 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         return this.values.get(key)?.accepted !== undefined;
     }
 
-    // TODO: have a separate method for getting the pending(?)
     public get(key: string): any {
         return this.values.get(key)?.accepted?.value;
+    }
+
+    // TODO: Should this return differently for a value of undefined vs. a pending delete?
+    public getPending(key: string): any {
+        const pending = this.values.get(key)?.pending;
+        if (pending === undefined || pending.type === "delete") {
+            return undefined;
+        }
+
+        return pending.value;
     }
 
     public set(key: string, value: any): void {

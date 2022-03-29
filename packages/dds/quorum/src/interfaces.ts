@@ -19,5 +19,6 @@ export interface IQuorumEvents extends ISharedObjectEvents {
 export interface IQuorum extends ISharedObject<IQuorumEvents> {
     has(key: string): boolean;
     get(key: string): any;
+    getPending(key: string): any;
     set(key: string, value: any): void;
 }
