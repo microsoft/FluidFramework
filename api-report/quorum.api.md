@@ -18,6 +18,8 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 // @public
 export interface IQuorum extends ISharedObject<IQuorumEvents> {
     // (undocumented)
+    delete(key: string): void;
+    // (undocumented)
     get(key: string): any;
     // (undocumented)
     getPending(key: string): any;
