@@ -195,7 +195,19 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
         const shareLinkUrl = new URL(shareLink);
-        let containerPackageName = packageInfoSource?.name;
+        // back-compat: GitHub #9653
+        const isFluidPackage = (pkg: any) =>
+            typeof pkg === "object"
+            && typeof pkg?.name === "string"
+            && typeof pkg?.fluid === "object";
+        let containerPackageName;
+        if (packageInfoSource && "name" in packageInfoSource) {
+            containerPackageName = packageInfoSource.name;
+        } else if (isFluidPackage((packageInfoSource as any)?.package)) {
+            containerPackageName = (packageInfoSource as any)?.package.name;
+        } else {
+            containerPackageName = (packageInfoSource as any)?.package;
+        }
         containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
         storeLocatorInOdspUrl(shareLinkUrl, {

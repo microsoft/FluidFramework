@@ -102,37 +102,9 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.shareLinkInfo.createLink.type, createLinkType);
     });
 
-    it("Should resolve url with a string in the codeDetails package", async () => {
-        const resolvedUrl = await resolver.resolve(request);
-        const codeDetails = { name: packageName };
-        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
-
-        const [url, queryString] = response?.split("?") ?? [];
-        const searchParams = new URLSearchParams(queryString);
-        assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
-        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
-        assert.strictEqual(searchParams.get("path"), "datastore", "Path should match");
-        assert.strictEqual(searchParams.get("containerPackageName"), packageName, "ContainerPackageName should match");
-        assert.strictEqual(url, `${siteUrl}`, "Url should match");
-    });
-
     it("Should resolve url given container package info", async () => {
         const resolvedUrl = await resolver.resolve(request);
         const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", {name: packageName});
-
-        const [url, queryString] = response?.split("?") ?? [];
-        const searchParams = new URLSearchParams(queryString);
-        assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
-        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
-        assert.strictEqual(searchParams.get("path"), "datastore", "Path should match");
-        assert.strictEqual(searchParams.get("containerPackageName"), packageName, "ContainerPackageName should match");
-        assert.strictEqual(url, `${siteUrl}`, "Url should match");
-    });
-
-    it("Should resolve url with a IFluidPackage in the codeDetails package", async () => {
-        const resolvedUrl = await resolver.resolve(request);
-        const codeDetails = { name: packageName };
-        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
 
         const [url, queryString] = response?.split("?") ?? [];
         const searchParams = new URLSearchParams(queryString);

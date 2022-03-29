@@ -162,7 +162,20 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             dataStorePath = dataStorePath.substr(1);
         }
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-        let containerPackageName = packageInfoSource?.name;
+        // back-compat: GitHub #9653
+        const isFluidPackage = (pkg: any) =>
+            typeof pkg === "object"
+            && typeof pkg?.name === "string"
+            && typeof pkg?.fluid === "object";
+        // back-compat: IFluidCodeDetails usage to be removed in 0.58.0
+        let containerPackageName;
+        if (packageInfoSource && "name" in packageInfoSource) {
+            containerPackageName = packageInfoSource.name;
+        } else if (isFluidPackage((packageInfoSource as any)?.package)) {
+            containerPackageName = (packageInfoSource as any)?.package.name;
+        } else {
+            containerPackageName = (packageInfoSource as any)?.package;
+        }
         containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
         return createOdspUrl({

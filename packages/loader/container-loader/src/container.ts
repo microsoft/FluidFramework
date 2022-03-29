@@ -39,6 +39,7 @@ import {
     UsageError,
  } from "@fluidframework/container-utils";
 import {
+    IContainerPackageInfo,
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
@@ -979,13 +980,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.emit("warning", warning);
     }
 
-    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
-        if (this.resolvedUrl === undefined) {
-            return undefined;
-        }
-
+    public getPackageName(codeDetails: IFluidCodeDetails | undefined): IContainerPackageInfo {
         let containerPackageName;
-        let codeDetails = this._context?.codeDetails;
         if (codeDetails && "name" in codeDetails) {
             containerPackageName = codeDetails;
         } else if (isFluidPackage(codeDetails?.package)) {
@@ -993,11 +989,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         } else {
             containerPackageName = codeDetails?.package;
         }
+        return { name: containerPackageName };
+    }
+
+    public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
+        if (this.resolvedUrl === undefined) {
+            return undefined;
+        }
 
         return this.urlResolver.getAbsoluteUrl(
             this.resolvedUrl,
             relativeUrl,
-            { name: containerPackageName });
+            this.getPackageName(this._context?.codeDetails));
     }
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
