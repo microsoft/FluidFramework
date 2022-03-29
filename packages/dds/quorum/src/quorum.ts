@@ -218,7 +218,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.submitLocalMessage(deleteOp);
     }
 
-    private handleIncomingSet(key: string, value: any, refSeq: number, setSequenceNumber: number) {
+    private readonly handleIncomingSet = (key: string, value: any, refSeq: number, setSequenceNumber: number) => {
         const currentValue = this.values.get(key);
         // A proposal is valid if the value is unknown
         // or if it was made with knowledge of the most recently accepted value
@@ -241,9 +241,9 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         // guaranteed to get any further message advancing the MSN.  Observing client disconnects could work.
         const noOp: IQuorumNoOpOperation = { type: "noop" };
         this.submitLocalMessage(noOp);
-    }
+    };
 
-    private handleIncomingDelete(key: string, refSeq: number, deleteSequenceNumber: number) {
+    private readonly handleIncomingDelete = (key: string, refSeq: number, deleteSequenceNumber: number) => {
         const currentValue = this.values.get(key);
         // A proposal is valid if the value is unknown
         // or if it was made with knowledge of the most recently accepted value
@@ -266,9 +266,9 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         // guaranteed to get any further message advancing the MSN.  Observing client disconnects could work.
         const noOp: IQuorumNoOpOperation = { type: "noop" };
         this.submitLocalMessage(noOp);
-    }
+    };
 
-    private handleIncomingNoOp(minimumSequenceNumber: number) {
+    private readonly handleIncomingNoOp = (minimumSequenceNumber: number) => {
         // Run through each of the values, find any pending that should now be considered settled because the MSN has
         // passed when they were sequenced.
         for (const [key, value] of this.values) {
@@ -286,7 +286,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
                 this.emit("accepted", key);
             }
         }
-    }
+    };
 
     /**
      * Create a summary for the quorum

@@ -62,6 +62,73 @@ describe("Quorum", () => {
             assert.ok(quorum1, "Could not create quorum1");
             assert.ok(quorum2, "Could not create quorum1");
         });
+
+        it("Can set a value and read it from all clients", async () => {
+            const expectedKey = "key";
+            const expectedValue = "value";
+            const quorum1AcceptanceP = new Promise<void>((resolve) => {
+                const watchForPending = (pendingKey: string) => {
+                    if (pendingKey === expectedKey) {
+                        assert.strictEqual(
+                            quorum1.get(expectedKey),
+                            undefined,
+                            "Value in Quorum 1 should not be accepted yet",
+                        );
+                        quorum1.off("pending", watchForPending);
+
+                        // Doing this synchronously after validating pending, since processAllMessages() won't permit
+                        // us to pause after the set but before the noop.
+                        const watchForAccepted = (acceptedKey: string) => {
+                            if (acceptedKey === expectedKey) {
+                                assert.strictEqual(
+                                    quorum1.get(expectedKey),
+                                    expectedValue,
+                                    "Value in Quorum 1 should be accepted now",
+                                );
+                                quorum1.off("accepted", watchForAccepted);
+                                resolve();
+                            }
+                        };
+                        quorum1.on("accepted", watchForAccepted);
+                    }
+                };
+                quorum1.on("pending", watchForPending);
+            });
+            const quorum2AcceptanceP = new Promise<void>((resolve) => {
+                const watchForPending = (pendingKey: string) => {
+                    if (pendingKey === expectedKey) {
+                        assert.strictEqual(
+                            quorum2.get(expectedKey),
+                            undefined,
+                            "Value in Quorum 2 should not be accepted yet",
+                        );
+                        quorum2.off("pending", watchForPending);
+
+                        // Doing this synchronously after validating pending, since processAllMessages() won't permit
+                        // us to pause after the set but before the noop.
+                        const watchForAccepted = (acceptedKey: string) => {
+                            if (acceptedKey === expectedKey) {
+                                assert.strictEqual(
+                                    quorum2.get(expectedKey),
+                                    expectedValue,
+                                    "Value in Quorum 2 should be accepted now",
+                                );
+                                quorum2.off("accepted", watchForAccepted);
+                                resolve();
+                            }
+                        };
+                        quorum2.on("accepted", watchForAccepted);
+                    }
+                };
+                quorum2.on("pending", watchForPending);
+            });
+            quorum1.set(expectedKey, expectedValue);
+            containerRuntimeFactory.processAllMessages();
+
+            await Promise.all([quorum1AcceptanceP, quorum2AcceptanceP]);
+            assert.strictEqual(quorum1.get(expectedKey), expectedValue, "Wrong value in Quorum 1");
+            assert.strictEqual(quorum2.get(expectedKey), expectedValue, "Wrong value in Quorum 2");
+        });
     });
 
     describe.skip("Detached/Attach", () => {
