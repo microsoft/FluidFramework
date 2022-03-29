@@ -30,6 +30,7 @@ import {
     IContainerLoadMode,
     IFluidCodeDetails,
     isFluidCodeDetails,
+    isFluidPackage,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
@@ -983,10 +984,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return undefined;
         }
 
+        let containerPackageName;
+        let codeDetails = this._context?.codeDetails;
+        if (codeDetails && "name" in codeDetails) {
+            containerPackageName = codeDetails;
+        } else if (isFluidPackage(codeDetails?.package)) {
+            containerPackageName = codeDetails?.package.name;
+        } else {
+            containerPackageName = codeDetails?.package;
+        }
+
         return this.urlResolver.getAbsoluteUrl(
             this.resolvedUrl,
             relativeUrl,
-            this._context?.codeDetails);
+            { name: containerPackageName });
     }
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {

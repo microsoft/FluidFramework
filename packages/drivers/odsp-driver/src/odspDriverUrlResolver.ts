@@ -5,7 +5,7 @@
 
 // Remove IFluidCodeDetails from driver layer
 import { assert } from "@fluidframework/common-utils";
-import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
     DriverHeader,
     IContainerPackageInfo,
@@ -157,23 +157,14 @@ export class OdspDriverUrlResolver implements IUrlResolver {
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
-        packageInfoSource?: IContainerPackageInfo | IFluidCodeDetails,
+        packageInfoSource?: IContainerPackageInfo,
     ): Promise<string> {
         let dataStorePath = relativeUrl;
         if (dataStorePath.startsWith("/")) {
             dataStorePath = dataStorePath.substr(1);
         }
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-
-        // back-compat: IFluidCodeDetails usage to be removed in 0.58.0
-        let containerPackageName;
-        if (packageInfoSource && "name" in packageInfoSource) {
-            containerPackageName = packageInfoSource.name;
-        } else if (isFluidPackage(packageInfoSource?.package)) {
-            containerPackageName = packageInfoSource?.package.name;
-        } else {
-            containerPackageName = packageInfoSource?.package;
-        }
+        let containerPackageName = packageInfoSource?.name;
         containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
         return createOdspUrl({
