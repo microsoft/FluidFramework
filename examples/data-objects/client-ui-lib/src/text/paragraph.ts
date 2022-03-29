@@ -434,10 +434,6 @@ export interface IItemsContext {
     nextPGPos: number;
     itemInfo: IParagraphItemInfo;
     paragraphLexer: ParagraphLexer<IItemsContext>;
-
-    // TODO: Should lift into a component-standard layout/render context instead
-    //       of using a map to smuggle context to components.
-    services: Map<string, any>;
 }
 
 export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsContext) {

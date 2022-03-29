@@ -6,14 +6,9 @@
 import { strict as assert } from "assert";
 import os from "os";
 import { Project, SourceFile } from "ts-morph"
-import {
-    BreakingIncrement,
-    checkMajorIncrement,
-    checkMinorIncrement,
-    DecompositionTypeData,
-    tryDecomposeTypeData,
-} from "./../../typeValidator/packageValidator";
-import { enableLogging } from "./../../typeValidator/validatorUtils"
+import { createSpecificValidator } from "./../../typeValidator/packageValidator";
+import { TypeData } from "../../typeValidator/typeData";
+import { BreakingIncrement, enableLogging } from "./../../typeValidator/validatorUtils"
 
 describe("Class", () => {
     enableLogging(true);
@@ -26,27 +21,32 @@ describe("Class", () => {
         assert(project !== undefined);
     });
 
-    function getTypeDataForSource(sourceFile: SourceFile): DecompositionTypeData {
-        let typeData: DecompositionTypeData;
+    function getTypeDataForSource(sourceFile: SourceFile): TypeData {
+        let typeData: TypeData;
         for (const declarations of sourceFile.getExportedDeclarations().values()) {
-            typeData = { kind: "unknown", name: "typeName", node: declarations[0] } as any as DecompositionTypeData;
-            tryDecomposeTypeData(project.getTypeChecker(), typeData);
+            typeData = { kind: "unknown", name: "typeName", node: declarations[0] };
             break;
         }
         return typeData!;
     }
 
     function checkIncrement(
-        project: Project,
-        pkgDir: string,
-        oldTypeData: DecompositionTypeData,
-        newTypeData: DecompositionTypeData,
+        oldSource: string,
+        newSource: string,
     ): BreakingIncrement {
-        let increment = checkMajorIncrement(project, pkgDir, oldTypeData, newTypeData);
-        if (increment === BreakingIncrement.none) {
-            increment = checkMinorIncrement(project, pkgDir, oldTypeData, newTypeData);
-        }
-        return increment;
+        const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, oldSource, { overwrite: true });
+        const oldTypeData = getTypeDataForSource(oldSourceFile);
+        const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, newSource, { overwrite: true });
+        const newTypeData = getTypeDataForSource(newSourceFile);
+
+        const validator = createSpecificValidator(
+            project.getTypeChecker(),
+            oldTypeData.node,
+            project.getTypeChecker(),
+            newTypeData.node,
+        );
+
+        return validator.validate(project, pkgDir);
     }
 
     // scenario: added new method
@@ -56,8 +56,6 @@ describe("Class", () => {
         `
         export class asdf {}
         `;
-        const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, classOld);
-        const oldTypeData = getTypeDataForSource(oldSourceFile);
 
         const classNew =
         `
@@ -65,10 +63,8 @@ describe("Class", () => {
         public qwer() { return false; };
         }
         `;
-        const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, classNew);
-        const newTypeData = getTypeDataForSource(newSourceFile);
 
-        let increment = checkIncrement(project, pkgDir, oldTypeData, newTypeData);
+        let increment = checkIncrement(classOld, classNew);
         assert(increment === BreakingIncrement.major);
 
     }).timeout(10000);
@@ -82,8 +78,6 @@ describe("Class", () => {
             public qewr() { return "afg"; }
         }
         `;
-        const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, classOld);
-        const oldTypeData = getTypeDataForSource(oldSourceFile);
 
         const classNew =
         `
@@ -91,10 +85,8 @@ describe("Class", () => {
             public qewr(param1 : string = "afg") { return "afg"; }
         }
         `;
-        const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, classNew);
-        const newTypeData = getTypeDataForSource(newSourceFile);
 
-        let increment = checkIncrement(project, pkgDir, oldTypeData, newTypeData);
+        let increment = checkIncrement(classOld, classNew);
         assert(increment == BreakingIncrement.minor);
 
     }).timeout(15000);
@@ -109,8 +101,6 @@ describe("Class", () => {
             public qewr(param1 : string = "afg") { return "afg"; }
         }
         `;
-        const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, classOld);
-        const oldTypeData = getTypeDataForSource(oldSourceFile);
 
         const classNew =
         `
@@ -118,10 +108,8 @@ describe("Class", () => {
             public qewr(param1 : boolean = false) { return "afg"; }
         }
         `;
-        const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, classNew);
-        const newTypeData = getTypeDataForSource(newSourceFile);
 
-        let increment = checkIncrement(project, pkgDir, oldTypeData, newTypeData);
+        let increment = checkIncrement(classOld, classNew);
         assert(increment == BreakingIncrement.major);
 
     }).timeout(15000);
@@ -137,8 +125,6 @@ describe("Class", () => {
             public qewr(param1 : string = "afg") { return "afg"; }
         }
         `;
-        const oldSourceFile = project.createSourceFile(`${pkgDir}/src/classOld.ts`, classOld);
-        const oldTypeData = getTypeDataForSource(oldSourceFile);
 
         const classNew =
         `
@@ -146,10 +132,8 @@ describe("Class", () => {
             public qewr(param1 : string) { return "afg"; }
         }
         `;
-        const newSourceFile = project.createSourceFile(`${pkgDir}/src/classNew.ts`, classNew);
-        const newTypeData = getTypeDataForSource(newSourceFile);
 
-        let increment = checkIncrement(project, pkgDir, oldTypeData, newTypeData);
+        let increment = checkIncrement(classOld, classNew);
         assert(increment == BreakingIncrement.major);
 
     }).timeout(15000);

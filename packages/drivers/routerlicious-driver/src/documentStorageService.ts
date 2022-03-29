@@ -21,6 +21,7 @@ import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
+import { ISnapshotTreeVersion } from "./definitions";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
     private _logTailSha: string | undefined = undefined;
@@ -36,7 +37,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         policies: IDocumentStorageServicePolicies,
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTree>): IDocumentStorageService {
+        snapshotTreeCache?: ICache<ISnapshotTreeVersion>): IDocumentStorageService {
         const storageService = driverPolicies?.enableWholeSummaryUpload ?
             new WholeSummaryDocumentStorageService(
                 id,
@@ -69,7 +70,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         policies: IDocumentStorageServicePolicies = {},
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTree>) {
+        snapshotTreeCache?: ICache<ISnapshotTreeVersion>) {
         super(DocumentStorageService.loadInternalDocumentStorageService(
             id,
             manager,

@@ -181,8 +181,6 @@ export interface IContainerContext extends IDisposable {
     getSpecifiedCodeDetails?(): IFluidCodeDetails_2 | undefined;
     // (undocumented)
     readonly loader: ILoader;
-    // @deprecated (undocumented)
-    readonly logger?: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
     // (undocumented)
@@ -190,7 +188,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly quorum: IQuorumClients;
     // @deprecated (undocumented)
-    raiseContainerWarning(warning: ContainerWarning): void;
+    raiseContainerWarning?(warning: ContainerWarning): void;
     readonly scope: IFluidObject & FluidObject;
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
@@ -201,7 +199,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)
-    readonly taggedLogger?: ITelemetryBaseLogger;
+    readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)
     updateDirtyContainerState(dirty: boolean): void;
 }

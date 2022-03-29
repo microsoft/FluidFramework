@@ -3,59 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import * as SearchMenu from "@fluid-example/search-menu";
 import { performance } from "@fluidframework/common-utils";
-import {
-    FluidObject,
-    IFluidLoadable,
-} from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreContext, IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@fluidframework/undo-redo";
-import { HTMLViewAdapter } from "@fluidframework/view-adapters";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { handleFromLegacyUri } from "@fluidframework/request-handler";
+import React from "react";
+import ReactDOM from "react-dom";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
+import { CommandBox } from "./commandBox";
 import { Cursor, IRange } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
-import { PresenceSignal } from "./presenceSignal";
 import {
     CursorDirection,
     IViewCursor,
-    IViewLayout,
 } from "./layout";
-
-function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
-    if (marker && marker.properties && marker.properties.crefTest) {
-        const crefTest: IReferenceDoc = marker.properties.crefTest;
-        if ((!crefTest.layout) || (!crefTest.layout.inline)) {
-            return marker as IBlockViewMarker;
-        }
-    }
-}
-
-interface IBlockViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IFluidHTMLView>;
-    instance?: IFluidHTMLView & FluidObject<IViewLayout>;
-}
-
-interface IFluidViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IFluidHTMLView>;
-    instance?: IFluidHTMLView;
-}
 
 interface IFlowViewUser extends IUser {
     name: string;
 }
 
-export interface IOverlayMarker {
+interface IOverlayMarker {
     id: string;
     position: number;
 }
@@ -112,238 +85,6 @@ interface ITextErrorInfo {
     alternates: Alt[];
     color?: string;
 }
-function altsToItems(alts: Alt[]) {
-    return alts.map((v) => ({ key: v.text }));
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
-}
-
-const fontSizeStrings = ["8", "9", "10", "11", "12", "14", "16", "18", "20", "24", "32"];
-const fontSizeTree = new MergeTree.TST<IFlowViewCmd>();
-for (const sizeString of fontSizeStrings) {
-    fontSizeTree.put(sizeString, { key: sizeString });
-}
-const fontSizes = (f: FlowView) => fontSizeTree;
-const defaultFontSize = (f: FlowView) => "18";
-const cssColorStrings = ["AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black",
-    "BlanchedAlmond", "Blue", "BlueViolet", "Brown", "BurlyWood", "CadetBlue", "Chartreuse", "Chocolate",
-    "Coral", "CornflowerBlue", "Cornsilk", "Crimson", "Cyan", "DarkBlue", "DarkCyan", "DarkGoldenRod",
-    "DarkGray", "DarkGrey", "DarkGreen", "DarkKhaki", "DarkMagenta", "DarkOliveGreen", "DarkOrange",
-    "DarkOrchid", "DarkRed", "DarkSalmon", "DarkSeaGreen", "DarkSlateBlue", "DarkSlateGray", "DarkSlateGrey",
-    "DarkTurquoise", "DarkViolet", "DeepPink", "DeepSkyBlue", "DimGray", "DimGrey", "DodgerBlue", "FireBrick",
-    "FloralWhite", "ForestGreen", "Fuchsia", "Gainsboro", "GhostWhite", "Gold", "GoldenRod", "Gray", "Grey",
-    "Green", "GreenYellow", "HoneyDew", "HotPink", "IndianRed", "Indigo", "Ivory", "Khaki", "Lavender",
-    "LavenderBlush", "LawnGreen", "LemonChiffon", "LightBlue", "LightCoral", "LightCyan",
-    "LightGoldenRodYellow", "LightGray", "LightGrey", "LightGreen", "LightPink", "LightSalmon",
-    "LightSeaGreen", "LightSkyBlue", "LightSlateGray", "LightSlateGrey", "LightSteelBlue", "LightYellow",
-    "Lime", "LimeGreen", "Linen", "Magenta", "Maroon", "MediumAquaMarine", "MediumBlue",
-    "MediumOrchid", "MediumPurple", "MediumSeaGreen", "MediumSlateBlue", "MediumSpringGreen",
-    "MediumTurquoise", "MediumVioletRed", "MidnightBlue", "MintCream", "MistyRose", "Moccasin", "NavajoWhite",
-    "Navy", "OldLace", "Olive", "OliveDrab", "Orange", "OrangeRed", "Orchid", "PaleGoldenRod", "PaleGreen",
-    "PaleTurquoise", "PaleVioletRed", "PapayaWhip", "PeachPuff", "Peru", "Pink", "Plum", "PowderBlue",
-    "Purple", "RebeccaPurple", "Red", "RosyBrown", "RoyalBlue", "SaddleBrown", "Salmon", "SandyBrown",
-    "SeaGreen", "SeaShell", "Sienna", "Silver", "SkyBlue", "SlateBlue", "SlateGray", "SlateGrey",
-    "Snow", "SpringGreen", "SteelBlue", "Tan", "Teal", "Thistle", "Tomato", "Turquoise", "Violet", "Wheat",
-    "White", "WhiteSmoke", "Yellow", "YellowGreen"];
-// Const cssColorTree = new MergeTree.TST<IFlowViewCmd>();
-for (const cssColor of cssColorStrings) {
-    fontSizeTree.put(cssColor, { key: cssColor });
-}
-// Const cssColors = (f: FlowView) => cssColorTree;
-// const defaultColor = (f: FlowView) => "Black";
-
-const commands: IFlowViewCmd[] = [
-    {
-        exec: (c, p, f) => {
-            f.copyFormat();
-        },
-        key: "copy format",
-    },
-    {
-        exec: (c, p, f) => {
-            f.paintFormat();
-        },
-        key: "paint format",
-    },
-    {
-        exec: (c, p, f) => {
-            f.toggleBlockquote();
-        },
-        key: "blockquote",
-    },
-    {
-        exec: (c, p, f) => {
-            f.toggleBold();
-        },
-        key: "bold",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setColor("red");
-        },
-        key: "red",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setColor("green");
-        },
-        key: "green",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setColor("gold");
-        },
-        key: "gold",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setColor("pink");
-        },
-        key: "pink",
-    },
-    {
-        exec: (c, p, f) => {
-            f.makeBlink("pink");
-        },
-        key: "blink-pink",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setFont("courier new", "18px");
-        },
-        key: "Courier font",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setFont("tahoma", "18px");
-        },
-        key: "Tahoma",
-        parameters: [
-            { name: "size", defaultValue: defaultFontSize, suffix: "px", values: fontSizes },
-        ],
-    },
-    {
-        exec: (c, p, f) => {
-            f.setPGProps({ header: true });
-        },
-        key: "Heading 2",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setPGProps({ header: null });
-        },
-        key: "Normal",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setFont("georgia", "18px");
-        },
-        key: "Georgia font",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setFont("sans-serif", "18px");
-        },
-        key: "sans font",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setFont("cursive", "18px");
-        },
-        key: "cursive font",
-    },
-    {
-        exec: (c, p, f) => {
-            f.toggleItalic();
-        },
-        key: "italic",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setList();
-        },
-        key: "list ... 1.)",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setList(1);
-        },
-        key: "list ... \u2022",
-    },
-    {
-        exec: (c, p, f) => {
-            showCell(f.cursor.pos, f);
-        },
-        key: "cell info",
-    },
-    {
-        exec: (c, p, f) => {
-            showTable(f.cursor.pos, f);
-        },
-        key: "table info",
-    },
-    {
-        exec: (c, p, f) => {
-            f.tableSummary();
-        },
-        key: "table summary",
-    },
-    {
-        exec: (c, p, f) => {
-            f.updatePGInfo(f.cursor.pos - 1);
-            Table.createTable(f.cursor.pos, f.sharedString, f.runtime.clientId);
-            f.hostSearchMenu(f.cursor.pos);
-        },
-        key: "table test",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertList();
-        },
-        key: "insert list",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertColumn();
-        },
-        key: "insert column",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertRow();
-        },
-        key: "insert row",
-    },
-    {
-        exec: (c, p, f) => {
-            f.deleteRow();
-        },
-        key: "delete row",
-    },
-    {
-        exec: (c, p, f) => {
-            f.deleteColumn();
-        },
-        key: "delete column",
-    },
-    {
-        exec: (c, p, f) => {
-            f.toggleUnderline();
-        },
-        key: "underline",
-    },
-    {
-        exec: (c, p, f) => {
-            (navigator as any).clipboard.readText().then((text) => {
-                // TODO bring back paste support
-                console.log(`Inserting ${text}`);
-            });
-        },
-        key: "paste component",
-    },
-];
 
 function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
     if ((elmOff.elm !== span) && (elmOff.elm.parentElement !== span)) {
@@ -517,50 +258,6 @@ function endRenderSegments(marker: MergeTree.Marker) {
 
 const wordHeadingColor = "rgb(47, 84, 150)";
 
-/**
- * Ensure the given 'element' is focusable and restore the default behavior of HTML intrinsic
- * controls (e.g., <input>) within the element.
- */
-function allowDOMEvents(element: HTMLElement) {
-    // Ensure element can receive DOM focus (see Example 1):
-    // https://www.w3.org/WAI/GL/WCAG20/WD-WCAG20-TECHS/SCR29.html
-
-    // Note: 'tabIndex' should never be NaN, undefined, etc., but use of negation below ensures
-    //       these degenerate values will also be replaced with 0.
-    if (!(element.tabIndex >= 0)) {
-        element.tabIndex = 0;
-    }
-
-    // TODO: Unsure if the empty/overlapping line divs overlapping inclusions are intentional?
-    //
-    // Elevate elements expecting DOM focus within their stacking container to ensure they
-    // appear above empty line divs generated after their marker.
-    element.style.zIndex = "1";
-
-    // Elements of a component do not expect whitespace to be preserved.  Revert the white-space
-    // 'pre' style applied by the lineDiv.
-    element.style.whiteSpace = "normal";
-
-    // Stops these events from bubbling back up to the FlowView when the <div> is focused.
-    // The FlowView invokes 'preventDefault()' on these events, which blocks the behavior of
-    // HTML intrinsic controls like <input />.
-    element.addEventListener("mousedown", (e) => { e.stopPropagation(); });
-    element.addEventListener("mousemove", (e) => { e.stopPropagation(); });
-    element.addEventListener("mouseup", (e) => { e.stopPropagation(); });
-    element.addEventListener("keydown", (e) => { e.stopPropagation(); });
-    element.addEventListener("keypress", (e) => { e.stopPropagation(); });
-    element.addEventListener("keyup", (e) => { e.stopPropagation(); });
-
-    return element;
-}
-
-function isComponentView(marker: MergeTree.Marker) {
-    if (marker.hasProperty("crefTest")) {
-        const refInfo = marker.properties.crefTest as IReferenceDoc;
-        return refInfo.type.name === "component";
-    }
-}
-
 function renderSegmentIntoLine(
     segment: MergeTree.ISegment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
@@ -596,44 +293,6 @@ function renderSegmentIntoLine(
         }
     } else if (MergeTree.Marker.is(segment)) {
         // Console.log(`marker pos: ${segpos}`);
-
-        // If the marker is a simple reference, see if it's types is registered as an external
-        // component.
-        if (segment.refType === MergeTree.ReferenceType.Simple) {
-            const marker = segment;
-            if (isComponentView(marker)) {
-                const span = document.createElement("span");
-                const componentMarker = marker as IFluidViewMarker;
-
-                // Delay load the instance if not available
-                if (componentMarker.instance === undefined) {
-                    if (componentMarker.instanceP === undefined) {
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        handleFromLegacyUri(
-                            `/${componentMarker.properties.leafId}`,
-                            lineContext.flowView.context.containerRuntime)
-                        .get()
-                        .then(async (component) => {
-                            if (!HTMLViewAdapter.canAdapt(component)) {
-                                return Promise.reject(new Error("component is not viewable"));
-                            }
-
-                            return new HTMLViewAdapter(component);
-                        });
-
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        componentMarker.instanceP.then((instance) => {
-                            // TODO how do I trigger a re-render?
-                            componentMarker.instance = instance;
-                        });
-                    }
-                } else {
-                    componentMarker.instance.render(span, { display: "inline" });
-                    componentMarker.properties.cachedElement = span;
-                    lineContext.contentDiv.appendChild(span);
-                }
-            }
-        }
 
         if (endRenderSegments(segment)) {
             if (lineContext.flowView.cursor.pos === segpos) {
@@ -675,7 +334,7 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
     lineDiv.appendChild(symbolDiv);
 }
 
-function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocumentContext) {
+function reRenderLine(lineDiv: ILineDiv, flowView: FlowView) {
     if (lineDiv) {
         const outerViewportBounds = ui.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
         const lineDivBounds = lineDiv.getBoundingClientRect();
@@ -790,11 +449,11 @@ function layoutCell(
     } as ILayoutContext;
     // TODO: deferred height calculation for starting in middle of box
     if (isInnerCell(cellView, layoutInfo)) {
-        const cellPos = getPosition(layoutInfo.flowView, cellView.marker);
+        const cellPos = getPosition(layoutInfo.flowView.sharedString, cellView.marker);
         cellLayoutInfo.startPos = cellPos + cellView.marker.cachedLength;
     } else {
         const nextTable = layoutInfo.startingPosStack.table.items[layoutInfo.stackIndex + 1];
-        cellLayoutInfo.startPos = getPosition(layoutInfo.flowView, nextTable as MergeTree.Marker);
+        cellLayoutInfo.startPos = getPosition(layoutInfo.flowView.sharedString, nextTable as MergeTree.Marker);
         cellLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
     }
     if (!cellView.emptyCell) {
@@ -802,7 +461,7 @@ function layoutCell(
         if (cellView.additionalCellMarkers) {
             for (const cellMarker of cellView.additionalCellMarkers) {
                 cellLayoutInfo.endMarker = cellMarker.cell.endMarker;
-                const cellPos = getPosition(layoutInfo.flowView, cellMarker);
+                const cellPos = getPosition(layoutInfo.flowView.sharedString, cellMarker);
                 cellLayoutInfo.startPos = cellPos + cellMarker.cachedLength;
                 const auxRenderOutput = renderFlow(cellLayoutInfo);
                 cellView.renderOutput.deferredHeight += auxRenderOutput.deferredHeight;
@@ -979,7 +638,7 @@ function renderTable(
     }
     if (layoutInfo.reRenderList) {
         for (const lineDiv of layoutInfo.reRenderList) {
-            reRenderLine(lineDiv, flowView, docContext);
+            reRenderLine(lineDiv, flowView);
         }
         layoutInfo.reRenderList = undefined;
     }
@@ -991,9 +650,9 @@ function showCell(pos: number, flowView: FlowView) {
     const startingPosStack = flowView.sharedString.getStackContext(pos, ["cell"]);
     if (startingPosStack.cell && (!startingPosStack.cell.empty())) {
         const cellMarker = startingPosStack.cell.top() as Table.ICellMarker;
-        const start = getPosition(flowView, cellMarker);
+        const start = getPosition(flowView.sharedString, cellMarker);
         const endMarker = cellMarker.cell.endMarker;
-        const end = getPosition(flowView, endMarker) + 1;
+        const end = getPosition(flowView.sharedString, endMarker) + 1;
         // eslint-disable-next-line max-len
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
         console.log(`cell contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
@@ -1004,9 +663,9 @@ function showTable(pos: number, flowView: FlowView) {
     const startingPosStack = flowView.sharedString.getStackContext(pos, ["table"]);
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         const tableMarker = startingPosStack.table.top() as Table.ITableMarker;
-        const start = getPosition(flowView, tableMarker);
+        const start = getPosition(flowView.sharedString, tableMarker);
         const endMarker = tableMarker.table.endTableMarker;
-        const end = getPosition(flowView, endMarker) + 1;
+        const end = getPosition(flowView.sharedString, endMarker) + 1;
         console.log(`table ${tableMarker.getId()} at [${start},${end})`);
         console.log(`table contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
     }
@@ -1033,7 +692,7 @@ function renderTree(
         layoutContext.stackIndex = 0;
         layoutContext.startingPosStack = startingPosStack;
     } else {
-        const previousTileInfo = findTile(flowView, requestedPosition, "pg", true);
+        const previousTileInfo = findTile(flowView.sharedString, requestedPosition, "pg", true);
         if (previousTileInfo) {
             layoutContext.startPos = previousTileInfo.pos + 1;
         } else {
@@ -1138,21 +797,15 @@ function lineIntersectsRect(y: number, rect: IExcludedRectangle) {
     return (y >= rect.y) && (y <= (rect.y + rect.height));
 }
 
-interface IListRefMarker extends MergeTree.Marker {
-    selectionListBox: SearchMenu.ISelectionListBox;
-}
-
 class Viewport {
     // Keep the line divs in order
-    public lineDivs: ILineDiv[] = [];
-    public visibleRanges: IRange[] = [];
-    public currentLineStart = -1;
+    private readonly lineDivs: ILineDiv[] = [];
     private lineTop = 0;
     private excludedRects = <IExcludedRectangle[]>[];
     private lineX = 0;
     private readonly inclusions: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
 
-    constructor(public maxHeight: number, public div: IViewportDiv, private width: number) {
+    constructor(private readonly maxHeight: number, public div: IViewportDiv, private readonly width: number) {
     }
 
     // Remove inclusions that are not in the excluded rect list
@@ -1170,7 +823,7 @@ class Viewport {
         }
     }
 
-    public viewHasInclusion(sha: string): HTMLDivElement {
+    private viewHasInclusion(sha: string): HTMLDivElement {
         for (let i = 0; i < this.div.children.length; i++) {
             const child = this.div.children.item(i);
             if ((child.classList).contains(sha)) {
@@ -1278,29 +931,6 @@ class Viewport {
                     showVideo.muted = true;
                     showVideo.load();
                     this.inclusions.set(irdoc.referenceDocId, showVideo);
-                } else if (irdoc.type.name === "list") {
-                    const listRefMarker = marker as IListRefMarker;
-                    let selectionIndex = 0;
-                    const prevSelectionBox = listRefMarker.selectionListBox;
-                    if (prevSelectionBox) {
-                        selectionIndex = prevSelectionBox.getSelectionIndex();
-                    }
-                    const shapeRect = new ui.Rectangle(0, 0, exclu.width, exclu.height);
-                    listRefMarker.selectionListBox =
-                        SearchMenu.selectionListBoxCreate(shapeRect, false, innerDiv, 24, 2);
-
-                    // Allow the list box to receive DOM focus and subscribe its 'keydown' handler.
-                    allowDOMEvents(listRefMarker.selectionListBox.elm);
-                    listRefMarker.selectionListBox.elm.addEventListener("keydown",
-                        (e) => listRefMarker.selectionListBox.keydown(e));
-
-                    const listIrdoc =
-                        <IListReferenceDoc>listRefMarker.properties[Paragraph.referenceProperty];
-                    for (const item of listIrdoc.items) {
-                        item.div = undefined;
-                    }
-                    listRefMarker.selectionListBox.showSelectionList(listIrdoc.items);
-                    listRefMarker.selectionListBox.setSelectionIndex(selectionIndex);
                 }
             }
         }
@@ -1410,10 +1040,6 @@ class Viewport {
 
     public remainingHeight() {
         return this.maxHeight - this.lineTop;
-    }
-
-    public setWidth(w: number) {
-        this.width = w;
     }
 }
 
@@ -1585,23 +1211,6 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
         return lineDiv;
     }
 
-    function makeBlockContentDiv(left: number, top: number, minWidth: string, minHeight: string) {
-        const blockDiv = document.createElement("div");
-        blockDiv.style.position = "absolute";
-        blockDiv.style.left = `${left}px`;
-        blockDiv.style.top = `${top}px`;
-        blockDiv.style.minWidth = minWidth;
-        blockDiv.style.minHeight = minHeight;
-        allowDOMEvents(blockDiv);
-        return blockDiv;
-    }
-
-    function makeBlockDiv(left: number, top: number, minWidth: string, minHeight: string) {
-        const blockDiv = makeBlockContentDiv(left, top, minWidth, minHeight);
-        layoutContext.viewport.div.appendChild(blockDiv);
-        return blockDiv;
-    }
-
     let currentPos = layoutContext.startPos;
     let curPGMarker: Paragraph.IParagraphMarker;
     let curPGMarkerPos: number;
@@ -1610,7 +1219,6 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
     //       of using 'services' to smuggle context to components.
     const itemsContext = {
         fontInfo: makeFontInfo(layoutContext.docContext),
-        services: layoutContext.flowView.services,
     } as Paragraph.IItemsContext;
     if (layoutContext.deferUntilHeight === undefined) {
         layoutContext.deferUntilHeight = 0;
@@ -1732,7 +1340,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
     // TODO: use end of doc marker
     do {
         if (!segoff) {
-            segoff = getContainingSegment(flowView, currentPos);
+            segoff = getContainingSegment(flowView.sharedString, currentPos);
         }
         if (fetchLog) {
             console.log(`got segment ${segoff.segment.toString()}`);
@@ -1745,65 +1353,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             ? segoff.segment
             : undefined;
 
-        const newBlock = getComponentBlock(asMarker);
-        if (newBlock) {
-            let ch: number;
-            if (newBlock.instance) {
-                let wpct = 0.75;
-                const layout = newBlock.instance.IViewLayout;
-                if (layout && layout.requestedWidthPercentage) {
-                    wpct = layout.requestedWidthPercentage;
-                }
-                const width = `${Math.round(wpct * parseInt(layoutContext.viewport.div.style.width, 10))}px`;
-                const minHeight = `${Math.round(0.33 * parseInt(layoutContext.viewport.div.style.height, 10))}px`;
-                const blockDiv = makeBlockDiv(0, layoutContext.viewport.getLineTop(), width, minHeight);
-                blockDiv.style.width = width;
-                if ((!layout) || (!layout.variableHeight)) {
-                    blockDiv.style.height = minHeight;
-                }
-                newBlock.instance.render(blockDiv, { display: "block" });
-                // Cache this in FlowView
-                ch = blockDiv.getBoundingClientRect().height;
-                console.log(`block height ${ch}`);
-            } else {
-                // Delay load the instance if not available
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                if (!newBlock.instanceP) {
-                    newBlock.instanceP = newBlock.properties.leafId.get()
-                        .then(async (component: FluidObject) => {
-                            // TODO below is a temporary workaround. Should every QI interface also implement
-                            // FluidObject. Then you can go from IFluidHTMLView to IViewLayout.
-                            // Or should you query for each one individually.
-                            if (!HTMLViewAdapter.canAdapt(component)) {
-                                return Promise.reject(new Error("component is not viewable"));
-                            }
-
-                            return new HTMLViewAdapter(component);
-                        });
-
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    newBlock.instanceP.then((instance) => {
-                        newBlock.instance = instance;
-                        const compPos = getPosition(layoutContext.flowView, asMarker);
-                        layoutContext.flowView.hostSearchMenu(compPos);
-                    });
-                }
-
-                ch = 10;
-                const lineDiv = makeLineDiv(
-                    new ui.Rectangle(
-                        0,
-                        layoutContext.viewport.getLineTop(),
-                        parseInt(layoutContext.viewport.div.style.width, 10),
-                        ch),
-                    layoutContext.docContext.fontstr);
-                lineDiv.style.backgroundColor = "red";
-            }
-
-            layoutContext.viewport.vskip(ch);
-            currentPos++;
-            segoff = undefined;
-        } else if (asMarker && asMarker.hasRangeLabel("table")) {
+        if (asMarker && asMarker.hasRangeLabel("table")) {
             let tableView: Table.Table;
             if (asMarker.removedSeq === undefined) {
                 renderTable(asMarker, docContext, layoutContext);
@@ -1814,7 +1364,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                 tableView = Table.parseTable(asMarker, currentPos, flowView.sharedString,
                     makeFontInfo(layoutContext.docContext));
             }
-            const endTablePos = getPosition(layoutContext.flowView, tableView.endTableMarker);
+            const endTablePos = getPosition(layoutContext.flowView.sharedString, tableView.endTableMarker);
             currentPos = endTablePos + 1;
             segoff = undefined;
             // TODO: if reached end of viewport, get pos ranges
@@ -1830,7 +1380,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                 }
                 curPGMarkerPos = currentPos;
             } else {
-                const curTilePos = findTile(flowView, currentPos, "pg", false);
+                const curTilePos = findTile(flowView.sharedString, currentPos, "pg", false);
                 curPGMarker = curTilePos.tile as Paragraph.IParagraphMarker;
                 curPGMarkerPos = curTilePos.pos;
             }
@@ -1872,7 +1422,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                 currentPos = curPGMarkerPos + curPGMarker.cachedLength;
 
                 if (currentPos < totalLength) {
-                    segoff = getContainingSegment(flowView, currentPos);
+                    segoff = getContainingSegment(flowView.sharedString, currentPos);
                     if (MergeTree.Marker.is(segoff.segment)) {
                         // eslint-disable-next-line max-len
                         if (segoff.segment.hasRangeLabel("cell") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
@@ -1926,7 +1476,6 @@ function makeSegSpan(
                     textErrorRun.end += segText.length;
                 }
                 const textErrorInfo = textSegment.properties[key] as ITextErrorInfo;
-                let slb: SearchMenu.ISelectionListBox;
                 span.textErrorRun = textErrorRun;
                 if (textErrorInfo.color === "paul") {
                     span.style.background = underlinePaulStringURL;
@@ -1936,47 +1485,6 @@ function makeSegSpan(
                     span.style.background = underlinePaulGoldStringURL;
                 } else {
                     span.style.background = underlineStringURL;
-                }
-                if (textErrorInfo.alternates.length > 0) {
-                    span.onmousedown = (e) => {
-                        function cancelIntellisense(ev: MouseEvent) {
-                            if (slb) {
-                                document.body.removeChild(slb.elm);
-                                slb = undefined;
-                            }
-                        }
-                        function acceptIntellisense(ev: MouseEvent) {
-                            cancelIntellisense(ev);
-                            const itemElm = ev.target as HTMLElement;
-                            const text = itemElm.innerText.trim();
-                            context.sharedString.removeText(span.textErrorRun.start, span.textErrorRun.end);
-                            context.sharedString.insertText(span.textErrorRun.start, text);
-                            context.hostSearchMenu(span.textErrorRun.start);
-                        }
-                        function selectItem(ev: MouseEvent) {
-                            const itemElm = ev.target as HTMLElement;
-                            if (slb) {
-                                slb.selectItem(itemElm.innerText);
-                            }
-                        }
-                        console.log(`button ${e.button}`);
-                        if ((e.button === 2) || ((e.button === 0) && (e.ctrlKey))) {
-                            const spanBounds = ui.Rectangle.fromClientRect(span.getBoundingClientRect());
-                            spanBounds.width = Math.floor(window.innerWidth / 4);
-                            slb = SearchMenu.selectionListBoxCreate(spanBounds, true, document.body, 24, 0, 12);
-                            slb.showSelectionList(altsToItems(textErrorInfo.alternates));
-                            span.onmouseup = cancelIntellisense;
-                            document.body.onmouseup = cancelIntellisense;
-                            slb.elm.onmouseup = acceptIntellisense;
-                            slb.elm.onmousemove = selectItem;
-                        } else if (e.button === 0) {
-                            context.clickSpan(e.clientX, e.clientY, span);
-                        }
-                    };
-                }
-            } else if (key === "blink") {
-                if (textSegment.properties[key]) {
-                    span.classList.add("blinking");
                 }
             } else {
                 span.style[key] = textSegment.properties[key];
@@ -2107,11 +1615,11 @@ class FlowCursor extends Cursor {
         } else {
             const lineDiv = this.lineDiv();
             if (lineDiv && (lineDiv.linePos <= this.pos) && (lineDiv.lineEnd > this.pos)) {
-                reRenderLine(lineDiv, flowView, flowView.lastDocContext);
+                reRenderLine(lineDiv, flowView);
             } else {
                 const foundLineDiv = findLineDiv(this.pos, flowView, true);
                 if (foundLineDiv) {
-                    reRenderLine(foundLineDiv, flowView, flowView.lastDocContext);
+                    reRenderLine(foundLineDiv, flowView);
                 } else {
                     flowView.render(flowView.topChar, true);
                 }
@@ -2276,20 +1784,20 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
     }
 }
 
-function getLocalRefPos(flowView: FlowView, localRef: MergeTree.LocalReference) {
-    return flowView.sharedString.getPosition(localRef.segment) + localRef.offset;
+function getLocalRefPos(sharedString: Sequence.SharedString, localRef: MergeTree.LocalReference) {
+    return sharedString.getPosition(localRef.segment) + localRef.offset;
 }
 
-function getContainingSegment(flowView: FlowView, pos: number): ISegmentOffset {
-    return flowView.sharedString.getContainingSegment(pos);
+function getContainingSegment(sharedString: Sequence.SharedString, pos: number): ISegmentOffset {
+    return sharedString.getContainingSegment(pos);
 }
 
-function findTile(flowView: FlowView, startPos: number, tileType: string, preceding: boolean) {
-    return flowView.sharedString.findTile(startPos, tileType, preceding);
+function findTile(sharedString: Sequence.SharedString, startPos: number, tileType: string, preceding: boolean) {
+    return sharedString.findTile(startPos, tileType, preceding);
 }
 
-function getPosition(flowView: FlowView, segment: MergeTree.ISegment) {
-    return flowView.sharedString.getPosition(segment);
+function getPosition(sharedString: Sequence.SharedString, segment: MergeTree.ISegment) {
+    return sharedString.getPosition(segment);
 }
 
 function preventD(e: Event) {
@@ -2322,54 +1830,34 @@ interface IReferenceDoc {
     layout?: IRefLayoutSpec;
 }
 
-interface IListReferenceDoc extends IReferenceDoc {
-    items: SearchMenu.ISearchMenuCommand[];
-    selectionIndex: number;
-}
+const presenceSignalType = "presence";
 
-export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost {
+export class FlowView extends ui.Component {
     public static docStartPosition = 0;
-    public get ISearchMenuHost() { return this; }
     public timeToImpression: number;
-    public timeToLoad: number;
     public timeToEdit: number;
-    public timeToCollab: number;
-    public prevTopSegment: MergeTree.TextSegment;
     public viewportStartPos: number;
     public viewportEndPos: number;
-    public cursorSpan: HTMLSpanElement;
     public childCursor: IViewCursor;
     public viewportDiv: HTMLDivElement;
     public viewportRect: ui.Rectangle;
-    public historyWidget: HTMLDivElement;
-    public historyBubble: HTMLDivElement;
-    public historyVersion: HTMLSpanElement;
-    public savedClient: MergeTree.Client;
     public ticking = false;
     public wheelTicking = false;
     public topChar = -1;
     public cursor: FlowCursor;
-    public presenceSignal: PresenceSignal;
     public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
-    public docRoot: types.ISharedMap;
     public curPG: MergeTree.Marker;
     public lastDocContext: IDocumentContext;
     public focusChild: FlowView;
-    public focusMarker: MergeTree.Marker;
-    public childMarker: MergeTree.Marker;
     public parentFlow: FlowView;
     public keypressHandler: (e: KeyboardEvent) => void;
     public keydownHandler: (e: KeyboardEvent) => void;
 
-    // TODO: 'services' is being used temporarily to smuggle context down to components.
-    //       Should be replaced w/component-standardized render context, layout context, etc.
-    public services = new Map<string, any>();
     public srcLanguage = "en";
 
     private lastVerticalX = -1;
     private pendingRender = false;
-    private activeSearchBox: SearchMenu.ISearchBox;
-    private readonly cmdTree: MergeTree.TST<IFlowViewCmd>;
+    private activeCommandBox: boolean;
     private formatRegister: MergeTree.PropertySet;
 
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
@@ -2379,10 +1867,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     private readonly undoRedoManager: UndoRedoStackManager;
 
+    private showCommandBox: () => void = () => {};
+
     constructor(
         element: HTMLDivElement,
         public readonly runtime: IFluidDataStoreRuntime,
-        public readonly context: IFluidDataStoreContext,
         public sharedString: Sequence.SharedString,
     ) {
         super(element);
@@ -2396,11 +1885,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         // Clip children of FlowView to the bounds of the FlowView's root div.
         this.element.style.overflow = "hidden";
-
-        this.cmdTree = new MergeTree.TST<IFlowViewCmd>();
-        for (const command of commands) {
-            this.cmdTree.put(command.key.toLowerCase(), command);
-        }
 
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
@@ -2437,34 +1921,207 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         this.cursor = new FlowCursor(this.viewportDiv);
 
-        // HACK: Expose "insertText" via window to Shared Browser Extension
-        //       for 2018/Oct demo.
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        window["insertText"] = (text: string) => {
-            this.sharedString.insertText(this.cursor.pos, text);
-        };
+        // Not great construction -- this slack wrapper div lets the command box use the flow-view div above act as
+        // its containing box while remaining out of the way for hit testing, etc.  Once FlowView is also React, it
+        // should be easier to coordinate the layout.
+        const commandBoxDiv = document.createElement("div");
+        commandBoxDiv.classList.add("command-box-wrapper");
+        this.element.appendChild(commandBoxDiv);
 
-        // Expose the ability to invalidate the current layout when a component's width/height changes.
-        this.services.set("invalidateLayout", () => {
-            console.log("Component invalidated layout");
-            this.hostSearchMenu(FlowView.docStartPosition);
-        });
+        const registerShowListener = (callback: () => void) => {
+            this.showCommandBox = callback;
+        };
+        const onCommandBoxDismiss = () => {
+            this.activeCommandBox = false;
+        };
+        const commandBoxCommands = [
+            {
+                friendlyName: "copy format",
+                exec: () => {
+                    this.copyFormat();
+                },
+            },
+            {
+                friendlyName: "paint format",
+                exec: () => {
+                    this.paintFormat();
+                },
+            },
+            {
+                friendlyName: "blockquote",
+                exec: () => {
+                    this.toggleBlockquote();
+                },
+            },
+            {
+                friendlyName: "bold",
+                exec: () => {
+                    this.toggleBold();
+                },
+            },
+            {
+                friendlyName: "red",
+                exec: () => {
+                    this.setColor("red");
+                },
+            },
+            {
+                friendlyName: "green",
+                exec: () => {
+                    this.setColor("green");
+                },
+            },
+            {
+                friendlyName: "gold",
+                exec: () => {
+                    this.setColor("gold");
+                },
+            },
+            {
+                friendlyName: "pink",
+                exec: () => {
+                    this.setColor("pink");
+                },
+            },
+            {
+                friendlyName: "Courier font",
+                exec: () => {
+                    this.setFont("courier new", "18px");
+                },
+            },
+            {
+                friendlyName: "Tahoma",
+                exec: () => {
+                    this.setFont("tahoma", "18px");
+                },
+            },
+            {
+                friendlyName: "Heading 2",
+                exec: () => {
+                    this.setPGProps({ header: true });
+                },
+            },
+            {
+                friendlyName: "Normal",
+                exec: () => {
+                    this.setPGProps({ header: null });
+                },
+            },
+            {
+                friendlyName: "Georgia font",
+                exec: () => {
+                    this.setFont("georgia", "18px");
+                },
+            },
+            {
+                friendlyName: "sans font",
+                exec: () => {
+                    this.setFont("sans-serif", "18px");
+                },
+            },
+            {
+                friendlyName: "cursive font",
+                exec: () => {
+                    this.setFont("cursive", "18px");
+                },
+            },
+            {
+                friendlyName: "italic",
+                exec: () => {
+                    this.toggleItalic();
+                },
+            },
+            {
+                friendlyName: "list ... 1.)",
+                exec: () => {
+                    this.setList();
+                },
+            },
+            {
+                friendlyName: "list ... \u2022",
+                exec: () => {
+                    this.setList(1);
+                },
+            },
+            {
+                friendlyName: "cell info",
+                exec: () => {
+                    showCell(this.cursor.pos, this);
+                },
+            },
+            {
+                friendlyName: "table info",
+                exec: () => {
+                    showTable(this.cursor.pos, this);
+                },
+            },
+            {
+                friendlyName: "table summary",
+                exec: () => {
+                    this.tableSummary();
+                },
+            },
+            {
+                friendlyName: "table test",
+                exec: () => {
+                    this.updatePGInfo(this.cursor.pos - 1);
+                    Table.createTable(this.cursor.pos, this.sharedString, this.runtime.clientId);
+                    this.hostSearchMenu(this.cursor.pos);
+                },
+            },
+            {
+                friendlyName: "insert column",
+                exec: () => {
+                    this.insertColumn();
+                },
+            },
+            {
+                friendlyName: "insert row",
+                exec: () => {
+                    this.insertRow();
+                },
+            },
+            {
+                friendlyName: "delete row",
+                exec: () => {
+                    this.deleteRow();
+                },
+            },
+            {
+                friendlyName: "delete column",
+                exec: () => {
+                    this.deleteColumn();
+                },
+            },
+            {
+                friendlyName: "underline",
+                exec: () => {
+                    this.toggleUnderline();
+                },
+            },
+        ];
+
+        const commandBoxElement = React.createElement(
+            CommandBox,
+            {
+                registerShowListener,
+                dismissCallback: onCommandBoxDismiss,
+                commands: commandBoxCommands,
+            },
+        );
+
+        ReactDOM.render(
+            commandBoxElement,
+            commandBoxDiv,
+        );
     }
 
-    public updatePresenceCursors() {
+    private updatePresenceCursors() {
         for (const presenceInfo of this.presenceVector.values()) {
             if (presenceInfo && presenceInfo.cursor) {
                 presenceInfo.cursor.refresh();
             }
         }
-    }
-
-    public addPresenceSignal(presenceSignal: PresenceSignal) {
-        presenceSignal.on("message", (message: IInboundSignalMessage, local: boolean) => {
-            this.remotePresenceUpdate(message, local);
-        });
-
-        this.broadcastPresence();
     }
 
     public presenceInfoInRange(start: number, end: number) {
@@ -2477,24 +2134,24 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public updatePresencePosition(localPresenceInfo: ILocalPresenceInfo) {
+    private updatePresencePosition(localPresenceInfo: ILocalPresenceInfo) {
         if (localPresenceInfo) {
-            localPresenceInfo.xformPos = getLocalRefPos(this, localPresenceInfo.localRef);
+            localPresenceInfo.xformPos = getLocalRefPos(this.sharedString, localPresenceInfo.localRef);
             if (localPresenceInfo.markLocalRef) {
-                localPresenceInfo.markXformPos = getLocalRefPos(this, localPresenceInfo.markLocalRef);
+                localPresenceInfo.markXformPos = getLocalRefPos(this.sharedString, localPresenceInfo.markLocalRef);
             } else {
                 localPresenceInfo.markXformPos = localPresenceInfo.xformPos;
             }
         }
     }
 
-    public updatePresencePositions() {
+    private updatePresencePositions() {
         for (const presenceInfo of this.presenceVector.values()) {
             this.updatePresencePosition(presenceInfo);
         }
     }
 
-    public updatePresenceVector(localPresenceInfo: ILocalPresenceInfo) {
+    private updatePresenceVector(localPresenceInfo: ILocalPresenceInfo) {
         this.updatePresencePosition(localPresenceInfo);
         const presentPresence = this.presenceVector[localPresenceInfo.clientId];
         let tempXformPos = -1;
@@ -2537,7 +2194,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
      * Returns the (x, y) coordinate of the given position relative to the FlowView's coordinate system or null
      * if the position is not visible.
      */
-    public getPositionLocation(position: number): ui.IPoint {
+    private getPositionLocation(position: number): ui.IPoint {
         const lineDiv = findLineDiv(position, this, true);
         if (!lineDiv) {
             return null;
@@ -2595,7 +2252,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         return position;
     }
 
-    public checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
+    private checkRow(lineDiv: ILineDiv, fn: (lineDiv: ILineDiv) => ILineDiv, rev?: boolean) {
         let _lineDiv = lineDiv;
         let rowDiv = _lineDiv as IRowDiv;
         let oldRowDiv: IRowDiv;
@@ -2650,7 +2307,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public clickSpan(x: number, y: number, elm: HTMLSpanElement) {
+    private clickSpan(x: number, y: number, elm: HTMLSpanElement) {
         const span = elm as ISegSpan;
         const elmOff = pointerToElementOffsetWebkit(x, y);
         if (elmOff) {
@@ -2664,7 +2321,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 this.childCursor.leave(CursorDirection.Airlift);
                 this.childCursor = undefined;
             }
-            const tilePos = findTile(this, this.cursor.pos, "pg", false);
+            const tilePos = findTile(this.sharedString, this.cursor.pos, "pg", false);
             if (tilePos) {
                 this.curPG = tilePos.tile as MergeTree.Marker;
             }
@@ -2672,15 +2329,13 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.cursor.updateView(this);
             if (this.parentFlow) {
                 this.parentFlow.focusChild = this;
-                this.parentFlow.focusMarker = this.childMarker;
             }
             this.focusChild = undefined;
-            this.focusMarker = undefined;
             return true;
         }
     }
 
-    public getSegSpan(span: ISegSpan): ISegSpan {
+    private getSegSpan(span: ISegSpan): ISegSpan {
         let _span = span;
         while (_span.tagName === "SPAN") {
             if (_span.segPos) {
@@ -2691,7 +2346,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public getPosFromPixels(targetLineDiv: ILineDiv, x: number) {
+    private getPosFromPixels(targetLineDiv: ILineDiv, x: number) {
         let position: number;
 
         if (targetLineDiv && (targetLineDiv.linePos !== undefined)) {
@@ -2745,7 +2400,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     // TODO: handle symbol div
-    public setCursorPosFromPixels(targetLineDiv: ILineDiv, x: number) {
+    private setCursorPosFromPixels(targetLineDiv: ILineDiv, x: number) {
         const position = this.getPosFromPixels(targetLineDiv, x);
         if (position !== undefined) {
             this.cursor.enable();
@@ -2760,7 +2415,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public getCanonicalX() {
+    private getCanonicalX() {
         const rect = this.cursor.rect();
         let x: number;
         if (this.lastVerticalX >= 0) {
@@ -2772,12 +2427,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         return x;
     }
 
-    public cursorRev(skipFirstRev = false) {
+    private cursorRev(skipFirstRev = false) {
         if (this.cursor.pos > FlowView.docStartPosition) {
             if (!skipFirstRev) {
                 this.cursor.pos--;
             }
-            const segoff = getContainingSegment(this, this.cursor.pos);
+            const segoff = getContainingSegment(this.sharedString, this.cursor.pos);
             if (MergeTree.Marker.is(segoff.segment)) {
                 const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
@@ -2806,7 +2461,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public cursorFwd() {
+    private cursorFwd() {
         if (this.cursor.pos < (this.sharedString.getLength() - 1)) {
             this.cursor.pos++;
 
@@ -2851,7 +2506,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public verticalMove(lineCount: number) {
+    private verticalMove(lineCount: number) {
         const up = lineCount < 0;
         const lineDiv = this.cursor.lineDiv();
         let targetLineDiv = lineDiv;
@@ -2928,11 +2583,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public viewportCharCount() {
+    private viewportCharCount() {
         return this.viewportEndPos - this.viewportStartPos;
     }
 
-    public clearSelection(render = true) {
+    private clearSelection(render = true) {
         // TODO: only rerender line if selection on one line
         if (this.cursor.getSelection()) {
             this.cursor.clearSelection();
@@ -2943,27 +2598,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public showSearchMenu(
-        cmdTree: MergeTree.TST<SearchMenu.ISearchMenuCommand>,
-        foldCase = true,
-        showAllInitially = false,
-        cmdParser?: (searchString: string, cmd?: SearchMenu.ISearchMenuCommand) => void) {
-        this.activeSearchBox =
-            SearchMenu.searchBoxCreate(this, this.viewportDiv, cmdTree, foldCase, cmdParser);
-        if (showAllInitially) {
-            this.activeSearchBox.showAllItems();
-        }
-        return true;
-    }
-
-    public cancelSearchMenu() {
-        this.activeSearchBox.dismiss();
-        this.activeSearchBox = undefined;
-    }
-
-    public setEdit(docRoot: types.ISharedMap) {
-        this.docRoot = docRoot;
-
+    public setEdit() {
         window.oncontextmenu = preventD;
         this.element.onmousemove = preventD;
         this.element.onmouseup = preventD;
@@ -3091,14 +2726,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const keydownHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keydownHandler(e);
-            } else if (this.activeSearchBox) {
-                if (e.keyCode === KeyCode.esc) {
-                    this.activeSearchBox.dismiss();
-                    this.activeSearchBox = undefined;
-                } else {
-                    this.activeSearchBox.keydown(e);
-                }
-            } else {
+            } else if (!this.activeCommandBox) {
                 const saveLastVertX = this.lastVerticalX;
                 let specialKey = true;
                 this.lastVerticalX = -1;
@@ -3227,12 +2855,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const keypressHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keypressHandler(e);
-            } else if (this.activeSearchBox) {
-                if (this.activeSearchBox.keypress(e)) {
-                    this.activeSearchBox.dismiss();
-                    this.activeSearchBox = undefined;
-                }
-            } else {
+            } else if (!this.activeCommandBox) {
                 const pos = this.cursor.pos;
                 const code = e.charCode;
                 if (code === CharacterCodes.cr) {
@@ -3256,12 +2879,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.keydownHandler = keydownHandler;
     }
 
-    public viewTileProps() {
+    private viewTileProps() {
         let searchPos = this.cursor.pos;
         if (this.cursor.pos === this.cursor.lineDiv().lineEnd) {
             searchPos--;
         }
-        const tileInfo = findTile(this, searchPos, "pg", false);
+        const tileInfo = findTile(this.sharedString, searchPos, "pg", false);
         if (tileInfo) {
             let buf = "";
             if (tileInfo.tile.properties) {
@@ -3276,10 +2899,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public setList(listKind = 0) {
+    private setList(listKind = 0) {
         this.undoRedoManager.closeCurrentOperation();
         const searchPos = this.cursor.pos;
-        const tileInfo = findTile(this, searchPos, "pg", false);
+        const tileInfo = findTile(this.sharedString, searchPos, "pg", false);
         if (tileInfo) {
             const tile = tileInfo.tile as Paragraph.IParagraphMarker;
             let listStatus = false;
@@ -3316,7 +2939,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.undoRedoManager.closeCurrentOperation();
     }
 
-    public tryMoveCell(pos: number, shift = false) {
+    private tryMoveCell(pos: number, shift = false) {
         const cursorContext =
             this.sharedString.getStackContext(pos, ["table", "cell", "row"]);
         if (cursorContext.table && (!cursorContext.table.empty())) {
@@ -3352,9 +2975,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     // TODO: tab stops in non-list, non-table paragraphs
-    public onTAB(shift = false) {
+    private onTAB(shift = false) {
         const searchPos = this.cursor.pos;
-        const tileInfo = findTile(this, searchPos, "pg", false);
+        const tileInfo = findTile(this.sharedString, searchPos, "pg", false);
         if (tileInfo) {
             if (!this.tryMoveCell(tileInfo.pos, shift)) {
                 const tile = tileInfo.tile as Paragraph.IParagraphMarker;
@@ -3363,8 +2986,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public toggleBlockquote() {
-        const tileInfo = findTile(this, this.cursor.pos, "pg", false);
+    private toggleBlockquote() {
+        const tileInfo = findTile(this.sharedString, this.cursor.pos, "pg", false);
         if (tileInfo) {
             const tile = tileInfo.tile;
             const props = tile.properties;
@@ -3378,26 +3001,26 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public toggleBold() {
+    private toggleBold() {
         this.toggleWordOrSelection("fontWeight", "bold", null);
     }
 
-    public toggleItalic() {
+    private toggleItalic() {
         this.toggleWordOrSelection("fontStyle", "italic", "normal");
     }
 
-    public toggleUnderline() {
+    private toggleUnderline() {
         this.toggleWordOrSelection("textDecoration", "underline", null);
     }
 
-    public copyFormat() {
-        const segoff = getContainingSegment(this, this.cursor.pos);
+    private copyFormat() {
+        const segoff = getContainingSegment(this.sharedString, this.cursor.pos);
         if (segoff.segment && MergeTree.TextSegment.is((segoff.segment))) {
             this.formatRegister = MergeTree.extend(MergeTree.createMap(), segoff.segment.properties);
         }
     }
 
-    public setProps(props: MergeTree.PropertySet, updatePG = true) {
+    private setProps(props: MergeTree.PropertySet) {
         const sel = this.cursor.getSelection();
         this.undoRedoManager.closeCurrentOperation();
         if (sel) {
@@ -3412,25 +3035,21 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.undoRedoManager.closeCurrentOperation();
     }
 
-    public paintFormat() {
+    private paintFormat() {
         if (this.formatRegister) {
             this.setProps(this.formatRegister);
         }
     }
 
-    public setFont(family: string, size = "18px") {
+    private setFont(family: string, size = "18px") {
         this.setProps({ fontFamily: family, fontSize: size });
     }
 
-    public setColor(color: string) {
-        this.setProps({ color }, false);
+    private setColor(color: string) {
+        this.setProps({ color });
     }
 
-    public makeBlink(color: string) {
-        this.setProps({ blink: true, color }, false);
-    }
-
-    public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
+    private toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
         const sel = this.cursor.getSelection();
         if (sel) {
             this.clearSelection(false);
@@ -3443,7 +3062,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
+    private toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
         let someSet = false;
         const findPropSet = (segment: MergeTree.ISegment) => {
             if (MergeTree.TextSegment.is(segment)) {
@@ -3463,53 +3082,13 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.undoRedoManager.closeCurrentOperation();
     }
 
-    public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
-        const router = await this.context.containerRuntime.createDataStore(chaincode);
-        const object: FluidObject<IFluidLoadable> = await requestFluidObject(router, "");
-        const loadable = object.IFluidLoadable;
-
-        const props = {
-            crefTest: {
-                layout: { inline },
-                type: {
-                    name: "component",
-                } as IReferenceDocType,
-                url: loadable.handle,
-            },
-            leafId: loadable.handle,
-        };
-
-        if (!inline) {
-            this.insertParagraph(this.cursor.pos++);
-        }
-
-        const markerPos = this.cursor.pos;
-        this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
-    }
-
-    public insertList() {
-        // eslint-disable-next-line max-len
-        const testList: SearchMenu.ISearchMenuCommand[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
-        const irdoc = <IListReferenceDoc>{
-            items: testList,
-            referenceDocId: "L",
-            selectionIndex: 0,
-            type: { name: "list" },
-            url: "",
-        };
-        const refProps = {
-            [Paragraph.referenceProperty]: irdoc,
-        };
-        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, refProps);
-    }
-
-    public deleteRow() {
+    private deleteRow() {
         const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getPosition(this, tableMarker);
+                const tableMarkerPos = getPosition(this.sharedString, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteRow(this.sharedString, rowMarker.row, tableMarker.table);
@@ -3522,21 +3101,21 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getPosition(this, tableMarker);
+                const tableMarkerPos = getPosition(this.sharedString, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteCellShiftLeft(this.sharedString, cellMarker.cell, tableMarker.table);
         }
     }
 
-    public deleteColumn() {
+    private deleteColumn() {
         const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getPosition(this, tableMarker);
+                const tableMarkerPos = getPosition(this.sharedString, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteColumn(this.sharedString, this.runtime.clientId,
@@ -3544,13 +3123,13 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public insertRow() {
+    private insertRow() {
         const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getPosition(this, tableMarker);
+                const tableMarkerPos = getPosition(this.sharedString, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertRow(
@@ -3562,11 +3141,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public tableSummary() {
+    private tableSummary() {
         const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
-            const tableMarkerPos = getPosition(this, tableMarker);
+            const tableMarkerPos = getPosition(this.sharedString, tableMarker);
             if (!tableMarker.table) {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
@@ -3574,105 +3153,14 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public randomCell(table: Table.Table) {
-        let cellCount = 0;
-        for (const row of table.rows) {
-            if (!Table.rowIsMoribund(row.rowMarker)) {
-                for (const cell of row.cells) {
-                    if (!Table.cellIsMoribund(cell.marker)) {
-                        cellCount++;
-                    }
-                }
-            }
-        }
-        if (cellCount > 0) {
-            const randIndex = Math.round(Math.random() * cellCount);
-            cellCount = 0;
-            for (const row of table.rows) {
-                if (!Table.rowIsMoribund(row.rowMarker)) {
-                    for (const cell of row.cells) {
-                        if (!Table.cellIsMoribund(cell.marker)) {
-                            if (cellCount === randIndex) {
-                                return cell;
-                            }
-                            cellCount++;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public crazyTable(k: number) {
-        let count = 0;
-        let rowCount = 0;
-        let columnCount = 0;
-        const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
-        if (stack.table && (!stack.table.empty())) {
-            const tableMarker = stack.table.top() as Table.ITableMarker;
-            const randomTableOp = () => {
-                count++;
-                if (!tableMarker.table) {
-                    const tableMarkerPos = getPosition(this, tableMarker);
-                    Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
-                }
-                const randCell = this.randomCell(tableMarker.table);
-                if (randCell) {
-                    const pos = getPosition(this, randCell.marker);
-                    this.cursor.pos = pos;
-                    this.cursor.updateView(this);
-                    let hit = false;
-                    if (rowCount < 8) {
-                        const chance = Math.round(Math.random() * 10);
-                        if (chance >= 5) {
-                            this.insertRow();
-                            rowCount++;
-                            hit = true;
-                        }
-                    }
-                    if ((columnCount < 8) && (!hit)) {
-                        const chance = Math.round(Math.random() * 10);
-                        if (chance >= 5) {
-                            this.insertColumn();
-                            columnCount++;
-                            hit = true;
-                        }
-                    }
-                    if ((rowCount > 4) && (!hit)) {
-                        const chance = Math.round(Math.random() * 10);
-                        if (chance >= 5) {
-                            this.deleteRow();
-                            rowCount--;
-                            hit = true;
-                        }
-                    }
-                    if ((columnCount > 4) && (!hit)) {
-                        const chance = Math.round(Math.random() * 10);
-                        if (chance >= 5) {
-                            this.deleteColumn();
-                            columnCount--;
-                            hit = true;
-                        }
-                    }
-                } else {
-                    return;
-                }
-                if (count < k) {
-                    setTimeout(randomTableOp, 200);
-                }
-            };
-            setTimeout(randomTableOp, 200);
-        }
-    }
-
-    public insertColumn() {
+    private insertColumn() {
         const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getPosition(this, tableMarker);
+                const tableMarkerPos = getPosition(this.sharedString, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertColumn(
@@ -3684,8 +3172,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public setPGProps(props: MergeTree.PropertySet) {
-        const tileInfo = findTile(this, this.cursor.pos, "pg", false);
+    private setPGProps(props: MergeTree.PropertySet) {
+        const tileInfo = findTile(this.sharedString, this.cursor.pos, "pg", false);
         if (tileInfo) {
             const pgMarker = tileInfo.tile as Paragraph.IParagraphMarker;
             this.sharedString.annotateRange(tileInfo.pos,
@@ -3694,13 +3182,13 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public selectAll() {
+    private selectAll() {
         this.cursor.clearSelection();
         this.cursor.mark = 0;
         this.cursor.pos = this.sharedString.getLength();
     }
 
-    public keyCmd(charCode: number, shift = false) {
+    private keyCmd(charCode: number, shift = false) {
         switch (charCode) {
             case CharacterCodes.A:
                 this.selectAll();
@@ -3711,8 +3199,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 break;
             }
             case CharacterCodes.M: {
-                this.activeSearchBox = SearchMenu.searchBoxCreate(this, this.viewportDiv,
-                    this.cmdTree, true);
+                this.activeCommandBox = true;
+                this.showCommandBox();
                 break;
             }
             case CharacterCodes.L:
@@ -3749,14 +3237,14 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public preScroll() {
+    private preScroll() {
         if (this.lastVerticalX === -1) {
             const rect = this.cursor.rect();
             this.lastVerticalX = rect.left;
         }
     }
 
-    public apresScroll(up: boolean) {
+    private apresScroll(up: boolean) {
         if ((this.cursor.pos < this.viewportStartPos) ||
             (this.cursor.pos >= this.viewportEndPos)) {
             const x = this.getCanonicalX();
@@ -3770,7 +3258,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public scroll(up: boolean, one = false) {
+    private scroll(up: boolean, one = false) {
         let scrollTo = this.topChar;
         if (one) {
             if (up) {
@@ -3842,21 +3330,27 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         });
     }
 
-    public async loadFinished(clockStart = 0) {
+    public loadFinished(clockStart = 0) {
         this.render(0, true);
         if (clockStart > 0) {
             // eslint-disable-next-line max-len
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performance.now()}`);
         }
-        this.presenceSignal = new PresenceSignal(this.runtime);
-        this.addPresenceSignal(this.presenceSignal);
+
+        // Set up for presence carets
+        this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            if (message.type === presenceSignalType) {
+                this.remotePresenceUpdate(message, local);
+            }
+        });
+        this.broadcastPresence();
 
         this.sharedString.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);
         });
     }
 
-    public updateTableInfo(changePos: number) {
+    private updateTableInfo(changePos: number) {
         const stack = this.sharedString.getStackContext(changePos, ["table"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
@@ -3864,8 +3358,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public updatePGInfo(changePos: number) {
-        const tileInfo = findTile(this, changePos, "pg", false);
+    private updatePGInfo(changePos: number) {
+        const tileInfo = findTile(this.sharedString, changePos, "pg", false);
         if (tileInfo) {
             const tile = tileInfo.tile as Paragraph.IParagraphMarker;
             Paragraph.clearContentCaches(tile);
@@ -3909,7 +3403,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private insertParagraph(pos: number) {
-        const curTilePos = findTile(this, pos, "pg", false);
+        const curTilePos = findTile(this.sharedString, pos, "pg", false);
         const pgMarker = curTilePos.tile as Paragraph.IParagraphMarker;
         const pgPos = curTilePos.pos;
         Paragraph.clearContentCaches(pgMarker);
@@ -4004,21 +3498,19 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             return quorumClient.client;
         } else {
             const audience = this.runtime.getAudience().getMembers();
-            if (audience.has(clientId)) {
-                return audience.get(clientId);
-            }
+            return audience.get(clientId);
         }
     }
 
     private broadcastPresence() {
-        if (this.presenceSignal && this.runtime.connected) {
+        if (this.runtime.connected) {
             const presenceInfo: IRemotePresenceInfo = {
                 origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
                 refseq: this.sharedString.getCurrentSeq(),
                 type: "selection",
             };
-            this.presenceSignal.submitPresence(presenceInfo);
+            this.runtime.submitSignal(presenceSignalType, presenceInfo);
         }
     }
 
@@ -4101,7 +3593,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     this.render(this.topChar, true);
                 });
             } else {
-                reRenderLine(localPresenceInfo.cursor.lineDiv(), this, this.lastDocContext);
+                reRenderLine(localPresenceInfo.cursor.lineDiv(), this);
             }
         }
     }

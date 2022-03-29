@@ -43,33 +43,33 @@ export const logCommonSessionEndMetrics = (
     sessionMetric: Lumber | undefined,
     sequenceNumber: number,
     lastSummarySequenceNumber: number,
-    timeoutErrorReason: NackMessagesType | undefined) => {
-        if (!sessionMetric) {
-            return;
-        }
+    activeNackMessageTypes: NackMessagesType[] | undefined) => {
+    if (!sessionMetric) {
+        return;
+    }
 
-        const contextError = context.getContextError();
+    const contextError = context.getContextError();
 
-        sessionMetric.setProperties({ [CommonProperties.sessionEndReason]: closeType });
-        sessionMetric.setProperties({ [CommonProperties.sessionState]: SessionState.end });
-        sessionMetric.setProperties({ [CommonProperties.sequenceNumber]: sequenceNumber });
-        sessionMetric.setProperties({ [CommonProperties.lastSummarySequenceNumber]: lastSummarySequenceNumber });
+    sessionMetric.setProperties({ [CommonProperties.sessionEndReason]: closeType });
+    sessionMetric.setProperties({ [CommonProperties.sessionState]: SessionState.end });
+    sessionMetric.setProperties({ [CommonProperties.sequenceNumber]: sequenceNumber });
+    sessionMetric.setProperties({ [CommonProperties.lastSummarySequenceNumber]: lastSummarySequenceNumber });
 
-        if (contextError) {
-            sessionMetric.error(`Session terminated due to ${contextError}`);
-        } else if (closeType === LambdaCloseType.Error) {
-            sessionMetric.error("Session terminated due to error");
-        } else if (!closeType || closeType === LambdaCloseType.Stop || closeType === LambdaCloseType.Rebalance) {
-            sessionMetric.setProperties({ [CommonProperties.sessionState]: SessionState.paused });
-            sessionMetric.success("Session paused");
-        } else if (closeType === LambdaCloseType.ActivityTimeout) {
-            if (timeoutErrorReason === NackMessagesType.SummaryMaxOps) {
-                sessionMetric.error(
-                    "Session terminated due to inactivity while exceeding max ops since last summary");
-            } else {
-                sessionMetric.success("Session terminated due to inactivity");
-            }
+    if (contextError) {
+        sessionMetric.error(`Session terminated due to ${contextError}`);
+    } else if (closeType === LambdaCloseType.Error) {
+        sessionMetric.error("Session terminated due to error");
+    } else if (!closeType || closeType === LambdaCloseType.Stop || closeType === LambdaCloseType.Rebalance) {
+        sessionMetric.setProperties({ [CommonProperties.sessionState]: SessionState.paused });
+        sessionMetric.success("Session paused");
+    } else if (closeType === LambdaCloseType.ActivityTimeout) {
+        if (activeNackMessageTypes?.includes(NackMessagesType.SummaryMaxOps)) {
+            sessionMetric.error(
+                "Session terminated due to inactivity while exceeding max ops since last summary");
         } else {
-            sessionMetric.error("Unknown session end state");
+            sessionMetric.success("Session terminated due to inactivity");
         }
+    } else {
+        sessionMetric.error("Unknown session end state");
+    }
 };

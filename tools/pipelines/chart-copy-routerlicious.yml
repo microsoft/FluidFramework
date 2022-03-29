@@ -6,6 +6,7 @@ trigger:
   branches:
     include:
     - main
+    - next
   paths:
     include:
     - server/routerlicious/kubernetes/routerlicious

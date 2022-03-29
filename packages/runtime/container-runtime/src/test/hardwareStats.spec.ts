@@ -19,7 +19,7 @@ describe("Hardware Stats", () => {
     let mockContext: Partial<IContainerContext> = {
         deltaManager: new MockDeltaManager(),
         quorum: new MockQuorum(),
-        logger: mockLogger,
+        taggedLogger: mockLogger,
         clientDetails: { capabilities: { interactive: true } },
         updateDirtyContainerState: (dirty: boolean) => {},
     };
@@ -43,7 +43,7 @@ describe("Hardware Stats", () => {
         mockContext = {
             deltaManager: new MockDeltaManager(),
             quorum: new MockQuorum(),
-            logger: mockLogger,
+            taggedLogger: mockLogger,
             clientDetails: { capabilities: { interactive: true } },
             updateDirtyContainerState: (dirty: boolean) => {},
         };

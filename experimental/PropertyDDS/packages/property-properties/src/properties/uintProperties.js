@@ -25,7 +25,7 @@ export class Uint8Property extends ValueProperty {
         super(in_params);
         // default for this property type is '0'
         this._data = 0;
-    };
+    }
 }
 Uint8Property.prototype._typeid = 'Uint8';
 Uint8Property.prototype._castFunctor = _castFunctors.Uint8;
@@ -46,7 +46,7 @@ export class Uint16Property extends ValueProperty {
         super(in_params);
         // default for this property type is '0'
         this._data = 0;
-    };
+    }
 }
 Uint16Property.prototype._typeid = 'Uint16';
 Uint16Property.prototype._castFunctor = _castFunctors.Uint16;
@@ -67,7 +67,7 @@ export class Uint32Property extends ValueProperty {
         super(in_params);
         // default for this property type is '0'
         this._data = 0;
-    };
+    }
 }
 Uint32Property.prototype._typeid = 'Uint32';
 Uint32Property.prototype._castFunctor = _castFunctors.Uint32;

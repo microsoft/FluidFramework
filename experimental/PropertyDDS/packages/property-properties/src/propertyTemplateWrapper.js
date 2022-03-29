@@ -8,15 +8,15 @@
  * Declaration of the PropertyTemplateWrapper module
  * PropertyTemplateWrapper is used to wrap a property template and perform internal optimizations
  */
+const { MSG } = require('@fluid-experimental/property-common').constants;
 const _ = require('lodash');
 const { ContainerProperty } = require('./properties/containerProperty');
-const { MSG } = require('@fluid-experimental/property-common').constants;
 
 const reservedTypesWithoutTemplates = {
     'BaseProperty': true,
     'ContainerProperty': true,
     'NodeProperty': true,
-    'Enum': true
+    'Enum': true,
 };
 /**
  * Utility function that validates if the typeid is a reserved type without a template.
@@ -28,7 +28,6 @@ const hasAssociatedTemplate = (in_typeid) => {
 };
 
 export class PropertyTemplateWrapper {
-
     /**
      * Constructor for creating a PropertyTemplateWrapper based on the given template.
      * @param {PropertyTemplate} in_remoteTemplate A property template
@@ -48,13 +47,12 @@ export class PropertyTemplateWrapper {
          */
         this._compiledPropertyTemplate = undefined;
 
-        /* What type of base object is created for this template*/
+        /* What type of base object is created for this template */
         this._objectCreationType = undefined;
 
-        /* The scope of this template*/
+        /* The scope of this template */
         this._scope = in_scope;
-    };
-
+    }
 
     /**
      * To get the property template that this is wrapping.
@@ -63,7 +61,7 @@ export class PropertyTemplateWrapper {
      */
     getPropertyTemplate() {
         return this._propertyTemplate;
-    };
+    }
 
     /**
      * Gets the compiled template or creates it then returns it.
@@ -78,7 +76,7 @@ export class PropertyTemplateWrapper {
             this._compiledPropertyTemplate = this._contructCompiledTemplate(in_propertyFactory);
         }
         return this._compiledPropertyTemplate;
-    };
+    }
 
     /**
      * Returns if the compiled template has been created.
@@ -87,7 +85,7 @@ export class PropertyTemplateWrapper {
      */
     hasCompiledTemplate() {
         return !!this._compiledPropertyTemplate;
-    };
+    }
 
     /**
      * To get the creation type of the template this wraps.
@@ -96,7 +94,7 @@ export class PropertyTemplateWrapper {
      */
     getCreationType() {
         return this._objectCreationType;
-    };
+    }
 
     /**
      * If current creation type is undefined, sets it to in_typeid if in_typeid is a creation type.
@@ -121,7 +119,7 @@ export class PropertyTemplateWrapper {
                 throw new Error(MSG.ONLY_ONE_CREATION_TYPE + currentCreationType + ', ' + in_typeid);
             }
         }
-    };
+    }
 
     /**
      * Contructs the compiled template from the template this wraps
@@ -250,7 +248,7 @@ export class PropertyTemplateWrapper {
         }
 
         return template;
-    };
+    }
 
     /**
      * A helper function which merges a child and parent property.
@@ -325,5 +323,5 @@ export class PropertyTemplateWrapper {
 
         mergeSubProperties(in_childProperty, in_parentProperty, 'properties');
         mergeSubProperties(in_childProperty, in_parentProperty, 'constants');
-    };
+    }
 }

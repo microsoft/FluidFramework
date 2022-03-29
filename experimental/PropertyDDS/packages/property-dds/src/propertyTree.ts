@@ -672,9 +672,6 @@ export class SharedPropertyTree extends SharedObject {
 		// Compute the delta between the old tip (including pending changes)
 		// and the new tip (not including the rebased pending changes)
 		deltaToTipCS.applyChangeSet(rebaseBaseChangeSet);
-		deltaToTipCS.applyChangeSet(pendingChanges, {
-			applyAfterMetaInformation: pendingChangesRebaseMetaInformation,
-		});
 
 		// Update the tip view
 		if (!this.tipView) {

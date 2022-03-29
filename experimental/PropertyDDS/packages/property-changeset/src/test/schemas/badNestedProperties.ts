@@ -15,15 +15,15 @@
     var templateSchema = {
         'properties': [{
                 'id': 'r',
-                'typeid': 'Float32'
+                'typeid': 'Float32',
             },
             {
                 'id': 'g',
-                'typeid': 'Float32'
+                'typeid': 'Float32',
             },
             {
                 'id': 'b',
-                'typeid': 'Float32'
+                'typeid': 'Float32',
             },
             {
                 'id': 'nest',
@@ -35,13 +35,13 @@
                         'id': 'nestedAgain',
                         'properties': [
                             { 'id': 'a', 'typeid': 'Int32' },
-                            { 'id': 'b', 'typeid': 'Flob' }
-                        ]
-                    }
-                ]
-            }
+                            { 'id': 'b', 'typeid': 'Flob' },
+                        ],
+                    },
+                ],
+            },
         ],
-        'typeid': 'TeamLeoValidation2:NestedTest-1.0.0'
+        'typeid': 'TeamLeoValidation2:NestedTest-1.0.0',
     };
     module.exports = templateSchema;
 })();

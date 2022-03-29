@@ -78,7 +78,6 @@ export class TestClient extends Client {
         specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
         const client2 = new TestClient(undefined, specToSeg);
         const { catchupOpsP } = await client2.load(
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
@@ -259,7 +258,6 @@ export class TestClient extends Client {
         while (start < this.getLength()) {
             chunk = this.getText(start, start + TestClient.searchChunkSize);
 
-            // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
             const result = chunk.match(target);
             if (result !== null) {
                 return { text: result[0], pos: (result.index + start) };

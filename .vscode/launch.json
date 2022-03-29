@@ -242,6 +242,7 @@
             },
             "sourceMaps": true,
             "stopOnEntry": false,
+            "pauseForSourceMap": false,
             "program": "${file}",
             "args": [
                 // "--fgrep",               // Uncomment to filter by test case name
@@ -255,7 +256,7 @@
                 "**/node_modules/**"
             ],
             "resolveSourceMapLocations": [
-                "${workspaceFolder}/**/dist/**/*.js",
+                "${workspaceFolder}/**/dist/**",
                 "!**/node_modules/**"
             ],
             "outFiles": [

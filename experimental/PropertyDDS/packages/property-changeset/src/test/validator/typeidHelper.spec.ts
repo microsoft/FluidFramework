@@ -20,7 +20,7 @@ import { TypeIdHelper } from '../../helpers/typeidHelper';
         it('getPrimitiveTypeId() should return all primitive typeids', () => {
             const result = TypeIdHelper.getPrimitiveTypeIds();
             expect(result).to.have.members(['Float32', 'Float64', 'Int8', 'Uint8', 'Int16', 'Uint16', 'Int32',
-                'Uint32', 'Bool', 'String', 'Reference', 'Enum', 'Int64', 'Uint64'
+                'Uint32', 'Bool', 'String', 'Reference', 'Enum', 'Int64', 'Uint64',
             ]);
         });
 
@@ -28,7 +28,7 @@ import { TypeIdHelper } from '../../helpers/typeidHelper';
             const result = TypeIdHelper.getReservedTypeIds();
 
             expect(result).to.have.members(['BaseProperty', 'ContainerProperty', 'NamedProperty', 'NodeProperty',
-                'NamedNodeProperty', 'RelationshipProperty'
+                'NamedNodeProperty', 'RelationshipProperty',
             ]);
         });
 

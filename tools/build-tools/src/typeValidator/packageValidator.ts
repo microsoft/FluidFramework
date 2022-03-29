@@ -4,33 +4,24 @@
  */
 
 import fs from "fs";
-import { DiagnosticCategory, Node, Project, TypeChecker } from "ts-morph";
+import { Node, TypeChecker } from "ts-morph";
 import { PackageDetails } from "./packageJson";
-import { ClassData, decomposeClassDeclaration } from "./classDecomposition";
+import { ClassValidator } from "./classDecomposition";
+import { EnumValidator } from "./enumValidator";
 import {
     generateTypeDataForProject,
     getFullTypeName,
     PackageAndTypeData,
     TypeData,
 } from "./typeData";
-import { DecompositionResult, GenericsInfo } from "./typeDecomposition";
-import { log } from "./validatorUtils";
+import { BreakingIncrement, IValidator, log } from "./validatorUtils";
 
-export enum BreakingIncrement {
-    none = 0,
-    minor = 1,
-    major = minor << 1 | minor, // this makes comparisons easier
-};
 // TODO: correlate type name with exporting package to support name aliasing
 export type BrokenTypes = Map<string, BreakingIncrement>;
 
 export interface PackageResult {
     increment: BreakingIncrement,
     brokenTypes: BrokenTypes,
-}
-
-export interface DecompositionTypeData extends TypeData {
-    classData?: ClassData,
 }
 
 /**
@@ -74,8 +65,7 @@ export function validatePackage(
 
     // Check old types first because these are the only ones that can cause a major increment
     for (const oldTypeData of oldDetails.typeData) {
-        oldTypeData as DecompositionTypeData;
-        const newTypeData = newTypeMap.get(getFullTypeName(oldTypeData)) as DecompositionTypeData | undefined;
+        const newTypeData = newTypeMap.get(getFullTypeName(oldTypeData));
         log(`Validating type ${oldTypeData.name}`);
 
         if (newTypeData === undefined) {
@@ -83,22 +73,18 @@ export function validatePackage(
             // Type has been removed, package requires major increment
             pkgIncrement |= BreakingIncrement.major;
         } else {
-            // Get the type data decomposition now that we need it
-            tryDecomposeTypeData(oldDetails.project.getTypeChecker(), oldTypeData);
-            tryDecomposeTypeData(newDetails.project.getTypeChecker(), newTypeData);
+            const validator = createSpecificValidator(
+                oldDetails.project.getTypeChecker(),
+                oldTypeData.node,
+                newDetails.project.getTypeChecker(),
+                newTypeData.node,
+            );
 
-            // Check for major increment.  This may also tell us a minor increment is required
-            // in some situations
-            const typeIncrement = checkMajorIncrement(project, packageDir, oldTypeData, newTypeData);
+            const typeIncrement = validator.validate(project, packageDir);
             if (typeIncrement !== BreakingIncrement.none) {
-                log("Check found major increment");
+                log(`Check found increment: ${typeIncrement}`);
                 pkgIncrement |= typeIncrement;
                 pkgBrokenTypes.set(oldTypeData.name, typeIncrement);
-            } else if (checkMinorIncrement(project, packageDir, oldTypeData, newTypeData)) {
-                // If no major increment, check for minor increment
-                log("Check found minor increment");
-                pkgIncrement |= BreakingIncrement.minor;
-                pkgBrokenTypes.set(oldTypeData.name, BreakingIncrement.minor);
             } else {
                 log("Check did not find increment");
             }
@@ -118,178 +104,23 @@ export function validatePackage(
     return { increment: pkgIncrement, brokenTypes: pkgBrokenTypes };
 }
 
-export function tryDecomposeTypeData(typeChecker: TypeChecker, typeData: DecompositionTypeData): boolean {
-    if (typeData.classData !== undefined) {
-        return true;
-    } else if (Node.isClassDeclaration(typeData.node)) {
-        typeData.classData = decomposeClassDeclaration(typeChecker, typeData.node);
-    } else {
-        return false;
-    }
-    return true;
-}
-
-export function checkMajorIncrement(
-    project: Project,
-    pkgDir: string,
-    oldTypeData: DecompositionTypeData,
-    newTypeData: DecompositionTypeData,
-): BreakingIncrement {
-    // Check for major increment through transitivity then bivariant assignment
-    // Type decomposition will have converted the class into a form where this is
-    // valid for finding major breaking changes
-    let testFile = "";
-    if (oldTypeData.classData !== undefined && newTypeData.classData !== undefined) {
-        testFile = buildClassTestFileMajor(
-            `old${getFullTypeName(oldTypeData)}`,
-            oldTypeData.classData,
-            `new${getFullTypeName(newTypeData)}`,
-            newTypeData.classData,
-        );
-        log(testFile);
+export function createSpecificValidator(
+    oldTypeChecker: TypeChecker,
+    oldNode: Node,
+    newTypeChecker: TypeChecker,
+    newNode: Node,
+): IValidator {
+    if (Node.isClassDeclaration(oldNode) && Node.isClassDeclaration(newNode)) {
+        const validator = new ClassValidator();
+        validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
+        return validator;
+    } else if (Node.isEnumDeclaration(oldNode) && Node.isEnumDeclaration(newNode)) {
+        const validator = new EnumValidator();
+        validator.decomposeDeclarations(oldTypeChecker, oldNode, newTypeChecker, newNode);
+        return validator;
     }
 
-    // Create a source file in the project and check for diagnostics
-    const sourcePath = `${pkgDir}/src/test/typeValidation.spec.ts`;
-    const sourceFile = project.createSourceFile(sourcePath, testFile);
-    const diagnostics = sourceFile.getPreEmitDiagnostics();
-    for (const diagnostic of diagnostics) {
-        if (diagnostic.getCategory() === DiagnosticCategory.Error) {
-            log(diagnostic.getMessageText().toString());
-        } else {
-            log(`non-error diagnostic found: ${diagnostic.getMessageText().toString()}`);
-        }
-    }
-
-    project.removeSourceFile(sourceFile);
-
-    if (diagnostics.length > 0) {
-        return BreakingIncrement.major;
-    }
-    return BreakingIncrement.none;
-}
-
-export function checkMinorIncrement(
-    project: Project,
-    pkgDir: string,
-    oldTypeData: DecompositionTypeData,
-    newTypeData: DecompositionTypeData,
-): BreakingIncrement {
-    // check for minor increment by comparing exact types
-    let testFile = "";
-    if (oldTypeData.classData !== undefined && newTypeData.classData !== undefined) {
-        testFile = buildClassTestFileMinor(
-            `old${getFullTypeName(oldTypeData)}`,
-            oldTypeData.classData,
-            `new${getFullTypeName(newTypeData)}`,
-            newTypeData.classData,
-        );
-        log(testFile);
-    }
-
-    // Create a source file in the project and check for diagnostics
-    const sourcePath = `${pkgDir}/src/test/typeValidation.spec.ts`;
-    const sourceFile = project.createSourceFile(sourcePath, testFile);
-    const diagnostics = sourceFile.getPreEmitDiagnostics();
-    for (const diagnostic of diagnostics) {
-        if (diagnostic.getCategory() === DiagnosticCategory.Error) {
-            log(diagnostic.getMessageText().toString());
-        } else {
-            log(`non-error diagnostic found: ${diagnostic.getMessageText().toString()}`);
-        }
-    }
-
-    project.removeSourceFile(sourceFile);
-
-    if (diagnostics.length > 0) {
-        return BreakingIncrement.minor;
-    }
-    return BreakingIncrement.none;
-}
-
-function buildClassTestFileMajor(
-    oldClassName: string,
-    oldClassData: ClassData,
-    newClassName: string,
-    newClassData: ClassData,
-): string {
-    const fileLines: string[] = [];
-
-    const requiredGenerics = new GenericsInfo(oldClassData.requiredGenerics);
-    requiredGenerics.merge(newClassData.requiredGenerics);
-    for (const [generic, paramCount] of requiredGenerics) {
-        const numberArray = Array.from(Array(paramCount).keys());
-        const typeParams = numberArray.map((n) => `T${n} = any`).join(", ");
-        const typedProperties = numberArray.map((n) => `myVar${n}: T${n};`).join("\n");
-        fileLines.push(`interface ${generic}<${typeParams}> {`);
-        fileLines.push(typedProperties);
-        fileLines.push(`};`);
-    }
-
-    let oldTypeParameters = oldClassData.typeParameters.join(", ");
-    oldTypeParameters = oldTypeParameters === "" ? oldTypeParameters : `<${oldTypeParameters}>`;
-    fileLines.push(`declare class ${oldClassName}${oldTypeParameters} {`);
-    fileLines.push(...oldClassData.properties);
-    fileLines.push("}");
-
-    let newTypeParameters = newClassData.typeParameters.join(", ");
-    newTypeParameters = newTypeParameters === "" ? newTypeParameters : `<${newTypeParameters}>`;
-    fileLines.push(`declare class ${newClassName}${newTypeParameters} {`);
-    fileLines.push(...newClassData.properties);
-    fileLines.push("}");
-
-    const oldTypeArgs = oldClassData.typeParameters.map(() => "any").join(", ");
-    const oldClassType = oldTypeArgs === "" ? oldClassName : `${oldClassName}<${oldTypeArgs}>`;
-    const newTypeArgs = newClassData.typeParameters.map(() => "any").join(", ");
-    const newClassType = newTypeArgs === "" ? newClassName : `${newClassName}<${newTypeArgs}>`;
-    fileLines.push(`const oldToNew: ${newClassType} = undefined as any as ${oldClassType}`);
-    fileLines.push(`const newToOld: ${oldClassType} = undefined as any as ${newClassType}`);
-
-    const declaration = fileLines.join("\n");
-    return declaration;
-}
-
-function buildClassTestFileMinor(
-    oldClassName: string,
-    oldClassData: ClassData,
-    newClassName: string,
-    newClassData: ClassData,
-): string {
-    const fileLines: string[] = [];
-
-    fileLines.push(`type Equals<X, Y> = (<T>() => (T extends X ? 1 : 2)) extends`);
-    fileLines.push(`    (<T>() => (T extends Y ? 1 : 2)) ? true : false;`);
-    fileLines.push(`let trueVal: true = true;`);
-
-    const requiredGenerics = new GenericsInfo(oldClassData.requiredGenerics);
-    requiredGenerics.merge(newClassData.requiredGenerics);
-    for (const [generic, paramCount] of requiredGenerics) {
-        const numberArray = Array.from(Array(paramCount).keys());
-        const typeParams = numberArray.map((n) => `T${n} = any`).join(", ");
-        const typedProperties = numberArray.map((n) => `myVar${n}: T${n};`).join("\n");
-        fileLines.push(`interface ${generic}<${typeParams}> {`);
-        fileLines.push(typedProperties);
-        fileLines.push(`};`);
-    }
-
-    let oldTypeParameters = oldClassData.typeParameters.join(", ");
-    oldTypeParameters = oldTypeParameters === "" ? oldTypeParameters : `<${oldTypeParameters}>`;
-    fileLines.push(`declare class ${oldClassName}${oldTypeParameters} {`);
-    fileLines.push(...oldClassData.properties);
-    fileLines.push("}");
-
-    let newTypeParameters = newClassData.typeParameters.join(", ");
-    newTypeParameters = newTypeParameters === "" ? newTypeParameters : `<${newTypeParameters}>`;
-    fileLines.push(`declare class ${newClassName}${newTypeParameters} {`);
-    fileLines.push(...newClassData.properties);
-    fileLines.push("}");
-
-    const oldTypeArgs = oldClassData.typeParameters.map(() => "any").join(", ");
-    const oldClassType = oldTypeArgs === "" ? oldClassName : `${oldClassName}<${oldTypeArgs}>`;
-    const newTypeArgs = newClassData.typeParameters.map(() => "any").join(", ");
-    const newClassType = newTypeArgs === "" ? newClassName : `${newClassName}<${newTypeArgs}>`;
-    fileLines.push(`trueVal = undefined as any as Equals<${newClassType}, ${oldClassType}>;`);
-
-    const declaration = fileLines.join("\n");
-    return declaration;
+    // We don't need to report if the declaration types have changed because that
+    // should be detected earlier as a removal/addition pair (major increment)
+    throw new Error("Unhandled export declaration type");
 }

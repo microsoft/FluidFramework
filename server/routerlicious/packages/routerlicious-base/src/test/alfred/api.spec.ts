@@ -61,7 +61,10 @@ describe("Routerlicious", () => {
                 [rawDeltasCollectionName]: [],
             });
             const defaultMongoManager = new MongoManager(defaultDbFactory);
+            const globalDbEnabled = false;
             const defaultDbManager = new MongoDatabaseManager(
+                globalDbEnabled,
+                defaultMongoManager,
                 defaultMongoManager,
                 nodeCollectionName,
                 documentsCollectionName,

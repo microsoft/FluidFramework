@@ -139,8 +139,8 @@ export interface IDocumentService {
 
 // @public (undocumented)
 export interface IDocumentServiceFactory {
-    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     protocolName: string;
 }
 
@@ -182,13 +182,9 @@ export interface IDriverBasicError extends IDriverErrorBase {
 
 // @public
 export interface IDriverErrorBase {
-    // (undocumented)
     canRetry: boolean;
-    // (undocumented)
     readonly errorType: DriverErrorType;
-    // (undocumented)
     readonly message: string;
-    // (undocumented)
     online?: string;
 }
 

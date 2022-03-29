@@ -135,7 +135,6 @@ describe("Odsp Create Container Test", () => {
             assert.strictEqual(error.statusCode, undefined, "Wrong error code");
             assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
                 "Error type should be correct");
-            assert.strictEqual(error.fluidErrorCode, "createFileNoItemId", "fluidErrorCode should be correct");
             assert.strictEqual(error.message, "ODSP CreateFile call returned no item ID", "Message should be correct");
         }
     });

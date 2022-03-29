@@ -181,20 +181,19 @@ Markdown formatting *goes* **here.**
 
 ### Diagrams
 
-We prefer text-based diagrams that are converted to images at build time. You can create inline diagrams with
-[Mermaid](https://mermaid-js.github.io/), or you can create ASCII art diagrams that will be converted to PNGs at build
-time.
+We prefer text-based diagrams that are converted to images/SVGs at build time or run time. You can create inline
+diagrams with [Mermaid](https://mermaid-js.github.io/) or [GoAT](https://github.com/bep/goat).
 
 #### Mermaid diagrams
 
-Mermaid diagrams can be put inline in a Markdown file using the `{{</* mermaid */>}}` shortcode.
+Mermaid diagrams can be put inline in a Markdown file using a code block with the `mermaid` language type.
 
 [Mermaid examples and syntax reference.](https://mermaid-js.github.io/mermaid/)
 
 **Input**
 
-```jsx
-{{</* mermaid */>}}
+~~~markdown
+```mermaid
 classDiagram
 Class01 <|-- VeryLongClass : Cool
 Class03 *-- Class04
@@ -209,12 +208,12 @@ Class01 : size()
 Class01 : int chimp
 Class01 : int gorilla
 Class08 <--> C2: Cool label
-{{</* /mermaid */>}}
 ```
+~~~
 
 **Output**
 
-{{< mermaid >}}
+```mermaid
 classDiagram
 Class01 <|-- VeryLongClass : Cool
 Class03 *-- Class04
@@ -229,29 +228,76 @@ Class01 : size()
 Class01 : int chimp
 Class01 : int gorilla
 Class08 <--> C2: Cool label
-{{< /mermaid >}}
+```
 
-#### ASCII art diagrams with ditaa
+#### ASCII art diagrams with GoAT
 
-[ditaa](https://github.com/stathissideris/ditaa) is a tool to convert ASCII art block diagrams to PNGs. Any file
-in the `/docs/content` folder with a `.ditaa` file extension will be converted to a PNG file in the same folder at
-build time.
+[GoAT](https://github.com/bep/goat) is a tool to convert ASCII art block diagrams to SVGs. GoAT diagrams can be put
+inline in a Markdown file using a code block with the `goat` language type.
 
-[asciiflow](http://asciiflow.com/) is an in-browser editor that makes it easier to create ASCII art block diagrams.
+To more easily create block diagrams, you can try [asciiflow](http://asciiflow.com/), an in-browser editor for ASCII art
+block diagrams.
+
+Some simple samples are included below. See
+[the Hugo docs](https://gohugo.io/content-management/diagrams/#goat-ascii-diagram-examples) and
+[the GoAT repo](https://github.com/bep/goat/tree/master/examples) for more examples.
+
+##### Example 1
 
 **Input**
 
-```golang
-{{% include file="content/community/doc-system/example.ditaa" safeHTML=true %}}
+~~~markdown
+```goat
++-------------------+    +---------------------+
+|                   |    |                     |
+|                   |    |                     |
+|  Input            +--->+   Output            |
+|                   |    |                     |
+|                   |    |                     |
++-------------------+    +---------------------+
 ```
+~~~
 
 **Output**
 
-![An example ditaa diagram that has been converted to a PNG image](example.png)
+```goat
++-------------------+    +---------------------+
+|                   |    |                     |
+|                   |    |                     |
+|  Input            +--->+   Output            |
+|                   |    |                     |
+|                   |    |                     |
++-------------------+    +---------------------+
+```
+
+##### Example 2
+
+**Input**
+
+~~~markdown
+```goat
+          .               .                .               .--- 1          .-- 1     / 1
+         / \              |                |           .---+            .-+         +
+        /   \         .---+---.         .--+--.        |   '--- 2      |   '-- 2   / \ 2
+       +     +        |       |        |       |    ---+            ---+          +
+      / \   / \     .-+-.   .-+-.     .+.     .+.      |   .--- 3      |   .-- 3   \ / 3
+     /   \ /   \    |   |   |   |    |   |   |   |     '---+            '-+         +
+     1   2 3   4    1   2   3   4    1   2   3   4         '--- 4          '-- 4     \ 4
+```
+~~~
 
 
-[Read more about ditaa here.](https://github.com/stathissideris/ditaa) Note that we are using
-[a fork of the original implementation](https://github.com/akavel/ditaa) re-written in Go to remove a Java dependency.
+**Output**
+
+```goat
+          .               .                .               .--- 1          .-- 1     / 1
+         / \              |                |           .---+            .-+         +
+        /   \         .---+---.         .--+--.        |   '--- 2      |   '-- 2   / \ 2
+       +     +        |       |        |       |    ---+            ---+          +
+      / \   / \     .-+-.   .-+-.     .+.     .+.      |   .--- 3      |   .-- 3   \ / 3
+     /   \ /   \    |   |   |   |    |   |   |   |     '---+            '-+         +
+     1   2 3   4    1   2   3   4    1   2   3   4         '--- 4          '-- 4     \ 4
+```
 
 ### Markdown enhancements
 

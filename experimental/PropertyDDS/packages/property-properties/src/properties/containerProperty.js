@@ -6,13 +6,13 @@
 /**
 * @fileoverview This file contains the implementation of the ContainerProperty class
 */
-const _ = require('underscore');
-const { BaseProperty } = require('./baseProperty');
-const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const { ConsoleUtils } = require('@fluid-experimental/property-common');
-const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProperty');
+const _ = require('underscore');
 const { validationsEnabled } = require('../enableValidations');
+const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
+const { BaseProperty } = require('./baseProperty');
+const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProperty');
 
 /**
  * A property object that allows to add child properties dynamically.
@@ -24,14 +24,13 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      * @protected
      */
     constructor(in_params) {
-        super( in_params );
+        super(in_params);
 
         if (in_params.optionalChildren) {
             this._optionalChildren = {};
             this._dynamicChildren = {};
         }
-
-    };
+    }
 
     /**
      * Returns the name of all the sub-properties of this property.
@@ -39,7 +38,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      */
     _getIds() {
         return AbstractStaticCollectionProperty.prototype._getIds.call(this).concat(Object.keys(this._dynamicChildren));
-    };
+    }
 
     /**
      * Returns the sub-property having the given name in this property.
@@ -50,7 +49,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      */
     _get(in_id) {
         return AbstractStaticCollectionProperty.prototype._get.call(this, in_id) || this._dynamicChildren[in_id];
-    };
+    }
 
     /**
      * Adds an optional child to list of possible optional children.
@@ -64,7 +63,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
             this._dynamicChildren = {};
         }
         this._optionalChildren[in_id] = in_typeid;
-    };
+    }
 
     /**
      * Appends a property
@@ -106,7 +105,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 
         // Add the child property to the dynamic properties
         this._insert(in_property.getId(), in_property, true);
-    };
+    }
 
     /**
      * Validates if inserting the property is valid.
@@ -126,7 +125,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
             throw new Error(MSG.MISMATCHING_PROPERTY_TYPEID + this._optionalChildren[in_id] +
                 ' instead it\'s: ' + in_property.getTypeid());
         }
-    };
+    }
 
     /**
      * @override
@@ -142,7 +141,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
                 return undefined;
             }
         }
-    };
+    }
 
     /**
      * Removes the given property
@@ -166,7 +165,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 
         this._removeByKey(id);
         return returnValue;
-    };
+    }
 
     /**
      * Validates if removing a property with specified id is valid.
@@ -184,7 +183,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
                 throw new Error((MSG.REMOVING_NON_EXISTING_KEY + in_id));
             }
         }
-    };
+    }
 
     /**
      * Removes all dynamic children
@@ -193,7 +192,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     clear() {
         this._checkIsNotReadOnly(true);
         _.each(this._dynamicChildren, this.remove.bind(this));
-    };
+    }
 
     /**
      * Inserts a property into the collection
@@ -219,7 +218,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
         if (in_reportToView) {
             this._reportDirtinessToView();
         }
-    };
+    }
 
     /**
      * Removes an entry with the given key
@@ -238,7 +237,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
         } else {
             console.error(MSG.REMOVING_NON_EXISTING_KEY + in_key);
         }
-    };
+    }
 
     /**
      * Stores the information to which CheckedOutRepositoryInfo object this root property belongs.
@@ -250,7 +249,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      */
     _setCheckedOutRepositoryInfo(in_checkedOutRepositoryInfo) {
         this._checkedOutRepositoryInfo = in_checkedOutRepositoryInfo;
-    };
+    }
 
     /**
      * Gets the information to which CheckedOutRepositoryInfo object this root property belongs.
@@ -262,7 +261,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      */
     _getCheckedOutRepositoryInfo() {
         return this._checkedOutRepositoryInfo;
-    };
+    }
 
     /**
      * Returns the name of all the static sub-properties of this property.
@@ -271,7 +270,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      */
     getStaticIds() {
         return Object.keys(this._staticChildren);
-    };
+    }
 
     /**
      * Returns the name of all the dynamic sub-properties of this property.
@@ -280,7 +279,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      */
     getDynamicIds() {
         return Object.keys(this._dynamicChildren);
-    };
+    }
 
     /**
     * Returns an Object with all the dynamic children of this node property.
@@ -293,7 +292,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     */
     _getDynamicChildrenReadOnly() {
         return this._dynamicChildren;
-    };
+    }
 
     /**
      * Given an object that mirrors a PSet Template, assign the properties
@@ -321,8 +320,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
         } else {
             ContainerProperty.prototype._setValues.call(this, in_properties, false, false);
         }
-    };
-
+    }
 }
 
 ContainerProperty.prototype._typeid = 'ContainerProperty';

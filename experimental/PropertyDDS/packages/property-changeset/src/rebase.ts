@@ -20,7 +20,7 @@ class SyncPromise {
     then(fn: (arg0: any) => { value: any; }): SyncPromise {
         this.value = new SyncPromise(fn(this.value)).value;
         return this;
-    };
+    }
 }
 
 const loop = (promise: Promise<any>, fn: { (currentChange: any): any; (currentRebasedChange: any): any; }, makePromise: (arg0: any) => any) => promise.then(fn).then((result) => result === null ? result : loop(makePromise(result), fn, makePromise));

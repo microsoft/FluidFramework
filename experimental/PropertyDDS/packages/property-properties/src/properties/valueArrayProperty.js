@@ -2,29 +2,28 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable new-cap*/
+/* eslint-disable new-cap */
 /**
  * @fileoverview Definition of the valuearray property class
  */
 
 const _ = require('lodash');
 const { MSG } = require('@fluid-experimental/property-common').constants;
-const { _castFunctors } = require('./primitiveTypeCasts');
 const {
     BaseDataArray,
     UniversalDataArray,
     BoolDataArray,
     Uint64,
-    Int64
+    Int64,
 } = require('@fluid-experimental/property-common');
-const { ArrayProperty } = require('./arrayProperty');
 const { Int64Property, Uint64Property } = require('../properties/intProperties');
+const { _castFunctors } = require('./primitiveTypeCasts');
+const { ArrayProperty } = require('./arrayProperty');
 
 /**
  * An array property which stores primitive values
  */
 export class ValueArrayProperty extends ArrayProperty {
-
     /**
      * @param {Object} in_params - Input parameters for property creation
      * @constructor
@@ -34,7 +33,7 @@ export class ValueArrayProperty extends ArrayProperty {
      */
     constructor(in_params) {
         super(in_params, true);
-    };
+    }
 
     /**
      * returns the value at in_position for a primitive array
@@ -43,7 +42,7 @@ export class ValueArrayProperty extends ArrayProperty {
      */
     _getValue(in_position) {
         return this._dataArrayRef.getValue(in_position);
-    };
+    }
 
     /**
      * returns the array of primitive values.
@@ -57,7 +56,7 @@ export class ValueArrayProperty extends ArrayProperty {
             result.push(this.get(ids[i]));
         }
         return result;
-    };
+    }
 
     /**
      * Resolves a direct child node based on the given path segment
@@ -70,7 +69,7 @@ export class ValueArrayProperty extends ArrayProperty {
      */
     _resolvePathSegment(in_segment, in_segmentType) {
         return this.get(in_segment);
-    };
+    }
 
     /**
      * Function to serialize special primitive types.
@@ -82,7 +81,7 @@ export class ValueArrayProperty extends ArrayProperty {
      */
     _serializeValue(in_obj) {
         return in_obj;
-    };
+    }
 
     /**
      * Function to serialize arrays of special primitive types.
@@ -94,7 +93,7 @@ export class ValueArrayProperty extends ArrayProperty {
      */
     _serializeArray(in_array) {
         return in_array;
-    };
+    }
 
     /**
      * Function to deserialize arrays of special primitive types.
@@ -106,7 +105,7 @@ export class ValueArrayProperty extends ArrayProperty {
      */
     _deserializeArray(in_serializedObj) {
         return in_serializedObj;
-    };
+    }
 }
 ValueArrayProperty.prototype._isPrimitive = true;
 
@@ -125,7 +124,7 @@ export class Float32ArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -133,7 +132,7 @@ export class Float32ArrayProperty extends ValueArrayProperty {
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Float32Array, in_length);
-    };
+    }
 }
 Float32ArrayProperty.prototype._typeid = 'Float32';
 
@@ -152,7 +151,7 @@ export class Float64ArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -160,7 +159,7 @@ export class Float64ArrayProperty extends ValueArrayProperty {
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Float64Array, in_length);
-    };
+    }
 }
 Float64ArrayProperty.prototype._typeid = 'Float64';
 
@@ -179,7 +178,7 @@ export class Uint8ArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -187,7 +186,7 @@ export class Uint8ArrayProperty extends ValueArrayProperty {
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Uint8Array, in_length);
-    };
+    }
 }
 Uint8ArrayProperty.prototype._typeid = 'Uint8';
 
@@ -207,7 +206,7 @@ export class Int8ArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -215,7 +214,7 @@ export class Int8ArrayProperty extends ValueArrayProperty {
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Int8Array, in_length);
-    };
+    }
 }
 Int8ArrayProperty.prototype._typeid = 'Int8';
 
@@ -234,7 +233,7 @@ export class Uint16ArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -242,7 +241,7 @@ export class Uint16ArrayProperty extends ValueArrayProperty {
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Uint16Array, in_length);
-    };
+    }
 }
 Uint16ArrayProperty.prototype._typeid = 'Uint16';
 
@@ -261,7 +260,7 @@ export class Int16ArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -269,7 +268,7 @@ export class Int16ArrayProperty extends ValueArrayProperty {
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Int16Array, in_length);
-    };
+    }
 }
 Int16ArrayProperty.prototype._typeid = 'Int16';
 
@@ -287,8 +286,7 @@ export class Uint32ArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
-
+    }
 
     /**
      * Creates and initializes the data array
@@ -296,7 +294,7 @@ export class Uint32ArrayProperty extends ValueArrayProperty {
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Uint32Array, in_length);
-    };
+    }
 }
 Uint32ArrayProperty.prototype._typeid = 'Uint32';
 
@@ -315,7 +313,7 @@ export class Int32ArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -323,7 +321,7 @@ export class Int32ArrayProperty extends ValueArrayProperty {
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Int32Array, in_length);
-    };
+    }
 }
 Int32ArrayProperty.prototype._typeid = 'Int32';
 
@@ -341,7 +339,7 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Function to serialize special primitive types.
@@ -356,8 +354,7 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
             return [in_obj.getValueLow(), in_obj.getValueHigh()];
         }
         return in_obj;
-    };
-
+    }
 
     /**
      * Function to serialize arrays of special primitive types.
@@ -373,7 +370,7 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
             result.push(this._serializeValue(in_array[i]));
         }
         return result;
-    };
+    }
 
     /**
      * Function to deserialize arrays of special primitive types.
@@ -389,13 +386,12 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
             result.push(this._deserializeValue(in_serializedObj[i]));
         }
         return result;
-    };
+    }
 
     /**
      * @inheritdoc
      */
     _prettyPrint(indent, externalId, printFct) {
-
         printFct(indent + externalId + this.getId() + ' (Array of ' + this.getTypeid() + '): [');
         var childIndent = indent + '  ';
         var int64Prop;
@@ -412,7 +408,7 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
             printFct(childIndent + i + ': ' + int64Prop);
         }
         printFct(indent + ']');
-    };
+    }
 }
 /**
  * An ArrayProperty which stores Int64 values
@@ -429,7 +425,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Sets the array properties elements to the content of the given array
@@ -447,7 +443,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
             return _castFunctors.Int64(element);
         });
         ArrayProperty.prototype.setRange.call(this, in_offset, out_array);
-    };
+    }
 
     /**
      * Inserts the content of a given array into the array property
@@ -464,7 +460,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
             return _castFunctors.Int64(element);
         });
         ArrayProperty.prototype.insertRange.call(this, in_offset, out_array);
-    };
+    }
 
     /**
      * Specialized function to deserialize Int64 primitive types.
@@ -476,7 +472,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
      */
     _deserializeValue(in_serializedObj) {
         return new Int64(in_serializedObj[0], in_serializedObj[1]);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -487,8 +483,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, new Int64());
         }
-    };
-
+    }
 }
 Int64ArrayProperty.prototype._typeid = 'Int64';
 
@@ -507,7 +502,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Specialized function to deserialize Uint64 primitive types.
@@ -519,7 +514,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
      */
     _deserializeValue(in_serializedObj) {
         return new Uint64(in_serializedObj[0], in_serializedObj[1]);
-    };
+    }
 
     /**
      * Sets the array properties elements to the content of the given array
@@ -537,7 +532,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
             return _castFunctors.Uint64(element);
         });
         ArrayProperty.prototype.setRange.call(this, in_offset, out_array);
-    };
+    }
 
     /**
      * Inserts the content of a given array into the array property
@@ -554,7 +549,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
             return _castFunctors.Uint64(element);
         });
         ArrayProperty.prototype.insertRange.call(this, in_offset, out_array);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -565,7 +560,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, new Uint64());
         }
-    };
+    }
 }
 Uint64ArrayProperty.prototype._typeid = 'Uint64';
 
@@ -584,7 +579,7 @@ export class StringArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -595,8 +590,7 @@ export class StringArrayProperty extends ValueArrayProperty {
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, '');
         }
-    };
-
+    }
 }
 StringArrayProperty.prototype._typeid = 'String';
 
@@ -615,7 +609,7 @@ export class BoolArrayProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params, Array, true);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -626,6 +620,6 @@ export class BoolArrayProperty extends ValueArrayProperty {
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, false);
         }
-    };
+    }
 }
 BoolArrayProperty.prototype._typeid = 'Bool';

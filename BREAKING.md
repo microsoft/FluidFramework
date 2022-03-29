@@ -1,14 +1,56 @@
-## Adding breaking change notes
+# Adding breaking and upcoming change notes
 
-Notes on breaking and otherwise interesting changes go here.  They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
+Notes on breaking, upcoming, and otherwise interesting changes go here.  They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
 
-### Writing a change note
+Upcoming changes include anything expected to become a breaking change in the future.  It can include deprecations, optional to required transitions, etc.  They should be added to the section for the version in which they are being announced.
+
+Breaking changes include anything that a consumer upgrading to the specified version must account for as part of the upgrade process.  It can include expected compile time breaks, runtime compatibility breaks, etc.  They should typically be announced as an upcoming change in an earlier version before becoming a breaking change.
+
+## Writing a change note
 
 There are a few steps you can take to write a good change note and avoid needing to followup for clarification.
 - Provide a concise title.  It should make clear what the topic of the change is.
 - Ensure the affected packages are named or clearly identifiable within the body.
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
+
+# 0.58
+
+## 0.58 Upcoming changes
+- [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
+
+### raiseContainerWarning removed from IContainerContext
+`raiseContainerWarning` property will be removed from `IContainerContext` interface and `ContainerContext` class. Please refer to [raiseContainerWarning property](#Remove-raisecontainerwarning-property) for more details.
+
+## 0.58 Breaking changes
+- [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from-merge-tree-to-sequence-package)
+- [Remove logger property from IContainerContext](#Remove-logger-property-from-IContainerContext)
+- [Set raiseContainerWarning property as optional parameter on IContainerContext](#Set-raiseContainerWarning-property-as-optional-parameter-on-IContainerContext)
+- [Consolidate fluidErrorCode and message on FF Errors](#Consolidate-fluidErrorCode-and-message-on-FF-Errors)
+
+### Move IntervalType from merge-tree to sequence package
+Move the type from the merge-tree package where it isn't used to the sequence package where it is used
+``` diff
+- import { IntervalType } from "@fluidframework/merge-tree";
++ import { IntervalType } from "@fluidframework/sequence";
+```
+
+## Remove logger property from IContainerContext
+The logger property in IContainerContext became an optional parameter in [release 0.56](#Set-logger-property-as-optional-parameter-in-IContainerContext). This property has now been removed. The `taggedLogger` property is now set as a required parameter in `IContainerContext` interface.
+
+## Set raiseContainerWarning property as optional parameter on IContainerContext
+`raiseContainerWarning` is set as an optional parameter on `IContainerContext` interface and would be removed from `IContainerContext` interface and `ContainerContext` class in the next release. Please see [raiseContainerWarning property](#Remove-raisecontainerwarning-property) for more details.
+
+### Consolidate fluidErrorCode and message on FF Errors
+Errors raised by the Fluid Framework will no longer contain the property `fluidErrorCode`.
+This was present in many error constructors, and exposed in the type `IFluidErrorBase`, but has now been removed.
+Previously, the fluidErrorCode value (a pascaleCased term) was often used as the error message itself.
+Now all error messages can be expected to be easily-read sentences,
+sometimes followed by a colon and an inner error message when applicable.
+
+# 0.57
+
+## 0.57 Upcoming changes
 
 ## 0.57 Breaking changes
 - [IFluidConfiguration removed](#IFluidConfiguration-removed)
@@ -109,6 +151,9 @@ When creating root datastores using `ContainerRuntime.createRootDataStore` or `C
 - [wait() methods removed from map and directory](#wait-methods-removed-from-map-and-directory)
 - [Removed containerPath from DriverPreCheckInfo](#removed-containerPath-from-DriverPreCheckInfo)
 - [Removed SharedObject.is](#Removed-SharedObject.is)
+- [Removed IContainerContext.id](#Removed-IContainerContext.id-and-ContainerContext.id)
+- [Remove raiseContainerWarning property](#Remove-raiseContainerWarning-property)
+- [Set logger property as optional parameter in IContainerContext](#Set-logger-property-as-optional-parameter-in-IContainerContext)
 
 ### `MessageType.Save` and code that handled it was removed
 The `Save` operation type was deprecated and has now been removed. This removes `MessageType.Save` from `protocol-definitions`, `save;${string}: ${string}` from `SummarizeReason` in the `container-runtime` package, and `MessageFactory.createSave()` from and `server-test-utils`.
@@ -172,6 +217,24 @@ The `containerPath` property of `DriverPreCheckInfo` was deprecated and has now 
 
 ### Removed `SharedObject.is`
 The `is` method is removed from SharedObject. This was being used to detect SharedObjects stored inside other SharedObjects (and then binding them), which should not be happening anymore. Instead, use handles to SharedObjects.
+
+### Removed IContainerContext.id and ContainerContext.id
+The `id` property of IContainerContext was deprecated and now removed. The `id` property of ContainerContext was deprecated and now removed. id should not be exposed at
+runtime level anymore. Instead, get from container's resolvedURL if necessary.
+
+### Remove raiseContainerWarning property
+
+The `raiseContainerWarning` property is removed from the following interfaces in release 0.56:
+
+- `IContainerRuntime`
+- `IFluidDataStoreContext`
+- `IFluidDataStoreRuntime`
+
+This property was also deprecated in `IContainerContext` and will be removed in a future release. Application developers should generate their own telemetry/logging events.
+
+### Set logger property as optional parameter in IContainerContext
+
+The `logger` property from `IContainerContext` is now optional. It will be removed completely in a future release. Use `taggedLogger` instead. Loggers passed to `ContainerContext` will need to support tagged events.
 
 ## 0.55 Breaking changes
 - [`SharedObject` summary and GC API changes](#SharedObject-summary-and-GC-API-changes)

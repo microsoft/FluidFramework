@@ -6,9 +6,9 @@
  * @fileoverview Helper functions to work with typeid strings
  */
 
-import { TemplateSchema as templateSchemaJson, NativeTypes } from "../templateSchema";
 // @ts-ignore
 import { constants } from "@fluid-experimental/property-common";
+import { TemplateSchema as templateSchemaJson, NativeTypes } from "../templateSchema";
 
 const { MSG } = constants;
 
@@ -81,7 +81,7 @@ export namespace TypeIdHelper {
 
         return {
             version: splitTypeId[1],
-            typeidWithoutVersion: splitTypeId[0]
+            typeidWithoutVersion: splitTypeId[0],
         };
     }
 
@@ -123,13 +123,13 @@ export namespace TypeIdHelper {
             return {
                 typeid,
                 context,
-                isEnum
+                isEnum,
             };
         } else {
             return {
                 typeid: in_typeid,
                 context: "single",
-                isEnum: false
+                isEnum: false,
             };
         }
     }
@@ -168,7 +168,7 @@ export namespace TypeIdHelper {
      * @param in_typeid - The typeid to check
      * @returns Is this a reference property typeid?
      */
-    export function isReferenceTypeId(in_typeid: string | undefined ): boolean { // in_enum
+    export function isReferenceTypeId(in_typeid: string | undefined): boolean { // in_enum
         return in_typeid === "Reference" ||
             (in_typeid.substr(0, 10) === "Reference<" && in_typeid.substr(-1) === ">");
     }
@@ -207,14 +207,13 @@ export namespace TypeIdHelper {
      * @return referenced typeid or in_param if it is not a reference
      */
     export function extractTypeId(in_typeid): string {
-        const matches = in_typeid.match(/\<(.*?)\>/); // eslint-disable-line
+        const matches = in_typeid.match(/\<(.*?)\>/);
         if (matches !== null && matches.length > 0) {
-            return matches[0].replace(/[\<\>]/gi, ""); // eslint-disable-line
+            return matches[0].replace(/[\<\>]/gi, "");
         } else {
             return in_typeid;
         }
     }
-
 
     /**
      * Check wether the in_typeid inherits from the in_baseTypeid
@@ -283,4 +282,4 @@ export namespace TypeIdHelper {
     export function getReservedTypeIds(): string[] {
         return templateSchemaJson["$defs"]["reserved-typeid"]["enum"];
     }
-};
+}

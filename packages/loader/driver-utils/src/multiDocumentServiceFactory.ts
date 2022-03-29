@@ -42,7 +42,11 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         });
     }
     public readonly protocolName = "none:";
-    async createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService> {
+    async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
+    ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         const urlObj = parse(resolvedUrl.url);
         if (urlObj.protocol === undefined || urlObj.protocol === null) {
@@ -53,13 +57,14 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
             throw new Error("Unknown Fluid protocol");
         }
 
-        return factory.createDocumentService(resolvedUrl, logger);
+        return factory.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
     }
 
     public async createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
         const urlObj = parse(createNewResolvedUrl.url);
@@ -70,6 +75,6 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         if (factory === undefined) {
             throw new Error("Unknown Fluid protocol");
         }
-        return factory.createContainer(createNewSummary, createNewResolvedUrl, logger);
+        return factory.createContainer(createNewSummary, createNewResolvedUrl, logger, clientIsSummarizer);
     }
 }

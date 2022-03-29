@@ -7,7 +7,9 @@
         "strictNullChecks": false,
         "rootDir": "./src",
         "outDir": "./dist",
-        "composite": true
+        "composite": true,
+        "types": ["react", "react-dom"],
+        "jsx": "react"
     },
     "include": [
         "src/**/*"

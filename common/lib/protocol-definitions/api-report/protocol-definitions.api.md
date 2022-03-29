@@ -281,8 +281,6 @@ export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>
     // (undocumented)
     get(key: string): any;
     // (undocumented)
-    getApprovalData(key: string): ICommittedProposal | undefined;
-    // (undocumented)
     has(key: string): boolean;
     // (undocumented)
     propose(key: string, value: any): Promise<void>;

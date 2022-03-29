@@ -7,11 +7,12 @@ import { strict as assert } from "assert";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
+import { LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     IntervalCollection,
+    IntervalType,
     ISerializedInterval,
     SequenceInterval,
     SharedString,

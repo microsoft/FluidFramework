@@ -6,13 +6,14 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
+import { ICombiningOp, LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     positionToRowCol,
     rowColToPosition,
     SharedNumberSequence,
     SparseMatrix,
+    IntervalType,
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
 import { CellRange } from "./cellrange";

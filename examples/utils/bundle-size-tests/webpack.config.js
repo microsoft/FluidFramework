@@ -61,13 +61,7 @@ module.exports = {
        */
       exclude: (instance) =>
         // object-is depends on es-abstract 1.18.0-next, which does not satisfy the semver of other packages. We should be able to remove this when es-abstract moves to 1.18.0
-        instance.name === 'es-abstract' ||
-        // socket.io and Fluid Framework do not use compatible versions of debug
-        instance.name === 'debug' ||
-        // socket.io and Fluid Framework do not use compatible versions of isarray
-        instance.name === 'isarray' ||
-        // socket.io and Fluid Framework do not use compatible versions of ms
-        instance.name === 'ms'
+        instance.name === 'es-abstract'
     }),
     new BundleAnalyzerPlugin({
       analyzerMode: 'static',

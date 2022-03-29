@@ -685,6 +685,7 @@ declare function get_current_InterfaceDeclaration_IQuorum():
 declare function use_old_InterfaceDeclaration_IQuorum(
     use: old.IQuorum);
 use_old_InterfaceDeclaration_IQuorum(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IQuorum());
 
 /*

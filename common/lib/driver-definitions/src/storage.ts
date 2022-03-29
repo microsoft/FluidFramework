@@ -304,7 +304,11 @@ export interface IDocumentServiceFactory {
     /**
      * Returns an instance of IDocumentService
      */
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+     createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
+    ): Promise<IDocumentService>;
 
     /**
      * Creates a new document with the provided options. Returns the document service.
@@ -315,6 +319,7 @@ export interface IDocumentServiceFactory {
         createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService>;
 }
 

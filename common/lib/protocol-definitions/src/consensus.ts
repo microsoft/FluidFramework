@@ -77,8 +77,6 @@ export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>
     has(key: string): boolean;
 
     get(key: string): any;
-
-    getApprovalData(key: string): ICommittedProposal | undefined;
 }
 
 /**

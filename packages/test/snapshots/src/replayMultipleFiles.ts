@@ -101,10 +101,17 @@ export async function processOneNode(args: IWorkerArgs) {
 
     replayArgs.verbose = false;
     replayArgs.inDirName = args.folder;
+    // we should be explicit for all channel types in our snapshot tests
+    replayArgs.strictChannels = true;
     // The output snapshots to compare against are under "currentSnapshots" sub-directory.
     replayArgs.outDirName = `${args.folder}/${currentSnapshots}`;
-    replayArgs.snapFreq = args.snapFreq;
-
+    if (args.mode === Mode.NewSnapshots) {
+        // when generating new snapshots, match those from
+        // the original file based on summarize ops
+        replayArgs.testSummaries = true;
+    } else{
+        replayArgs.snapFreq = args.snapFreq;
+    }
     replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;
     replayArgs.compare = args.mode === Mode.Compare;
     // Make it easier to see problems in stress tests
@@ -149,7 +156,6 @@ export async function processContent(mode: Mode, concurrently = true) {
             console.error(`Can't locate ${messages}`);
             continue;
         }
-
         // Clean up any failed snapshots that might have been written out in previous test run.
         cleanFailedSnapshots(folder);
 
@@ -216,7 +222,7 @@ async function processNodeForValidate(
 }
 
 /**
- * In UdpateSnapshots mode, the snapshot format has changed and we need to update the reference snapshot files with the
+ * In UpdateSnapshots mode, the snapshot format has changed and we need to update the reference snapshot files with the
  * newer version. We need to do the following:
  * - Move the current snapshot files to a new sub-folder in the older snapshots folder.
  * - Update the current snapshot files to the newer version.
@@ -233,7 +239,7 @@ async function processNodeForUpdatingSnapshots(
     const versionFileName = `${currentSnapshotsDir}/snapshotVersion.json`;
     assert(fs.existsSync(versionFileName), `Version file ${versionFileName} does not exist`);
 
-    // Get the version of the current snapshots. This becomes the the folder name under the "src_snapshtos" folder
+    // Get the version of the current snapshots. This becomes the the folder name under the "src_snapshots" folder
     // where these snapshots will be moved.
     const versionContent = JSON.parse(fs.readFileSync(`${versionFileName}`, "utf-8"));
     const version = versionContent.snapshotVersion;
@@ -265,7 +271,7 @@ async function processNodeForNewSnapshots(
     limiter: ConcurrencyLimiter,
 ) {
     const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
-    // If current snapshots dir already exists, these are existing snapshtos. We should skip because we don't want to
+    // If current snapshots dir already exists, these are existing snapshots. We should skip because we don't want to
     // update them.
     if (fs.existsSync(currentSnapshotsDir)) {
         return;
@@ -330,7 +336,7 @@ async function processNodeForBackCompat(data: IWorkerArgs) {
  * the threads. If concurrently if false, directly processes the snapshots.
  */
 async function processNode(
-    data: IWorkerArgs,
+    workerData: IWorkerArgs,
     concurrently: boolean,
     limiter: ConcurrencyLimiter,
 ) {
@@ -343,11 +349,11 @@ async function processNode(
     }
 
     if (!concurrently || !threads) {
-        await processOneNode(data);
+        await processOneNode(workerData);
         return;
     }
 
-    await (async (workerData: IWorkerArgs) => limiter.addWork(async () => new Promise((resolve, reject) => {
+    return limiter.addWork(async () => new Promise((resolve, reject) => {
         const worker = new threads.Worker(workerLocation, { workerData });
 
         worker.on("message", (message: string) => {
@@ -360,22 +366,23 @@ async function processNode(
                 + `If you changed snapshot representation and validated new format is backward`
                 + ` compatible, you can run 'npm run test:update' to update baseline snapshot files.\n`
                 + `Check README.md for more details.`;
-                reject(new Error(`${message}\n\n${extra}`));
+                reject(new Error(`${JSON.stringify(workerData)}\n${message}\n\n${extra}`));
             } else {
-                reject(new Error(message));
+                reject(new Error(`${JSON.stringify(workerData)}\nmessage`));
             }
         });
 
         worker.on("error", (error) => {
+            error.message = `${JSON.stringify(workerData)}\n${error.message}`;
             reject(error);
         });
 
         worker.on("exit", (code) => {
             if (code !== 0) {
-                reject(new Error(`Worker stopped with exit code ${code}`));
+                reject(new Error(`${JSON.stringify(workerData)}\nWorker stopped with exit code ${code}`));
             }
         });
-    })))(data);
+    }));
 }
 
 /**

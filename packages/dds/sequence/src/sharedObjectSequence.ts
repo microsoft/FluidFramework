@@ -27,7 +27,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
      * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
      * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
      */
-    // eslint-disable-next-line @typescript-eslint/no-shadow
+
     public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, SharedObjectSequenceFactory.Type) as SharedObjectSequence<T>;
     }

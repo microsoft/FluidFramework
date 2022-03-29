@@ -225,6 +225,8 @@ const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
+const summarizerClientType = "summarizer";
+
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
 
@@ -259,7 +261,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
-                    reject(err ?? new GenericError("containerClosedWithoutErrorDuringLoad"));
+                    // pre-0.58 error message: containerClosedWithoutErrorDuringLoad
+                    reject(err ?? new GenericError("Container closed without error during load"));
                 };
                 container.on("closed", onClosed);
 
@@ -563,6 +566,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 error: {
                     // load information to associate errors with the specific load point
                     dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
+                    dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
                     dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
                     containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
                     containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
@@ -589,7 +593,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.connectionStateHandler = new ConnectionStateHandler(
             {
-                protocolHandler: () => this._protocolHandler,
+                quorumClients: () => this._protocolHandler?.quorum,
                 logConnectionStateChangeTelemetry: (value, oldState, reason) =>
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
@@ -780,7 +784,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public async attach(request: IRequest): Promise<void> {
         await PerformanceEvent.timedExecAsync(this.mc.logger, { eventName: "Attach" }, async () => {
             if (this._lifecycleState !== "loaded") {
-                throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
+                // pre-0.58 error message: containerNotValidForAttach
+                throw new UsageError(`The Container is not in a valid state for attach [${this._lifecycleState}]`);
             }
 
             // If container is already attached or attach is in progress, throw an error.
@@ -820,11 +825,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const createNewResolvedUrl = await this.urlResolver.resolve(request);
                 ensureFluidResolvedUrl(createNewResolvedUrl);
                 if (this.service === undefined) {
+                    assert(this.client.details.type !== summarizerClientType,
+                        "client should not be summarizer before container is created");
                     this.service = await runWithRetry(
                         async () => this.serviceFactory.createContainer(
                             summary,
                             createNewResolvedUrl,
                             this.subLogger,
+                            false, // clientIsSummarizer
                         ),
                         "containerAttach",
                         this.mc.logger,
@@ -1020,7 +1028,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
-        this.close(new GenericError("existingContextDoesNotSatisfyIncomingProposal"));
+        // pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
+        this.close(new GenericError("Existing context does not satisfy incoming proposal"));
     }
 
     private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -1060,7 +1069,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
         }
-        this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl, this.subLogger);
+        this.service = await this.serviceFactory.createDocumentService(
+            this._resolvedUrl,
+            this.subLogger,
+            this.client.details.type === summarizerClientType,
+        );
 
         // Ideally we always connect as "read" by default.
         // Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
@@ -1328,8 +1341,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             proposals,
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-            // Quorum proposal rejection removed, delete when protocol-base 0.1035 is integrated.
-            () => {});
+        );
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1643,17 +1655,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Check and report if we're getting messages from a clientId that we previously
         // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
         if (message.clientId != null) {
-            let errorCode: string | undefined;
+            let errorMsg: string | undefined;
             const client: ILocalSequencedClient | undefined =
                 this.getQuorum().getMember(message.clientId);
             if (client === undefined && message.type !== MessageType.ClientJoin) {
-                errorCode = "messageClientIdMissingFromQuorum";
+                // pre-0.58 error message: messageClientIdMissingFromQuorum
+                errorMsg = "Remote message's clientId is missing from the quorum";
             } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
-                errorCode = "messageClientIdShouldHaveLeft";
+                // pre-0.58 error message: messageClientIdShouldHaveLeft
+                errorMsg = "Remote message's clientId already should have left";
             }
-            if (errorCode !== undefined) {
+            if (errorMsg !== undefined) {
                 const error = new DataCorruptionError(
-                    errorCode,
+                    errorMsg,
                     extractSafePropertiesFromMessage(message));
                 this.close(normalizeError(error));
             }

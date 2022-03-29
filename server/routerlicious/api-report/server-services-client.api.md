@@ -7,6 +7,7 @@
 import * as api from '@fluidframework/protocol-definitions';
 import { AxiosInstance } from 'axios';
 import { AxiosRequestConfig } from 'axios';
+import { AxiosRequestHeaders } from 'axios';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
@@ -20,7 +21,7 @@ import { SummaryObject } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
 export class BasicRestWrapper extends RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: Record<string, unknown>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: Record<string, unknown>, axios?: AxiosInstance, refreshDefaultQueryString?: () => Record<string, unknown>, refreshDefaultHeaders?: () => Record<string, unknown>, getCorrelationId?: () => string | undefined);
+    constructor(baseurl?: string, defaultQueryString?: Record<string, unknown>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: AxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: () => Record<string, unknown>, refreshDefaultHeaders?: () => AxiosRequestHeaders, getCorrelationId?: () => string | undefined);
     // (undocumented)
     protected request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
 }
@@ -502,19 +503,19 @@ export abstract class RestWrapper {
     // (undocumented)
     protected defaultQueryString: Record<string, unknown>;
     // (undocumented)
-    delete<T>(url: string, queryString?: Record<string, unknown>, headers?: Record<string, unknown>): Promise<T>;
+    delete<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
     // (undocumented)
     protected generateQueryString(queryStringValues: Record<string, unknown>): string;
     // (undocumented)
-    get<T>(url: string, queryString?: Record<string, unknown>, headers?: Record<string, unknown>): Promise<T>;
+    get<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
     // (undocumented)
     protected readonly maxBodyLength: number;
     // (undocumented)
     protected readonly maxContentLength: number;
     // (undocumented)
-    patch<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: Record<string, unknown>): Promise<T>;
+    patch<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
     // (undocumented)
-    post<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: Record<string, unknown>): Promise<T>;
+    post<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
     // (undocumented)
     protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 }

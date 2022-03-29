@@ -121,7 +121,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 
     for(const testConfig of testConfigs) {
         it(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function() {
-            const provider  = getTestObjectProvider();
+            const provider = getTestObjectProvider();
             switch(provider.driver.type) {
                 case "local":
                 case "tinylicious":
@@ -159,7 +159,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                                         return policies;
                                     }
 
-                                    return Reflect.get(target, prop,r);
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                                    return Reflect.get(target, prop, r);
                                 },
                             }),
                 };

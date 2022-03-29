@@ -323,8 +323,6 @@ export class EpochTracker implements IPersistedFileCache {
         if (isFluidError(error) && error.errorType === DriverErrorType.fileOverwrittenInStorage) {
             const epochError = this.checkForEpochErrorCore(epochFromResponse);
             if (epochError !== undefined) {
-                assert(isFluidError(epochError),
-                    0x21f /* "epochError expected to be thrown by throwOdspNetworkError and of known type" */);
                 epochError.addTelemetryProperties({
                     fromCache,
                     clientEpoch: this.fluidEpoch,
@@ -338,7 +336,10 @@ export class EpochTracker implements IPersistedFileCache {
             // If it was categorized as epoch error but the epoch returned in response matches with the client epoch
             // then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
             // time is 1s.
-            throw new ThrottlingError("coherency409", error.message, 1, { [Odsp409Error]: true, driverVersion });
+            throw new ThrottlingError(
+                `Coherency 409: ${error.message}`,
+                1 /* retryAfterSeconds */,
+                { [Odsp409Error]: true, driverVersion });
         }
     }
 
@@ -350,7 +351,7 @@ export class EpochTracker implements IPersistedFileCache {
             // This is similar in nature to how fluidEpochMismatchError (409) is handled.
             // Difference - client detected mismatch, instead of server detecting it.
             return new NonRetryableError(
-                "epochMismatch", "Epoch mismatch", DriverErrorType.fileOverwrittenInStorage, { driverVersion });
+                "Epoch mismatch", DriverErrorType.fileOverwrittenInStorage, { driverVersion });
         }
     }
 

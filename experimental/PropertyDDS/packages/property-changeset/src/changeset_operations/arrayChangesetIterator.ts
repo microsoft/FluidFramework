@@ -6,7 +6,6 @@
  * @fileoverview Iterator to iterate over array ChangeSets
  */
 
-
  import isNumber from "lodash/isNumber";
  import isString from "lodash/isString";
 
@@ -16,17 +15,12 @@ import { constants } from "@fluid-experimental/property-common";
 import { SerializedChangeSet } from "../changeset";
 import { ArrayIteratorOperationTypes } from "./operationTypes";
 
-
 const { MSG } = constants;
 
-
-
-type genericArray = Array<number | string | (SerializedChangeSet & {typeid:string})>;
-export type arrayInsertList = [number, string | genericArray]
-export type arrayModifyList = [number, string | genericArray] | [number, string, string] | [number, genericArray, genericArray]
-export type arrayRemoveList = [number, number | string | genericArray]
-
-
+type genericArray = (number | string | (SerializedChangeSet & {typeid: string}))[];
+export type arrayInsertList = [number, string | genericArray];
+export type arrayModifyList = [number, string | genericArray] | [number, string, string] | [number, genericArray, genericArray];
+export type arrayRemoveList = [number, number | string | genericArray];
 
 /**
  * Description of an array operation
@@ -45,7 +39,6 @@ export interface InsertOperation extends OperationDescription {
     removeInsertOperation?: arrayInsertList;
     operation?: arrayInsertList;
 }
-
 
 /**
  * Description of a remove array operation
@@ -68,7 +61,7 @@ export interface ModifyOperation extends OperationDescription {
 /**
  * Description of a modify array operation
  */
- export interface NOPOperation extends Omit<OperationDescription, "removeInsertOperation"|"operation"> {
+ export interface NOPOperation extends Omit<OperationDescription, "removeInsertOperation" | "operation"> {
     type: ArrayIteratorOperationTypes.NOP;
     operation?: [];
 }
@@ -85,9 +78,9 @@ export type GenericOperation = NoneNOPOperation | NOPOperation;
 export class ArrayChangeSetIterator {
     static types = ArrayIteratorOperationTypes; // @TODO Not sure if this is still required if we export it separately.
 
-    private _changeSet: SerializedChangeSet;
+    private readonly _changeSet: SerializedChangeSet;
     private _copiedModifies: string | any[];
-    private _currentIndices: { insert: number; remove: number; modify: number; };
+    private readonly _currentIndices: { insert: number; remove: number; modify: number; };
     private _currentOffset: number;
     private _lastOperationIndex: number;
     private _lastOperationOffset: number;
@@ -133,7 +126,7 @@ export class ArrayChangeSetIterator {
         this._op = {
             type: ArrayIteratorOperationTypes.NOP,
             offset: 0,
-            operation: undefined
+            operation: undefined,
         };
 
         // go to the first element
@@ -272,14 +265,14 @@ export class ArrayChangeSetIterator {
         }
         this._atEnd = false;
         return true;
-    };
+    }
 
     /**
      * @returns true, if there are no more operations left
      */
     atEnd(): boolean {
         return this._atEnd;
-    };
+    }
 
     private _copyModifies(in_modifies: string[]) {
         if (!in_modifies || in_modifies.length === 0) {
@@ -290,5 +283,5 @@ export class ArrayChangeSetIterator {
             result.push([in_modifies[i][0], in_modifies[i][1].slice()]);
         }
         return result;
-    };
-};
+    }
+}
