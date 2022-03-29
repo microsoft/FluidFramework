@@ -431,8 +431,8 @@ describe("Garbage Collection Tests", () => {
     });
 
     /**
-     * These tests validate such scenarios where nodes transition from unreferenced -> referenced -> ureferenced state
-     * by verifing that their unreferenced timestamps are updated correctly.
+     * These tests validate such scenarios where nodes transition from unreferenced -> referenced -> unreferenced state
+     * by verifying that their unreferenced timestamps are updated correctly.
      *
      * In these tests, V = nodes and E = edges between nodes. Root nodes that are always referenced are marked as *.
      */
@@ -457,7 +457,7 @@ describe("Garbage Collection Tests", () => {
 
             let rootGCState: IGarbageCollectionState = { gcNodes: {} };
             for (const key of Object.keys(summaryTree.tree)) {
-                // Skip blobs that do not stsart with the GC prefix.
+                // Skip blobs that do not start with the GC prefix.
                 if (!key.startsWith(gcBlobPrefix)) {
                     continue;
                 }

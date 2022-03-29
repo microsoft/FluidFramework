@@ -93,7 +93,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
      * 1 containers root.
      * 3 data stores.
      * 3 x 1 DDS for each data store.
-     * 2 external blobs.
+     * 2 attachment blobs.
      */
     it("can correctly generate GC stats without unreferenced nodes", async () => {
         const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
@@ -105,16 +105,16 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
-            blobCount: 2,
-            unrefBlobCount: 0,
-            updatedBlobCount: 0,
+            attachmentBlobCount: 2,
+            unrefAttachmentBlobCount: 0,
+            updatedAttachmentBlobCount: 0,
         };
 
         // Add both data store handles in default data store to mark them referenced.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         defaultDataStore._root.set("dataStore2", dataStore2.handle);
 
-        // Upload 2 blobs and store their handles to mark them referenced.
+        // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
         const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
@@ -142,16 +142,16 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
-            blobCount: 2,
-            unrefBlobCount: 0,
-            updatedBlobCount: 0,
+            attachmentBlobCount: 2,
+            unrefAttachmentBlobCount: 0,
+            updatedAttachmentBlobCount: 0,
         };
 
         // Add both data store handles in default data store to mark them referenced.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         defaultDataStore._root.set("dataStore2", dataStore2.handle);
 
-        // Upload 2 blobs and store their handles to mark them referenced.
+        // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
         const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
@@ -172,8 +172,8 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         expectedGCStats.updatedNodeCount = 3;
         expectedGCStats.unrefDataStoreCount = 1;
         expectedGCStats.updatedDataStoreCount = 1;
-        expectedGCStats.unrefBlobCount = 1;
-        expectedGCStats.updatedBlobCount = 1;
+        expectedGCStats.unrefAttachmentBlobCount = 1;
+        expectedGCStats.updatedAttachmentBlobCount = 1;
 
         let gcStats = await containerRuntime.collectGarbage({});
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
@@ -197,8 +197,8 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         expectedGCStats.updatedNodeCount = 3;
         expectedGCStats.unrefDataStoreCount = 2;
         expectedGCStats.updatedDataStoreCount = 1;
-        expectedGCStats.unrefBlobCount = 2;
-        expectedGCStats.updatedBlobCount = 1;
+        expectedGCStats.unrefAttachmentBlobCount = 2;
+        expectedGCStats.updatedAttachmentBlobCount = 1;
 
         gcStats = await containerRuntime.collectGarbage({});
         assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
@@ -222,16 +222,16 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
-            blobCount: 2,
-            unrefBlobCount: 0,
-            updatedBlobCount: 0,
+            attachmentBlobCount: 2,
+            unrefAttachmentBlobCount: 0,
+            updatedAttachmentBlobCount: 0,
         };
 
         // Add both data store handles in default data store to mark them referenced.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         defaultDataStore._root.set("dataStore2", dataStore2.handle);
 
-        // Upload 2 blobs and store their handles to mark them referenced.
+        // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
         const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
@@ -272,9 +272,9 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
             dataStoreCount: 3,
             unrefDataStoreCount: 0,
             updatedDataStoreCount: 0,
-            blobCount: 0,
-            unrefBlobCount: 0,
-            updatedBlobCount: 0,
+            attachmentBlobCount: 0,
+            unrefAttachmentBlobCount: 0,
+            updatedAttachmentBlobCount: 0,
         };
 
         // Add both data store handles in default data store to mark them referenced.

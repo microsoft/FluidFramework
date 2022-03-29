@@ -193,7 +193,8 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
         }
 
         /**
-         * Validates the blob's reference state in the GC summary tree and in the blob summary tree.
+         * Validates the reference state of the attachment blob with the given handle in the GC summary tree and in
+         * the blob summary tree.
          */
         async function validateBlobsReferenceState(
             blobHandle: IFluidHandle<ArrayBufferLike>,
@@ -206,7 +207,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             const blobsTree = (summary.tree[".blobs"] as ISummaryTree).tree;
             let blobFound = false;
             for (const [, attachment] of Object.entries(blobsTree)) {
-                assert(attachment.type === SummaryType.Attachment, "blob tree should only contain attachments");
+                assert(attachment.type === SummaryType.Attachment, "blob tree should only contain attachment blobs");
                 if (attachment.id === blobId) {
                     blobFound = true;
                 }
@@ -261,7 +262,8 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             );
         });
 
-        it("deletes external blobs when unreferenced", async () => {
+        it("marks attachment blobs as referenced / unreferenced correctly", async () => {
+            // Upload couple of attachment blobs and mark them referenced.
             const blob1Contents = "Blob contents 1";
             const blob2Contents = "Blob contents 2";
             const blob1Handle = await defaultDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
@@ -271,12 +273,12 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
             await validateBlobsReferenceState(blob1Handle, true /* referenced */);
             await validateBlobsReferenceState(blob2Handle, true /* referenced */);
 
-            // Remove its handle and verify its marked as unreferenced.
+            // Remove blob1's handle and verify its marked as unreferenced.
             defaultDataStore._root.delete("blob1");
             await validateBlobsReferenceState(blob1Handle, false /* referenced */);
 
-            // Add data store's handle back in root component. If deleteUnreferencedContent is true, the data store
-            // should get deleted and should remain unreferenced. Otherwise, it should be referenced back.
+            // Add blob1's handle back. If deleteUnreferencedContent is true, the blob should get deleted and should
+            // remain unreferenced. Otherwise, it should be referenced back.
             // Also, if deleteUnreferencedContent is true, it won't be in the GC state in the summary anymore.
             defaultDataStore._root.set("blob1", blob1Handle);
             await validateBlobsReferenceState(

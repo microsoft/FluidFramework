@@ -76,20 +76,20 @@ export interface IGCStats {
     nodeCount: number;
     /** The number of data stores in the container. */
     dataStoreCount: number;
-    /** The number of external blobs in the container. */
-    blobCount: number;
+    /** The number of attachment blobs in the container. */
+    attachmentBlobCount: number;
     /** The number of unreferenced nodes in the container. */
     unrefNodeCount: number;
     /** The number of unreferenced data stores in the container. */
     unrefDataStoreCount: number;
-    /** The number of unreferenced external blobs in the container. */
-    unrefBlobCount: number;
+    /** The number of unreferenced attachment blobs in the container. */
+    unrefAttachmentBlobCount: number;
     /** The number of nodes whose reference state updated since last GC run. */
     updatedNodeCount: number;
     /** The number of data stores whose reference state updated since last GC run. */
     updatedDataStoreCount: number;
-    /** The number of external blobs whose reference state updated since last GC run. */
-    updatedBlobCount: number;
+    /** The number of attachment blobs whose reference state updated since last GC run. */
+    updatedAttachmentBlobCount: number;
 }
 
 /** The types of GC nodes in the GC reference graph. */
@@ -950,13 +950,13 @@ export class GarbageCollector implements IGarbageCollector {
         const gcStats: IGCStats = {
             nodeCount: 0,
             dataStoreCount: 0,
-            blobCount: 0,
+            attachmentBlobCount: 0,
             unrefNodeCount: 0,
             unrefDataStoreCount: 0,
-            unrefBlobCount: 0,
+            unrefAttachmentBlobCount: 0,
             updatedNodeCount: 0,
             updatedDataStoreCount: 0,
-            updatedBlobCount: 0,
+            updatedAttachmentBlobCount: 0,
         };
 
         const updateNodeStats = (nodeId: string, referenced: boolean) => {
@@ -983,12 +983,12 @@ export class GarbageCollector implements IGarbageCollector {
                 }
             }
             if (this.runtime.getNodeType(nodeId) === GCNodeType.Blob) {
-                gcStats.blobCount++;
+                gcStats.attachmentBlobCount++;
                 if (stateUpdated) {
-                    gcStats.updatedBlobCount++;
+                    gcStats.updatedAttachmentBlobCount++;
                 }
                 if (!referenced) {
-                    gcStats.unrefBlobCount++;
+                    gcStats.unrefAttachmentBlobCount++;
                 }
             }
         };

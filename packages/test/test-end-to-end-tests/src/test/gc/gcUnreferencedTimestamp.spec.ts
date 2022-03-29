@@ -191,10 +191,10 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             assert(dsBTimestamp4 === undefined, `data store should not have unreferenced timestamp anymore`);
         });
 
-        it("adds / removes unreferenced timestamp for external blobs correctly", async () => {
+        it("adds / removes unreferenced timestamp for attachment blobs correctly", async () => {
             const summarizerClient = await getNewSummarizer();
 
-            // Upload a new blob and mark it as referenced by storing its handle in a referenced DDS.
+            // Upload an attachment blob and mark it as referenced by storing its handle in a referenced DDS.
             const blob1Contents = "Blob contents 1";
             const blob1Handle = await dataStoreA._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
             const blob1NodePath = blob1Handle.absolutePath.slice(1);
@@ -235,7 +235,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             const dataStoreB = await dataObjectFactory.createInstance(dataStoreA.containerRuntime);
             dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
-            // Upload a blob and mark it as referenced by storing its handle in a referenced DDS.
+            // Upload an attachment blob and mark it as referenced by storing its handle in a referenced DDS.
             const blob1Contents = "Blob contents 1";
             const blob1Handle = await dataStoreA._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
             const blob1NodePath = blob1Handle.absolutePath.slice(1);

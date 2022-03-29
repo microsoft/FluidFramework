@@ -354,13 +354,13 @@ export interface IGCRuntimeOptions {
 
 // @public
 export interface IGCStats {
-    blobCount: number;
+    attachmentBlobCount: number;
     dataStoreCount: number;
     nodeCount: number;
-    unrefBlobCount: number;
+    unrefAttachmentBlobCount: number;
     unrefDataStoreCount: number;
     unrefNodeCount: number;
-    updatedBlobCount: number;
+    updatedAttachmentBlobCount: number;
     updatedDataStoreCount: number;
     updatedNodeCount: number;
 }
