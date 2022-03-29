@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { comparePayloads } from './EditUtilities';
 import { ForestNode } from './Forest';
-import { comparePayloads } from './generic';
 
 /**
  * @returns true iff two `ForestNodes` are equivalent.

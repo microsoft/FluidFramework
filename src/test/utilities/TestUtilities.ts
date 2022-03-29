@@ -21,8 +21,7 @@ import {
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	createAndAttachContainer,
-	// KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
-} from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
+} from '@fluidframework/test-utils';
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { assert } from '@fluidframework/common-utils';
@@ -30,31 +29,23 @@ import type { IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { DetachedSequenceId, EditId, NodeId, StableNodeId } from '../../Identifiers';
 import { assertNotUndefined, fail, identity } from '../../Common';
-import { SharedTree, Change, setTrait, ChangeInternal, StablePlace, getNodeId } from '../../default-edits';
-import {
-	ChangeNode,
-	Edit,
-	getUploadedEditChunkContents,
-	newEdit,
-	NodeData,
-	NodeIdContext,
-	NodeIdConverter,
-	Payload,
-	SharedTreeDiagnosticEvent,
-	SharedTreeSummaryWriteFormat,
-	TraitLocation,
-	TreeView,
-} from '../../generic';
 import { EditLog } from '../../EditLog';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
-import { GenericSharedTree, reservedIdCount } from '../../generic/GenericSharedTree';
 import { getChangeNodeFromView, getChangeNodeFromViewNode } from '../../SerializationUtilities';
 import { initialTree } from '../../InitialTree';
+import { ChangeInternal, ChangeNode, Edit, NodeData, Payload, WriteFormat } from '../../persisted-types';
+import { TraitLocation, TreeView } from '../../TreeView';
+import { SharedTreeDiagnosticEvent } from '../../EventTypes';
+import { getNodeId, NodeIdContext, NodeIdConverter } from '../../NodeIdUtilities';
+import { newEdit, setTrait } from '../../EditUtilities';
+import { getUploadedEditChunkContents } from '../../SummaryTestUtilities';
+import { reservedIdCount, SharedTree } from '../../SharedTree';
+import { Change, StablePlace } from '../../ChangeTypes';
 import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
-export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
+export interface SharedTreeTestingComponents {
 	/** The MockFluidDataStoreRuntime used to created the SharedTree. */
 	componentRuntime: MockFluidDataStoreRuntime;
 	/**
@@ -63,7 +54,7 @@ export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
 	 * */
 	containerRuntimeFactory: MockContainerRuntimeFactory;
 	/** The SharedTree created and set up. */
-	tree: TSharedTree;
+	tree: SharedTree;
 }
 
 /** Options used to customize setUpTestSharedTree */
@@ -96,7 +87,7 @@ export interface SharedTreeTestingOptions {
 	/**
 	 * If not set, summaries will be written in format 0.0.2.
 	 */
-	writeSummaryFormat?: SharedTreeSummaryWriteFormat;
+	writeFormat?: WriteFormat;
 	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
@@ -120,8 +111,7 @@ export function testTrait(view: TreeView): TraitLocation {
 export function setUpTestSharedTree(
 	options: SharedTreeTestingOptions = { localMode: true }
 ): SharedTreeTestingComponents {
-	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId, summarizeHistory, writeSummaryFormat } =
-		options;
+	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId, summarizeHistory, writeFormat } = options;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
 		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
@@ -138,7 +128,7 @@ export function setUpTestSharedTree(
 	}
 
 	// Enable expensiveValidation
-	const factory = SharedTree.getFactory(summarizeHistory === undefined ? true : summarizeHistory, writeSummaryFormat);
+	const factory = SharedTree.getFactory(summarizeHistory === undefined ? true : summarizeHistory, writeFormat);
 	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true);
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
@@ -185,11 +175,11 @@ export function setUpTestSharedTree(
 const TestDataStoreType = '@fluid-example/test-dataStore';
 
 /** Objects returned by setUpLocalServerTestSharedTree */
-export interface LocalServerSharedTreeTestingComponents<TSharedTree = SharedTree> {
+export interface LocalServerSharedTreeTestingComponents {
 	/** The testObjectProvider created if one was not set in the options. */
 	testObjectProvider: TestObjectProvider;
 	/** The SharedTree created and set up. */
-	tree: TSharedTree;
+	tree: SharedTree;
 	/** The container created and set up. */
 	container: Container;
 }
@@ -213,7 +203,7 @@ export interface LocalServerSharedTreeTestingOptions {
 	/**
 	 * If not set, summaries will be written in format 0.0.2.
 	 */
-	writeSummaryFormat?: SharedTreeSummaryWriteFormat;
+	writeFormat?: WriteFormat;
 	/**
 	 * If not set, will upload edit chunks when they are full.
 	 */
@@ -241,7 +231,7 @@ afterEach(() => {
 export async function setUpLocalServerTestSharedTree(
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents> {
-	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory, writeSummaryFormat, uploadEditChunks } =
+	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory, writeFormat, uploadEditChunks } =
 		options;
 
 	const treeId = id ?? 'test';
@@ -250,7 +240,7 @@ export async function setUpLocalServerTestSharedTree(
 			treeId,
 			SharedTree.getFactory(
 				summarizeHistory === undefined ? true : summarizeHistory,
-				writeSummaryFormat,
+				writeFormat,
 				uploadEditChunks === undefined ? true : uploadEditChunks
 			),
 		],
@@ -350,7 +340,7 @@ export function createStableEdits(
 }
 
 /** Asserts that changes to SharedTree in editor() function do not cause any observable state change */
-export function assertNoDelta(tree: GenericSharedTree<any, any, any>, editor: () => void) {
+export function assertNoDelta(tree: SharedTree, editor: () => void) {
 	const viewA = tree.currentView;
 	editor();
 	const viewB = tree.currentView;
@@ -418,7 +408,7 @@ export function getDocumentFiles(document: string): {
 	blobsByVersion: Map<string, string>;
 	history: Edit<ChangeInternal>[];
 	changeNode: ChangeNode;
-	sortedVersions: string[];
+	sortedVersions: WriteFormat[];
 } {
 	// Cache the contents of the relevant files here to avoid loading more than once.
 	// Map containing summary file contents, keys are summary versions, values have file contents
@@ -486,7 +476,7 @@ export function getDocumentFiles(document: string): {
 
 	const history = assertNotUndefined(historyOrUndefined);
 	const changeNode = assertNotUndefined(changeNodeOrUndefined);
-	const sortedVersions = Array.from(summaryByVersion.keys()).sort(versionComparator);
+	const sortedVersions = Array.from(summaryByVersion.keys()).sort(versionComparator) as WriteFormat[];
 
 	return {
 		summaryByVersion,
@@ -509,7 +499,7 @@ export async function createDocumentFiles(document: string, history: Edit<Change
 		fs.mkdirSync(directory);
 	}
 
-	const writeFormats = [SharedTreeSummaryWriteFormat.Format_0_0_2, SharedTreeSummaryWriteFormat.Format_0_1_1];
+	const writeFormats = [WriteFormat.v0_0_2, WriteFormat.v0_1_1];
 
 	fs.writeFileSync(join(directory, 'history.json'), JSON.stringify(history));
 
@@ -530,7 +520,7 @@ export async function createDocumentFiles(document: string, history: Edit<Change
 	for (const format of writeFormats) {
 		const { tree: tree2, testObjectProvider: testObjectProvider2 } = await setUpLocalServerTestSharedTree({
 			setupEditId: summaryCompatibilityTestSetupEditId,
-			writeSummaryFormat: format,
+			writeFormat: format,
 		});
 
 		tree2.loadSummary(summary);
@@ -550,7 +540,7 @@ export async function createDocumentFiles(document: string, history: Edit<Change
 		const { tree: tree3, testObjectProvider: testObjectProvider3 } = await setUpLocalServerTestSharedTree({
 			setupEditId: summaryCompatibilityTestSetupEditId,
 			summarizeHistory: false,
-			writeSummaryFormat: format,
+			writeFormat: format,
 		});
 
 		tree3.loadSummary(summary);

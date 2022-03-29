@@ -5,7 +5,9 @@
 
 import { copyPropertyIfDefined, memoizeGetter } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
-import { ChangeNode, ChangeNode_0_0_2, NodeIdConverter, TraitMap, TreeView } from './generic';
+import { NodeIdConverter } from './NodeIdUtilities';
+import { ChangeNode, ChangeNode_0_0_2, TraitMap } from './persisted-types';
+import { TreeView } from './TreeView';
 
 /**
  * Converts this tree view to an equivalent `ChangeNode`.

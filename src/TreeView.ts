@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from '../Common';
-import { NodeId, TraitLabel } from '../Identifiers';
-import { Delta, Forest } from '../Forest';
+import { assert, fail } from './Common';
+import { NodeId, TraitLabel } from './Identifiers';
+import { Delta, Forest } from './Forest';
 import { NodeData, Side } from './persisted-types';
 
 /**

@@ -4,10 +4,10 @@
  */
 
 import { IRevertible, UndoRedoStackManager } from '@fluidframework/undo-redo';
-import { assertNotUndefined } from '../Common';
-import { EditId } from '../Identifiers';
-import { EditCommittedEventArguments, SharedTreeEvent } from '../generic';
-import { SharedTree } from './SharedTree';
+import { assertNotUndefined } from './Common';
+import { SharedTreeEvent } from './EventTypes';
+import { EditId } from './Identifiers';
+import { EditCommittedEventArguments, SharedTree } from './SharedTree';
 
 /**
  * A shared tree undo redo handler that will add revertible local tree changes to the provided
@@ -23,7 +23,7 @@ export class SharedTreeUndoRedoHandler {
 		tree.off(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);
 	}
 
-	private readonly treeDeltaHandler = (eventArguments: EditCommittedEventArguments<SharedTree>) => {
+	private readonly treeDeltaHandler = (eventArguments: EditCommittedEventArguments) => {
 		const { editId, local, tree } = eventArguments;
 
 		if (local) {

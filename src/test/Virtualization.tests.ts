@@ -4,14 +4,23 @@
  */
 
 import { expect } from 'chai';
-// KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
-import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
-import { EditHandle, EditLog } from '../EditLog';
-import { Edit, SharedTreeSummary, SharedTreeDiagnosticEvent, SharedTreeSummaryWriteFormat } from '../generic';
-import { SharedTree, Change, ChangeInternal } from '../default-edits';
+import { TestObjectProvider } from '@fluidframework/test-utils';
+import { EditLog } from '../EditLog';
 import { assertNotUndefined } from '../Common';
-import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
 import { initialTree } from '../InitialTree';
+import { SharedTree } from '../SharedTree';
+import {
+	ChangeInternal,
+	Edit,
+	FluidEditHandle,
+	SharedTreeSummary,
+	SharedTreeSummary_0_0_2,
+	WriteFormat,
+} from '../persisted-types';
+import { Change } from '../ChangeTypes';
+import { SharedTreeDiagnosticEvent } from '../EventTypes';
+import { StringInterner } from '../StringInterner';
+import { TreeCompressor_0_1_1 } from '../TreeCompressor';
 import { applyNoop, createStableEdits, setUpLocalServerTestSharedTree } from './utilities/TestUtilities';
 
 describe('SharedTree history virtualization', () => {
@@ -23,7 +32,7 @@ describe('SharedTree history virtualization', () => {
 	function createCatchUpSummary(): SharedTreeSummary_0_0_2<Change> {
 		return {
 			currentTree: initialTree,
-			version: '0.0.2',
+			version: WriteFormat.v0_0_2,
 			sequencedEdits: createStableEdits(250),
 		};
 	}
@@ -31,7 +40,7 @@ describe('SharedTree history virtualization', () => {
 	beforeEach(async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({
 			summarizeHistory: true,
-			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+			writeFormat: WriteFormat.v0_1_1,
 		});
 		sharedTree = testingComponents.tree;
 		testObjectProvider = testingComponents.testObjectProvider;
@@ -46,7 +55,7 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	// Replace sharedTree with one that writes summary format 0.0.2
-	const useSharedTreeSummaryFormat_0_0_2 = async () => {
+	const useSharedTreeSummaryv0_0_2 = async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({
 			summarizeHistory: true,
 		});
@@ -83,12 +92,12 @@ describe('SharedTree history virtualization', () => {
 		const { editHistory } = summary;
 		const { editChunks } = assertNotUndefined(editHistory);
 		expect(editChunks.length).to.equal(1);
-		expect(typeof (editChunks[0].chunk as EditHandle).get).to.equal('function');
+		expect(typeof (editChunks[0].chunk as FluidEditHandle).get).to.equal('function');
 
 		// Load a second tree using the summary
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
-			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+			writeFormat: WriteFormat.v0_1_1,
 		});
 
 		sharedTree2.loadSummary(summary);
@@ -114,7 +123,7 @@ describe('SharedTree history virtualization', () => {
 		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary<Change>;
 		const { editChunks } = assertNotUndefined(editHistory);
 		expect(editChunks.length).to.equal(1);
-		expect(typeof (editChunks[0].chunk as EditHandle).get).to.equal('function');
+		expect(typeof (editChunks[0].chunk as FluidEditHandle).get).to.equal('function');
 	});
 
 	it('only uploads catchup blobs from one client', async () => {
@@ -178,7 +187,7 @@ describe('SharedTree history virtualization', () => {
 		// Make sure each starting revision is correct and each chunk in the summary is a handle
 		editChunks.forEach(({ startRevision, chunk }, index) => {
 			expect(startRevision).to.equal(index * (sharedTree.edits as EditLog).editsPerChunk);
-			expect(typeof (chunk as EditHandle).get).to.equal('function');
+			expect(typeof (chunk as FluidEditHandle).get).to.equal('function');
 		});
 	});
 
@@ -186,12 +195,12 @@ describe('SharedTree history virtualization', () => {
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
 			summarizeHistory: true,
-			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+			writeFormat: WriteFormat.v0_1_1,
 		});
 		const { tree: sharedTree3 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
 			summarizeHistory: true,
-			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+			writeFormat: WriteFormat.v0_1_1,
 		});
 
 		// All shared trees should have no edits or chunks
@@ -210,7 +219,7 @@ describe('SharedTree history virtualization', () => {
 		const sharedTree3Chunk = assertNotUndefined(sharedTree3Summary.editHistory).editChunks[0].chunk;
 
 		// Make sure the chunk of the first shared tree is a handle
-		expect(typeof (sharedTreeChunk as EditHandle).get).to.equal('function');
+		expect(typeof (sharedTreeChunk as FluidEditHandle).get).to.equal('function');
 
 		const sharedTreeHandleRoute = (sharedTreeChunk as any).absolutePath;
 		const sharedTree2HandleRoute = (sharedTree2Chunk as any).absolutePath;
@@ -232,7 +241,7 @@ describe('SharedTree history virtualization', () => {
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
 			summarizeHistory: true,
-			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+			writeFormat: WriteFormat.v0_1_1,
 		});
 
 		let unexpectedHistoryChunk = false;
@@ -249,7 +258,7 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('does not cause misaligned chunks for format version 0.0.2', async () => {
-		await useSharedTreeSummaryFormat_0_0_2();
+		await useSharedTreeSummaryv0_0_2();
 		// Add enough edits for a chunk and a half
 		await addNewEditChunks(1, 50);
 
@@ -279,9 +288,11 @@ describe('SharedTree history virtualization', () => {
 		const bigPayload = 'a'.repeat(fourMegas / numberOfEdits);
 		const edits = createStableEdits(numberOfEdits, undefined, () => bigPayload);
 
+		const interner = new StringInterner();
+		const treeCompressor = new TreeCompressor_0_1_1<never>();
 		const fakeSummary: SharedTreeSummary<Change> = {
-			version: '0.1.1',
-			currentTree: initialTree,
+			version: WriteFormat.v0_1_1,
+			currentTree: treeCompressor.compress(initialTree, interner),
 			editHistory: {
 				editChunks: [
 					{
@@ -291,6 +302,7 @@ describe('SharedTree history virtualization', () => {
 				],
 				editIds: edits.map((e) => e.id),
 			},
+			internedStrings: interner.getSerializable(),
 		};
 
 		sharedTree.loadSummary(fakeSummary);

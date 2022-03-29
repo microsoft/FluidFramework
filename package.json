@@ -49,7 +49,7 @@
 		"buffer": "^6.0.3",
 		"denque": "^1.5.1",
 		"lru-cache": "^6.0.0",
-		"sorted-btree": "^1.6.2",
+		"sorted-btree": "^1.7.0",
 		"uuid": "^8.3.2"
 	},
 	"devDependencies": {
@@ -72,12 +72,12 @@
 		"copyfiles": "^2.4.1",
 		"env-cmd": "^10.1.0",
 		"eslint": "^7.32.0",
-		"mocha": "^9.2.1",
+		"mocha": "^9.2.2",
 		"nyc": "^15.1.0",
 		"prando": "^6.0.1",
 		"prettier": "^2.5.1",
 		"rimraf": "^3.0.2",
-		"typescript": "4.5.5"
+		"typescript": "4.6.2"
 	},
 	"publishConfig": {
 		"registry": "https://pkgs.dev.azure.com/intentional/_packaging/intentional-npm/npm/registry/"

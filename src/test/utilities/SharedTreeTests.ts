@@ -5,36 +5,45 @@
 
 import { assert, expect } from 'chai';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
+import { IsoBuffer } from '@fluidframework/common-utils';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import {
+	MockContainerRuntime,
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+} from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../../Common';
 import { Definition, DetachedSequenceId, EditId, TraitLabel } from '../../Identifiers';
-import {
-	SharedTreeOpType,
-	SharedTreeEvent,
-	serialize,
-	newEdit,
-	EditStatus,
-	EditCommittedEventArguments,
-	SequencedEditAppliedEventArguments,
-	deepCompareNodes,
-} from '../../generic';
-import {
-	Change,
-	ChangeType,
-	Delete,
-	Insert,
-	StablePlace,
-	StableRange,
-	SharedTree,
-	Move,
-	BuildNode,
-} from '../../default-edits';
 import { CachingLogViewer } from '../../LogViewer';
-import { EditLog } from '../../EditLog';
+import { EditLog, OrderedEditSet } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
-import { deserialize, SharedTreeSummary_0_0_2 } from '../../SummaryBackCompatibility';
+import { deserialize } from '../../SummaryBackCompatibility';
 import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
+import { StringInterner } from '../../StringInterner';
+import { getChangeNodeFromView } from '../../SerializationUtilities';
+import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree';
+import {
+	ChangeInternal,
+	CompressedChangeInternal,
+	EditChunkContents,
+	EditStatus,
+	EditWithoutId,
+	FluidEditHandle,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
+	SharedTreeSummary_0_0_2,
+	WriteFormat,
+} from '../../persisted-types';
+import { getSharedTreeEncoder } from '../../SharedTreeEncoder';
+import { SharedTreeEvent } from '../../EventTypes';
+import { BuildNode, Change, ChangeType, Delete, Insert, Move, StablePlace, StableRange } from '../../ChangeTypes';
+import { deepCompareNodes, newEdit } from '../../EditUtilities';
+import { serialize } from '../../Summary';
+import { TreeCompressor_0_1_1 } from '../../TreeCompressor';
+import { buildLeaf, TestTree } from './TestNode';
+import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
+import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
 import {
 	areNodesEquivalent,
 	assertNoDelta,
@@ -44,10 +53,9 @@ import {
 	testTrait,
 	testTraitLabel,
 	translateId,
+	setUpLocalServerTestSharedTree,
+	applyNoop,
 } from './TestUtilities';
-import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
-import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
-import { buildLeaf, TestTree } from './TestNode';
 
 function revertEditInTree(tree: SharedTree, edit: EditId): EditId | undefined {
 	return tree.revert(edit);
@@ -61,13 +69,18 @@ const undoRedoOptions = {
 };
 
 /**
- * Runs a test suite for operations on `SharedTree`.
+ * Runs a test suite for operations on `SharedTree` writing ops at `writeFormat`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
+export function runSharedTreeOperationsTests(
 	title: string,
-	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>
+	writeFormat: WriteFormat,
+	setUpTestSharedTreeWithDefaultVersion: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents
 ) {
+	const setUpTestSharedTree: typeof setUpTestSharedTreeWithDefaultVersion = (options) =>
+		setUpTestSharedTreeWithDefaultVersion({ writeFormat, ...options });
+
+	const encoder = getSharedTreeEncoder(writeFormat, true);
 	/**
 	 * Convenience bundling of test components.
 	 * Like {@link SharedTreeTestingComponents}, but contains both the {@link SimpleTestTree} and
@@ -77,7 +90,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 		/**
 		 * {@inheritDoc SharedTreeTestingComponents.tree}
 		 */
-		sharedTree: TSharedTree;
+		sharedTree: SharedTree;
 
 		/**
 		 * {@link SimpleTestTree} corresponding to {@link SharedTreeTest.sharedTree}
@@ -216,7 +229,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 					Change.setPayload(detachedNode.identifier, 42),
 					Change.insert(detachedSequenceId, StablePlace.before(testTree.left))
 				);
-				const logViewer = sharedTree.logViewer as CachingLogViewer<Change>;
+				const logViewer = sharedTree.logViewer as CachingLogViewer;
 				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(id)).status).equals(
 					EditStatus.Invalid
 				);
@@ -240,7 +253,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 					),
 					Change.insert(detachedRightNodeSequenceId, StablePlace.before(testTree.left))
 				);
-				const logViewer = sharedTree.logViewer as CachingLogViewer<Change>;
+				const logViewer = sharedTree.logViewer as CachingLogViewer;
 				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(id)).status).equals(
 					EditStatus.Invalid
 				);
@@ -503,7 +516,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				);
 
 				containerRuntimeFactory.processAllMessages();
-				const logViewer = sharedTree1.logViewer as CachingLogViewer<Change>;
+				const logViewer = sharedTree1.logViewer as CachingLogViewer;
 				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit1.id)).status).equals(
 					EditStatus.Applied
 				);
@@ -627,11 +640,65 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				const defaultEdits = sharedTree1.edits.length;
 				const edit = newEdit([]);
 				for (let submissions = 0; submissions < 2; submissions++) {
-					remoteRuntime.submit({ type: SharedTreeOpType.Edit, edit }, /* localOpMetadata */ undefined);
+					const op = encoder.encodeEditOp(edit, (obj) => obj);
+					remoteRuntime.submit(op, /* localOpMetadata */ undefined);
 				}
 				containerRuntimeFactory.processAllMessages();
 				expect(sharedTree1.edits.length).to.equal(defaultEdits + 1);
 			});
+
+			if (writeFormat !== WriteFormat.v0_0_2) {
+				// This is a regression test for an issue where edits containing fluid handles weren't properly
+				// serialized by chunk uploading code: rather than use an IFluidSerializer, we previously just
+				// JSON.stringify'd.
+				it('can round-trip edits containing handles through chunking', async () => {
+					const blobbedPayload = 'blobbed-string-payload';
+					const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
+						writeFormat,
+					});
+					const testTree = setUpTestTree(tree);
+
+					const buffer = IsoBuffer.from(blobbedPayload, 'utf8');
+					const blob = await tree.getRuntime().uploadBlob(buffer);
+					const nodeWithPayload = testTree.buildLeaf(testTree.generateNodeId());
+					tree.applyEdit(
+						...Insert.create([nodeWithPayload], StablePlace.after(testTree.left)),
+						Change.setPayload(nodeWithPayload.identifier, { blob })
+					);
+
+					// Apply enough edits for the upload of an edit chunk
+					for (let i = 0; i < (tree.edits as EditLog).editsPerChunk; i++) {
+						applyNoop(tree);
+					}
+
+					// `ensureSynchronized` does not guarantee blob upload
+					await new Promise((resolve) => setImmediate(resolve));
+					// Wait for the ops to to be submitted and processed across the containers
+					await testObjectProvider.ensureSynchronized();
+
+					const summary = tree.saveSummary() as SharedTreeSummary<Change>;
+
+					const { editHistory } = summary;
+					const { editChunks } = assertNotUndefined(editHistory);
+					expect(editChunks.length).to.equal(2);
+
+					const chunkHandle = editChunks[0].chunk as FluidEditHandle;
+					expect(typeof chunkHandle.get).to.equal('function');
+
+					const { tree: secondTree } = await setUpLocalServerTestSharedTree({
+						writeFormat,
+						testObjectProvider,
+					});
+					secondTree.loadSummary(summary);
+					expect(tree.equals(secondTree)).to.be.true;
+
+					const { blob: blobHandle } = new TreeNodeHandle(secondTree.currentView, nodeWithPayload.identifier)
+						.payload;
+					expect(blobHandle).to.not.be.undefined;
+					const blobContents = await blobHandle.get();
+					expect(IsoBuffer.from(blobContents, 'utf8').toString()).to.equal(blobbedPayload);
+				});
+			}
 		});
 
 		describe('SharedTree summarizing', () => {
@@ -648,13 +715,21 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 
 				// Serialize the state of one uninitialized tree into a second tree
 				const serialized = serialize(uninitializedTree.saveSummary(), testSerializer, testHandle);
-				const parsedTree = deserialize(serialized, testSerializer) as SharedTreeSummary_0_0_2<unknown>;
-				expect(parsedTree.sequencedEdits).deep.equal([]);
-				expect(deepCompareNodes(parsedTree.currentTree, initialTree)).to.be.true;
+				const parsedTree = deserialize(serialized, testSerializer);
+				if (writeFormat === WriteFormat.v0_0_2) {
+					const summary = parsedTree as SharedTreeSummary_0_0_2<unknown>;
+					expect(summary.sequencedEdits).to.deep.equal([]);
+					expect(deepCompareNodes(summary.currentTree, initialTree)).to.be.true;
+				} else {
+					const summary = parsedTree as SharedTreeSummary<unknown>;
+					expect(summary.editHistory).to.deep.equal({ editChunks: [], editIds: [] });
+					expect(summary.currentTree).to.be.instanceOf(Array);
+					expect(summary.internedStrings).to.have.length(1);
+				}
 			});
 
 			[true, false].forEach((hasLocalEdits) => {
-				it(`produces correct snapshot for a tree with ${hasLocalEdits ? 'local' : 'acked'} edits`, () => {
+				it(`produces correct snapshot for a tree with ${hasLocalEdits ? 'local' : 'acked'} edits`, async () => {
 					// The initial tree results in an edit.
 					const { sharedTree, testTree, containerRuntimeFactory } = createSimpleTestTree({
 						localMode: hasLocalEdits,
@@ -667,25 +742,28 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 					}
 
 					const serialized = serialize(sharedTree.saveSummary(), testSerializer, testHandle);
-					const treeContent = JSON.parse(serialized);
-					const parsedTree = treeContent as SharedTreeSummary_0_0_2<Change>;
+					const treeContent: SharedTreeSummaryBase = JSON.parse(serialized);
+					const parsedTree = encoder.decodeSummary(treeContent);
 
 					expect(parsedTree.currentTree).to.not.be.undefined;
-					const testRoot = assertArrayOfOne(parsedTree.currentTree.traits[testTree.traitLabel]);
+					const testRoot = assertArrayOfOne(
+						assertNotUndefined(parsedTree.currentTree?.traits[testTree.traitLabel])
+					);
 					expect(testRoot).to.not.be.undefined;
 					expect(testRoot.traits.left).to.not.be.undefined;
 					expect(testRoot.traits.right).to.not.be.undefined;
 					expect(testRoot.traits.left.length).to.equal(2);
 
-					expect(parsedTree.sequencedEdits).to.not.be.undefined;
-					const sequencedEdits = assertNotUndefined(parsedTree.sequencedEdits);
+					const editLog: OrderedEditSet<ChangeInternal> = new EditLog(parsedTree.editHistory);
 
 					// Expect there to be a change in the edit history in addition to the one from setUpTestSharedTree
-					expect(sequencedEdits.length).to.equal(2);
+					expect(editLog.length).to.equal(2);
+
 					// The first operation to be sequenced is the tree init
-					expect(sequencedEdits[1].changes.length).to.equal(2);
-					expect(sequencedEdits[1].changes[0].type).to.equal(ChangeType.Build);
-					expect(sequencedEdits[1].changes[1].type).to.equal(ChangeType.Insert);
+					const treeInitEdit = await editLog.getEditAtIndex(1);
+					expect(treeInitEdit.changes.length).to.equal(2);
+					expect(treeInitEdit.changes[0].type).to.equal(ChangeType.Build);
+					expect(treeInitEdit.changes[1].type).to.equal(ChangeType.Insert);
 				});
 			});
 
@@ -731,6 +809,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				} = createSimpleTestTree({
 					localMode: false,
 					summarizeHistory: true,
+					writeFormat: WriteFormat.v0_0_2,
 				});
 				const { sharedTree: sharedTree2 } = createSimpleTestTree();
 
@@ -984,7 +1063,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 
 				let eventCount = 0;
 				let editIdFromEvent: EditId | undefined;
-				sharedTree.on(SharedTreeEvent.EditCommitted, (args: EditCommittedEventArguments<TSharedTree>) => {
+				sharedTree.on(SharedTreeEvent.EditCommitted, (args: EditCommittedEventArguments) => {
 					expect(args.local).true;
 					expect(args.tree).equals(sharedTree);
 					editIdFromEvent = args.editId;
@@ -1027,10 +1106,9 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				containerRuntimeFactory.processAllMessages();
 				await sharedTree1.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 
-				const eventArgs: SequencedEditAppliedEventArguments<TSharedTree>[] = [];
-				sharedTree1.on(
-					SharedTreeEvent.SequencedEditApplied,
-					(args: SequencedEditAppliedEventArguments<TSharedTree>) => eventArgs.push(args)
+				const eventArgs: SequencedEditAppliedEventArguments[] = [];
+				sharedTree1.on(SharedTreeEvent.SequencedEditApplied, (args: SequencedEditAppliedEventArguments) =>
+					eventArgs.push(args)
 				);
 
 				// Invalid change
@@ -1069,5 +1147,130 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree>(
 				expect(eventArgs[2].outcome.status).equals(EditStatus.Applied);
 			});
 		});
+
+		// This functionality was only implemented in format 0.1.1.
+		if (writeFormat !== WriteFormat.v0_0_2) {
+			describe('String interning and tree compression', () => {
+				it('compress ops via interning and tree compression and decompress when processing edits', () => {
+					const {
+						sharedTree: tree,
+						testTree,
+						containerRuntimeFactory,
+					} = createSimpleTestTree({ writeFormat });
+					const { tree: secondTree } = setUpTestSharedTree({ containerRuntimeFactory, writeFormat });
+					const remoteRuntime = containerRuntimeFactory.createContainerRuntime(
+						new MockFluidDataStoreRuntime()
+					);
+
+					const newNode = testTree.buildLeaf(testTree.generateNodeId());
+					const insert = Insert.create([newNode], StablePlace.after(testTree.left));
+					const move = Move.create(StableRange.only(newNode), StablePlace.before(testTree.left));
+
+					tree.applyEdit(...insert);
+					tree.applyEdit(...move);
+
+					// Unit testing the interning of ops requires access violation since factory and messages are protected.
+					type WithFactory<T> = T & { factory: MockContainerRuntimeFactory };
+					type WithMessages<T> = T & { messages: ISequencedDocumentMessage[] };
+					const factory = (remoteRuntime as unknown as WithFactory<MockContainerRuntime>).factory;
+					const messages = (factory as unknown as WithMessages<MockContainerRuntimeFactory>).messages;
+
+					for (const message of messages) {
+						expect(message.contents.internedStrings).to.not.be.undefined;
+					}
+					expect(tree.equals(secondTree)).to.be.false;
+
+					containerRuntimeFactory.processAllMessages();
+
+					const insertEdit = secondTree.edits.getEditInSessionAtIndex(1);
+					const moveEdit = secondTree.edits.getEditInSessionAtIndex(2);
+					expect(insertEdit.changes).to.deep.equal(insert);
+					expect(moveEdit.changes).to.deep.equal(move);
+					expect(tree.equals(secondTree)).to.be.true;
+				});
+
+				it('compress summaries via interning and tree compression on save and decompress on load', () => {
+					const {
+						sharedTree: tree,
+						testTree: testTree,
+						containerRuntimeFactory,
+					} = createSimpleTestTree({ writeFormat });
+					const { sharedTree: secondTree } = createSimpleTestTree({ writeFormat });
+
+					const newNode = testTree.buildLeaf(testTree.generateNodeId());
+					tree.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));
+					tree.applyEdit(...Move.create(StableRange.only(newNode), StablePlace.before(testTree.left)));
+
+					containerRuntimeFactory.processAllMessages();
+
+					const summary = tree.saveSummary() as SharedTreeSummary<Change>;
+					const interner = new StringInterner();
+					const treeCompressor = new TreeCompressor_0_1_1();
+					const expectedCompressedTree = treeCompressor.compress(
+						getChangeNodeFromView(tree.currentView),
+						interner
+					);
+					expect(summary.internedStrings).to.not.be.undefined;
+					expect(summary.internedStrings).deep.equal(interner.getSerializable());
+					expect(summary.currentTree).deep.equal(expectedCompressedTree);
+
+					expect(tree.equals(secondTree)).to.be.false;
+					secondTree.loadSummary(summary);
+					expect(tree.equals(secondTree)).to.be.true;
+				});
+
+				it('compress and decompress edit chunks via interning and tree compression', async () => {
+					const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
+						writeFormat,
+					});
+					const testTree = setUpTestTree(tree);
+
+					const uncompressedEdits: EditWithoutId<ChangeInternal>[] = [
+						{
+							changes: tree.edits.getEditInSessionAtIndex(0).changes as ChangeInternal[],
+						},
+					];
+
+					// Apply enough edits for the upload of an edit chunk
+					for (let i = 0; i < (tree.edits as EditLog).editsPerChunk - 1; i++) {
+						const newNode = testTree.buildLeaf(testTree.generateNodeId());
+						const edit = tree.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));
+						uncompressedEdits.push({ changes: edit.changes });
+					}
+
+					const expectedCompressedEdits: readonly EditWithoutId<CompressedChangeInternal>[] =
+						encoder.encodeEditChunk(uncompressedEdits).edits;
+
+					// Apply one more edit so that an edit chunk gets uploaded
+					const newNode = testTree.buildLeaf(testTree.generateNodeId());
+					tree.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));
+
+					// `ensureSynchronized` does not guarantee blob upload
+					await new Promise((resolve) => setImmediate(resolve));
+					// Wait for the ops to to be submitted and processed across the containers
+					await testObjectProvider.ensureSynchronized();
+
+					const summary = tree.saveSummary() as SharedTreeSummary<Change>;
+
+					const { editHistory } = summary;
+					const { editChunks } = assertNotUndefined(editHistory);
+					expect(editChunks.length).to.equal(2);
+
+					const handle = editChunks[0].chunk as FluidEditHandle;
+					expect(typeof handle.get).to.equal('function');
+					const chunkContents: EditChunkContents = JSON.parse(IsoBuffer.from(await handle.get()).toString());
+					expect(chunkContents.edits).to.deep.equal(expectedCompressedEdits);
+					expect(chunkContents.internedStrings).to.not.be.undefined;
+
+					const { sharedTree: secondTree } = createSimpleTestTree({ writeFormat });
+					expect(tree.equals(secondTree)).to.be.false;
+					secondTree.loadSummary(summary);
+					expect(tree.equals(secondTree)).to.be.true;
+					expect((await tree.edits.getEditAtIndex(2)).id).to.equal(
+						(await secondTree.edits.getEditAtIndex(2)).id
+					);
+				});
+			});
+		}
 	});
 }

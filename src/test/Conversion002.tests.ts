@@ -4,21 +4,18 @@
  */
 
 import { expect } from 'chai';
-import {
-	StablePlace,
-	StableRange,
-	tryConvertToStablePlace,
-	tryConvertToStablePlaceInternal_0_0_2,
-	tryConvertToStableRange,
-	tryConvertToStableRangeInternal_0_0_2,
-} from '../default-edits';
+import { StablePlace, StableRange } from '../ChangeTypes';
 import {
 	tryConvertToChangeNode,
 	tryConvertToChangeNode_0_0_2,
 	tryConvertToNodeData,
 	tryConvertToNodeData_0_0_2,
-} from '../generic';
-import { deepCompareNodes } from '../generic/EditUtilities';
+	tryConvertToStablePlace,
+	tryConvertToStablePlaceInternal_0_0_2,
+	tryConvertToStableRange,
+	tryConvertToStableRangeInternal_0_0_2,
+} from '../Conversion002';
+import { deepCompareNodes } from '../EditUtilities';
 import { expectDefined } from './utilities/TestCommon';
 import { refreshTestTree, areNodesEquivalent } from './utilities/TestUtilities';
 

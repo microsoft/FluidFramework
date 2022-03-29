@@ -21,7 +21,7 @@ export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta, Forest, ForestNode, ParentData } from './Forest';
 export { sharedTreeAssertionErrorType, isSharedTreeEvent, Result } from './Common';
 export * from './Identifiers';
-export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from './EditLog';
+export type { OrderedEditSet, EditHandle } from './EditLog';
 export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
 export { LazyCheckout } from './LazyCheckout';
@@ -29,107 +29,105 @@ export { EagerCheckout } from './EagerCheckout';
 export * from './ReconciliationPath';
 export * from './MergeHealth';
 export * from './TreeViewUtilities';
-export {
-	SharedTree,
-	ChangeType,
-	Change,
-	Build,
-	BuildNode,
-	BuildTreeNode,
-	Insert,
-	Detach,
-	SetValue,
-	Constraint,
-	ConstraintEffect,
-	ChangeTypeInternal,
-	ChangeInternal,
-	BuildNodeInternal,
-	BuildInternal,
-	InsertInternal,
-	DetachInternal,
-	SetValueInternal,
-	ConstraintInternal,
-	Delete,
-	Move,
-	DeleteInternal,
-	MoveInternal,
-	StablePlaceInternal_0_0_2,
-	StableRangeInternal_0_0_2,
-	StablePlace,
-	StableRange,
-	SharedTreeFactory,
-	setTrait,
-	validateStablePlace,
-	PlaceValidationResult,
-	BadPlaceValidationResult,
-	validateStableRange,
-	RangeValidationResultKind,
-	RangeValidationResult,
-	BadRangeValidationResult,
-	Transaction,
-	isDetachedSequenceId,
-} from './default-edits';
+export { StringInterner } from './StringInterner';
 export {
 	Side,
-	EditCommittedHandler,
-	EditCommittedEventArguments,
-	SequencedEditAppliedHandler,
-	SequencedEditAppliedEventArguments,
-	EditApplicationOutcome,
-	SharedTreeChangeType,
-	SharedTreeFailureType,
-	ISharedTreeEvents,
-	GenericSharedTree,
-	SharedTreeEvent,
-	SharedTreeDiagnosticEvent,
-	Edit,
-	newEdit,
-	comparePayloads,
-	EditWithoutId,
-	EditBase,
-	HasTraits,
-	TraitMap,
+	EditStatus,
+	TreeNode,
 	TreeNodeSequence,
 	Payload,
-	NodeData,
-	TreeNode,
+	ConstraintEffect,
+	Edit,
+	ChangeInternal,
 	ChangeNode,
 	ChangeNode_0_0_2,
-	EditStatus,
+	SharedTreeEditOp,
+	EditLogSummary,
+	FluidEditHandle,
+	SharedTreeSummaryBase,
+	SharedTreeSummary,
+	EditWithoutId,
+	PlaceholderTree,
+	CompressedPlaceholderTree,
+	EditBase,
+	HasTraits,
+	VersionedOp,
+	SharedTreeOpType,
+	InsertInternal,
+	DetachInternal,
+	BuildInternal,
+	SetValueInternal,
+	DeleteInternal,
+	ConstraintInternal,
+	BuildNodeInternal,
+	StablePlaceInternal_0_0_2,
+	StableRangeInternal_0_0_2,
+	NodeData,
+	CompressedTraits,
+	CompressedChangeNode,
+	TraitMap,
+	ChangeTypeInternal,
 	TraitLocationInternal_0_0_2,
+	WriteFormat,
+} from './persisted-types';
+export {
+	SharedTree,
+	EditCommittedHandler,
+	SequencedEditAppliedHandler,
+	EditCommittedEventArguments,
+	SequencedEditAppliedEventArguments,
+	EditApplicationOutcome,
+	ISharedTreeEvents,
+	SharedTreeFactoryOptions,
+} from './SharedTree';
+export { SharedTreeFactory } from './Factory';
+export * from './EventTypes';
+export {
+	setTrait,
+	areRevisionViewsSemanticallyEqual,
+	BadPlaceValidationResult,
+	BadRangeValidationResult,
+	PlaceValidationResult,
+	RangeValidationResult,
+	RangeValidationResultKind,
+	comparePayloads,
+} from './EditUtilities';
+export {
+	Transaction,
+	TransactionFactory,
 	GenericTransaction,
 	GenericTransactionPolicy,
-	TransactionFailure,
-	TransactionState,
-	SucceedingTransactionState,
-	FailingTransactionState,
-	FailedEditingResult,
-	ChangeResult,
 	EditingResult,
 	EditingResultBase,
+	FailedEditingResult,
 	ValidEditingResult,
-	SharedTreeFactoryOptions,
-	SharedTreeSummarizer,
-	EditLogSummarizer,
-	SharedTreeSummary,
-	SharedTreeSummaryBase,
-	SharedTreeSummaryWriteFormat,
-	UploadedEditChunkContents,
-	getUploadedEditChunkContents,
-	saveUploadedEditChunkContents,
-	NodeIdContext,
-	NodeIdGenerator,
-	NodeIdConverter,
+	TransactionState,
+	TransactionFailure,
+	SucceedingTransactionState,
+	FailingTransactionState,
+	ChangeResult,
+} from './Transaction';
+export { SummaryContents } from './Summary';
+export {
 	NodeInTrait,
 	PlaceIndex,
 	TreeViewNode,
 	TreeView,
-	RevisionView,
-	TransactionView,
 	TraitNodeIndex,
 	TreeViewPlace,
 	TreeViewRange,
-	TransactionFactory,
-	areRevisionViewsSemanticallyEqual,
 	TraitLocation,
-} from './generic';
+} from './TreeView';
+export { RevisionView, TransactionView } from './RevisionView';
+export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
+
+/**
+ * TODO:#61413: Publish test utilities from a separate test package
+ */
+export {
+	/** @deprecated Use `getSerializedUploadedEditChunkContents` instead. */
+	getSerializedUploadedEditChunkContents as getUploadedEditChunkContents,
+	getSerializedUploadedEditChunkContents,
+} from './SummaryTestUtilities';
+
+export * from './ChangeTypes';

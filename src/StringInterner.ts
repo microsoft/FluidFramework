@@ -4,18 +4,19 @@
  */
 
 import { fail } from './Common';
+import type { InternedStringId } from './Identifiers';
 
 /**
  * Interns strings as integers.
  * Given a string, this class will produce a unique integer associated with that string that can then be used to retrieve the string.
  */
 export class StringInterner {
-	private counter = 0;
-	private readonly stringToInternIdMap = new Map<string, number>();
-	private readonly internIdToStringMap = new Map<number, string>();
+	private readonly stringToInternedIdMap = new Map<string, InternedStringId>();
+	private readonly internedStrings: string[] = [];
 
 	/**
-	 * @param inputStrings - A list of strings to intern in the order given
+	 * @param inputStrings - A list of strings to intern in the order given. Can be used to rehydrate from a previous
+	 * `StringInterner`'s {@link StringInterner.getSerializable} return value.
 	 */
 	constructor(inputStrings: readonly string[] = []) {
 		for (const value of inputStrings) {
@@ -24,16 +25,17 @@ export class StringInterner {
 	}
 
 	/**
-	 * @param inputString - The string to get the associated intern ID for
+	 * @param input - The string to get the associated intern ID for
 	 * @returns an intern ID that is uniquely associated with the input string
 	 */
-	public getInternId(inputString: string): number {
-		const possibleOutput = this.stringToInternIdMap.get(inputString);
+	public getInternId(input: string): InternedStringId {
+		const possibleOutput = this.stringToInternedIdMap.get(input);
 
 		if (possibleOutput === undefined) {
-			this.stringToInternIdMap.set(inputString, this.counter);
-			this.internIdToStringMap.set(this.counter, inputString);
-			return this.counter++;
+			const internId = this.stringToInternedIdMap.size;
+			this.stringToInternedIdMap.set(input, internId as InternedStringId);
+			this.internedStrings.push(input);
+			return internId as InternedStringId;
 		}
 
 		return possibleOutput;
@@ -46,13 +48,13 @@ export class StringInterner {
 	 * @returns a string that is uniquely associated with the given intern ID
 	 */
 	public getString(internId: number): string {
-		return this.internIdToStringMap.get(internId) ?? fail(`No string associated with ${internId}.`);
+		return this.internedStrings[internId] ?? fail(`No string associated with ${internId}.`);
 	}
 
 	/**
-	 * @returns the list of strings interned where the indices map to the associated intern ID of each string
+	 * @returns the list of strings interned where the indices map to the associated {@link InternedStringId} of each string
 	 */
 	public getSerializable(): readonly string[] {
-		return Array.from(this.stringToInternIdMap.keys());
+		return this.internedStrings;
 	}
 }

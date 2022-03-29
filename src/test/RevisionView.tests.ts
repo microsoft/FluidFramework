@@ -5,13 +5,14 @@
 
 import { expect } from 'chai';
 import { TraitLabel } from '../Identifiers';
-import { detachRange, insertIntoTrait, StablePlace, StableRange } from '../default-edits';
-import { ChangeNode, RevisionView } from '../generic';
 import { getChangeNodeFromViewNode } from '../SerializationUtilities';
-import { convertTreeNodesToViewNodes } from '../generic/RevisionView';
-import { refreshTestTree } from './utilities/TestUtilities';
-import { LeafNode, TestNode } from './utilities/TestNode';
+import { ChangeNode } from '../persisted-types';
+import { convertTreeNodesToViewNodes, RevisionView } from '../RevisionView';
+import { StablePlace, StableRange } from '../ChangeTypes';
+import { detachRange, insertIntoTrait } from '../EditUtilities';
 import { expectDefined } from './utilities/TestCommon';
+import { LeafNode, TestNode } from './utilities/TestNode';
+import { refreshTestTree } from './utilities/TestUtilities';
 
 describe('RevisionView', () => {
 	const testTree = refreshTestTree();

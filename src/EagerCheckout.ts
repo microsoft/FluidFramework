@@ -4,7 +4,8 @@
  */
 
 import { Checkout } from './Checkout';
-import { EditCommittedEventArguments, GenericSharedTree, RevisionView } from './generic';
+import { RevisionView } from './RevisionView';
+import { EditCommittedEventArguments, SharedTree } from './SharedTree';
 
 /**
  * Checkout that always stays up to date with the SharedTree.
@@ -13,22 +14,14 @@ import { EditCommittedEventArguments, GenericSharedTree, RevisionView } from './
  * @public
  * @sealed
  */
-export class EagerCheckout<TChange, TChangeInternal, TFailure = unknown> extends Checkout<
-	TChange,
-	TChangeInternal,
-	TFailure
-> {
+export class EagerCheckout extends Checkout {
 	/**
 	 * @param tree - the tree
 	 */
-	public constructor(tree: GenericSharedTree<TChange, TChangeInternal, TFailure>) {
-		super(
-			tree,
-			tree.currentView,
-			(args: EditCommittedEventArguments<GenericSharedTree<TChange, TChangeInternal, TFailure>>) => {
-				this.emitChange();
-			}
-		);
+	public constructor(tree: SharedTree) {
+		super(tree, tree.currentView, (args: EditCommittedEventArguments) => {
+			this.emitChange();
+		});
 	}
 
 	protected get latestCommittedView(): RevisionView {

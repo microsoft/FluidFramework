@@ -4,7 +4,8 @@
  */
 
 import { expect } from 'chai';
-import { ChangeNode, deepCompareNodes } from '../generic';
+import { deepCompareNodes } from '../EditUtilities';
+import { ChangeNode } from '../persisted-types';
 import { refreshTestTree } from './utilities/TestUtilities';
 
 // TODO #45414: Re-enable when compareEdits compares the actual changes instead of just the edit IDs.

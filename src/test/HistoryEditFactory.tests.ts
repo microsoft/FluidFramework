@@ -1,13 +1,13 @@
 import { expect } from 'chai';
+import { revert } from '../HistoryEditFactory';
+import { DetachedSequenceId } from '../Identifiers';
 import {
 	ChangeInternal,
 	DetachInternal,
-	revert,
+	Side,
 	StablePlaceInternal_0_0_2,
 	StableRangeInternal_0_0_2,
-} from '../default-edits';
-import { Side } from '../generic';
-import { DetachedSequenceId } from '../Identifiers';
+} from '../persisted-types';
 import { expectDefined } from './utilities/TestCommon';
 import { refreshTestTree } from './utilities/TestUtilities';
 

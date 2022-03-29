@@ -5,10 +5,11 @@
 
 import { expect } from 'chai';
 import { IsoBuffer } from '@fluidframework/common-utils';
-import { EditHandle, EditLog, separateEditAndId } from '../EditLog';
+import { EditLog, separateEditAndId } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
-import { newEdit, Edit, EditWithoutId } from '../generic';
+import { Edit, FluidEditHandle, EditWithoutId, EditChunkContents } from '../persisted-types';
+import { newEdit } from '../EditUtilities';
 
 type DummyChange = never;
 
@@ -40,7 +41,7 @@ function createEditLogWithHandles(
 		}
 	}
 
-	const handles: EditHandle[] = editChunks.map((chunk) => {
+	const handles: FluidEditHandle[] = editChunks.map((chunk) => {
 		return {
 			absolutePath: 'test blob',
 			get: async () => {
@@ -50,21 +51,25 @@ function createEditLogWithHandles(
 	});
 
 	let startRevision = 0;
-	const handlesWithKeys = handles.map((chunk) => {
+	const handlesWithKeys = handles.map((baseHandle) => {
 		const handle = {
 			startRevision,
-			chunk,
+			chunk: {
+				get: async () =>
+					(
+						JSON.parse(IsoBuffer.from(await baseHandle.get()).toString()) as Omit<
+							EditChunkContents,
+							'edits'
+						> & { edits: EditWithoutId<DummyChange>[] }
+					).edits,
+				baseHandle,
+			},
 		};
 		startRevision = startRevision + 5;
 		return handle;
 	});
 
-	const editLog = new EditLog<DummyChange>(
-		{ editChunks: handlesWithKeys, editIds },
-		undefined,
-		undefined,
-		editsPerChunkOnEditLog
-	);
+	const editLog = new EditLog({ editChunks: handlesWithKeys, editIds }, undefined, undefined, editsPerChunkOnEditLog);
 
 	return editLog;
 }

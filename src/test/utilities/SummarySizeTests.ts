@@ -5,28 +5,19 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { IsoBuffer } from '@fluidframework/common-utils';
-// KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
-import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
+import { TestObjectProvider } from '@fluidframework/test-utils';
 import { expect } from 'chai';
-import {
-	Change,
-	ChangeInternal,
-	Delete,
-	Insert,
-	Move,
-	revert,
-	SharedTree,
-	StablePlace,
-	StableRange,
-} from '../../default-edits';
-import { ChangeNode, Edit, TraitMap } from '../../generic';
 import { Definition, EditId, TraitLabel } from '../../Identifiers';
+import { Change, Delete, Insert, Move, StablePlace, StableRange } from '../../ChangeTypes';
+import { SharedTree } from '../../SharedTree';
+import { ChangeInternal, ChangeNode, Edit, TraitMap } from '../../persisted-types';
+import { revert } from '../../HistoryEditFactory';
+import { TestTree } from './TestNode';
 import {
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
 	setUpTestTree,
 } from './TestUtilities';
-import { TestTree } from './TestNode';
 
 /**
  * An entry into the summarySizeTests list.
@@ -114,16 +105,16 @@ const summarySizeTests: SummarySizeTestEntry[] = [
  * Runs a test suite for summaries on `SharedTree` that verifies their sizes do not exceed the defined limits.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSummarySizeTests<TSharedTree extends SharedTree>(
+export function runSummarySizeTests(
 	title: string,
 	setUpLocalServerTestSharedTree: (
 		options: LocalServerSharedTreeTestingOptions
-	) => Promise<LocalServerSharedTreeTestingComponents<TSharedTree>>
+	) => Promise<LocalServerSharedTreeTestingComponents>
 ) {
 	describe(title, () => {
 		const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
-		let tree: TSharedTree;
+		let tree: SharedTree;
 		let testTree: TestTree;
 		let testObjectProvider: TestObjectProvider;
 

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from '../Identifiers';
-import { assert, assertNotUndefined } from '../Common';
-import { NodeData, Payload, Side, TraitLocation, TreeNode, TreeNodeSequence } from '../generic';
-import { ConstraintEffect } from './persisted-types';
+import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from './Identifiers';
+import { assert, assertNotUndefined } from './Common';
+import { ConstraintEffect, NodeData, Payload, Side, TreeNode, TreeNodeSequence } from './persisted-types';
+import { TraitLocation } from './TreeView';
+import { getNodeId } from './NodeIdUtilities';
 
 /**
  * The type of a Change
@@ -396,21 +397,3 @@ export const StableRange = {
 		end: StablePlace.atEndOf(trait),
 	}),
 };
-
-/**
- * @returns True iff the given `node` is of type NodeData.
- */
-function isNodeData(node: NodeData<NodeId> | NodeId): node is NodeData<NodeId> {
-	return (node as NodeData<NodeId>).definition !== undefined && (node as NodeData<NodeId>).identifier !== undefined;
-}
-
-/**
- * @returns The NodeId for a given node or its id.
- */
-export function getNodeId(node: NodeData<NodeId> | NodeId): NodeId {
-	if (isNodeData(node)) {
-		return node.identifier;
-	} else {
-		return node;
-	}
-}

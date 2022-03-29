@@ -10,8 +10,7 @@ import {
 	IChannelFactory,
 	IChannel,
 } from '@fluidframework/datastore-definitions';
-import { SharedTreeFactoryOptions } from '../generic';
-import { SharedTree } from './SharedTree';
+import { SharedTree, SharedTreeFactoryOptions } from './SharedTree';
 
 /**
  * Factory for SharedTree.
@@ -84,7 +83,7 @@ export class SharedTreeFactory implements IChannelFactory {
 			id,
 			this.options.expensiveValidation,
 			this.options.summarizeHistory,
-			this.options.writeSummaryFormat,
+			this.options.writeFormat,
 			this.options.uploadEditChunks
 		);
 		return sharedTree;

@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DetachedSequenceId, NodeId, StableNodeId } from '../Identifiers';
-import { assert, fail } from '../Common';
-import { NodeIdConverter, RevisionView, Side, TreeNode, TreeView } from '../generic';
-import { getChangeNode_0_0_2FromViewNode } from '../SerializationUtilities';
-import { rangeFromStableRange } from '../TreeViewUtilities';
+import { DetachedSequenceId, isDetachedSequenceId, NodeId, StableNodeId } from './Identifiers';
+import { assert, fail } from './Common';
+import { getChangeNode_0_0_2FromViewNode } from './SerializationUtilities';
+import { rangeFromStableRange } from './TreeViewUtilities';
 import {
 	ChangeInternal,
 	ChangeTypeInternal,
@@ -16,11 +15,16 @@ import {
 	InsertInternal,
 	BuildNodeInternal,
 	StableRangeInternal_0_0_2,
+	TreeNode,
+	Side,
 } from './persisted-types';
 import { Transaction } from './Transaction';
-import { isDetachedSequenceId, RangeValidationResultKind, validateStableRange } from './EditUtilities';
+import { RangeValidationResultKind, validateStableRange } from './EditUtilities';
 import { StablePlace } from './ChangeTypes';
 import { tryConvertToStablePlaceInternal_0_0_2 } from './Conversion002';
+import { RevisionView } from './RevisionView';
+import { NodeIdConverter } from './NodeIdUtilities';
+import { TreeView } from './TreeView';
 
 /**
  * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes

@@ -4,11 +4,15 @@
  */
 
 import BTree from 'sorted-btree';
-import { IsoBuffer, TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 import { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { assert, assertNotUndefined, compareArrays, compareFiniteNumbers, fail } from './Common';
-import { Edit, EditWithoutId, SharedTreeDiagnosticEvent } from './generic';
 import { EditId } from './Identifiers';
+import { ChangeCompressor } from './Compression';
+import { StringInterner } from './StringInterner';
+import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types';
+import { SharedTreeDiagnosticEvent } from './EventTypes';
+import { compressEdit } from './ChangeCompression';
 
 /**
  * An ordered set of Edits associated with a SharedTree.
@@ -61,36 +65,6 @@ export interface OrderedEditSet<TChange = unknown> {
 }
 
 /**
- * Information used to populate an edit log.
- * @public
- */
-export interface EditLogSummary<TChange> {
-	/**
-	 * A of list of serialized chunks and their corresponding keys.
-	 * Start revision is the index of the first edit in the chunk in relation to the edit log.
-	 */
-	readonly editChunks: readonly {
-		readonly startRevision: number;
-		readonly chunk: EditChunkOrHandle<TChange>;
-	}[];
-
-	/**
-	 * A list of edits IDs for all sequenced edits.
-	 */
-	readonly editIds: readonly EditId[];
-}
-
-/**
- * EditHandles are used to load edit chunks stored outside of the EditLog.
- * Can be satisfied by IFluidHandle<ArrayBufferLike>.
- * @public
- */
-export interface EditHandle {
-	readonly get: () => Promise<ArrayBufferLike>;
-	readonly absolutePath: string;
-}
-
-/**
  * Server-provided metadata for edits that have been sequenced.
  */
 export interface EditSequencingInfo {
@@ -137,23 +111,41 @@ export interface LocalOrderedEditId {
 }
 
 /**
- * A sequence of edits that may or may not to be downloaded into the EditLog from an external service
+ * Metadata for an edit.
+ */
+export type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
+
+/**
+ * Compressor+interner pair used for encoding an {@link EditLog} into a summary.
+ * @internal
+ */
+export interface EditLogEncoder<TChange, TCompressedChange> {
+	compressor: ChangeCompressor<TChange, TCompressedChange>;
+	interner: StringInterner;
+}
+
+const noopEncoder: EditLogEncoder<any, any> = {
+	compressor: { compress: <T>(change: T) => change, decompress: <T>(change: T) => change },
+	interner: new StringInterner(),
+};
+
+/**
+ * A sequence of edits that may or may not need to be downloaded into the EditLog from an external service
  */
 export interface EditChunk<TChange> {
-	handle?: EditHandle;
+	handle?: EditHandle<TChange>;
 	edits?: EditWithoutId<TChange>[];
 }
 
 /**
- * Either a chunk of edits or a handle that can be used to load that chunk.
+ * EditHandles are used to load edit chunks stored outside of the EditLog.
+ * This is typically implemented by a wrapper around an IFluidHandle<ArrayBufferLike>.
  * @public
  */
-export type EditChunkOrHandle<TChange> = EditHandle | readonly EditWithoutId<TChange>[];
-
-/**
- * Metadata for an edit.
- */
-export type OrderedEditId = SequencedOrderedEditId | LocalOrderedEditId;
+export interface EditHandle<TChange> {
+	readonly get: () => Promise<EditWithoutId<TChange>[]>;
+	readonly baseHandle: FluidEditHandle;
+}
 
 /**
  * Returns an object that separates an Edit into two fields, id and editWithoutId.
@@ -175,7 +167,7 @@ function joinEditAndId<TChange>(id: EditId, edit: EditWithoutId<TChange>): Edit<
  * @param summary - The edit log summary to parse.
  * @returns the number of handles saved to the provided edit log summary.
  */
-export function getNumberOfHandlesFromEditLogSummary<TChange>(summary: EditLogSummary<TChange>): number {
+export function getNumberOfHandlesFromEditLogSummary(summary: EditLogSummary<unknown, unknown>): number {
 	const { editChunks } = summary;
 
 	let numberOfHandles = 0;
@@ -258,7 +250,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * @param logger - An optional logger to record telemetry/errors
 	 */
 	public constructor(
-		summary: EditLogSummary<TChange> = { editIds: [], editChunks: [] },
+		summary: EditLogSummary<TChange, EditHandle<TChange>> = { editIds: [], editChunks: [] },
 		logger?: ITelemetryLogger,
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
 		editsPerChunk = 100,
@@ -285,7 +277,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 					// This typecast should not be required,
 					// however typescript fails to infer types correctly in the case of readonly arrays guarded by Array.isArray
 					// See https://github.com/microsoft/TypeScript/issues/17002
-					handle: chunk as EditHandle,
+					handle: chunk as EditHandle<TChange>,
 				});
 			}
 		});
@@ -413,8 +405,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 			if (edits === undefined) {
 				assert(handle !== undefined, 'An edit chunk should include at least a handle or edits.');
-				const edits = JSON.parse(IsoBuffer.from(await handle.get()).toString())
-					.edits as EditWithoutId<TChange>[];
+				const edits = await handle.get();
 
 				// Make sure the loaded edit chunk is the correct size. If a higher starting revison is set, the length is the difference of both.
 				// Otherwise, it means that there are no sequenced edits in memory so the length is the difference of the number of
@@ -496,7 +487,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	/**
 	 * Assigns provided handles to edit chunks based on chunk index specified.
 	 */
-	public processEditChunkHandle(chunkHandle: EditHandle, startRevision: number): void {
+	public processEditChunkHandle(chunkHandle: EditHandle<TChange>, startRevision: number): void {
 		const chunk = this.editChunks.get(startRevision);
 		if (chunk !== undefined) {
 			assertNotUndefined(
@@ -528,14 +519,17 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	}
 
 	/**
-	 * Removes all local edits from this EditLog. This is somewhat of a kludge to support edit ops concurrent to a version update op.
-	 * TODO:#73073: Remove this API after conversion of old local edits is supported.
+	 * Removes all local edits from this EditLog, and returns their contents.
+	 * This is useful for op format upgrades, which might warrant re-application of these ops using the new format.
+	 * See the breaking change documentation for more information.
 	 */
-	public clearLocalEdits(): void {
+	public clearLocalEdits(): Edit<TChange>[] {
 		for (const { id } of this.localEdits) {
 			this.allEditIds.delete(id);
 		}
+		const localEdits = this.localEdits.slice();
 		this.localEdits.length = 0;
+		return localEdits;
 	}
 
 	/**
@@ -652,17 +646,27 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 	/**
 	 * @param useHandles - By default, false. If true, returns handles instead of edit chunks where possible.
-	 * 					   TODO:#49901: This parameter is used for testing and should be removed once format version 0.1.0 is written.
+	 * 					   TODO:#49901: This parameter is used for testing and should be removed once format version 0.1.1 is written.
 	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
 	 * @internal
 	 */
-	public getEditLogSummary(useHandles = false): EditLogSummary<TChange> {
+	public getEditLogSummary<TCompressedChange>(
+		useHandles = false,
+		encoder: {
+			compressor: ChangeCompressor<TChange, TCompressedChange>;
+			interner: StringInterner;
+		} = noopEncoder
+	): EditLogSummary<TCompressedChange, FluidEditHandle> {
+		const { compressor, interner } = encoder;
 		if (useHandles) {
 			return {
 				editChunks: this.editChunks.toArray().map(([startRevision, { handle, edits }]) => {
 					return {
 						startRevision,
-						chunk: handle ?? edits ?? fail('An edit chunk must have either a handle or a list of edits.'),
+						chunk:
+							handle?.baseHandle ??
+							edits?.map((edit) => compressEdit(compressor, interner, edit)) ??
+							fail('An edit chunk must have either a handle or a list of edits.'),
 					};
 				}),
 				editIds: this.sequencedEditIds,
@@ -675,7 +679,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			editChunks: this.editChunks.toArray().map(([startRevision, { edits, handle }]) => {
 				return {
 					startRevision,
-					chunk: edits ?? handle ?? fail('An edit chunk must have either a handle or a list of edits.'),
+					chunk:
+						edits?.map((edit) => compressEdit(compressor, interner, edit)) ??
+						handle?.baseHandle ??
+						fail('An edit chunk must have either a handle or a list of edits.'),
 				};
 			}),
 			editIds: this.sequencedEditIds,

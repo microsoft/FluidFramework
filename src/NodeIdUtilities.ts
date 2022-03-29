@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NodeId, StableNodeId } from '../Identifiers';
+import { NodeId, StableNodeId } from './Identifiers';
 import { NodeData } from './persisted-types';
 
 /**
@@ -26,6 +26,7 @@ export interface NodeIdGenerator {
 
 /**
  * An object which can convert node IDs between compressed and stable variants
+ * @public
  */
 export interface NodeIdConverter {
 	/**

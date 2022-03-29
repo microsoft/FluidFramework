@@ -6,11 +6,7 @@
 import { bufferToString, IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelAttributes,
-} from '@fluidframework/datastore-definitions';
+import { IFluidDataStoreRuntime, IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import {
 	createSingleBlobSummary,
@@ -19,14 +15,14 @@ import {
 	serializeHandles,
 	SharedObject,
 } from '@fluidframework/shared-object-base';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { v4 } from 'uuid';
-import { assert, assertNotUndefined, fail } from '../Common';
-import { EditLog, EditLogSummary, OrderedEditSet } from '../EditLog';
-import { EditId, NodeId, StableNodeId } from '../Identifiers';
-import { initialTree } from '../InitialTree';
+import { assert, assertNotUndefined, fail, copyPropertyIfDefined } from './Common';
+import { EditHandle, EditLog, getNumberOfHandlesFromEditLogSummary, OrderedEditSet } from './EditLog';
+import { EditId, NodeId, StableNodeId, DetachedSequenceId, isDetachedSequenceId } from './Identifiers';
+import { initialTree } from './InitialTree';
 import {
 	CachingLogViewer,
 	EditCacheEntry,
@@ -34,38 +30,44 @@ import {
 	LogViewer,
 	SequencedEditResult,
 	SequencedEditResultCallback,
-} from '../LogViewer';
+} from './LogViewer';
+import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility';
+import { ReconciliationPath } from './ReconciliationPath';
 import {
-	convertSummaryToReadFormat,
-	deserialize,
-	getSummaryStatistics,
-	readFormatVersion,
-} from '../SummaryBackCompatibility';
-import { ReconciliationPath } from '../ReconciliationPath';
-import {
+	ChangeInternal,
+	ChangeNode_0_0_2,
+	ChangeTypeInternal,
+	ConstraintInternal,
+	DetachInternal,
 	Edit,
-	SharedTreeOpType,
+	EditChunkContents,
+	EditStatus,
+	EditWithoutId,
 	SharedTreeEditOp,
 	SharedTreeHandleOp,
-	EditWithoutId,
 	SharedTreeOp,
-	EditStatus,
-	SharedTreeSummaryWriteFormat,
+	SharedTreeOpType,
+	SharedTreeSummaryBase,
+	WriteFormat,
 } from './persisted-types';
-import { serialize, SharedTreeSummarizer, SharedTreeSummary, SharedTreeSummaryBase } from './Summary';
-import { areRevisionViewsSemanticallyEqual, newEditId } from './EditUtilities';
+import { serialize, SummaryContents } from './Summary';
+import { areRevisionViewsSemanticallyEqual, convertTreeNodes, internalizeBuildNode, newEditId } from './EditUtilities';
 import { NodeIdContext } from './NodeIdUtilities';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
-import { TransactionFactory } from './GenericTransaction';
 import { RevisionView } from './RevisionView';
+import { getSharedTreeEncoder, SharedTreeEncoder } from './SharedTreeEncoder';
+import { revert } from './HistoryEditFactory';
+import { BuildTreeNode, Change, ChangeType } from './ChangeTypes';
+import { Transaction } from './Transaction';
+import { SharedTreeFactory } from './Factory';
+import { tryConvertToStablePlaceInternal_0_0_2, tryConvertToStableRangeInternal_0_0_2 } from './Conversion002';
 
 /**
  * Filename where the snapshot is stored.
  */
 const snapshotFileName = 'header';
 
-const initialSummary: SharedTreeSummary<unknown> = {
-	version: readFormatVersion,
+const initialSummary: SummaryContents<unknown> = {
 	currentTree: initialTree,
 	editHistory: {
 		editChunks: [],
@@ -80,80 +82,47 @@ export const reservedIdCount = 1024;
 /**
  * Used for version comparison.
  */
-const sortedSummaryWriteVersions = [
-	SharedTreeSummaryWriteFormat.Format_0_0_2,
-	SharedTreeSummaryWriteFormat.Format_0_1_1,
-];
-
-/**
- * Format versions that SharedTree supports reading.
- * @public
- */
-export enum SharedTreeSummaryReadFormat {
-	/** Stores all edits in their raw format. */
-	Format_0_0_2 = '0.0.2',
-	/** Supports history virtualization and makes currentView optional. */
-	Format_0_1_1 = '0.1.1',
-}
-
-/**
- * Used for version comparison.
- */
-const sortedSummaryReadVersions = [SharedTreeSummaryReadFormat.Format_0_0_2, SharedTreeSummaryReadFormat.Format_0_1_1];
+const sortedWriteVersions = [WriteFormat.v0_0_2, WriteFormat.v0_1_1];
 
 /**
  * The arguments included when the EditCommitted SharedTreeEvent is emitted.
  * @public
  */
-export interface EditCommittedEventArguments<TSharedTree> {
+export interface EditCommittedEventArguments {
 	/** The ID of the edit committed. */
 	readonly editId: EditId;
 	/** Whether or not this is a local edit. */
 	readonly local: boolean;
 	/** The tree the edit was committed on. Required for local edit events handled by SharedTreeUndoRedoHandler. */
-	readonly tree: TSharedTree;
+	readonly tree: SharedTree;
 }
 
 /**
  * The arguments included when the {@link SharedTreeEvent.SequencedEditApplied} SharedTreeEvent is emitted.
  * @public
  */
-export interface SequencedEditAppliedEventArguments<TSharedTree> {
+// TODO:#73458: Remove unnecessary generic parameter
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface SequencedEditAppliedEventArguments<TSharedTree = SharedTree> {
 	/** The ID of the edit committed. */
-	readonly edit: Edit<SharedTreeChangeType<TSharedTree>>;
+	readonly edit: Edit<ChangeInternal>;
 	/** Whether or not this was a local edit. */
 	readonly wasLocal: boolean;
 	/** The tree the edit was applied to. */
-	readonly tree: TSharedTree;
+	readonly tree: SharedTree;
 	/** The telemetry logger associated with sequenced edit application. */
 	readonly logger: ITelemetryLogger;
 	/** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
-	readonly reconciliationPath: ReconciliationPath<SharedTreeChangeType<TSharedTree>>;
+	readonly reconciliationPath: ReconciliationPath;
 	/** The outcome of the sequenced edit being applied. */
-	readonly outcome: EditApplicationOutcome<TSharedTree>;
+	readonly outcome: EditApplicationOutcome;
 }
-
-/**
- * Helper for extracting the change type from a {@link GenericSharedTree} type.
- * @public
- */
-export type SharedTreeChangeType<TSharedTree> = TSharedTree extends GenericSharedTree<any, infer TChangeInternal, any>
-	? TChangeInternal
-	: never;
-
-/**
- * Helper for extracting the failure type from a {@link GenericSharedTree} type.
- * @public
- */
-export type SharedTreeFailureType<TSharedTree> = TSharedTree extends GenericSharedTree<any, any, infer TFailure>
-	? TFailure
-	: never;
 
 /**
  * The outcome of an edit.
  * @public
  */
-export type EditApplicationOutcome<TSharedTree> =
+export type EditApplicationOutcome =
 	| {
 			/**
 			 * The revision view resulting from the edit.
@@ -168,7 +137,7 @@ export type EditApplicationOutcome<TSharedTree> =
 			/**
 			 * The revision view resulting from the edit.
 			 */
-			readonly failure: SharedTreeFailureType<TSharedTree>;
+			readonly failure: Transaction.Failure;
 			/**
 			 * The status code for the edit that produced the revision.
 			 */
@@ -179,22 +148,24 @@ export type EditApplicationOutcome<TSharedTree> =
  * Events which may be emitted by `SharedTree`. See {@link SharedTreeEvent} for documentation of event semantics.
  * @public
  */
-export interface ISharedTreeEvents<TSharedTree> extends ISharedObjectEvents {
-	(event: 'committedEdit', listener: EditCommittedHandler<TSharedTree>);
-	(event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler<TSharedTree>);
+// TODO:#73458: Remove unnecessary generic parameter
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface ISharedTreeEvents<TSharedTree = SharedTree> extends ISharedObjectEvents {
+	(event: 'committedEdit', listener: EditCommittedHandler);
+	(event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler);
 }
 
 /**
  * Expected type for a handler of the `EditCommitted` event.
  * @public
  */
-export type EditCommittedHandler<TSharedTree> = (args: EditCommittedEventArguments<TSharedTree>) => void;
+export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
 
 /**
  * Expected type for a handler of the {@link SharedTreeEvent.SequencedEditApplied} event.
  * @public
  */
-export type SequencedEditAppliedHandler<TSharedTree> = (args: SequencedEditAppliedEventArguments<TSharedTree>) => void;
+export type SequencedEditAppliedHandler = (args: SequencedEditAppliedEventArguments) => void;
 
 const sharedTreeTelemetryProperties: ITelemetryLoggerPropertyBags = { all: { isSharedTreeEvent: true } };
 
@@ -207,8 +178,8 @@ export interface SharedTreeFactoryOptions {
 	expensiveValidation?: boolean;
 	/** If false, does not include history in summaries. */
 	readonly summarizeHistory?: boolean;
-	/** Determines the summary format version to write, 0.0.2 by default. */
-	readonly writeSummaryFormat?: SharedTreeSummaryWriteFormat;
+	/** Determines the format version to write, 0.0.2 by default. */
+	readonly writeFormat?: WriteFormat;
 	/** If true, edit chunks are uploaded as blobs when they become full. */
 	readonly uploadEditChunks?: boolean;
 }
@@ -217,21 +188,47 @@ export interface SharedTreeFactoryOptions {
  * A distributed tree.
  * @public
  */
-export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unknown>
-	extends SharedObject<ISharedTreeEvents<GenericSharedTree<TChange, TChangeInternal, TFailure>>>
-	implements NodeIdContext
-{
+export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
+	/**
+	 * Create a new SharedTree. It will contain the default value (see initialTree).
+	 */
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree {
+		return runtime.createChannel(id, SharedTreeFactory.Type) as SharedTree;
+	}
+
+	/**
+	 * Get a factory for SharedTree to register with the data store.
+	 * @param summarizeHistory - Determines if the history is included in summaries.
+	 * @param writeFormat - Determines the format version the SharedTree will write summaries in.
+	 * This format may be updated to a newer (supported) version if a collaborating shared-tree is initialized
+	 * with a newer write version.
+	 * See docs/Breaking-Change-Migration for more details on this scheme.
+	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
+	 * @returns A factory that creates `SharedTree`s and loads them from storage.
+	 */
+	public static getFactory(
+		summarizeHistory = false,
+		writeFormat = WriteFormat.v0_0_2,
+		uploadEditChunks = false
+	): SharedTreeFactory {
+		return new SharedTreeFactory({
+			summarizeHistory,
+			writeFormat,
+			uploadEditChunks,
+		});
+	}
+
 	/**
 	 * The log of completed edits for this SharedTree.
 	 */
-	private editLog: EditLog<TChangeInternal>;
+	private editLog: EditLog<ChangeInternal>;
 
 	/**
 	 * As an implementation detail, SharedTree uses a log viewer that caches views of different revisions.
 	 * It is not exposed to avoid accidental correctness issues, but `logViewer` is exposed in order to give clients a way
 	 * to access the revision history.
 	 */
-	private cachingLogViewer: CachingLogViewer<TChangeInternal, TFailure>;
+	private cachingLogViewer: CachingLogViewer;
 
 	/**
 	 * Viewer for trees defined by editLog. This allows access to views of the tree at different revisions (various points in time).
@@ -241,14 +238,15 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	}
 
 	protected readonly logger: ITelemetryLogger;
-	protected readonly sequencedEditAppliedLogger: ITelemetryLogger;
+	private readonly sequencedEditAppliedLogger: ITelemetryLogger;
+	private encoder: SharedTreeEncoder<ChangeInternal>;
 
 	/** Indicates if the client is the oldest member of the quorum. */
 	private currentIsOldest: boolean;
 
 	private readonly processEditResult = (editResult: EditStatus, editId: EditId): void => {
 		// TODO:#44859: Invalid results should be handled by the app
-		this.emit(GenericSharedTree.eventFromEditResult(editResult), editId);
+		this.emit(SharedTree.eventFromEditResult(editResult), editId);
 	};
 
 	private readonly processSequencedEditResult = ({
@@ -256,10 +254,8 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		wasLocal,
 		result,
 		reconciliationPath,
-	}: SequencedEditResult<TChangeInternal, TFailure>): void => {
-		const eventArguments: SequencedEditAppliedEventArguments<
-			GenericSharedTree<TChange, TChangeInternal, TFailure>
-		> = {
+	}: SequencedEditResult): void => {
+		const eventArguments: SequencedEditAppliedEventArguments = {
 			edit,
 			wasLocal,
 			tree: this,
@@ -270,27 +266,28 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		this.emit(SharedTreeEvent.SequencedEditApplied, eventArguments);
 	};
 
+	public readonly transactionFactory = Transaction.factory;
+
 	/**
 	 * Create a new SharedTreeFactory.
 	 * @param runtime - The runtime the SharedTree will be associated with
 	 * @param id - Unique ID for the SharedTree
 	 * @param expensiveValidation - Enable expensive asserts.
 	 * @param summarizeHistory - Determines if the history is included in summaries.
-	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
+	 * @param writeFormat - Determines the format version the SharedTree will write summaries in.
 	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 */
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
-		public readonly transactionFactory: TransactionFactory<TChangeInternal, TFailure>,
-		attributes: IChannelAttributes,
 		private readonly expensiveValidation = false,
-		protected readonly summarizeHistory = true,
-		protected writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
+		private readonly summarizeHistory = true,
+		private writeFormat = WriteFormat.v0_0_2,
 		private readonly uploadEditChunks = false
 	) {
-		super(id, runtime, attributes);
+		super(id, runtime, SharedTreeFactory.Attributes);
 		this.expensiveValidation = expensiveValidation;
+		this.encoder = getSharedTreeEncoder(writeFormat, this.summarizeHistory);
 
 		// This code is somewhat duplicated from OldestClientObserver because it currently depends on the container runtime
 		// which SharedTree does not have access to.
@@ -309,9 +306,10 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 			sharedTreeTelemetryProperties
 		);
 		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(
-			initialSummary as SharedTreeSummary<TChangeInternal>,
+			initialSummary as SummaryContents<ChangeInternal>,
 			this.processEditResult,
-			this.processSequencedEditResult
+			this.processSequencedEditResult,
+			WriteFormat.v0_1_1
 		);
 
 		this.editLog = editLog;
@@ -424,7 +422,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * @returns the edit history of the tree. The format of the contents of edits are subject to change and should not be relied upon.
 	 * @internal
 	 */
-	public get editsInternal(): OrderedEditSet<TChangeInternal> {
+	public get editsInternal(): OrderedEditSet<ChangeInternal> {
 		return this.editLog;
 	}
 
@@ -438,7 +436,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * Uploads the edit chunk and sends the chunk starting revision along with the resulting handle as an op.
 	 */
 	private async uploadEditChunk(
-		edits: readonly EditWithoutId<TChangeInternal>[],
+		edits: readonly EditWithoutId<ChangeInternal>[],
 		startRevision: number
 	): Promise<void> {
 		// SPO attachment blob upload limit is set here:
@@ -447,7 +445,9 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		const blobUploadSizeLimit = 4194304;
 
 		try {
-			const buffer = IsoBuffer.from(JSON.stringify({ edits }));
+			const chunkContents = this.encoder.encodeEditChunk(edits);
+			const serializedContents = serializeHandles(chunkContents, this.serializer, this.handle);
+			const buffer = IsoBuffer.from(serializedContents);
 			const bufferSize = buffer.byteLength;
 			assert(
 				bufferSize <= blobUploadSizeLimit,
@@ -460,7 +460,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 					fail('Edit chunk handle could not be serialized.'),
 				startRevision,
 				type: SharedTreeOpType.Handle,
-				version: this.writeSummaryFormat,
+				version: this.writeFormat,
 			};
 			this.submitLocalMessage(handleOp);
 			this.emit(SharedTreeDiagnosticEvent.EditChunkUploaded);
@@ -486,26 +486,27 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	/**
 	 * Saves this SharedTree into a serialized summary. This is used for testing.
 	 *
-	 * @param options - Optional serializer and summarizer to use. If not passed in, SharedTree's serializer and summarizer are used.
+	 * @param summarizer - Optional summarizer to use. If not passed in, SharedTree's summarizer is used.
 	 * @internal
 	 */
-	public saveSerializedSummary(options?: {
-		serializer?: IFluidSerializer;
-		summarizer?: SharedTreeSummarizer;
-	}): string {
-		const { serializer, summarizer } = options || {};
-
-		return serialize(
-			summarizer
-				? summarizer((useHandles = false) => this.editLog.getEditLogSummary(useHandles), this.currentView)
-				: this.saveSummary(),
-			serializer ?? this.serializer,
-			this.handle
-		);
+	public saveSerializedSummary(options?: { serializer?: IFluidSerializer }): string {
+		const { serializer } = options || {};
+		return serialize(this.saveSummary(), serializer ?? this.serializer, this.handle);
 	}
 
 	/**
-	 * Saves this SharedTree into a summary.
+	 * Initialize shared tree with a serialized summary. This is used for testing.
+	 * @returns - statistics about the loaded summary.
+	 * @internal
+	 */
+	public loadSerializedSummary(blobData: string): ITelemetryProperties {
+		const summary = deserialize(blobData, this.serializer);
+		this.loadSummary(summary);
+		return getSummaryStatistics(summary);
+	}
+
+	/**
+	 * Saves this SharedTree into a deserialized summary.
 	 * @internal
 	 */
 	public saveSummary(): SharedTreeSummaryBase {
@@ -523,42 +524,60 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		}
 
 		assert(this.editLog.numberOfLocalEdits === 0, 'generateSummary must not be called with local edits');
-		return this.generateSummary((useHandles = false) => this.editLog.getEditLogSummary(useHandles));
+		return this.generateSummary();
 	}
 
 	/**
 	 * Generates a SharedTree summary for the current state of the tree.
 	 * Will never be called when local edits are present.
-	 * @internal
 	 */
-	protected abstract generateSummary(
-		summarizeLog: (useHandles?: boolean) => EditLogSummary<TChangeInternal>
-	): SharedTreeSummaryBase;
+	private generateSummary(): SharedTreeSummaryBase {
+		try {
+			return this.encoder.encodeSummary(this.editLog, this.currentView, this);
+		} catch (error) {
+			this.logger?.sendErrorEvent({
+				eventName: 'UnsupportedSummaryWriteFormat',
+				formatVersion: this.writeFormat,
+			});
+			throw error;
+		}
+	}
 
 	/**
-	 * Initialize shared tree with a summary.
+	 * Initialize shared tree with a deserialized summary.
 	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummaryBase): void {
-		const { version: loadedSummaryVersion } = summary;
+		const { version: loadedSummaryVersion } = summary as { version: WriteFormat };
 
-		if (isUpdateRequired(loadedSummaryVersion, this.writeSummaryFormat)) {
-			this.submitLocalMessage({ type: SharedTreeOpType.Update, version: this.writeSummaryFormat });
+		if (isUpdateRequired(loadedSummaryVersion, this.writeFormat)) {
+			this.submitLocalMessage({ type: SharedTreeOpType.Update, version: this.writeFormat });
 
 			// Sets the write format to the loaded version so that SharedTree continues to write the old version while waiting for the update op to be sequenced.
-			this.changeWriteFormat(loadedSummaryVersion as SharedTreeSummaryWriteFormat);
+			this.changeWriteFormat(loadedSummaryVersion);
 		}
 
-		const convertedSummary = convertSummaryToReadFormat<TChangeInternal>(summary);
+		const decoder = getSharedTreeEncoder(loadedSummaryVersion, this.summarizeHistory);
+		const convertedSummary = decoder.decodeSummary(summary);
 
-		if (loadedSummaryVersion !== convertedSummary.version) {
+		if (compareSummaryFormatVersions(loadedSummaryVersion, WriteFormat.v0_1_1) < 0) {
+			const { editHistory } = convertedSummary;
+			const { editIds, editChunks } = editHistory;
 			this.logger.sendTelemetryEvent({
 				eventName: 'SummaryConversion',
-				...getSummaryStatistics(convertedSummary),
+				formatVersion: WriteFormat.v0_1_1,
+				historySize: editIds.length,
+				totalNumberOfChunks: editChunks.length,
+				uploadedChunks: getNumberOfHandlesFromEditLogSummary(editHistory),
 			});
 		}
 
-		this.initializeNewEditLogFromSummary(convertedSummary, this.processEditResult, this.processSequencedEditResult);
+		this.initializeNewEditLogFromSummary(
+			convertedSummary,
+			this.processEditResult,
+			this.processSequencedEditResult,
+			summary.version
+		);
 
 		if (this.runtime.connected) {
 			const noChunksReadyForUpload = this.editLog.getEditChunksReadyForUpload()[Symbol.iterator]().next().done;
@@ -574,7 +593,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 				if (this.runtime.getQuorum().getMembers().size === 0) {
 					const noop: SharedTreeOp = {
 						type: SharedTreeOpType.NoOp,
-						version: this.writeSummaryFormat,
+						version: this.writeFormat,
 					};
 
 					this.submitLocalMessage(noop);
@@ -605,19 +624,18 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * @returns the initialized values (this is mostly to keep the constructor happy)
 	 */
 	private initializeNewEditLogFromSummary(
-		summary: SharedTreeSummary<TChangeInternal>,
+		summary: SummaryContents<ChangeInternal>,
 		editStatusCallback: EditStatusCallback,
-		sequencedEditResultCallback: SequencedEditResultCallback<TChangeInternal, TFailure>
-	): { editLog: EditLog<TChangeInternal>; cachingLogViewer: CachingLogViewer<TChangeInternal, TFailure> } {
+		sequencedEditResultCallback: SequencedEditResultCallback,
+		version: WriteFormat
+	): { editLog: EditLog<ChangeInternal>; cachingLogViewer: CachingLogViewer } {
 		const { editHistory, currentTree } = summary;
 
 		// Dispose the current log viewer if it exists. This ensures that re-used EditAddedHandlers below don't retain references to old
 		// log viewers.
 		this.cachingLogViewer?.detachFromEditLog();
 		const indexOfFirstEditInSession =
-			editHistory?.editIds.length === 1 && summary.version === SharedTreeSummaryWriteFormat.Format_0_1_1
-				? 0
-				: editHistory?.editIds.length;
+			editHistory?.editIds.length === 1 && version === WriteFormat.v0_1_1 ? 0 : editHistory?.editIds.length;
 		// Use previously registered EditAddedHandlers if there is an existing EditLog.
 		const editLog = new EditLog(
 			editHistory,
@@ -631,7 +649,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 			this.emit(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk);
 		});
 
-		let knownRevisions: [number, EditCacheEntry<TChangeInternal, TFailure>][] | undefined;
+		let knownRevisions: [number, EditCacheEntry][] | undefined;
 		if (currentTree !== undefined) {
 			const currentView = RevisionView.fromTree(currentTree, this) ?? fail('Failed to load summary currentView');
 			// TODO:#47830: Store multiple checkpoints in summary.
@@ -659,7 +677,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * Upload any full chunks that have yet to be uploaded.
 	 */
 	private uploadCatchUpBlobs(): void {
-		if (this.writeSummaryFormat !== SharedTreeSummaryWriteFormat.Format_0_0_2 && this.uploadEditChunks) {
+		if (this.writeFormat !== WriteFormat.v0_0_2 && this.uploadEditChunks) {
 			for (const [startRevision, chunk] of this.editLog.getEditChunksReadyForUpload()) {
 				this.uploadEditChunk(chunk, startRevision)
 					.then(() => {
@@ -687,7 +705,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 *
 	 * @internal
 	 * */
-	public equals(sharedTree: GenericSharedTree<any, any, any>): boolean {
+	public equals(sharedTree: SharedTree): boolean {
 		if (!areRevisionViewsSemanticallyEqual(this.currentView, this, sharedTree.currentView, sharedTree)) {
 			return false;
 		}
@@ -705,10 +723,9 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 			const newBlob = await storage.readBlob(snapshotFileName);
 			const blobData = bufferToString(newBlob, 'utf8');
 
-			const summary = deserialize(blobData, this.serializer);
-			this.loadSummary(summary);
+			const stats = this.loadSerializedSummary(blobData);
 
-			summaryLoadPerformanceEvent.end(getSummaryStatistics(summary));
+			summaryLoadPerformanceEvent.end(stats);
 		} catch (error) {
 			summaryLoadPerformanceEvent.cancel({ eventName: 'SummaryLoadFailure' }, error);
 			throw error;
@@ -722,29 +739,32 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		this.cachingLogViewer.setMinimumSequenceNumber(message.minimumSequenceNumber);
 		const op: SharedTreeOp = message.contents;
 		const { type, version } = op;
-		const resolvedVersion = version ?? SharedTreeSummaryWriteFormat.Format_0_0_2;
-		const sameVersion = resolvedVersion === this.writeSummaryFormat;
+		const resolvedVersion = version ?? WriteFormat.v0_0_2;
+		const sameVersion = resolvedVersion === this.writeFormat;
 
 		// Edit and handle ops should only be processed if they're the same version as the tree write version.
 		// Update ops should only be processed if they're not the same version.
 		if (sameVersion) {
 			if (type === SharedTreeOpType.Handle) {
 				const { editHandle, startRevision } = op;
-				this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), startRevision);
+				const baseHandle = this.deserializeHandle(editHandle);
+				const decodedHandle: EditHandle<ChangeInternal> = {
+					get: async () => {
+						const contents = await baseHandle.get();
+						const parsedContents: EditChunkContents = JSON.parse(IsoBuffer.from(contents).toString());
+						const decoder = getSharedTreeEncoder(parsedContents.version, this.summarizeHistory);
+						return decoder.decodeEditChunk(parsedContents);
+					},
+					baseHandle,
+				};
+				this.editLog.processEditChunkHandle(decodedHandle, startRevision);
 			} else if (type === SharedTreeOpType.Edit) {
-				const semiSerializedEdit = op.edit;
-				// semiSerializedEdit may have handles which have been replaced by `serializer.encode`.
-				// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
-				// Stringify using JSON, not IFluidSerializer since OPs use JSON directly.
-				// TODO:Performance:#48025: Avoid this serialization round trip.
-				const stringEdit = JSON.stringify(semiSerializedEdit);
-				const parsedEdit = this.serializer.parse(stringEdit);
-				const edit = parsedEdit as Edit<TChangeInternal>;
+				const edit = this.parseSequencedEdit(op);
 				this.processSequencedEdit(edit, message);
 			}
 		} else if (type === SharedTreeOpType.Update) {
 			this.processVersionUpdate(op.version);
-		} else if (compareSummaryFormatVersions(version, this.writeSummaryFormat) === 1) {
+		} else if (compareSummaryFormatVersions(resolvedVersion, this.writeFormat) === 1) {
 			// An op version newer than our current version should not be received. If this happens, either an
 			// incorrect op version has been written or an update op was skipped.
 			const error = 'Newer op version received by a client that has yet to be updated.';
@@ -773,15 +793,31 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	}
 
 	/**
+	 * Parses a sequenced edit. This is only invoked for ops with version matching the current `writeFormat`.
+	 */
+	private parseSequencedEdit(op: SharedTreeEditOp<unknown>): Edit<ChangeInternal> {
+		// TODO:Type Safety: Improve type safety around op sending/parsing (e.g. discriminated union over version field somehow)
+		const decoder = getSharedTreeEncoder(op.version ?? WriteFormat.v0_0_2, this.summarizeHistory);
+		return decoder.decodeEditOp(op, (semiSerializedEdit) => {
+			// semiSerializedEdit may have handles which have been replaced by `serializer.encode`.
+			// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
+			// Stringify using JSON, not IFluidSerializer since OPs use JSON directly.
+			// TODO:Performance:#48025: Avoid this serialization round trip.
+			const encodedEdit: Edit<unknown> = this.serializer.parse(JSON.stringify(semiSerializedEdit));
+			return encodedEdit;
+		});
+	}
+
+	/*
 	 * Abstract helper that allows the concrete SharedTree type to perform pre-processing of an edit before it is added to the log.
 	 * @param edit - The edit to preprocess
 	 * @param wasCreatedLocally - whether or not the edit was created by this shared tree instance
 	 */
-	protected preprocessEdit(edit: Edit<TChangeInternal>, wasCreatedLocally: boolean): Edit<TChangeInternal> {
+	protected preprocessEdit(edit: Edit<ChangeInternal>, wasCreatedLocally: boolean): Edit<ChangeInternal> {
 		return edit;
 	}
 
-	private processSequencedEdit(edit: Edit<TChangeInternal>, message: ISequencedDocumentMessage): void {
+	private processSequencedEdit(edit: Edit<ChangeInternal>, message: ISequencedDocumentMessage): void {
 		const { id: editId } = edit;
 		const wasLocalEdit = this.editLog.isLocalEdit(editId);
 
@@ -798,7 +834,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		if (wasLocalEdit) {
 			this.editLog.addSequencedEdit(edit, message);
 			// If this client created the edit that filled up a chunk, it is responsible for uploading that chunk.
-			if (this.writeSummaryFormat !== SharedTreeSummaryWriteFormat.Format_0_0_2 && this.uploadEditChunks) {
+			if (this.writeFormat !== WriteFormat.v0_0_2 && this.uploadEditChunks) {
 				const lastPair = this.editLog.getLastEditChunk();
 				if (lastPair !== undefined) {
 					const [startRevision, chunk] = lastPair;
@@ -826,28 +862,35 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * Updates SharedTree to the provided version if the version is a valid write version newer than the current version.
 	 * @param version - The version to update to.
 	 */
-	private processVersionUpdate(version: SharedTreeSummaryWriteFormat) {
-		if (isUpdateRequired(this.writeSummaryFormat, version)) {
+	private processVersionUpdate(version: WriteFormat) {
+		if (isUpdateRequired(this.writeFormat, version)) {
 			try {
 				// The edit log may contain some local edits submitted after the version update op was submitted but
 				// before we receive the message it has been sequenced. Since these edits must be sequenced after the version
 				// update op (and therefore will be discarded), by current design they should be removed from the edit log.
-				this.editLog.clearLocalEdits();
+				// These edits are then re-submitted using the new format.
+				const previousLocalEdits = this.editLog.clearLocalEdits();
 				const oldSummary = this.saveSummary();
 
-				if (version === SharedTreeSummaryWriteFormat.Format_0_1_1) {
-					const newSummary = convertSummaryToReadFormat<TChangeInternal>(oldSummary);
+				if (compareSummaryFormatVersions(version, WriteFormat.v0_1_1) >= 0) {
+					const decoder = getSharedTreeEncoder(oldSummary.version, this.summarizeHistory);
+					const summaryContents = decoder.decodeSummary(oldSummary);
 
 					this.initializeNewEditLogFromSummary(
-						newSummary,
+						summaryContents,
 						this.processEditResult,
-						this.processSequencedEditResult
+						this.processSequencedEditResult,
+						version
 					);
 				} else {
 					throw new Error(`Updating to version ${version} is not supported.`);
 				}
 
 				this.changeWriteFormat(version);
+				for (const edit of previousLocalEdits) {
+					this.applyEditInternal(edit);
+				}
+
 				if (this.currentIsOldest) {
 					this.uploadCatchUpBlobs();
 				}
@@ -869,9 +912,9 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * This is exposed as it is useful for testing, particularly with invalid and malformed Edits.
 	 * @internal
 	 */
-	public applyEdit(...changes: readonly TChange[]): Edit<TChangeInternal> {
+	public applyEdit(...changes: readonly Change[]): Edit<ChangeInternal> {
 		const id = newEditId();
-		const internalEdit: Edit<TChangeInternal> = {
+		const internalEdit: Edit<ChangeInternal> = {
 			id,
 			changes: changes.map((c) => this.internalizeChange(c)),
 		};
@@ -883,13 +926,13 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	/**
 	 * @internal
 	 */
-	public applyEditInternal(editOrChanges: Edit<TChangeInternal> | readonly TChangeInternal[]): Edit<TChangeInternal> {
-		let edit: Edit<TChangeInternal>;
+	public applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal> {
+		let edit: Edit<ChangeInternal>;
 		if (Array.isArray(editOrChanges)) {
 			const id = newEditId();
 			edit = { id, changes: editOrChanges };
 		} else {
-			edit = editOrChanges as Edit<TChangeInternal>;
+			edit = editOrChanges as Edit<ChangeInternal>;
 		}
 		this.submitEditOp(edit);
 		this.applyEditLocally(edit, { isSequenced: false, wasCreatedLocally: true });
@@ -900,10 +943,66 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * Given a newly constructed edit, add any necessary metadata
 	 * @internal
 	 */
-	public abstract internalizeChange(change: TChange): TChangeInternal;
+	public internalizeChange(change: Change): ChangeInternal {
+		switch (change.type) {
+			case ChangeType.Insert:
+				return {
+					source: change.source,
+					destination:
+						tryConvertToStablePlaceInternal_0_0_2(change.destination, this) ??
+						fail('Node ID was not generated by this SharedTree'),
+					type: ChangeTypeInternal.Insert,
+				};
+			case ChangeType.Detach: {
+				const detach: DetachInternal = {
+					source:
+						tryConvertToStableRangeInternal_0_0_2(change.source, this) ??
+						fail('Node ID was not generated by this SharedTree'),
+					type: ChangeTypeInternal.Detach,
+				};
+				copyPropertyIfDefined(change, detach, 'destination');
+				return detach;
+			}
+			case ChangeType.Build: {
+				const source = change.source.map((buildNode) =>
+					convertTreeNodes<BuildTreeNode, ChangeNode_0_0_2, DetachedSequenceId>(
+						buildNode,
+						(nodeData) => internalizeBuildNode(nodeData, this),
+						isDetachedSequenceId
+					)
+				);
+				return { source, destination: change.destination, type: ChangeTypeInternal.Build };
+			}
+			case ChangeType.SetValue:
+				return {
+					nodeToModify:
+						this.tryConvertToStableNodeId(change.nodeToModify) ??
+						fail('Node ID was not generated by this SharedTree'),
+					payload: change.payload,
+					type: ChangeTypeInternal.SetValue,
+				};
+			case ChangeType.Constraint: {
+				const constraint: ConstraintInternal = {
+					effect: change.effect,
+					toConstrain:
+						tryConvertToStableRangeInternal_0_0_2(change.toConstrain, this) ??
+						fail('Node ID was not generated by this SharedTree'),
+					type: ChangeTypeInternal.Constraint,
+				};
+				copyPropertyIfDefined(change, constraint, 'contentHash');
+				copyPropertyIfDefined(change, constraint, 'identityHash');
+				copyPropertyIfDefined(change, constraint, 'label');
+				copyPropertyIfDefined(change, constraint, 'length');
+				copyPropertyIfDefined(change, constraint, 'parentNode');
+				return constraint;
+			}
+			default:
+				fail('unexpected change type');
+		}
+	}
 
 	private applyEditLocally(
-		edit: Edit<TChangeInternal>,
+		edit: Edit<ChangeInternal>,
 		editInformation: (
 			| { isSequenced: false; message?: never }
 			| { isSequenced: true; message: ISequencedDocumentMessage }
@@ -917,7 +1016,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 			this.editLog.addLocalEdit(processedEdit);
 		}
 
-		const eventArguments: EditCommittedEventArguments<GenericSharedTree<TChange, TChangeInternal, TFailure>> = {
+		const eventArguments: EditCommittedEventArguments = {
 			editId: processedEdit.id,
 			local: !isSequenced,
 			tree: this,
@@ -950,25 +1049,19 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 	 * @returns the inverse of `changes` or undefined if the changes could not be inverted for the given tree state.
 	 * @internal
 	 */
-	public abstract revertChanges(
-		changes: readonly TChangeInternal[],
-		before: RevisionView
-	): TChangeInternal[] | undefined;
+	public revertChanges(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined {
+		return revert(changes, before, this);
+	}
 
-	private submitEditOp(edit: Edit<TChangeInternal>): void {
-		const editOp: SharedTreeEditOp<TChangeInternal> = {
-			type: SharedTreeOpType.Edit,
-			edit,
-			version: this.writeSummaryFormat,
-		};
-
-		// IFluidHandles are not allowed in Ops.
-		// Ops can contain Fluid's Serializable (for payloads) which allows IFluidHandles.
-		// So replace the handles by encoding before sending:
-		const semiSerialized = this.serializer.encode(editOp, this.handle);
-
-		// TODO:44711: what should be passed in when unattached?
-		this.submitLocalMessage(semiSerialized);
+	/**
+	 * Submits an edit by the local client to the runtime.
+	 */
+	private submitEditOp(edit: Edit<ChangeInternal>): void {
+		const op = this.encoder.encodeEditOp(edit, (preparedEdit) => {
+			const serializedEdit: Edit<ChangeInternal> = this.serializer.encode(preparedEdit, this.handle);
+			return serializedEdit;
+		});
+		this.submitLocalMessage(op);
 	}
 
 	public getRuntime(): IFluidDataStoreRuntime {
@@ -990,7 +1083,7 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		const op: SharedTreeOp = content;
 		switch (op.type) {
 			case SharedTreeOpType.Edit: {
-				const { edit } = op as SharedTreeEditOp<TChangeInternal>;
+				const edit = this.parseSequencedEdit(op);
 				this.applyEditLocally(edit, { isSequenced: false, wasCreatedLocally: false });
 				break;
 			}
@@ -1006,19 +1099,20 @@ export abstract class GenericSharedTree<TChange, TChangeInternal, TFailure = unk
 		}
 	}
 
-	private changeWriteFormat(newFormat: SharedTreeSummaryWriteFormat): void {
-		this.writeSummaryFormat = newFormat;
+	private changeWriteFormat(newFormat: WriteFormat): void {
+		this.writeFormat = newFormat;
+		this.encoder = getSharedTreeEncoder(newFormat, this.summarizeHistory);
 		this.emit(SharedTreeDiagnosticEvent.WriteVersionChanged, newFormat);
 	}
 }
 
 /**
  * @returns 1 if versionA is newer, -1 if versionB is newer, and 0 if the versions are the same.
- * @throws if either version isn't a valid SharedTreeSummaryReadFormat version.
+ * @throws if either version isn't a valid WriteFormat version.
  */
 function compareSummaryFormatVersions(versionA: string, versionB: string): number {
-	const versionAIndex = sortedSummaryReadVersions.indexOf(versionA as SharedTreeSummaryReadFormat);
-	const versionBIndex = sortedSummaryReadVersions.indexOf(versionB as SharedTreeSummaryReadFormat);
+	const versionAIndex = sortedWriteVersions.indexOf(versionA as WriteFormat);
+	const versionBIndex = sortedWriteVersions.indexOf(versionB as WriteFormat);
 
 	if (versionAIndex === -1 || versionBIndex === -1) {
 		fail('Summary version being compared cannot be read.');
@@ -1036,10 +1130,10 @@ function compareSummaryFormatVersions(versionA: string, versionB: string): numbe
 /**
  * Checks if the summary version needs to be updated.
  * @returns true if the old version is older than the new version.
- * @throws if the new version isn't a supported SharedTreeSummaryWriteFormat version.
+ * @throws if the new version isn't a supported WriteFormat version.
  */
 function isUpdateRequired(oldVersion: string, newVersion: string): boolean {
-	const newVersionIndex = sortedSummaryWriteVersions.indexOf(newVersion as SharedTreeSummaryWriteFormat);
+	const newVersionIndex = sortedWriteVersions.indexOf(newVersion as WriteFormat);
 	if (newVersionIndex === -1) {
 		fail('New write version is invalid.');
 	}

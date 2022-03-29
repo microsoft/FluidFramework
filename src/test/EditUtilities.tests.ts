@@ -9,16 +9,19 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { FluidSerializer } from '@fluidframework/shared-object-base';
 import { Definition } from '../Identifiers';
+import { getChangeNodeFromView } from '../SerializationUtilities';
+import { noop } from '../Common';
 import {
+	comparePayloads,
+	convertTreeNodes,
+	deepCompareNodes,
 	internalizeBuildNode,
 	PlaceValidationResult,
 	RangeValidationResultKind,
 	validateStablePlace,
 	validateStableRange,
-} from '../default-edits';
-import { ChangeNode, comparePayloads, convertTreeNodes, deepCompareNodes, Payload, Side } from '../generic';
-import { getChangeNodeFromView } from '../SerializationUtilities';
-import { noop } from '../Common';
+} from '../EditUtilities';
+import { ChangeNode, Payload, Side } from '../persisted-types';
 import { refreshTestTree } from './utilities/TestUtilities';
 
 describe('EditUtilities', () => {

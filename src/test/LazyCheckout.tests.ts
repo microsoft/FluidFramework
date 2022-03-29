@@ -4,7 +4,7 @@
  */
 
 import { expect } from 'chai';
-import { Delete, StableRange } from '../default-edits';
+import { Delete, StableRange } from '../ChangeTypes';
 import { LazyCheckout } from '../LazyCheckout';
 import { checkoutTests } from './Checkout.tests';
 import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';

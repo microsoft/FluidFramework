@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { StablePlace, StableRange } from './ChangeTypes';
 import { assert, fail } from './Common';
-import { StablePlace, StableRange } from './default-edits';
-import { TraitLocation, TreeView, TreeViewPlace, TreeViewRange } from './generic';
+import { TraitLocation, TreeView, TreeViewPlace, TreeViewRange } from './TreeView';
 
 /**
  * Express the given {@link (StableRange:interface)} as a {@link TreeViewRange}

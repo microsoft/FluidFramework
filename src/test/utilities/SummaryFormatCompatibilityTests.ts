@@ -5,29 +5,27 @@
 
 import * as fs from 'fs';
 import { expect } from 'chai';
+import { v5 as uuidv5 } from 'uuid';
 // KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
 import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
-import {
-	Change,
-	ChangeInternal,
-	noHistorySummarizer,
-	noHistorySummarizer_0_1_1,
-	SharedTree,
-	SharedTreeNoHistorySummarizer,
-} from '../../default-edits';
-import {
-	Edit,
-	SharedTreeSummary,
-	SharedTreeSummaryBase,
-	SharedTreeSummaryWriteFormat,
-	EditWithoutId,
-	UploadedEditChunkContents,
-	SharedTreeSummaryReadFormat,
-} from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { EditLog, separateEditAndId } from '../../EditLog';
 import { assertNotUndefined } from '../../Common';
 import { getChangeNodeFromView } from '../../SerializationUtilities';
+import type { EditId } from '../../Identifiers';
+import {
+	ChangeInternal,
+	Edit,
+	EditWithoutId,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
+	WriteFormat,
+} from '../../persisted-types';
+import { getSharedTreeEncoder, SharedTreeEncoder } from '../../SharedTreeEncoder';
+import { SharedTree } from '../../SharedTree';
+import { Change } from '../../ChangeTypes';
+import { UploadedEditChunkContents } from '../../SummaryTestUtilities';
+import { TestFluidSerializer } from './TestSerializer';
 import {
 	getDocumentFiles,
 	LocalServerSharedTreeTestingComponents,
@@ -37,24 +35,26 @@ import {
 	summaryCompatibilityTestSetupEditId,
 	testDocumentsPathBase,
 } from './TestUtilities';
-import { TestFluidSerializer } from './TestSerializer';
+
+const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
 
 /**
- * A version/summarizer pair must be specified for a no history write test to be generated.
+ * A version/encoder pair must be specified for a no history write test to be generated.
  * Versions that can no longer be written should be removed from this list.
  */
-const noHistorySupportedSummarizers: {
-	version: SharedTreeSummaryWriteFormat;
-	summarizer: SharedTreeNoHistorySummarizer;
-}[] = [
-	{ version: SharedTreeSummaryWriteFormat.Format_0_0_2, summarizer: noHistorySummarizer },
-	{ version: SharedTreeSummaryWriteFormat.Format_0_1_1, summarizer: noHistorySummarizer_0_1_1 },
-];
+const noHistorySupportedEncoders: {
+	version: WriteFormat;
+	encoder: SharedTreeEncoder<ChangeInternal>;
+}[] = [WriteFormat.v0_0_2, WriteFormat.v0_1_1].map((version) => ({
+	version,
+	encoder: getSharedTreeEncoder(
+		version,
+		false,
+		(edit) => uuidv5(JSON.stringify(edit.changes), uuidNamespace) as EditId
+	),
+}));
 
-const supportedSummaryWriteFormats: SharedTreeSummaryWriteFormat[] = [
-	SharedTreeSummaryWriteFormat.Format_0_0_2,
-	SharedTreeSummaryWriteFormat.Format_0_1_1,
-];
+const supportedSummaryWriteFormats: WriteFormat[] = [WriteFormat.v0_0_2, WriteFormat.v0_1_1];
 
 /**
  * An entry into the forwardCompatibilityTests list that is run as the following test:
@@ -68,15 +68,15 @@ const supportedSummaryWriteFormats: SharedTreeSummaryWriteFormat[] = [
  */
 interface ForwardCompatibilityTestEntry {
 	/** Version of the summarizer, should be older than the load versions. */
-	summarizerVersion: SharedTreeSummaryWriteFormat;
+	summarizerVersion: WriteFormat;
 	/** A list of all the versions that can be read with directions on how they are expected to be handled by the specified summarizer. */
 	loadVersions: {
 		/** Version of the summary to load for testing. */
-		loadVersion: SharedTreeSummaryReadFormat;
+		loadVersion: WriteFormat;
 		/** Condition under which the summarizer will write a different format version than the summarizerVersion. */
 		condition: (summary: SharedTreeSummaryBase) => boolean;
 		/** The format version that will be written if the condition is true. */
-		conditionalWriteVersion: SharedTreeSummaryWriteFormat;
+		conditionalWriteVersion: WriteFormat;
 	}[];
 }
 
@@ -85,10 +85,10 @@ interface ForwardCompatibilityTestEntry {
  */
 const forwardCompatibilityTests: ForwardCompatibilityTestEntry[] = [
 	{
-		summarizerVersion: SharedTreeSummaryWriteFormat.Format_0_0_2,
+		summarizerVersion: WriteFormat.v0_0_2,
 		loadVersions: [
 			{
-				loadVersion: SharedTreeSummaryReadFormat.Format_0_1_1,
+				loadVersion: WriteFormat.v0_1_1,
 				// In the special case in which a SharedTree loads a summary with handles (which would necessarily
 				// imply that the summary was version >= 0.1.0), then a 0.1.0 summary is written even if the summarizer is 0.0.2.
 				condition: (summary: SharedTreeSummaryBase): boolean => {
@@ -99,7 +99,7 @@ const forwardCompatibilityTests: ForwardCompatibilityTestEntry[] = [
 					// An editChunk is a handle iff its "chunk" field is not an array
 					return castedSummary.editHistory.editChunks.some(({ chunk }) => !Array.isArray(chunk));
 				},
-				conditionalWriteVersion: SharedTreeSummaryWriteFormat.Format_0_1_1,
+				conditionalWriteVersion: WriteFormat.v0_1_1,
 			},
 		],
 	},
@@ -109,17 +109,17 @@ const forwardCompatibilityTests: ForwardCompatibilityTestEntry[] = [
  * Runs a test suite for summaries on `SharedTree`.
  * This suite can be used to test other implementations that aim to fulfill `SharedTree`'s contract.
  */
-export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTree>(
+export function runSummaryFormatCompatibilityTests(
 	title: string,
-	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents<TSharedTree>,
+	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents,
 	setUpLocalServerTestSharedTree: (
 		options: LocalServerSharedTreeTestingOptions
-	) => Promise<LocalServerSharedTreeTestingComponents<TSharedTree>>
+	) => Promise<LocalServerSharedTreeTestingComponents>
 ) {
 	// KLUDGE: Calling ensureSynchronized after too many edits are applied (about 450+) causes it to hang indefinitely,
 	//         bug filed at https://github.com/microsoft/FluidFramework/issues/7575
 	async function applyEdits(
-		tree: TSharedTree,
+		tree: SharedTree,
 		testObjectProvider: TestObjectProvider,
 		history: Edit<ChangeInternal>[]
 	) {
@@ -135,9 +135,10 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 	}
 
 	describe(title, () => {
+		// Note: this test serializer doesn't handle blobs properly (it just uses JSON.stringify/JSON.parse).
 		const testSerializer = new TestFluidSerializer();
 
-		let expectedTree: TSharedTree;
+		let expectedTree: SharedTree;
 		let testObjectProvider: TestObjectProvider;
 		let editsPerChunk: number;
 		// Number of edits per catchup chunk
@@ -173,7 +174,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						// Use a tree with the correct summary write format
 						const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 							setupEditId: summaryCompatibilityTestSetupEditId,
-							writeSummaryFormat: version,
+							writeFormat: version,
 						});
 
 						await applyEdits(tree, testObjectProvider, history);
@@ -189,18 +190,13 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					});
 				}
 
-				for (const { summarizer, version } of noHistorySupportedSummarizers) {
+				for (const { version, encoder } of noHistorySupportedEncoders) {
 					it(`version ${version} with no history can be written`, async () => {
 						await applyEdits(expectedTree, testObjectProvider, history);
 
 						// Save a new summary with the expected tree and use it to load a new SharedTree
 						const editLog = expectedTree.edits as EditLog<ChangeInternal>;
-						const newSummary = summarizer(
-							(useHandles = false) => editLog.getEditLogSummary(useHandles),
-							expectedTree.currentView,
-							expectedTree,
-							true
-						);
+						const newSummary = encoder.encodeSummary(editLog, expectedTree.currentView, expectedTree);
 
 						// Check that the new summary is equivalent to the saved one
 						const serializedSummary = assertNotUndefined(noHistorySummaryByVersion.get(version));
@@ -224,10 +220,9 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						await applyEdits(expectedTree, testObjectProvider, history);
 
 						const serializedSummary = assertNotUndefined(summaryByVersion.get(version));
-						const summary = deserialize(serializedSummary, testSerializer);
 
 						const { tree } = setUpTestSharedTree();
-						tree.loadSummary(summary);
+						tree.loadSerializedSummary(serializedSummary);
 
 						expect(tree.equals(expectedTree)).to.be.true;
 					});
@@ -277,8 +272,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						it(`version ${firstVersion} and version ${version} summaries produce identical trees`, async () => {
 							// Load the first summary into the expected tree.
 							const firstSerializedSummary = assertNotUndefined(summaryByVersion.get(firstVersion));
-							const firstSummary = deserialize(firstSerializedSummary, testSerializer);
-							expectedTree.loadSummary(firstSummary);
+							expectedTree.loadSerializedSummary(firstSerializedSummary);
 
 							// Wait for the ops to to be submitted and processed across the containers.
 							await testObjectProvider.ensureSynchronized();
@@ -286,8 +280,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 							// Create a tree that loads the current summary version.
 							const { tree, containerRuntimeFactory } = setUpTestSharedTree();
 							const serializedSummary = assertNotUndefined(summaryByVersion.get(version));
-							const summary = deserialize(serializedSummary, testSerializer);
-							tree.loadSummary(summary);
+							tree.loadSerializedSummary(serializedSummary);
 
 							containerRuntimeFactory.processAllMessages();
 
@@ -298,8 +291,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					// Test that the current format version can be loaded and produce the correct change node tree.
 					it(`version ${version} produces the correct change node`, async () => {
 						const serializedSummary = assertNotUndefined(summaryByVersion.get(version));
-						const summary = deserialize(serializedSummary, testSerializer);
-						expectedTree.loadSummary(summary);
+						expectedTree.loadSerializedSummary(serializedSummary);
 
 						// Wait for the ops to to be submitted and processed across the containers.
 						await testObjectProvider.ensureSynchronized();
@@ -335,16 +327,15 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								// Use a tree with the correct summary write format
 								const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 									setupEditId: summaryCompatibilityTestSetupEditId,
-									writeSummaryFormat: supportedWriteVersion,
+									writeFormat: supportedWriteVersion,
 								});
 
 								// Load the summary to be read
 								const serializedSummary = assertNotUndefined(summaryByVersion.get(readVersion));
-								const summary = deserialize(serializedSummary, testSerializer);
 
 								// Wait for the ops to to be submitted and processed across the containers.
 								await testObjectProvider.ensureSynchronized();
-								tree.loadSummary(summary);
+								tree.loadSerializedSummary(serializedSummary);
 
 								await testObjectProvider.ensureSynchronized();
 
@@ -379,15 +370,14 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								// Use a tree with the correct summary write format
 								const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 									setupEditId: summaryCompatibilityTestSetupEditId,
-									writeSummaryFormat: supportedWriteVersion,
+									writeFormat: supportedWriteVersion,
 								});
 
 								const serializedSummary = assertNotUndefined(summaryByVersion.get(loadVersion));
-								const summary = deserialize(serializedSummary, testSerializer);
 
 								// Wait for the ops to to be submitted and processed across the containers.
 								await testObjectProvider.ensureSynchronized();
-								tree.loadSummary(summary);
+								tree.loadSerializedSummary(serializedSummary);
 
 								await testObjectProvider.ensureSynchronized();
 
@@ -426,10 +416,10 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
  */
 function expectBlobsByVersion(summary: SharedTreeSummaryBase, blobs: string, history: Edit<ChangeInternal>[]): void {
 	const { version } = summary;
-	const storedBlobs: UploadedEditChunkContents<ChangeInternal>[] = JSON.parse(blobs);
+	const storedBlobs: UploadedEditChunkContents[] = JSON.parse(blobs);
 
 	switch (version) {
-		case SharedTreeSummaryWriteFormat.Format_0_1_1: {
+		case WriteFormat.v0_1_1: {
 			let loadedEdits: EditWithoutId<ChangeInternal>[] = [];
 
 			// Obtain all edits from the summary, replacing handles with edits loaded from the stored blob file.
@@ -439,7 +429,9 @@ function expectBlobsByVersion(summary: SharedTreeSummaryBase, blobs: string, his
 					if (!Array.isArray(chunk)) {
 						const storedBlob = storedBlobs.shift();
 						expect(storedBlob).to.not.be.undefined;
-						const { absolutePath, chunkContents } = assertNotUndefined(storedBlob);
+						const { absolutePath, chunkContents: encodedChunkContents } = assertNotUndefined(storedBlob);
+						const decoder = getSharedTreeEncoder(encodedChunkContents.version ?? WriteFormat.v0_0_2, false);
+						const chunkContents = decoder.decodeEditChunk(encodedChunkContents);
 
 						// TestSerializer doesn't replace serialized handles with actual handles so the absolutePath is found under 'url'.
 						expect(absolutePath).to.equal((chunk as any).url);

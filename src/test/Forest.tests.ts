@@ -6,8 +6,8 @@
 import { expect } from 'chai';
 import { Forest, ForestNode } from '../Forest';
 import { compareForestNodes } from '../ForestUtilities';
-import { Payload } from '../generic';
 import { NodeId, TraitLabel } from '../Identifiers';
+import { Payload } from '../persisted-types';
 import { TestTree } from './utilities/TestNode';
 import { refreshTestTree } from './utilities/TestUtilities';
 
