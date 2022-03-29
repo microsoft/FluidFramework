@@ -26,18 +26,20 @@ Lists here are examples of options we could provide, and are not intended to be 
 
 -   Chunk Representations: Forest at least one chunk representation to actually store data. Several are provided for performance reasons:
 
-    -   IndirectNode: Most general, supports all functionality (generally want to always include this one)
+    -   IndirectNode: Single node chunk: most general, supports all functionality (generally want to always include this one)
     -   UniformSequence: Highly compressed based on tree shape
 
--   Schema generators: We will likely want at least one tool that takes input schema files and generates the types used by the `Schema` library. Some options are listed here, but little thought has gone into this list:
+-   Schema importers: We will likely want at least one tool that takes input schema files and generates the types used by the `Schema` library.
+Some options are listed here, but little thought has gone into this list:
 
     -   [json schema](https://json-schema.org/)
     -   graphQL
-    -   custom
+    -   typescript DSL (like [TypeBox](https://www.npmjs.com/package/@sinclair/typebox)) that supports runtime and compile type typing without code gen.
 
--   Schema libraries: We likely want to provide some useful schema, using and compatible with some generator (above):
+-   Schema libraries: We likely want to provide some useful schema, using and compatible with some importer (above):
 
     -   json (some way to embed json into our trees)
+    -   xml
     -   primitives (somehow we need to express primitive types / values. This can be in the form of a schema library, which may or may not be special compared to normal schema libraries)
 
 -   Schematize configurations:
@@ -166,3 +168,8 @@ REST: https://www.redhat.com/en/topics/api/what-is-a-rest-api
 SOAP: https://www.redhat.com/en/topics/integration/whats-the-difference-between-soap-rest
 
 how common are id uses in editing now?
+
+
+## WASM and Native Code
+
+TODO: How does the desire to support native code, and/or wasm impact this?
