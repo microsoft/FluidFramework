@@ -19,6 +19,7 @@ import {
     defaultSessionExpiryDurationMs,
     GarbageCollector,
     gcBlobPrefix,
+    GCNodeType,
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
@@ -40,20 +41,22 @@ describe("Garbage Collection Tests", () => {
     // Time after which unreferenced nodes can be deleted.
     const deleteTimeoutMs = 500;
     const testPkgPath = [ "testPkg" ];
-    // The package data is tagged in the telemetry event .
+    // The package data is tagged in the telemetry event.
     const eventPkg = { value:`/${testPkgPath.join("/")}`, tag: TelemetryDataTag.PackageData };
 
+    const getNodeType = (nodePath: string) => {
+        return GCNodeType.DataStore;
+    };
     // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
     const defaultGCData: IGarbageCollectionData = { gcNodes: {} };
-    const getGCData = async (fullGC?: boolean) => defaultGCData;
-    const updateUsedRoutes = (usedRoutes: string[]) => {
-        return { totalNodeCount: 0, unusedNodeCount: 0 };
-    };
     // The runtime to be passed to the garbage collector.
     const gcRuntime: IGarbageCollectionRuntime = {
         updateStateBeforeGC: async () => {},
-        getGCData,
-        updateUsedRoutes,
+        getGCData: async (fullGC?: boolean) => defaultGCData,
+        updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
+        deleteUnusedRoutes: (unusedRoutes: string[]) => {},
+        getNodeType,
+        getCurrentReferenceTimestampMs: () => Date.now(),
         closeFn: () => { closeCalled = true; },
     };
 
@@ -70,9 +73,7 @@ describe("Garbage Collection Tests", () => {
         return GarbageCollector.create(
             gcRuntime,
             { gcAllowed: true, deleteTimeoutMs },
-            (unusedRoutes: string[]) => {},
             (nodeId: string) => testPkgPath,
-            () => Date.now(),
             () => Date.now(),
             baseSnapshot,
             async <T>(id: string) => getNodeGCDetails(id) as T,

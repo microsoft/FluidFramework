@@ -11,7 +11,11 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
+<<<<<<< HEAD
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+=======
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+>>>>>>> 684f50e3ac (Added GC mark phase of blobs uploaded externally via BlobManager.)
 
 /**
  * This class represents blob (long string)
@@ -202,6 +206,42 @@ export class BlobManager {
             eventName: "AttachmentBlobsLoaded",
             count: snapshot.ids?.length ?? 0,
             redirectTable: snapshot.redirectTable?.length,
+        });
+    }
+
+    /**
+     * Generates data used for garbage collection. Each blob uploaded represents a node in the GC graph as it can be
+     * individually referenced by storing its handle in a referenced DDS. Returns the list of blob ids as GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data. BlobManager doesn't care
+     * about this for now because the data is a simple list of blob ids.
+     */
+    public getGCData(fullGC: boolean = false): IGarbageCollectionData {
+        const gcData: IGarbageCollectionData = { gcNodes: {} };
+        /**
+          * The GC node id is of the format `/_blobs/blobId`. This node is must match the path of the blob handle
+          * returned by the createBlob API because blobs are marked referenced by storing these handles in a referenced
+          * DDS. There are no outbound routes from these nodes as it  can only be referenced by other nodes in the
+          * container but cannot referenced other nodes.
+          */
+        this.blobIds.forEach((blobId: string) => {
+            gcData.gcNodes[`/${BlobManager.basePath}/${blobId}`] = [];
+        });
+        return gcData;
+    }
+
+    /**
+     * When running GC in test mode, this is called to delete blobs that are unused.
+     * @param unusedRoutes - These are the blob node ids that are unused and should be deleted.
+     */
+    public deleteUnusedRoutes(unusedRoutes: string[]): void {
+        // The routes or blob node ids are in the same format as returned in getGCData - `/_blobs/blobId`.
+        unusedRoutes.forEach((route: string) => {
+            const pathParts = route.split("/");
+            assert(
+                pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+                "Invalid blob node id in unused routes.",
+            );
+            this.blobIds.delete(pathParts[2]);
         });
     }
 

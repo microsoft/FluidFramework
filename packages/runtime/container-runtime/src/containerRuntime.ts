@@ -100,6 +100,7 @@ import {
     seqFromTree,
     calculateStats,
 } from "@fluidframework/runtime-utils";
+import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -140,6 +141,7 @@ import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import {
     GarbageCollector,
+    GCNodeType,
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
@@ -1075,13 +1077,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
-            (unusedRoutes: string[]) => this.dataStores.deleteUnusedRoutes(unusedRoutes),
             (nodePath: string) => this.dataStores.getNodePackagePath(nodePath),
-            /**
-             * Returns the timestamp of the last message seen by this client. This is used by garbage collector as
-             * the current reference timestamp for tracking unreferenced objects.
-             */
-            () => this.deltaManager.lastMessage?.timestamp ?? this.messageAtLastSummary?.timestamp,
             () => this.messageAtLastSummary?.timestamp,
             context.baseSnapshot,
             async <T>(id: string) => readAndParse<T>(this.storage, id),
@@ -1133,7 +1129,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
-            async () => this.garbageCollector.getDataStoreBaseGCDetails(),
+            async () => this.garbageCollector.getBaseGCDetails(),
             (path: string, timestampMs: number, packagePath?: readonly string[]) => this.garbageCollector.nodeUpdated(
                 path,
                 "Changed",
@@ -2110,7 +2106,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
     public async getGCData(fullGC?: boolean): Promise<IGarbageCollectionData> {
-        return this.dataStores.getGCData(fullGC);
+        const builder = new GCDataBuilder();
+        const dsGCData = await this.dataStores.getGCData(fullGC);
+        builder.addNodes(dsGCData.gcNodes);
+
+        const blobsGCData = this.blobManager.getGCData(fullGC);
+        builder.addNodes(blobsGCData.gcNodes);
+        return builder.getGCData();
     }
 
     /**
@@ -2126,7 +2128,57 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // always referenced, so the used routes is only self-route (empty string).
         this.summarizerNode.updateUsedRoutes([""]);
 
-        return this.dataStores.updateUsedRoutes(usedRoutes, gcTimestamp);
+        const dataStoreUsedRoutes: string[] = [];
+        for (const route of usedRoutes) {
+            if (route.split("/")[1] !== BlobManager.basePath) {
+                dataStoreUsedRoutes.push(route);
+            }
+        }
+
+        return this.dataStores.updateUsedRoutes(dataStoreUsedRoutes, gcTimestamp);
+    }
+
+    /**
+     * When running GC in test mode, this is called to delete objects whose routes are unused. This enables testing
+     * scenarios with accessing deleted content.
+     * @param unusedRoutes - The routes that are unused in all data stores in this Container.
+     */
+    public deleteUnusedRoutes(unusedRoutes: string[]) {
+        const blobManagerUnusedRoutes: string[] = [];
+        const dataStoreUnusedRoutes: string[] = [];
+        for (const route of unusedRoutes) {
+            if (route.split("/")[1] === BlobManager.basePath) {
+                blobManagerUnusedRoutes.push(route);
+            } else {
+                dataStoreUnusedRoutes.push(route);
+            }
+        }
+
+        this.blobManager.deleteUnusedRoutes(blobManagerUnusedRoutes);
+        this.dataStores.deleteUnusedRoutes(dataStoreUnusedRoutes);
+    }
+
+    /**
+     * Returns a server generated referenced timestamp to be used to track unreferenced nodes by GC.
+     */
+    public getCurrentReferenceTimestampMs(): number | undefined {
+        // Use the timestamp of the last message seen by this client as that is server generated. If no messages have
+        // been processed, use the timestamp of the message from the last summary.
+        return this.deltaManager.lastMessage?.timestamp ?? this.messageAtLastSummary?.timestamp;
+    }
+
+    /**
+     * Returns the type of the GC node. Currently, there are nodes that belong to data store and nodes that belong
+     * to the blob manager.
+     */
+    public getNodeType(nodePath: string): GCNodeType {
+        if (this.dataStores.isDataStoreNode(nodePath)) {
+            return GCNodeType.DataStore;
+        }
+        if (nodePath.split("/")[1] === BlobManager.basePath) {
+            return GCNodeType.Blob;
+        }
+        return GCNodeType.Other;
     }
 
     /**
