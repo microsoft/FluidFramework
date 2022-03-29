@@ -9,6 +9,7 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
+    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { assert, performance } from "@fluidframework/common-utils";
 
@@ -27,6 +28,9 @@ class OpPerfTelemetry {
     // To track round trip time for every %1000 client message.
     private opSendTimeForLatencyStatistics: number | undefined;
     private clientSequenceNumberForLatencyStatistics: number | undefined;
+
+    private opTimeSittingInInboundQueue: number | undefined;
+    private durationSittingInInboundQueue: number | undefined;
 
     private firstConnection = true;
     private connectionOpSeqNumber: number | undefined;
@@ -63,8 +67,33 @@ class OpPerfTelemetry {
         this.deltaManager.on("disconnect", () => {
             this.opSendTimeForLatencyStatisticsForMsnStatistics = undefined;
             this.clientSequenceNumberForLatencyStatistics = undefined;
+            this.opTimeSittingInInboundQueue = undefined;
+            this.durationSittingInInboundQueue = undefined;
             this.connectionOpSeqNumber = undefined;
             this.firstConnection = false;
+        });
+
+        this.deltaManager.outbound.on("push", (messages) => {
+            for (const msg of messages) {
+                if (msg.type === MessageType.Operation &&
+                    this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber) {
+                    assert(this.opTimeSittingInInboundQueue === undefined,
+                        "OpTimeSittingInboundQueue should be undefined");
+                    assert(this.durationSittingInInboundQueue === undefined,
+                        "durationSittingInInboundQueue should be undefined");
+                     this.opTimeSittingInInboundQueue = Date.now();
+                }
+            }
+        });
+
+        this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
+            if (this.clientId === message.clientId &&
+                message.type === MessageType.Operation &&
+                this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber &&
+                this.opTimeSittingInInboundQueue !== undefined) {
+                this.durationSittingInInboundQueue = Date.now() - this.opTimeSittingInInboundQueue;
+                this.opTimeSittingInInboundQueue = undefined;
+            }
         });
 
         this.deltaManager.inbound.on("idle", (count: number, duration: number) => {
@@ -113,7 +142,11 @@ class OpPerfTelemetry {
 
     private beforeOpSubmit(message: IDocumentMessage) {
         // start with first client op and measure latency every 500 client ops
-        if (this.clientSequenceNumberForLatencyStatistics === undefined && message.clientSequenceNumber % 500 === 1) {
+        if (this.clientSequenceNumberForLatencyStatistics === undefined &&
+            message.clientSequenceNumber % 500 === 1) {
+            assert(this.opTimeSittingInInboundQueue === undefined, "OpTimeSittingInboundQueue should be undefined");
+            assert(this.durationSittingInInboundQueue === undefined,
+                "durationSittingInInboundQueue should be undefined");
             this.opSendTimeForLatencyStatistics = Date.now();
             this.clientSequenceNumberForLatencyStatistics = message.clientSequenceNumber;
         }
@@ -162,8 +195,10 @@ class OpPerfTelemetry {
                 duration,
                 category,
                 pingLatency: this.pingLatency,
+                durationInboundQueue: this.durationSittingInInboundQueue,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
+            this.durationSittingInInboundQueue = undefined;
         }
     }
 }
