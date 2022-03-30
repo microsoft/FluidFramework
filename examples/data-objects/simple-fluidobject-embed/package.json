@@ -38,11 +38,10 @@
   },
   "dependencies": {
     "@fluid-example/clicker": "^0.59.1000",
+    "@fluid-example/example-utils": "^0.59.1000",
     "@fluidframework/aqueduct": "^0.59.1000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/view-interfaces": "^0.59.1000",
-    "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react": "^16.10.2"
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.59.1000",
@@ -50,7 +49,6 @@
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",
     "@types/react": "^16.9.15",
-    "@types/react-dom": "^16.9.4",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",
