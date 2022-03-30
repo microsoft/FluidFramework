@@ -78,10 +78,10 @@ export class TestClient extends Client {
         specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
         const client2 = new TestClient(undefined, specToSeg);
         const { catchupOpsP } = await client2.load(
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             } as IFluidDataStoreRuntime,
             storage,
             TestClient.serializer);

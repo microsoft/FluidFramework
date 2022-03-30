@@ -366,12 +366,12 @@ export class PartialSequenceLengths {
             }
         }
         if (seqPartialLen === undefined) {
+            // len will be assigned below, making this assertion true.
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             seqPartialLen = {
                 clientId,
                 seglen: seqSeglen,
                 seq,
-            // len will be assigned below, making this assertion true.
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             } as PartialSequenceLength;
             partialLengths.push(seqPartialLen);
         } else {
