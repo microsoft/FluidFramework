@@ -41,6 +41,7 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 
 export class OrdererManager implements core.IOrdererManager {
     constructor(
+        private readonly globalDbEnabled: boolean,
         private readonly ordererUrl: string,
         private readonly tenantManager: core.ITenantManager,
         private readonly localOrderManager: LocalOrderManager,
@@ -58,7 +59,9 @@ export class OrdererManager implements core.IOrdererManager {
             getLumberBaseProperties(documentId, tenantId),
         );
 
-        if (tenant.orderer.url !== this.ordererUrl) {
+        if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
+            winston.error(`Invalid ordering service endpoint`, { messageMetaData });
+            Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
             return Promise.reject(new Error("Invalid ordering service endpoint"));
         }
 
@@ -92,7 +95,7 @@ export class AlfredResources implements core.IResources {
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any,
-        public globalDbMongoManager?: core.MongoManager,
+        public documentsCollection: core.ICollection<core.IDocument>,
     ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
         const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -321,6 +324,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const serverUrl = config.get("worker:serverUrl");
 
         const orderManager = new OrdererManager(
+            globalDbEnabled,
             serverUrl,
             tenantManager,
             localOrderManager,
@@ -350,7 +354,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             port,
             documentsCollectionName,
             metricClientConfig,
-            globalDbMongoManager);
+            documentsCollection);
     }
 }
 
@@ -372,6 +376,6 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.mongoManager,
             resources.producer,
             resources.metricClientConfig,
-            resources.globalDbMongoManager);
+            resources.documentsCollection);
     }
 }

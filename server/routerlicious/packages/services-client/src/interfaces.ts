@@ -7,3 +7,19 @@ export interface IAlfredTenant {
     id: string;
     key: string;
 }
+
+export interface IDocumentSession {
+    documentId: string;
+
+    hasSessionLocationChanged: boolean;
+
+    session: ISession;
+}
+
+export interface ISession {
+    ordererUrl: string;
+
+    historianUrl: string;
+
+    isSessionAlive: boolean;
+}

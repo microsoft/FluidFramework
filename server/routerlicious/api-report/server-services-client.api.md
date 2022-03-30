@@ -193,6 +193,16 @@ export interface ICredentials {
 }
 
 // @public (undocumented)
+export interface IDocumentSession {
+    // (undocumented)
+    documentId: string;
+    // (undocumented)
+    hasSessionLocationChanged: boolean;
+    // (undocumented)
+    session: ISession;
+}
+
+// @public (undocumented)
 export interface IEmbeddedSummaryHandle extends ISummaryHandle {
     // (undocumented)
     embedded: boolean;
@@ -331,6 +341,16 @@ export interface INormalizedWholeSummary {
 export interface IPatchRefParamsExternal extends resources.IPatchRefParams {
     // (undocumented)
     config?: IExternalWriterConfig;
+}
+
+// @public (undocumented)
+export interface ISession {
+    // (undocumented)
+    historianUrl: string;
+    // (undocumented)
+    isSessionAlive: boolean;
+    // (undocumented)
+    ordererUrl: string;
 }
 
 // @public (undocumented)

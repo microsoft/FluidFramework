@@ -15,6 +15,7 @@ import {
     IGitCache,
     SummaryTreeUploadManager,
     WholeSummaryUploadManager,
+    ISession,
 } from "@fluidframework/server-services-client";
 import {
     ICollection,
@@ -117,6 +118,8 @@ export class DocumentStorage implements IDocumentStorage {
         sequenceNumber: number,
         term: number,
         initialHash: string,
+        ordererUrl: string,
+        historianUrl: string,
         values: [string, ICommittedProposal][],
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
@@ -187,6 +190,12 @@ export class DocumentStorage implements IDocumentStorage {
             lastSummarySequenceNumber: 0,
         };
 
+        const sessionP: ISession = {
+            ordererUrl,
+            historianUrl,
+            isSessionAlive: true,
+        };
+
         const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
             {
@@ -197,6 +206,7 @@ export class DocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
+                session: sessionP,
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
@@ -282,11 +292,13 @@ export class DocumentStorage implements IDocumentStorage {
         tenantId: string,
         documentId: string,
         deli?: string,
-        scribe?: string): Promise<IDocument> {
+        scribe?: string,
+        session?: ISession): Promise<IDocument> {
         const value: IDocument = {
             createTime: Date.now(),
             deli,
             documentId,
+            session,
             scribe,
             tenantId,
             version: "0.1",
@@ -318,7 +330,7 @@ export class DocumentStorage implements IDocumentStorage {
 
             // Setting an empty string to deli and scribe denotes that the checkpoints should be loaded from summary.
             const value = inSummary ?
-                await this.createObject(collection, tenantId, documentId, "", "") :
+                await this.createObject(collection, tenantId, documentId, "", "", undefined) :
                 await this.createObject(collection, tenantId, documentId);
 
             return {
