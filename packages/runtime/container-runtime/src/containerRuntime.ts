@@ -2313,7 +2313,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientSequenceNumber,
                 submitOpDuration: trace.trace().duration,
                 opsSizesSinceLastSummary: this.opTracker.opsSizeAccumulator,
-                systemOpsSinceLastSummary: this.opTracker.systemOpCount,
+                nonSystemOpsSinceLastSummary: this.opTracker.nonSystemOpCount,
             } as const;
 
             this.summarizerNode.completeSummary(handle);

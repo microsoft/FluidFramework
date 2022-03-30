@@ -12,9 +12,9 @@ import { isSystemMessage } from "@fluidframework/protocol-base";
 import { utf8ByteLength } from "@fluidframework/runtime-utils";
 
 export class OpTracker {
-    private _systemOpCount: number = 0;
-    public get systemOpCount(): number {
-        return this._systemOpCount;
+    private _nonSystemOpCount: number = 0;
+    public get nonSystemOpCount(): number {
+        return this._nonSystemOpCount;
     }
 
     private _opsSizeAccumulator: number = 0;
@@ -31,7 +31,7 @@ export class OpTracker {
         }
 
         deltaManager.on("op", (message) => {
-            this._systemOpCount += isSystemMessage(message) ? 1 : 0;
+            this._nonSystemOpCount += isSystemMessage(message) ? 0 : 1;
             const stringContents = typeof message.contents === "string" ?
                 message.contents :
                 JSON.stringify(message.contents);
@@ -40,7 +40,7 @@ export class OpTracker {
     }
 
     public reset() {
-        this._systemOpCount = 0;
+        this._nonSystemOpCount = 0;
         this._opsSizeAccumulator = 0;
     }
 }

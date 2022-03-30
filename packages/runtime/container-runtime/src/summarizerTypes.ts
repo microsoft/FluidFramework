@@ -189,8 +189,8 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
     readonly submitOpDuration: number;
     /** Sum of the sizes of all op contents since the last summary */
     readonly opsSizesSinceLastSummary: number;
-    /** Number of system ops since the last summary @see isSystemMessage */
-    readonly systemOpsSinceLastSummary: number;
+    /** Number of non-system ops since the last summary @see isSystemMessage */
+    readonly nonSystemOpsSinceLastSummary: number;
 }
 
 /**

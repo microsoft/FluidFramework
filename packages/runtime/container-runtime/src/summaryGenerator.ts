@@ -72,8 +72,8 @@ type SummaryGeneratorOptionalTelemetryProperties =
     /** Delta in sum of op sizes between the current reference sequence number and the reference
      *  sequence number of the last summary */
     "opsSizesSinceLastSummary" |
-    /** Delta between the number of system ops since the last summary @see isSystemMessage */
-    "systemOpsSinceLastSummary" |
+    /** Delta between the number of non-system ops since the last summary @see isSystemMessage */
+    "nonSystemOpsSinceLastSummary" |
     /** Time it took to generate the summary tree and stats. */
     "generateDuration" |
     /** The handle returned by storage pointing to the uploaded summary tree. */
@@ -324,6 +324,8 @@ export class SummaryGenerator {
                         summarizeTelemetryProps = {
                             ...summarizeTelemetryProps,
                             clientSequenceNumber: summaryData.clientSequenceNumber,
+                            opsSizesSinceLastSummary: summaryData.opsSizesSinceLastSummary,
+                            nonSystemOpsSinceLastSummary: summaryData.nonSystemOpsSinceLastSummary,
                         };
                     }
                 }
