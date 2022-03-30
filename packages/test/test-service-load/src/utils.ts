@@ -19,7 +19,7 @@ import { ITelemetryBufferedLogger, ITestDriver, TestDriverTypes } from "@fluidfr
 import { createFluidTestDriver, generateOdspHostStoragePolicy, OdspTestDriver } from "@fluidframework/test-drivers";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { createFluidExport, ILoadTest } from "./loadTestDataStore";
-import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
+import { generateConfigurations, generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 
@@ -126,6 +126,10 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     const containerOptions = random.pick(
         randEng,
         generateRuntimeOptions(seed, testConfig.optionOverrides?.[testDriver.type]?.container));
+    const configurations = random.pick(
+        randEng,
+        generateConfigurations(seed, testConfig?.optionOverrides?.[testDriver.type]?.configurations));
+
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
@@ -140,6 +144,11 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
             }),
         options: loaderOptions,
         detachedBlobStorage: new MockDetachedBlobStorage(),
+        configProvider: {
+            getRawConfig(name) {
+                return configurations[name];
+            },
+        },
     });
 
     const container: IContainer = await loader.createDetachedContainer(codeDetails);
