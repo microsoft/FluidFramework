@@ -17,7 +17,11 @@ There are a few steps you can take to write a good change note and avoid needing
 # 0.58
 
 ## 0.58 Upcoming changes
+- [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
 - [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
+
+### Doing operations not allowed on deleted sub directory
+Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory will throw `UsageError` exception now.
 
 ### raiseContainerWarning removed from IContainerContext
 `raiseContainerWarning` property will be removed from `IContainerContext` interface and `ContainerContext` class. Please refer to [raiseContainerWarning property](#Remove-raisecontainerwarning-property) for more details.
