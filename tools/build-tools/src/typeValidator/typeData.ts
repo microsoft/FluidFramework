@@ -5,7 +5,7 @@
 
 import { Node, Project, ts } from "ts-morph";
 import * as fs from "fs";
-import { getPackageDetailsOrThrow, PackageDetails } from "./packageJson";
+import { getPackageDetails, PackageDetails } from "./packageJson";
 
 export interface PackageAndTypeData{
     packageDetails: PackageDetails;
@@ -50,10 +50,7 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
     if (Node.isNamespaceDeclaration(node)){
         const typeData: TypeData[]=[];
         for(const s of node.getStatements()){
-            // only get type data for nodes that are exported from the namespace
-            if(Node.isExportableNode(s) && s.isExported()){
-                typeData.push(...getNodeTypeData(s, node.getName()));
-            }
+            typeData.push(...getNodeTypeData(s, node.getName()));
         }
         return typeData;
     }
@@ -69,13 +66,6 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
             typeData.push(...getNodeTypeData(dec, namespacePrefix));
         }
         return typeData
-    }
-
-    if(Node.isIdentifier(node)){
-        const typeData: TypeData[]=[];
-        node.getDefinitionNodes().forEach(
-            (d)=>typeData.push(...getNodeTypeData(d, namespacePrefix)));
-        return typeData;
     }
 
     if (Node.isClassDeclaration(node)
@@ -119,14 +109,19 @@ export function toTypeString(prefix: string, typeData: TypeData){
 
     const typeStringBase =`${prefix}.${typeData.name}${typeParams ?? ""}`;
     switch(node.getKind()){
+        case ts.SyntaxKind.ClassDeclaration:
+            // turn the class into a type by not omitting anything
+            // this will expose all public props, and validate the
+            // interfaces matches
+            return `Omit<${typeStringBase},"">`;
+
         case ts.SyntaxKind.VariableDeclaration:
         case ts.SyntaxKind.FunctionDeclaration:
-        case ts.SyntaxKind.Identifier:
             // turn variables and functions into types
-            return `TypeOnly<typeof ${typeStringBase}>`;
+            return `typeof ${typeStringBase}`;
 
         default:
-            return `TypeOnly<${typeStringBase}>`;
+            return typeStringBase;
     }
 }
 
@@ -142,53 +137,40 @@ function tryFindDependencyPath(packageDir: string, dependencyName: string) {
     return `${testPath}/node_modules/${dependencyName}`
 }
 
-function getIndexSourceFile(basePath: string){
+export function generateTypeDataForProject(packageDir: string, dependencyName: string | undefined): PackageAndTypeData {
 
-    const tsConfigPath: string =`${basePath}/tsconfig.json`;
-
-    if (fs.existsSync(tsConfigPath)) {
-        const project = new Project({
-            skipFileDependencyResolution: true,
-            tsConfigFilePath: tsConfigPath,
-        });
-
-        return {project, file: project.getSourceFileOrThrow("index.ts")};
-
-    }else{
-        const project = new Project({
-            skipFileDependencyResolution: true,
-        });
-        project.addSourceFilesAtPaths(`${basePath}/dist/**/*.d.ts`)
-        return {project, file: project.getSourceFileOrThrow("index.d.ts")};
-    }
-
-}
-
-export async function generateTypeDataForProject(packageDir: string, dependencyName: string | undefined): Promise<PackageAndTypeData> {
-
-    let basePath = dependencyName === undefined
+    const basePath = dependencyName === undefined
         ? packageDir
         : tryFindDependencyPath(packageDir, dependencyName);
 
-    if (!fs.existsSync(`${basePath}/package.json`)) {
-        throw new Error(`package.json does not exist at ${basePath}.\nYou may need to install the package via npm install.`)
+    const tsConfigPath =`${basePath}/tsconfig.json`;
+
+    if (!fs.existsSync(tsConfigPath)) {
+        throw new Error(`Tsconfig json does not exist: ${tsConfigPath}.\nYou may need to install the package via npm install in the package dir.`)
     }
-    const {project, file} = getIndexSourceFile(basePath);
-    const typeData = new Map<string, TypeData>();
+
+    const packageDetails = getPackageDetails(basePath);
+
+    const project = new Project({
+        skipFileDependencyResolution: true,
+        tsConfigFilePath: tsConfigPath,
+    });
+
+    const file = project.getSourceFile("index.ts")
+    if(file == undefined){
+        throw new Error("index.ts does not exist in package source.\nYou may need to install the package via npm install in the package dir.");
+    }
+    const typeData: TypeData[]=[];
+
     const exportedDeclarations = file.getExportedDeclarations();
     for(const declarations of exportedDeclarations.values()){
         for(const dec of declarations){
-           getNodeTypeData(dec).forEach((td)=> {
-               const fullName = getFullTypeName(td);
-               typeData.set(fullName, td);
-           })
+            typeData.push(...getNodeTypeData(dec));
         }
     }
-
-    const packageDetails = await getPackageDetailsOrThrow(basePath);
     return {
         packageDetails,
-        typeData: Array.from(typeData.values()).sort((a,b)=>a.name.localeCompare(b.name)),
+        typeData: typeData.sort((a,b)=>a.name.localeCompare(b.name)),
         project,
     };
 }
