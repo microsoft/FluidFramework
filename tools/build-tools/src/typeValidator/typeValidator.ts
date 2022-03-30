@@ -38,6 +38,9 @@ async function run(): Promise<boolean>{
     }
     const concurrency = 25;
     const runningGenerates: Promise<boolean>[]=[];
+    // this loop incrementally builds up the runningGenerates promise list
+    // each dir with an index greater than concurrency looks back the concurrency value
+    // to determine when to run
     packageDirs.forEach(( packageDir,i)=> runningGenerates.push((async ()=> {
         if(i >= concurrency){
             await runningGenerates[i - concurrency];

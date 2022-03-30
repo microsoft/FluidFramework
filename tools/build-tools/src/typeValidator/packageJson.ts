@@ -60,7 +60,7 @@ export async function getPackageDetailsOrThrow(packageDir: string, updateOptions
     return result;
 }
 
-export async function getPackageDetails(packageDir: string, updateOptions?: {cwd?: string}): Promise<PackageDetails & {error?: never} | {error: string}> {
+export async function getPackageDetails(packageDir: string, updateOptions?: {cwd?: string}): Promise<PackageDetails & {error?: undefined} | {error: string}> {
 
     const packagePath = `${packageDir}/package.json`;
     if(!await util.promisify(fs.exists)(packagePath)){
@@ -87,6 +87,15 @@ export async function getPackageDetails(packageDir: string, updateOptions?: {cwd
 
     // if the packages has no type validation data, then initialize it
    if(updateOptions !== undefined && normalizedVersion !== pkgJson.typeValidation?.version){
+        /*
+         * this is where we build the previous version we use to compare against the current version.
+         * For both major and minor we use semver such that the current major is compared against the latest
+         * previous major, and the same for minor.
+         * For patch we do not use semver, we compare directly to the previous patch version.
+         *
+         * We do this to align with our release process. We are strictest between patches, and looser between minor and major
+         * We may need to adjust this as we adjust our release processes.
+         */
         let normalizeParts = normalizedVersion.split(".").map((p)=>Number.parseInt(p));
         const validationVersionParts = pkgJson.typeValidation?.version?.split(".").map((p)=>Number.parseInt(p)) ?? [0,0,0];
         let semVer="^"
