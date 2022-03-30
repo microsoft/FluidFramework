@@ -55,7 +55,6 @@ export class OdspSummaryUploadManager {
                 lastSummaryProposalHandle: this.lastSummaryProposalHandle,
             });
         }
-        assert(context.ackHandle !== undefined, "Parent summary should always exist");
         const result = await this.writeSummaryTreeCore(context.ackHandle, context.referenceSequenceNumber, tree);
         const id = result ? result.id : undefined;
         if (!result || !id) {
@@ -66,7 +65,7 @@ export class OdspSummaryUploadManager {
     }
 
     private async writeSummaryTreeCore(
-        parentHandle: string,
+        parentHandle: string | undefined,
         referenceSequenceNumber: number,
         tree: api.ISummaryTree,
     ): Promise<IWriteSummaryResponse> {
