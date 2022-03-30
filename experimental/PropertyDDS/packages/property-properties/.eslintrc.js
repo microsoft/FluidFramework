@@ -32,6 +32,7 @@ module.exports = {
         "@typescript-eslint/quotes": "off",
         "@typescript-eslint/restrict-plus-operands": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
+        "@typescript-eslint/unbound-method": "off",
         "guard-for-in": "off",
         "import/no-duplicates": "off",
         "import/no-internal-modules": "off",

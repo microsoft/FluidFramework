@@ -81,6 +81,7 @@ export class TestClient extends Client {
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             } as IFluidDataStoreRuntime,
             storage,
             TestClient.serializer);
