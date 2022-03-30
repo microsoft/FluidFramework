@@ -26,6 +26,7 @@ import {
     IFileSystemManager,
     IFileSystemManagerFactory,
     Constants,
+    getRepoManagerParamsFromRequest,
 } from "../utils";
 import { handleResponse } from "./utils";
 
@@ -148,7 +149,6 @@ export function create(
      */
     router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
         const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
         const [tenantId,documentId] = storageRoutingId.split(":");
         if (!documentId) {
             handleResponse(
@@ -156,21 +156,17 @@ export function create(
                 response);
             return;
         }
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager) => getSummary(
-            repoManager,
-            fileSystemManagerFactory.create({ storageName }),
-            request.params.sha,
-            documentId,
-            tenantId,
-            getExternalWriterParams(request.query?.config as string | undefined),
-            persistLatestFullSummary,
-        ));
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        const resultP = repoManagerFactory.open(repoManagerParams)
+            .then(async (repoManager) => getSummary(
+                repoManager,
+                fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
+                request.params.sha,
+                documentId,
+                tenantId,
+                getExternalWriterParams(request.query?.config as string | undefined),
+                persistLatestFullSummary,
+            ));
         handleResponse(resultP, response);
     });
 
@@ -179,7 +175,6 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
         const [tenantId,documentId] = storageRoutingId.split(":");
         if (!documentId) {
             handleResponse(
@@ -187,22 +182,18 @@ export function create(
                 response);
             return;
         }
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const wholeSummaryPayload: IWholeSummaryPayload = request.body;
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => createSummary(
-            repoManager,
-            fileSystemManagerFactory.create({ storageName }),
-            wholeSummaryPayload,
-            documentId,
-            tenantId,
-            getExternalWriterParams(request.query?.config as string | undefined),
-            persistLatestFullSummary,
-        ));
+        const resultP = repoManagerFactory.open(repoManagerParams)
+            .then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => createSummary(
+                repoManager,
+                fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
+                wholeSummaryPayload,
+                documentId,
+                tenantId,
+                getExternalWriterParams(request.query?.config as string | undefined),
+                persistLatestFullSummary,
+            ));
         handleResponse(resultP, response, 201);
     });
 
@@ -212,7 +203,6 @@ export function create(
      */
     router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
         const [tenantId,documentId] = storageRoutingId.split(":");
         if (!documentId) {
             handleResponse(
@@ -220,22 +210,18 @@ export function create(
                 response);
             return;
         }
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager) => deleteSummary(
-            repoManager,
-            fileSystemManagerFactory.create({ storageName }),
-            documentId,
-            tenantId,
-            softDelete,
-            getExternalWriterParams(request.query?.config as string | undefined),
-            persistLatestFullSummary,
-        ));
+        const resultP = repoManagerFactory.open(repoManagerParams)
+            .then(async (repoManager) => deleteSummary(
+                repoManager,
+                fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
+                documentId,
+                tenantId,
+                softDelete,
+                getExternalWriterParams(request.query?.config as string | undefined),
+                persistLatestFullSummary,
+            ));
         handleResponse(resultP, response, 204);
     });
 

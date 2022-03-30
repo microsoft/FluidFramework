@@ -6,7 +6,7 @@
 import { ICreateRepoParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import nconf from "nconf";
-import { Constants, IRepositoryManagerFactory } from "../../utils";
+import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory } from "../../utils";
 import { handleResponse } from "../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
@@ -16,18 +16,16 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
      * Creates a new git repository
      */
     router.post("/:owner/repos", (request, response, next) => {
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
         const createParams = request.body as ICreateRepoParams;
         if (!createParams || !createParams.name) {
             return response.status(400).json("Invalid repo name");
         }
 
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
+
         const repoManagerP = repoManagerFactory.create({
-            repoOwner: request.params.owner,
+            ...repoManagerParams,
             repoName: createParams.name,
-            fileSystemManagerParams: {
-                storageName,
-            },
         });
 
         handleResponse(repoManagerP.then(() => undefined), response, 201);
@@ -37,14 +35,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
      * Retrieves an existing get repository
      */
     router.get("/repos/:owner/:repo", (request, response, next) => {
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-        const repoManagerP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        });
+        const repoManagerP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request));
 
         handleResponse(repoManagerP.then(() => ({ name: request.params.repo })), response);
     });

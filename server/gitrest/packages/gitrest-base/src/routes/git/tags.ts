@@ -6,7 +6,7 @@
 import { ICreateTagParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import nconf from "nconf";
-import { Constants, IRepositoryManagerFactory } from "../../utils";
+import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory } from "../../utils";
 import { handleResponse } from "../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
@@ -15,27 +15,15 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
     // https://developer.github.com/v3/git/tags/
 
     router.post("/repos/:owner/:repo/git/tags", async (request, response, next) => {
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager) => repoManager.createTag(request.body as ICreateTagParams));
+        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+            .then(async (repoManager) => repoManager.createTag(request.body as ICreateTagParams));
 
         handleResponse(resultP, response, 201);
     });
 
     router.get("/repos/:owner/:repo/git/tags/*", async (request, response, next) => {
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager) => repoManager.getTag(request.params[0]));
+        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+            .then(async (repoManager) => repoManager.getTag(request.params[0]));
 
         handleResponse(resultP, response);
     });

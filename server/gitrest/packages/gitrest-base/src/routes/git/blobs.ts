@@ -6,23 +6,16 @@
 import { ICreateBlobParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import nconf from "nconf";
-import { Constants, IRepositoryManagerFactory } from "../../utils";
+import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory } from "../../utils";
 import { handleResponse } from "../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
-
     router.post("/repos/:owner/:repo/git/blobs", async (request, response, next) => {
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager) => repoManager.createBlob(
-            request.body as ICreateBlobParams,
-        ));
+        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+            .then(async (repoManager) => repoManager.createBlob(
+                request.body as ICreateBlobParams,
+            ));
 
         handleResponse(resultP, response, 201);
     });
@@ -31,16 +24,10 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
      * Retrieves the given blob from the repository
      */
     router.get("/repos/:owner/:repo/git/blobs/:sha", async (request, response, next) => {
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager) => repoManager.getBlob(
-            request.params.sha,
-        ));
+        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+            .then(async (repoManager) => repoManager.getBlob(
+                request.params.sha,
+            ));
 
         handleResponse(resultP, response);
     });

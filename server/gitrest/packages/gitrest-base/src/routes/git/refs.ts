@@ -8,7 +8,7 @@ import {
     IPatchRefParamsExternal } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import nconf from "nconf";
-import { Constants, getExternalWriterParams, IRepositoryManagerFactory } from "../../utils";
+import { getExternalWriterParams, getRepoManagerParamsFromRequest, IRepositoryManagerFactory } from "../../utils";
 import { handleResponse } from "../utils";
 
 /**
@@ -27,74 +27,46 @@ export function create(
     // https://developer.github.com/v3/git/refs/
 
     router.get("/repos/:owner/:repo/git/refs", async (request, response, next) => {
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager) => repoManager.getRefs());
+        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+            .then(async (repoManager) => repoManager.getRefs());
+
         handleResponse(resultP, response);
     });
 
     router.get("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager) => repoManager.getRef(
-            getRefId(request.params[0]),
-            getExternalWriterParams(request.query?.config as string),
-        ));
+        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+            .then(async (repoManager) => repoManager.getRef(
+                getRefId(request.params[0]),
+                getExternalWriterParams(request.query?.config as string),
+            ));
         handleResponse(resultP, response);
     });
 
     router.post("/repos/:owner/:repo/git/refs", async (request, response, next) => {
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
         const createRefParams = request.body as ICreateRefParamsExternal;
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager) => repoManager.createRef(
-            createRefParams,
-            createRefParams.config,
-        ));
+        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+            .then(async (repoManager) => repoManager.createRef(
+                createRefParams,
+                createRefParams.config,
+            ));
         handleResponse(resultP, response, 201);
     });
 
     router.patch("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
         const patchRefParams = request.body as IPatchRefParamsExternal;
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager) => repoManager.patchRef(
-            getRefId(request.params[0]),
-            patchRefParams,
-            patchRefParams.config,
-        ));
+        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+            .then(async (repoManager) => repoManager.patchRef(
+                getRefId(request.params[0]),
+                patchRefParams,
+                patchRefParams.config,
+            ));
         handleResponse(resultP, response);
     });
 
     router.delete("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
-        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-        const resultP = repoManagerFactory.open({
-            repoOwner: request.params.owner,
-            repoName: request.params.repo,
-            fileSystemManagerParams: {
-                storageName,
-            },
-        }).then(async (repoManager) => repoManager.deleteRef(getRefId(request.params[0])));
+        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+            .then(async (repoManager) => repoManager.deleteRef(getRefId(request.params[0])));
+
         handleResponse(resultP, response, 204);
     });
     return router;
