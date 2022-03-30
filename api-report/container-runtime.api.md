@@ -119,8 +119,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getAudience(): IAudience;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    // Warning: (ae-forgotten-export) The symbol "IPendingRuntimeState" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     getPendingLocalState(): Promise<IPendingRuntimeState>;
     // (undocumented)
@@ -422,6 +420,20 @@ export interface IPendingMessage {
     referenceSequenceNumber: number;
     // (undocumented)
     type: "message";
+}
+
+// @public (undocumented)
+export interface IPendingRuntimeState {
+    // (undocumented)
+    baseSnapshot: ISnapshotTree;
+    // (undocumented)
+    pending?: IPendingLocalState;
+    // (undocumented)
+    savedOps: ISequencedDocumentMessage[];
+    // Warning: (ae-forgotten-export) The symbol "ISerializedBaseSnapshotBlobs" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    snapshotBlobs: ISerializedBaseSnapshotBlobs;
 }
 
 // @public (undocumented)

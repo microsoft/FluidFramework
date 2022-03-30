@@ -49,7 +49,8 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
         for (const id of Object.values(tree.blobs)) {
             let blob;
             if ((tree as any).blobsContents) {
-                // ISnapshotTreeWithBlobContents
+                // TODO: ISnapshotTreeWithBlobContents needs to be exported from container to avoid this type assertion
+                // (this is the format used in detached container since there is no storage)
                 blob = (tree as any).blobsContents[id];
             } else {
                 blob = await storage.readBlob(id);

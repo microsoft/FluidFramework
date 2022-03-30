@@ -119,7 +119,7 @@ export class BlobManager {
         }
 
         if (!this.runtime.connected && this.runtime.attachState === AttachState.Attached) {
-            // see #8246
+            // see https://github.com/microsoft/FluidFramework/issues/8246
             // Avoid getting storage if we are offline since it might be undefined. In the future we will return
             // handles immediately while offline
             await new Promise((resolve) => this.runtime.once("connected", resolve));

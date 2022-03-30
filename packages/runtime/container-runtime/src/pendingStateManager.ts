@@ -102,7 +102,7 @@ export class PendingStateManager implements IDisposable {
     }
 
     public getLocalState(): IPendingLocalState | undefined {
-        assert(this.initialStates.isEmpty(), "local state get while applying initial states");
+        assert(this.initialStates.isEmpty(), "Must call getLocalState() after applying initial states");
         if (this.hasPendingMessages()) {
             return {
                 pendingStates: this.pendingStates.toArray().map(
@@ -200,7 +200,7 @@ export class PendingStateManager implements IDisposable {
                 if (seqNum !== undefined) {
                     if (nextState.referenceSequenceNumber > seqNum) {
                         break; // nothing left to do at this sequence number
-                    } else if (nextState.referenceSequenceNumber > 0 && nextState.referenceSequenceNumber < seqNum) {
+                    } else if (nextState.referenceSequenceNumber < seqNum) {
                         throw new Error("loaded from snapshot too recent to apply stashed ops");
                     }
                 }

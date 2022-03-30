@@ -2697,7 +2697,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 savedOps: this.savedOps,
             };
         }
-        assert(!!this.context.baseSnapshot, "no base snapshot");
+        assert(!!this.context.baseSnapshot, "Must have a base snapshot");
         return {
             pending: this.pendingStateManager.getLocalState(),
             snapshotBlobs: await SerializedSnapshotStorage.serialize(this.context.baseSnapshot, this.storage),

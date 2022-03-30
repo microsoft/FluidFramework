@@ -139,7 +139,7 @@ export interface IContainerConfig {
      */
     clientDetailsOverride?: IClientDetails;
     /**
-     * serialized state from a previous container
+     * Serialized state from a previous instance of this container
      */
     serializedContainerState?: IPendingContainerState;
 }
@@ -265,12 +265,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 container._lifecycleState = "loading";
                 const version = loadOptions.version;
 
-                // always load unpaused with pending ops!
-                // It is also default mode in general.
                 const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
-                assert(pendingLocalState === undefined || loadOptions.loadMode === undefined,
-                    0x1e1 /* "pending state requires immediate connection!" */);
-                const mode: IContainerLoadMode = !pendingLocalState ? loadOptions.loadMode ?? defaultMode : {};
+                // if we have pendingLocalState, anything we cached is not useful and we shouldn't wait for connection
+                // to return container, so ignore this value and use undefined for opsBeforeReturn
+                const mode: IContainerLoadMode = pendingLocalState
+                    ? { ...(loadOptions.loadMode ?? defaultMode), opsBeforeReturn: undefined }
+                    : loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
                     // pre-0.58 error message: containerClosedWithoutErrorDuringLoad
@@ -760,7 +760,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public closeAndGetPendingLocalState(): string {
-        return "a string";
+        throw new Error("TODO: this needs to be made async in container-definitions");
     }
 
     public async closeAndGetPendingLocalStateAsync(): Promise<string> {
@@ -771,7 +771,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
-        assert(!!this._protocolHandler, "no protocol handler");
+        assert(!!this._protocolHandler, "Must have a valid protocol handler instance");
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: await this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
@@ -1110,6 +1110,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (!pendingLocalState) {
             await this.connectStorageService();
         } else {
+            // if we have pendingLocalState we can load without storage; don't wait for connection
             this.connectStorageService().catch((error) => this.close(error));
         }
 
@@ -1382,7 +1383,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         // Track membership changes and update connection state accordingly
-        this.connectionStateHandler.loadProtocol(protocol);
+        this.connectionStateHandler.initProtocol(protocol);
 
         protocol.quorum.on("addProposal", (proposal: ISequencedProposal) => {
             if (proposal.key === "code" || proposal.key === "code2") {
