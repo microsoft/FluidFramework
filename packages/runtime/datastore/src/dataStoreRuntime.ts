@@ -156,9 +156,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly deferredAttached = new Deferred<void>();
     private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
     private readonly notBoundedChannelContextSet = new Set<string>();
-    private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
     private visibilityState: VisibilityState = VisibilityState.NotVisible;
+    // A list of handles that are bound when the data store is not visible. We have to make them visible when the data
+    // store becomes visible.
+    private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
 
     public readonly id: string;
     public readonly options: ILoaderOptions;
@@ -258,7 +260,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         this.attachListener();
-        // If exists on storage or loaded from a snapshot, it should already be binded.
+        // If exists on storage or loaded from a snapshot, it should already be bound.
         this.bindState = existing ? BindState.Bound : BindState.NotBound;
         this._attachState = dataStoreContext.attachState;
 
@@ -394,10 +396,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
 
         /**
-         * If this channel has already been bound, do nothing. This can happen during attachGraph() when a channel's
-         * graph is attached. It calls bindToContext on the shared object which will end up back here.
+         * If this channel is already waiting to be made visible, do nothing. This can happen during attachGraph() when
+         * a channel's graph is attached. It calls bindToContext on the shared object which will end up back here.
          */
-        if (this.boundhandles !== undefined && this.boundhandles.has(channel.handle)) {
+        if (this.pendingHandlesToMakeVisible.has(channel.handle)) {
             return;
         }
 
@@ -423,12 +425,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         }
         this.visibilityState = VisibilityState.LocallyVisible;
 
-        if (this.boundhandles !== undefined) {
-            this.boundhandles.forEach((handle) => {
-                handle.attachGraph();
-            });
-            this.boundhandles = undefined;
-        }
+        this.pendingHandlesToMakeVisible.forEach((handle) => {
+            handle.attachGraph();
+        });
+        this.pendingHandlesToMakeVisible.clear();
         this.bindToContext();
     }
 
@@ -460,11 +460,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             handle.attachGraph();
             return;
         }
-
-        if (this.boundhandles === undefined) {
-            this.boundhandles = new Set<IFluidHandle>();
-        }
-        this.boundhandles.add(handle);
+        this.pendingHandlesToMakeVisible.add(handle);
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -898,7 +894,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this._attachState = AttachState.Attaching;
 
             assert(this.visibilityState === VisibilityState.LocallyVisible,
-                `Data store should not attach if is not locally visible - ${this.visibilityState}`);
+                `Data store should be locally visible before it can become globally visible.`);
 
             // Mark the data store globally visible and make its child channels visible as well.
             this.visibilityState = VisibilityState.GloballyVisible;

@@ -11,7 +11,7 @@ import {
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
-    private boundHandles: Set<IFluidHandle> | undefined;
+    private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
     public readonly absolutePath: string;
 
     public get IFluidHandle(): IFluidHandle { return this; }
@@ -63,13 +63,10 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
         }
 
         this._visible = true;
-        if (this.boundHandles !== undefined) {
-            for (const handle of this.boundHandles) {
-                handle.attachGraph();
-            }
-
-            this.boundHandles = undefined;
-        }
+        this.pendingHandlesToMakeVisible.forEach((handle) => {
+            handle.attachGraph();
+        });
+        this.pendingHandlesToMakeVisible.clear();
         this.routeContext.attachGraph();
     }
 
@@ -79,10 +76,6 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
             handle.attachGraph();
             return;
         }
-
-        if (this.boundHandles === undefined) {
-            this.boundHandles = new Set<IFluidHandle>();
-        }
-        this.boundHandles.add(handle);
+        this.pendingHandlesToMakeVisible.add(handle);
     }
 }
