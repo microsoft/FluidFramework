@@ -32,11 +32,6 @@ module.exports = env => {
             devtoolNamespace: "fluid-example/dice-roller",
             libraryTarget: "umd"
         },
-        devServer: {
-            devMiddleware: { publicPath: '/dist' },
-            onBeforeSetupMiddleware: (devServer) => fluidRoute.before(devServer.app, devServer, env),
-            onAfterSetupMiddleware: (devServer) => fluidRoute.after(devServer.app, devServer, __dirname, env),
-        },
         // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
         // This should be configurable under devServer.static.watch
         // (see https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md) but that does not seem to work.
@@ -46,5 +41,6 @@ module.exports = env => {
         }
     }, isProduction
         ? require("./webpack.prod")
-        : require("./webpack.dev"));
+        : require("./webpack.dev"),
+    fluidRoute.devServerConfig(__dirname, env));
 };

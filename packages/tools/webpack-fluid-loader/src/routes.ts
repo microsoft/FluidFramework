@@ -27,10 +27,35 @@ let odspAuthLock: Promise<void> | undefined;
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
+/**
+ * @returns A portion of a webpack config needed add support for the webpack-dev-server to use the webpack-fluid-loader.
+ */
+export function devServerConfig(baseDir: string, env: RouteOptions) {
+    return {
+        devServer: {
+            static: [
+                {
+                    directory: path.join(
+                        baseDir,
+                        "/node_modules/@fluid-tools/webpack-fluid-loader/dist/fluid-loader.bundle.js",
+                    ),
+                    publicPath: "/fluid-loader.bundle.js",
+                },
+                {
+                    directory: path.resolve(baseDir, "dist"),
+                    publicPath: "/dist",
+                },
+            ],
+            onBeforeSetupMiddleware: async (devServer) => before(devServer.app),
+            onAfterSetupMiddleware: (devServer) => after(devServer.app, devServer, baseDir, env),
+        },
+    };
+}
+
 export const before = async (app: express.Application) => {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
-    app.get("/", (req, res) => res.redirect(`/new`));
+    app.get("/", (req, res) => res.redirect("/new"));
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
@@ -290,7 +315,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     <div id="content" style="min-height: 100%;">
     </div>
 
-    <script src="/node_modules/@fluid-tools/webpack-fluid-loader/dist/fluid-loader.bundle.js"></script>
+    <script src="/fluid-loader.bundle.js"></script>
     ${packageJson.fluid.browser.umd.files.map((file) => `<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};

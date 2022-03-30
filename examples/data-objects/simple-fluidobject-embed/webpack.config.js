@@ -36,10 +36,7 @@ module.exports = env => {
             libraryTarget: "umd"
         },
         devServer: {
-            devMiddleware: { publicPath: '/dist' },
             stats: "minimal",
-            before: fluidRoute.before,
-            onAfterSetupMiddleware: (devServer) => fluidRoute.after(devServer.app, devServer, __dirname, env),
         },
         // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
         // This should be configurable under devServer.static.watch
@@ -50,5 +47,6 @@ module.exports = env => {
         }
     }, isProduction
         ? require("./webpack.prod")
-        : require("./webpack.dev"));
+        : require("./webpack.dev"),
+    fluidRoute.devServerConfig(__dirname, env));
 };
