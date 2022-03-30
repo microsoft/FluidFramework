@@ -15,6 +15,7 @@ import {
 
 import { MapFactory } from "../map";
 import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../directory";
+import { IDirectory } from "../interfaces";
 
 function createConnectedDirectory(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -140,6 +141,65 @@ describe("Directory", () => {
                 clearExpected = true;
                 directory.clear();
                 assert.equal(clearExpected, false, "missing clearExpected event");
+            });
+
+            it("Should fire dispose event correctly", () => {
+                let valueChangedExpected: boolean = true;
+                let previousValue: any;
+
+                directory.on("valueChanged", (changed, local, target) => {
+                    assert.equal(valueChangedExpected, true, "valueChange event not expected");
+                    valueChangedExpected = false;
+
+                    assert.equal(changed.key, "dwayne", "key should match");
+                    assert.equal(changed.previousValue, previousValue, "previous value should match");
+                    assert.equal(changed.path, "/rock", "absolute path should match");
+
+                    assert.equal(local, true, "local should be true for local action for valueChanged event");
+                    assert.equal(target, directory, "target should be the directory for valueChanged event");
+                });
+
+                // Test dispose on subdirectory delete
+                let subDirectoryDisposed = false;
+                const subDirectory = directory.createSubDirectory("rock");
+                subDirectory.on("disposed", (value: IDirectory) => {
+                    subDirectoryDisposed = true;
+                    assert.equal(value.disposed, true, "sub directory not deleted");
+                });
+                // Should fire dispose event.
+                directory.deleteSubDirectory("rock");
+                assert.equal(subDirectoryDisposed, true, "sub directory not disposed!!");
+
+                // Should be able to work on new directory with same name.
+                previousValue = undefined;
+                valueChangedExpected = true;
+                const newSubDirectory = directory.createSubDirectory("rock");
+                newSubDirectory.set("dwayne", "johnson");
+                assert.equal(valueChangedExpected, false, "missing valueChangedExpected event");
+
+                // Usage Error on accessing disposed directory.
+                try {
+                    subDirectory.set("throw", "error");
+                    assert.fail("Should throw usage error");
+                } catch (error) {
+                    assert.strictEqual(error.errorType, "usageError", "Should throw usage error");
+                }
+
+                // Check recursive dispose event firing
+                const subSubDirectory = newSubDirectory.createSubDirectory("rockChild");
+                let rockSubDirectoryDisposed = false;
+                let subSubDirectoryDisposed = false;
+                newSubDirectory.on("disposed", (value: IDirectory) => {
+                    rockSubDirectoryDisposed = true;
+                    assert.equal(value.disposed, true, "rock sub directory not deleted");
+                });
+                subSubDirectory.on("disposed", (value: IDirectory) => {
+                    subSubDirectoryDisposed = true;
+                    assert.equal(value.disposed, true, "sub sub directory not deleted");
+                });
+                directory.deleteSubDirectory("rock");
+                assert(rockSubDirectoryDisposed, "Rock sub directory should be disposed");
+                assert(subSubDirectoryDisposed, "sub sub directory should be disposed");
             });
 
             it("Rejects a undefined and null key set", () => {
