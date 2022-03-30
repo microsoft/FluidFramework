@@ -420,7 +420,7 @@ export class PendingStateManager implements IDisposable {
          */
         assert(
             nextPendingState.type !== "flushMode",
-            "We should not see a pending FlushMode until we see a flush when processing a batch",
+            0x2bd /* "We should not see a pending FlushMode until we see a flush when processing a batch" */,
         );
 
         // There should be a pending batch begin message.

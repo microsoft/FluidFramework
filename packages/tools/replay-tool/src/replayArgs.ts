@@ -23,6 +23,7 @@ export class ReplayArgs {
     public write = false;
     public expandFiles = true;
     public testSummaries = false;
+    public strictChannels = false;
 
     public checkArgs() {
         if (this.from > this.to) {

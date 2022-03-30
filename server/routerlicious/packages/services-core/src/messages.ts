@@ -181,11 +181,14 @@ export enum NackMessagesType {
     SummaryMaxOps = "summaryMaxOps",
 }
 
+/**
+ * Control message sent to enable a nack message
+ */
 export interface INackMessagesControlMessageContents {
     /**
      * Identifier for the type/reason for this nack messages
      */
-    identifier: NackMessagesType | undefined;
+    identifier: NackMessagesType;
 
     /**
      * The INackContent to send when nacking the message
@@ -202,6 +205,21 @@ export interface INackMessagesControlMessageContents {
      * Controls if system messages should be nacked
      */
     allowSystemMessages?: boolean;
+}
+
+/**
+ * Control message sent to disable a nack message
+ */
+export interface IDisableNackMessagesControlMessageContents {
+    /**
+     * Identifier for the type/reason for this nack messages
+     */
+    identifier: NackMessagesType;
+
+    /**
+     * The INackContent to send when nacking the message
+     */
+    content: undefined;
 }
 
 export interface ILambdaStartControlMessageContents {

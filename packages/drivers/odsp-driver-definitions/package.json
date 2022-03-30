@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/odsp-driver-definitions",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "Socket storage implementation for SPO and ODC",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,7 +34,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/driver-definitions": "^0.45.1000"
+    "@fluidframework/driver-definitions": "^0.45.2000-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

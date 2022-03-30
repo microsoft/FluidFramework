@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-internal/test-app-insights-logger";
-export const pkgVersion = "0.58.2000";
+export const pkgVersion = "0.58.3000";

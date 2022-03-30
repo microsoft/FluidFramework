@@ -9,7 +9,7 @@ import replace from "replace-in-file";
 import path from "path";
 import { pathExistsSync } from "fs-extra";
 import { NpmPackageJsonLint } from "npm-package-json-lint";
-import { merge } from "lodash";
+import merge from "lodash.merge";
 import sortPackageJson from "sort-package-json";
 import {
     Handler,
@@ -105,9 +105,11 @@ export const handlers: Handler[] = [
                 ret.push(`license: "${json.license}" !== "${licenseId}"`);
             }
 
-            if ((typeof json.repository) === "string") {
+            if (!json.repository) {
+                ret.push(`repository field missing`);
+            } else if ((typeof json.repository) === "string") {
                 ret.push(`repository should be an object, not a string`);
-            } else if (json.repository.url !== repository) {
+            } else if (json.repository?.url !== repository) {
                 ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
             }
 

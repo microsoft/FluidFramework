@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/likes",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "A Fluid object for storing like counts using pre-build DDS hooks",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,18 +35,18 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-experimental/get-container": "^0.58.2000",
-    "@fluid-experimental/react": "^0.58.2000",
-    "@fluid-experimental/react-inputs": "^0.58.2000",
-    "@fluidframework/aqueduct": "^0.58.2000",
+    "@fluid-experimental/get-container": "^0.58.3000",
+    "@fluid-experimental/react": "^0.58.3000",
+    "@fluid-experimental/react-inputs": "^0.58.3000",
+    "@fluidframework/aqueduct": "^0.58.3000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/counter": "^0.58.2000",
-    "@fluidframework/datastore-definitions": "^0.58.2000",
-    "@fluidframework/map": "^0.58.2000",
-    "@fluidframework/merge-tree": "^0.58.2000",
+    "@fluidframework/counter": "^0.58.3000",
+    "@fluidframework/datastore-definitions": "^0.58.3000",
+    "@fluidframework/map": "^0.58.3000",
+    "@fluidframework/merge-tree": "^0.58.3000",
     "@fluidframework/protocol-definitions": "^0.1027.1000",
-    "@fluidframework/sequence": "^0.58.2000",
-    "@fluidframework/shared-object-base": "^0.58.2000",
+    "@fluidframework/sequence": "^0.58.3000",
+    "@fluidframework/shared-object-base": "^0.58.3000",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },

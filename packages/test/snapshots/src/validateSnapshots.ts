@@ -63,28 +63,40 @@ export async function validateSnapshots(
         }
 
         // We must have a corresponding destination snapshot for the source snapshot.
-        assert(fs.existsSync(`${destDir}/${file.name}`), `Destination snapshot does not exist for ${file.name}`);
+        const referenceDir = `${destDir}/${file.name}`;
+        assert(fs.existsSync(referenceDir), `Destination snapshot does not exist for ${file.name}`);
 
         const snapshotFileName = file.name.split(".")[0];
-        const srcContent = fs.readFileSync(`${srcDir}/${file.name}`, "utf-8");
-        // eslint-disable-next-line prefer-const
-        let container: IContainer;
-        // This function will be called by the storage service when the container is snapshotted. When that happens,
-        // validate that snapshot with the destination snapshot.
-        const onSnapshotCb =
+        const sourceDir = `${srcDir}/${file.name}`;
+        const srcContent = fs.readFileSync(sourceDir, "utf-8");
+
+        try{
+            // This function will be called by the storage service when the container is snapshotted. When that happens,
+            // validate that snapshot with the destination snapshot.
+            const onSnapshotCb =
             (snapshot: IFileSnapshot) => compareWithReferenceSnapshot(
                 getNormalizedFileSnapshot(
                     addSummaryMessage(snapshot, seqToMessage, container.deltaManager.lastSequenceNumber)),
                 `${destDir}/${snapshotFileName}`,
                 reportError,
             );
-        const storage = new SnapshotStorageService(JSON.parse(srcContent) as IFileSnapshot, onSnapshotCb);
+            const storage = new SnapshotStorageService(JSON.parse(srcContent) as IFileSnapshot, onSnapshotCb);
 
-        container = await loadContainer(
-            new StaticStorageDocumentServiceFactory(storage),
-            FileStorageDocumentName,
-        );
-        await uploadSummary(container);
+            const container: IContainer = await loadContainer(
+                new StaticStorageDocumentServiceFactory(storage),
+                FileStorageDocumentName,
+                true,
+            );
+
+            await uploadSummary(container);
+        }catch(e) {
+            if(e instanceof Error) {
+                e.message = JSON.stringify({
+                    sourceDir, referenceDir, snapshotFileName, message: e.message,
+                }, undefined, 2);
+            }
+            throw e;
+        }
     }
 
     if (errors.length !== 0) {

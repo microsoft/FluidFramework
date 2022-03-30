@@ -85,7 +85,11 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         const resolvedUrl = await resolvedUrlFn();
         const outerProxyLogger = ChildLogger.create(undefined, "OuterProxyIFrameDriver");
         const connectedDocumentService: IDocumentService =
-            await this.documentServiceFactory.createDocumentService(resolvedUrl, outerProxyLogger);
+            await this.documentServiceFactory.createDocumentService(
+                resolvedUrl,
+                outerProxyLogger,
+                false, // clientIsSummarizer
+            );
 
         return this.getDocumentServiceProxy(connectedDocumentService, resolvedUrl, outerProxyLogger);
     }
