@@ -105,7 +105,6 @@ import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
-import { abort } from "process";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -433,6 +432,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public get readOnlyInfo(): ReadOnlyInfo {
         return this._deltaManager.readOnlyInfo;
+    }
+
+    public get closeSignal(): AbortSignal {
+        return this._deltaManager.closeAbortController.signal;
     }
 
     /**
@@ -817,10 +820,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.context.notifyAttaching();
                 }
 
-                const abortController = new AbortController();
-                // When container closes, runWithRetry should abort
-                this.addListener("closed", (event: Event) => { abortController.abort(); });
-
                 // Actually go and create the resolved document
                 const createNewResolvedUrl = await this.urlResolver.resolve(request);
                 ensureFluidResolvedUrl(createNewResolvedUrl);
@@ -837,7 +836,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         "containerAttach",
                         this.mc.logger,
                         {
-                            cancel: abortController.signal,
+                            cancel: this.closeSignal,
                         }, // progress
                     );
                 }
