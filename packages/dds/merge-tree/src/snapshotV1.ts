@@ -218,8 +218,17 @@ export class SnapshotV1 {
                     assert(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq,
                         0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */);
                     raw.removedSeq = segment.removedSeq;
+
+                    // back compat for when we split overlap and removed client
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     raw.removedClient = this.getLongClientId(segment.removedClientId!);
+
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const removedClientIds = [segment.removedClientId!];
+                    if(segment.removedClientOverlap !== undefined) {
+                        removedClientIds.push(... segment.removedClientOverlap);
+                    }
+                    raw.removedClientIds = removedClientIds.map((id)=>this.getLongClientId(id));
                 }
 
             // Sanity check that we are preserving either the seq < minSeq or a removed segment's info.

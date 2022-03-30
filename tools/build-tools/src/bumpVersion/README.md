@@ -30,7 +30,7 @@ For each package/monorepo that needs to be release, from the bottom of the depen
 
 #### Virtual patches
 
-The tool supports virtual patch versioning using the `--virtualPatch` flag.  The beta versioning scheme we use (0.x.x) does not have room to differentiate major/minor/patch because we only have 2 version components. We can simulate this by making the second component represent the major version, and combine minor and patch into the third by representing minor as a 1000 increment and patch as a 1 increment. This reserves number space (999 of them) between each minor version, allowing room for patches.  This mechanism is not needed outside of the beta versioning scheme.
+The tool supports virtual patch versioning using the `--virtualPatch` flag.  The beta versioning scheme we use (0.x.x) does not have room to differentiate major/minor/patch because we only have 2 version components. We can simulate this by making the second component represent the major version, and combine minor and patch into the third by representing minor as a 1000 increment and patch as a 1 increment. This reserves number space (999 of them) between each minor version, allowing room for patches.  Additionally, bumping the second version component also sets the third component to `1000`, skipping over `0`.  This ensures 4 digits in the third component because 0 padding is not allowed under semver.  This mechanism is not needed outside of the beta versioning scheme.
 
 ### Update dependencies across monorepo or independent packages
 

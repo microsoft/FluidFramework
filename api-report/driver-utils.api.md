@@ -188,10 +188,10 @@ export function getDocAttributesFromProtocolSummary(protocolSummary: ISummaryTre
 // @public
 export function getQuorumValuesFromProtocolSummary(protocolSummary: ISummaryTree): [string, ICommittedProposal][];
 
-// @public (undocumented)
+// @public
 export const getRetryDelayFromError: (error: any) => number | undefined;
 
-// @public (undocumented)
+// @public
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
 // @public
@@ -232,9 +232,9 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     // (undocumented)
     static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]): IDocumentServiceFactory;
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "none:";
     }

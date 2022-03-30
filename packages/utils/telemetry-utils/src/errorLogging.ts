@@ -126,6 +126,14 @@ export function normalizeError(
         untrustedOrigin: 1, // This will let us filter to errors not originated by our own code
     });
 
+    // We need to preserve these properties which are used in a non-typesafe way throughout driver code (see #8743)
+    // Anywhere they are set should be on a valid Fluid Error that would have been returned above,
+    // but we can't prove it with the types, so adding this defensive measure.
+    if (typeof error === "object" && error !== null) {
+        const { canRetry, retryAfterSeconds } = error as any;
+        Object.assign(normalizeError, { canRetry, retryAfterSeconds });
+    }
+
     if (typeof(error) !== "object") {
         // This is only interesting for non-objects
         fluidError.addTelemetryProperties({ typeofError: typeof(error) });

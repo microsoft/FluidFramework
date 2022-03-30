@@ -8,6 +8,7 @@ import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import { IAnyDriverError } from "@fluidframework/driver-utils";
 import { IClient, IConnect } from "@fluidframework/protocol-definitions";
+import type { io as SocketIOClientStatic } from "socket.io-client";
 import { errorObjectFromSocketError, IR11sSocketError } from "./errorUtils";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -21,7 +22,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
         tenantId: string,
         id: string,
         token: string | null,
-        io: SocketIOClientStatic,
+        io: typeof SocketIOClientStatic,
         client: IClient,
         url: string,
         logger: ITelemetryLogger,

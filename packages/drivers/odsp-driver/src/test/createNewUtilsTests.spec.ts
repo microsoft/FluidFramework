@@ -15,7 +15,7 @@ import { INewFileInfo, createCacheSnapshotKey, ISnapshotContents } from "../odsp
 import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache(2000);
+const createUtLocalCache = () => new LocalPersistentCache();
 
 describe("Create New Utils Tests", () => {
     const documentAttributes: api.IDocumentAttributes = {
@@ -127,6 +127,7 @@ describe("Create New Utils Tests", () => {
                 );
         const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
         test(snapshot);
+        await epochTracker.removeEntries().catch(() => {});
     });
 
     it("Should save share link information received during createNewFluidFile", async () => {
@@ -201,5 +202,6 @@ describe("Create New Utils Tests", () => {
             link: undefined,
             error: mockError,
         });
+        await epochTracker.removeEntries().catch(() => {});
     });
 });

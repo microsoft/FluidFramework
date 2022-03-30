@@ -7,6 +7,7 @@
 
 /* Remove once strictNullCheck is enabled */
 
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     ConflictAction,
     IIntegerRange,
@@ -837,7 +838,7 @@ export interface IInterval {
     compare(b: IInterval): number;
     compareStart(b: IInterval): number;
     compareEnd(b: IInterval): number;
-    modify(label: string, start: number, end: number): IInterval | undefined;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
     overlaps(b: IInterval): boolean;
     union(b: IInterval): IInterval;
 }

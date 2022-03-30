@@ -101,6 +101,8 @@ export async function processOneNode(args: IWorkerArgs) {
 
     replayArgs.verbose = false;
     replayArgs.inDirName = args.folder;
+    // we should be explicit for all channel types in our snapshot tests
+    replayArgs.strictChannels = true;
     // The output snapshots to compare against are under "currentSnapshots" sub-directory.
     replayArgs.outDirName = `${args.folder}/${currentSnapshots}`;
     if (args.mode === Mode.NewSnapshots) {

@@ -25,7 +25,6 @@ import {
     normalizeError,
     logIfFalse,
     safeRaiseEvent,
-    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -202,11 +201,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.messageBuffer.push(message);
 
+        this.emit("submitOp", message);
+
         if (!batch) {
             this.flush();
         }
 
-        this.emit("submitOp", message);
         return message.clientSequenceNumber;
     }
 
@@ -570,21 +570,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     private disconnectHandler(reason: string) {
-        if (this.messageBuffer.length > 0) {
-            // Behavior is not well defined here RE batches across connections / disconnect.
-            // DeltaManager overall policy - drop all ops on disconnection and rely on
-            // container runtime to deal with resubmitting any ops that did not make it through.
-            // So drop them, but also raise error event to look into details.
-            this.logger.sendTelemetryEvent({
-                eventName: "OpenBatchOnDisconnect",
-                length: this.messageBuffer.length,
-                reason: {
-                    value: reason,
-                    tag: TelemetryDataTag.PackageData,
-                },
-            });
-            this.messageBuffer.length = 0;
-        }
+        this.messageBuffer.length = 0;
         this.emit("disconnect", reason);
     }
 
