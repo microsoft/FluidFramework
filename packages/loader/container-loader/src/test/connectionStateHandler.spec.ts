@@ -81,8 +81,10 @@ describe("ConnectionStateHandler Tests", () => {
             },
             new TelemetryNullLogger(),
         );
-        connectionStateHandler_receivedAddMemberEvent = (id: string) => { (connectionStateHandler as any).receivedAddMemberEvent(id); };
-        connectionStateHandler_receivedRemoveMemberEvent = (id: string) => { (connectionStateHandler as any).receivedRemoveMemberEvent(id); };
+        connectionStateHandler_receivedAddMemberEvent =
+            (id: string) => { (connectionStateHandler as any).receivedAddMemberEvent(id); };
+        connectionStateHandler_receivedRemoveMemberEvent =
+            (id: string) => { (connectionStateHandler as any).receivedRemoveMemberEvent(id); };
     });
 
     it("Should move to connected state on normal flow for read client", async () => {
