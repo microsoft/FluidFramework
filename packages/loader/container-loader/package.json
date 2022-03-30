@@ -109,6 +109,10 @@
   },
   "typeValidation": {
     "version": "0.58.3000",
-    "broken": {}
+    "broken": {
+      "0.58.2000":{
+        "ClassDeclaration_Container": {"backCompat": false}
+      }
+    }
   }
 }
