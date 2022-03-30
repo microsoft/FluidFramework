@@ -58,7 +58,7 @@
     "@fluidframework/core-interfaces": "^0.42.0",
     "@fluidframework/datastore-definitions": "^0.59.1000",
     "@fluidframework/merge-tree": "^0.59.1000",
-    "@fluidframework/protocol-definitions": "^0.1027.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
     "@fluidframework/request-handler": "^0.59.1000",
     "@fluidframework/runtime-definitions": "^0.59.1000",
     "@fluidframework/sequence": "^0.59.1000",
