@@ -16,7 +16,6 @@ import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerEvents } from '@fluidframework/container-definitions';
 import { IContainerLoadMode } from '@fluidframework/container-definitions';
-import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -78,8 +77,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
-    // (undocumented)
-    getPackageName(codeDetails: IFluidCodeDetails | undefined): IContainerPackageInfo;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)

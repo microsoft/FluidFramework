@@ -30,7 +30,6 @@ import {
     IContainerLoadMode,
     IFluidCodeDetails,
     isFluidCodeDetails,
-    isFluidPackage,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
@@ -39,7 +38,6 @@ import {
     UsageError,
  } from "@fluidframework/container-utils";
 import {
-    IContainerPackageInfo,
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
@@ -94,7 +92,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { ReconnectMode, IConnectionManagerFactoryArgs } from "./contracts";
+import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
@@ -980,18 +978,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.emit("warning", warning);
     }
 
-    private getPackageName(codeDetails: IFluidCodeDetails | undefined): IContainerPackageInfo {
-        let containerPackageName;
-        if (codeDetails && "name" in codeDetails) {
-            containerPackageName = codeDetails;
-        } else if (isFluidPackage(codeDetails?.package)) {
-            containerPackageName = codeDetails?.package.name;
-        } else {
-            containerPackageName = codeDetails?.package;
-        }
-        return { name: containerPackageName };
-    }
-
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         if (this.resolvedUrl === undefined) {
             return undefined;
@@ -1000,7 +986,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.urlResolver.getAbsoluteUrl(
             this.resolvedUrl,
             relativeUrl,
-            this.getPackageName(this._context?.codeDetails));
+            getPackageName(this._context?.codeDetails));
     }
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
