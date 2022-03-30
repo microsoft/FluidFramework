@@ -54,13 +54,13 @@ function safeParse(json: string, error: string){
 
 export async function getPackageDetailsOrThrow(packageDir: string, updateOptions?: {cwd?: string}):  Promise<PackageDetails> {
     const result = await getPackageDetails(packageDir, updateOptions);
-    if(result.error !== undefined){
-        throw new Error(result.error);
+    if(result.skipReason !== undefined){
+        throw new Error(result.skipReason);
     }
     return result;
 }
 
-export async function getPackageDetails(packageDir: string, updateOptions?: {cwd?: string}): Promise<PackageDetails & {error?: undefined} | {error: string}> {
+export async function getPackageDetails(packageDir: string, updateOptions?: {cwd?: string}): Promise<PackageDetails & {skipReason?: undefined} | {skipReason: string}> {
 
     const packagePath = `${packageDir}/package.json`;
     if(!await util.promisify(fs.exists)(packagePath)){
@@ -71,11 +71,11 @@ export async function getPackageDetails(packageDir: string, updateOptions?: {cwd
     const pkgJson: PackageJson = safeParse(content.toString(), packagePath);
 
     if(pkgJson.name.startsWith("@fluid-internal")){
-        return {error: "Skipping package: @fluid-internal "}
+        return {skipReason: "Skipping package: @fluid-internal "}
     }else if( pkgJson.main?.endsWith("index.js") !== true){
-        return  {error: "Skipping package: no index.js in main property"}
+        return  {skipReason: "Skipping package: no index.js in main property"}
     }else if(pkgJson.typeValidation?.disabled === true){
-        return  {error: "Skipping package: type validation disabled"}
+        return  {skipReason: "Skipping package: type validation disabled"}
     }
 
     // normalize the version to remove any pre-release version info,
