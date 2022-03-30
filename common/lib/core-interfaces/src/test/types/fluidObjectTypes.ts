@@ -101,3 +101,14 @@ declare function getIFluidObject(): IFluidObject;
     useProvider<IFluidLoadable>(legacy);
     useProvider<IFluidLoadable>(fluidObject);
 }
+
+// validate nested property is fluid object too
+{
+    interface IFoo {
+        z: { z: boolean };
+      }
+
+    const foo: FluidObject<IFoo> = getFluidObject();
+    // @ts-expect-error provider shouldn't have any non-provider properties
+    useProvider(foo.z);
+}

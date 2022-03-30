@@ -25,8 +25,11 @@
  export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> =
     string extends TProp ? never : number extends TProp? never : // exclude indexers [key:string |number]: any
     TProp extends keyof Exclude<T[TProp], undefined> // TProp is a property of T, and T[TProp]
-        ? TProp
-        :never;
+        ? TProp extends
+            keyof Exclude<Exclude<T[TProp], undefined>[TProp], undefined> // TProp is a property of T, and T[TProp]
+            ? TProp
+            :never
+        : never;
 
 /**
  * This utility type take interface(s) that follow the FluidObject pattern, and produces
@@ -58,7 +61,9 @@
  * `FluidObject<IFoo & IBar>`
  *
  */
- export type FluidObject<T = unknown> = Partial<Pick<T, FluidObjectProviderKeys<T>>>;
+ export type FluidObject<T = unknown> = {
+    readonly [P in FluidObjectProviderKeys<T>]?: T[P];
+};
 
 /**
  * This utility type creates a type that is the union of all keys on the generic type
