@@ -12,7 +12,6 @@ import {
     ILoader,
     IRuntime,
     ICriticalContainerError,
-    ContainerWarning,
     AttachState,
     ILoaderOptions,
     IRuntimeFactory,
