@@ -185,8 +185,8 @@ async function runnerProcess(
                 configProvider: {
                     getRawConfig(name) {
                         return configurations[runConfig.runId % configurations.length][name];
-                    }
-                }
+                    },
+                },
             });
 
             const container: IContainer = await loader.resolve({ url, headers });

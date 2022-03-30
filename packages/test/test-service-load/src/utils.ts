@@ -147,8 +147,8 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
         configProvider: {
             getRawConfig(name) {
                 return configurations[name];
-            }
-        }
+            },
+        },
     });
 
     const container: IContainer = await loader.createDetachedContainer(codeDetails);

@@ -90,9 +90,9 @@ export function generateRuntimeOptions(
 }
 
 export function generateConfigurations(
-    seed: number, overrides: OptionsMatrix<Record<string,ConfigTypes>> | undefined
+    seed: number, overrides: OptionsMatrix<Record<string,ConfigTypes>> | undefined,
 ): Record<string,ConfigTypes>[] {
-    if (overrides === undefined){
+    if (overrides === undefined) {
         return [{}];
     }
     return generatePairwiseOptions<Record<string, ConfigTypes>>(
