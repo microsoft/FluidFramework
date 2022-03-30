@@ -519,6 +519,11 @@
           "backCompat": false,
           "forwardCompat": false
         }
+      },
+      "0.47.0": {
+        "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false
+        }
       }
     }
   }
