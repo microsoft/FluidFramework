@@ -102,6 +102,10 @@
   },
   "typeValidation": {
     "version": "0.58.3000",
-    "broken": {}
+    "broken": {
+      "0.58.1001":{
+        "ClassDeclaration_SharedDirectory": {"forwardCompat": false}
+      }
+    }
   }
 }
