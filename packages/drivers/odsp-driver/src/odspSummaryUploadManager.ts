@@ -69,7 +69,7 @@ export class OdspSummaryUploadManager {
         referenceSequenceNumber: number,
         tree: api.ISummaryTree,
     ): Promise<IWriteSummaryResponse> {
-        const containesProtocolTree = Object.keys(tree.tree).includes(".protocol");
+        const containsProtocolTree = Object.keys(tree.tree).includes(".protocol");
         const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
             tree,
@@ -81,7 +81,7 @@ export class OdspSummaryUploadManager {
             sequenceNumber: referenceSequenceNumber,
             // no ack handle implies this is initial summary after empty file creation.
             // send container payload so server will use it without a summary op
-            type: containesProtocolTree || parentHandle === undefined ? "container" : "channel",
+            type: containsProtocolTree || parentHandle === undefined ? "container" : "channel",
         };
 
         return getWithRetryForTokenRefresh(async (options) => {
