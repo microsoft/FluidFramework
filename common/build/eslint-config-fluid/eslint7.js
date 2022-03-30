@@ -12,7 +12,6 @@ module.exports = {
     "extends": [
         "eslint:recommended",
         "plugin:eslint-comments/recommended",
-        "plugin:react/recommended",
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
@@ -34,8 +33,6 @@ module.exports = {
         "project": "./tsconfig.json"
     },
     "plugins": [
-        "@typescript-eslint",
-        "react",
         "unicorn",
     ],
     "reportUnusedDisableDirectives": true,
@@ -48,39 +45,6 @@ module.exports = {
         "@typescript-eslint/await-thenable": "error",
         "@typescript-eslint/ban-types": "error",
         "@typescript-eslint/brace-style": "off",
-        // [
-        //     "error",
-        //     "1tbs",
-        //     {
-        //         "allowSingleLine": true
-        //     }
-        // ],
-        // TODO - investigate turning this on once we have correct settings
-        // "@typescript-eslint/naming-convention": [
-        //     "error",
-        //     {
-        //         "selector": "default",
-        //         "format": ["camelCase"]
-        //     },
-        //     {
-        //         "selector": "variable",
-        //         "format": ["camelCase"]
-        //     },
-        //     {
-        //         "selector": "parameter",
-        //         "format": ["camelCase"],
-        //         "leadingUnderscore": "allow"
-        //     },
-        //     {
-        //         "selector": "memberLike",
-        //         "modifiers": ["private"],
-        //         "format": ["camelCase"]
-        //     },
-        //     {
-        //         "selector": "typeLike",
-        //         "format": ["PascalCase"]
-        //     }
-        // ],
         "@typescript-eslint/comma-dangle": [
             "error",
             {
