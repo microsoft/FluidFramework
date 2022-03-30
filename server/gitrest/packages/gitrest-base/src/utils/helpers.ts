@@ -93,6 +93,14 @@ export async function retrieveLatestFullSummaryFromStorage(
  * Retrieves the full repository path. Or throws an error if not valid.
  */
 export function getRepoPath(owner: string, name: string) {
+    if (!owner || owner === "") {
+        throw new NetworkError(400, `Invalid arguments. A repo owner must be provided.`);
+    }
+
+    if (!name || name === "") {
+        throw new NetworkError(400, `Invalid arguments. A repo name must be provided.`);
+    }
+
     // Verify that both inputs are valid folder names
     const parsedOwner = path.parse(owner);
     const parsedName = path.parse(name);

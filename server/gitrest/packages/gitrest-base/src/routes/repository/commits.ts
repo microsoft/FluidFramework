@@ -5,7 +5,7 @@
 
 import { Router } from "express";
 import nconf from "nconf";
-import { getExternalWriterParams, IRepositoryManagerFactory } from "../../utils";
+import { Constants, getExternalWriterParams, IRepositoryManagerFactory } from "../../utils";
 import { handleResponse } from "../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
@@ -18,10 +18,14 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
     // since
     // until
     router.get("/repos/:owner/:repo/commits", async (request, response, next) => {
-        const resultP = repoManagerFactory.open(
-            request.params.owner,
-            request.params.repo,
-        ).then(async (repoManager) => repoManager.getCommits(
+        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
+        const resultP = repoManagerFactory.open({
+            repoOwner: request.params.owner,
+            repoName: request.params.repo,
+            fileSystemManagerParams: {
+                storageName,
+            },
+        }).then(async (repoManager) => repoManager.getCommits(
             request.query.sha as string,
             Number(request.query.count as string),
             getExternalWriterParams(request.query?.config as string),

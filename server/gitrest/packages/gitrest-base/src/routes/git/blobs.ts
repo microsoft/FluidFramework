@@ -6,17 +6,21 @@
 import { ICreateBlobParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import nconf from "nconf";
-import { IRepositoryManagerFactory } from "../../utils";
+import { Constants, IRepositoryManagerFactory } from "../../utils";
 import { handleResponse } from "../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
 
     router.post("/repos/:owner/:repo/git/blobs", async (request, response, next) => {
-        const resultP = repoManagerFactory.open(
-            request.params.owner,
-            request.params.repo,
-        ).then(async (repoManager) => repoManager.createBlob(
+        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
+        const resultP = repoManagerFactory.open({
+            repoOwner: request.params.owner,
+            repoName: request.params.repo,
+            fileSystemManagerParams: {
+                storageName,
+            },
+        }).then(async (repoManager) => repoManager.createBlob(
             request.body as ICreateBlobParams,
         ));
 
@@ -27,10 +31,14 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
      * Retrieves the given blob from the repository
      */
     router.get("/repos/:owner/:repo/git/blobs/:sha", async (request, response, next) => {
-        const resultP = repoManagerFactory.open(
-            request.params.owner,
-            request.params.repo,
-        ).then(async (repoManager) => repoManager.getBlob(
+        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
+        const resultP = repoManagerFactory.open({
+            repoOwner: request.params.owner,
+            repoName: request.params.repo,
+            fileSystemManagerParams: {
+                storageName,
+            },
+        }).then(async (repoManager) => repoManager.getBlob(
             request.params.sha,
         ));
 

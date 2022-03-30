@@ -24,6 +24,8 @@ import {
     isContainerSummary,
     IRepositoryManager,
     IFileSystemManager,
+    IFileSystemManagerFactory,
+    Constants,
 } from "../utils";
 import { handleResponse } from "./utils";
 
@@ -134,7 +136,7 @@ async function deleteSummary(
 
 export function create(
     store: Provider,
-    fileSystemManager: IFileSystemManager,
+    fileSystemManagerFactory: IFileSystemManagerFactory,
     repoManagerFactory: IRepositoryManagerFactory,
 ): Router {
     const router: Router = Router();
@@ -145,18 +147,24 @@ export function create(
      * If sha is "latest", returns latest summary for owner/repo.
      */
     router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
-        const storageRoutingId: string = request.get("Storage-Routing-Id");
+        const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
+        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
         const [tenantId,documentId] = storageRoutingId.split(":");
         if (!documentId) {
-            handleResponse(Promise.reject(new NetworkError(400, "Invalid Storage-Routing-Id header")), response);
+            handleResponse(
+                Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
+                response);
             return;
         }
-        const resultP = repoManagerFactory.open(
-            request.params.owner,
-            request.params.repo,
-        ).then(async (repoManager) => getSummary(
+        const resultP = repoManagerFactory.open({
+            repoOwner: request.params.owner,
+            repoName: request.params.repo,
+            fileSystemManagerParams: {
+                storageName,
+            },
+        }).then(async (repoManager) => getSummary(
             repoManager,
-            fileSystemManager,
+            fileSystemManagerFactory.create({ storageName }),
             request.params.sha,
             documentId,
             tenantId,
@@ -170,19 +178,25 @@ export function create(
      * Creates a new summary.
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
-        const storageRoutingId: string = request.get("Storage-Routing-Id");
+        const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
+        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
         const [tenantId,documentId] = storageRoutingId.split(":");
         if (!documentId) {
-            handleResponse(Promise.reject(new NetworkError(400, "Invalid Storage-Routing-Id header")), response);
+            handleResponse(
+                Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
+                response);
             return;
         }
         const wholeSummaryPayload: IWholeSummaryPayload = request.body;
-        const resultP = repoManagerFactory.open(
-            request.params.owner,
-            request.params.repo,
-        ).then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => createSummary(
+        const resultP = repoManagerFactory.open({
+            repoOwner: request.params.owner,
+            repoName: request.params.repo,
+            fileSystemManagerParams: {
+                storageName,
+            },
+        }).then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => createSummary(
             repoManager,
-            fileSystemManager,
+            fileSystemManagerFactory.create({ storageName }),
             wholeSummaryPayload,
             documentId,
             tenantId,
@@ -197,19 +211,25 @@ export function create(
      * If header Soft-Delete="true", only flags summary as deleted.
      */
     router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
-        const storageRoutingId: string = request.get("Storage-Routing-Id");
+        const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
+        const storageName: string | undefined = request.get(Constants.StorageNameHeader);
         const [tenantId,documentId] = storageRoutingId.split(":");
         if (!documentId) {
-            handleResponse(Promise.reject(new NetworkError(400, "Invalid Storage-Routing-Id header")), response);
+            handleResponse(
+                Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
+                response);
             return;
         }
         const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
-        const resultP = repoManagerFactory.open(
-            request.params.owner,
-            request.params.repo,
-        ).then(async (repoManager) => deleteSummary(
+        const resultP = repoManagerFactory.open({
+            repoOwner: request.params.owner,
+            repoName: request.params.repo,
+            fileSystemManagerParams: {
+                storageName,
+            },
+        }).then(async (repoManager) => deleteSummary(
             repoManager,
-            fileSystemManager,
+            fileSystemManagerFactory.create({ storageName }),
             documentId,
             tenantId,
             softDelete,
