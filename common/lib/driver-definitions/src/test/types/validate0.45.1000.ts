@@ -295,6 +295,7 @@ declare function get_current_InterfaceDeclaration_IDocumentService():
 declare function use_old_InterfaceDeclaration_IDocumentService(
     use: old.IDocumentService);
 use_old_InterfaceDeclaration_IDocumentService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentService());
 
 /*
@@ -319,6 +320,7 @@ declare function get_current_InterfaceDeclaration_IDocumentServiceFactory():
 declare function use_old_InterfaceDeclaration_IDocumentServiceFactory(
     use: old.IDocumentServiceFactory);
 use_old_InterfaceDeclaration_IDocumentServiceFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentServiceFactory());
 
 /*
@@ -367,6 +369,7 @@ declare function get_current_InterfaceDeclaration_IDocumentStorageService():
 declare function use_old_InterfaceDeclaration_IDocumentStorageService(
     use: old.IDocumentStorageService);
 use_old_InterfaceDeclaration_IDocumentStorageService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentStorageService());
 
 /*

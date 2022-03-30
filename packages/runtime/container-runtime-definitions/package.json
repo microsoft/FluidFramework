@@ -36,10 +36,10 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/container-definitions": "^0.47.1000",
+    "@fluidframework/container-definitions": "^0.48.1000-0",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.45.1000",
-    "@fluidframework/protocol-definitions": "^0.1027.1000",
+    "@fluidframework/driver-definitions": "^0.46.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
     "@fluidframework/runtime-definitions": "^0.59.1000",
     "@types/node": "^14.18.0"
   },
@@ -160,6 +160,17 @@
         }
       },
       "0.57.0": {
+        "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideContainerRuntime": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainerRuntime": {
+          "backCompat": false
+        }
+      },
+      "0.58.1000": {
         "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
           "backCompat": false
         },

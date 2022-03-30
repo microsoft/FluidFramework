@@ -41,7 +41,7 @@
   "dependencies": {
     "@fluid-example/example-utils": "^0.59.1000",
     "@fluidframework/aqueduct": "^0.59.1000",
-    "@fluidframework/container-definitions": "^0.47.1000",
+    "@fluidframework/container-definitions": "^0.48.1000-0",
     "@fluidframework/core-interfaces": "^0.42.0",
     "@fluidframework/merge-tree": "^0.59.1000",
     "@fluidframework/runtime-definitions": "^0.59.1000",

@@ -178,7 +178,11 @@ async function createWebLoader(
     // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
     if (testOrderer) {
         const resolvedUrl = await urlResolver.resolve(await urlResolver.createRequestForCreateNew(documentId));
-        const innerDocumentService = await documentServiceFactory.createDocumentService(resolvedUrl);
+        const innerDocumentService = await documentServiceFactory.createDocumentService(
+            resolvedUrl,
+            undefined, // logger
+            false, // clientIsSummarizer
+        );
         documentServiceFactory = new LocalDocumentServiceFactory(
             deltaConns.get(documentId),
             undefined,
