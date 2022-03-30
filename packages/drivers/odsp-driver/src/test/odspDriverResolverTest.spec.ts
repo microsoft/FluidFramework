@@ -104,8 +104,8 @@ describe("Odsp Driver Resolver", () => {
 
     it("Should resolve url with a string in the codeDetails package", async () => {
         const resolvedUrl = await resolver.resolve(request);
-        const codeDetails = { name: packageName };
-        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
+        const codeDetails = { package: packageName };
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails as any);
 
         const [url, queryString] = response?.split("?") ?? [];
         const searchParams = new URLSearchParams(queryString);
@@ -131,8 +131,12 @@ describe("Odsp Driver Resolver", () => {
 
     it("Should resolve url with a IFluidPackage in the codeDetails package", async () => {
         const resolvedUrl = await resolver.resolve(request);
-        const codeDetails = { name: packageName };
-        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
+        const fluidPackage: any = {
+            name: packageName,
+            fluid: {},
+        };
+        const codeDetails = { package: fluidPackage };
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails as any);
 
         const [url, queryString] = response?.split("?") ?? [];
         const searchParams = new URLSearchParams(queryString);
