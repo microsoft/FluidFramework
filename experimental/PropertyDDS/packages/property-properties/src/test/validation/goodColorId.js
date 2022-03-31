@@ -17,20 +17,20 @@ var templateSchema100 = {
         {
             'id': 'r',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Red' }
+            'annotation': { 'description': 'Red' },
         },
         {
             'id': 'g',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Green' }
+            'annotation': { 'description': 'Green' },
         },
         {
             'id': 'b',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Blue' }
-        }
+            'annotation': { 'description': 'Blue' },
+        },
     ],
-    'typeid': 'TeamLeoValidation2:ColorID-1.0.0'
+    'typeid': 'TeamLeoValidation2:ColorID-1.0.0',
 };
 
 var templateSchema100Modified = {
@@ -38,15 +38,15 @@ var templateSchema100Modified = {
         {
             'id': 'r',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Red' }
+            'annotation': { 'description': 'Red' },
         },
         {
             'id': 'g',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Green' }
-        }
+            'annotation': { 'description': 'Green' },
+        },
     ],
-    'typeid': 'TeamLeoValidation2:ColorID-1.0.0'
+    'typeid': 'TeamLeoValidation2:ColorID-1.0.0',
 };
 
 var templateSchema101 = {
@@ -54,21 +54,21 @@ var templateSchema101 = {
         {
             'id': 'r',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Red' }
+            'annotation': { 'description': 'Red' },
         },
         {
             'id': 'g',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Green' }
+            'annotation': { 'description': 'Green' },
         },
         {
             'id': 'b',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Blue' }
-        }
+            'annotation': { 'description': 'Blue' },
+        },
     ],
     'typeid': 'TeamLeoValidation2:ColorID-1.0.1',
-    'annotation': { 'description': 'Color template' }
+    'annotation': { 'description': 'Color template' },
 };
 
 var templateSchema101BadSemver = {
@@ -76,25 +76,25 @@ var templateSchema101BadSemver = {
         {
             'id': 'r',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Red' }
+            'annotation': { 'description': 'Red' },
         },
         {
             'id': 'g',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Green' }
+            'annotation': { 'description': 'Green' },
         },
         {
             'id': 'b',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Blue' }
+            'annotation': { 'description': 'Blue' },
         },
         {
             'id': 'a',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Alpha' }
-        }
+            'annotation': { 'description': 'Alpha' },
+        },
     ],
-    'typeid': 'TeamLeoValidation2:ColorID-1.0.1'
+    'typeid': 'TeamLeoValidation2:ColorID-1.0.1',
 };
 
 var templateSchema110 = {
@@ -102,25 +102,25 @@ var templateSchema110 = {
         {
             'id': 'r',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Red' }
+            'annotation': { 'description': 'Red' },
         },
         {
             'id': 'g',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Green' }
+            'annotation': { 'description': 'Green' },
         },
         {
             'id': 'b',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Blue' }
+            'annotation': { 'description': 'Blue' },
         },
         {
             'id': 'a',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Alpha' }
-        }
+            'annotation': { 'description': 'Alpha' },
+        },
     ],
-    'typeid': 'TeamLeoValidation2:ColorID-1.1.0'
+    'typeid': 'TeamLeoValidation2:ColorID-1.1.0',
 };
 
 var templateSchema110BadSemver = {
@@ -128,15 +128,15 @@ var templateSchema110BadSemver = {
         {
             'id': 'r',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Red' }
+            'annotation': { 'description': 'Red' },
         },
         {
             'id': 'g',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Green' }
-        }
+            'annotation': { 'description': 'Green' },
+        },
     ],
-    'typeid': 'TeamLeoValidation2:ColorID-1.1.0'
+    'typeid': 'TeamLeoValidation2:ColorID-1.1.0',
 };
 
 var templateSchema110BadSemver2 = {
@@ -144,15 +144,15 @@ var templateSchema110BadSemver2 = {
         {
             'id': 'r',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Red' }
+            'annotation': { 'description': 'Red' },
         },
         {
             'id': 'g',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Green' }
-        }
+            'annotation': { 'description': 'Green' },
+        },
     ],
-    'typeid': 'TeamLeoValidation2:ColorID-1.0.1'
+    'typeid': 'TeamLeoValidation2:ColorID-1.0.1',
 };
 
 var templateSchema200 = {
@@ -160,32 +160,32 @@ var templateSchema200 = {
         {
             'id': 'r',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Red' }
+            'annotation': { 'description': 'Red' },
         },
         {
             'id': 'g',
             'typeid': 'Float32',
-            'annotation': { 'description': 'Green' }
-        }
+            'annotation': { 'description': 'Green' },
+        },
     ],
-    'typeid': 'TeamLeoValidation2:ColorID-2.0.0'
+    'typeid': 'TeamLeoValidation2:ColorID-2.0.0',
 };
 
 const objToExport = {
     '1-0-0': {
         original: templateSchema100,
-        modified: templateSchema100Modified
+        modified: templateSchema100Modified,
     },
     '1-0-1': {
         goodSemver: templateSchema101,
-        badSemver1: templateSchema101BadSemver
+        badSemver1: templateSchema101BadSemver,
     },
     '1-1-0': {
         goodSemver: templateSchema110,
         badSemver1: templateSchema110BadSemver,
-        badSemver2: templateSchema110BadSemver2
+        badSemver2: templateSchema110BadSemver2,
     },
-    '2-0-0': templateSchema200
+    '2-0-0': templateSchema200,
 };
 
 module.exports = objToExport;

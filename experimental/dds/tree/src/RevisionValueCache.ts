@@ -47,8 +47,6 @@ export class RevisionValueCache<TValue> {
 		 * The first revision within the retention window. All entries with revisions >= retentionWindowStart will be retained.
 		 * Must be >= 0.
 		 */
-		// False positive
-		// eslint-disable-next-line @typescript-eslint/prefer-readonly
 		private retentionWindowStart: Revision,
 		/**
 		 * Optional list of entries to permanently retain.

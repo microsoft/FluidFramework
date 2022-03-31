@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
-    ContainerWarning,
     ILoader,
     AttachState,
     ILoaderOptions,
@@ -263,7 +262,6 @@ export class MockQuorum implements IQuorum, EventEmitter {
         }
         this.map.set(key, value);
         this.eventEmitter.emit("approveProposal", 0, key, value);
-        this.eventEmitter.emit("commitProposal", 0, key, value);
     }
 
     has(key: string): boolean {
@@ -315,7 +313,6 @@ export class MockQuorum implements IQuorum, EventEmitter {
             case "removeMember":
             case "addProposal":
             case "approveProposal":
-            case "commitProposal":
                 this.eventEmitter.on(event, listener);
                 this.eventEmitter.emit("afterOn", event);
                 return this;
@@ -550,8 +547,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public async requestDataStore(request: IRequest): Promise<IResponse> {
         return null;
     }
-
-    public raiseContainerWarning(warning: ContainerWarning): void { }
 
     public reSubmit(content: any, localOpMetadata: unknown) {
         return;

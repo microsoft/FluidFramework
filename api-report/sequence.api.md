@@ -7,7 +7,6 @@
 import { BaseSegment } from '@fluidframework/merge-tree';
 import { Client } from '@fluidframework/merge-tree';
 import { Deferred } from '@fluidframework/common-utils';
-import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -17,8 +16,6 @@ import { IEvent } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IInterval } from '@fluidframework/merge-tree';
 import { IJSONSegment } from '@fluidframework/merge-tree';
@@ -30,7 +27,6 @@ import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeOp } from '@fluidframework/merge-tree';
 import { IMergeTreeRemoveMsg } from '@fluidframework/merge-tree';
 import { IntervalConflictResolver } from '@fluidframework/merge-tree';
-import { IntervalType } from '@fluidframework/merge-tree';
 import { IRelativePosition } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISegmentAction } from '@fluidframework/merge-tree';
@@ -71,7 +67,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number, end: number, client: Client, intervalType?: IntervalType): TInterval;
+    create(label: string, start: number, end: number, client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
 }
 
 // @public (undocumented)
@@ -106,7 +102,7 @@ export class Interval implements ISerializableInterval {
     // (undocumented)
     getProperties(): PropertySet;
     // (undocumented)
-    modify(label: string, start: number, end: number): Interval;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): Interval;
     // (undocumented)
     overlaps(b: Interval): boolean;
     // (undocumented)
@@ -181,6 +177,18 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
         done: boolean;
     };
     }
+
+// @public (undocumented)
+export enum IntervalType {
+    // (undocumented)
+    Nest = 1,
+    // (undocumented)
+    Simple = 0,
+    // (undocumented)
+    SlideOnRemove = 2,
+    // (undocumented)
+    Transient = 4
+}
 
 // @public
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
@@ -376,7 +384,7 @@ export class SequenceInterval implements ISerializableInterval {
     // (undocumented)
     intervalType: IntervalType;
     // (undocumented)
-    modify(label: string, start: number, end: number): SequenceInterval;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): SequenceInterval;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
@@ -418,8 +426,6 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected onDisconnect(): void;
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
-    protected registerCore(): void;
     // (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -567,8 +573,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: SummarySerializer): void;
     // (undocumented)
-    protected registerCore(): void;
-    // (undocumented)
     removeLocalReference(lref: LocalReference): void;
     // (undocumented)
     removeRange(start: number, end: number): IMergeTreeRemoveMsg;
@@ -666,7 +670,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     static create(runtime: IFluidDataStoreRuntime, id?: string): SparseMatrix;
     static getFactory(): IChannelFactory;
     // (undocumented)
-    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle<IFluidObject & FluidObject & IFluidLoadable>>;
+    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle>;
     // (undocumented)
     getPositionProperties(row: number, col: number): PropertySet;
     // (undocumented)

@@ -90,6 +90,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
                     return getChild(tree, childrenIds[index], update);
                 }
 
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return target[key];
             },
             set(target, key, value) {

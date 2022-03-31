@@ -26,7 +26,7 @@ export async function deleteSummarizedOps(
         ).toArray();
 
         const currentEpochTime = new Date().getTime();
-        const epochTimeBeforeOfflineWindow =  currentEpochTime - offlineWindowMs;
+        const epochTimeBeforeOfflineWindow = currentEpochTime - offlineWindowMs;
         const scheduledDeletionEpochTime = currentEpochTime + softDeleteRetentionPeriodMs;
 
         for (const doc of uniqueDocuments) {

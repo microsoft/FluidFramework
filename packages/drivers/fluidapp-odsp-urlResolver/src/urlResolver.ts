@@ -58,8 +58,6 @@ async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlP
     const pathname = urlSource.pathname;
     // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
     const siteDriveItemMatch = pathname.match(/\/(p|preview|meetingnotes)\/([^/]*)\/([^/]*)\/([^/]*)/);
-
-    // eslint-disable-next-line no-null/no-null
     if (siteDriveItemMatch === null) {
         return undefined;
     }

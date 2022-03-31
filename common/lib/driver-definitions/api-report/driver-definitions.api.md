@@ -36,7 +36,6 @@ export enum DriverErrorType {
     fetchFailure = "fetchFailure",
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
     fileOverwrittenInStorage = "fileOverwrittenInStorage",
-    // @deprecated (undocumented)
     genericError = "genericError",
     genericNetworkError = "genericNetworkError",
     incorrectServerResponse = "incorrectServerResponse",
@@ -58,8 +57,6 @@ export enum DriverHeader {
 // @public
 export interface DriverPreCheckInfo {
     codeDetailsHint?: string;
-    // @deprecated (undocumented)
-    containerPath: string;
     criticalBootDomains?: string[];
 }
 
@@ -71,6 +68,11 @@ export interface IAuthorizationError extends IDriverErrorBase {
     readonly errorType: DriverErrorType.authorizationError;
     // (undocumented)
     readonly tenantId?: string;
+}
+
+// @public
+export interface IContainerPackageInfo {
+    name: string;
 }
 
 // @public (undocumented)
@@ -137,8 +139,8 @@ export interface IDocumentService {
 
 // @public (undocumented)
 export interface IDocumentServiceFactory {
-    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     protocolName: string;
 }
 
@@ -180,13 +182,9 @@ export interface IDriverBasicError extends IDriverErrorBase {
 
 // @public
 export interface IDriverErrorBase {
-    // (undocumented)
     canRetry: boolean;
-    // (undocumented)
     readonly errorType: DriverErrorType;
-    // (undocumented)
     readonly message: string;
-    // (undocumented)
     online?: string;
 }
 
@@ -265,7 +263,7 @@ export interface IThrottlingWarning extends IDriverErrorBase {
 // @public (undocumented)
 export interface IUrlResolver {
     // (undocumented)
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, codeDetails?: IFluidCodeDetails): Promise<string>;
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IFluidCodeDetails | IContainerPackageInfo): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
@@ -283,6 +281,7 @@ export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
 }
+
 
 // (No @packageDocumentation comment for this package)
 

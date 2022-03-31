@@ -1,9 +1,13 @@
 {
   "name": "@fluidframework/tinylicious-driver",
-  "version": "0.56.0",
+  "version": "0.58.3000",
   "description": "Driver for tinylicious",
   "homepage": "https://fluidframework.com",
-  "repository": "https://github.com/microsoft/FluidFramework",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "packages/drivers/tinylicious-driver"
+  },
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/index.js",
@@ -27,18 +31,18 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.41.0",
-    "@fluidframework/driver-definitions": "^0.44.0-0",
-    "@fluidframework/driver-utils": "^0.56.0",
-    "@fluidframework/protocol-definitions": "^0.1026.0",
-    "@fluidframework/routerlicious-driver": "^0.56.0",
-    "@fluidframework/server-services-client": "^0.1034.0",
+    "@fluidframework/core-interfaces": "^0.42.0",
+    "@fluidframework/driver-definitions": "^0.45.2000-0",
+    "@fluidframework/driver-utils": "^0.58.3000",
+    "@fluidframework/protocol-definitions": "^0.1027.1000",
+    "@fluidframework/routerlicious-driver": "^0.58.3000",
+    "@fluidframework/server-services-client": "^0.1035.1000",
     "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.25.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/jsrsasign": "^8.0.8",

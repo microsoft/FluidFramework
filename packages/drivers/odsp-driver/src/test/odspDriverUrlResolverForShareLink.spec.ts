@@ -74,7 +74,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
                 assert.strictEqual(resolvedUrl2.driveId, driveId, "Drive id should be equal");
                 assert.strictEqual(resolvedUrl2.siteUrl, siteUrl, "SiteUrl should be equal");
                 assert.strictEqual(resolvedUrl2.itemId, itemId, "Item id should be equal");
-                assert.strictEqual(resolvedUrl2.fileVersion, urlWithNav.hasVersion  ? fileVersion : undefined);
+                assert.strictEqual(resolvedUrl2.fileVersion, urlWithNav.hasVersion ? fileVersion : undefined);
                 assert.strictEqual(resolvedUrl2.hashedDocumentId, await getHashedDocumentId(driveId, itemId), "Doc id should be equal");
                 assert(resolvedUrl2.endpoints.snapshotStorageUrl !== undefined, "Snapshot url should not be empty");
             };

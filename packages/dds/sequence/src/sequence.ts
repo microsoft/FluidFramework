@@ -114,7 +114,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                     const props = {};
                     for (const key of Object.keys(r.propertyDeltas)) {
                         props[key] =
-                            // eslint-disable-next-line no-null/no-null
                             r.segment.properties[key] === undefined ? null : r.segment.properties[key];
                     }
                     if (lastAnnotate && lastAnnotate.pos2 === r.position &&
@@ -157,7 +156,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     protected client: Client;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
-    // cache out going ops created when parital loading
+    // cache out going ops created when partial loading
     private readonly loadedDeferredOutgoingOps:
         [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
     // cache incoming ops that arrive when partial loading
@@ -315,7 +314,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     /**
      * Resolves a remote client's position against the local sequence
      * and returns the remote client's position relative to the local
-     * sequence
+     * sequence. The client ref seq must be above the minimum sequence number
+     * or the return value will be undefined.
+     * Generally this method is used in conjunction with signals which provide
+     * point in time values for the below parameters, and is useful for things
+     * like displaying user position. It should not be used with persisted values
+     * as persisted values will quickly become invalid as the remoteClientRefSeq
+     * moves below the minimum sequence number
      * @param remoteClientPosition - The remote client's position to resolve
      * @param remoteClientRefSeq - The reference sequence number of the remote client
      * @param remoteClientId - The client id of the remote client
@@ -539,7 +544,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                     this.loadFinished(error);
                 });
             if (this.dataStoreRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
-                // if we not doing parital load, await the catch up ops,
+                // if we not doing partial load, await the catch up ops,
                 // and the finalization of the load
                 await loadCatchUpOps;
             }
@@ -565,16 +570,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
-    protected registerCore() {
-        for (const value of this.intervalMapKernel.values()) {
-            if (SharedObject.is(value)) {
-                value.bindToContext();
-            }
-        }
-
-        this.client.startOrUpdateCollaboration(this.runtime.clientId);
-    }
-
     protected didAttach() {
         // If we are not local, and we've attached we need to start generating and sending ops
         // so start collaboration and provide a default client id incase we are not connected
@@ -595,7 +590,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
         this.processMinSequenceNumberChanged(minSeq);
 
-        this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
+        this.messagesSinceMSNChange.forEach((m) => { m.minimumSequenceNumber = minSeq; });
 
         return this.client.summarize(this.runtime, this.handle, serializer, this.messagesSinceMSNChange);
     }
@@ -605,14 +600,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         const message = parseHandles(rawMessage, this.serializer);
 
         const ops: IMergeTreeDeltaOp[] = [];
-        function transfromOps(event: SequenceDeltaEvent) {
+        function transformOps(event: SequenceDeltaEvent) {
             ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
         }
         const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
         let stashMessage: Readonly<ISequencedDocumentMessage> = message;
         if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
             if (needsTransformation) {
-                this.on("sequenceDelta", transfromOps);
+                this.on("sequenceDelta", transformOps);
             }
         }
 
@@ -620,7 +615,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
         if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
             if (needsTransformation) {
-                this.removeListener("sequenceDelta", transfromOps);
+                this.removeListener("sequenceDelta", transformOps);
                 // shallow clone the message as we only overwrite top level properties,
                 // like referenceSequenceNumber and content only
                 stashMessage = {
@@ -665,7 +660,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 throw error;
             } else {
                 // it is important this series remains synchronous
-                // first we stop defering incoming ops, and apply then all
+                // first we stop deferring incoming ops, and apply then all
                 this.deferIncomingOps = false;
                 while (this.loadedDeferredIncomingOps.length > 0) {
                     this.processCore(this.loadedDeferredIncomingOps.shift(), false, undefined);

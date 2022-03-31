@@ -6,19 +6,18 @@
  * @fileoverview Definition of the EnumProperty classes
  */
 
+const { TypeIdHelper } = require('@fluid-experimental/property-changeset');
+const { MSG } = require('@fluid-experimental/property-common').constants;
+const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const _ = require('lodash');
 const { Int32Property } = require('./intProperties');
 const { _castFunctors } = require('./primitiveTypeCasts');
 const { ValueProperty } = require('./valueProperty');
-const { TypeIdHelper } = require('@fluid-experimental/property-changeset');
-const { MSG } = require('@fluid-experimental/property-common').constants;
-const { ConsoleUtils } = require('@fluid-experimental/property-common');
 
 /**
  * A primitive property for enums.
  */
 export class EnumProperty extends Int32Property {
-
     /**
     * @param {Object=} in_params - the parameters
     * @constructor
@@ -35,7 +34,7 @@ export class EnumProperty extends Int32Property {
         this._enumDictionary = in_params._enumDictionary;
         // default for this property type is '0' if it exists to keep backward compatibility
         this._data = this._enumDictionary ? this._enumDictionary.defaultValue : 0;
-    };
+    }
 
     /**
      * Evaluates enum properties as primitives.
@@ -43,7 +42,7 @@ export class EnumProperty extends Int32Property {
      */
     isPrimitiveType() {
         return true;
-    };
+    }
 
     /**
      * Returns the current enum string
@@ -57,7 +56,7 @@ export class EnumProperty extends Int32Property {
         } else {
             return resultEntry.id;
         }
-    };
+    }
 
     /**
      * Sets the (internal, integer) value of the property
@@ -79,7 +78,7 @@ export class EnumProperty extends Int32Property {
         } else {
             ValueProperty.prototype.setValue.call(this, in_value);
         }
-    };
+    }
 
     /**
      * Sets the property by an enum string
@@ -97,7 +96,7 @@ export class EnumProperty extends Int32Property {
             var internalValue = internalEnum.value;
             this.setValue(internalValue);
         }
-    };
+    }
 
     /**
      * Returns the full property type identifier for the ChangeSet including the enum type id
@@ -107,7 +106,7 @@ export class EnumProperty extends Int32Property {
      */
     getFullTypeid(in_hideCollection = false) {
         return TypeIdHelper.createSerializationTypeId(this._typeid, 'single', true);
-    };
+    }
 
     /**
      * let the user to query all valid entries of an enum
@@ -115,7 +114,7 @@ export class EnumProperty extends Int32Property {
      */
     getValidEnumList() {
         return this._enumDictionary.enumEntriesById;
-    };
+    }
 }
 EnumProperty.prototype._typeid = 'Enum';
 EnumProperty.prototype._castFunctor = _castFunctors.Int32;

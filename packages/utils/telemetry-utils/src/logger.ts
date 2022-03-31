@@ -215,6 +215,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 }
 
 /**
+ * @deprecated 0.56, remove TaggedLoggerAdapter once its usage is removed from
+ * container-runtime. Issue: #8191
  * TaggedLoggerAdapter class can add tag handling to your logger.
  */
  export class TaggedLoggerAdapter implements ITelemetryBaseLogger {

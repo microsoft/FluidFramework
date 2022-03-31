@@ -7,7 +7,7 @@ import { ITelemetryProperties } from "@fluidframework/common-definitions";
 
 /**
  * All normalized errors flowing through the Fluid Framework adhere to this readonly interface.
- * It features errorType, fluidErrorCode, and message strings, plus Error's members as optional
+ * It features errorType and errorInstanceId on top of Error's members as readonly,
  * and a getter/setter for telemetry props to be included when the error is logged.
  */
 export interface IFluidErrorBase extends Error {
@@ -15,12 +15,10 @@ export interface IFluidErrorBase extends Error {
     readonly errorType: string;
 
     /**
-     * Indicates a point in code where this error originated.
-     * Avoid crafting these via string format or otherwise including variable data, so they're easy to find the code.
+     * Error's message property, made readonly.
+     * Be specific, but also take care when including variable data to consider suitability for aggregation in telemetry
+     * Also avoid including any data that jeopardizes the user's privacy.  Add a tagged telemetry property instead.
      */
-    readonly fluidErrorCode: string;
-
-    /** The free-form error message */
     readonly message: string;
 
     /** Error's stack property, made readonly */
@@ -52,14 +50,13 @@ export const hasErrorInstanceId = (x: any): x is { errorInstanceId: string } =>
 /** type guard for IFluidErrorBase interface */
 export function isFluidError(e: any): e is IFluidErrorBase {
     return typeof e?.errorType === "string" &&
-        typeof e?.fluidErrorCode === "string" &&
         typeof e?.message === "string" &&
-        typeof e?.errorInstanceId === "string" &&
+        hasErrorInstanceId(e) &&
         hasTelemetryPropFunctions(e);
 }
 
 /** type guard for old standard of valid/known errors */
-export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode"> {
+export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId"> {
     return typeof e?.errorType === "string" &&
         typeof e?.message === "string" &&
         hasTelemetryPropFunctions(e);

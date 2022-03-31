@@ -102,7 +102,7 @@ function findMatchingElementIndexInDataSet(data: IInspectorRow[], currentlyExpan
       }
     }
   }
-  return  {idx: rowCounter, found: false};
+  return { idx: rowCounter, found: false };
 }
 
 interface ISearchLevelState {

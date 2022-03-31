@@ -5,7 +5,6 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
@@ -16,7 +15,6 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
@@ -30,6 +28,9 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
+
+// @public
+export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
 
 // @public (undocumented)
 export const channelsTreeName = ".channels";
@@ -81,9 +82,9 @@ export interface IAttachMessage {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents>, IProvideFluidHandleContext {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[]): Promise<IFluidRouter>;
+    createDataStore(pkg: string | string[]): Promise<IDataStore>;
     // @internal @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IFluidRouter>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
@@ -106,6 +107,11 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
+}
+
+// @public
+export interface IDataStore extends IFluidRouter {
+    trySetAlias(alias: string): Promise<AliasResult>;
 }
 
 // @public
@@ -171,8 +177,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];
-    raiseContainerWarning(warning: ContainerWarning): void;
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
     readonly storage: IDocumentStorageService;
@@ -372,7 +377,6 @@ export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRe
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
-
 
 // (No @packageDocumentation comment for this package)
 

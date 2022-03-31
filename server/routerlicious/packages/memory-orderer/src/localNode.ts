@@ -21,7 +21,7 @@ import {
     DefaultServiceConfiguration,
 } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
-import * as moniker from "moniker";
+import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage } from "./interfaces";
@@ -185,7 +185,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         // Create a new socket and bind it to a relay on the node
                         const connection = orderer.connectInternal(
                             subscriber,
-                            moniker.choose(),
+                            (sillyname() as string).toLowerCase().split(" ").join("-"),
                             connectMessage.client);
 
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import { ICollection, IDeliState, IDocument, IQueuedMessage } from "@fluidframework/server-services-core";
 
 export enum DeliCheckpointReason {

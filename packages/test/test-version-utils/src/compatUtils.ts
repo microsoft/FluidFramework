@@ -12,7 +12,6 @@ import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datasto
 import { ISharedDirectory } from "@fluidframework/map";
 import { unreachableCase } from "@fluidframework/common-utils";
 import {
-    ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
     ChannelFactoryRegistry,
@@ -106,7 +105,7 @@ export async function getVersionedTestObjectProvider(
     },
     runtimeVersion?: number | string,
     dataRuntimeVersion?: number | string,
-): Promise<ITestObjectProvider> {
+): Promise<TestObjectProvider> {
     const loaderApi = getLoaderApi(baseVersion, loaderVersion);
     const containerRuntimeApi = getContainerRuntimeApi(baseVersion, runtimeVersion);
     const dataRuntimeApi = getDataRuntimeApi(baseVersion, dataRuntimeVersion);

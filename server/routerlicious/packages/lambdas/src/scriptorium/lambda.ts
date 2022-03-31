@@ -13,6 +13,7 @@ import {
     SequencedOperationType,
     runWithRetry,
 } from "@fluidframework/server-services-core";
+import { getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
@@ -21,7 +22,9 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
     constructor(
         private readonly opCollection: ICollection<any>,
-        protected context: IContext) {
+        protected context: IContext,
+        protected readonly tenantId: string,
+        protected readonly documentId: string) {
     }
 
     public handler(message: IQueuedMessage) {
@@ -105,7 +108,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             "insertOpScriptorium",
             3 /* maxRetries */,
             1000 /* retryAfterMs */,
-            this.context.log,
+            getLumberBaseProperties(this.documentId, this.tenantId),
             (error) => error.code === 11000 /* shouldIgnoreError */);
     }
 }

@@ -213,6 +213,7 @@ export function checkInstalled(requested: string) {
 }
 
 export const loadPackage = (modulePath: string, pkg: string) =>
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-return
     require(path.join(modulePath, "node_modules", pkg));
 
 export function getRequestedRange(baseVersion: string, requested?: number | string): string {

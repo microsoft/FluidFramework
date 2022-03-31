@@ -55,7 +55,7 @@ async function main() {
         validationResults.forEach((value, key) => {
             const changeType = incrementToVersionChangeType(value.level);
             if (changeType !== undefined) {
-                bumpVersionCommand(context, key, changeType, false);
+                bumpVersionCommand(context, key, changeType, false, false);
                 console.log(`Version for ${key} has been updated. Create a pre-release and update dependencies to consume it.`);
             }
         })

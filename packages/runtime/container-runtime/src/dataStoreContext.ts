@@ -13,7 +13,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
     BindState,
     AttachState,
     ILoaderOptions,
@@ -67,7 +66,7 @@ import {
     TelemetryDataTag,
     ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
-import { CreateProcessingError } from "@fluidframework/container-utils";
+import { DataProcessingError } from "@fluidframework/container-utils";
 
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -107,10 +106,6 @@ export function createAttributesBlob(
 
 interface ISnapshotDetails {
     pkg: readonly string[];
-    /**
-     * This tells whether a data store is root. Root data stores are never collected.
-     * Non-root data stores may be collected if they are not used.
-     */
     isRootDataStore: boolean;
     snapshot?: ISnapshotTree;
 }
@@ -118,6 +113,36 @@ interface ISnapshotDetails {
 interface FluidDataStoreMessage {
     content: any;
     type: string;
+}
+
+/** Properties necessary for creating a FluidDataStoreContext */
+export interface IFluidDataStoreContextProps {
+    readonly id: string;
+    readonly runtime: ContainerRuntime;
+    readonly storage: IDocumentStorageService;
+    readonly scope: FluidObject;
+    readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
+    readonly writeGCDataAtRoot: boolean;
+    readonly disableIsolatedChannels: boolean;
+    readonly pkg?: Readonly<string[]>;
+}
+
+/** Properties necessary for creating a local FluidDataStoreContext */
+export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
+    readonly pkg: Readonly<string[]> | undefined;
+    readonly snapshotTree: ISnapshotTree | undefined;
+    readonly isRootDataStore: boolean | undefined;
+    readonly bindChannelFn: (channel: IFluidDataStoreChannel) => void;
+    /**
+     * @deprecated 0.16 Issue #1635, #3631
+     */
+    readonly createProps?: any;
+}
+
+/** Properties necessary for creating a remote FluidDataStoreContext */
+export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
+    readonly snapshotTree: ISnapshotTree | string | undefined;
+    readonly getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase | undefined>;
 }
 
 /**
@@ -182,12 +207,25 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.registry;
     }
 
+    /**
+     * A datastore is considered as root if it
+     * 1. is root in memory - see isInMemoryRoot
+     * 2. is root as part of the base snapshot that the datastore loaded from
+     * @returns whether a datastore is root
+     */
     public async isRoot(): Promise<boolean> {
-        return (await this.getInitialSnapshotDetails()).isRootDataStore;
+        return this.isInMemoryRoot() || (await this.getInitialSnapshotDetails()).isRootDataStore;
     }
 
-    protected get disableIsolatedChannels(): boolean {
-        return this._containerRuntime.disableIsolatedChannels;
+    /**
+     * There are 3 states where isInMemoryRoot needs to be true
+     * 1. when a datastore becomes aliased. This can happen for both remote and local datastores
+     * 2. when a datastore is created locally as root
+     * 3. when a datastore is created locally as root and is rehydrated
+     * @returns whether a datastore is root in memory
+     */
+    protected isInMemoryRoot(): boolean {
+        return this._isInMemoryRoot;
     }
 
     protected registry: IFluidDataStoreRegistry | undefined;
@@ -200,6 +238,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected channelDeferred: Deferred<IFluidDataStoreChannel> | undefined;
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
+    private _isInMemoryRoot: boolean = false;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
@@ -209,24 +248,34 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // if it realizes after GC is run.
     private lastUsedState: { usedRoutes: string[], gcTimestamp?: number } | undefined;
 
+    public readonly id: string;
+    private readonly _containerRuntime: ContainerRuntime;
+    public readonly storage: IDocumentStorageService;
+    public readonly scope: FluidObject;
+    private readonly writeGCDataAtRoot: boolean;
+    protected readonly disableIsolatedChannels: boolean;
+    protected pkg?: readonly string[];
+
     constructor(
-        private readonly _containerRuntime: ContainerRuntime,
-        public readonly id: string,
+        props: IFluidDataStoreContextProps,
         private readonly existing: boolean,
-        public readonly storage: IDocumentStorageService,
-        public readonly scope: FluidObject | FluidObject,
-        createSummarizerNode: CreateChildSummarizerNodeFn,
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
-        bindChannel: (channel: IFluidDataStoreChannel) => void,
-        private writeGCDataAtRoot: boolean,
-        protected pkg?: readonly string[],
+        bindChannelFn: (channel: IFluidDataStoreChannel) => void,
     ) {
         super();
 
+        this._containerRuntime = props.runtime;
+        this.id = props.id;
+        this.storage = props.storage;
+        this.scope = props.scope;
+        this.writeGCDataAtRoot = props.writeGCDataAtRoot;
+        this.disableIsolatedChannels = props.disableIsolatedChannels;
+        this.pkg = props.pkg;
+
         // URIs use slashes as delimiters. Handles use URIs.
         // Thus having slashes in types almost guarantees trouble down the road!
-        assert(id.indexOf("/") === -1, 0x13a /* `Data store ID contains slash: ${id}` */);
+        assert(this.id.indexOf("/") === -1, 0x13a /* `Data store ID contains slash: ${id}` */);
 
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && this.existing ?
             this.containerRuntime.attachState : AttachState.Detached;
@@ -235,14 +284,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             assert(this.bindState === BindState.NotBound, 0x13b /* "datastore context is already in bound state" */);
             this.bindState = BindState.Binding;
             assert(this.channel !== undefined, 0x13c /* "undefined channel on datastore context" */);
-            bindChannel(this.channel);
+            bindChannelFn(this.channel);
             this.bindState = BindState.Bound;
         };
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
 
-        this.summarizerNode = createSummarizerNode(
+        this.summarizerNode = props.createSummarizerNodeFn(
             thisSummarizeInternal,
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
             async () => this.getBaseGCDetails(),
@@ -276,7 +325,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
-                const errorWrapped = CreateProcessingError(error, "realizeFluidDataStoreContext");
+                const errorWrapped = DataProcessingError.wrapIfUnrecognized(error, "realizeFluidDataStoreContext");
                 errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData"} });
                 this.channelDeferred?.reject(errorWrapped);
                 this.logger.sendErrorEvent({ eventName: "RealizeError"}, errorWrapped);
@@ -415,8 +464,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
 
         // Add data store's attributes to the summary.
-        const { pkg, isRootDataStore } = await this.getInitialSnapshotDetails();
-        const attributes = createAttributes(pkg, isRootDataStore, this.disableIsolatedChannels);
+        const { pkg } = await this.getInitialSnapshotDetails();
+        const isRoot = await this.isRoot();
+        const attributes = createAttributes(pkg, isRoot, this.disableIsolatedChannels);
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC data to the summary if it's not written at the root.
@@ -577,11 +627,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
-    // @deprecated Warnings are being deprecated
-    public raiseContainerWarning(warning: ContainerWarning): void {
-        this.containerRuntime.raiseContainerWarning(warning);
-    }
-
     protected bindRuntime(channel: IFluidDataStoreChannel) {
         if (this.channel) {
             throw new Error("Runtime already bound");
@@ -647,7 +692,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * This method should not be used outside of the aliasing context.
      * It will be removed, as the source of truth for this flag will be the aliasing blob.
      */
-    public abstract setRoot(): void;
+    public setInMemoryRoot(): void {
+        this._isInMemoryRoot = true;
+    }
 
     /**
      * @deprecated - Renamed to getBaseGCDetails().
@@ -698,43 +745,28 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 }
 
-export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
-    private isRootDataStore: boolean | undefined;
+export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
+    private readonly initSnapshotValue: ISnapshotTree | string | undefined;
     private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
-    constructor(
-        id: string,
-        private readonly initSnapshotValue: ISnapshotTree | string | undefined,
-        getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase | undefined>,
-        runtime: ContainerRuntime,
-        storage: IDocumentStorageService,
-        scope: FluidObject,
-        createSummarizerNode: CreateChildSummarizerNodeFn,
-        writeGCDataAtRoot: boolean,
-        pkg?: string[],
-    ) {
+    constructor(props: IRemoteFluidDataStoreContextProps) {
         super(
-            runtime,
-            id,
-            true,
-            storage,
-            scope,
-            createSummarizerNode,
+            props,
+            true /* existing */,
             BindState.Bound,
-            false,
+            false /* isLocalDataStore */,
             () => {
                 throw new Error("Already attached");
             },
-            writeGCDataAtRoot,
-            pkg,
         );
 
+        this.initSnapshotValue = props.snapshotTree;
         this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
-            return (await getBaseGCDetails()) ?? {};
+            return (await props.getBaseGCDetails()) ?? {};
         });
     }
 
-    private readonly initialSnapshotDetailsP =  new LazyPromise<ISnapshotDetails>(async () => {
+    private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
         let tree: ISnapshotTree | undefined;
         let isRootDataStore = true;
 
@@ -779,7 +811,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
              * data stores in older documents are not garbage collected incorrectly. This may lead to additional
              * roots in the document but they won't break.
              */
-            isRootDataStore = this.isRootDataStore === true || (attributes.isRootDataStore ?? true);
+            isRootDataStore = attributes.isRootDataStore ?? true;
 
             if (hasIsolatedChannels(attributes)) {
                 tree = tree.trees[channelsTreeName];
@@ -791,8 +823,8 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         return {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             pkg: this.pkg!,
-            snapshot: tree,
             isRootDataStore,
+            snapshot: tree,
         };
     });
 
@@ -814,49 +846,32 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
     public generateAttachMessage(): IAttachMessage {
         throw new Error("Cannot attach remote store");
     }
-
-    /**
-     * @deprecated - Sets the datastore as root, for aliasing purposes: #7948
-     * This method should not be used outside of the aliasing context.
-     * It will be removed, as the source of truth for this flag will be the aliasing blob.
-     */
-    public setRoot(): void {
-        this.isRootDataStore = true;
-    }
 }
 
 /**
  * Base class for detached & attached context classes
  */
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
-    constructor(
-        id: string,
-        pkg: Readonly<string[]> | undefined,
-        runtime: ContainerRuntime,
-        storage: IDocumentStorageService,
-        scope: FluidObject,
-        createSummarizerNode: CreateChildSummarizerNodeFn,
-        bindChannel: (channel: IFluidDataStoreChannel) => void,
-        private readonly snapshotTree: ISnapshotTree | undefined,
-        protected isRootDataStore: boolean | undefined,
-        writeGCDataAtRoot: boolean,
-        /**
-         * @deprecated 0.16 Issue #1635, #3631
-         */
-        public readonly createProps?: any,
-    ) {
+    private readonly snapshotTree: ISnapshotTree | undefined;
+    /**
+     * @deprecated 0.16 Issue #1635, #3631
+     */
+    public readonly createProps?: any;
+
+    constructor(props: ILocalFluidDataStoreContextProps) {
         super(
-            runtime,
-            id,
-            snapshotTree !== undefined ? true : false,
-            storage,
-            scope,
-            createSummarizerNode,
-            snapshotTree ? BindState.Bound : BindState.NotBound,
-            true,
-            bindChannel,
-            writeGCDataAtRoot,
-            pkg);
+            props,
+            props.snapshotTree !== undefined ? true : false /* existing */,
+            props.snapshotTree ? BindState.Bound : BindState.NotBound,
+            true /* isLocalDataStore */,
+            props.bindChannelFn,
+        );
+
+        this.snapshotTree = props.snapshotTree;
+        if (props.isRootDataStore === true) {
+            this.setInMemoryRoot();
+        }
+        this.createProps = props.createProps;
         this.attachListeners();
     }
 
@@ -874,8 +889,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     public generateAttachMessage(): IAttachMessage {
         assert(this.channel !== undefined, 0x14f /* "There should be a channel when generating attach message" */);
         assert(this.pkg !== undefined, 0x150 /* "pkg should be available in local data store context" */);
-        assert(this.isRootDataStore !== undefined,
-            0x151 /* "isRootDataStore should be available in local data store context" */);
 
         const summarizeResult = this.channel.getAttachSummary();
 
@@ -887,7 +900,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         // Add data store's attributes to the summary.
         const attributes = createAttributes(
             this.pkg,
-            this.isRootDataStore,
+            this.isInMemoryRoot(),
             this.disableIsolatedChannels,
         );
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
@@ -907,6 +920,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         let snapshot = this.snapshotTree;
         let attributes: ReadFluidDataStoreAttributes;
+        let isRootDataStore = false;
         if (snapshot !== undefined) {
             // Get the dataStore attributes.
             // Note: storage can be undefined in special case while detached.
@@ -921,17 +935,18 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
                 // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
                 // stores in older documents are not garbage collected incorrectly. This may lead to additional
                 // roots in the document but they won't break.
-                this.isRootDataStore = this.isRootDataStore || (attributes.isRootDataStore ?? true);
+                if (attributes.isRootDataStore ?? true) {
+                    isRootDataStore = true;
+                    this.setInMemoryRoot();
+                }
             }
         }
         assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
-        assert(this.isRootDataStore !== undefined,
-            0x153 /* "isRootDataStore should be available in local data store" */);
 
         return {
             pkg: this.pkg,
+            isRootDataStore,
             snapshot,
-            isRootDataStore: this.isRootDataStore,
         };
     }
 
@@ -947,15 +962,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         // Local data store does not have initial summary.
         return {};
     }
-
-    /**
-     * @deprecated - Sets the datastore as root, for aliasing purposes: #7948
-     * This method should not be used outside of the aliasing context.
-     * It will be removed, as the source of truth for this flag will be the aliasing blob.
-     */
-    public setRoot(): void {
-        this.isRootDataStore = true;
-    }
 }
 
 /**
@@ -965,34 +971,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
  * Runtime is created using data store factory that is associated with this context.
  */
 export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
-    constructor(
-        id: string,
-        pkg: string[] | undefined,
-        runtime: ContainerRuntime,
-        storage: IDocumentStorageService,
-        scope: FluidObject & FluidObject,
-        createSummarizerNode: CreateChildSummarizerNodeFn,
-        bindChannel: (channel: IFluidDataStoreChannel) => void,
-        snapshotTree: ISnapshotTree | undefined,
-        isRootDataStore: boolean | undefined,
-        writeGCDataAtRoot: boolean,
-        /**
-         * @deprecated 0.16 Issue #1635, #3631
-         */
-        createProps?: any,
-    ) {
-        super(
-            id,
-            pkg,
-            runtime,
-            storage,
-            scope,
-            createSummarizerNode,
-            bindChannel,
-            snapshotTree,
-            isRootDataStore,
-            writeGCDataAtRoot,
-            createProps);
+    constructor(props: ILocalFluidDataStoreContextProps) {
+        super(props);
     }
 }
 
@@ -1006,29 +986,8 @@ export class LocalDetachedFluidDataStoreContext
     extends LocalFluidDataStoreContextBase
     implements IFluidDataStoreContextDetached
 {
-    constructor(
-        id: string,
-        pkg: Readonly<string[]>,
-        runtime: ContainerRuntime,
-        storage: IDocumentStorageService,
-        scope: FluidObject & FluidObject,
-        createSummarizerNode: CreateChildSummarizerNodeFn,
-        bindChannel: (channel: IFluidDataStoreChannel) => void,
-        isRootDataStore: boolean,
-        writeGCDataAtRoot: boolean,
-    ) {
-        super(
-            id,
-            pkg,
-            runtime,
-            storage,
-            scope,
-            createSummarizerNode,
-            bindChannel,
-            undefined,
-            isRootDataStore,
-            writeGCDataAtRoot,
-        );
+    constructor(props: ILocalFluidDataStoreContextProps) {
+        super(props);
         this.detachedRuntimeCreation = true;
     }
 
@@ -1052,7 +1011,7 @@ export class LocalDetachedFluidDataStoreContext
 
         super.bindRuntime(dataStoreRuntime);
 
-        if (this.isRootDataStore) {
+        if (await this.isRoot()) {
             dataStoreRuntime.bindToContext();
         }
     }

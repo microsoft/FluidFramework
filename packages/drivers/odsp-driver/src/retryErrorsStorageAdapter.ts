@@ -54,7 +54,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
         );
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return this.runWithRetry(
             async () => this.internalStorageService.getVersions(versionId, count),
             "storage_getVersions",
@@ -92,7 +92,8 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 
     private checkStorageDisposed() {
         if (this._disposed) {
-            throw new LoggingError("storageServiceDisposedCannotRetry", { canRetry: false });
+            // pre-0.58 error message: storageServiceDisposedCannotRetry
+            throw new LoggingError("Storage Service is disposed. Cannot retry", { canRetry: false });
         }
     }
 

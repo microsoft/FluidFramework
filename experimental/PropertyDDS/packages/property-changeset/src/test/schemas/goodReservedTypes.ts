@@ -18,13 +18,13 @@
         'inherits': 'NamedProperty',
         'properties': [{
                 'id': 'exampleProperty1',
-                'typeid': 'String'
+                'typeid': 'String',
             },
             {
                 'id': 'exampleProperty2',
-                'typeid': 'NodeProperty'
-            }
-        ]
+                'typeid': 'NodeProperty',
+            },
+        ],
     };
     module.exports = templateSchema;
 })();

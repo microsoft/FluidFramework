@@ -79,6 +79,7 @@ export class SummarizerClientElection
                         lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
                         electionSequenceNumber,
                         nextElectedClientId: this.clientElection.peekNextElectedClient()?.clientId,
+                        electionEnabled: this.electionEnabled,
                     });
                     this.lastReportedSeq = sequenceNumber;
                 }

@@ -17,7 +17,7 @@ describe("generatePairwiseOptions.examples",()=>{
             p3: [undefined, 0, 10, 100],
         });
 
-        for(const option  of options) {
+        for(const option of options) {
             myFunction(option.p1, option.p2, option.p3);
         }
     });

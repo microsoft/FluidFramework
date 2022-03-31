@@ -15,8 +15,8 @@
     var templateSchema = {
         'typeid': 'autodesk:GoodDraftAsVersion-draft',
         'properties': [
-            { 'id': 'int', 'typeid': 'Int32' }
-        ]
+            { 'id': 'int', 'typeid': 'Int32' },
+        ],
     };
     module.exports = templateSchema;
 })();

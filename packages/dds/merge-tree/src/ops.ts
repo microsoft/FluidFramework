@@ -14,13 +14,6 @@ export enum ReferenceType {
     Transient = 0x100,
 }
 
-export enum IntervalType {
-    Simple = 0x0,
-    Nest = 0x1,
-    SlideOnRemove = 0x2,
-    Transient = 0x4,
-}
-
 export interface IMarkerDef {
     refType?: ReferenceType;
 }

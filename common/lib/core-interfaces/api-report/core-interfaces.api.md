@@ -38,15 +38,6 @@ export interface IFluidCodeDetailsConfig {
     readonly [key: string]: string;
 }
 
-// @public @deprecated (undocumented)
-export const IFluidConfiguration: keyof IProvideFluidConfiguration;
-
-// @public @deprecated (undocumented)
-export interface IFluidConfiguration extends IProvideFluidConfiguration {
-    // @deprecated (undocumented)
-    scopes: string[];
-}
-
 // @public (undocumented)
 export const IFluidHandle: keyof IProvideFluidHandle;
 
@@ -84,8 +75,6 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 
 // @public @deprecated (undocumented)
 export interface IFluidObject {
-    // @deprecated (undocumented)
-    readonly IFluidConfiguration?: IFluidConfiguration;
     // @deprecated (undocumented)
     readonly IFluidHandle?: IFluidHandle;
     // @deprecated (undocumented)
@@ -152,12 +141,6 @@ export interface IFluidSerializer extends IProvideFluidSerializer {
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
-// @public @deprecated (undocumented)
-export interface IProvideFluidConfiguration {
-    // @deprecated (undocumented)
-    readonly IFluidConfiguration: IFluidConfiguration;
 }
 
 // @public (undocumented)

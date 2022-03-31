@@ -5,17 +5,17 @@
 
 import { PromiseCache } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+    IContainerPackageInfo,
+    IResolvedUrl,
+    IUrlResolver,
+} from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { NonRetryableError } from "@fluidframework/driver-utils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspResolvedUrl,
     IdentityType,
-    isTokenFromCache,
     OdspResourceTokenFetchOptions,
     TokenFetcher,
-    OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import {
     getLocatorFromOdspUrl,
@@ -72,7 +72,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         if (shareLinkFetcherProps) {
             this.shareLinkFetcherProps = {
                 ...shareLinkFetcherProps,
-                tokenFetcher: this.toInstrumentedTokenFetcher(this.logger, shareLinkFetcherProps.tokenFetcher),
+                tokenFetcher: shareLinkFetcherProps.tokenFetcher,
             };
         }
     }
@@ -152,27 +152,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         return url.href;
     }
 
-    private toInstrumentedTokenFetcher(
-        logger: ITelemetryLogger,
-        tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
-    ): TokenFetcher<OdspResourceTokenFetchOptions> {
-        return async (options: OdspResourceTokenFetchOptions) => {
-            return PerformanceEvent.timedExecAsync(
-                logger,
-                { eventName: "GetSharingLinkToken" },
-                async (event) => tokenFetcher(options).then((tokenResponse) => {
-                    if (tokenResponse === null) {
-                        throw new NonRetryableError(
-                            "shareLinkTokenIsNull",
-                            "Token callback returned null",
-                            OdspErrorType.fetchTokenError);
-                    }
-                    event.end({ fromCache: isTokenFromCache(tokenResponse) });
-                    return tokenResponse;
-                }));
-        };
-    }
-
     private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
         if (this.shareLinkFetcherProps === undefined) {
             throw new Error("Failed to get share link because share link fetcher props are missing");
@@ -212,17 +191,22 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         dataStorePath: string,
-        codeDetails?: IFluidCodeDetails,
+        packageInfoSource?: IContainerPackageInfo | IFluidCodeDetails,
     ): Promise<string> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
-
         const shareLinkUrl = new URL(shareLink);
 
-        const containerPackageName =
-            isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
-            odspResolvedUrl.codeHint?.containerPackageName;
+        // back-compat: IFluidCodeDetails usage to be removed in 0.58.0
+        let containerPackageName;
+        if (packageInfoSource && "name" in packageInfoSource) {
+            containerPackageName = packageInfoSource.name;
+        } else if (isFluidPackage(packageInfoSource?.package)) {
+            containerPackageName = packageInfoSource?.package.name;
+        } else {
+            containerPackageName = packageInfoSource?.package;
+        }
+        containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,

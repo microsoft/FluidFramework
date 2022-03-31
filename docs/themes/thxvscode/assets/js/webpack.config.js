@@ -1,13 +1,13 @@
 const path = require('path')
 const webpack = require('webpack')
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   mode: "production",
   optimization: {
-    minimizer: [
-      new UglifyJSPlugin()
-    ]
+    minimizer: [new TerserPlugin({
+      extractComments: false,
+    })],
   },
   target: 'web',
   entry: path.resolve('index.js'),

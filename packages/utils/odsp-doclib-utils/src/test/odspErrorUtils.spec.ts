@@ -11,6 +11,7 @@ import { createWriteError, GenericNetworkError } from "@fluidframework/driver-ut
 import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { createOdspNetworkError, enrichOdspError } from "../odspErrorUtils";
+import { pkgVersion } from "../packageVersion";
 
 describe("OdspErrorUtils", () => {
     function assertCustomPropertySupport(err: any) {
@@ -21,7 +22,7 @@ describe("OdspErrorUtils", () => {
 
     describe("createOdspNetworkError", () => {
         it("GenericNetworkError Test_1", () => {
-            const networkError = createOdspNetworkError("testErrorCode", "Test Message", 500);
+            const networkError = createOdspNetworkError("Test Message", 500);
             assert(networkError.errorType === DriverErrorType.genericNetworkError,
                 "Error should be a genericNetworkError");
             assertCustomPropertySupport(networkError);
@@ -30,7 +31,6 @@ describe("OdspErrorUtils", () => {
 
         it("GenericNetworkError Test_2", () => {
             const networkError = createOdspNetworkError(
-                "testErrorCode",
                 "Test Message",
                 400 /* statusCode */,
                 undefined /* retryAfterSeconds */);
@@ -41,7 +41,6 @@ describe("OdspErrorUtils", () => {
 
         it("GenericNetworkError Test", () => {
             const networkError = createOdspNetworkError(
-                "testErrorCode",
                 "Test Message",
                 500 /* statusCode */);
             assertCustomPropertySupport(networkError);
@@ -51,7 +50,6 @@ describe("OdspErrorUtils", () => {
 
         it("AuthorizationError Test 401", () => {
             const networkError = createOdspNetworkError(
-                "testErrorCode",
                 "Test Message",
                 401 /* statusCode */);
             assert(networkError.errorType === DriverErrorType.authorizationError,
@@ -61,7 +59,6 @@ describe("OdspErrorUtils", () => {
 
         it("AuthorizationError Test 403", () => {
             const networkError = createOdspNetworkError(
-                "testErrorCode",
                 "Test Message",
                 403 /* statusCode */);
             assert(networkError.errorType === DriverErrorType.authorizationError, "Error should be an authorizationError");
@@ -70,7 +67,6 @@ describe("OdspErrorUtils", () => {
 
         it("OutOfStorageError Test 507", () => {
             const networkError = createOdspNetworkError(
-                "testErrorCode",
                 "Test Message",
                 507 /* statusCode */);
             assert(networkError.errorType === OdspErrorType.outOfStorageError,
@@ -80,7 +76,6 @@ describe("OdspErrorUtils", () => {
 
         it("FileNotFoundOrAccessDeniedError Test", () => {
             const networkError = createOdspNetworkError(
-                "testErrorCode",
                 "Test Message",
                 404 /* statusCode */);
             assertCustomPropertySupport(networkError);
@@ -91,7 +86,6 @@ describe("OdspErrorUtils", () => {
 
         it("InvalidFileNameError Test 414", () => {
             const networkError = createOdspNetworkError(
-                "testErrorCode",
                 "Test Message",
                 414 /* statusCode */);
             assert(networkError.errorType === OdspErrorType.invalidFileNameError,
@@ -101,7 +95,6 @@ describe("OdspErrorUtils", () => {
 
         it("ThrottlingError 400 Test", () => {
             const networkError = createOdspNetworkError(
-                "testErrorCode",
                 "Test Message",
                 400 /* statusCode */,
                 100 /* retryAfterSeconds */);
@@ -112,7 +105,6 @@ describe("OdspErrorUtils", () => {
 
         it("ThrottlingError Test", () => {
             const networkError = createOdspNetworkError(
-                "testErrorCode",
                 "Test Message",
                 429,
                 100 /* retryAfterSeconds */) as IThrottlingWarning;
@@ -124,7 +116,7 @@ describe("OdspErrorUtils", () => {
 
     describe("enrichError", () => {
         it("enriched with online flag", () => {
-            const error = new GenericNetworkError("someErrorCode", "Some message", false) as GenericNetworkError & OdspError;
+            const error = new GenericNetworkError("Some message", false, { driverVersion: pkgVersion }) as GenericNetworkError & OdspError;
             enrichOdspError(error);
 
             assert(typeof error.online === "string");
@@ -134,7 +126,6 @@ describe("OdspErrorUtils", () => {
         it("enriched with facetCodes", () => {
             const responseText = '{ "error": { "message":"hello", "code": "foo", "innerError": { "code": "bar" } } }';
             const error = createOdspNetworkError(
-                "testErrorCode",
                 "Test Message",
                 400,
                 undefined,
@@ -157,7 +148,6 @@ describe("OdspErrorUtils", () => {
                 },
             };
             const error = createOdspNetworkError(
-                "testErrorCode",
                 "Test Message",
                 400,
                 undefined,
@@ -180,7 +170,7 @@ describe("OdspErrorUtils", () => {
     });
 
     it("WriteError Test", () => {
-        const writeError = createWriteError("Test Error");
+        const writeError = createWriteError("Test Error", { driverVersion: pkgVersion });
         assertCustomPropertySupport(writeError);
         assert(writeError.errorType === DriverErrorType.writeError, "Error should be a writeError");
         assert.equal(writeError.canRetry, false, "Error should be critical");

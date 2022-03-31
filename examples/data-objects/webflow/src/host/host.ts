@@ -3,28 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ICommand, KeyCode, Template, TagName } from "@fluid-example/flow-util-lib";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { htmlFormatter } from "../html/formatters";
-
+import { ICommand, KeyCode, TagName } from "../util";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 import { SearchMenuView } from "./searchmenu";
-
-const template = new Template(
-    {
-        tag: "div", props: { className: styles.host }, children: [
-            {
-                tag: "div", ref: "viewport", props: { type: "text", className: styles.viewport }, children: [
-                    { tag: "p", ref: "slot", props: { className: styles.slot } },
-                ],
-            },
-            { tag: "div", ref: "search", props: { type: "text", className: styles.search } },
-        ],
-    });
 
 export class WebflowView implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
@@ -32,6 +19,8 @@ export class WebflowView implements IFluidHTMLView {
     private searchMenu?: SearchMenuView;
     private previouslyFocused?: HTMLOrSVGElement;
     private root: Element;
+    private readonly slotElement = document.createElement("p");
+    private readonly searchElement = document.createElement("div");
 
     constructor(private readonly docP: Promise<FlowDocument>) { }
 
@@ -49,12 +38,22 @@ export class WebflowView implements IFluidHTMLView {
     }
 
     public render(elm: HTMLElement): void {
-        this.root = template.clone();
+        this.root = document.createElement("div");
+        this.root.classList.add(styles.host);
+
+        const viewportDiv = document.createElement("div");
+        viewportDiv.classList.add(styles.viewport);
+
+        this.slotElement.classList.add(styles.slot);
+        viewportDiv.append(this.slotElement);
+
+        this.searchElement.classList.add(styles.search);
+
+        this.root.append(viewportDiv, this.searchElement);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.docP.then((doc) => {
-            const slot = template.get(this.root, "slot") as HTMLElement;
-            let editor = new Editor(doc, slot, htmlFormatter);
+            let editor = new Editor(doc, this.slotElement, htmlFormatter);
 
             this.searchMenu = new SearchMenuView();
 
@@ -86,7 +85,7 @@ export class WebflowView implements IFluidHTMLView {
 
             const switchFormatter = (formatter: Readonly<RootFormatter<IFormatterState>>) => {
                 editor.remove();
-                editor = new Editor(doc, slot, formatter);
+                editor = new Editor(doc, this.slotElement, formatter);
             };
 
             const setStyle = (style: string) => {
@@ -94,12 +93,12 @@ export class WebflowView implements IFluidHTMLView {
                 doc.setCssStyle(start, end, style);
             };
 
-            this.searchMenu.attach(template.get(this.root, "search"), {
+            this.searchMenu.attach(this.searchElement, {
                 commands: [
                     { name: "blockquote", enabled: always, exec: () => { setFormat(TagName.blockquote); } },
                     { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    { name: "debug", enabled: always, exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); slot.toggleAttribute("data-debug"); } },
+                    { name: "debug", enabled: always, exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); this.slotElement.toggleAttribute("data-debug"); } },
                     { name: "h1", enabled: always, exec: () => { setFormat(TagName.h1); } },
                     { name: "h2", enabled: always, exec: () => { setFormat(TagName.h2); } },
                     { name: "h3", enabled: always, exec: () => { setFormat(TagName.h3); } },

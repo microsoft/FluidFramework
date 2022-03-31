@@ -4,74 +4,95 @@
 
 # ORDER MATTERS! The last matching pattern has the most precedence.
 
-# Public API reports. These are listed explicitly for clarity.
+# Files in the root
+/*.*                                                                      @microsoft/fluid-cr-core
+
+/.devcontainer/                                                           @microsoft/fluid-cr-infra
+/.github/                                                                 @microsoft/fluid-cr-infra
+/.github/ISSUE_TEMPLATE/                                                  @microsoft/fluid-cr-docs
+/.md-magic-templates/                                                     @microsoft/fluid-cr-docs
+/.vscode/                                                                 @microsoft/fluid-cr-infra
+
+/common/build/                                                            @microsoft/fluid-cr-infra
+/common/lib/                                                              @microsoft/fluid-cr-core
+/docs/                                                                    @microsoft/fluid-cr-docs
+
+/examples/                                                                @microsoft/fluid-cr-framework
+/experimental/                                                            @microsoft/fluid-cr-framework
+/experimental/PropertyDDS/                                                @evaliyev @karlbom @nedalhy @ruiterr
+/experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
+/packages/dds/                                                            @microsoft/fluid-cr-dds
+/packages/drivers/                                                        @microsoft/fluid-cr-drivers
+/packages/drivers/odsp*/                                                  @microsoft/fluid-cr-drivers @microsoft/fluid-cr-odsp
+/packages/framework/                                                      @microsoft/fluid-cr-framework
+/packages/loader/                                                         @microsoft/fluid-cr-loader
+/packages/runtime/                                                        @microsoft/fluid-cr-runtime
+/packages/test/                                                           @microsoft/fluid-cr-test
+/packages/tools/                                                          @microsoft/fluid-cr-tools
+/packages/utils/                                                          @microsoft/fluid-cr-infra
+/packages/utils/odsp-doclib-utils/                                        @microsoft/fluid-cr-odsp
+/packages/utils/telemetry-utils/                                          @microsoft/fluid-cr-telemetry
+/server/                                                                  @microsoft/fluid-cr-server
+/tools/                                                                   @microsoft/fluid-cr-infra
+
+# PUBLIC API REPORTS
+# All packages are assumed to have public APIs unless defined otherwise in the sections below.
+api-report/                                                               @microsoft/fluid-cr-api
+# These packages represent the primary public API of the framework.
 api-report/azure-client.api.md                                            @microsoft/fluid-cr-api
 api-report/azure-service-utils.api.md                                     @microsoft/fluid-cr-api
 api-report/test-client-utils.api.md                                       @microsoft/fluid-cr-api
 api-report/fluid-framework.api.md                                         @microsoft/fluid-cr-api
 api-report/tinylicious-client.api.md                                      @microsoft/fluid-cr-api
-# All packages are assumed to have public APIs unless excluded in the section below.
-api-report/                                                               @microsoft/fluid-cr-api
 
-# Internal API reports. The packages listed here are not considered part of the public API.
-/docs/PACKAGES.md                                                         @microsoft/fluid-cr-internal-api
-api-report/aqueduct.api.md                                                @microsoft/fluid-cr-internal-api
-api-report/cell.api.md                                                    @microsoft/fluid-cr-internal-api
-api-report/container-loader.api.md                                        @microsoft/fluid-cr-internal-api
-api-report/container-runtime-definitions.api.md                           @microsoft/fluid-cr-internal-api
-api-report/container-runtime.api.md                                       @microsoft/fluid-cr-internal-api
-api-report/container-utils.api.md                                         @microsoft/fluid-cr-internal-api
-api-report/counter.api.md                                                 @microsoft/fluid-cr-internal-api
-api-report/data-object-base.api.md                                        @microsoft/fluid-cr-internal-api
-api-report/datastore-definitions.api.md                                   @microsoft/fluid-cr-internal-api
-api-report/datastore.api.md                                               @microsoft/fluid-cr-internal-api
-api-report/dds-interceptions.api.md                                       @microsoft/fluid-cr-internal-api
-api-report/debugger.api.md                                                @microsoft/fluid-cr-internal-api
-api-report/driver-base.api.md                                             @microsoft/fluid-cr-internal-api
-api-report/driver-utils.api.md                                            @microsoft/fluid-cr-internal-api
-api-report/file-driver.api.md                                             @microsoft/fluid-cr-internal-api
-api-report/fluid-static.api.md                                            @microsoft/fluid-cr-internal-api
-api-report/garbage-collector.api.md                                       @microsoft/fluid-cr-internal-api
-api-report/iframe-driver.api.md                                           @microsoft/fluid-cr-internal-api
-api-report/ink.api.md                                                     @microsoft/fluid-cr-internal-api
-api-report/map.api.md                                                     @microsoft/fluid-cr-internal-api
-api-report/matrix.api.md                                                  @microsoft/fluid-cr-internal-api
-api-report/mocha-test-setup.api.md                                        @microsoft/fluid-cr-internal-api
-api-report/odsp-driver-definitions.api.md                                 @microsoft/fluid-cr-internal-api
-api-report/odsp-driver.api.md                                             @microsoft/fluid-cr-internal-api
-api-report/ordered-collection.api.md                                      @microsoft/fluid-cr-internal-api
-api-report/register-collection.api.md                                     @microsoft/fluid-cr-internal-api
-api-report/replay-driver.api.md                                           @microsoft/fluid-cr-internal-api
-api-report/request-handler.api.md                                         @microsoft/fluid-cr-internal-api
-api-report/routerlicious-driver.api.md                                    @microsoft/fluid-cr-internal-api
-api-report/runtime-definitions.api.md                                     @microsoft/fluid-cr-internal-api
-api-report/runtime-utils.api.md                                           @microsoft/fluid-cr-internal-api
-api-report/sequence.api.md                                                @microsoft/fluid-cr-internal-api
-api-report/shared-object-base.api.md                                      @microsoft/fluid-cr-internal-api
-api-report/shared-summary-block.api.md                                    @microsoft/fluid-cr-internal-api
-api-report/synthesize.api.md                                              @microsoft/fluid-cr-internal-api
-api-report/task-manager.api.md                                            @microsoft/fluid-cr-internal-api
-api-report/telemetry-utils.api.md                                         @microsoft/fluid-cr-internal-api
-api-report/test-driver-definitions.api.md                                 @microsoft/fluid-cr-internal-api
-api-report/test-drivers.api.md                                            @microsoft/fluid-cr-internal-api
-api-report/test-runtime-utils.api.md                                      @microsoft/fluid-cr-internal-api
-api-report/test-utils.api.md                                              @microsoft/fluid-cr-internal-api
-api-report/tool-utils.api.md                                              @microsoft/fluid-cr-internal-api
-api-report/undo-redo.api.md                                               @microsoft/fluid-cr-internal-api
-api-report/view-adapters.api.md                                           @microsoft/fluid-cr-internal-api
-api-report/view-interfaces.api.md                                         @microsoft/fluid-cr-internal-api
-api-report/web-code-loader.api.md                                         @microsoft/fluid-cr-internal-api
+# INTERNAL API REPORTS
+# The packages listed here are not considered part of the public API.
+api-report/aqueduct.api.md                                                @microsoft/fluid-cr-framework
+api-report/cell.api.md                                                    @microsoft/fluid-cr-dds
+api-report/container-loader.api.md                                        @microsoft/fluid-cr-loader
+api-report/container-runtime-definitions.api.md                           @microsoft/fluid-cr-runtime
+api-report/container-runtime.api.md                                       @microsoft/fluid-cr-runtime
+api-report/container-utils.api.md                                         @microsoft/fluid-cr-runtime
+api-report/counter.api.md                                                 @microsoft/fluid-cr-dds
+api-report/data-object-base.api.md                                        @microsoft/fluid-cr-framework
+api-report/datastore-definitions.api.md                                   @microsoft/fluid-cr-runtime
+api-report/datastore.api.md                                               @microsoft/fluid-cr-runtime
+api-report/dds-interceptions.api.md                                       @microsoft/fluid-cr-dds
+api-report/debugger.api.md                                                @microsoft/fluid-cr-tools
+api-report/driver-base.api.md                                             @microsoft/fluid-cr-drivers
+api-report/driver-utils.api.md                                            @microsoft/fluid-cr-drivers
+api-report/file-driver.api.md                                             @microsoft/fluid-cr-drivers
+api-report/fluid-static.api.md                                            @microsoft/fluid-cr-framework @microsoft/fluid-cr-api
+api-report/garbage-collector.api.md                                       @microsoft/fluid-cr-runtime
+api-report/iframe-driver.api.md                                           @microsoft/fluid-cr-drivers
+api-report/ink.api.md                                                     @microsoft/fluid-cr-dds
+api-report/map.api.md                                                     @microsoft/fluid-cr-dds
+api-report/matrix.api.md                                                  @microsoft/fluid-cr-dds
+api-report/mocha-test-setup.api.md                                        @microsoft/fluid-cr-test
+api-report/odsp-driver-definitions.api.md                                 @microsoft/fluid-cr-odsp
+api-report/odsp-driver.api.md                                             @microsoft/fluid-cr-odsp
+api-report/ordered-collection.api.md                                      @microsoft/fluid-cr-dds
+api-report/register-collection.api.md                                     @microsoft/fluid-cr-dds
+api-report/replay-driver.api.md                                           @microsoft/fluid-cr-drivers
+api-report/request-handler.api.md                                         @microsoft/fluid-cr-runtime
+api-report/routerlicious-driver.api.md                                    @microsoft/fluid-cr-server
+api-report/runtime-definitions.api.md                                     @microsoft/fluid-cr-runtime
+api-report/runtime-utils.api.md                                           @microsoft/fluid-cr-runtime
+api-report/sequence.api.md                                                @microsoft/fluid-cr-dds
+api-report/shared-object-base.api.md                                      @microsoft/fluid-cr-framework
+api-report/shared-summary-block.api.md                                    @microsoft/fluid-cr-runtime
+api-report/synthesize.api.md                                              @microsoft/fluid-cr-runtime
+api-report/task-manager.api.md                                            @microsoft/fluid-cr-dds
+api-report/telemetry-utils.api.md                                         @microsoft/fluid-cr-telemetry
+api-report/test-driver-definitions.api.md                                 @microsoft/fluid-cr-drivers
+api-report/test-drivers.api.md                                            @microsoft/fluid-cr-drivers
+api-report/test-runtime-utils.api.md                                      @microsoft/fluid-cr-runtime
+api-report/test-utils.api.md                                              @microsoft/fluid-cr-test
+api-report/tool-utils.api.md                                              @microsoft/fluid-cr-tools
+api-report/undo-redo.api.md                                               @microsoft/fluid-cr-framework
+api-report/view-adapters.api.md                                           @microsoft/fluid-cr-framework
+api-report/view-interfaces.api.md                                         @microsoft/fluid-cr-framework
+api-report/web-code-loader.api.md                                         @microsoft/fluid-cr-loader
 
-# Documentation folders
-/.github/ISSUE_TEMPLATE/                                                  @microsoft/fluid-cr-docs @tylerbutler
-/docs/                                                                    @microsoft/fluid-cr-docs @tylerbutler
-
-# Documentation files
-/.github/workflows/azure-static-web-apps-agreeable-hill-0eeff5b10.yml     @microsoft/fluid-cr-docs @tylerbutler
-/README.md                                                                @microsoft/fluid-cr-docs @tylerbutler
-/.markdownlint.json                                                       @microsoft/fluid-cr-docs @tylerbutler
-*api-extractor.json                                                       @microsoft/fluid-cr-docs @tylerbutler
-*md-magic.config.*                                                        @microsoft/fluid-cr-docs @tylerbutler
-
-# Shared ESLint config
-common/build/eslint-config-fluid/                                         @tylerbutler
+# No owners for package.json files to avoid review spam when mono-repo dependencies are updated
+package.json @msfluid-bot

@@ -17,7 +17,7 @@ import { getHashedDocumentId } from "../odspPublicUtils";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
 import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache(2000);
+const createUtLocalCache = () => new LocalPersistentCache();
 
 describe("Tests for Epoch Tracker", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -42,6 +42,10 @@ describe("Tests for Epoch Tracker", () => {
                 resolvedUrl,
             },
             new TelemetryNullLogger());
+    });
+
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
     });
 
     it("Cache, old versions", async () => {
@@ -173,7 +177,7 @@ describe("Tests for Epoch Tracker", () => {
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 {},
                 { "x-fluid-epoch": "epoch1" });
-        assert(response.commonSpoHeaders["X-RequestStats"] !== undefined, "CorrelationId should be present");
+        assert(response.propsToLog.XRequestStatsHeader !== undefined, "CorrelationId should be present");
     });
 
     it("Epoch error should not occur if response does not contain epoch", async () => {

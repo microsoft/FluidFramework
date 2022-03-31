@@ -164,8 +164,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
             if (containersToApply.length === 0) { break; }
 
             // Ignore readonly dirty containers, because it can't sent up and nothing can be done about it being dirty
-            const dirtyContainers =
-                containersToApply.filter((c) => c.deltaManager.readOnlyInfo.readonly !== true && c.isDirty);
+            const dirtyContainers = containersToApply.filter((c) => {
+                const { deltaManager, isDirty } = c;
+                return deltaManager.readOnlyInfo.readonly !== true && isDirty;
+            });
             if (dirtyContainers.length === 0) {
                 // Wait for all the leave messages
                 const pendingClients = this.getPendingClients(containersToApply);
@@ -484,7 +486,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
                     // But already parsed when apply ("op" event)
                     let contents = typeof msgContents === "string" ?
                         JSON.parse(msgContents) : msgContents;
-                    // eslint-disable-next-line no-null/no-null
                     while (contents !== undefined && contents !== null) {
                         if (contents.contents?.address !== undefined) {
                             address += `/${contents.contents.address}`;

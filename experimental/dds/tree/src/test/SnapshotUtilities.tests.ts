@@ -133,12 +133,10 @@ describe('SnapshotUtilities', () => {
 		it('compares mixed types', () => {
 			check({ 0: 1 }, [1], allUnequal);
 			// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
-			/* eslint-disable no-null/no-null */
 			check(null, 'null', allUnequal);
 			check(null, 'null', allUnequal);
 			check(1, '1', allUnequal);
 			check(null, 0, allUnequal);
-			/* eslint-enable no-null/no-null */
 			check('', 0, allUnequal);
 		});
 
@@ -194,7 +192,6 @@ describe('SnapshotUtilities', () => {
 		it.skip('strange cases', () => {
 			// Top level undefined fails in JSON.parse.
 			// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface.)
-			// eslint-disable-next-line no-null/no-null
 			check(undefined, null, sameAfter);
 		});
 	});

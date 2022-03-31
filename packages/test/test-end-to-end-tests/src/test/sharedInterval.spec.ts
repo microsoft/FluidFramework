@@ -7,11 +7,12 @@ import { strict as assert } from "assert";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
+import { LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     IntervalCollection,
+    IntervalType,
     ISerializedInterval,
     SequenceInterval,
     SharedString,
@@ -616,17 +617,13 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                     deltaArgs2 = propertyDeltas;
                 });
                 intervals1.changeProperties(id1, { prop1: "prop1" });
-                // eslint-disable-next-line no-null/no-null
                 assertPropertyChangedArg(deltaArgs1.prop1, null, "Mismatch in property-changed event arg 1");
                 await provider.opProcessingController.processOutgoing();
                 intervals2.changeProperties(id1, { prop2: "prop2" });
-                // eslint-disable-next-line no-null/no-null
                 assertPropertyChangedArg(deltaArgs2.prop2, null, "Mismatch in property-changed event arg 2");
 
                 await provider.ensureSynchronized();
-                // eslint-disable-next-line no-null/no-null
                 assertPropertyChangedArg(deltaArgs1.prop2, null, "Mismatch in property-changed event arg 3");
-                // eslint-disable-next-line no-null/no-null
                 assertPropertyChangedArg(deltaArgs2.prop1, null, "Mismatch in property-changed event arg 4");
 
                 interval1 = intervals1.getIntervalById(id1);
@@ -655,7 +652,6 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 intervals1.changeProperties(id1, { prop1: "maybe" });
                 assertPropertyChangedArg(deltaArgs1.prop1, "yes", "Mismatch in property-changed event arg 9");
                 await provider.opProcessingController.processOutgoing();
-                // eslint-disable-next-line no-null/no-null
                 intervals2.changeProperties(id1, { prop1: null });
                 assertPropertyChangedArg(deltaArgs2.prop1, "yes", "Mismatch in property-changed event arg 10");
 

@@ -14,13 +14,14 @@ function setNavigator(navigator: Partial<Navigator & {deviceMemory?: number}> | 
     global.navigator = navigator as Navigator;
 }
 
-describe("Hardware Stats",  () => {
+describe("Hardware Stats", () => {
     let mockLogger = new MockLogger();
     let mockContext: Partial<IContainerContext> = {
         deltaManager: new MockDeltaManager(),
         quorum: new MockQuorum(),
-        logger: mockLogger,
+        taggedLogger: mockLogger,
         clientDetails: { capabilities: { interactive: true } },
+        updateDirtyContainerState: (dirty: boolean) => {},
     };
 
     const getDeviceSpecEvents = (): ITelemetryBaseEvent[] =>
@@ -42,8 +43,9 @@ describe("Hardware Stats",  () => {
         mockContext = {
             deltaManager: new MockDeltaManager(),
             quorum: new MockQuorum(),
-            logger: mockLogger,
+            taggedLogger: mockLogger,
             clientDetails: { capabilities: { interactive: true } },
+            updateDirtyContainerState: (dirty: boolean) => {},
         };
     });
 

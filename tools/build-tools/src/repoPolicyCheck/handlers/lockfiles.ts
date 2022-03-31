@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import shell from "shelljs";
 import {
     Handler,
     readFile
@@ -23,7 +22,8 @@ export const handlers: Handler[] = [
             if (matches !== null) {
                 const results: string[] = [];
                 const containsBadUrl = matches.some((value) => {
-                    if (value.startsWith(`https://registry.npmjs.org`)) {
+                    const url = new URL(value);
+                    if (url.protocol === `https:` && url.hostname === `registry.npmjs.org`) {
                         return false;
                     }
                     results.push(value)
@@ -35,13 +35,6 @@ export const handlers: Handler[] = [
             }
             return;
         },
-        resolver: file => {
-            const command = `package-lock-sanitizer -l ${file}`;
-            if (shell.exec(command).code !== 0) {
-                return { resolved: false, message: "Error: package-lock sanitize" };
-            }
-            return { resolved: true };
-        }
     },
     {
         name: "package-lockfiles-npm-version",

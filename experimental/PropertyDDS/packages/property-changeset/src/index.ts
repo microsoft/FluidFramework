@@ -24,5 +24,5 @@ export {
     rebaseToRemoteChanges,
     SerializedChangeSet,
     TraversalContext,
-    ExtractedContext
+    ExtractedContext,
 };

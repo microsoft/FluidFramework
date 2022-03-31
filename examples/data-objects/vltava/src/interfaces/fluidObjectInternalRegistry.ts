@@ -4,6 +4,7 @@
  */
 
 import { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 
@@ -21,6 +22,8 @@ export interface IProvideFluidObjectInternalRegistry<T=DefaultRegistryTypes> {
 export interface IFluidObjectInternalRegistry<T=DefaultRegistryTypes> extends IProvideFluidObjectInternalRegistry<T> {
     getFromCapability(type: FluidObjectKeys<T>): IInternalRegistryEntry<T>[];
     hasCapability(type: string, capability: FluidObjectKeys<T>): boolean;
+    getByFactory(factoryId: string): IInternalRegistryEntry | undefined;
+    getAll(): IInternalRegistryEntry<T>[];
 }
 
 /**
@@ -31,4 +34,5 @@ export interface IInternalRegistryEntry<T=DefaultRegistryTypes> {
     capabilities: FluidObjectKeys<T>[];
     friendlyName: string;
     fabricIconName: string;
+    getView: (serializableObject: Serializable) => Promise<JSX.Element>;
 }

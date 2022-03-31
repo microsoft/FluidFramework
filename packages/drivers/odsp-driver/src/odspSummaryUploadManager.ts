@@ -46,7 +46,9 @@ export class OdspSummaryUploadManager {
     public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
         // If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
         // then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
-        if (context.proposalHandle !== this.lastSummaryProposalHandle) {
+        // Don't bother logging if lastSummaryProposalHandle hasn't been set before; only log on a positive mismatch.
+        if (this.lastSummaryProposalHandle !== undefined &&
+            this.lastSummaryProposalHandle !== context.proposalHandle) {
             this.mc.logger.sendTelemetryEvent({
                 eventName: "LastSummaryProposedHandleMismatch",
                 ackedSummaryProposedHandle: context.proposalHandle,
@@ -106,6 +108,7 @@ export class OdspSummaryUploadManager {
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                     blobs,
                     size: postBody.length,
+                    referenceSequenceNumber,
                 },
                 async () => {
                     const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(

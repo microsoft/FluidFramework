@@ -103,6 +103,7 @@ declare function get_current_InterfaceDeclaration_DriverPreCheckInfo():
 declare function use_old_InterfaceDeclaration_DriverPreCheckInfo(
     use: old.DriverPreCheckInfo);
 use_old_InterfaceDeclaration_DriverPreCheckInfo(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_DriverPreCheckInfo());
 
 /*
@@ -346,6 +347,7 @@ declare function get_current_InterfaceDeclaration_IDocumentStorageService():
 declare function use_old_InterfaceDeclaration_IDocumentStorageService(
     use: old.IDocumentStorageService);
 use_old_InterfaceDeclaration_IDocumentStorageService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentStorageService());
 
 /*

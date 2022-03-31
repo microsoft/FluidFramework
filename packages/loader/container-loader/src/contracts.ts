@@ -10,6 +10,7 @@ import {
     IDeltaQueue,
     ReadOnlyInfo,
     IConnectionDetails,
+    ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import {
     ConnectionMode,
@@ -96,7 +97,7 @@ export interface IConnectionManager {
     /**
      * Disposed connection manager
      */
-    dispose(error: any): void;
+    dispose(error?: ICriticalContainerError): void;
 }
 
 /**

@@ -13,6 +13,7 @@ import {
     ISnapshotOptions,
     OdspResourceTokenFetchOptions,
     TokenFetcher,
+    IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
@@ -52,9 +53,14 @@ export async function prefetchLatestSnapshot(
     const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
+    const resolvedUrlData: IOdspUrlParts = {
+        siteUrl: odspResolvedUrl.siteUrl,
+        driveId: odspResolvedUrl.driveId,
+        itemId: odspResolvedUrl.itemId,
+    };
     const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
         odspLogger,
-        odspResolvedUrl,
+        resolvedUrlData,
         getStorageToken,
         true /* throwOnNullToken */,
     );

@@ -5,23 +5,23 @@
 /**
  * @fileoverview Definition of the array property class
  */
-const _ = require('lodash');
-const { BaseProperty } = require('./baseProperty');
-const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
-const { deserializeNonPrimitiveArrayElements } = require('../containerSerializer');
 const {
     ArrayChangeSetIterator,
     ChangeSet,
     PathHelper,
-    TypeIdHelper
+    TypeIdHelper,
 } = require('@fluid-experimental/property-changeset');
 const { MSG } = require('@fluid-experimental/property-common').constants;
-const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 const { UniversalDataArray, ConsoleUtils } = require('@fluid-experimental/property-common');
 const fastestJSONCopy = require('fastest-json-copy');
-const deepCopy = fastestJSONCopy.copy;
+const _ = require('lodash');
+const { deserializeNonPrimitiveArrayElements } = require('../containerSerializer');
 const { validationsEnabled } = require('../enableValidations');
+const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
+const { BaseProperty } = require('./baseProperty');
+const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 
+const deepCopy = fastestJSONCopy.copy;
 
 var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
 
@@ -35,25 +35,24 @@ var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
 var DIRTY_AND_PENDING_CHILD_CHANGES = {
     pending: undefined,
     dirty: undefined,
-    flags: MODIFIED_STATE_FLAGS.PENDING_CHANGE | MODIFIED_STATE_FLAGS.DIRTY
+    flags: MODIFIED_STATE_FLAGS.PENDING_CHANGE | MODIFIED_STATE_FLAGS.DIRTY,
 };
 var PENDING_CHILD_CHANGES = {
     pending: undefined,
     dirty: undefined,
-    flags: MODIFIED_STATE_FLAGS.PENDING_CHANGE
+    flags: MODIFIED_STATE_FLAGS.PENDING_CHANGE,
 };
 var DIRTY_CHILD_CHANGES = {
     pending: undefined,
     dirty: undefined,
-    flags: MODIFIED_STATE_FLAGS.DIRTY
+    flags: MODIFIED_STATE_FLAGS.DIRTY,
 };
 var DIRTY_STATE_FLAGS_ARRAY = [
     undefined,
     PENDING_CHILD_CHANGES,
     DIRTY_CHILD_CHANGES,
-    DIRTY_AND_PENDING_CHILD_CHANGES
+    DIRTY_AND_PENDING_CHILD_CHANGES,
 ];
-
 
 var PATH_TOKENS = BaseProperty.PATH_TOKENS;
 
@@ -71,7 +70,7 @@ var PATH_TOKENS = BaseProperty.PATH_TOKENS;
  * @return {Array.<Number>} List of the selected segments, given as indices of the segments
  * @private
  */
-var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_segmentLengths) {
+var _getLongestIncreasingSubsequenceSegments = function(in_segmentStarts, in_segmentLengths) {
     if (in_segmentStarts.length === 0) {
         return [];
     }
@@ -97,7 +96,7 @@ var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_se
             sequenceLength: in_segmentLengths[i] + (lastEntry ? lastEntry.sequenceLength : 0),
             segmentIndex: i,
             sequenceLastEntry: currentSegmentStart + in_segmentLengths[i] - 1,
-            previousEntry: lastEntry
+            previousEntry: lastEntry,
         };
 
         // Search for the insertion position for this entry
@@ -141,7 +140,6 @@ var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_se
 };
 
 export class ArrayProperty extends AbstractStaticCollectionProperty {
-
     /**
      * Default constructor for ArrayProperty
      * @param {Object} [in_params] - the parameters
@@ -162,7 +160,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         }
 
         this._dataArrayCreate(length);
-    };
+    }
 
     /**
      * Returns the path segment for a child
@@ -173,14 +171,13 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @protected
      */
     _getPathSegmentForChildNode(in_childNode) {
-
         var index = this._dataArrayGetBuffer().indexOf(in_childNode);
         if (index === -1) {
             throw new Error(MSG.GET_PATH_SEGMENT_CALLED_FOR_NON_ENTRY);
         }
 
         return '[' + index + ']';
-    };
+    }
 
     /**
      * Resolves a direct child node based on the given path segment
@@ -210,7 +207,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         } else {
             return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
         }
-    };
+    }
 
     /**
      * Insert into the array at a given position.
@@ -224,7 +221,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     insert(in_position, in_value) {
         this.insertRange(in_position, [in_value]);
-    };
+    }
 
     /**
      * Is this property a leaf node with regard to flattening?
@@ -235,7 +232,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _isFlattenLeaf() {
         return true;
-    };
+    }
 
     /**
      * Add one or more values at the end of the array
@@ -252,7 +249,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             this.insertRange(this._dataArrayGetLength(), [in_values]);
         }
         return this._dataArrayGetLength();
-    };
+    }
 
     /**
      * Add elements to the end of the queue (array)
@@ -278,7 +275,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             this.insertRange(0, [in_values]);
         }
         return this._dataArrayGetLength();
-    };
+    }
 
     /**
      * Removes an element of the array (or a letter in a StringProperty) and shifts remaining elements to the left
@@ -294,7 +291,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         var value = this.get(in_position);
         this.removeRange(in_position, 1);
         return value;
-    };
+    }
 
     /**
      * Removes the last element of the array or the last letter of a string (for StringProperty)
@@ -310,7 +307,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         } else {
             return undefined;
         }
-    };
+    }
 
     /**
      * Removes an element from the front of the array or a letter from the beginning of a string (for StringProperty)
@@ -324,7 +321,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         } else {
             return undefined;
         }
-    };
+    }
 
     /**
      * Removes elements from the front of the queue (array)
@@ -346,7 +343,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             throw new Error(MSG.ARRAY_SET_ONE_ELEMENT + in_value);
         }
         this.setRange(in_position, [in_value]);
-    };
+    }
 
     /**
      * Sets the values of items in the array.
@@ -384,7 +381,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         } else {
             this._setValuesInternal(in_values);
         }
-    };
+    }
 
     /**
      * @param {Array<*>|Object} in_values an array or object containing the values to be set.
@@ -397,7 +394,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             if (_.isArray(in_values)) {
                 this.clear();
                 this.insertRange(0, in_values);
-            } else AbstractStaticCollectionProperty.prototype.setValues.call(this, in_values);
+            } else {
+                AbstractStaticCollectionProperty.prototype.setValues.call(this, in_values);
+            }
         } else {
             if (_.isArray(in_values) && in_values.length < this._dataArrayGetLength()) {
                 this.removeRange(in_values.length, this._dataArrayGetLength() - in_values.length);
@@ -405,7 +404,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
             var that = this;
             var maxIndex = this._dataArrayGetLength() - 1;
-            _.each(in_values, function (value, index) {
+            _.each(in_values, function(value, index) {
                 if (index > maxIndex) {
                     that.insert(index, value);
                 } else {
@@ -415,7 +414,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                 }
             });
         }
-    };
+    }
 
     /**
      * Sets the values of items in the array.
@@ -436,7 +435,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         } else {
             ArrayProperty.prototype._setValues.call(this, in_values, false, false);
         }
-    };
+    }
 
     /**
      * Deletes all values from an array
@@ -445,7 +444,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         if (this.getLength()) {
             this.removeRange(0, this.getLength());
         }
-    };
+    }
 
     /**
      * @return {Array<*> | String} all values in the ArrayProperty
@@ -455,7 +454,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     getEntriesReadOnly() {
         return this._dataArrayGetBuffer();
-    };
+    }
 
     /**
      * Private helper function to update the internal dirty and pending changes
@@ -469,13 +468,12 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         ChangeSet.prototype._performApplyAfterOnPropertyArray(pendingChanges,
             in_changeSet, this.getFullTypeid(true));
 
-
         var dirtyChanges = this._getDirtyChanges();
         ChangeSet.prototype._performApplyAfterOnPropertyArray(dirtyChanges,
             in_changeSet, this.getFullTypeid(true));
 
         this._setChanges(pendingChanges, dirtyChanges);
-    };
+    }
 
     /**
      * Returns the pending changeset for this object
@@ -483,7 +481,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _getPendingChanges() {
         return (this._dirty && this._dirty.pending) || {};
-    };
+    }
 
     /**
      * Returns the dirty changeset for this object
@@ -491,7 +489,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _getDirtyChanges() {
         return (this._dirty && this._dirty.dirty) || {};
-    };
+    }
 
     /**
      * Sets the pending and dirty changesets
@@ -532,7 +530,6 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         if (this._dirty) {
             if (this._dirty.dirty === undefined &&
                 this._dirty.pending === undefined) {
-
                 if (oldFlags === 0) {
                     this._dirty = undefined;
                 } else {
@@ -544,7 +541,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         } else if (oldFlags) {
             this._dirty = DIRTY_STATE_FLAGS_ARRAY[oldFlags];
         }
-    };
+    }
 
     /**
      * Sets the dirty flags for this property
@@ -563,11 +560,10 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             } else {
                 this._dirty = DIRTY_STATE_FLAGS_ARRAY[in_flags];
             }
-
         } else {
             this._dirty = DIRTY_STATE_FLAGS_ARRAY[in_flags];
         }
-    };
+    }
 
     /**
      * Gets the dirty flags for this property
@@ -579,7 +575,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         }
 
         return this._dirty.flags;
-    };
+    }
 
     /**
      * Inserts the content of a given array into the array property
@@ -598,17 +594,17 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'ArrayProperty.insertRange');
         }
 
-	    if (validationsEnabled.enabled) {
-	        for (var i = 0; i < in_array.length; i++) {
-	            if (in_array[i] instanceof BaseProperty) {
-	                in_array[i]._validateInsertIn(this)
-	            }
-	        }
-	        this._checkIsNotReadOnly(true);
-	    }
+        if (validationsEnabled.enabled) {
+            for (var i = 0; i < in_array.length; i++) {
+                if (in_array[i] instanceof BaseProperty) {
+                    in_array[i]._validateInsertIn(this);
+                }
+            }
+            this._checkIsNotReadOnly(true);
+        }
         this._insertRangeWithoutDirtying(in_offset, in_array);
         this._setDirty();
-    };
+    }
 
     /**
      * inserts the content of a given array, but doesn't dirty the property
@@ -620,7 +616,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @private
      */
     _insertRangeWithoutDirtying(in_offset, in_array, in_setParents) {
-        if (in_setParents === undefined) in_setParents = true;
+        if (in_setParents === undefined) {
+            in_setParents = true;
+        }
         if (in_offset < 0 || in_offset > this.length || !_.isNumber(in_offset)) {
             throw Error(MSG.START_OFFSET_INVALID + in_offset);
         }
@@ -646,10 +644,10 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
         // Insert entry into changesets
         var changeSet = {
-            'insert': [[in_offset, this._serializeArray(in_array)]]
+            'insert': [[in_offset, this._serializeArray(in_array)]],
         };
         this._updateChanges(changeSet);
-    };
+    }
 
     /**
      * Removes a given number of elements from the array property (or given number of letters from a StringProperty)
@@ -679,7 +677,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         this._removeRangeWithoutDirtying(in_offset, in_deleteCount);
         this._setDirty();
         return result;
-    };
+    }
 
     /**
      * removes a given number of elements from the array property, and ensures, if this is not
@@ -700,7 +698,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         }
 
         this._dataArrayRemoveRange(in_offset, in_deleteCount);
-    };
+    }
 
     /**
      * removes a given number of elements from the array property, but doesn't dirty the property
@@ -714,10 +712,10 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
         // Insert entry into changesets
         var changeSet = {
-            'remove': [[in_offset, in_deleteCount]]
+            'remove': [[in_offset, in_deleteCount]],
         };
         this._updateChanges(changeSet);
-    };
+    }
 
     /**
      * Sets the array properties elements to the content of the given array
@@ -742,7 +740,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         this._checkIsNotReadOnly(true);
         this._setRangeWithoutDirtying(in_offset, in_array);
         this._setDirty();
-    };
+    }
 
     /**
      * sets the array properties elements to the content of the given array
@@ -753,7 +751,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _setRangeWithoutDirtying(in_offset, in_array) {
         this._modifyRangeWithoutDirtying(in_offset, in_array);
-    };
+    }
 
     /**
      * sets the array properties elements to the content of the given array
@@ -795,8 +793,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             changeSet['modify'] = changeArray;
             this._updateChanges(changeSet);
         }
-    };
-
+    }
 
     /**
      * Returns the name of all the sub-properties of this property.
@@ -807,7 +804,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     getIds() {
         return Object.keys(this._dataArrayGetBuffer());
-    };
+    }
 
     /**
      * Checks whether a property or data exists at the given position.
@@ -817,7 +814,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     has(in_position) {
         return this._dataArrayGetBuffer()[in_position] !== undefined;
-    };
+    }
 
     /**
      * Gets the array element at a given index
@@ -890,7 +887,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             }
             return result;
         }
-    };
+    }
 
     /**
      * Returns an object with all the nested values contained in this property
@@ -918,14 +915,14 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             result.push(child.getValues());
         }
         return result;
-    };
+    }
 
     /**
      * @return {Number} the current length of the array
      */
     getLength() {
         return this._dataArrayGetLength();
-    };
+    }
 
     /**
      * @inheritdoc
@@ -1015,7 +1012,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         // Finally mark the property as dirty (we postponed this in the previous operations to prevent multiple triggering
         // of dirtying events)
         this._setDirty(in_reportToView);
-    };
+    }
 
     /**
      * @inheritdoc
@@ -1027,7 +1024,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         // Finally mark the property as dirty (we postponed this in the previous operations to prevent multiple triggering
         // of dirtying events)
         this._setDirty(false);
-    };
+    }
 
     /**
      * Removes the dirtiness flag from this property
@@ -1053,8 +1050,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         }
 
         this._setChanges(pendingChanges, dirtyChanges);
-    };
-
+    }
 
     /**
      * Removes the dirtiness flag from this property and recursively from all of its children
@@ -1070,8 +1066,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         }
         // after all paths are clean, we are also clean!
         this._cleanDirty(in_dirtinessType);
-    };
-
+    }
 
     /**
      * Internal helper function that implements the deserialize algorithm for an array of named properties.
@@ -1194,7 +1189,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                 let elementsToInsert = targetArray.slice(lastPositionInTargetArray, startPointInTargetArray);
                 changes.insert.push([
                     lastPositionInInitialArray,
-                    deepCopy(elementsToInsert)
+                    deepCopy(elementsToInsert),
                 ]);
                 var scope = this._getScope();
                 var insertedProperties = deserializeNonPrimitiveArrayElements(elementsToInsert, scope);
@@ -1237,7 +1232,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             this._setDirty(in_reportToView);
         }
         return changes;
-    };
+    }
 
     /**
      * Function to deserialize special primitive types.
@@ -1249,7 +1244,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _deserializeValue(in_serializedObj) {
         return in_serializedObj;
-    };
+    }
 
     /**
      * Function to serialize special primitive types.
@@ -1262,7 +1257,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     _serializeValue(in_obj) {
         // we have to convert the propertySet objects to changesets
         return in_obj._serialize(false, true);
-    };
+    }
 
     /**
      * Function to serialize arrays of special primitive types.
@@ -1285,7 +1280,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         }
     }
         return result;
-    };
+    }
 
     /**
      * Function to deserialize arrays of special primitive types.
@@ -1297,8 +1292,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _deserializeArray(in_serializedObj) {
         return in_serializedObj;
-    };
-
+    }
 
     /**
      * @inheritdoc
@@ -1320,13 +1314,12 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
         if (!in_serializedObj.insert ||
             !in_serializedObj.insert[0]) {
-
             // we've got an empty object, so we have to wipe everything we've got
             if (arrayLength > 0) {
                 this._clearRange(0, arrayLength);
                 this._setDirty(in_reportToView);
                 var removeChangeSet = {
-                    remove: [[0, arrayLength]]
+                    remove: [[0, arrayLength]],
                 };
                 this._updateChanges(removeChangeSet);
                 return removeChangeSet;
@@ -1345,7 +1338,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
             // The changes we will report as result of this function
             var simpleChanges = {
-                insert: in_createChangeSet ? deepCopy(in_serializedObj.insert) : in_serializedObj.insert
+                insert: in_createChangeSet ? deepCopy(in_serializedObj.insert) : in_serializedObj.insert,
             };
             if (arrayLength > 0) {
                 simpleChanges.remove = [[0, arrayLength]];
@@ -1402,7 +1395,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
             return simpleChanges;
         }
-    };
+    }
 
     _getChangesetForCustomTypeArray(in_basePropertyChangeset,
         in_dirtinessType,
@@ -1417,7 +1410,6 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         var currentArraySize = this._dataArrayGetLength();
         var op, opStartIndex;
         while (!iterator.atEnd() || currentArrayIndex < currentArraySize) {
-
             if (!iterator.atEnd()) {
                 op = iterator.opDescription;
                 opStartIndex = op.operation[0] + op.offset;
@@ -1427,13 +1419,11 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                 opStartIndex = Number.MAX_VALUE;
             }
 
-
             if (currentArrayIndex < opStartIndex) {
                 // not in the influence of an insert or remove
 
                 // we have to check if the element was modified (since that is not tracked)
                 if (this._dataArrayGetValue(currentArrayIndex)._isDirty(in_dirtinessType)) {
-
                     // check if we can combine modifies:
                     var lastModify = undefined;
                     if (result.modify && result.modify.length > 0) {
@@ -1449,7 +1439,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                         lastModify[1].push(this._dataArrayGetValue(currentArrayIndex).serialize(
                             {
                                 'dirtyOnly': true, 'includeRootTypeid': true, 'dirtinessType': in_dirtinessType,
-                                'includeReferencedRepositories': in_includeReferencedRepositories
+                                'includeReferencedRepositories': in_includeReferencedRepositories,
                             }));
                     } else {
                         // begin new modify
@@ -1460,7 +1450,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                         [this._dataArrayGetValue(currentArrayIndex).serialize(
                             {
                                 'dirtyOnly': true, 'includeRootTypeid': true, 'dirtinessType': in_dirtinessType,
-                                'includeReferencedRepositories': in_includeReferencedRepositories
+                                'includeReferencedRepositories': in_includeReferencedRepositories,
                             })]]);
                     }
                     currentArrayIndex++;
@@ -1471,12 +1461,11 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                             this._dataArrayGetValue(currentArrayIndex).serialize(
                                 {
                                     'dirtyOnly': true, 'includeRootTypeid': true, 'dirtinessType': in_dirtinessType,
-                                    'includeReferencedRepositories': in_includeReferencedRepositories
-                                })
+                                    'includeReferencedRepositories': in_includeReferencedRepositories,
+                                }),
                         );
                         currentArrayIndex++;
                     }
-
                 } else {
                     currentArrayIndex++;
                 }
@@ -1499,7 +1488,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                         newInsert[1].push(this._dataArrayGetValue(opStartIndex + j).serialize(
                             {
                                 'dirtyOnly': false, 'includeRootTypeid': true, 'dirtinessType': in_dirtinessType,
-                                'includeReferencedRepositories': in_includeReferencedRepositories
+                                'includeReferencedRepositories': in_includeReferencedRepositories,
                             }));
                     }
                     if (!result.insert) {
@@ -1516,7 +1505,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             }
         }
         return result;
-    };
+    }
 
     /**
      * Serialize the property
@@ -1577,7 +1566,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             }
             return result;
         }
-    };
+    }
 
     /**
      * Repeatedly calls back the given function with human-readable string
@@ -1588,7 +1577,6 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @param {function} printFct - Function to call for printing each property
      */
     _prettyPrint(indent, externalId, printFct) {
-
         printFct(indent + externalId + this.getId() + ' (Array of ' + this.getTypeid() + '): [');
         if (!this._isPrimitive) {
             this._prettyPrintChildren(indent, printFct);
@@ -1605,7 +1593,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             }
         }
         printFct(indent + ']');
-    };
+    }
 
     /**
      * Repeatedly calls back the given function with human-readable string
@@ -1620,7 +1608,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             this.get(ids[i], { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })
                 ._prettyPrint(indent, ids[i] + ': ', printFct);
         }
-    };
+    }
 
     /**
      * Return a JSON representation of the array and its items.
@@ -1633,14 +1621,14 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             context: this._context,
             typeid: this.getTypeid(),
             isConstant: this._isConstant,
-            value: []
+            value: [],
         };
 
         if (!this._isPrimitive) {
             var ids = this.getIds();
             for (var i = 0; i < ids.length; i++) {
                 json.value.push(
-                    this.get(ids[i], { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })._toJson()
+                    this.get(ids[i], { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })._toJson(),
                 );
             }
         } else {
@@ -1648,7 +1636,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         }
 
         return json;
-    };
+    }
 
     /**
      * Returns the full property type identifier for the ChangeSet including the array type id, if not
@@ -1662,7 +1650,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         } else {
             return TypeIdHelper.createSerializationTypeId(this._typeid, 'array');
         }
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -1677,7 +1665,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             element._setParent(this);
             this._dataArraySetValue(i, element);
         }
-    };
+    }
 
     /**
      * Returns the length of the data array
@@ -1685,7 +1673,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _dataArrayGetLength() {
         return this._dataArrayRef.length;
-    };
+    }
 
     /**
      * Returns the data array's internal buffer
@@ -1693,7 +1681,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _dataArrayGetBuffer() {
         return this._dataArrayRef.getBuffer();
-    };
+    }
 
     /**
      * Returns an entry from the data array
@@ -1703,7 +1691,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _dataArrayGetValue(in_index) {
         return this._dataArrayRef.getValue(in_index);
-    };
+    }
 
     /**
      * Sets an entry in the data array
@@ -1712,7 +1700,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _dataArraySetValue(in_index, in_value) {
         this._dataArrayRef.setValue(in_index, in_value);
-    };
+    }
 
     /**
      * Set the array to the given new array
@@ -1720,7 +1708,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _dataArrayDeserialize(in_newArray) {
         this._dataArrayRef.deserialize(in_newArray);
-    };
+    }
 
     /**
      * Inserts a range into the data array
@@ -1729,7 +1717,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _dataArrayInsertRange(in_position, in_range) {
         this._dataArrayRef.insertRange(in_position, in_range);
-    };
+    }
 
     /**
      * Removes a range from the data array
@@ -1738,7 +1726,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _dataArrayRemoveRange(in_position, in_length) {
         this._dataArrayRef.removeRange(in_position, in_length);
-    };
+    }
 
     /**
      * Overwrites a range in the data array
@@ -1747,7 +1735,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _dataArraySetRange(in_position, in_range) {
         this._dataArrayRef.set(in_position, in_range);
-    };
+    }
 
     /**
      * Get the scope to which this property belongs to.
@@ -1764,7 +1752,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         } else {
             return this._scope;
         }
-    };
+    }
 
     /**
      * returns the length of the current array property

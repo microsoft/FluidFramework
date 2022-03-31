@@ -11,7 +11,7 @@ import { runWithRetry } from "../runWithRetry";
 const _setTimeout = global.setTimeout;
 const fastSetTimeout: any =
     (callback: (...cbArgs: any[]) => void, ms: number, ...args: any[]) => _setTimeout(callback, ms / 1000.0, ...args);
-async function  runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
+async function runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
     global.setTimeout = fastSetTimeout;
     return callback().finally(()=>{
         global.setTimeout = _setTimeout;

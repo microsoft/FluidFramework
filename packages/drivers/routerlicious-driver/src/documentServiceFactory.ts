@@ -10,7 +10,7 @@ import {
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     getDocAttributesFromProtocolSummary,
@@ -25,6 +25,8 @@ import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
 import { InMemoryCache } from "./cache";
+import { pkgVersion as driverVersion } from "./packageVersion";
+import { ISnapshotTreeVersion } from "./definitions";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -43,7 +45,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     public readonly protocolName = "fluid:";
     private readonly driverPolicies: IRouterliciousDriverPolicies;
     private readonly blobCache = new InMemoryCache<ArrayBufferLike>();
-    private readonly snapshotTreeCache = new InMemoryCache<ISnapshotTree>();
+    private readonly snapshotTreeCache = new InMemoryCache<ISnapshotTreeVersion>();
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
@@ -59,6 +61,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         createNewSummary: ISummaryTree | undefined,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         assert(!!createNewSummary, 0x204 /* "create empty file not supported" */);
@@ -116,7 +119,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                     deltaStorageUrl: parsedDeltaStorageUrl.toString(),
                 },
             },
-            logger);
+            logger,
+            clientIsSummarizer,
+        );
     }
 
     /**
@@ -128,6 +133,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
@@ -147,7 +153,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
-        const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+        const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion }});
 
         return new DocumentService(
             fluidResolvedUrl,

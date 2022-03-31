@@ -285,7 +285,6 @@ export class Forest {
 		assert(node, 'can not replace payload for node that does not exist');
 		const mutableNodes = this.nodes.clone();
 		const newNode = { ...node };
-		/* eslint-disable-next-line no-null/no-null */
 		if (value !== null) {
 			newNode.payload = value;
 		} else {

@@ -8,8 +8,7 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions, IGCStats } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
@@ -41,7 +40,6 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         undefined,
         runtimeOptions,
     );
-    const logger = new TelemetryNullLogger();
 
     let provider: ITestObjectProvider;
     let containerRuntime: ContainerRuntime;
@@ -90,105 +88,180 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
     });
 
     /**
-     * There are 5 GC nodes in total in this tests:
-     * 1 for the container's root.
-     * 2 for default data store.
-     * 2 for the data store created in the test.
+     * There are 7 GC nodes in total in these tests:
+     * 1 = containers root.
+     * 3 = data stores.
+     * 3 = 1 DDS for each data store.
      */
-    it("can generate GC related stats correctly in summarize and collectGarbage", async () => {
+    it("can correctly generate GC stats without unreferenced nodes", async () => {
         const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
         const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
+        const expectedGCStats: IGCStats = {
+            nodeCount: 7,
+            unrefNodeCount: 0,
+            updatedNodeCount: 0,
+            dataStoreCount: 3,
+            unrefDataStoreCount: 0,
+            updatedDataStoreCount: 0,
+        };
 
-        // Add data store's handle in root component and verify that there are no deleted stats.
-        {
-            defaultDataStore._root.set("dataStore1", dataStore1.handle);
-            defaultDataStore._root.set("dataStore2", dataStore2.handle);
-            await provider.ensureSynchronized();
+        // Add both data store handles in root component to mark them referenced.
+        defaultDataStore._root.set("dataStore1", dataStore1.handle);
+        defaultDataStore._root.set("dataStore2", dataStore2.handle);
+        await provider.ensureSynchronized();
 
-            const gcStats = await containerRuntime.collectGarbage({ logger });
-            assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
-            assert.strictEqual(gcStats.deletedNodes, 0, "There shouldn't be any deleted node");
-            assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");
-            assert.strictEqual(gcStats.deletedDataStores, 0, "There shouldn't be any deleted data stores");
+        // Nothing should be unreferenced.
+        const gcStats = await containerRuntime.collectGarbage({});
+        assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-            const { stats } = await containerRuntime.summarize({
-                runGC: true,
-                fullTree: true,
-                trackState: false,
-                summaryLogger: logger,
-            });
-            assert.strictEqual(stats.unreferencedBlobSize, 0, "There shouldn't be unreferenced blobs in summary");
-        }
+        const summarizeResult = await containerRuntime.summarize({ trackState: false });
+        assert.strictEqual(summarizeResult.stats.unreferencedBlobSize, 0, "There shouldn't be unreferenced blobs");
+    });
 
-        // Remove dataStore1's handle and verify this deleted data store is reflected in stats.
-        {
-            defaultDataStore._root.delete("dataStore1");
-            await provider.ensureSynchronized();
+    it("can correctly generate GC stats when nodes are unreferenced", async () => {
+        const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
+        const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
+        const expectedGCStats: IGCStats = {
+            nodeCount: 7,
+            unrefNodeCount: 0,
+            updatedNodeCount: 0,
+            dataStoreCount: 3,
+            unrefDataStoreCount: 0,
+            updatedDataStoreCount: 0,
+        };
 
-            const gcStats = await containerRuntime.collectGarbage({ logger });
-            assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
-            assert.strictEqual(gcStats.deletedNodes, 2, "The deleted data store and its DDS is not reflected");
-            assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");
-            assert.strictEqual(gcStats.deletedDataStores, 1, "The deleted data store is not reflected");
+        // Add both data store handles in root component to mark them referenced.
+        defaultDataStore._root.set("dataStore1", dataStore1.handle);
+        defaultDataStore._root.set("dataStore2", dataStore2.handle);
+        await provider.ensureSynchronized();
 
-            const { summary, stats } = await containerRuntime.summarize({
-                runGC: true,
-                fullTree: true,
-                trackState: false,
-                summaryLogger: logger,
-            });
-            const deletedDataStoreStats = getDataStoreSummaryStats(summary, [ dataStore1.id ]);
-            assert.strictEqual(
-                stats.unreferencedBlobSize,
-                deletedDataStoreStats.totalBlobSize,
-                "dataStore1's blobs should be in unreferenced blob size",
-            );
-        }
+        // Remove dataStore1's handle to mark it unreferenced.
+        defaultDataStore._root.delete("dataStore1");
+        await provider.ensureSynchronized();
 
-        // Remove dataStore1's handle and verify this deleted data store is reflected in stats.
-        {
-            defaultDataStore._root.delete("dataStore2");
-            await provider.ensureSynchronized();
+        // dataStore1 and its DDS should be now unreferenced. Also, their reference state updated from referenced
+        // to unreferenced.
+        expectedGCStats.unrefNodeCount = 2;
+        expectedGCStats.updatedNodeCount = 2;
+        expectedGCStats.unrefDataStoreCount = 1;
+        expectedGCStats.updatedDataStoreCount = 1;
 
-            const gcStats = await containerRuntime.collectGarbage({ logger });
-            assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
-            assert.strictEqual(gcStats.deletedNodes, 4, "The deleted data store and its DDS is not reflected");
-            assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");
-            assert.strictEqual(gcStats.deletedDataStores, 2, "The deleted data store is not reflected");
+        let gcStats = await containerRuntime.collectGarbage({});
+        assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-            const { summary, stats } = await containerRuntime.summarize({
-                runGC: true,
-                fullTree: true,
-                trackState: false,
-                summaryLogger: logger,
-            });
-            const deletedDataStoreStats = getDataStoreSummaryStats(summary, [ dataStore1.id, dataStore2.id ]);
-            assert.strictEqual(
-                stats.unreferencedBlobSize,
-                deletedDataStoreStats.totalBlobSize,
-                "dataStore1 and dataStore2's blobs should be in unreferenced blob size",
-            );
-        }
+        let summarizeResult = await containerRuntime.summarize({ trackState: false });
+        let unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [ dataStore1.id ]);
+        assert.strictEqual(
+            summarizeResult.stats.unreferencedBlobSize,
+            unrefDataStoreStats.totalBlobSize,
+            "dataStore1's blobs should be in unreferenced blob size",
+        );
 
-        // Add data store's handle back and very that there are no deleted stats.
-        {
-            defaultDataStore._root.set("dataStore1", dataStore1.handle);
-            defaultDataStore._root.set("dataStore2", dataStore2.handle);
-            await provider.ensureSynchronized();
+        // Remove dataStore2's handle to mark it unreferenced.
+        defaultDataStore._root.delete("dataStore2");
+        await provider.ensureSynchronized();
 
-            const gcStats = await containerRuntime.collectGarbage({ logger });
-            assert.strictEqual(gcStats.totalNodes, 7, "Total GC nodes in incorrect");
-            assert.strictEqual(gcStats.deletedNodes, 0, "There shouldn't be any deleted node");
-            assert.strictEqual(gcStats.totalDataStores, 3, "The data store count is incorrect");
-            assert.strictEqual(gcStats.deletedDataStores, 0, "There shouldn't be any deleted data stores");
+        // dataStore1, dataStore2 and their DDS should be now unreferenced. Also, dataStore2's reference state updated
+        // from referenced to unreferenced.
+        expectedGCStats.unrefNodeCount = 4;
+        expectedGCStats.updatedNodeCount = 2;
+        expectedGCStats.unrefDataStoreCount = 2;
+        expectedGCStats.updatedDataStoreCount = 1;
 
-            const { stats } = await containerRuntime.summarize({
-                runGC: true,
-                fullTree: true,
-                trackState: false,
-                summaryLogger: logger,
-            });
-            assert.strictEqual(stats.unreferencedBlobSize, 0, "There shouldn't be unreferenced blobs in summary");
-        }
+        gcStats = await containerRuntime.collectGarbage({});
+        assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
+
+        summarizeResult = await containerRuntime.summarize({ trackState: false });
+        unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [ dataStore1.id, dataStore2.id ]);
+        assert.strictEqual(
+            summarizeResult.stats.unreferencedBlobSize,
+            unrefDataStoreStats.totalBlobSize,
+            "dataStore1 and dataStore2's blobs should be in unreferenced blob size",
+        );
+    });
+
+    it("can correctly generate GC stats when nodes are re-referenced", async () => {
+        const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
+        const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
+        const expectedGCStats: IGCStats = {
+            nodeCount: 7,
+            unrefNodeCount: 0,
+            updatedNodeCount: 0,
+            dataStoreCount: 3,
+            unrefDataStoreCount: 0,
+            updatedDataStoreCount: 0,
+        };
+
+        // Add both data store handles in root component to mark them referenced.
+        defaultDataStore._root.set("dataStore1", dataStore1.handle);
+        defaultDataStore._root.set("dataStore2", dataStore2.handle);
+        await provider.ensureSynchronized();
+
+        // Remove both data store handles to mark them unreferenced.
+        defaultDataStore._root.delete("dataStore1");
+        defaultDataStore._root.delete("dataStore2");
+        await provider.ensureSynchronized();
+
+        // Add their handle back to re-reference them.
+        defaultDataStore._root.set("dataStore1", dataStore1.handle);
+        defaultDataStore._root.set("dataStore2", dataStore2.handle);
+        await provider.ensureSynchronized();
+
+        // Nothing should be unreferenced.
+        const gcStats = await containerRuntime.collectGarbage({});
+        assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
+
+        const summarizeResult = await containerRuntime.summarize({ trackState: false });
+        assert.strictEqual(summarizeResult.stats.unreferencedBlobSize, 0, "There shouldn't be unreferenced blobs");
+    });
+
+    it("can correctly generate GC stats when reference state changes between GC runs", async () => {
+        const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
+        const dataStore2 = await dataObjectFactory.createInstance(containerRuntime);
+        const expectedGCStats: IGCStats = {
+            nodeCount: 7,
+            unrefNodeCount: 0,
+            updatedNodeCount: 0,
+            dataStoreCount: 3,
+            unrefDataStoreCount: 0,
+            updatedDataStoreCount: 0,
+        };
+
+        // Add both data store handles in root component to mark them referenced.
+        defaultDataStore._root.set("dataStore1", dataStore1.handle);
+        defaultDataStore._root.set("dataStore2", dataStore2.handle);
+        await provider.ensureSynchronized();
+
+        // Nothins should be unreferenced.
+        let gcStats = await containerRuntime.collectGarbage({});
+        assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
+
+        // Remove both data store handles to mark them unreferenced.
+        defaultDataStore._root.delete("dataStore1");
+        defaultDataStore._root.delete("dataStore2");
+        await provider.ensureSynchronized();
+
+        // dataStore1, dataStore2 and their DDS should be now unreferenced. Also, their reference state updated
+        // from referenced to unreferenced.
+        expectedGCStats.unrefNodeCount = 4;
+        expectedGCStats.updatedNodeCount = 4;
+        expectedGCStats.unrefDataStoreCount = 2;
+        expectedGCStats.updatedDataStoreCount = 2;
+
+        gcStats = await containerRuntime.collectGarbage({});
+        assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
+
+        // Add their handle back to re-reference them.
+        defaultDataStore._root.set("dataStore1", dataStore1.handle);
+        defaultDataStore._root.set("dataStore2", dataStore2.handle);
+        await provider.ensureSynchronized();
+
+        // dataStore1, dataStore2 and their DDS should be now referenced. Also, their reference state updated
+        // from unreferenced to referenced.
+        expectedGCStats.unrefNodeCount = 0;
+        expectedGCStats.unrefDataStoreCount = 0;
+
+        gcStats = await containerRuntime.collectGarbage({});
+        assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
     });
 });

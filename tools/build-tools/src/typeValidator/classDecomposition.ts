@@ -11,7 +11,7 @@ import {
     getPropertyReplacement,
     getSetterReplacement,
 } from "./memberDecomposition";
-import { decomposeType, GenericsInfo, typeToString } from "./typeDecomposition";
+import { decomposeType, decomposeTypes, GenericsInfo, typeToString } from "./typeDecomposition";
 import { BreakingIncrement, IValidator, log } from "./validatorUtils";
 
 /**

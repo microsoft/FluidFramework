@@ -4,7 +4,7 @@
  */
 
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryGenericEvent, ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
@@ -12,7 +12,7 @@ import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframe
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { ChildLogger, MultiSinkLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, MultiSinkLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -107,7 +107,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
             return {
                 get: () => documentId,
                 update: () => { }, // do not update the document ID in odsp test cases
-                reset: () => documentId = createDocumentId(),
+                reset: () => { documentId = createDocumentId(); },
             };
         default:
             return {
@@ -117,8 +117,72 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
                     ensureFluidResolvedUrl(resolvedUrl);
                     documentId = resolvedUrl.id ?? documentId;
                 },
-                reset: () => documentId = createDocumentId(),
+                reset: () => { documentId = createDocumentId(); },
             };
+    }
+}
+
+/**
+ * This class tracks events. It allows specifying expected events, which will be looked for in order.
+ * It also tracks all unexpected errors.
+ * At any point you call reportAndClearTrackedEvents which will provide all unexpected errors, and
+ * any expected events that have not occurred.
+ */
+export class EventAndErrorTrackingLogger extends TelemetryLogger {
+    constructor(private readonly baseLogger: ITelemetryBaseLogger) {
+        super();
+    }
+
+    private readonly expectedEvents: ({index: number, event: ITelemetryGenericEvent | undefined} | undefined)[] = [];
+    private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
+
+    public registerExpectedEvent(... orderedExpectedEvents: ITelemetryGenericEvent[]) {
+        if(this.expectedEvents.length !== 0) {
+            // we don't have to error here. just no reason not to. given the events must be
+            // ordered it could be tricky to figure out problems around multiple registrations.
+            throw new Error(
+                "Expected events already registered.\n"
+                + "Call reportAndClearTrackedEvents to clear them before registering more");
+        }
+        this.expectedEvents.push(... orderedExpectedEvents.map((event,index)=>({index, event})));
+    }
+
+    send(event: ITelemetryBaseEvent): void {
+        const ee = this.expectedEvents[0]?.event;
+        if(ee?.eventName === event.eventName) {
+            let matches = true;
+            for(const key of Object.keys(ee)) {
+                if(ee[key] !== event[key]) {
+                    matches = false;
+                    break;
+                }
+            }
+            if(matches) {
+                // we found an expected event
+                // so remove it from the list of expected events
+                // and if it is an error, change it to generic
+                // this helps keep our telemetry clear of
+                // expected errors.
+                this.expectedEvents.shift();
+                if(event.category === "error") {
+                    event.category = "generic";
+                }
+            }
+        }
+        if(event.category === "error") {
+            this.unexpectedErrors.push(event);
+        }
+
+        this.baseLogger.send(event);
+    }
+
+    public reportAndClearTrackedEvents() {
+        const expectedNotFound = this.expectedEvents.splice(0, this.expectedEvents.length);
+        const unexpectedErrors = this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
+        return {
+            expectedNotFound,
+            unexpectedErrors,
+        };
     }
 }
 
@@ -129,7 +193,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     private readonly _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
-    private _logger: ITelemetryBaseLogger | undefined;
+    private _logger: EventAndErrorTrackingLogger | undefined;
     private readonly _documentIdStrategy: IDocumentIdStrategy;
     // Since documentId doesn't change we can only create/make one container. Call the load functions instead.
     private _documentCreated = false;
@@ -147,9 +211,10 @@ export class TestObjectProvider implements ITestObjectProvider {
         this._documentIdStrategy = getDocumentIdStrategy(driver.type);
     }
 
-    get logger() {
+    get logger(): EventAndErrorTrackingLogger {
         if (this._logger === undefined) {
-            this._logger = ChildLogger.create(getTestLogger?.(), undefined,
+            this._logger = new EventAndErrorTrackingLogger(
+                ChildLogger.create(getTestLogger?.(), undefined,
                 {
                     all: {
                         driverType: this.driver.type,
@@ -157,7 +222,7 @@ export class TestObjectProvider implements ITestObjectProvider {
                         driverTenantName: this.driver.tenantName,
                         driverUserIndex: this.driver.userIndex,
                     },
-                });
+                }));
         }
         return this._logger;
     }
@@ -311,6 +376,10 @@ export class TestObjectProvider implements ITestObjectProvider {
         this._documentServiceFactory = undefined;
         this._urlResolver = undefined;
         this._documentIdStrategy.reset();
+        const logError = getUnexpectedLogErrorException(this._logger);
+        if(logError) {
+            throw logError;
+        }
         this._logger = undefined;
         this._documentCreated = false;
     }
@@ -321,5 +390,20 @@ export class TestObjectProvider implements ITestObjectProvider {
 
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
         this._documentIdStrategy.update(resolvedUrl);
+    }
+}
+
+export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string) {
+    if(logger === undefined) {
+        return;
+    }
+    const results = logger.reportAndClearTrackedEvents();
+    if(results.unexpectedErrors.length > 0) {
+        return new Error(
+            `${prefix ?? ""}Unexpected Errors in Logs:\n${JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
+    }
+    if(results.expectedNotFound.length > 0) {
+        return new Error(
+            `${prefix ?? ""}Expected Events not found:\n${JSON.stringify(results.expectedNotFound, undefined, 2)}`);
     }
 }

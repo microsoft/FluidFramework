@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { InstrumentedStorageTokenFetcher, IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
@@ -29,6 +29,7 @@ interface IJoinSessionBody {
  * @param requestSocketToken - flag indicating whether joinSession is expected to return access token
  * which is used when establishing websocket connection with collab session backend service.
  * @param options - Options to fetch the token.
+ * @param disableJoinSessionRefresh - Whether the caller wants to disable refreshing join session periodically.
  * @param guestDisplayName - display name used to identify guest user joining a session.
  * This is optional and used only when collab session is being joined via invite.
  */
@@ -41,18 +42,26 @@ export async function fetchJoinSession(
     epochTracker: EpochTracker,
     requestSocketToken: boolean,
     options: TokenFetchOptionsEx,
+    disableJoinSessionRefresh: boolean | undefined,
     guestDisplayName?: string,
 ): Promise<ISocketStorageDiscovery> {
     const token = await getStorageToken(options, "JoinSession");
 
-    const extraProps = options.refresh
+    const tokenRefreshProps = options.refresh
         ? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
         : {};
+    const details: ITelemetryProperties = {
+        refreshedToken: options.refresh,
+        requestSocketToken,
+        ...tokenRefreshProps,
+    };
+
     return PerformanceEvent.timedExecAsync(
         logger, {
             eventName: "JoinSession",
             attempts: options.refresh ? 2 : 1,
-            ...extraProps,
+            details: JSON.stringify(details),
+            ...tokenRefreshProps,
         },
         async (event) => {
             const siteOrigin = getOrigin(urlParts.siteUrl);
@@ -61,6 +70,9 @@ export async function fetchJoinSession(
             postBody += `Authorization: Bearer ${token}\r\n`;
             postBody += `X-HTTP-Method-Override: POST\r\n`;
             postBody += `Content-Type: application/json\r\n`;
+            if (!disableJoinSessionRefresh) {
+                postBody += `prefer: FluidRemoveCheckAccess\r\n`;
+            }
             postBody += `_post: 1\r\n`;
             // Name should be there when socket token is requested and vice-versa.
             if (requestSocketToken && guestDisplayName !== undefined) {
@@ -94,10 +106,11 @@ export async function fetchJoinSession(
 
             // TODO SPO-specific telemetry
             event.end({
-                ...response.commonSpoHeaders,
+                ...response.propsToLog,
                 // pushV2 websocket urls will contain pushf
                 pushv2: socketUrl.includes("pushf"),
                 webSocketHostName,
+                refreshSessionDurationSeconds: response.content.refreshSessionDurationSeconds,
             });
 
             if (response.content.runtimeTenantId && !response.content.tenantId) {

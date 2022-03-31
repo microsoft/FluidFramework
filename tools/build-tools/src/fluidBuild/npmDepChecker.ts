@@ -17,8 +17,7 @@ interface DepCheckRecord {
 };
 
 export class NpmDepChecker {
-    // @types/socket.io-client is references in the tsconfig.json
-    private readonly foundTypes: string[] = ["@types/socket.io-client", "@types/node", "@types/expect-puppeteer", "@types/jest-environment-puppeteer"];
+    private readonly foundTypes: string[] = ["@types/node", "@types/expect-puppeteer", "@types/jest-environment-puppeteer"];
     // hjs is implicitly used
     private readonly ignored = ["hjs", ...this.foundTypes];
     // list of packages that should always in the devDependencies

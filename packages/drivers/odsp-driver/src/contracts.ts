@@ -34,6 +34,11 @@ export interface ISocketStorageDiscovery {
      * passed as a parameter to `OdspDocumentService.create()` factory.
      */
     socketToken?: string;
+
+    /**
+     * This is the time within which client has to refresh the session on (ODSP) relay service.
+     */
+    refreshSessionDurationSeconds?: number;
 }
 
 /**

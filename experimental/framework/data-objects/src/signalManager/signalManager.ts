@@ -91,7 +91,7 @@ export interface IRuntimeSignaler {
  * deregistration.
  */
 export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignaler {
-    private readonly emitter  = new EventEmitter();
+    private readonly emitter = new EventEmitter();
 
     private readonly managerId: string | undefined;
 
@@ -117,7 +117,6 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
             // Only call listeners when the runtime is connected and if the signal has an
             // identifiable sender clientId.  The listener is responsible for deciding how
             // it wants to handle local/remote signals
-            // eslint-disable-next-line no-null/no-null
             if (this.signaler.connected && clientId !== null) {
                 this.emitter.emit(message.type, clientId, local, message.content);
             }

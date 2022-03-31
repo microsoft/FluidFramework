@@ -14,7 +14,6 @@ const { BaseProperty } = require('./baseProperty');
  * set collection.
  */
 export class NamedProperty extends ContainerProperty {
-
     /**
      * @param {object} in_params         - List of parameters
      * @param {string} in_params.id      - id of the property (null, if the GUID should be used for the ID)
@@ -28,7 +27,7 @@ export class NamedProperty extends ContainerProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Returns a string identifying the property
@@ -43,7 +42,7 @@ export class NamedProperty extends ContainerProperty {
         } else {
             return this.getGuid();
         }
-    };
+    }
 
     /**
      * Returns the GUID of this named property
@@ -55,17 +54,15 @@ export class NamedProperty extends ContainerProperty {
     getGuid() {
         var guid = this.get('guid', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
         return guid ? guid.getValue() : '';
-    };
-
+    }
 
     // THIS IS DISABLED FOR THE MOMENT, UNTIL WE BETTER UNDERSTAND HOW REFERENCES WORK IN FLUID
     /**
      * Return the URN for this named property
      * @return {string} The URN
      */
-    /*NamedProperty.prototype.getUrn = function() {
+    /* NamedProperty.prototype.getUrn = function() {
 
-    };*/
-
+    }; */
 }
 NamedProperty.prototype._typeid = 'NamedProperty';

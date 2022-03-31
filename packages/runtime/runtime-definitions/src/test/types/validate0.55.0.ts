@@ -115,6 +115,7 @@ declare function get_old_TypeAliasDeclaration_FluidDataStoreRegistryEntry():
 declare function use_current_TypeAliasDeclaration_FluidDataStoreRegistryEntry(
     use: current.FluidDataStoreRegistryEntry);
 use_current_TypeAliasDeclaration_FluidDataStoreRegistryEntry(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_FluidDataStoreRegistryEntry());
 
 /*
@@ -127,6 +128,7 @@ declare function get_current_TypeAliasDeclaration_FluidDataStoreRegistryEntry():
 declare function use_old_TypeAliasDeclaration_FluidDataStoreRegistryEntry(
     use: old.FluidDataStoreRegistryEntry);
 use_old_TypeAliasDeclaration_FluidDataStoreRegistryEntry(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_FluidDataStoreRegistryEntry());
 
 /*
@@ -211,6 +213,7 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeBase(
     use: current.IContainerRuntimeBase);
 use_current_InterfaceDeclaration_IContainerRuntimeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -223,6 +226,7 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeBase(
     use: old.IContainerRuntimeBase);
 use_old_InterfaceDeclaration_IContainerRuntimeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -307,6 +311,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContext(
     use: current.IFluidDataStoreContext);
 use_current_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -319,6 +324,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: old.IFluidDataStoreContext);
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -331,6 +337,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContextDetached():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: current.IFluidDataStoreContextDetached);
 use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -343,6 +350,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: old.IFluidDataStoreContextDetached);
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -403,6 +411,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreFactory():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreFactory(
     use: current.IFluidDataStoreFactory);
 use_current_InterfaceDeclaration_IFluidDataStoreFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreFactory());
 
 /*
@@ -415,6 +424,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreFactory():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreFactory(
     use: old.IFluidDataStoreFactory);
 use_old_InterfaceDeclaration_IFluidDataStoreFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreFactory());
 
 /*
@@ -451,6 +461,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreRegistry():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreRegistry(
     use: current.IFluidDataStoreRegistry);
 use_current_InterfaceDeclaration_IFluidDataStoreRegistry(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreRegistry());
 
 /*
@@ -463,6 +474,7 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreRegistry():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreRegistry(
     use: old.IFluidDataStoreRegistry);
 use_old_InterfaceDeclaration_IFluidDataStoreRegistry(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreRegistry());
 
 /*
@@ -643,6 +655,7 @@ declare function get_old_InterfaceDeclaration_IProvideFluidDataStoreFactory():
 declare function use_current_InterfaceDeclaration_IProvideFluidDataStoreFactory(
     use: current.IProvideFluidDataStoreFactory);
 use_current_InterfaceDeclaration_IProvideFluidDataStoreFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideFluidDataStoreFactory());
 
 /*
@@ -655,6 +668,7 @@ declare function get_current_InterfaceDeclaration_IProvideFluidDataStoreFactory(
 declare function use_old_InterfaceDeclaration_IProvideFluidDataStoreFactory(
     use: old.IProvideFluidDataStoreFactory);
 use_old_InterfaceDeclaration_IProvideFluidDataStoreFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideFluidDataStoreFactory());
 
 /*
@@ -667,6 +681,7 @@ declare function get_old_InterfaceDeclaration_IProvideFluidDataStoreRegistry():
 declare function use_current_InterfaceDeclaration_IProvideFluidDataStoreRegistry(
     use: current.IProvideFluidDataStoreRegistry);
 use_current_InterfaceDeclaration_IProvideFluidDataStoreRegistry(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideFluidDataStoreRegistry());
 
 /*
@@ -679,6 +694,7 @@ declare function get_current_InterfaceDeclaration_IProvideFluidDataStoreRegistry
 declare function use_old_InterfaceDeclaration_IProvideFluidDataStoreRegistry(
     use: old.IProvideFluidDataStoreRegistry);
 use_old_InterfaceDeclaration_IProvideFluidDataStoreRegistry(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideFluidDataStoreRegistry());
 
 /*
@@ -907,6 +923,7 @@ declare function get_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries
 declare function use_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries(
     use: current.NamedFluidDataStoreRegistryEntries);
 use_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries());
 
 /*
@@ -919,6 +936,7 @@ declare function get_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEnt
 declare function use_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries(
     use: old.NamedFluidDataStoreRegistryEntries);
 use_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries());
 
 /*
@@ -931,6 +949,7 @@ declare function get_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry()
 declare function use_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry(
     use: current.NamedFluidDataStoreRegistryEntry);
 use_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry());
 
 /*
@@ -943,6 +962,7 @@ declare function get_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEnt
 declare function use_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry(
     use: old.NamedFluidDataStoreRegistryEntry);
 use_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry());
 
 /*

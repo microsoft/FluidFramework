@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluidframework/common-utils";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ChannelStorageService } from "../channelStorageService";
@@ -21,7 +22,7 @@ describe("ChannelStorageService", () => {
                 throw new Error("not implemented");
             },
         };
-        const ss = new ChannelStorageService(tree, storage);
+        const ss = new ChannelStorageService(tree, storage, new TelemetryUTLogger());
 
         assert.strictEqual(await ss.contains("/"), false);
         assert.deepStrictEqual(await ss.list(""), []);
@@ -40,7 +41,7 @@ describe("ChannelStorageService", () => {
                 return stringToBuffer(id, "utf8");
             },
         };
-        const ss = new ChannelStorageService(tree, storage);
+        const ss = new ChannelStorageService(tree, storage, new TelemetryUTLogger());
 
         assert.strictEqual(await ss.contains("foo"), true);
         assert.deepStrictEqual(await ss.list(""), ["foo"]);
@@ -66,7 +67,7 @@ describe("ChannelStorageService", () => {
                 return stringToBuffer(id, "utf8");
             },
         };
-        const ss = new ChannelStorageService(tree, storage);
+        const ss = new ChannelStorageService(tree, storage, new TelemetryUTLogger());
 
         assert.strictEqual(await ss.contains("nested/foo"), true);
         assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);

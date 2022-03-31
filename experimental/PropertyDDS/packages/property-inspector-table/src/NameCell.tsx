@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {  PropertyProxy } from '@fluid-experimental/property-proxy';
+import { PropertyProxy } from '@fluid-experimental/property-proxy';
 import { ItemMenu } from './ItemMenu';
 import { BaseProperty, ArrayProperty, NodeProperty, MapProperty } from '@fluid-experimental/property-properties';
 import { createStyles, withStyles, WithStyles } from '@material-ui/core/styles';

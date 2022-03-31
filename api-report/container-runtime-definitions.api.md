@@ -5,12 +5,12 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeBaseEvents } from '@fluidframework/runtime-definitions';
+import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -49,8 +49,6 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     readonly isDirty: boolean;
     // (undocumented)
     readonly options: ILoaderOptions;
-    // @deprecated
-    raiseContainerWarning(warning: ContainerWarning): void;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     readonly scope: IFluidObject & FluidObject;
@@ -69,6 +67,14 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "connected", listener: (clientId: string) => void): any;
     // (undocumented)
     (event: "localHelp", listener: (message: IHelpMessage) => void): any;
+}
+
+// @public @deprecated (undocumented)
+export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
+    // (undocumented)
+    fluidDataStoreChannel?: {
+        bindToContext?(): void;
+    };
 }
 
 // @public @deprecated (undocumented)

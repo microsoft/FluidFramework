@@ -8,6 +8,7 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
@@ -37,7 +38,7 @@ export class DirectoryFactory {
 }
 
 // @public
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents> {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     createSubDirectory(subdirName: string): IDirectory;
     deleteSubDirectory(subdirName: string): boolean;
@@ -65,6 +66,8 @@ export interface IDirectoryDataObject {
 export interface IDirectoryEvents extends IEvent {
     // (undocumented)
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public (undocumented)
@@ -171,6 +174,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     createSubDirectory(subdirName: string): IDirectory;
     delete(key: string): boolean;
     deleteSubDirectory(subdirName: string): boolean;
+    // (undocumented)
+    dispose(error?: Error): void;
+    // (undocumented)
+    get disposed(): boolean;
     entries(): IterableIterator<[string, any]>;
     forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
@@ -190,8 +197,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected populate(data: IDirectoryDataObject): void;
     // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // @internal (undocumented)
-    protected registerCore(): void;
     // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     set<T = any>(key: string, value: T): this;
@@ -226,8 +231,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected onDisconnect(): void;
     // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // @internal (undocumented)
-    protected registerCore(): void;
     // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     set(key: string, value: any): this;

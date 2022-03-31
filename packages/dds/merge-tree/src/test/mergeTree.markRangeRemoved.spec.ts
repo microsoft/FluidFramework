@@ -128,7 +128,7 @@ describe("MergeTree.markRangeRemoved", () => {
 
             // Client 1 inserts "c" having received acks for its own edits, but has not yet having
             // observed the insertion of "X" from client 2.
-            expected.insertTextRemote(0, "c", undefined, ++seq, refSeqAt2,         /* longClientId: */ "1");
+            expected.insertTextRemote(0, "c", undefined, ++seq, refSeqAt2, /* longClientId: */ "1");
         }
 
         // Next, we run through the same sequence from the perspective of client 1:

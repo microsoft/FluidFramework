@@ -95,6 +95,7 @@ declare function get_old_InterfaceDeclaration_IChannelServices():
 declare function use_current_InterfaceDeclaration_IChannelServices(
     use: current.IChannelServices);
 use_current_InterfaceDeclaration_IChannelServices(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IChannelServices());
 
 /*
@@ -107,6 +108,7 @@ declare function get_current_InterfaceDeclaration_IChannelServices():
 declare function use_old_InterfaceDeclaration_IChannelServices(
     use: old.IChannelServices);
 use_old_InterfaceDeclaration_IChannelServices(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IChannelServices());
 
 /*
@@ -143,6 +145,7 @@ declare function get_old_InterfaceDeclaration_IDeltaConnection():
 declare function use_current_InterfaceDeclaration_IDeltaConnection(
     use: current.IDeltaConnection);
 use_current_InterfaceDeclaration_IDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDeltaConnection());
 
 /*
@@ -155,6 +158,7 @@ declare function get_current_InterfaceDeclaration_IDeltaConnection():
 declare function use_old_InterfaceDeclaration_IDeltaConnection(
     use: old.IDeltaConnection);
 use_old_InterfaceDeclaration_IDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltaConnection());
 
 /*

@@ -28,7 +28,7 @@ export async function createTree(
     });
 
     const sha = await git.writeTree({
-        fs: fs,
+        fs,
         dir: utils.getGitDir(store, tenantId),
         tree: entries,
     });
@@ -48,7 +48,7 @@ export async function getTree(
 
     if (recursive) {
         returnEntries = await git.walk({
-            fs: fs,
+            fs,
             dir: utils.getGitDir(store, tenantId),
             map: (async (path, [head]) => {
                 if (path === ".") {
@@ -67,7 +67,7 @@ export async function getTree(
             trees: [git.TREE({ ref: sha } as any)],
         });
     } else {
-        const treeObject = await git.readTree({ fs: fs, dir: utils.getGitDir(store, tenantId), oid: sha });
+        const treeObject = await git.readTree({ fs, dir: utils.getGitDir(store, tenantId), oid: sha });
         const description = treeObject.tree;
 
         returnEntries = description.map((tree) => {

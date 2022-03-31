@@ -1,9 +1,13 @@
 {
   "name": "@fluidframework/test-pairwise-generator",
-  "version": "0.56.0",
+  "version": "0.58.3000",
   "description": "End to end tests",
   "homepage": "https://fluidframework.com",
-  "repository": "https://github.com/microsoft/FluidFramework",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "packages/test/test-pairwise-generator"
+  },
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
@@ -51,8 +55,8 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.25.0",
-    "@fluidframework/mocha-test-setup": "^0.56.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/mocha-test-setup": "^0.58.3000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",

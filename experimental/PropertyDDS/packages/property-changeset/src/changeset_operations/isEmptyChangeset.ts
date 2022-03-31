@@ -21,4 +21,3 @@
 export const isEmptyChangeSet = (in_changeSet: SerializedChangeSet): boolean => in_changeSet === undefined ||
         (isObject(in_changeSet) &&
             (isEmpty(in_changeSet) || (Object.keys(in_changeSet).length === 1 && has(in_changeSet, "typeid"))));
-

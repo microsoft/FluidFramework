@@ -22,12 +22,27 @@ export enum OnlineStatus {
 // No solution for node.js (other than resolve dns names / ping specific sites)
 // Can also use window.addEventListener("online" / "offline")
 export function isOnline(): OnlineStatus {
-    // eslint-disable-next-line no-null/no-null
     if (typeof navigator === "object" && navigator !== null && typeof navigator.onLine === "boolean") {
         return navigator.onLine ? OnlineStatus.Online : OnlineStatus.Offline;
     }
     return OnlineStatus.Unknown;
 }
+
+/**
+ * Interface describing errors and warnings raised by any driver code.
+ * Not expected to be implemented by a class or an object literal, but rather used in place of
+ * any or unknown in various function signatures that pass errors around.
+ *
+ * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
+ * It will be either DriverErrorType or the specific driver's specialized error type enum,
+ * but we can't reference a specific driver's error type enum in this code.
+ */
+ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+    readonly errorType: string;
+}
+
+/** Telemetry props with driver-specific required properties */
+export type DriverErrorTelemetryProps = ITelemetryProperties & { driverVersion: string | undefined };
 
 /**
  * Generic network error class.
@@ -36,10 +51,9 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     readonly errorType = DriverErrorType.genericNetworkError;
 
     constructor(
-        readonly fluidErrorCode: string,
         message: string,
         readonly canRetry: boolean,
-        props?: ITelemetryProperties,
+        props: DriverErrorTelemetryProps,
     ) {
         super(message, props);
     }
@@ -57,8 +71,8 @@ export class DeltaStreamConnectionForbiddenError extends LoggingError implements
     readonly errorType: string = DeltaStreamConnectionForbiddenError.errorType;
     readonly canRetry = false;
 
-    constructor(readonly fluidErrorCode: string) {
-        super(fluidErrorCode, { statusCode: 400 });
+    constructor(message: string, props: DriverErrorTelemetryProps) {
+        super(message, { ...props, statusCode: 400 });
     }
 }
 
@@ -67,11 +81,10 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     readonly canRetry = false;
 
     constructor(
-        readonly fluidErrorCode: string,
         message: string,
         readonly claims: string | undefined,
         readonly tenantId: string | undefined,
-        props?: ITelemetryProperties,
+        props: DriverErrorTelemetryProps,
     ) {
         // don't log claims or tenantId
         super(message, props, new Set(["claims", "tenantId"]));
@@ -80,11 +93,10 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
 
 export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
     constructor(
-        readonly fluidErrorCode: string,
         message: string,
         readonly errorType: T,
         readonly canRetry: boolean,
-        props?: ITelemetryProperties,
+        props: DriverErrorTelemetryProps,
     ) {
         super(message, props);
     }
@@ -92,27 +104,24 @@ export class NetworkErrorBasic<T extends string> extends LoggingError implements
 
 export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(
-        fluidErrorCode: string,
-        message: string | undefined,
+        message: string,
         readonly errorType: T,
-        props?: ITelemetryProperties,
+        props: DriverErrorTelemetryProps,
     ) {
-        super(fluidErrorCode, message ?? fluidErrorCode, errorType, false, props);
+        super(message, errorType, false, props);
     }
 }
 
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(
-        fluidErrorCode: string,
-        message: string | undefined,
+        message: string,
         readonly errorType: T,
-        props?: ITelemetryProperties,
+        props: DriverErrorTelemetryProps,
     ) {
-        super(fluidErrorCode, message ?? fluidErrorCode, errorType, true, props);
+        super(message, errorType, true, props);
     }
 }
 
-//* Check
 /**
  * Throttling error class - used to communicate all throttling errors
  */
@@ -121,29 +130,27 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
     readonly canRetry = true;
 
     constructor(
-        readonly fluidErrorCode: string,
         message: string,
         readonly retryAfterSeconds: number,
-        props?: ITelemetryProperties,
+        props: DriverErrorTelemetryProps,
     ) {
         super(message, props);
     }
 }
 
-export const createWriteError = (fluidErrorCode: string) =>
-    new NonRetryableError(fluidErrorCode, undefined, DriverErrorType.writeError);
+export const createWriteError = (message: string, props: DriverErrorTelemetryProps) =>
+    new NonRetryableError(message, DriverErrorType.writeError, props);
 
 export function createGenericNetworkError(
-    fluidErrorCode: string,
-    message: string | undefined,
-    canRetry: boolean,
-    retryAfterMs?: number,
-    props?: ITelemetryProperties,
+    message: string,
+    retryInfo: {canRetry: boolean, retryAfterMs?: number },
+    props: DriverErrorTelemetryProps,
 ): ThrottlingError | GenericNetworkError {
-    if (retryAfterMs !== undefined && canRetry) {
-        return new ThrottlingError(fluidErrorCode, message ?? fluidErrorCode, retryAfterMs / 1000, props);
+    if (retryInfo.retryAfterMs !== undefined && retryInfo.canRetry) {
+        return new ThrottlingError(
+            message, retryInfo.retryAfterMs / 1000, props);
     }
-    return new GenericNetworkError(fluidErrorCode, message ?? fluidErrorCode, canRetry, props);
+    return new GenericNetworkError(message, retryInfo.canRetry, props);
 }
 
 /**
@@ -153,8 +160,10 @@ export function createGenericNetworkError(
  */
 export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
 
+/** Check retryAfterSeconds property on error */
 export const getRetryDelaySecondsFromError = (error: any): number | undefined =>
     error?.retryAfterSeconds as number | undefined;
 
+/** Check retryAfterSeconds property on error and convert to ms */
 export const getRetryDelayFromError = (error: any): number | undefined => error?.retryAfterSeconds !== undefined ?
     error.retryAfterSeconds * 1000 : undefined;

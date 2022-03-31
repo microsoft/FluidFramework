@@ -10,6 +10,5 @@ module.exports = {
     "rules": {
         "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
-        "no-null/no-null": "off"
     }
 }

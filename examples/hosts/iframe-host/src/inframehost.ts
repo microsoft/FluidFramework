@@ -27,7 +27,7 @@ import {
     OuterUrlResolver,
 } from "@fluidframework/iframe-driver";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 export interface IFrameInnerApi {
@@ -75,9 +75,6 @@ class ProxyRuntime implements IRuntime {
     }
 
     async request(request: IRequest): Promise<IResponse> {
-        throw new Error("Method not implemented.");
-    }
-    async snapshot(tagMessage: string, fullTree?: boolean | undefined): Promise<ITree | null> {
         throw new Error("Method not implemented.");
     }
     async setConnectionState(connected: boolean, clientId?: string) {
@@ -137,7 +134,7 @@ export class IFrameOuterHost {
         // them all in one (otherwise there are mysterious runtime errors)
         const combinedProxy = {};
 
-        const outerDocumentServiceProxy =  new DocumentServiceFactoryProxy(
+        const outerDocumentServiceProxy = new DocumentServiceFactoryProxy(
             MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
             this.hostConfig.options,
         );

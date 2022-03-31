@@ -2,9 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { getVersionedTestObjectProvider } from "./compatUtils";
+import { Lazy } from "@fluidframework/common-utils";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
 import {
@@ -20,6 +18,7 @@ import {
 
 /*
  * Generate configuration combinations for a particular compat version
+ * NOTE: Please update this packages README.md if the default versions and config combination changes
  */
 interface CompatConfig {
     name: string,
@@ -128,132 +127,63 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
     ];
 };
 
-// set it in the env for parallel workers
-if (compatKind) {
-    process.env.fluid__test__compatKind = JSON.stringify(compatKind);
-}
-if (compatVersions) {
-    process.env.fluid__test__compatVersion = JSON.stringify(compatVersions);
-}
-process.env.fluid__test__driver = driver;
-process.env.fluid__test__r11sEndpointName = r11sEndpointName;
-process.env.fluid__test__tenantIndex = tenantIndex.toString();
-process.env.fluid__test__baseVersion = baseVersion;
+export const configList = new Lazy<readonly CompatConfig[]>(() => {
+    // set it in the env for parallel workers
+    if (compatKind) {
+        process.env.fluid__test__compatKind = JSON.stringify(compatKind);
+    }
+    if (compatVersions) {
+        process.env.fluid__test__compatVersion = JSON.stringify(compatVersions);
+    }
+    process.env.fluid__test__driver = driver;
+    process.env.fluid__test__r11sEndpointName = r11sEndpointName;
+    process.env.fluid__test__tenantIndex = tenantIndex.toString();
+    process.env.fluid__test__baseVersion = baseVersion;
 
-let configList: CompatConfig[] = [];
-if (!compatVersions || compatVersions.length === 0) {
-    defaultVersions.forEach((value) => {
-        configList.push(...genConfig(value));
-    });
-    LTSVersions.forEach((value) => {
-        configList.push(...genLTSConfig(value));
-    });
-} else {
-    compatVersions.forEach((value) => {
-        if (value === "LTS") {
-            LTSVersions.forEach((lts) => {
-                configList.push(...genLTSConfig(lts));
-            });
-        } else {
-            const num = parseInt(value, 10);
-            if (num.toString() === value) {
-                configList.push(...genConfig(num));
+    let _configList: CompatConfig[] = [];
+    if (!compatVersions || compatVersions.length === 0) {
+        defaultVersions.forEach((value) => {
+            _configList.push(...genConfig(value));
+        });
+        LTSVersions.forEach((value) => {
+            _configList.push(...genLTSConfig(value));
+        });
+    } else {
+        compatVersions.forEach((value) => {
+            if (value === "LTS") {
+                LTSVersions.forEach((lts) => {
+                    _configList.push(...genLTSConfig(lts));
+                });
             } else {
-                configList.push(...genConfig(value));
+                const num = parseInt(value, 10);
+                if (num.toString() === value) {
+                    _configList.push(...genConfig(num));
+                } else {
+                    _configList.push(...genConfig(value));
+                }
             }
-        }
-    });
-}
-
-if (compatKind !== undefined) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    configList = configList.filter((value) => compatKind!.includes(value.kind));
-}
-
-/*
- * Mocha Utils for test to generate the compat variants.
- */
-function describeCompat(
-    name: string,
-    tests: (provider: () => ITestObjectProvider) => void,
-    compatFilter?: CompatKind[],
-) {
-    let configs = configList;
-    if (compatFilter !== undefined) {
-        configs = configs.filter((value) => compatFilter.includes(value.kind));
+        });
     }
 
-    describe(name, () => {
-        for (const config of configs) {
-            describe(config.name, () => {
-                let provider: ITestObjectProvider;
-                let resetAfterEach: boolean;
-                before(async () => {
-                    provider = await getVersionedTestObjectProvider(
-                        baseVersion,
-                        config.loader,
-                        {
-                            type: driver,
-                            version: config.driver,
-                            config: {
-                                r11s: { r11sEndpointName },
-                                odsp: { tenantIndex },
-                            },
-                        },
-                        config.containerRuntime,
-                        config.dataRuntime,
-                    );
-                });
-                tests((reset: boolean = true) => {
-                    if (reset) {
-                        provider.reset();
-                        resetAfterEach = true;
-                    }
-                    return provider;
-                });
-                afterEach(() => {
-                    if (resetAfterEach) {
-                        provider.reset();
-                    }
-                });
-            });
-        }
-    });
-}
-
-export function describeNoCompat(
-    name: string,
-    tests: (provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void,
-) {
-    describeCompat(name, tests, [CompatKind.None]);
-}
-
-export function describeLoaderCompat(
-    name: string,
-    tests: (provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void,
-) {
-    describeCompat(name, tests, [CompatKind.None, CompatKind.Loader]);
-}
-
-export function describeFullCompat(
-    name: string,
-    tests: (provider: (resetAfterEach?: boolean) => ITestObjectProvider) => void,
-) {
-    describeCompat(name, tests);
-}
+    if (compatKind !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        _configList = _configList.filter((value) => compatKind!.includes(value.kind));
+    }
+    return _configList;
+});
 
 /*
  * Mocha start up to ensure legacy versions are installed
  */
 export async function mochaGlobalSetup() {
-    const versions = new Set(configList.map((value) => value.compatVersion));
+    const versions = new Set(configList.value.map((value) => value.compatVersion));
     if (versions.size === 0) { return; }
 
     // Make sure we wait for all before returning, even if one of them has error.
     const installP = Array.from(versions.values()).map(
         async (value) => ensurePackageInstalled(baseVersion, value, reinstall));
 
-    let error: Error | undefined;
+    let error: unknown | undefined;
     for (const p of installP) {
         try {
             await p;

@@ -60,26 +60,28 @@ use_old_ClassDeclaration_BaseTelemetryNullLogger(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.32.1:
-* "ClassDeclaration_BatchManager": {"forwardCompat": false}
+* "RemovedClassDeclaration_BatchManager": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_BatchManager():
     Omit<old.BatchManager<any>,"">;
-declare function use_current_ClassDeclaration_BatchManager(
+declare function use_current_RemovedClassDeclaration_BatchManager(
+    // @ts-expect-error compatibility expected to be broken
     use: Omit<current.BatchManager<any>,"">);
-use_current_ClassDeclaration_BatchManager(
+use_current_RemovedClassDeclaration_BatchManager(
     get_old_ClassDeclaration_BatchManager());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.32.1:
-* "ClassDeclaration_BatchManager": {"backCompat": false}
+* "RemovedClassDeclaration_BatchManager": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_BatchManager():
+declare function get_current_RemovedClassDeclaration_BatchManager():
+    // @ts-expect-error compatibility expected to be broken
     Omit<current.BatchManager<any>,"">;
 declare function use_old_ClassDeclaration_BatchManager(
     use: Omit<old.BatchManager<any>,"">);
 use_old_ClassDeclaration_BatchManager(
-    get_current_ClassDeclaration_BatchManager());
+    get_current_RemovedClassDeclaration_BatchManager());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -254,26 +256,28 @@ use_old_ClassDeclaration_EventForwarder(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.32.1:
-* "FunctionDeclaration_extractLogSafeErrorProperties": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_extractLogSafeErrorProperties():
     typeof old.extractLogSafeErrorProperties;
-declare function use_current_FunctionDeclaration_extractLogSafeErrorProperties(
+declare function use_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties(
+    // @ts-expect-error compatibility expected to be broken
     use: typeof current.extractLogSafeErrorProperties);
-use_current_FunctionDeclaration_extractLogSafeErrorProperties(
+use_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties(
     get_old_FunctionDeclaration_extractLogSafeErrorProperties());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.32.1:
-* "FunctionDeclaration_extractLogSafeErrorProperties": {"backCompat": false}
+* "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_extractLogSafeErrorProperties():
+declare function get_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties():
+    // @ts-expect-error compatibility expected to be broken
     typeof current.extractLogSafeErrorProperties;
 declare function use_old_FunctionDeclaration_extractLogSafeErrorProperties(
     use: typeof old.extractLogSafeErrorProperties);
 use_old_FunctionDeclaration_extractLogSafeErrorProperties(
-    get_current_FunctionDeclaration_extractLogSafeErrorProperties());
+    get_current_RemovedFunctionDeclaration_extractLogSafeErrorProperties());
 
 /*
 * Validate forward compat by using old type in place of current type

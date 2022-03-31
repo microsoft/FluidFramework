@@ -16,6 +16,7 @@ import {
     InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { isSystemMessage } from "@fluidframework/protocol-base";
 import { IOdspSnapshot, ISnapshotCachedEntry, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
@@ -95,7 +96,7 @@ export async function fetchSnapshotWithRedeem(
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
-        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+        odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
     return fetchLatestSnapshotCore(
@@ -119,8 +120,8 @@ export async function fetchSnapshotWithRedeem(
                 { ...odspResolvedUrl,
                     shareLinkInfo: {
                         ...odspResolvedUrl.shareLinkInfo,
-                        sharingLinkToRedeem: undefined
-                    }
+                        sharingLinkToRedeem: undefined,
+                    },
                 };
 
             return fetchLatestSnapshotCore(
@@ -201,6 +202,7 @@ async function fetchLatestSnapshotCore(
             eventName: "TreesLatest",
             attempts: tokenFetchOptions.refresh ? 2 : 1,
             shareLinkPresent: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
+            isSummarizer: odspResolvedUrl.summarizer,
             redeemFallbackEnabled: enableRedeemFallback,
         };
         if (snapshotOptions !== undefined) {
@@ -215,23 +217,33 @@ async function fetchLatestSnapshotCore(
             logger,
             perfEvent,
             async (event) => {
-                const startTime = performance.now();
                 const response = await snapshotDownloader(
                     odspResolvedUrl,
                     storageToken,
                     snapshotOptions,
                     controller,
                 );
-                const endTime = performance.now();
-                const overallTime = endTime - startTime;
                 const snapshot = response.odspSnapshotResponse.content;
-                let dnstime: number | undefined; // domainLookupEnd - domainLookupStart
-                let redirectTime: number | undefined; // redirectEnd -redirectStart
+                // From: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
+                // fetchStart: immediately before the browser starts to fetch the resource.
+                // requestStart: immediately before the browser starts requesting the resource from the server
+                // responseStart: immediately after the browser receives the first byte of the response from the server.
+                // responseEnd: immediately after the browser receives the last byte of the resource
+                //              or immediately before the transport connection is closed, whichever comes first.
+                // secureConnectionStart: immediately before the browser starts the handshake process to secure the
+                //              current connection. If a secure connection is not used, this property returns zero.
+                // startTime: Time when the resource fetch started. This value is equivalent to fetchStart.
+                // domainLookupStart: immediately before the browser starts the domain name lookup for the resource.
+                // domainLookupEnd: immediately after the browser finishes the domain name lookup for the resource.
+                // redirectStart: start time of the fetch which that initiates the redirect.
+                // redirectEnd: immediately after receiving the last byte of the response of the last redirect.
+                let dnsLookupTime: number | undefined; // domainLookupEnd - domainLookupStart
+                let redirectTime: number | undefined; // redirectEnd - redirectStart
                 let tcpHandshakeTime: number | undefined; // connectEnd  - connectStart
-                let secureConntime: number | undefined; // connectEnd  - secureConnectionStart
-                let responseTime: number | undefined; // responsEnd - responseStart
-                let fetchStToRespEndTime: number | undefined; // responseEnd  - fetchStart
-                let reqStToRespEndTime: number | undefined; // responseEnd - requestStart
+                let secureConnectionTime: number | undefined; // connectEnd  - secureConnectionStart
+                let responseNetworkTime: number | undefined; // responsEnd - responseStart
+                let fetchStartToResponseEndTime: number | undefined; // responseEnd  - fetchStart
+                let reqStartToResponseEndTime: number | undefined; // responseEnd - requestStart
                 let networkTime: number | undefined; // responseEnd - startTime
                 const spReqDuration = response.odspSnapshotResponse.headers.get("sprequestduration");
 
@@ -245,17 +257,19 @@ async function fetchLatestSnapshotCore(
                     if ((resource_initiatortype.localeCompare("fetch") === 0)
                         && (resource_name.localeCompare(response.requestUrl) === 0)) {
                         redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
-                        dnstime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
+                        dnsLookupTime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
                         tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
-                        secureConntime = (indResTime.secureConnectionStart > 0) ?
-                            (indResTime.connectEnd - indResTime.secureConnectionStart) : 0;
-                        responseTime = indResTime.responseEnd - indResTime.responseStart;
-                        fetchStToRespEndTime = (indResTime.fetchStart > 0) ?
-                            (indResTime.responseEnd - indResTime.fetchStart) : 0;
-                        reqStToRespEndTime = (indResTime.requestStart > 0) ?
-                            (indResTime.responseEnd - indResTime.requestStart) : 0;
-                        networkTime = (indResTime.startTime > 0) ? (indResTime.responseEnd - indResTime.startTime) : 0;
-                        if (spReqDuration) {
+                        secureConnectionTime = (indResTime.secureConnectionStart > 0) ?
+                            (indResTime.connectEnd - indResTime.secureConnectionStart) : undefined;
+                        responseNetworkTime = (indResTime.responseStart > 0) ?
+                            (indResTime.responseEnd - indResTime.responseStart) : undefined;
+                        fetchStartToResponseEndTime = (indResTime.fetchStart > 0) ?
+                            (indResTime.responseEnd - indResTime.fetchStart) : undefined;
+                        reqStartToResponseEndTime = (indResTime.requestStart > 0) ?
+                            (indResTime.responseEnd - indResTime.requestStart) : undefined;
+                        networkTime = (indResTime.startTime > 0) ?
+                            (indResTime.responseEnd - indResTime.fetchStart) : undefined;
+                        if (spReqDuration !== undefined && networkTime !== undefined) {
                             networkTime = networkTime - parseInt(spReqDuration, 10);
                         }
                         break;
@@ -264,7 +278,6 @@ async function fetchLatestSnapshotCore(
 
                 const { numTrees, numBlobs, encodedBlobsSize } =
                     validateAndEvalBlobsAndTrees(response.odspSnapshotResponse.content);
-                const clientTime = networkTime ? overallTime - networkTime : undefined;
 
                 // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
                 // cannot cache using an HTTP response header.
@@ -301,23 +314,31 @@ async function fetchLatestSnapshotCore(
                     encodedBlobsSize,
                     sequenceNumber,
                     ops: snapshot.ops?.length ?? 0,
+                    nonSysOps:  snapshot.ops?.filter((op) => !isSystemMessage(op)).length ?? 0,
                     headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
-                    redirecttime: redirectTime,
-                    dnsLookuptime: dnstime,
-                    responsenetworkTime: responseTime,
-                    tcphandshakeTime: tcpHandshakeTime,
-                    secureconnectiontime: secureConntime,
-                    fetchstarttorespendtime: fetchStToRespEndTime,
-                    reqstarttorespendtime: reqStToRespEndTime,
-                    overalltime: overallTime,
-                    networktime: networkTime,
-                    clienttime: clientTime,
+                    // Interval between the first fetch until the last byte of the last redirect.
+                    redirectTime,
+                    // Interval between start and finish of the domain name lookup for the resource.
+                    dnsLookupTime,
+                    // Interval to receive all (first to last) bytes form the server.
+                    responseNetworkTime,
+                    // Time to establish the connection to the server to retrieve the resource.
+                    tcpHandshakeTime,
+                    // Time from the end of the connection until the inital handshake process to secure the connection.
+                    secureConnectionTime,
+                    // Interval between the initial fetch until the last byte is received.
+                    fetchStartToResponseEndTime,
+                    // Interval between starting the request for the resource until receiving the last byte.
+                    reqStartToResponseEndTime,
+                    // Interval between starting the request for the resource until receiving the last byte but
+                    // excluding the Snaphot request duration indicated on the snapshot response header.
+                    networkTime,
                     // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
                     // Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
                     sltelemetry: response.odspSnapshotResponse.headers.get("x-fluid-sltelemetry"),
-                    ...response.odspSnapshotResponse.commonSpoHeaders,
+                    ...response.odspSnapshotResponse.propsToLog,
                 });
                 return snapshot;
             },
@@ -359,7 +380,14 @@ async function fetchSnapshotContentsCoreV1(
 ): Promise<ISnapshotRequestAndResponseOptions> {
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
-    const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, snapshotOptions);
+    // The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
+    // Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
+    // This error thrown by server will contain the new redirect location. Look at the 404 error parsing
+    // for futher reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
+    const header = { prefer: "manualredirect" };
+    const { body, headers } = getFormBodyAndHeaders(
+        odspResolvedUrl, storageToken, snapshotOptions, header);
+    headers.accept = "application/json";
     const fetchOptions = {
         body,
         headers,
@@ -370,7 +398,7 @@ async function fetchSnapshotContentsCoreV1(
         fetchAndParseAsJSONHelper<IOdspSnapshot>(url, fetchOptions));
     const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return  {
+    return {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: url,
@@ -410,7 +438,7 @@ async function fetchSnapshotContentsCoreV2(
     const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
         new ReadBuffer(new Uint8Array(response.content)));
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return  {
+    return {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: fullUrl,
@@ -421,6 +449,7 @@ function getFormBodyAndHeaders(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
     snapshotOptions: ISnapshotOptions | undefined,
+    headers?: {[index: string]: string},
 ) {
     const formBoundary = uuid();
     const formParams: string[] = [];
@@ -434,16 +463,23 @@ function getFormBodyAndHeaders(
             }
         });
     }
+    if (headers !== undefined) {
+        Object.entries(headers).forEach(([key, value]) => {
+            if (value !== undefined) {
+                formParams.push(`${key}: ${value}`);
+            }
+        });
+    }
     if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
         formParams.push(`sl: ${odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem}`);
     }
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
     const postBody = formParams.join("\r\n");
-    const headers: {[index: string]: any} = {
+    const header: {[index: string]: any} = {
         "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
     };
-    return { body: postBody, headers };
+    return { body: postBody, headers: header };
 }
 
 function validateAndEvalBlobsAndTrees(snapshot: ISnapshotContents) {
@@ -481,7 +517,7 @@ export async function downloadSnapshot(
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
-        odspResolvedUrl.shareLinkInfo = {...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem}
+        odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
     if (fetchBinarySnapshotFormat) {

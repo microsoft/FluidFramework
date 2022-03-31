@@ -100,7 +100,6 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
 	// null is of type object, and needs to be treated as distinct from the empty object.
 	// Handling it early also avoids type errors trying to access its keys.
 	// Rationale: 'undefined' payloads are reserved for future use (see 'SetValue' interface).
-	// eslint-disable-next-line no-null/no-null
 	if (a === null || b === null) {
 		return false;
 	}
@@ -173,7 +172,6 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
  * @param containsPII - boolean flag for whether the message passed in contains personally identifying information (PII).
  */
 export function assert(condition: unknown, message?: string, containsPII = false): asserts condition {
-	// Rationale: Assert condition is permitted to be truthy.
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (!condition) {
 		fail(message, containsPII);
@@ -188,6 +186,7 @@ export function assert(condition: unknown, message?: string, containsPII = false
  */
 export function fail(message: string = defaultFailMessage, containsPII = false): never {
 	if (process.env.NODE_ENV !== 'production') {
+		// eslint-disable-next-line no-debugger
 		debugger;
 		console.error(message);
 	}

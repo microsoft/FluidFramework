@@ -5,13 +5,12 @@
 /**
  * @namespace property-properties
  */
-const { LazyLoadedProperties: Property } = require('./properties/lazyLoadedProperties');
-const { AbstractStaticCollectionProperty } = require('./properties/abstractStaticCollectionProperty')
 const { PathHelper } = require('@fluid-experimental/property-changeset');
-
+const { LazyLoadedProperties: Property } = require('./properties/lazyLoadedProperties');
+const { AbstractStaticCollectionProperty } = require('./properties/abstractStaticCollectionProperty');
 
 var MSG = {
-    NOTHING_TO_DESERIALIZE: 'Repository deserialize(), no input given'
+    NOTHING_TO_DESERIALIZE: 'Repository deserialize(), no input given',
 };
 
 /**
@@ -28,15 +27,14 @@ class ScopeProperty extends AbstractStaticCollectionProperty {
         // at this point. There may be a bug with MR.
         super(in_params);
         this._scope = in_params.scope;
-    };
-
+    }
 
     /**
      * @override
      */
     _getScope() {
         return this._scope;
-    };
+    }
 
     /**
      * Remove a child property
@@ -53,7 +51,7 @@ class ScopeProperty extends AbstractStaticCollectionProperty {
         } else {
             throw new Error(MSG.REMOVING_NON_EXISTING_ID + in_id);
         }
-    };
+    }
 }
 
 /**
@@ -64,7 +62,6 @@ class ScopeProperty extends AbstractStaticCollectionProperty {
  * @alias property-properties.serialize
  */
 export function serialize(in_psets, in_dirtyOnly) {
-
     in_dirtyOnly = in_dirtyOnly || false;
 
     var documentData = {};
@@ -79,9 +76,8 @@ export function serialize(in_psets, in_dirtyOnly) {
         documentData[rootTypeid][keys[i]] = in_psets[keys[i]].serialize(in_dirtyOnly);
     }
 
-
     return documentData;
-};
+}
 
 /**
  * Deserialize the input document
@@ -93,7 +89,6 @@ export function serialize(in_psets, in_dirtyOnly) {
  * @alias property-properties.deserialize
  */
 export function deserialize(in_data, in_scope, in_filteringOptions) {
-
     if (!in_data) {
         console.warn(MSG.NOTHING_TO_DESERIALIZE);
         return {};
@@ -110,7 +105,7 @@ export function deserialize(in_data, in_scope, in_filteringOptions) {
             case PathHelper.CoverageExtent.PARTLY_COVERED:
                 baseFilteringOptions = {
                     basePath: in_filteringOptions.basePath,
-                    paths: pathCoverage.pathList
+                    paths: pathCoverage.pathList,
                 };
                 break;
             case PathHelper.CoverageExtent.UNCOVERED:
@@ -133,7 +128,7 @@ export function deserialize(in_data, in_scope, in_filteringOptions) {
             // reconstruct entity
             let filteringOptions = baseFilteringOptions && {
                 basePath: PathHelper.getChildAbsolutePathCanonical(baseFilteringOptions.basePath, classKeys[iClass]),
-                paths: baseFilteringOptions.paths
+                paths: baseFilteringOptions.paths,
             };
             // TODO: In theory this could throw when the entity can not be created because it is not included
             //       in the paths. Make sure to handle this case when we'll add that validation.
@@ -160,7 +155,7 @@ export function deserialize(in_data, in_scope, in_filteringOptions) {
     }
 
     return deserializedProperties;
-};
+}
 /**
  * Deserialize the input document assuming it contains elements of a non-primitive array.
  * @param {array<object>} in_data the input JSON document data
@@ -169,7 +164,6 @@ export function deserialize(in_data, in_scope, in_filteringOptions) {
  * @alias property-properties.deserializeNonPrimitiveArrayElements
  */
 export function deserializeNonPrimitiveArrayElements(in_data, in_scope) {
-
     if (!in_data) {
         console.warn(MSG.NOTHING_TO_DESERIALIZE);
         return [];
@@ -198,5 +192,4 @@ export function deserializeNonPrimitiveArrayElements(in_data, in_scope) {
     }
 
     return insertedPropertyInstances;
-};
-
+}

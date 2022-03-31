@@ -97,10 +97,10 @@ export class TenantManager implements core.ITenantManager {
     }
 
     public async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
-        const result = await Axios.get(
-            `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/key`,
+        const result = await Axios.get<core.ITenantKeys>(
+            `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/keys`,
             { params: { includeDisabledTenant }});
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return result.data;
+        return result.data.key1;
     }
 }

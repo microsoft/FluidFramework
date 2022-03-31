@@ -96,7 +96,18 @@ export class BlobManager {
         return new BlobHandle(
             `${BlobManager.basePath}/${storageId}`,
             this.routeContext,
-            async () => this.getStorage().readBlob(storageId),
+            async () => {
+                return this.getStorage().readBlob(storageId).catch((error) => {
+                    this.logger.sendErrorEvent(
+                        {
+                            eventName:"AttachmentReadBlobError",
+                            id: storageId,
+                        },
+                        error,
+                    );
+                    throw error;
+                });
+            },
         );
     }
 

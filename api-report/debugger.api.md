@@ -78,7 +78,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     // (undocumented)
     getStartingOpSequence(): Promise<number>;
     // (undocumented)
-    getVersions(versionId: string, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
     // (undocumented)
     initStorage(documentService: IDocumentService): Promise<boolean>;
     isDoneFetch(currentOp: number, lastTimeStamp?: number): boolean;

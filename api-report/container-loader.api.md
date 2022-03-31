@@ -80,8 +80,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     // (undocumented)
-    get id(): string;
-    // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
     static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: unknown): Promise<Container>;
@@ -91,6 +89,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     readonly options: ILoaderOptions;
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
+    // @deprecated (undocumented)
     raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
@@ -107,8 +106,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get serviceConfiguration(): IClientConfiguration | undefined;
     // (undocumented)
     setAutoReconnect(reconnect: boolean): void;
-    // (undocumented)
-    snapshot(tagMessage: string, fullTree?: boolean): Promise<void>;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)

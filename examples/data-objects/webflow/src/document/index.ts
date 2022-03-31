@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -33,7 +32,7 @@ import {
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { IFluidHTMLOptions } from "@fluidframework/view-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
-import { clamp, emptyArray } from "../util";
+import { clamp, emptyArray, randomId, TagName, TokenList } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { documentType } from "../package";
 import { debug } from "./debug";

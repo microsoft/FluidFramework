@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-unassigned-import
-import { } from "@fluidframework/core-interfaces";
 import {
     ICombiningOp,
     IMergeTreeInsertMsg,
@@ -30,7 +28,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
      * Inserts the text at the position.
      * @param pos - The position to insert the text at
      * @param text - The text to insert
-     * @param props - The properties of text
+     * @param props - The properties of the text
      */
     insertText(pos: number, text: string, props?: PropertySet): void;
 

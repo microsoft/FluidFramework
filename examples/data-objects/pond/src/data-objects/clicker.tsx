@@ -7,9 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
-import ReactDOM from "react-dom";
 
 const storedMapKey = "storedMap";
 const counter1Key = "counter";
@@ -18,11 +16,22 @@ const counter2Key = "counter2";
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends DataObject implements IFluidHTMLView {
-    public get IFluidHTMLView() { return this; }
+export class DoubleCounter extends DataObject {
+    private _counter1: SharedCounter | undefined;
+    public get counter1(): SharedCounter {
+        if (this._counter1 === undefined) {
+            throw new Error("Counter1 accessed before initialized");
+        }
+        return this._counter1;
+    }
 
-    private counter1: SharedCounter | undefined;
-    private counter2: SharedCounter | undefined;
+    private _counter2: SharedCounter | undefined;
+    public get counter2(): SharedCounter {
+        if (this._counter2 === undefined) {
+            throw new Error("Counter2 accessed before initialized");
+        }
+        return this._counter2;
+    }
 
     public static readonly ComponentName = `@fluid-example/pond-clicker`;
 
@@ -45,36 +54,20 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 
     protected async hasInitialized() {
         const counter1Handle = this.root.get<IFluidHandle<SharedCounter>>(counter1Key);
-        this.counter1 = await counter1Handle?.get();
+        this._counter1 = await counter1Handle?.get();
 
         const storedMap = await this.root.get<IFluidHandle<ISharedMap>>(storedMapKey)?.get();
         const counter2Handle = storedMap?.get<IFluidHandle<SharedCounter>>(counter2Key);
-        this.counter2 = await counter2Handle?.get();
+        this._counter2 = await counter2Handle?.get();
     }
-
-    // start IFluidHTMLView
-
-    public render(div: HTMLElement) {
-        if (this.counter1 === undefined || this.counter2 === undefined) {
-            throw new Error("hasInitialized should be called prior to render");
-        }
-
-        // Get our counter object that we set in initialize and pass it in to the view.
-        ReactDOM.render(
-            <CounterReactView counter1={this.counter1} counter2={this.counter2} />,
-            div,
-        );
-    }
-
-    // end IFluidHTMLView
 
     // ----- COMPONENT SETUP STUFF -----
 
-    public static getFactory() { return Clicker.factory; }
+    public static getFactory() { return DoubleCounter.factory; }
 
     private static readonly factory = new DataObjectFactory(
-        Clicker.ComponentName,
-        Clicker,
+        DoubleCounter.ComponentName,
+        DoubleCounter,
         [
             SharedCounter.getFactory(),
             SharedMap.getFactory(),
@@ -84,18 +77,18 @@ export class Clicker extends DataObject implements IFluidHTMLView {
 
 // ----- REACT STUFF -----
 
-interface CounterProps {
+export interface DoubleCounterViewProps {
     counter1: SharedCounter;
     counter2: SharedCounter;
 }
 
-interface CounterState {
+interface DoubleCounterViewState {
     value1: number;
     value2: number;
 }
 
-class CounterReactView extends React.Component<CounterProps, CounterState> {
-    constructor(props: CounterProps) {
+export class DoubleCounterView extends React.Component<DoubleCounterViewProps, DoubleCounterViewState> {
+    constructor(props: DoubleCounterViewProps) {
         super(props);
 
         this.state = {

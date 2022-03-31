@@ -49,10 +49,3 @@ export interface IFluidMountableView extends IProvideFluidMountableView {
      */
     unmount(): void;
 }
-
-declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject {
-        /** @deprecated - use `FluidObject<IFluidMountableView> instead */
-        readonly IFluidMountableView?: IFluidMountableView;
-     }
-}

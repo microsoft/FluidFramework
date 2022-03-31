@@ -27,10 +27,10 @@ describe("Test for Test Utils", () => {
 
             let response: IThrottlerResponse;
             for (let i = 0; i < rate; i++) {
-                response =  await throttlerHelper.updateCount(id, 1);
+                response = await throttlerHelper.updateCount(id, 1);
                 assert.strictEqual(response.throttleStatus, false);
             }
-            response =  await throttlerHelper.updateCount(id, 1);
+            response = await throttlerHelper.updateCount(id, 1);
             assert.strictEqual(response.throttleStatus, true);
         });
 
@@ -40,7 +40,7 @@ describe("Test for Test Utils", () => {
 
             const id = "test-id";
 
-            const response =  await throttlerHelper.updateCount(id, rate + 1);
+            const response = await throttlerHelper.updateCount(id, rate + 1);
             assert.strictEqual(response.throttleStatus, true);
         });
 
@@ -50,19 +50,19 @@ describe("Test for Test Utils", () => {
 
             const id = "test-id";
 
-            let response =  await throttlerHelper.updateCount(id, rate + 1);
+            let response = await throttlerHelper.updateCount(id, rate + 1);
             assert.strictEqual(response.throttleStatus, true);
 
             Sinon.clock.tick(response.retryAfterInMs);
-            response =  await throttlerHelper.updateCount(id, 0);
+            response = await throttlerHelper.updateCount(id, 0);
             assert.strictEqual(response.throttleStatus, false);
 
             // for longer
-            response =  await throttlerHelper.updateCount(id, rate + 10);
+            response = await throttlerHelper.updateCount(id, rate + 10);
             assert.strictEqual(response.throttleStatus, true);
 
             Sinon.clock.tick(response.retryAfterInMs);
-            response =  await throttlerHelper.updateCount(id, 0);
+            response = await throttlerHelper.updateCount(id, 0);
             assert.strictEqual(response.throttleStatus, false);
         });
 
@@ -74,11 +74,11 @@ describe("Test for Test Utils", () => {
 
             let response: IThrottlerResponse;
             for (let i = 0; i < rate; i++) {
-                response =  await throttlerHelper.updateCount(id, 1);
+                response = await throttlerHelper.updateCount(id, 1);
                 assert.strictEqual(response.throttleStatus, false);
                 Sinon.clock.tick(1);
             }
-            response =  await throttlerHelper.updateCount(id, 1);
+            response = await throttlerHelper.updateCount(id, 1);
             assert.strictEqual(response.throttleStatus, false);
         });
 
@@ -91,12 +91,12 @@ describe("Test for Test Utils", () => {
             let response: IThrottlerResponse;
             let cachedResponse: IThrottlerResponse;
 
-            response =  await throttlerHelper.updateCount(id, 1);
+            response = await throttlerHelper.updateCount(id, 1);
             assert.strictEqual(response.throttleStatus, false);
             cachedResponse = await throttlerHelper.getThrottleStatus(id);
             assert.deepStrictEqual(cachedResponse, response);
 
-            response =  await throttlerHelper.updateCount(id, 1);
+            response = await throttlerHelper.updateCount(id, 1);
             assert.strictEqual(response.throttleStatus, true);
             cachedResponse = await throttlerHelper.getThrottleStatus(id);
             assert.deepStrictEqual(cachedResponse, response);

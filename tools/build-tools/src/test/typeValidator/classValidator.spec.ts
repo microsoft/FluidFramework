@@ -10,7 +10,6 @@ import { createSpecificValidator } from "./../../typeValidator/packageValidator"
 import { TypeData } from "../../typeValidator/typeData";
 import { BreakingIncrement, enableLogging } from "./../../typeValidator/validatorUtils"
 
-
 describe("Class", () => {
     enableLogging(true);
     let project: Project;
