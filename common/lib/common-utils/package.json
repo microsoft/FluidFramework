@@ -27,7 +27,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:gen": "concurrently npm:build:gen:ver typetests:gen",
+    "build:gen": "concurrently npm:build:gen:ver npm:typetests:gen",
     "build:gen:ver": "gen-version",
     "build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
     "build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
