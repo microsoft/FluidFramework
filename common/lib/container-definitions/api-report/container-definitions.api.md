@@ -132,7 +132,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     // @alpha
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
-    closeAndGetPendingLocalState(): string;
+    closeAndGetPendingLocalState(): Promise<string>;
     readonly closed: boolean;
     readonly connected: boolean;
     readonly connectionState: ConnectionState;
@@ -529,6 +529,18 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 
 // @public
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+
+// @public
+export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
+    // (undocumented)
+    blobsContents: {
+        [path: string]: ArrayBufferLike;
+    };
+    // (undocumented)
+    trees: {
+        [path: string]: ISnapshotTreeWithBlobContents;
+    };
+}
 
 // @public
 export interface IThrottlingWarning extends IErrorBase {
