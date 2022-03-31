@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails, FluidObject, IFluidPackage } from "@fluidframework/core-interfaces";
-import { IContainer } from "@fluidframework/container-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { IContainer, IFluidPackage, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";

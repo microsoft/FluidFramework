@@ -7,9 +7,7 @@ import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
-    IFluidCodeDetails,
     IFluidRouter,
-    IProvideFluidCodeDetailsComparer,
     IRequest,
     IRequestHeader,
     IResponse,
@@ -23,6 +21,8 @@ import {
     ILoaderOptions as ILoaderOptions1,
     IProxyLoaderFactory,
     LoaderHeader,
+    IProvideFluidCodeDetailsComparer,
+    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
     ChildLogger,

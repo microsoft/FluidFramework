@@ -4,12 +4,14 @@
  */
 
 import {
+    ICodeDetailsLoader,
     IFluidModule,
     IProvideRuntimeFactory,
-    ICodeDetailsLoader,
+    IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails, IFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 
 /**

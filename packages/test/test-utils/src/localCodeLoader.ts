@@ -8,10 +8,12 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import {
     IProvideRuntimeFactory,
     IFluidModule,
+    IProvideFluidCodeDetailsComparer,
+    IFluidCodeDetails,
     ICodeDetailsLoader,
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails, IProvideFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase, IProvideFluidDataStoreFactory,
     IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";

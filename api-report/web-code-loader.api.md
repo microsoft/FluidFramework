@@ -6,11 +6,11 @@
 
 import { ICodeAllowList } from '@fluidframework/container-definitions';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidCodeResolver } from '@fluidframework/container-definitions';
 import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
-import { IFluidPackage } from '@fluidframework/core-interfaces';
-import { IFluidPackageEnvironment } from '@fluidframework/core-interfaces';
+import { IFluidPackage } from '@fluidframework/container-definitions';
+import { IFluidPackageEnvironment } from '@fluidframework/container-definitions';
 import { IResolvedFluidCodeDetails } from '@fluidframework/container-definitions';
 
 // @public
