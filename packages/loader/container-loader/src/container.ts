@@ -1758,7 +1758,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
-            this.codeLoader,
+            this.codeLoader as any,
             codeDetails,
             snapshot,
             new DeltaManagerProxy(this._deltaManager),

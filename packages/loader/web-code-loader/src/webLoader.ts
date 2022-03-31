@@ -4,18 +4,19 @@
  */
 
 import {
-    ICodeLoader,
     ICodeAllowList,
     IFluidModule,
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidBrowserPackage,
+    ICodeDetailsLoader,
+    IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ScriptManager } from "./scriptManager";
 
-export class WebCodeLoader implements ICodeLoader {
-    private readonly loadedModules = new Map<string, Promise<IFluidModule> | IFluidModule>();
+export class WebCodeLoader implements ICodeDetailsLoader {
+    private readonly loadedModules = new Map<string, Promise<IFluidModuleWithDetails> | IFluidModuleWithDetails>();
     private readonly scriptManager = new ScriptManager();
 
     constructor(
@@ -24,7 +25,7 @@ export class WebCodeLoader implements ICodeLoader {
 
     public async seedModule(
         source: IFluidCodeDetails,
-        maybeFluidModule?: Promise<IFluidModule> | IFluidModule,
+        maybeFluidModule?: Promise<IFluidModuleWithDetails> | IFluidModuleWithDetails,
     ): Promise<void> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
         if (resolved.resolvedPackageCacheId !== undefined
@@ -50,7 +51,7 @@ export class WebCodeLoader implements ICodeLoader {
      */
     public async load(
         source: IFluidCodeDetails,
-    ): Promise<IFluidModule> {
+    ): Promise<IFluidModuleWithDetails> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
         if (resolved.resolvedPackageCacheId !== undefined) {
             const maybePkg = this.loadedModules.get(resolved.resolvedPackageCacheId);
@@ -60,10 +61,13 @@ export class WebCodeLoader implements ICodeLoader {
         }
 
         const fluidModuleP = this.loadModuleFromResolvedCodeDetails(resolved);
+
         if (resolved.resolvedPackageCacheId !== undefined) {
             this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModuleP);
         }
-        return fluidModuleP;
+        const fluidModule = await fluidModuleP;
+
+        return fluidModule;
     }
 
     private async loadModuleFromResolvedCodeDetails(resolved: IResolvedFluidCodeDetails) {
@@ -79,7 +83,7 @@ export class WebCodeLoader implements ICodeLoader {
 
         let fluidModule: IFluidModule | undefined;
         for (const script of await loadedScriptsP) {
-            const maybeFluidModule = script.entryPoint as IFluidModule;
+            const maybeFluidModule = script.entryPoint as any;
             if (maybeFluidModule.fluidExport !== undefined) {
                 if (fluidModule !== undefined) {
                     throw new Error("Multiple Fluid modules loaded");
@@ -91,6 +95,9 @@ export class WebCodeLoader implements ICodeLoader {
         if (fluidModule?.fluidExport === undefined) {
             throw new Error("Entry point of loaded code package not a Fluid module");
         }
-        return fluidModule;
+        return {
+            module: fluidModule,
+            details: resolved,
+        };
     }
 }

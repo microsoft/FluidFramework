@@ -16,8 +16,8 @@ import {
     AttachState,
     ILoaderOptions,
     IRuntimeFactory,
-    ICodeLoader,
     IProvideRuntimeFactory,
+    ICodeDetailsLoader,
 } from "@fluidframework/container-definitions";
 import {
     IFluidObject,
@@ -45,7 +45,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { Container } from "./container";
-import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
+import { IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -53,7 +53,7 @@ export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: FluidObject,
-        codeLoader: ICodeDetailsLoader | ICodeLoader,
+        codeLoader: ICodeDetailsLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -160,7 +160,7 @@ export class ContainerContext implements IContainerContext {
     constructor(
         private readonly container: Container,
         public readonly scope: IFluidObject & FluidObject,
-        private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
+        private readonly codeLoader: ICodeDetailsLoader,
         private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -333,7 +333,7 @@ export class ContainerContext implements IContainerContext {
                 details: details ?? codeDetails,
             };
         } else {
-            return { module: loadCodeResult, details: codeDetails };
+            return loadCodeResult;
         }
     }
     // #endregion

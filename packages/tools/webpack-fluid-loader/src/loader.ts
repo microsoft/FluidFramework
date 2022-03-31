@@ -9,12 +9,12 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { assert, BaseTelemetryNullLogger, Deferred } from "@fluidframework/common-utils";
 import {
     AttachState,
-    IFluidModule,
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidBrowserPackage,
     IProvideRuntimeFactory,
     IContainer,
+    IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
@@ -90,9 +90,10 @@ export type RouteOptions =
     | ITinyliciousRouteOptions
     | IOdspRouteOptions;
 
-function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
+function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModuleWithDetails):
+    IFluidModuleWithDetails {
     const fluidModuleExport: FluidObject<IProvideRuntimeFactory & IFluidDataStoreFactory> =
-        fluidModule.fluidExport;
+        fluidModule.module.fluidExport;
     if (fluidModuleExport.IRuntimeFactory === undefined) {
         const dataStoreFactory = fluidModuleExport.IFluidDataStoreFactory;
 
@@ -105,9 +106,12 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
             ]),
         );
         return {
-            fluidExport: {
-                IRuntimeFactory: runtimeFactory,
+            module: {
+                fluidExport: {
+                    IRuntimeFactory: runtimeFactory,
+                },
             },
+            details: fluidModule.details,
         };
     }
     return fluidModule;
@@ -159,7 +163,7 @@ class WebpackCodeResolver implements IFluidCodeResolver {
  */
 async function createWebLoader(
     documentId: string,
-    fluidModule: IFluidModule,
+    fluidModule: IFluidModuleWithDetails,
     options: RouteOptions,
     urlResolver: MultiUrlResolver,
     codeDetails: IFluidCodeDetails,
@@ -215,7 +219,7 @@ export function isSynchronized() {
 export async function start(
     id: string,
     packageJson: IFluidPackage,
-    fluidModule: IFluidModule,
+    fluidModule: IFluidModuleWithDetails,
     options: RouteOptions,
     div: HTMLDivElement,
 ): Promise<void> {
