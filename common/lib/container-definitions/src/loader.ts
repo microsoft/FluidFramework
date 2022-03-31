@@ -17,6 +17,7 @@ import {
     IQuorumClients,
     ISequencedDocumentMessage,
     ISequencedProposal,
+    ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
@@ -476,4 +477,14 @@ declare module "@fluidframework/core-interfaces" {
 export interface IPendingLocalState {
     url: string;
     pendingRuntimeState: unknown;
+}
+
+/**
+ * This is used when we rehydrate a container from the snapshot. Here we put the blob contents
+ * in separate property: blobContents. This is used as the ContainerContext's base snapshot
+ * when attaching.
+ */
+export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
+    blobsContents: {[path: string]: ArrayBufferLike},
+    trees: {[path: string]: ISnapshotTreeWithBlobContents},
 }
