@@ -278,8 +278,8 @@ export interface ISummaryRuntimeOptions {
  * Options for container runtime.
  */
 export interface IContainerRuntimeOptions {
-    summaryOptions?: ISummaryRuntimeOptions;
-    gcOptions?: IGCRuntimeOptions;
+    readonly summaryOptions?: ISummaryRuntimeOptions;
+    readonly gcOptions?: IGCRuntimeOptions;
     /**
      * Affects the behavior while loading the runtime when the data verification check which
      * compares the DeltaManager sequence number (obtained from protocol in summary) to the
@@ -288,20 +288,20 @@ export interface IContainerRuntimeOptions {
      * 2. "log" will log an error event to telemetry, but still continue to load.
      * 3. "bypass" will skip the check entirely. This is not recommended.
      */
-    loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     /**
      * Should the runtime use data store aliasing for creating root datastores.
      * In case of aliasing conflicts, the runtime will raise an exception which does
      * not effect the status of the container.
      */
-    useDataStoreAliasing?: boolean;
+    readonly useDataStoreAliasing?: boolean;
     /**
      * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
      * send all operations to the driver layer, while in TurnBased the operations will be buffered
      * and then sent them as a single batch at the end of the turn.
      * By default, flush mode is TurnBased.
      */
-    flushMode?: FlushMode;
+    readonly flushMode?: FlushMode;
 }
 
 type IRuntimeMessageMetadata = undefined | {

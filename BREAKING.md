@@ -14,7 +14,11 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
-# 0.58
+## 0.59
+- [`IContainerRuntimeBase.setFlushMode` is deprecated](#IContainerRuntimeBase.setFlushMode-is-deprecated)
+
+### `IContainerRuntimeBase.setFlushMode` is deprecated
+`IContainerRuntimeBase.setFlushMode` is deprecated and will be removed in a future release. FlushMode will become an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977)
 
 ## 0.58 Upcoming changes
 - [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
