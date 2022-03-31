@@ -44,7 +44,7 @@
     "@fluidframework/core-interfaces": "^0.42.0",
     "@fluidframework/datastore": "^0.58.3000",
     "@fluidframework/datastore-definitions": "^0.58.3000",
-    "@fluidframework/driver-definitions": "^0.45.1000",
+    "@fluidframework/driver-definitions": "^0.45.2000-0",
     "@fluidframework/file-driver": "^0.58.3000",
     "@fluidframework/ink": "^0.58.3000",
     "@fluidframework/map": "^0.58.3000",

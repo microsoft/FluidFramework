@@ -38,7 +38,7 @@ export class DirectoryFactory {
 }
 
 // @public
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, IDisposable {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     createSubDirectory(subdirName: string): IDirectory;
     deleteSubDirectory(subdirName: string): boolean;
