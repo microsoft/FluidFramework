@@ -28,8 +28,6 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:gen": "concurrently npm:build:gen:ver typetests:gen",
-    "typetests:gen": "fluid-type-validator -d .",
-    "typetests:prepare": "fluid-type-validator -d . -p",
     "build:gen:ver": "gen-version",
     "build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
     "build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
@@ -54,7 +52,9 @@
     "test:report": "nyc npm run test:mocha:report && npm run test:jest:report",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -d .",
+    "typetests:prepare": "fluid-type-validator -d . -p"
   },
   "nyc": {
     "all": true,
