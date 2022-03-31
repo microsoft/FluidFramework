@@ -13,10 +13,10 @@ import { Packr } from "msgpackr";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelFactory,
+    IChannelAttributes,
+    IFluidDataStoreRuntime,
+    IChannelStorageService,
+    IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
@@ -25,9 +25,9 @@ import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-ba
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 
 import {
-	ChangeSet,
-	Utils as ChangeSetUtils,
-	rebaseToRemoteChanges,
+    ChangeSet,
+    Utils as ChangeSetUtils,
+    rebaseToRemoteChanges,
 } from "@fluid-experimental/property-changeset";
 
 import { PropertyFactory, BaseProperty, NodeProperty } from "@fluid-experimental/property-properties";
@@ -44,30 +44,30 @@ type FetchUnrebasedChangeFn = (guid: string) => IRemotePropertyTreeMessage;
 type FetchRebasedChangesFn = (startGuid: string, endGuid?: string) => IPropertyTreeMessage[];
 
 export const enum OpKind {
-	// eslint-disable-next-line @typescript-eslint/no-shadow
-	ChangeSet = 0,
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    ChangeSet = 0,
 }
 
 export interface IPropertyTreeMessage {
-	op: OpKind;
-	changeSet: SerializedChangeSet;
-	metadata: Metadata;
-	guid: string;
-	referenceGuid: string;
-	remoteHeadGuid: string;
-	localBranchStart: string | undefined;
-	rebaseMetaInformation?: Map<any, any>;
-	useMH?: boolean;
+    op: OpKind;
+    changeSet: SerializedChangeSet;
+    metadata: Metadata;
+    guid: string;
+    referenceGuid: string;
+    remoteHeadGuid: string;
+    localBranchStart: string | undefined;
+    rebaseMetaInformation?: Map<any, any>;
+    useMH?: boolean;
 }
 
 export interface IRemotePropertyTreeMessage extends IPropertyTreeMessage {
-	sequenceNumber: number;
+    sequenceNumber: number;
 }
 interface ISnapshot {
-	branchGuid: string;
-	summaryMinimumSequenceNumber: number;
-	useMH: boolean;
-	numChunks: number;
+    branchGuid: string;
+    summaryMinimumSequenceNumber: number;
+    useMH: boolean;
+    numChunks: number;
 }
 export interface ISnapshotSummary {
 	remoteTipView?: SerializedChangeSet;
@@ -76,9 +76,9 @@ export interface ISnapshotSummary {
 }
 
 export interface SharedPropertyTreeOptions {
-	paths?: string[];
-	clientFiltering?: boolean;
-	useMH?: boolean;
+    paths?: string[];
+    clientFiltering?: boolean;
+    useMH?: boolean;
 }
 
 export interface ISharedPropertyTreeEncDec {
@@ -769,12 +769,12 @@ export class SharedPropertyTree extends SharedObject {
 			const viewCS = new ChangeSet(this.tipView);
             viewCS.applyChangeSet(newTipDelta);
             viewCS.applyChangeSet(pendingChanges);
-		}
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	protected applyStashedOp() {
-		throw new Error("not implemented");
-	}
+    protected applyStashedOp() {
+        throw new Error("not implemented");
+    }
 }
