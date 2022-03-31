@@ -1714,7 +1714,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         this.mc.logger.sendTelemetryEvent({
-            eventName: "FlushModeUpdate",
+            eventName: "FlushMode Updated",
             old: this._flushMode,
             new: mode,
         });
