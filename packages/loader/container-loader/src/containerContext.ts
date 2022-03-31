@@ -20,6 +20,7 @@ import {
     IFluidCodeDetailsComparer,
     IProvideFluidCodeDetailsComparer,
     ICodeDetailsLoader,
+    IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import {
     IFluidObject,
@@ -44,7 +45,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { Container } from "./container";
-import { IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 

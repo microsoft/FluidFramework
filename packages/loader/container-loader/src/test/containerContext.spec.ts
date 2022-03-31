@@ -9,6 +9,8 @@ import {
     ILoader,
     IRuntime,
     IRuntimeFactory,
+    ICodeDetailsLoader,
+    IFluidModuleWithDetails,
     IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
@@ -23,7 +25,6 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Container } from "../container";
 import { ContainerContext } from "../containerContext";
-import { ICodeDetailsLoader } from "../loader";
 
 describe("ContainerContext Tests", () => {
     let sandbox: Sinon.SinonSandbox;
@@ -57,7 +58,7 @@ describe("ContainerContext Tests", () => {
     })(defaultErrorHandler);
 
     const createTestContext = async (
-        codeLoader: unknown, /* ICodeDetailsLoader */
+        codeLoader: unknown,
         existing: boolean = true,
     ) => {
         return ContainerContext.createOrLoad(
@@ -89,14 +90,20 @@ describe("ContainerContext Tests", () => {
     it("Should load code using legacy loader", async () => {
         // Arrange
         const proposedCodeDetails = codeDetailsForVersion("2.0.0");
+        const load = async (): Promise<IFluidModuleWithDetails> => {
+            return {
+                module: { fluidExport: { } },
+                details: proposedCodeDetails,
+            };
+        };
 
-        const simpleCodeLoader = { load: async () => {} };
+        const simpleCodeLoader = { load };
         const mockCodeLoader = sandbox.mock(simpleCodeLoader);
         // emulate legacy ICodeLoader
         mockCodeLoader
             .expects("load")
             .once()
-            .resolves({ fluidExport: mockRuntimeFactory });
+            .resolves({ module: { fluidExport: mockRuntimeFactory }, details: proposedCodeDetails });
 
         // Act
         const testContext = await createTestContext(simpleCodeLoader);
@@ -117,9 +124,15 @@ describe("ContainerContext Tests", () => {
     it("Should load code without details", async () => {
         // Arrange
         const proposedCodeDetails = codeDetailsForVersion("2.0.0");
+        const load = async (): Promise<IFluidModuleWithDetails> => {
+            return {
+                module: { fluidExport: { } },
+                details: { } as any,
+            };
+        };
 
         const codeDetailsLoader = {
-            load: async () => {},
+            load,
             get IFluidCodeDetailsComparer() {
                 return this;
             },
@@ -142,7 +155,7 @@ describe("ContainerContext Tests", () => {
             .resolves(true);
 
         // Act
-        const testContext = await createTestContext(codeDetailsLoader);
+        const testContext = await createTestContext(codeDetailsLoader as any);
 
         // Assert
         strict.ok(testContext);
@@ -157,9 +170,15 @@ describe("ContainerContext Tests", () => {
         // Arrange
         const proposedCodeDetails = codeDetailsForVersion("2.0.0");
         const moduleCodeDetails = codeDetailsForVersion("3.0.0");
+        const load = async (): Promise<IFluidModuleWithDetails> => {
+            return {
+                module: { fluidExport: { } },
+                details: proposedCodeDetails,
+            };
+        };
 
         const codeDetailsLoader = {
-            load: async () => {},
+            load,
             get IFluidCodeDetailsComparer() {
                 return this;
             },
