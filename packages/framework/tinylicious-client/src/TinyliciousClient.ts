@@ -7,7 +7,12 @@ import {
     IDocumentServiceFactory,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import {
+    AttachState,
+    IContainer,
+    IFluidCodeDetails,
+    IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
     createTinyliciousCreateNewRequest,
@@ -119,8 +124,14 @@ export class TinyliciousClient {
         const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
-        const module = { fluidExport: containerRuntimeFactory };
-        const codeLoader = { load: async () => module };
+        const load = async (fluidCodeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+            return {
+                module: { fluidExport: containerRuntimeFactory },
+                details: fluidCodeDetails,
+            };
+        };
+
+        const codeLoader = { load };
         const loader = new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,

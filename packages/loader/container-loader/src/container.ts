@@ -30,7 +30,6 @@ import {
     IPendingLocalState,
     ReadOnlyInfo,
     IContainerLoadMode,
-    ICodeDetailsLoader,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
@@ -1750,7 +1749,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._context = await ContainerContext.createOrLoad(
             this,
             this.scope,
-            this.codeLoader as ICodeDetailsLoader,
+            this.codeLoader,
             codeDetails,
             snapshot,
             new DeltaManagerProxy(this._deltaManager),

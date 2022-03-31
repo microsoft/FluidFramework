@@ -7,7 +7,12 @@ import {
     IDocumentServiceFactory,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import {
+    AttachState,
+    IContainer,
+    IFluidCodeDetails,
+    IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
@@ -138,8 +143,14 @@ export class AzureClient {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
-        const module = { fluidExport: runtimeFactory };
-        const codeLoader = { load: async () => module };
+        const load = async (fluidCodeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+            return {
+                module: { fluidExport: runtimeFactory },
+                details: fluidCodeDetails,
+            };
+        };
+
+        const codeLoader = { load };
         return new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,

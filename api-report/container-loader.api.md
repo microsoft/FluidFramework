@@ -10,7 +10,6 @@ import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { ICodeLoader } from '@fluidframework/container-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerEvents } from '@fluidframework/container-definitions';
@@ -155,7 +154,7 @@ export interface ILoaderOptions extends ILoaderOptions_2 {
 
 // @public
 export interface ILoaderProps {
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
     readonly configProvider?: IConfigProviderBase;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
@@ -168,7 +167,7 @@ export interface ILoaderProps {
 
 // @public
 export interface ILoaderServices {
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
