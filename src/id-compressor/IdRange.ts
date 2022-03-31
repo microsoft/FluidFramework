@@ -5,7 +5,6 @@
 
 import { assert } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
-import { fail } from '../Common';
 import { LocalCompressedId, OpSpaceCompressedId, SessionId } from '../Identifiers';
 
 /**
@@ -16,9 +15,7 @@ export type AttributionInfo = Serializable;
 /**
  * Data describing a range of session-local IDs (from a remote or local session).
  *
- * A range is composed of two adjacent sub-ranges of local IDs:
- * 1. A range of local IDs that were explicitly generated. Some of these may have overrides.
- * 2. A subsequent run of implicitly-generated local IDs, which never have overrides.
+ * A range is composed of local IDs that were generated. Some of these may have overrides.
  *
  * @example
  * Suppose an IdCompressor generated a sequence of local IDs as follows:
@@ -28,43 +25,28 @@ export type AttributionInfo = Serializable;
  * compressor.generateLocalId()
  * compressor.generateLocalId('0ed545f8-e97e-4dc1-acf9-c4a783258bdf')
  * compressor.generateLocalId()
- * compressor.takeNextRange(3)
+ * compressor.generateLocalId()
+ * compressor.takeNextCreationRange()
  * ```
- * This would result in the following explicit and implicit sub-ranges:
- * * Explicits:
+ * This would result in the following range:
  * ```
  * {
  *     first: localId1,
- *     last: localId5,
+ *     last: localId6,
  *     overrides: [[localId2, '0093cf29-9454-4034-8940-33b1077b41c3'], [localId4, '0ed545f8-e97e-4dc1-acf9-c4a783258bdf']]
  * }
  * ```
- * * Implicits:
- * ```
- * {
- *     first: localId6,
- *     last: localId8
- * }
- * ```
  */
-export interface IdRange {
+export interface IdCreationRange {
 	readonly sessionId: SessionId;
-	readonly ids?: IdRange.Ids;
+	readonly ids?: IdCreationRange.Ids;
 	readonly attributionInfo?: AttributionInfo;
 }
 
 export type UnackedLocalId = LocalCompressedId & OpSpaceCompressedId;
 
-export namespace IdRange {
+export namespace IdCreationRange {
 	export type Ids =
-		| ({ readonly implicits?: Pick<Implicits, 'last'> } & HasExplicits)
-		| { readonly implicits: Implicits };
-
-	export interface HasExplicits {
-		readonly explicits: Explicits;
-	}
-
-	export type Explicits =
 		| {
 				readonly first: UnackedLocalId;
 				readonly last: UnackedLocalId;
@@ -78,66 +60,32 @@ export namespace IdRange {
 		readonly overrides: Overrides;
 	}
 
-	export interface Implicits {
-		readonly first: UnackedLocalId;
-		readonly last: UnackedLocalId;
-	}
-
 	export type Override = readonly [id: UnackedLocalId, override: string];
 	export type Overrides = readonly [Override, ...Override[]];
 
-	export function getExplicits(
-		range: IdRange
+	export function getIds(
+		range: IdCreationRange
 	): { first: UnackedLocalId; last: UnackedLocalId; overrides?: Overrides } | undefined {
-		if (range.ids === undefined) {
+		const { ids } = range;
+		if (ids === undefined) {
 			return undefined;
 		}
 
-		const ids = range.ids as Partial<HasExplicits>;
+		let first = ids.first;
+		let last = ids.last;
 
-		if (ids.explicits === undefined) {
-			return undefined;
+		const overrides = ids as Partial<HasOverrides>;
+		if (overrides.overrides !== undefined) {
+			first ??= overrides.overrides[0][0];
+			last ??= overrides.overrides[overrides.overrides.length - 1][0];
 		}
 
-		let first = ids.explicits.first;
-		let last = ids.explicits.last;
-
-		const explicits = ids.explicits as Partial<HasOverrides>;
-
-		if (explicits.overrides !== undefined) {
-			first ??= explicits.overrides[0][0];
-			last ??= explicits.overrides[explicits.overrides.length - 1][0];
-		}
-
-		assert(first !== undefined && last !== undefined, 'malformed IdRange');
+		assert(first !== undefined && last !== undefined, 'malformed IdCreationRange');
 
 		return {
 			first,
 			last,
-			overrides: explicits.overrides,
+			overrides: overrides.overrides,
 		};
 	}
-
-	export function getImplicits(range: IdRange): (Implicits & { count: number }) | undefined {
-		if (range.ids === undefined) {
-			return undefined;
-		}
-
-		const ids = range.ids as Ids & Partial<HasExplicits>;
-		const implicits = ids.implicits as (Partial<Pick<Implicits, 'first'>> & Pick<Implicits, 'last'>) | undefined;
-		if (implicits === undefined) {
-			return undefined;
-		}
-		const first = implicits.first ?? ((getLast(ids.explicits ?? fail('malformed IdRange')) - 1) as UnackedLocalId);
-		const last = implicits.last;
-		return { first, last, count: first - last + 1 };
-	}
-}
-
-function getLast(explicits: IdRange.Explicits & Partial<IdRange.HasOverrides>): UnackedLocalId {
-	let last = explicits.last;
-	if (explicits.overrides !== undefined) {
-		last ??= explicits.overrides[explicits.overrides.length - 1][0];
-	}
-	return last ?? fail('malformed IdRange');
 }

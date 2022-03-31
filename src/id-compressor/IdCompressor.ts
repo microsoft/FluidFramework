@@ -26,7 +26,7 @@ import {
 	CompressedId,
 } from '../Identifiers';
 import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from './AppendOnlySortedMap';
-import { AttributionInfo, IdRange, UnackedLocalId } from './IdRange';
+import { AttributionInfo, IdCreationRange, UnackedLocalId } from './IdRange';
 import {
 	numericUuidEquals,
 	getPositiveDelta,
@@ -139,19 +139,28 @@ export function isLocalId(id: CompressedId): id is LocalCompressedId {
 }
 
 /**
- * A object for retrieving the session-space IDs for a range of implicit IDs.
+ * A object for retrieving the session-space IDs for a range of IDs.
  * Optimized to avoid allocating an array of IDs.
  */
-export interface ImplicitIdRange {
+export interface IdRange {
 	/**
 	 * The length of the ID range.
 	 */
 	readonly length: number;
 
 	/**
-	 * Returns the implicit ID in range at the provided index.
+	 * Returns the ID in range at the provided index.
 	 */
 	get(index: number): SessionSpaceCompressedId;
+}
+
+/**
+ * A serializable descriptor of a range of session-space IDs.
+ * The contained IDs must be retrieved by calling `getIdsFromRange`, which returns an `IdRange`.
+ */
+export interface IdRangeDescriptor<TId extends LocalCompressedId | OpSpaceCompressedId> {
+	readonly first: TId;
+	readonly count: number;
 }
 
 /**
@@ -313,7 +322,7 @@ export class IdCompressor {
 	private localIdCount = 0;
 
 	/**
-	 * The most recent (i.e. smallest, due to being negative) local ID in a range returned by `takeNextRange`.
+	 * The most recent (i.e. smallest, due to being negative) local ID in a range returned by `takeNextCreationRange`.
 	 * Undefined if no non-empty ranges have ever been returned by this compressor.
 	 */
 	private lastTakenLocalId: LocalCompressedId | undefined;
@@ -383,11 +392,11 @@ export class IdCompressor {
 		assert(reservedIdCount >= 0, 'reservedIdCount must be non-negative');
 		this.localSession = this.createSession(localSessionId, attributionInfo);
 		if (reservedIdCount > 0) {
-			const reservedIdRange: IdRange = {
+			const reservedIdRange: IdCreationRange = {
 				sessionId: reservedSessionId,
 				ids: {
-					implicits: { last: -reservedIdCount as UnackedLocalId },
-					explicits: { overrides: [[-1 as UnackedLocalId, sharedTreeInitialTreeId]] }, // Kludge: see `initialTreeId`
+					last: -reservedIdCount as UnackedLocalId,
+					overrides: [[-1 as UnackedLocalId, sharedTreeInitialTreeId]], // Kludge: see `initialTreeId`
 				},
 			};
 			// Reserved final IDs are implicitly finalized and no one locally created them, so finalizing immediately is safe.
@@ -453,155 +462,118 @@ export class IdCompressor {
 	}
 
 	/**
-	 * Provides the session-space IDs corresponding to a range of implicit IDs.
-	 * See `ImplicitIdRange` for more details.
+	 * Provides the session-space IDs corresponding to a range of IDs.
+	 * See `IdRange` for more details.
 	 */
-	public getImplicitIdsFromRange(localRange: IdRange): ImplicitIdRange {
-		const { sessionId } = localRange;
-		const implicits = IdRange.getImplicits(localRange);
-
+	public getIdsFromRange(
+		rangeDescriptor: IdRangeDescriptor<SessionSpaceCompressedId>,
+		sessionId: SessionId
+	): IdRange {
+		const { first, count } = rangeDescriptor;
 		if (sessionId === this.localSessionId) {
-			if (implicits === undefined) {
-				return {
-					length: 0,
-					get: () => fail('No implicit IDs exist in range.'),
-				};
-			}
-
-			const { first, count } = implicits;
 			return {
 				length: count,
 				get: (index: number) => {
 					if (index < 0 || index >= count) {
-						fail('Index out of bounds of implicit range.');
+						fail('Index out of bounds of range.');
 					}
 					return (first - index) as LocalCompressedId;
 				},
 			};
 		} else {
-			if (implicits === undefined) {
-				return {
-					length: 0,
-					get: () => fail('No implicit IDs exist in range.'),
-				};
-			} else {
-				const { first, count } = implicits;
-				const session = this.tryGetSession(sessionId) ?? fail('Unknown session, range may not be finalized.');
-				const firstNumericUuid = incrementUuid(session.sessionUuid, -first - 1);
-				const firstImplicitFinal =
-					this.compressNumericUuid(firstNumericUuid) ??
-					fail('Remote range must be finalized before getting IDs.');
-				assert(
-					isFinalId(firstImplicitFinal),
-					'Implicit IDs from a remote session ID must have final form, as overrides are impossible by definition.'
+			const session = this.tryGetSession(sessionId) ?? fail('Unknown session, range may not be finalized.');
+			const firstNumericUuid = incrementUuid(session.sessionUuid, -first - 1);
+			const firstFinal =
+				this.compressNumericUuid(firstNumericUuid) ??
+				fail('Remote range must be finalized before getting IDs.');
+			assert(
+				isFinalId(firstFinal),
+				'ID from a remote session ID must have final form, as overrides are impossible by definition.'
+			);
+			const [baseFinalId, cluster] = this.getClusterForFinalId(firstFinal) ?? fail();
+			const numIdsRemainingInFirstCluster = cluster.capacity - (firstFinal - baseFinalId);
+			let pivotFinal: FinalCompressedId | undefined;
+			if (count > numIdsRemainingInFirstCluster) {
+				const compressedPivot = this.compressNumericUuid(
+					incrementUuid(firstNumericUuid, numIdsRemainingInFirstCluster)
 				);
-				const [baseFinalId, cluster] = this.getClusterForFinalId(firstImplicitFinal) ?? fail();
-				const numImplicitsRemainingInFirstCluster = cluster.capacity - (firstImplicitFinal - baseFinalId);
-				let pivotFinal: FinalCompressedId | undefined;
-				if (count > numImplicitsRemainingInFirstCluster) {
-					const compressedPivot = this.compressNumericUuid(
-						incrementUuid(firstNumericUuid, numImplicitsRemainingInFirstCluster)
+				// Looking up the actual cluster can be avoided, as it is guaranteed that at most one new cluster will be
+				// created when finalizing a range (regardless of size) due to the expansion optimization.
+				if (compressedPivot === undefined || isLocalId(compressedPivot)) {
+					fail(
+						'ID from a remote session ID must have final form, as overrides are impossible by definition.'
 					);
-					// Looking up the actual cluster can be avoided, as it is guaranteed that at most one new cluster will be
-					// created when finalizing a range (regardless of size) due to the expansion optimization.
-					if (compressedPivot === undefined || isLocalId(compressedPivot)) {
-						fail(
-							'Implicit IDs from a remote session ID must have final form, as overrides are impossible by definition.'
-						);
-					} else {
-						pivotFinal = compressedPivot;
-					}
+				} else {
+					pivotFinal = compressedPivot;
 				}
-
-				return {
-					length: count,
-					get: (index: number) => {
-						if (index < 0 || index >= count) {
-							fail('Index out of bounds of implicit range.');
-						}
-						if (index < numImplicitsRemainingInFirstCluster) {
-							return (firstImplicitFinal + index) as FinalCompressedId & SessionSpaceCompressedId;
-						} else {
-							return ((pivotFinal ?? fail('Pivot must exist if range spans clusters.')) +
-								(index - numImplicitsRemainingInFirstCluster)) as FinalCompressedId &
-								SessionSpaceCompressedId;
-						}
-					},
-				};
 			}
+
+			return {
+				length: count,
+				get: (index: number) => {
+					if (index < 0 || index >= count) {
+						fail('Index out of bounds of range.');
+					}
+					if (index < numIdsRemainingInFirstCluster) {
+						return (firstFinal + index) as FinalCompressedId & SessionSpaceCompressedId;
+					} else {
+						return ((pivotFinal ?? fail('Pivot must exist if range spans clusters.')) +
+							(index - numIdsRemainingInFirstCluster)) as FinalCompressedId & SessionSpaceCompressedId;
+					}
+				},
+			};
 		}
 	}
 
 	/**
 	 * Returns a range of local IDs created by this session in a format for sending to the server for finalizing.
-	 * The range will include the supplied number of implicit IDs as well as all local IDs generated via calls to
-	 * `generateCompressedId` since the last time this method was called.
-	 * @param implicitCount the number of implicit local IDs in the range. Zero should be passed if no implicits should be in the range.
-	 * @returns the range of session-local IDs, or undefined if none exist. This range must be sent to the server for ordering before
+	 * The range will include all local IDs generated via calls to `generateCompressedId` since the last time this method was called.
+	 * @returns the range of session-local IDs, which may be empty. This range must be sent to the server for ordering before
 	 * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
 	 */
-	public takeNextRange(implicitCount: number): IdRange {
-		assert(implicitCount >= 0, 'Implicit count cannot be negative.');
-		const firstImplicitLocal = -(this.localIdCount + 1) as UnackedLocalId;
-		const lastExplicitLocal = (firstImplicitLocal + 1) as UnackedLocalId;
+	public takeNextCreationRange(): IdCreationRange {
+		const lastLocalInRange = -this.localIdCount as UnackedLocalId;
 		const lastTakenNormalized = this.lastTakenLocalId ?? 0;
-		assert(lastExplicitLocal <= lastTakenNormalized);
+		assert(lastLocalInRange <= lastTakenNormalized);
 
-		let explicits: IdRange.Explicits | undefined;
-		if (lastExplicitLocal !== lastTakenNormalized) {
-			const firstExplicitLocal = (lastTakenNormalized - 1) as UnackedLocalId;
+		let ids: IdCreationRange.Ids | undefined;
+		if (lastLocalInRange !== lastTakenNormalized) {
+			const firstLocalInRange = (lastTakenNormalized - 1) as UnackedLocalId;
 			const localOverrides = [
 				...this.localOverrides.getRange(
 					(lastTakenNormalized - 1) as LocalCompressedId,
-					(firstImplicitLocal + 1) as LocalCompressedId
+					lastLocalInRange as LocalCompressedId
 				),
 			];
 			if (localOverrides.length > 0) {
 				// Cast: typecript 4.4.4 doesn't infer that `localOverrides` has at least one element and is therefore an `Overrides`
-				const overrides = localOverrides as unknown as IdRange.Overrides;
-				assert(overrides[0][0] <= firstExplicitLocal);
-				assert(overrides[overrides.length - 1][0] >= lastExplicitLocal);
-				explicits = {
+				const overrides = localOverrides as unknown as IdCreationRange.Overrides;
+				assert(overrides[0][0] <= firstLocalInRange);
+				assert(overrides[overrides.length - 1][0] >= lastLocalInRange);
+				ids = {
 					overrides,
 				};
-				const first = firstExplicitLocal === overrides[0][0] ? undefined : firstExplicitLocal;
-				const last = lastExplicitLocal === overrides[overrides.length - 1][0] ? undefined : lastExplicitLocal;
-				setPropertyIfDefined(first, explicits, 'first');
-				setPropertyIfDefined(last, explicits, 'last');
+				const first = firstLocalInRange === overrides[0][0] ? undefined : firstLocalInRange;
+				const last = lastLocalInRange === overrides[overrides.length - 1][0] ? undefined : lastLocalInRange;
+				setPropertyIfDefined(first, ids, 'first');
+				setPropertyIfDefined(last, ids, 'last');
 			} else {
-				explicits = {
-					first: firstExplicitLocal,
-					last: lastExplicitLocal,
+				ids = {
+					first: firstLocalInRange,
+					last: lastLocalInRange,
 				};
 			}
-			this.lastTakenLocalId = lastExplicitLocal;
+			this.lastTakenLocalId = lastLocalInRange;
 		}
 
-		const range: Mutable<IdRange> = { sessionId: this.localSessionId };
+		const range: Mutable<IdCreationRange> = { sessionId: this.localSessionId };
 		if (!this.sentAttributionInfo) {
 			setPropertyIfDefined(this.localSession.attributionInfo, range, 'attributionInfo');
 			this.sentAttributionInfo = true;
 		}
-		if (explicits === undefined && implicitCount === 0) {
-			return range;
-		}
 
-		let ids: IdRange.Ids;
-		if (implicitCount !== 0) {
-			const lastImplicitLocal = (firstImplicitLocal - implicitCount + 1) as UnackedLocalId;
-			this.localIdCount += implicitCount;
-			if (explicits === undefined) {
-				ids = { implicits: { first: firstImplicitLocal, last: lastImplicitLocal } };
-			} else {
-				ids = { explicits, implicits: { last: lastImplicitLocal } };
-			}
-			assert(
-				ids.implicits !== undefined && ids.implicits.last < (this.lastTakenLocalId ?? lastTakenNormalized),
-				'Implicits must be ordered after explicits'
-			);
-			this.lastTakenLocalId = ids.implicits.last;
-		} else {
-			ids = { explicits: explicits ?? fail('No explicits and no implicits should have returned earlier.') };
+		if (ids === undefined) {
+			return range;
 		}
 
 		assert(
@@ -617,7 +589,7 @@ export class IdCompressor {
 	 * Finalizes the supplied range of IDs (which may be from either a remote or local session).
 	 * @param range the range of session-local IDs to finalize.
 	 */
-	public finalizeRange(range: IdRange): void {
+	public finalizeRange(range: IdCreationRange): void {
 		const { sessionId, attributionInfo } = range;
 
 		const isLocal = sessionId === this.localSessionId;
@@ -628,9 +600,8 @@ export class IdCompressor {
 		);
 		session ??= this.createSession(sessionId, attributionInfo);
 
-		const implicits = IdRange.getImplicits(range);
-		const explicits = IdRange.getExplicits(range);
-		if (implicits === undefined && explicits === undefined) {
+		const ids = IdCreationRange.getIds(range);
+		if (ids === undefined) {
 			return;
 		}
 
@@ -641,9 +612,8 @@ export class IdCompressor {
 		};
 
 		const normalizedLastFinalized = session.lastFinalizedLocalId ?? 0;
-		const newFirstFinalizedLocalId = explicits?.first ?? implicits?.first;
+		const { first: newFirstFinalizedLocalId, last: newLastFinalizedLocalId } = ids;
 		assert(newFirstFinalizedLocalId === normalizedLastFinalized - 1, 'Ranges finalized out of order.');
-		const newLastFinalizedLocalId = implicits?.last ?? explicits?.last ?? fail();
 
 		// The total number of session-local IDs to finalize
 		const finalizeCount = normalizedLastFinalized - newLastFinalizedLocalId;
@@ -735,7 +705,7 @@ export class IdCompressor {
 		}
 
 		// If there are overrides, we must determine which cluster object (current or overflow) each belongs to and add it.
-		const overrides = explicits?.overrides;
+		const overrides = ids.overrides;
 		if (overrides !== undefined) {
 			for (let i = 0; i < overrides.length; i++) {
 				const [overriddenLocal, override] = overrides[i];
@@ -744,7 +714,7 @@ export class IdCompressor {
 				assert(overriddenLocal < normalizedLastFinalized, 'Ranges finalized out of order.');
 				assert(
 					overriddenLocal >= newLastFinalizedLocalId,
-					'Malformed range: override ID ahead of implicit range start.'
+					'Malformed range: override ID ahead of range start.'
 				);
 				let cluster: IdCluster;
 				let overriddenFinal: FinalCompressedId;
@@ -995,6 +965,23 @@ export class IdCompressor {
 		} else {
 			return this.generateNextLocalId();
 		}
+	}
+
+	/**
+	 * Generates a range of compressed IDs.
+	 * This should ONLY be called to generate IDs for local operations.
+	 * @param count the number of IDs to generate, must be > 0.
+	 * @returns a persistable descriptor of the ID range.
+	 */
+	public generateCompressedIdRange(count: number): IdRangeDescriptor<LocalCompressedId> {
+		assert(count > 0, 'Must generate a nonzero number of IDs.');
+		assert(
+			count <= Number.MAX_SAFE_INTEGER,
+			'The number of allocated local IDs must not exceed the JS maximum safe integer.'
+		);
+		const first = this.generateNextLocalId();
+		this.localIdCount += count - 1;
+		return { first, count };
 	}
 
 	private generateNextLocalId(): LocalCompressedId {
@@ -1834,7 +1821,7 @@ interface SerializedLocalState {
 	sentAttributionInfo: boolean;
 
 	/**
-	 * The most recent local ID in a range returned by `takeNextRange`.
+	 * The most recent local ID in a range returned by `takeNextCreationRange`.
 	 */
 	lastTakenLocalId: LocalCompressedId | undefined;
 }

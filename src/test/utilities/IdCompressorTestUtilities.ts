@@ -12,6 +12,7 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import {
 	IdCompressor,
+	IdRangeDescriptor,
 	isLocalId,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
@@ -25,7 +26,7 @@ import {
 	stableIdFromNumericUuid,
 } from '../../id-compressor/NumericUuid';
 import { SessionId, StableId, SessionSpaceCompressedId } from '../../Identifiers';
-import { IdRange } from '../../id-compressor/IdRange';
+import { IdCreationRange } from '../../id-compressor/IdRange';
 import { FinalCompressedId } from '../..';
 
 /** Identifies a compressor in a network */
@@ -102,7 +103,10 @@ export const sessionNumericUuids = new Map(
 
 /** An immutable view of an `IdCompressor` */
 export interface ReadonlyIdCompressor
-	extends Omit<IdCompressor, 'generateCompressedId' | 'takeNextRange' | 'finalizeRange'> {
+	extends Omit<
+		IdCompressor,
+		'generateCompressedId' | 'generateCompressedIdRange' | 'takeNextCreationRange' | 'finalizeRange'
+	> {
 	readonly clusterCapacity: number;
 }
 
@@ -124,7 +128,7 @@ export class IdCompressorTestNetwork {
 	/** The compressors used in this network */
 	private readonly compressors: ClientMap<IdCompressor>;
 	/** The log of operations seen by the server so far. Append-only. */
-	private readonly serverOperations: ([range: IdRange, clientFrom: Client] | number)[] = [];
+	private readonly serverOperations: ([range: IdCreationRange, clientFrom: Client] | number)[] = [];
 	/** An index into `serverOperations` for each client which represents how many operations have been delivered to that client */
 	private readonly clientProgress: ClientMap<number>;
 	/** All ids (local and sequenced) that a client has created or received, in order. */
@@ -239,28 +243,47 @@ export class IdCompressorTestNetwork {
 	 * Allocates a new range of local IDs and enqueues them for future delivery via a `testIdDelivery` action.
 	 * Calls to this method determine the total order of delivery, regardless of when `deliverOperations` is called.
 	 */
-	public allocateAndSendIds(client: Client, numIds: number, overrides: { [index: number]: string } = {}): IdRange {
+	public allocateAndSendIds(
+		client: Client,
+		numIds: number
+	): { range: IdRangeDescriptor<SessionSpaceCompressedId>; sessionId: SessionId };
+
+	/**
+	 * Allocates a new range of local IDs and enqueues them for future delivery via a `testIdDelivery` action.
+	 * Calls to this method determine the total order of delivery, regardless of when `deliverOperations` is called.
+	 */
+	public allocateAndSendIds(client: Client, numIds: number, overrides: { [index: number]: string }): IdCreationRange;
+
+	public allocateAndSendIds(
+		client: Client,
+		numIds: number,
+		overrides: { [index: number]: string } = {}
+	): { range: IdRangeDescriptor<SessionSpaceCompressedId>; sessionId: SessionId } | IdCreationRange {
 		assert(numIds > 0, 'Must allocate a non-zero number of IDs');
 		const compressor = this.compressors.get(client);
-		let nextExplicitIndex = 0;
+		let nextIdIndex = 0;
 		for (const [overrideIndex, uuid] of Object.entries(overrides)
 			.map(([id, uuid]) => [Number.parseInt(id, 10), uuid] as [number, string])
 			.sort(([a], [b]) => a - b)) {
-			while (nextExplicitIndex < overrideIndex) {
+			while (nextIdIndex < overrideIndex) {
 				this.addNewId(client, compressor.generateCompressedId(), undefined, client, false);
-				nextExplicitIndex += 1;
+				nextIdIndex += 1;
 			}
 			this.addNewId(client, compressor.generateCompressedId(uuid), uuid, client, false);
-			nextExplicitIndex += 1;
+			nextIdIndex += 1;
 		}
-		const numImplicits = numIds - nextExplicitIndex;
-		const range = compressor.takeNextRange(numImplicits);
-		const ids = compressor.getImplicitIdsFromRange(range);
-		for (let i = 0; i < numImplicits; i++) {
-			this.addNewId(client, ids.get(i), undefined, client, false);
+		const numTrailingIds = numIds - nextIdIndex;
+		let range: IdRangeDescriptor<SessionSpaceCompressedId> | undefined;
+		if (numTrailingIds > 0) {
+			range = compressor.generateCompressedIdRange(numTrailingIds);
+			const ids = compressor.getIdsFromRange(range, compressor.localSessionId);
+			for (let i = 0; i < numTrailingIds; i++) {
+				this.addNewId(client, ids.get(i), undefined, client, false);
+			}
 		}
-		this.serverOperations.push([range, client]);
-		return range;
+		const creationRange = compressor.takeNextCreationRange();
+		this.serverOperations.push([creationRange, client]);
+		return nextIdIndex === 0 ? { range: range ?? fail(), sessionId: compressor.localSessionId } : creationRange;
 	}
 
 	/**
@@ -276,13 +299,17 @@ export class IdCompressorTestNetwork {
 					const [range, clientFrom] = operation;
 					compressorTo.finalizeRange(range);
 
-					const explicits = IdRange.getExplicits(range);
-					if (explicits !== undefined) {
+					const ids = IdCreationRange.getIds(range);
+					if (ids !== undefined) {
 						let overrideIndex = 0;
-						const overrides = explicits.overrides;
-						for (let id = explicits.first; id >= explicits.last; id--) {
+						const overrides = ids.overrides;
+						for (let id = ids.first; id >= ids.last; id--) {
 							let override: string | undefined;
-							if (overrides !== undefined && id === overrides[overrideIndex][0]) {
+							if (
+								overrides !== undefined &&
+								overrideIndex < overrides.length &&
+								id === overrides[overrideIndex][0]
+							) {
 								override = overrides[overrideIndex][1];
 								overrideIndex++;
 							}
@@ -290,11 +317,6 @@ export class IdCompressorTestNetwork {
 							this.addNewId(clientTo, sessionSpaceId, override, clientFrom, true);
 						}
 						assert(overrideIndex === (overrides?.length ?? 0));
-					}
-
-					const ids = compressorTo.getImplicitIdsFromRange(range);
-					for (let i = 0; i < ids.length; i++) {
-						this.addNewId(clientTo, ids.get(i), undefined, clientFrom, true);
 					}
 				}
 			}

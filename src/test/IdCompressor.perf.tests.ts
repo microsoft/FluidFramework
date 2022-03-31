@@ -5,17 +5,25 @@
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
-import { fail } from '../Common';
+import { fail, Mutable } from '../Common';
 import {
 	defaultClusterCapacity,
 	IdCompressor,
+	IdRangeDescriptor,
 	isFinalId,
 	isLocalId,
 	SerializedIdCompressorWithNoSession,
 } from '../id-compressor/IdCompressor';
-import { IdRange } from '../id-compressor/IdRange';
+import { IdCreationRange, UnackedLocalId } from '../id-compressor/IdRange';
 import { createSessionId, numericUuidFromStableId, stableIdFromNumericUuid } from '../id-compressor/NumericUuid';
-import { CompressedId, FinalCompressedId, LocalCompressedId, OpSpaceCompressedId } from '../Identifiers';
+import {
+	CompressedId,
+	FinalCompressedId,
+	LocalCompressedId,
+	OpSpaceCompressedId,
+	SessionId,
+	SessionSpaceCompressedId,
+} from '../Identifiers';
 import {
 	Client,
 	IdCompressorTestNetwork,
@@ -28,7 +36,6 @@ describe('IdCompressor Perf', () => {
 	const type = BenchmarkType.Measurement;
 	const localClient = Client.Client1;
 	const remoteClient = Client.Client2;
-	const remoteClient2 = Client.Client3;
 	let compressor: IdCompressor;
 	let remoteCompressor: IdCompressor;
 
@@ -64,7 +71,11 @@ describe('IdCompressor Perf', () => {
 				1: 'override2',
 			});
 		}
-		network.allocateAndSendIds(localClient, 1, override ? { 0: 'override3' } : undefined);
+		if (override) {
+			network.allocateAndSendIds(localClient, 1, { 0: 'override3' });
+		} else {
+			network.allocateAndSendIds(localClient, 1);
+		}
 
 		if (!local) {
 			network.deliverOperations(localClient);
@@ -85,24 +96,29 @@ describe('IdCompressor Perf', () => {
 	}
 
 	[true, false].forEach((isLocal) => {
-		let range: IdRange | undefined;
-		const numImplicits = 100;
-		const clusterSize = Math.round(numImplicits / 2);
+		let range: IdRangeDescriptor<SessionSpaceCompressedId>;
+		let sessionId: SessionId;
+		const numIds = 100;
+		const clusterSize = Math.round(numIds / 2);
 		const setupRange = (isLocal: boolean) => {
 			setupCompressors(clusterSize, true, false);
-			range = (isLocal ? compressor : remoteCompressor).takeNextRange(numImplicits);
-			compressor.finalizeRange(range);
+			const originCompressor = isLocal ? compressor : remoteCompressor;
+			sessionId = originCompressor.localSessionId;
+			range = originCompressor.generateCompressedIdRange(numIds);
+			const creationRange = originCompressor.takeNextCreationRange();
+			compressor.finalizeRange(creationRange);
 		};
 		const beforeLocal = () => setupRange(false);
 		const beforeRemote = () => setupRange(true);
 		benchmark({
 			type,
-			title: `get ${numImplicits} implicit IDs for a ${isLocal ? 'local' : 'remote'} range`,
+			title: `get ${numIds} sequential IDs for a ${isLocal ? 'local' : 'remote'} range`,
 			before: isLocal ? beforeLocal : beforeRemote,
 			benchmarkFn: () => {
-				const ids = compressor.getImplicitIdsFromRange(range ?? fail());
-				for (let i = 0; i < numImplicits; i++) {
-					ids.get(i); // get an implicit ID
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const ids = compressor.getIdsFromRange(range!, sessionId!);
+				for (let i = 0; i < numIds; i++) {
+					ids.get(i); // get a sequential ID
 				}
 			},
 		});
@@ -127,9 +143,11 @@ describe('IdCompressor Perf', () => {
 
 	[true, false].forEach((override) => {
 		for (const clusterSize of [1, 10, 500, 1000]) {
-			const implicitCount = 5;
 			const overrideCount = 3;
-			let client = remoteClient;
+			const numIds = 7;
+			const session1 = '8150a099-5302-4672-b5f3-7a4492b59418' as SessionId;
+			const session2 = 'f2ded886-92da-4248-967b-eb96ee04cf51' as SessionId;
+			let session: SessionId = session1;
 			let lastFinalizedLocalId1 = 0 as LocalCompressedId;
 			let lastFinalizedLocalId2 = 0 as LocalCompressedId;
 			let overrideIndex = 0;
@@ -137,51 +155,52 @@ describe('IdCompressor Perf', () => {
 				type,
 				title: `finalize a range of IDs (cluster size =${clusterSize}${override ? ', overrides present' : ''})`,
 				before: () => {
-					setupCompressors(clusterSize, true, false);
+					setupCompressors(clusterSize, false, false);
 				},
 				benchmarkFn: () => {
 					// Create a range with as minimal overhead as possible, as we'd like for this code to not exist
 					// in the timing loop at all (but benchmark forces us to do so)
-					let firstImplicitLocal = ((client === remoteClient
-						? lastFinalizedLocalId1
-						: lastFinalizedLocalId2) - 1) as LocalCompressedId & OpSpaceCompressedId;
-					let overrides: [LocalCompressedId & OpSpaceCompressedId, string][] | undefined;
+					const isLocal = session === session1;
+					const first = ((isLocal ? lastFinalizedLocalId1 : lastFinalizedLocalId2) - 1) as LocalCompressedId &
+						OpSpaceCompressedId;
+					let overrides: Mutable<IdCreationRange.Overrides> | undefined;
 					const actualOverrideCount = override ? overrideCount : 0;
 					if (actualOverrideCount > 0) {
-						overrides = [];
+						overrides = [] as unknown as Mutable<IdCreationRange.Overrides>;
 						for (let i = 0; i < actualOverrideCount; i++) {
 							overrides.push([
-								(firstImplicitLocal - i) as LocalCompressedId & OpSpaceCompressedId,
+								(first - i) as LocalCompressedId & OpSpaceCompressedId,
 								`override${overrideIndex++}`,
 							]);
 						}
-						firstImplicitLocal = (firstImplicitLocal - actualOverrideCount) as LocalCompressedId &
-							OpSpaceCompressedId;
 					}
 
-					const range = {
-						sessionId: sessionIds.get(client),
-						explicitIds: overrides,
-						implicitIds: { firstImplicitLocal, implicitCount },
+					const last = (first - numIds) as UnackedLocalId;
+					const range: IdCreationRange = {
+						sessionId: session,
+						ids: {
+							first,
+							last,
+							overrides,
+						},
 					};
 
 					compressor.finalizeRange(range);
 
-					const lastFinalizedLocalIdT = (firstImplicitLocal - implicitCount) as LocalCompressedId;
-					if (client === remoteClient) {
-						lastFinalizedLocalId1 = lastFinalizedLocalIdT;
+					if (isLocal) {
+						lastFinalizedLocalId1 = last;
 					} else {
-						lastFinalizedLocalId2 = lastFinalizedLocalIdT;
+						lastFinalizedLocalId2 = last;
 					}
 					// Alternate clients to sidestep optimization that packs them all into last cluster
-					client = client === remoteClient ? remoteClient2 : remoteClient;
+					session = isLocal ? session1 : session2;
 				},
 			});
 		}
 	});
 
 	[true, false].forEach((override) => {
-		const implicitCount = 5;
+		const idCount = 5;
 		benchmark({
 			type,
 			title: `creates an ID range (${override ? 'with overrides' : ''})`,
@@ -192,7 +211,8 @@ describe('IdCompressor Perf', () => {
 				if (override) {
 					compressor.generateCompressedId(v4());
 				}
-				compressor.takeNextRange(implicitCount);
+				compressor.generateCompressedIdRange(idCount);
+				compressor.takeNextCreationRange();
 			},
 		});
 	});

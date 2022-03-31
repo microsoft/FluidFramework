@@ -28,7 +28,7 @@ import {
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid';
-import { IdRange, UnackedLocalId } from '../id-compressor/IdRange';
+import { IdCreationRange, UnackedLocalId } from '../id-compressor/IdRange';
 import {
 	createCompressor,
 	performFuzzActions,
@@ -165,7 +165,8 @@ describe('IdCompressor', () => {
 			compressor1.clusterCapacity = 5;
 			compressor2.clusterCapacity = 5;
 
-			compressor1.finalizeRange(compressor2.takeNextRange(1 /* one ID, enough to make a cluster */));
+			compressor2.generateCompressedId(); // one ID, enough to make a cluster
+			compressor1.finalizeRange(compressor2.takeNextCreationRange());
 
 			const localId = compressor1.generateCompressedId();
 			const stableId2 = assertIsStableId(compressor1.decompress(localId));
@@ -176,161 +177,108 @@ describe('IdCompressor', () => {
 		it('unifies overrides with sequential local IDs that have been finalized', () => {
 			const compressor = createCompressor(Client.Client1);
 			const id = compressor.generateCompressedId();
-			compressor.finalizeRange(compressor.takeNextRange(0));
+			compressor.finalizeRange(compressor.takeNextCreationRange());
 			const stableId = assertIsStableId(compressor.decompress(id));
 			const localId2 = compressor.generateCompressedId(stableId);
 			expect(localId2).to.equal(id, 'only one local ID should be allocated for the same sequential uuid');
 		});
 
-		it('cannot create negative amounts of implicit IDs', () => {
-			expect(() => createCompressor(Client.Client1).takeNextRange(-1)).to.throw(
-				'Implicit count cannot be negative.'
+		it('cannot create negative amounts of local IDs', () => {
+			expect(() => createCompressor(Client.Client1).generateCompressedIdRange(-1)).to.throw(
+				'Must generate a nonzero number of IDs.'
 			);
+		});
+
+		it('cannot create unacceptably large amounts of local IDs', () => {
+			expect(() =>
+				createCompressor(Client.Client1).generateCompressedIdRange(Number.MAX_SAFE_INTEGER + 2)
+			).to.throw('The number of allocated local IDs must not exceed the JS maximum safe integer.');
 		});
 	});
 
 	it('only sends attribution info on the first range from each session', () => {
 		const compressor = createCompressor(Client.Client1, 5, 'attribution');
-		const range1 = compressor.takeNextRange(0);
+		const range1 = compressor.takeNextCreationRange();
 		expectDefined(range1.attributionInfo);
-		const range2 = compressor.takeNextRange(1);
+		const range2 = compressor.takeNextCreationRange();
 		expect(range2.attributionInfo).to.be.undefined;
 	});
 
-	describe('can produce a range', () => {
+	describe('can produce a creation range', () => {
 		const tests: {
 			title: string;
 			overrideIndices: number[];
-			firstImplicitIndex: number;
-			implicitCount: number;
+			idCount: number;
 		}[] = [
-			{ title: 'that is empty', overrideIndices: [], firstImplicitIndex: 0, implicitCount: 0 },
-			{ title: 'with only implicit IDs', overrideIndices: [], firstImplicitIndex: 0, implicitCount: 3 },
+			{ title: 'that is empty', overrideIndices: [], idCount: 0 },
+			{ title: 'with only sequential IDs', overrideIndices: [], idCount: 3 },
 			{
 				title: 'with an overriding ID',
 				overrideIndices: [0],
-				firstImplicitIndex: 1,
-				implicitCount: 0,
+				idCount: 1,
 			},
 			{
-				title: 'with an explicit ID before an overriding ID',
+				title: 'with a sequential ID before an overriding ID',
 				overrideIndices: [1],
-				firstImplicitIndex: 2,
-				implicitCount: 0,
+				idCount: 2,
 			},
 			{
-				title: 'with an explicit ID after an overriding ID',
+				title: 'with a sequential ID after an overriding ID',
 				overrideIndices: [0],
-				firstImplicitIndex: 2,
-				implicitCount: 0,
+				idCount: 2,
 			},
 			{
-				title: 'with an overriding ID between explicit IDs',
+				title: 'with an overriding ID between sequential IDs',
 				overrideIndices: [1],
-				firstImplicitIndex: 3,
-				implicitCount: 0,
+				idCount: 3,
 			},
 			{
-				title: 'with an overriding ID and implicit IDs',
-				overrideIndices: [0],
-				firstImplicitIndex: 1,
-				implicitCount: 3,
-			},
-			{
-				title: 'with an explicit ID before an overriding ID and implicit IDs',
-				overrideIndices: [1],
-				firstImplicitIndex: 2,
-				implicitCount: 3,
-			},
-			{
-				title: 'with an explicit ID after an overriding ID and implicit IDs',
-				overrideIndices: [0],
-				firstImplicitIndex: 2,
-				implicitCount: 3,
-			},
-			{
-				title: 'with an overriding ID between explicit IDs and implicit IDs',
-				overrideIndices: [1],
-				firstImplicitIndex: 3,
-				implicitCount: 3,
+				title: 'with a sequential ID between override IDs',
+				overrideIndices: [0, 2],
+				idCount: 3,
 			},
 		];
 
-		tests.forEach(({ title, overrideIndices, firstImplicitIndex, implicitCount }) => {
+		tests.forEach(({ title, overrideIndices, idCount }) => {
 			it(title, () => {
 				const compressor = createCompressor(Client.Client1);
-				validateIdRange(compressor, firstImplicitIndex, implicitCount, new Set(overrideIndices));
+				validateIdCreationRange(compressor, idCount, new Set(overrideIndices));
 			});
 
-			tests.forEach(
-				({
-					title: title2,
-					overrideIndices: overrideIndices2,
-					firstImplicitIndex: firstImplicitIndex2,
-					implicitCount: implicitCount2,
-				}) => {
-					it(`${title2} after a range ${title}`, () => {
-						const compressor = createCompressor(Client.Client1);
-						const lastTaken = validateIdRange(
-							compressor,
-							firstImplicitIndex,
-							implicitCount,
-							new Set(overrideIndices)
-						);
-						validateIdRange(
-							compressor,
-							firstImplicitIndex2,
-							implicitCount2,
-							new Set(overrideIndices2),
-							lastTaken
-						);
-					});
-				}
-			);
+			tests.forEach(({ title: title2, overrideIndices: overrideIndices2, idCount: idCount2 }) => {
+				it(`${title2} after a range ${title}`, () => {
+					const compressor = createCompressor(Client.Client1);
+					const lastTaken = validateIdCreationRange(compressor, idCount, new Set(overrideIndices));
+					validateIdCreationRange(compressor, idCount2, new Set(overrideIndices2), lastTaken);
+				});
+			});
 		});
 
-		function validateIdRange(
+		function validateIdCreationRange(
 			compressor: IdCompressor,
-			firstImplicitIndex: number,
-			implicitCount: number,
+			idCount: number,
 			overrideIndices: Set<number>,
 			lastTakenId = 0 as UnackedLocalId
 		): UnackedLocalId {
 			const overrides: [SessionSpaceCompressedId, string?][] = [];
-			for (let i = 0; i < firstImplicitIndex; i++) {
+			for (let i = 0; i < idCount; i++) {
 				const override = overrideIndices.has(i) ? v4() : undefined;
 				const id = compressor.generateCompressedId(override);
 				overrides.push([id, override]);
 			}
-			const range = compressor.takeNextRange(implicitCount);
+			const range = compressor.takeNextCreationRange();
 			let newLastTakenId = lastTakenId;
-			let explicitsActual = IdRange.getExplicits(range);
+			let idsActual = IdCreationRange.getIds(range);
 			if (overrides.length === 0) {
-				expect(explicitsActual).to.be.undefined;
+				expect(idsActual).to.be.undefined;
 			} else {
-				explicitsActual = expectDefined(explicitsActual);
-				expect(overrides[0][0]).to.equal(explicitsActual.first);
-				expect(overrides[overrides.length - 1][0]).to.equal(explicitsActual.last);
+				idsActual = expectDefined(idsActual);
+				expect(overrides[0][0]).to.equal(idsActual.first);
+				expect(overrides[overrides.length - 1][0]).to.equal(idsActual.last);
 				for (const [id, uuid] of Object.entries(overrideIndices)) {
 					expect(overrides[id][1]).to.equal(uuid);
 				}
-				newLastTakenId = explicitsActual.last;
-			}
-
-			let implicitsActual = IdRange.getImplicits(range);
-			if (implicitCount === 0) {
-				expect(implicitsActual).to.be.undefined;
-			} else {
-				implicitsActual = expectDefined(implicitsActual);
-				if (overrides.length > 0) {
-					expect(implicitsActual.first).to.equal(overrides[overrides.length - 1][0] - 1);
-				} else {
-					expect(implicitsActual.first).to.equal(lastTakenId - 1);
-				}
-
-				expect(implicitsActual.last).to.equal(newLastTakenId - implicitCount);
-				expect(implicitsActual.count).to.equal(implicitCount);
-				newLastTakenId = implicitsActual.last;
+				newLastTakenId = idsActual.last;
 			}
 
 			return newLastTakenId;
@@ -343,9 +291,10 @@ describe('IdCompressor', () => {
 			const override1 = 'override1';
 			const override2 = 'override2';
 			const id1 = compressor.generateCompressedId(override1);
-			const range1 = compressor.takeNextRange(1);
+			compressor.generateCompressedId();
+			const range1 = compressor.takeNextCreationRange();
 			const id2 = compressor.generateCompressedId(override2);
-			const range2 = compressor.takeNextRange(0);
+			const range2 = compressor.takeNextCreationRange();
 			compressor.finalizeRange(range1);
 			compressor.finalizeRange(range2);
 			const finalId1 = compressor.normalizeToOpSpace(id1);
@@ -357,40 +306,38 @@ describe('IdCompressor', () => {
 		});
 
 		it('prevents attempts to finalize ranges twice', () => {
-			const implicitCompressor = createCompressor(Client.Client1);
-			const implicitRange = implicitCompressor.takeNextRange(1);
-			implicitCompressor.finalizeRange(implicitRange);
-			expect(() => implicitCompressor.finalizeRange(implicitRange)).to.throw('Ranges finalized out of order.');
+			const rangeCompressor = createCompressor(Client.Client1);
+			rangeCompressor.generateCompressedIdRange(3);
+			const batchRange = rangeCompressor.takeNextCreationRange();
+			rangeCompressor.finalizeRange(batchRange);
+			expect(() => rangeCompressor.finalizeRange(batchRange)).to.throw('Ranges finalized out of order.');
 
 			// Make a new compressor, as the first one will be left in a bad state
 			const explicitCompressor = createCompressor(Client.Client1);
 			explicitCompressor.generateCompressedId();
-			const explicitRange = explicitCompressor.takeNextRange(1);
+			explicitCompressor.generateCompressedId('override');
+			const explicitRange = explicitCompressor.takeNextCreationRange();
 			explicitCompressor.finalizeRange(explicitRange);
 			expect(() => explicitCompressor.finalizeRange(explicitRange)).to.throw('Ranges finalized out of order.');
 		});
 
 		it('prevents attempts to finalize ranges out of order', () => {
-			const implicitCompressor = createCompressor(Client.Client1);
-			implicitCompressor.takeNextRange(1);
-			const implicitRange = implicitCompressor.takeNextRange(1);
-			expect(() => implicitCompressor.finalizeRange(implicitRange)).to.throw('Ranges finalized out of order.');
-
-			// Make a new compressor, as the first one will be left in a bad state
-			const explicitCompressor = createCompressor(Client.Client1);
-			explicitCompressor.generateCompressedId();
-			explicitCompressor.takeNextRange(1);
-			explicitCompressor.generateCompressedId();
-			const explicitRange = implicitCompressor.takeNextRange(1);
-			expect(() => explicitCompressor.finalizeRange(explicitRange)).to.throw('Ranges finalized out of order.');
+			const compressor = createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			compressor.takeNextCreationRange();
+			compressor.generateCompressedId();
+			const secondRange = compressor.takeNextCreationRange();
+			expect(() => compressor.finalizeRange(secondRange)).to.throw('Ranges finalized out of order.');
 		});
 
 		it('prevents finalizing unacceptably enormous amounts of ID allocation', () => {
 			const compressor1 = createCompressor(Client.Client1);
 			const compressor2 = createCompressor(Client.Client2);
 			const integerLargerThanHalfMax = Math.round((Number.MAX_SAFE_INTEGER / 3) * 2);
-			const range1 = compressor1.takeNextRange(integerLargerThanHalfMax);
-			const range2 = compressor2.takeNextRange(integerLargerThanHalfMax);
+			compressor1.generateCompressedIdRange(integerLargerThanHalfMax);
+			compressor2.generateCompressedIdRange(integerLargerThanHalfMax);
+			const range1 = compressor1.takeNextCreationRange();
+			const range2 = compressor2.takeNextCreationRange();
 			compressor1.finalizeRange(range1);
 			expect(() => compressor1.finalizeRange(range2)).to.throw(
 				'The number of allocated final IDs must not exceed the JS maximum safe integer.'
@@ -404,7 +351,7 @@ describe('IdCompressor', () => {
 			const id = compressor.generateCompressedId();
 			const uuid = compressor.decompress(id);
 			expect(compressor.recompress(uuid)).to.equal(id);
-			compressor.finalizeRange(compressor.takeNextRange(0));
+			compressor.finalizeRange(compressor.takeNextCreationRange());
 			expect(compressor.recompress(uuid)).to.equal(id);
 		});
 
@@ -413,7 +360,7 @@ describe('IdCompressor', () => {
 			const override = 'override';
 			const id = compressor.generateCompressedId(override);
 			expect(compressor.recompress(override)).to.equal(id);
-			compressor.finalizeRange(compressor.takeNextRange(0));
+			compressor.finalizeRange(compressor.takeNextCreationRange());
 			expect(compressor.recompress(override)).to.equal(id);
 		});
 
@@ -425,7 +372,7 @@ describe('IdCompressor', () => {
 			const uuid = compressor.decompress(id);
 
 			const compressor2 = createCompressor(Client.Client2);
-			compressor2.finalizeRange(compressor.takeNextRange(0));
+			compressor2.finalizeRange(compressor.takeNextCreationRange());
 			const finalId1 = compressor2.recompress(uuid);
 			const finalId2 = compressor2.recompress(override);
 			if (finalId1 === undefined || finalId2 === undefined) {
@@ -443,7 +390,8 @@ describe('IdCompressor', () => {
 			expect(compressor.tryRecompress(stableIdFromNumericUuid(sessionNumericUuids.get(Client.Client1), 1))).to.be
 				.undefined;
 			compressor.generateCompressedId(override);
-			compressor.finalizeRange(compressor.takeNextRange(2));
+			compressor.generateCompressedIdRange(2);
+			compressor.finalizeRange(compressor.takeNextCreationRange());
 			expect(compressor.tryRecompress(stableIdFromNumericUuid(sessionNumericUuids.get(Client.Client1), 4))).to.be
 				.undefined;
 		});
@@ -455,7 +403,7 @@ describe('IdCompressor', () => {
 			const id = compressor.generateCompressedId();
 			const uuid = compressor.decompress(id);
 			expect(isStableId(uuid)).to.be.true;
-			compressor.finalizeRange(compressor.takeNextRange(0));
+			compressor.finalizeRange(compressor.takeNextCreationRange());
 			expect(compressor.decompress(id)).to.equal(uuid);
 		});
 
@@ -481,9 +429,11 @@ describe('IdCompressor', () => {
 
 		it('can decompress a final ID', () => {
 			const compressor = createCompressor(Client.Client1);
-			const range = compressor.takeNextRange(1);
-			compressor.finalizeRange(range);
-			const finalId = compressor.normalizeToOpSpace(compressor.getImplicitIdsFromRange(range).get(0));
+			const range = compressor.generateCompressedIdRange(1);
+			compressor.finalizeRange(compressor.takeNextCreationRange());
+			const finalId = compressor.normalizeToOpSpace(
+				compressor.getIdsFromRange(range, compressor.localSessionId).get(0)
+			);
 			if (isLocalId(finalId)) {
 				expect.fail('Op space ID was finalized but is local');
 			}
@@ -495,7 +445,7 @@ describe('IdCompressor', () => {
 			const compressor = createCompressor(Client.Client1);
 			const override = 'override';
 			const id = compressor.generateCompressedId(override);
-			const range = compressor.takeNextRange(0);
+			const range = compressor.takeNextCreationRange();
 			compressor.finalizeRange(range);
 			const finalId = compressor.normalizeToOpSpace(id);
 			if (isLocalId(finalId)) {
@@ -543,7 +493,7 @@ describe('IdCompressor', () => {
 		it('can normalize a local ID to op space after finalizing', () => {
 			const compressor = createCompressor(Client.Client1);
 			const id = compressor.generateCompressedId();
-			compressor.finalizeRange(compressor.takeNextRange(0));
+			compressor.finalizeRange(compressor.takeNextCreationRange());
 			const normalized = compressor.normalizeToOpSpace(id);
 			expect(isFinalId(normalized)).to.be.true;
 			expect(id).to.not.equal(normalized);
@@ -563,7 +513,7 @@ describe('IdCompressor', () => {
 			const compressor2 = createCompressor(Client.Client2);
 			const id = compressor1.generateCompressedId();
 			const normalizedLocal = compressor1.normalizeToOpSpace(id);
-			const range = compressor1.takeNextRange(0);
+			const range = compressor1.takeNextCreationRange();
 			compressor1.finalizeRange(range);
 			const normalizedFinal = compressor1.normalizeToOpSpace(id);
 			compressor2.finalizeRange(range);
@@ -589,12 +539,14 @@ describe('IdCompressor', () => {
 		it('correctly deserializes and resumes a session', () => {
 			const compressor1 = createCompressor(Client.Client1, undefined, Client.Client1);
 			const compressor2 = createCompressor(Client.Client2, undefined, Client.Client2);
-			const range1 = compressor1.takeNextRange(1);
-			compressor1.finalizeRange(range1);
-			compressor2.finalizeRange(range1);
+			compressor1.generateCompressedId();
+			const creationRange = compressor1.takeNextCreationRange();
+			compressor1.finalizeRange(creationRange);
+			compressor2.finalizeRange(creationRange);
 			const [_, serializedWithSession] = expectSerializes(compressor1);
 			const compressorResumed = IdCompressor.deserialize(serializedWithSession);
-			const range2 = compressorResumed.takeNextRange(1);
+			compressorResumed.generateCompressedId();
+			const range2 = compressorResumed.takeNextCreationRange();
 			compressor1.finalizeRange(range2);
 			compressor2.finalizeRange(range2);
 			expect(
@@ -781,9 +733,9 @@ describe('IdCompressor', () => {
 
 		itNetwork('can normalize local op space IDs from a local session to session space IDs', (network) => {
 			const compressor = network.getCompressor(Client.Client1);
-			const range = network.allocateAndSendIds(Client.Client1, 1);
+			const { range, sessionId } = network.allocateAndSendIds(Client.Client1, 1);
 			network.deliverOperations(Client.Client1);
-			const id = compressor.normalizeToOpSpace(compressor.getImplicitIdsFromRange(range).get(0));
+			const id = compressor.normalizeToOpSpace(compressor.getIdsFromRange(range, sessionId).get(0));
 			expect(isFinalId(id)).to.be.true;
 			expect(isLocalId(compressor.normalizeToSessionSpace(id, compressor.localSessionId))).to.be.true;
 		});
@@ -791,9 +743,9 @@ describe('IdCompressor', () => {
 		itNetwork('can normalize local op space IDs from a remote session to session space IDs', (network) => {
 			const compressor1 = network.getCompressor(Client.Client1);
 			const compressor2 = network.getCompressor(Client.Client2);
-			const range = network.allocateAndSendIds(Client.Client1, 1);
+			const { range, sessionId } = network.allocateAndSendIds(Client.Client1, 1);
 			// Mimic sending a reference to an ID that hasn't been acked yet, such as in a slow network
-			const id = compressor1.normalizeToOpSpace(compressor1.getImplicitIdsFromRange(range).get(0));
+			const id = compressor1.normalizeToOpSpace(compressor1.getIdsFromRange(range, sessionId).get(0));
 			const getSessionNormalizedId = () => compressor2.normalizeToSessionSpace(id, compressor1.localSessionId);
 			expect(getSessionNormalizedId).to.throw('No IDs have ever been finalized by the supplied session.');
 			network.deliverOperations(Client.Client2);
@@ -814,7 +766,7 @@ describe('IdCompressor', () => {
 			network.deliverOperations(DestinationClient.All);
 
 			const range1 = network.allocateAndSendIds(Client.Client1, 1, { 0: override });
-			const overrides1 = expectDefined(IdRange.getExplicits(range1)?.overrides);
+			const overrides1 = expectDefined(IdCreationRange.getIds(range1)?.overrides);
 			const id1 = compressor1.normalizeToSessionSpace(overrides1[0][0], compressor1.localSessionId);
 			const opNormalizedLocal1 = compressor1.normalizeToOpSpace(id1);
 			expect(isLocalId(opNormalizedLocal1)).to.be.true;
@@ -826,7 +778,7 @@ describe('IdCompressor', () => {
 			expect(isFinalId(finalId1)).to.be.true;
 
 			const range2 = network.allocateAndSendIds(Client.Client2, 2, { 1: override });
-			const overrides2 = expectDefined(IdRange.getExplicits(range2)?.overrides);
+			const overrides2 = expectDefined(IdCreationRange.getIds(range2)?.overrides);
 			const id2 = compressor2.normalizeToSessionSpace(overrides2[0][0], compressor2.localSessionId);
 			const opNormalizedLocal2 = compressor2.normalizeToOpSpace(id2);
 			expect(isLocalId(opNormalizedLocal2)).to.be.true;
@@ -913,7 +865,7 @@ describe('IdCompressor', () => {
 			// This is a glass box test in that it assumes the negative/positive encoding of CompressedIds (negative = local, positive = final).
 			const compressor1 = network.getCompressor(Client.Client1);
 
-			// Client 1 makes two IDs, two explicit (one with an override) and one implicit
+			// Client 1 makes two IDs, two explicit (one with an override) and one sequential
 			network.allocateAndSendIds(Client.Client1, 3, {
 				1: 'override1',
 			});
@@ -929,7 +881,7 @@ describe('IdCompressor', () => {
 			network.deliverOperations(Client.Client1);
 			network.getIdLog(Client.Client1).forEach((id) => expect(id.id).to.be.lessThan(0));
 
-			// Client 3 makes two IDs, two explicit (one with an override) and one implicit
+			// Client 3 makes two IDs, two explicit (one with an override) and one sequential
 			network.allocateAndSendIds(Client.Client2, 3, {
 				1: 'override2',
 			});
@@ -973,9 +925,9 @@ describe('IdCompressor', () => {
 		itNetwork('can set the cluster size via constructor', 2, (network) => {
 			const compressor = network.getCompressor(Client.Client1);
 			network.allocateAndSendIds(Client.Client1, 1);
-			const range = network.allocateAndSendIds(Client.Client2, 2);
+			const { range, sessionId } = network.allocateAndSendIds(Client.Client2, 2);
 			network.deliverOperations(DestinationClient.All);
-			const id = compressor.getImplicitIdsFromRange(range).get(0);
+			const id = compressor.getIdsFromRange(range, sessionId).get(0);
 			// Glass box test, as it knows the order of final IDs
 			expect(id).to.equal(compressor.reservedIdCount + compressor.clusterCapacity);
 		});
@@ -987,9 +939,9 @@ describe('IdCompressor', () => {
 			network.allocateAndSendIds(Client.Client2, initialClusterCapacity);
 			network.enqueueCapacityChange(5);
 			network.allocateAndSendIds(Client.Client1, 1);
-			const range = network.allocateAndSendIds(Client.Client2, 1);
+			const { range, sessionId } = network.allocateAndSendIds(Client.Client2, 1);
 			network.deliverOperations(DestinationClient.All);
-			const id = compressor.getImplicitIdsFromRange(range).get(0);
+			const id = compressor.getIdsFromRange(range, sessionId).get(0);
 			// Glass box test, as it knows the order of final IDs
 			expect(id).to.equal(compressor.reservedIdCount + initialClusterCapacity * 2 + compressor.clusterCapacity);
 		});
@@ -997,24 +949,35 @@ describe('IdCompressor', () => {
 		describe('can get IDs from ranges', () => {
 			itNetwork('unless they are unfinalized and from a remote session', (network) => {
 				const compressor = network.getCompressor(Client.Client1);
-				const unackedRemoteRange = network.allocateAndSendIds(Client.Client2, 5);
-				expect(() => compressor.getImplicitIdsFromRange(unackedRemoteRange)).to.throw(
+				const { range: unackedRemoteRange, sessionId } = network.allocateAndSendIds(Client.Client2, 5);
+				expect(() => compressor.getIdsFromRange(unackedRemoteRange, sessionId)).to.throw(
 					'Unknown session, range may not be finalized.'
 				);
 				network.deliverOperations(Client.Client1);
-				const unackedRemoteRange2 = network.allocateAndSendIds(Client.Client2, 5);
-				expect(() => compressor.getImplicitIdsFromRange(unackedRemoteRange2)).to.throw(
+				const { range: unackedRemoteRange2, sessionId: sessionId2 } = network.allocateAndSendIds(
+					Client.Client2,
+					5
+				);
+				expect(() => compressor.getIdsFromRange(unackedRemoteRange2, sessionId2)).to.throw(
 					'Remote range must be finalized before getting IDs.'
 				);
 			});
 
 			itNetwork('that are unacked', (network) => {
 				const compressor = network.getCompressor(Client.Client1);
-				const range1 = compressor.getImplicitIdsFromRange(network.allocateAndSendIds(Client.Client1, 5));
+				const { range: rangeDescriptor1, sessionId: sessionId1 } = network.allocateAndSendIds(
+					Client.Client1,
+					5
+				);
+				const range1 = compressor.getIdsFromRange(rangeDescriptor1, sessionId1);
 				for (let i = 0; i < range1.length; i++) {
 					expect(range1.get(i)).to.equal(-(i + 1));
 				}
-				const range2 = compressor.getImplicitIdsFromRange(network.allocateAndSendIds(Client.Client1, 7));
+				const { range: rangeDescriptor2, sessionId: sessionId2 } = network.allocateAndSendIds(
+					Client.Client1,
+					7
+				);
+				const range2 = compressor.getIdsFromRange(rangeDescriptor2, sessionId2);
 				for (let i = 0; i < range2.length; i++) {
 					expect(range2.get(i)).to.equal(-(i + 1 + range1.length));
 				}
@@ -1022,7 +985,8 @@ describe('IdCompressor', () => {
 
 			itNetwork('from the local session that are acked', (network) => {
 				const compressor = network.getCompressor(Client.Client1);
-				const range1 = compressor.getImplicitIdsFromRange(network.allocateAndSendIds(Client.Client1, 5));
+				const { range, sessionId } = network.allocateAndSendIds(Client.Client1, 5);
+				const range1 = compressor.getIdsFromRange(range, sessionId);
 				network.deliverOperations(Client.Client1);
 
 				for (let i = 0; i < range1.length; i++) {
@@ -1035,19 +999,22 @@ describe('IdCompressor', () => {
 				const clusterCapacity = compressor.clusterCapacity;
 				network.allocateAndSendIds(Client.Client1, 1);
 				// Spans an entire cluster
-				const rangeFullCluster = network.allocateAndSendIds(Client.Client2, clusterCapacity);
+				const { range: rangeFullCluster, sessionId: sessionId2 } = network.allocateAndSendIds(
+					Client.Client2,
+					clusterCapacity
+				);
 				network.allocateAndSendIds(Client.Client1, 1);
 				network.allocateAndSendIds(Client.Client2, 1);
 				// Spans the middle 3 IDs in a cluster of size 5
-				const rangeMiddleCluster = network.allocateAndSendIds(Client.Client2, clusterCapacity - 2);
+				const { range: rangeMiddleCluster } = network.allocateAndSendIds(Client.Client2, clusterCapacity - 2);
 				network.deliverOperations(Client.Client1);
 
-				const idsFullCluster = compressor.getImplicitIdsFromRange(rangeFullCluster);
+				const idsFullCluster = compressor.getIdsFromRange(rangeFullCluster, sessionId2);
 				for (let i = 0; i < idsFullCluster.length; i++) {
 					expect(idsFullCluster.get(i)).to.equal(compressor.reservedIdCount + clusterCapacity + i);
 				}
 
-				const idsMiddleCluster = compressor.getImplicitIdsFromRange(rangeMiddleCluster);
+				const idsMiddleCluster = compressor.getIdsFromRange(rangeMiddleCluster, sessionId2);
 				for (let i = 0; i < idsMiddleCluster.length; i++) {
 					expect(idsMiddleCluster.get(i)).to.equal(compressor.reservedIdCount + clusterCapacity * 2 + 1 + i);
 				}
@@ -1059,10 +1026,13 @@ describe('IdCompressor', () => {
 				network.allocateAndSendIds(Client.Client1, clusterCapacity);
 				network.allocateAndSendIds(Client.Client2, clusterCapacity - 2);
 				network.allocateAndSendIds(Client.Client1, 1);
-				const rangeSpanningClusters = network.allocateAndSendIds(Client.Client2, clusterCapacity);
+				const { range: rangeSpanningClusters, sessionId } = network.allocateAndSendIds(
+					Client.Client2,
+					clusterCapacity
+				);
 				network.deliverOperations(Client.Client1);
 
-				const idsSpanningClusters = compressor.getImplicitIdsFromRange(rangeSpanningClusters);
+				const idsSpanningClusters = compressor.getIdsFromRange(rangeSpanningClusters, sessionId);
 				for (let i = 0; i < 2; i++) {
 					expect(idsSpanningClusters.get(i)).to.equal(compressor.reservedIdCount + clusterCapacity + 3 + i);
 				}
