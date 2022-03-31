@@ -70,7 +70,7 @@ export class OdspSummaryUploadManager {
         tree: api.ISummaryTree,
     ): Promise<IWriteSummaryResponse> {
         const enableContainerTypeSummaryUpload = this.mc.config.getBoolean("Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload");
-        const containsProtocolTree = enableContainerTypeSummaryUpload  &&
+        const containsProtocolTree = enableContainerTypeSummaryUpload &&
             Object.keys(tree.tree).includes(".protocol");
         const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
