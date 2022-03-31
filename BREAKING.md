@@ -21,6 +21,8 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
 - [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
+- [Remove `@fluidframework/core-interface#fluidPackage.ts`](#Remove-fluidframeworkcore-interfacefluidPackagets)
+- [getAbsoluteUrl() argument type changed](#getAbsoluteUrl-argument-type-changed)
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
@@ -28,6 +30,42 @@ These should not be used and there is no replacement provided.
 
 ### raiseContainerWarning removed from IContainerContext
 `raiseContainerWarning` property will be removed from `IContainerContext` interface and `ContainerContext` class. Please refer to [raiseContainerWarning property](#Remove-raisecontainerwarning-property) for more details.
+
+### Remove `@fluidframework/core-interface#fluidPackage.ts`
+All the interfaces and const from `fluidPackage.ts` were moved to `@fluidframework/container-definitions` in previous release. Please refer to: [Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`](#Moved-fluidframeworkcore-interfacefluidPackagets-to-fluidframeworkcontainer-definitionfluidPackagets). It is now removed from `@fluidframework/core-interface#fluidPackage.ts`. Import the following interfaces and const from `@fluidframework/container-definitions`:
+- `IFluidPackageEnvironment`
+- `IFluidPackage`
+- `isFluidPackage`
+- `IFluidCodeDetailsConfig`
+- `IFluidCodeDetailsConfig`
+- `IFluidCodeDetails`
+- `IFluidCodeDetailsComparer`
+- `IProvideFluidCodeDetailsComparer`
+- `IFluidCodeDetailsComparer`
+
+### `getAbsoluteUrl()` argument type changed
+The `packageInfoSource` argument in `getAbsoluteUrl()` on `@fluidframework/odsp-driver`, `@fluidframework/iframe-driver`, and `@fluidframework/driver-definitions` is typed to `IContainerPackageInfo` interface only.
+
+```diff
+- getAbsoluteUrl(
+-    resolvedUrl: IResolvedUrl,
+-    relativeUrl: string,
+-    packageInfoSource?: IFluidCodeDetails | IContainerPackageInfo,
+- ): Promise<string>;
+
++ interface IContainerPackageInfo {
++    /**
++     * Container package name.
++     */
++    name: string;
++ }
+
++ getAbsoluteUrl(
++    resolvedUrl: IResolvedUrl,
++    relativeUrl: string,
++    packageInfoSource?: IContainerPackageInfo,
++ ): Promise<string>;
+```
 
 # 0.58
 

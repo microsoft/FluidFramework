@@ -9,10 +9,10 @@ import {
     ILoader,
     IRuntime,
     IRuntimeFactory,
+    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
     FluidObject,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IQuorum,

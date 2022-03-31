@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IFluidModule, IProvideRuntimeFactory } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails, IFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
+import {
+    ICodeLoader,
+    IFluidModule,
+    IProvideRuntimeFactory,
+    IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
+} from "@fluidframework/container-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 
 /**

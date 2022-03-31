@@ -647,6 +647,7 @@ declare function get_old_InterfaceDeclaration_IUrlResolver():
 declare function use_current_InterfaceDeclaration_IUrlResolver(
     use: current.IUrlResolver);
 use_current_InterfaceDeclaration_IUrlResolver(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IUrlResolver());
 
 /*
@@ -659,6 +660,7 @@ declare function get_current_InterfaceDeclaration_IUrlResolver():
 declare function use_old_InterfaceDeclaration_IUrlResolver(
     use: old.IUrlResolver);
 use_old_InterfaceDeclaration_IUrlResolver(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IUrlResolver());
 
 /*

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
 import {
     ContainerMessageType,
@@ -13,7 +13,7 @@ import {
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidCodeDetails, IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
