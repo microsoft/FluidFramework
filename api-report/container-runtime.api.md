@@ -311,6 +311,7 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    flushMode?: FlushMode;
     // (undocumented)
     gcOptions?: IGCRuntimeOptions;
     loadSequenceNumberVerification?: "close" | "log" | "bypass";
