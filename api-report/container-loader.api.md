@@ -84,7 +84,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
-    // Warning: (ae-forgotten-export) The symbol "IPendingContainerState" needs to be exported by the entry point index.d.ts
     static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
@@ -181,6 +180,20 @@ export interface ILoaderServices {
     readonly scope: FluidObject;
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
+}
+
+// @public (undocumented)
+export interface IPendingContainerState {
+    // (undocumented)
+    clientId?: string;
+    // (undocumented)
+    pendingRuntimeState: unknown;
+    // (undocumented)
+    protocol: IProtocolState;
+    // (undocumented)
+    term: number;
+    // (undocumented)
+    url: string;
 }
 
 // @public
