@@ -388,7 +388,7 @@ export class OdspDocumentService implements IDocumentService {
         };
 
         const getResponseAndRefreshAfterDeltaMs = async () => {
-            let _response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+            const _response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
             // If the response does not contain refreshSessionDurationSeconds, then treat it as old flow and let the
             // cache entry to be treated as expired after 1 hour.
             _response.joinSessionResponse.refreshSessionDurationSeconds =
