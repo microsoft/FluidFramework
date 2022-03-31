@@ -1,11 +1,12 @@
 const fluidRoute = require("@fluidframework/webpack-fluid-loader");
 const path = require("path");
+const merge = require("webpack-merge");
 
 const pkg = require("./package.json");
 const dataObjectName = pkg.name.slice(1);
 
 module.exports = env => {
-    return({
+    return merge({
         entry: {
             main: "./src/index.ts",
         },
@@ -29,11 +30,8 @@ module.exports = env => {
         },
         devServer: {
             devMiddleware: {
-                publicPath: '/dist',
                 stats: "minimal",
             },
-            onBeforeSetupMiddleware: (devServer) => fluidRoute.before(devServer.app, devServer),
-            onAfterSetupMiddleware: (devServer) => fluidRoute.after(devServer.app, devServer, __dirname, env),
         },
         // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
         // This should be configurable under devServer.static.watch
@@ -44,5 +42,6 @@ module.exports = env => {
         },
         mode: "development",
         devtool: "source-map"
-    });
+    },
+    fluidRoute.devServerConfig(__dirname, env));
 };
