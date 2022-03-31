@@ -46,7 +46,7 @@ module.exports = env => {
         },
         devServer: {
             host: "0.0.0.0",
-            stats: "minimal",
+            devMiddleware: { stats: "minimal" }
         },
         // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
         // This should be configurable under devServer.static.watch
