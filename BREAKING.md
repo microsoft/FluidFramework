@@ -18,10 +18,14 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.58 Upcoming changes
 - [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
+- [IDirectory extends IDisposable](#IDirectory-extends-IDisposable)
 - [`IContainerRuntimeBase.setFlushMode` is deprecated](#icontainerruntimebasesetflushmode-is-deprecated)
 
 ### Doing operations not allowed on deleted sub directory
 Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory will throw `UsageError` exception now.
+
+### IDirectory extends IDisposable
+IDirectory has started extending IDisposable. This means that users implementing the IDirectory interface needs to implement IDisposable too now.
 
 ### `IContainerRuntimeBase.setFlushMode` is deprecated
 `IContainerRuntimeBase.setFlushMode` is deprecated and will be removed in a future release. FlushMode will become an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977)

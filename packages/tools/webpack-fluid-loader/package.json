@@ -33,7 +33,7 @@
     "prepack": "npm run webpack",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "test:mocha": "mocha --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+    "test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
@@ -91,6 +91,7 @@
     "webpack-dev-server": "^3.8.0"
   },
   "devDependencies": {
+    "@fluid-tools/webpack-fluid-loader-previous": "npm:@fluid-tools/webpack-fluid-loader@0.58.2000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.27.0",
     "@fluidframework/mocha-test-setup": "^0.58.3000",
@@ -120,5 +121,9 @@
     "typescript-formatter": "7.1.0",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11"
+  },
+  "typeValidation": {
+    "version": "0.58.3000",
+    "broken": {}
   }
 }
