@@ -51,7 +51,6 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         runtimeOptions,
     );
 
-    // Enable config provider setting to write GC data at the root.
     const settings = { "Fluid.GarbageCollection.LogUnknownOutboundRoutes": "true" };
     const configProvider = mockConfigProvider(settings);
 

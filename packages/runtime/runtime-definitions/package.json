@@ -37,10 +37,10 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.47.1000",
+    "@fluidframework/container-definitions": "^0.48.1000-0",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.45.2000-0",
-    "@fluidframework/protocol-definitions": "^0.1027.1000",
+    "@fluidframework/driver-definitions": "^0.46.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
     "@types/node": "^14.18.0"
   },
   "devDependencies": {
@@ -128,6 +128,24 @@
         "TypeAliasDeclaration_FluidDataStoreRegistryEntry": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
         }
       },
       "0.52.0": {
@@ -170,6 +188,24 @@
         "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
         }
       },
       "0.53.0": {
@@ -212,6 +248,24 @@
         "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
         }
       },
       "0.54.0": {
@@ -254,6 +308,24 @@
         "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
         }
       },
       "0.55.0": {
@@ -296,6 +368,24 @@
         "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
         }
       },
       "0.56.0": {
@@ -338,6 +428,24 @@
         "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
         }
       },
       "0.57.0": {
@@ -380,6 +488,53 @@
         "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntry": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
+        }
+      },
+      "0.58.1000": {
+        "InterfaceDeclaration_IContainerRuntimeBase": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreContext": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidDataStoreContextDetached": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {
+          "backCompat": false
+        },
+        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IAttachMessage": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_InboundAttachMessage": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNode": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISummarizerNodeWithGC": {
+          "backCompat": false
         }
       }
     }
