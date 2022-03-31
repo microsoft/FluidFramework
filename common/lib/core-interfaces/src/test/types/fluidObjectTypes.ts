@@ -102,7 +102,7 @@ declare function getIFluidObject(): IFluidObject;
     useProvider<IFluidLoadable>(fluidObject);
 }
 
-// validate nested property is fluid object too
+// validate nested property is FluidObject too
 {
     interface IFoo {
         z: { z: boolean };
