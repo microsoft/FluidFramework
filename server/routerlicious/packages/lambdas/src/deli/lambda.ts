@@ -428,7 +428,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         }
     }
 
-    public async close(closeType: LambdaCloseType) {
+    public close(closeType: LambdaCloseType) {
         this.checkpointContext.close();
 
         this.clearActivityIdleTimer();
