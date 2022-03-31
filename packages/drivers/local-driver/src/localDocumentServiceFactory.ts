@@ -45,6 +45,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
         createNewSummary: ISummaryTree | undefined,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         assert(!!createNewSummary, 0x202 /* "create empty file not supported" */);
@@ -74,7 +75,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             defaultHash,
             quorumValues,
         );
-        return this.createDocumentService(resolvedUrl, logger);
+        return this.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
     }
 
     /**
@@ -85,6 +86,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 

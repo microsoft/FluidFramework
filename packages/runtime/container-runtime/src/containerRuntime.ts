@@ -100,6 +100,7 @@ import {
     requestFluidObject,
     responseToException,
     seqFromTree,
+    calculateStats,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -2059,11 +2060,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             gcStats = await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
         }
 
-        const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
-        assert(summarizeResult.summary.type === SummaryType.Tree,
+        const { stats, summary } = await this.summarizerNode.summarize(fullTree, trackState);
+
+        assert(summary.type === SummaryType.Tree,
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
-        return { ...summarizeResult, gcStats } as IRootSummaryTreeWithStats;
+        return { stats, summary, gcStats };
     }
 
     /**
@@ -2244,11 +2246,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
+            const gcSummaryTreeStats = summaryTree.tree[gcTreeKey]
+                ? calculateStats((summaryTree.tree[gcTreeKey] as ISummaryTree))
+                : undefined;
 
             const summaryStats: IGeneratedSummaryStats = {
                 dataStoreCount: this.dataStores.size,
                 summarizedDataStoreCount: this.dataStores.size - handleCount,
                 gcStateUpdatedDataStoreCount: summarizeResult.gcStats?.updatedDataStoreCount,
+                gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
+                gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
                 ...partialStats,
             };
             const generateSummaryData = {

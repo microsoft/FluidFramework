@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-driver-definitions",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "A driver abstraction and implementations for testing against server",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -56,7 +56,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.45.1000",
+    "@fluidframework/driver-definitions": "^0.45.2000-0",
     "@fluidframework/protocol-definitions": "^0.1027.1000",
     "uuid": "^8.3.1"
   },

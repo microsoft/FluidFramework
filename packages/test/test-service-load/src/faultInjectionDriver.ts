@@ -31,8 +31,12 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 
     constructor(private readonly internal: IDocumentServiceFactory) { }
 
-    async createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService> {
-        const internal = await this.internal.createDocumentService(resolvedUrl, logger);
+    async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
+    ): Promise<IDocumentService> {
+        const internal = await this.internal.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
         const ds = new FaultInjectionDocumentService(internal);
         assert(!this._documentServices.has(resolvedUrl), "one ds per resolved url instance");
         this._documentServices.set(resolvedUrl, ds);
@@ -42,12 +46,14 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ):
         Promise<IDocumentService> {
         return this.internal.createContainer(
             createNewSummary,
             createNewResolvedUrl,
             logger,
+            clientIsSummarizer,
         );
     }
 }

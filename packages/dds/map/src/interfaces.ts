@@ -27,7 +27,7 @@ export interface IValueChanged {
  * @remarks
  * When used as a Map, operates on its keys.
  */
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, IDisposable {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     /**
      * The absolute path of the directory.
      */

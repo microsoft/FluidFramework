@@ -589,6 +589,7 @@ describe("Runtime", () => {
                 };
             };
             const getMockPendingStateManager = (hasPendingMessages: boolean): PendingStateManager => {
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 return {
                     replayPendingStates: () => { },
                     hasPendingMessages: () => hasPendingMessages,
@@ -598,6 +599,7 @@ describe("Runtime", () => {
                 } as PendingStateManager;
             };
             const getMockDataStores = (): DataStores => {
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 return {
                     processFluidDataStoreOp:
                         (_message: ISequencedDocumentMessage,

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { Client } from "./client";
 import {
     ISegment,
@@ -133,7 +134,13 @@ export class LocalReferenceCollection {
             if (!seg1.localRefs) {
                 seg1.localRefs = new LocalReferenceCollection(seg1);
             }
+            assert(seg1.localRefs.refsByOffset.length === seg1.cachedLength, "LocalReferences array contains a gap");
             seg1.localRefs.append(seg2.localRefs);
+        }
+        else if (seg1.localRefs) {
+            // Since creating the LocalReferenceCollection, we may have appended
+            // segments that had no local references. Account for them now by padding the array.
+            seg1.localRefs.refsByOffset.length += seg2.cachedLength;
         }
     }
 
@@ -219,9 +226,11 @@ export class LocalReferenceCollection {
             this.refsByOffset[lref.offset] = {
                 at: [lref],
             };
-        } else {
+        } else if (refsAtOffset.at === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            refsAtOffset.at!.push(lref);
+            this.refsByOffset[lref.offset]!.at = [lref];
+        } else {
+            refsAtOffset.at.push(lref);
         }
 
         if (lref.hasRangeLabels() || lref.hasTileLabels()) {

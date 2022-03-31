@@ -24,7 +24,7 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache(2000);
+const createUtLocalCache = () => new LocalPersistentCache();
 
 describe("Tests for snapshot fetch", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -118,6 +118,10 @@ describe("Tests for snapshot fetch", () => {
             epochTracker,
             async () => { return {}; },
             );
+    });
+
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
     });
 
     it("cache fetch throws and network fetch succeeds", async () => {
