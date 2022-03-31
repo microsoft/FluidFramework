@@ -766,7 +766,9 @@ export class SharedPropertyTree extends SharedObject {
 			const changeSet = new ChangeSet(this.tipView);
 			changeSet.applyChangeSet(accumulatedChanges);
 		} else {
-			new ChangeSet(this.tipView).applyChangeSet(newTipDelta);
+			const viewCS = new ChangeSet(this.tipView);
+            viewCS.applyChangeSet(newTipDelta);
+            viewCS.applyChangeSet(pendingChanges);
 		}
 
 		return true;
