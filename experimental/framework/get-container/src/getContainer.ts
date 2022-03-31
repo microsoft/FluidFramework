@@ -25,11 +25,12 @@ export interface IGetContainerParams {
 
 export async function createContainer(
     params: IGetContainerParams,
+    fluidCodeDetails?: IFluidCodeDetails,
 ): Promise<IContainer> {
-    const load = async (fluidCodeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+    const load = async (): Promise<IFluidModuleWithDetails> => {
         return {
             module: { fluidExport: params.containerRuntimeFactory },
-            details: fluidCodeDetails,
+            details: fluidCodeDetails as any,
         };
     };
 
@@ -51,12 +52,12 @@ export async function createContainer(
 
 export async function getContainer(
     params: IGetContainerParams,
-    source?: IFluidCodeDetails,
+    fluidCodeDetails?: IFluidCodeDetails,
 ): Promise<IContainer> {
-    const load = async (fluidCodeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+    const load = async (): Promise<IFluidModuleWithDetails> => {
         return {
             module: { fluidExport: params.containerRuntimeFactory },
-            details: fluidCodeDetails,
+            details: fluidCodeDetails as any,
         };
     };
 

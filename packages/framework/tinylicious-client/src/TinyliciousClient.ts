@@ -120,14 +120,14 @@ export class TinyliciousClient {
         };
     }
 
-    private createLoader(containerSchema: ContainerSchema) {
+    private createLoader(containerSchema: ContainerSchema, fluidCodeDetails?: IFluidCodeDetails) {
         const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
-        const load = async (fluidCodeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+        const load = async (): Promise<IFluidModuleWithDetails> => {
             return {
                 module: { fluidExport: containerRuntimeFactory },
-                details: fluidCodeDetails,
+                details: fluidCodeDetails as any,
             };
         };
 

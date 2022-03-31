@@ -27,6 +27,7 @@ export async function getSessionStorageContainer(
     documentId: string,
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
+    fluidCodeDetails?: IFluidCodeDetails,
 ): Promise<IContainer> {
     let deltaConnection = deltaConnectionMap.get(documentId);
     if (deltaConnection === undefined) {
@@ -39,10 +40,10 @@ export async function getSessionStorageContainer(
 
     // To bypass proposal-based loading, we need a codeLoader that will return our already-in-memory container factory.
     // The expected format of that response is an IFluidModule with a fluidExport.
-    const load = async (fluidCodeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+    const load = async (): Promise<IFluidModuleWithDetails> => {
         return {
             module: { fluidExport: containerRuntimeFactory },
-            details: fluidCodeDetails,
+            details: fluidCodeDetails as any,
         };
     };
 

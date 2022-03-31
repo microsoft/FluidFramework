@@ -47,14 +47,15 @@ async function loadContainer(
     documentId: string,
     createNew: boolean,
     divId: string,
+    fluidCodeDetails?: IFluidCodeDetails,
 ): Promise<string> {
     const documentServiceFactory = await InnerDocumentServiceFactory.create(innerPort);
     const urlResolver = await InnerUrlResolver.create(innerPort);
 
-    const load = async (fluidCodeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+    const load = async (): Promise<IFluidModuleWithDetails> => {
         return {
             module: { fluidExport: TodoContainer },
-            details: fluidCodeDetails,
+            details: fluidCodeDetails as any,
         };
     };
 

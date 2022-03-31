@@ -139,14 +139,14 @@ export class AzureClient {
         };
     }
 
-    private createLoader(containerSchema: ContainerSchema): Loader {
+    private createLoader(containerSchema: ContainerSchema, fluidCodeDetails?: IFluidCodeDetails): Loader {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
-        const load = async (fluidCodeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+        const load = async (): Promise<IFluidModuleWithDetails> => {
             return {
                 module: { fluidExport: runtimeFactory },
-                details: fluidCodeDetails,
+                details: fluidCodeDetails as any,
             };
         };
 
