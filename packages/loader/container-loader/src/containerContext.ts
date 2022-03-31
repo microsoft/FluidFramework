@@ -17,14 +17,14 @@ import {
     IRuntimeFactory,
     ICodeLoader,
     IProvideRuntimeFactory,
+    IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
+    IProvideFluidCodeDetailsComparer,
 } from "@fluidframework/container-definitions";
 import {
     IFluidObject,
     IRequest,
     IResponse,
-    IFluidCodeDetails,
-    IFluidCodeDetailsComparer,
-    IProvideFluidCodeDetailsComparer,
     FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";

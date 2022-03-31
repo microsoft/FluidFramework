@@ -11,6 +11,8 @@ import {
     ReadOnlyInfo,
     IConnectionDetails,
     ICriticalContainerError,
+    IFluidCodeDetails,
+    isFluidPackage,
 } from "@fluidframework/container-definitions";
 import {
     ConnectionMode,
@@ -20,6 +22,7 @@ import {
     IClientDetails,
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
+import { IContainerPackageInfo } from "@fluidframework/driver-definitions";
 
 export enum ReconnectMode {
     Never = "Never",
@@ -155,3 +158,20 @@ export interface IConnectionManagerFactoryArgs {
      */
     readonly readonlyChangeHandler: (readonly?: boolean) => void,
 }
+
+/**
+ *
+ * @param codeDetails- Data structure used to describe the code to load on the Fluid document
+ * @returns The name of the Fluid package
+ */
+export const getPackageName = (codeDetails: IFluidCodeDetails | undefined): IContainerPackageInfo => {
+    let containerPackageName;
+    if (codeDetails && "name" in codeDetails) {
+        containerPackageName = codeDetails;
+    } else if (isFluidPackage(codeDetails?.package)) {
+        containerPackageName = codeDetails?.package.name;
+    } else {
+        containerPackageName = codeDetails?.package;
+    }
+    return { name: containerPackageName };
+};

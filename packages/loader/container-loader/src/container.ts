@@ -14,8 +14,6 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
-    IFluidCodeDetails,
-    isFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -29,6 +27,8 @@ import {
     IThrottlingWarning,
     ReadOnlyInfo,
     IContainerLoadMode,
+    IFluidCodeDetails,
+    isFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
@@ -92,7 +92,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { ReconnectMode, IConnectionManagerFactoryArgs } from "./contracts";
+import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
@@ -993,7 +993,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.urlResolver.getAbsoluteUrl(
             this.resolvedUrl,
             relativeUrl,
-            this._context?.codeDetails);
+            getPackageName(this._context?.codeDetails));
     }
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
