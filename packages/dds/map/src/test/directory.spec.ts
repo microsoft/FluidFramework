@@ -145,14 +145,13 @@ describe("Directory", () => {
 
             it("Should fire dispose event correctly", () => {
                 let valueChangedExpected: boolean = true;
-                let previousValue: any;
 
                 directory.on("valueChanged", (changed, local, target) => {
                     assert.equal(valueChangedExpected, true, "valueChange event not expected");
                     valueChangedExpected = false;
 
                     assert.equal(changed.key, "dwayne", "key should match");
-                    assert.equal(changed.previousValue, previousValue, "previous value should match");
+                    assert.equal(changed.previousValue, undefined, "previous value should match");
                     assert.equal(changed.path, "/rock", "absolute path should match");
 
                     assert.equal(local, true, "local should be true for local action for valueChanged event");
@@ -171,7 +170,6 @@ describe("Directory", () => {
                 assert.equal(subDirectoryDisposed, true, "sub directory not disposed!!");
 
                 // Should be able to work on new directory with same name.
-                previousValue = undefined;
                 valueChangedExpected = true;
                 const newSubDirectory = directory.createSubDirectory("rock");
                 newSubDirectory.set("dwayne", "johnson");
