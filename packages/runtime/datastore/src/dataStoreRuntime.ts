@@ -157,7 +157,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
     private readonly notBoundedChannelContextSet = new Set<string>();
     private _attachState: AttachState;
-    private visibilityState: VisibilityState = VisibilityState.NotVisible;
+    private visibilityState: VisibilityState;
     // A list of handles that are bound when the data store is not visible. We have to make them visible when the data
     // store becomes visible.
     private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
@@ -267,7 +267,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         /**
          * back-compat 0.58.2000 - visibility state was added in this version. For older versions, get the visibility
          * state similar to the data store context:
-         * The existing flag can be true in two conditions:
+         * If existing flag is false, this is a new data store and is not visible.  The existing flag can be true in two
+         * conditions:
          * 1. It's a local data store that is created when a detached container is rehydrated. In this case, the data
          *    store is locally visible because the snapshot it is loaded from contains locally visible data stores only.
          * 2. It's a remote data store that is created when an attached container is loaded is loaded from snapshot or
@@ -278,6 +279,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         } else if (existing) {
             this.visibilityState = dataStoreContext.attachState === AttachState.Detached
                 ? VisibilityState.LocallyVisible : VisibilityState.GloballyVisible;
+        } else {
+            this.visibilityState = VisibilityState.NotVisible;
         }
 
         // If it's existing we know it has been attached.

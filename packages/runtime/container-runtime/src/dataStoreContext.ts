@@ -283,8 +283,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.containerRuntime.attachState : AttachState.Detached;
 
         /**
-         * If existing flag is false, this is a new data store and is not visible.
-         * The existing flag can be true in two conditions:
+         * If existing flag is false, this is a new data store and is not visible. The existing flag can be true in two
+         * conditions:
          * 1. It's a local data store that is created when a detached container is rehydrated. In this case, the data
          *    store is locally visible because the snapshot it is loaded from contains locally visible data stores only.
          * 2. It's a remote data store that is created when an attached container is loaded is loaded from snapshot or
