@@ -11,9 +11,6 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
-  "main": "dist/index.js",
-  "module": "lib/index.js",
-  "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "npm run build:test",
@@ -83,7 +80,7 @@
     "@fluidframework/counter": "^0.58.3000",
     "@fluidframework/datastore": "^0.58.3000",
     "@fluidframework/datastore-definitions": "^0.58.3000",
-    "@fluidframework/driver-definitions": "^0.45.1000",
+    "@fluidframework/driver-definitions": "^0.45.2000-0",
     "@fluidframework/driver-utils": "^0.58.3000",
     "@fluidframework/garbage-collector": "^0.58.3000",
     "@fluidframework/ink": "^0.58.3000",
@@ -119,7 +116,8 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
+    "@fluidframework/test-end-to-end-tests-previous": "npm:@fluidframework/test-end-to-end-tests@0.58.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/nock": "^9.3.0",
