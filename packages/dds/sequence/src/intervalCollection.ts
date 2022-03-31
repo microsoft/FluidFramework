@@ -397,9 +397,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     constructor(
         private readonly client: Client,
         private readonly label: string,
-        private readonly helpers: IIntervalHelpers<TInterval>) {
-        this.endIntervalTree =
-            new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
+        private readonly helpers: IIntervalHelpers<TInterval>,
+    ) {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.endIntervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
     }
 
     public addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>) {

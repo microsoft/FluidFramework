@@ -67,6 +67,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get closed(): boolean;
     // (undocumented)
+    get closeSignal(): AbortSignal;
+    // (undocumented)
     connect(): void;
     // (undocumented)
     get connected(): boolean;

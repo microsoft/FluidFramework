@@ -69,7 +69,7 @@ export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) =
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
 // @public (undocumented)
-export function getOrCreateRepository(endpoint: string, owner: string, repository: string): Promise<void>;
+export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: AxiosRequestHeaders): Promise<void>;
 
 // @public (undocumented)
 export function getRandomName(connector?: string, capitalize?: boolean): string;
