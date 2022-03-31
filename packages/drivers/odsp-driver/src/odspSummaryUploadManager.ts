@@ -69,7 +69,9 @@ export class OdspSummaryUploadManager {
         referenceSequenceNumber: number,
         tree: api.ISummaryTree,
     ): Promise<IWriteSummaryResponse> {
-        const containsProtocolTree = Object.keys(tree.tree).includes(".protocol");
+        const enableContainerTypeSummaryUpload = this.mc.config.getBoolean("Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload");
+        const containsProtocolTree = enableContainerTypeSummaryUpload  &&
+            Object.keys(tree.tree).includes(".protocol");
         const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
             tree,
@@ -110,6 +112,7 @@ export class OdspSummaryUploadManager {
                     size: postBody.length,
                     referenceSequenceNumber,
                     type: snapshot.type,
+                    enableContainerTypeSummaryUpload,
                 },
                 async () => {
                     const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
