@@ -109,6 +109,6 @@ declare function getIFluidObject(): IFluidObject;
       }
 
     const foo: FluidObject<IFoo> = getFluidObject();
-    // @ts-expect-error provider shouldn't have any non-provider properties
+    // @ts-expect-error "Property 'z' does not exist on type 'FluidObject<IFoo>'."
     useProvider(foo.z);
 }
