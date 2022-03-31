@@ -55,6 +55,7 @@
   "devDependencies": {
     "@fluidframework/aqueduct": "^0.58.3000",
     "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@0.58.2000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
@@ -69,5 +70,9 @@
   },
   "peerDependencies": {
     "fluid-framework": "^0.50.0"
+  },
+  "typeValidation": {
+    "version": "0.58.3000",
+    "broken": {}
   }
 }
