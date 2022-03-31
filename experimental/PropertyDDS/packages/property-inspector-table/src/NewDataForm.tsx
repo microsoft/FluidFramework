@@ -228,7 +228,8 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 
   const handleCreateData = () => {
     setCreating(true);
-    void ErrorPopup(onDataCreate.bind(null, inputName, selectedTypeOption.value, selectedContainerOption.value));
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    ErrorPopup(onDataCreate.bind(null, inputName, selectedTypeOption.value, selectedContainerOption.value));
   };
 
   const cancelBtn = (

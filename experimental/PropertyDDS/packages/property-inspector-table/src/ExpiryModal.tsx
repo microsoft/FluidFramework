@@ -182,7 +182,8 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     if (newState) {
       setModalExpiryState(newState);
     } else {
-      void getExpiryInfo().then((expiryInfo) => {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      getExpiryInfo().then((expiryInfo) => {
         if (expiryInfo) {
           newState = expiryInfoToState(expiryInfo);
           setModalExpiryState(newState);
@@ -200,7 +201,8 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     setModalExpiryState({ ...modalExpiryState, expiresIn: expiryPlaceHolder });
     return ErrorPopup(setRepoExpiry.bind(null, repositoryUrn!, expiryTime)).then(() => {
       setModalState({ mode: "default" });
-      void getExpiryInfo().then((expiryInfo) => {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      getExpiryInfo().then((expiryInfo) => {
         if (expiryInfo) {
           const newState = expiryInfoToState(expiryInfo);
           setModalExpiryState(newState);

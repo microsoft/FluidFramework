@@ -30,6 +30,7 @@ export const ModalContext = React.createContext<IModalContext>({
   showModal : () => { return; },
 });
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export class ModalManager extends React.Component<{}, IModalContext> {
   constructor(props) {
     super(props);

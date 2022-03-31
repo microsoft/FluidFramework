@@ -108,7 +108,8 @@ export const EditReferencePath: React.FunctionComponent<IEditReferencePathProps
           onChange={handleInputChange}
           onKeyPress={(event) => {
             if (event.key === "Enter") {
-              void handleEdit();
+              // eslint-disable-next-line @typescript-eslint/no-floating-promises
+              handleEdit();
             }
           }}
           placeholder={path}

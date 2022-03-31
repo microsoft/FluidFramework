@@ -17,6 +17,7 @@
     "@typescript-eslint/no-unsafe-return": "off",
     "@typescript-eslint/strict-boolean-expressions": "off",
     "import/no-internal-modules": "off",
+    "no-bitwise": "off",
     "no-param-reassign": "off",
     "unicorn/filename-case": "off",
   }
