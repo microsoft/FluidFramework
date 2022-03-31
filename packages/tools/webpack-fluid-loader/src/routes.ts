@@ -33,26 +33,23 @@ const getThisOrigin = (options: RouteOptions): string => `http://localhost:${opt
 export function devServerConfig(baseDir: string, env: RouteOptions) {
     return {
         devServer: {
-            static: [
-                {
-                    directory: path.join(
-                        baseDir,
-                        "/node_modules/@fluid-tools/webpack-fluid-loader/dist/fluid-loader.bundle.js",
-                    ),
-                    publicPath: "/fluid-loader.bundle.js",
-                },
-                {
-                    directory: path.resolve(baseDir, "dist"),
-                    publicPath: "/dist",
-                },
-            ],
-            onBeforeSetupMiddleware: async (devServer) => before(devServer.app),
+            static: {
+                directory: path.join(
+                    baseDir,
+                    "/node_modules/@fluid-tools/webpack-fluid-loader/dist/fluid-loader.bundle.js",
+                ),
+                publicPath: "/fluid-loader.bundle.js",
+            },
+            devMiddleware: {
+                publicPath: "/dist",
+            },
+            onBeforeSetupMiddleware: (devServer) => before(devServer.app),
             onAfterSetupMiddleware: (devServer) => after(devServer.app, devServer, baseDir, env),
         },
     };
 }
 
-export const before = async (app: express.Application) => {
+export const before = (app: express.Application) => {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
     app.get("/", (req, res) => res.redirect("/new"));
@@ -264,6 +261,9 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         }
     });
 
+    // Ignore favicon.ico urls.
+    app.get("/favicon.ico", (req: express.Request, res) => res.end());
+
     /**
      * For urls of format - http://localhost:8080/<id>.
      * If the `id` is "new" or "manualAttach", the user is trying to create a new document.
@@ -272,12 +272,6 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
      */
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get("/:id*", async (req: express.Request, res) => {
-        // Ignore favicon.ico urls.
-        if (req.url === "/favicon.ico") {
-            res.end();
-            return;
-        }
-
         const documentId = req.params.id;
         // For testing orderer, we use the path: http://localhost:8080/testorderer. This will use the local storage
         // instead of using actual storage service to which the connection is made. This will enable testing
