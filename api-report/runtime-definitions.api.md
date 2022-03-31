@@ -178,7 +178,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly isLocalDataStore: boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
-    makeVisible?(): void;
+    makeLocallyVisible?(): void;
     // (undocumented)
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];

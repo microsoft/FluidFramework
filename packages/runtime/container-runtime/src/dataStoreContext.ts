@@ -133,7 +133,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
     readonly pkg: Readonly<string[]> | undefined;
     readonly snapshotTree: ISnapshotTree | undefined;
     readonly isRootDataStore: boolean | undefined;
-    readonly makeVisibleFn: () => void;
+    readonly makeLocallyVisibleFn: () => void;
     /**
      * @deprecated 0.16 Issue #1635, #3631
      */
@@ -244,7 +244,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
-    public visibilityState: VisibilityState = VisibilityState.NotVisible;
+    public visibilityState: VisibilityState;
 
     // The used state of this node as per the last GC run. This is used to update the used state of the channel
     // if it realizes after GC is run.
@@ -263,7 +263,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         private readonly existing: boolean,
         private bindState: BindState,
         public readonly isLocalDataStore: boolean,
-        private readonly makeVisibleFn: () => void,
+        private readonly makeLocallyVisibleFn: () => void,
     ) {
         super();
 
@@ -283,6 +283,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.containerRuntime.attachState : AttachState.Detached;
 
         /**
+         * If existing flag is false, this is a new data store and is not visible.
          * The existing flag can be true in two conditions:
          * 1. It's a local data store that is created when a detached container is rehydrated. In this case, the data
          *    store is locally visible because the snapshot it is loaded from contains locally visible data stores only.
@@ -292,13 +293,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (existing) {
             this.visibilityState = this.containerRuntime.attachState === AttachState.Detached
                 ? VisibilityState.LocallyVisible : VisibilityState.GloballyVisible;
+        } else {
+            this.visibilityState = VisibilityState.NotVisible;
         }
 
         this.bindToContext = () => {
             assert(this.bindState === BindState.NotBound, 0x13b /* "datastore context is already in bound state" */);
             this.bindState = BindState.Binding;
             assert(this.channel !== undefined, 0x13c /* "undefined channel on datastore context" */);
-            makeVisibleFn();
+            this.makeLocallyVisible();
             this.bindState = BindState.Bound;
         };
 
@@ -642,14 +645,14 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     /**
-     * This is called by the data store channel when it becomes locally visible. We need to notify our parent to make
-     * us visible in the container.
+     * This is called by the data store channel when it becomes locally visible indicating that it is ready to become
+     * globally visible now.
      */
-    public makeVisible() {
+    public makeLocallyVisible() {
         assert(this.visibilityState === VisibilityState.NotVisible, "datastore context is already visible");
         assert(this.channel !== undefined, "undefined channel on datastore context");
         this.visibilityState = VisibilityState.LocallyVisible;
-        this.makeVisibleFn();
+        this.makeLocallyVisibleFn();
     }
 
     protected bindRuntime(channel: IFluidDataStoreChannel) {
@@ -889,7 +892,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             props.snapshotTree !== undefined ? true : false /* existing */,
             props.snapshotTree ? BindState.Bound : BindState.NotBound,
             true /* isLocalDataStore */,
-            props.makeVisibleFn,
+            props.makeLocallyVisibleFn,
         );
 
         this.snapshotTree = props.snapshotTree;

@@ -156,7 +156,7 @@ export class DataStores implements IDisposable {
                         key,
                         { type: CreateSummarizerNodeSource.FromSummary },
                     ),
-                    makeVisibleFn: () => this.makeDataStoreVisible(key),
+                    makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(key),
                     snapshotTree,
                     isRootDataStore: undefined,
                     writeGCDataAtRoot: this.writeGCDataAtRoot,
@@ -291,11 +291,11 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Makes the data store with the given id visible in the container graph by moving the data store context from
-     * unbound to bound list. This data store can now be reached from the root.
+     * Make the data stores locally visible in the container graph by moving the data store context from unbound to
+     * bound list. This data store can now be reached from the root.
      * @param id - The id of the data store context to make visible.
      */
-    public makeDataStoreVisible(id: string): void {
+    private makeDataStoreLocallyVisible(id: string): void {
         const localContext = this.contexts.getUnbound(id);
         assert(!!localContext, 0x15f /* "Could not find unbound context to bind" */);
 
@@ -331,7 +331,7 @@ export class DataStores implements IDisposable {
                 id,
                 { type: CreateSummarizerNodeSource.Local },
             ),
-            makeVisibleFn: () => this.makeDataStoreVisible(id),
+            makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
             isRootDataStore: isRoot,
             writeGCDataAtRoot: this.writeGCDataAtRoot,
@@ -352,7 +352,7 @@ export class DataStores implements IDisposable {
                 id,
                 { type: CreateSummarizerNodeSource.Local },
             ),
-            makeVisibleFn: () => this.makeDataStoreVisible(id),
+            makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
             isRootDataStore: isRoot,
             writeGCDataAtRoot: this.writeGCDataAtRoot,

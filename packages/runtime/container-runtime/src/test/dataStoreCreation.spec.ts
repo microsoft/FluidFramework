@@ -38,7 +38,7 @@ describe("Data Store Creation Tests", () => {
 
         let storage: IDocumentStorageService;
         let scope: FluidObject;
-        const makeVisibleFn = () => {};
+        const makeLocallyVisibleFn = () => {};
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
         const dataStoreAName = "dataStoreA";
@@ -118,7 +118,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                makeVisibleFn,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -145,7 +145,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                makeVisibleFn,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -172,7 +172,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                makeVisibleFn,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -199,7 +199,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                makeVisibleFn,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -226,7 +226,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreBId),
-                makeVisibleFn,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -250,7 +250,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreCId),
-                makeVisibleFn,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -277,7 +277,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                makeVisibleFn,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -304,7 +304,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                makeVisibleFn,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -331,7 +331,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                makeVisibleFn,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,

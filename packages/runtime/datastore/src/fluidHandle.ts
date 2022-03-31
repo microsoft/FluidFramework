@@ -21,20 +21,24 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
     }
 
     /**
-     * Tells whether the object of this handle is visible in the container.
+     * Tells whether the object of this handle is visible in the container locally or globally.
      */
     private get visible(): boolean {
         /**
-         * If the object of this handle is attached, it is visible in the container. This is a work around the scenario
-         * where the object becomes visible but the handle does not get this notification. For example, handles to a DDS
-         * other than the default handle won't know if the DDS becomes visible after the handle was created.
+         * If the object of this handle is attached, it is visible in the container. Ideally, checking local visibility
+         * should be enough for a handle. However, there are scenarios where the object becomes locally visible but the
+         * handle does not know this - This will happen is attachGraph is never called on the handle. Couple of examples
+         * where this can happen:
+         * 1. Handles to DDS other than the default handle won't know if the DDS becomes visible after the handle was
+         *    created.
+         * 2. Handles to root data stores will never know that it was visible because the handle will not be stores in
+         *    another DDS and so, attachGraph will never be called on it.
          */
-        if (this.isAttached) {
-            this._visible = true;
-        }
-        return this._visible;
+        return this.isAttached || this.locallyVisible;
     }
-    private _visible: boolean = false;
+
+    // Tracks whether this handle is locally visible in the container.
+    private locallyVisible: boolean = false;
 
     /**
      * Creates a new FluidObjectHandle.
@@ -48,9 +52,6 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
         public readonly routeContext: IFluidHandleContext,
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
-        if (this.isAttached) {
-            this._visible = true;
-        }
     }
 
     public async get(): Promise<any> {
@@ -62,7 +63,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
             return;
         }
 
-        this._visible = true;
+        this.locallyVisible = true;
         this.pendingHandlesToMakeVisible.forEach((handle) => {
             handle.attachGraph();
         });

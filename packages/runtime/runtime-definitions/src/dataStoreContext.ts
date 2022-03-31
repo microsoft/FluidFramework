@@ -375,10 +375,10 @@ export interface IFluidDataStoreContext extends
     bindToContext(): void;
 
     /**
-     * Makes the data store visible in the container. This happens automatically for root data stores when they are
-     * marked as root. For non-root data stores, this happens when their handle is added to a visible DDS.
+     * Called to make the data store locally visible in the container. This happens automatically for root data stores
+     * when they are marked as root. For non-root data stores, this happens when their handle is added to a visible DDS.
      */
-    makeVisible?(): void;
+    makeLocallyVisible?(): void;
 
     /**
      * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
