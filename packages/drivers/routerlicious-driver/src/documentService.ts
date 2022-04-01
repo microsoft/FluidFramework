@@ -74,6 +74,12 @@ export class DocumentService implements api.IDocumentService {
             false,
             storageRestWrapper);
         const gitManager = new GitManager(historian);
+        const noCacheHistorian = new Historian(
+            this.gitUrl,
+            true,
+            true,
+            storageRestWrapper);
+        const noCacheGitManager = new GitManager(noCacheHistorian);
         const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
             caching: this.driverPolicies.enablePrefetch
                 ? api.LoaderCachingPolicy.Prefetch
@@ -84,6 +90,7 @@ export class DocumentService implements api.IDocumentService {
         this.documentStorageService = new DocumentStorageService(
             this.documentId,
             gitManager,
+            noCacheGitManager,
             this.logger,
             documentStorageServicePolicies,
             this.driverPolicies,

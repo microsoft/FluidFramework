@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import URLParse from "url-parse";
+import { ISession } from "./contracts";
 
 export const parseFluidUrl = (fluidUrl: string): URLParse => {
     return new URLParse(fluidUrl, true);
@@ -17,3 +19,23 @@ export const parseFluidUrl = (fluidUrl: string): URLParse => {
  */
 export const replaceDocumentIdInPath = (urlPath: string, documentId: string): string =>
     urlPath.split("/").slice(0, -1).concat([documentId]).join("/");
+
+export const createFluidUrl = (domain: string, pathname: string): string =>
+    "fluid://".concat(domain).concat(pathname);
+
+export const replaceWithDiscoveryUrl = (resolvedUrl: IFluidResolvedUrl,
+    session: ISession,
+    parsedUrl: URLParse): void => {
+    if (session.ordererUrl.includes("https")) {
+        const replacementOrderUrl = new URL(session.ordererUrl);
+        const replaceHistorianUrl = new URL(session.historianUrl);
+        const deltaStorageUrl = new URL(resolvedUrl.endpoints.deltaStorageUrl);
+        const storageUrl = new URL(resolvedUrl.endpoints.storageUrl);
+        deltaStorageUrl.host = replacementOrderUrl.host;
+        storageUrl.host = replaceHistorianUrl.host;
+        resolvedUrl.url = createFluidUrl(session.ordererUrl.replace(/^https?:\/\//, ""), parsedUrl.pathname);
+        resolvedUrl.endpoints.ordererUrl = session.ordererUrl;
+        resolvedUrl.endpoints.deltaStorageUrl = deltaStorageUrl.toString();
+        resolvedUrl.endpoints.storageUrl = storageUrl.toString();
+    }
+};

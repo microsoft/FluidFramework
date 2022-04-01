@@ -33,6 +33,11 @@ export interface IRouterliciousDriverPolicies {
      */
     enableWholeSummaryUpload: boolean;
     /**
+     * Enable discovery for the routerlicious service
+     * Default: false
+     */
+    enableDiscovery: boolean;
+    /**
      * Enable using RestLess which avoids CORS preflight requests.
      * Default: true
      */
