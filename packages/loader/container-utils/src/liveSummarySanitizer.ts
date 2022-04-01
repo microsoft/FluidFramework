@@ -76,14 +76,14 @@ class LiveV1SummarySanitizer {
         const keys = [".channels", ".electedSummarizer", ".metadata"];
         assert(
             validateKeyPresence(keys, srcSummary),
-            0x2c0 /* "Valid app tree keys should be present" */,
+            "Valid app tree keys should be present",
         );
 
         const parentTree = srcSummary.tree;
         const meta = readBlobContent(
             (parentTree[".metadata"] as ISummaryBlob).content,
         );
-        assert(meta !== undefined, 0x2c1 /* "Invalid app metadata" */);
+        assert(meta !== undefined, "Invalid app metadata");
 
         return {
             type: SummaryType.Tree,
@@ -110,7 +110,7 @@ class LiveV1SummarySanitizer {
         const protocolSummary = srcSummary.tree[".protocol"];
         assert(
             protocolSummary.type === SummaryType.Tree,
-            0x2c2 /* "Invalid object type" */,
+            "Invalid object type",
         );
 
         const keys = [
@@ -122,7 +122,7 @@ class LiveV1SummarySanitizer {
 
         assert(
             validateKeyPresence(keys, protocolSummary),
-            0x2c3 /* "Valid protocol tree keys should be present" */,
+            "Valid protocol tree keys should be present",
         );
 
         const parentTree = protocolSummary.tree;
@@ -130,11 +130,11 @@ class LiveV1SummarySanitizer {
             (parentTree.quorumValues as ISummaryBlob).content,
         );
 
-        assert(Array.isArray(quorumValues), 0x2c4 /* "Invalid quorum values" */);
+        assert(Array.isArray(quorumValues), "Invalid quorum values");
         const firstQuorumValue = quorumValues[0];
         assert(
             firstQuorumValue !== undefined && firstQuorumValue.length >= 2,
-            0x2c5 /* "First quorum value not valid" */,
+            "First quorum value not valid",
         );
 
         const codeProposal = firstQuorumValue[this.quorumValIdx];
@@ -169,11 +169,11 @@ class LiveV1SummarySanitizer {
  * @param liveSummary - summary
  */
 export function getSanitizedCopy(liveSummary: ISummaryTree): ISummaryTree {
-    assert(validateTree(liveSummary), 0x2c6 /* "Summary tree is not valid" */);
+    assert(validateTree(liveSummary), "Summary tree is not valid");
 
     const meta = liveSummary.tree[".metadata"];
-    assert(meta !== undefined, 0x2c7 /* "Missing summary metadata" */);
-    assert(meta.type === SummaryType.Blob, 0x2c8 /* "Summary metadata is not valid" */);
+    assert(meta !== undefined, "Missing summary metadata");
+    assert(meta.type === SummaryType.Blob, "Summary metadata is not valid");
 
     const metaContent = readBlobContent(meta.content) as Record<
         string,
@@ -181,15 +181,9 @@ export function getSanitizedCopy(liveSummary: ISummaryTree): ISummaryTree {
     >;
     assert(
         metaContent.summaryFormatVersion === 1,
-        0x2c9 /* "We can only recover through v1 summaries" */,
+        "We can only recover through v1 summaries",
     );
 
     const v1sanitizer = new LiveV1SummarySanitizer(liveSummary);
     return v1sanitizer.sanitizedCopy;
 }
-
-// Open questions:
-// metadata.disableIsolatedChannels === undefined,
-// channels wrap flag
-// data store aliases
-// gc in summary
