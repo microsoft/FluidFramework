@@ -83,11 +83,12 @@ Features not needed for minimal strongly typed application use or the JSON and X
 
 ## Schema Representation
 
-Include a simple schema system, usable as a MVP for both `stored schema` and `view schema`.
+The MVP should include a simple schema system, usable as a MVP for both `stored schema` and `view schema`.
 
-On possible such schema system is included in [Schema.ts](./Schema.ts)
+On possible such schema system is included in [Schema.ts](./Schema.ts).
 
-These `Types` can be added as `stored schema` as part of an edit op, which is considered conflicted if it tries to add a type that has a conflicting `name` and is not equal to the existing one.
+These `TreeSchema` and `FieldSchema` can be added as `stored schema` as part of an edit op,
+which is considered conflicted if it tries to add a type that has a conflicting `name` and is not equal to the existing one.
 
 While a schema must be added to the document as a stored schema to use the type
 (otherwise adding a new type could break existing data which might not even be downloaded on the current client),
@@ -158,3 +159,29 @@ Polish up and finalize schema language, schema aware APIs, and make sure APIs ar
 Schema/Shape optimized storage formats, and optimize schematize for these formats and for known stored schema.
 
 Support additional functionality (other options for stored schema, imperative extensions to view schema)
+
+# Misc Notes
+
+## Schema DDS
+
+The stored schema could be in its own DDS.
+This would be particularly practical we add a way (or find a pattern for) for DDS_s to perform cross DDS transactions.
+Maybe the tree DDS could be optionally configured with a schema DDS which it uses for stored schema (could allow sharing schema between documents).
+Readonly (for most people) public schema documents would compose interestingly with this.
+
+Even if we can't make it work as a separate DDS, it should be implemented such that it would be easy to reuse the code as a schema-dds.
+
+## Typescript Typing
+
+It is be possible to have an embedded DSL for schema declaration in the style of [typebox](https://www.npmjs.com/package/@sinclair/typebox) which produces both compile time types and runtime schema data.
+This allows for schema aware apis (for example for tree reading and editing) to be provided without code gen.
+
+Its possible to take this schema aware static typing much further though (but it may not be useful to do so).
+This static typing could be used to provide:
+
+-   A SchemaRegistry that also collects runtime and compile type data.
+-   Type safe APIs for schema updates (updating a stored schema gives back a new schema repository that includes the changes).
+-   Ways to type document load/viewing (ex: provide an expected stored schema with the document, and type check that the view supports it, optionally including strongly typed handles/adapters/reencoders for schematize)
+
+Regardless of the typescript typing, the stored schema can be checked against the view schema to skip schematize where possible.
+Schema-supersettting can be also used to determine if a schema is safe for reading but not writing.
