@@ -92,7 +92,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             resolvedUrl.endpoints.ordererUrl,
         );
 
-        const documentPostCreateCallback = this.tokenProvider.documentPostCreateCallback;
+        const { documentPostCreateCallback } = this.tokenProvider;
 
         // the backend responds with the actual document ID associated with the new container.
 
