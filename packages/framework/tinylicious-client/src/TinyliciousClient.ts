@@ -10,7 +10,6 @@ import {
 import {
     AttachState,
     IContainer,
-    IFluidCodeDetails,
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
@@ -120,14 +119,14 @@ export class TinyliciousClient {
         };
     }
 
-    private createLoader(containerSchema: ContainerSchema, fluidCodeDetails?: IFluidCodeDetails) {
+    private createLoader(containerSchema: ContainerSchema) {
         const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
         const load = async (): Promise<IFluidModuleWithDetails> => {
             return {
                 module: { fluidExport: containerRuntimeFactory },
-                details: fluidCodeDetails as any,
+                details: { package: "no-dynamic-package", config: {} },
             };
         };
 

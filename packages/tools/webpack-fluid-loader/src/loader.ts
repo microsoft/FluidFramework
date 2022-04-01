@@ -95,7 +95,7 @@ export type RouteOptions =
 function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModuleWithDetails):
     IFluidModuleWithDetails {
     const fluidModuleExport: FluidObject<IProvideRuntimeFactory & IFluidDataStoreFactory> =
-        fluidModule.module.fluidExport;
+        fluidModule.module.fluidExport; // fluidModule
     if (fluidModuleExport.IRuntimeFactory === undefined) {
         const dataStoreFactory = fluidModuleExport.IFluidDataStoreFactory;
 

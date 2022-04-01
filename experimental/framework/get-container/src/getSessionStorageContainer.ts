@@ -5,7 +5,6 @@
 
 import {
     IContainer,
-    IFluidCodeDetails,
     IFluidModuleWithDetails,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
@@ -27,7 +26,6 @@ export async function getSessionStorageContainer(
     documentId: string,
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
-    fluidCodeDetails?: IFluidCodeDetails,
 ): Promise<IContainer> {
     let deltaConnection = deltaConnectionMap.get(documentId);
     if (deltaConnection === undefined) {
@@ -43,7 +41,7 @@ export async function getSessionStorageContainer(
     const load = async (): Promise<IFluidModuleWithDetails> => {
         return {
             module: { fluidExport: containerRuntimeFactory },
-            details: fluidCodeDetails as any,
+            details: { package: "no-dynamic-package", config: {} },
         };
     };
 

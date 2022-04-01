@@ -58,13 +58,13 @@ describe("ContainerContext Tests", () => {
     })(defaultErrorHandler);
 
     const createTestContext = async (
-        codeLoader: unknown,
+        codeLoader: ICodeDetailsLoader,
         existing: boolean = true,
     ) => {
         return ContainerContext.createOrLoad(
             (mockContainer as unknown) as Container,
             (sandbox.stub() as unknown) as FluidObject,
-            codeLoader as ICodeDetailsLoader,
+            codeLoader,
             quorumCodeDetails,
             undefined,
             sandbox.stub() as any,
@@ -121,13 +121,14 @@ describe("ContainerContext Tests", () => {
         mockCodeLoader.verify();
     });
 
+    // open an issue to add string typing
     it("Should load code without details", async () => {
         // Arrange
         const proposedCodeDetails = codeDetailsForVersion("2.0.0");
         const load = async (): Promise<IFluidModuleWithDetails> => {
             return {
                 module: { fluidExport: { } },
-                details: { } as any,
+                details: { package: "no-dynamic-package", config: {} },
             };
         };
 
@@ -139,7 +140,8 @@ describe("ContainerContext Tests", () => {
             satisfies: async (
                 candidate: IFluidCodeDetails,
                 constraint: IFluidCodeDetails,
-            ) => {},
+            ) => { return true; },
+            compare: async () => { return 0; },
         };
         const mockCodeLoader = sandbox.mock(codeDetailsLoader);
         mockCodeLoader
@@ -155,7 +157,7 @@ describe("ContainerContext Tests", () => {
             .resolves(true);
 
         // Act
-        const testContext = await createTestContext(codeDetailsLoader as any);
+        const testContext = await createTestContext(codeDetailsLoader);
 
         // Assert
         strict.ok(testContext);
@@ -166,6 +168,7 @@ describe("ContainerContext Tests", () => {
         mockCodeLoader.verify();
     });
 
+    // open an issue to add string typing
     it("Should load code with details", async () => {
         // Arrange
         const proposedCodeDetails = codeDetailsForVersion("2.0.0");
@@ -185,7 +188,8 @@ describe("ContainerContext Tests", () => {
             satisfies: async (
                 candidate: IFluidCodeDetails,
                 constraint: IFluidCodeDetails,
-            ) => {},
+            ) => { return true; },
+            compare: async () => { return 0; },
         };
         const mockCodeLoader = sandbox.mock(codeDetailsLoader);
         mockCodeLoader

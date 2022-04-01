@@ -5,7 +5,6 @@
 
 import {
     IContainer,
-    IFluidCodeDetails,
     IFluidModuleWithDetails,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
@@ -25,12 +24,11 @@ export interface IGetContainerParams {
 
 export async function createContainer(
     params: IGetContainerParams,
-    fluidCodeDetails?: IFluidCodeDetails,
 ): Promise<IContainer> {
     const load = async (): Promise<IFluidModuleWithDetails> => {
         return {
             module: { fluidExport: params.containerRuntimeFactory },
-            details: fluidCodeDetails as any,
+            details: { package: "no-dynamic-package", config: {} },
         };
     };
 
@@ -52,12 +50,11 @@ export async function createContainer(
 
 export async function getContainer(
     params: IGetContainerParams,
-    fluidCodeDetails?: IFluidCodeDetails,
 ): Promise<IContainer> {
     const load = async (): Promise<IFluidModuleWithDetails> => {
         return {
             module: { fluidExport: params.containerRuntimeFactory },
-            details: fluidCodeDetails as any,
+            details: { package: "no-dynamic-package", config: {} },
         };
     };
 

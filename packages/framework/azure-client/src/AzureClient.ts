@@ -10,7 +10,6 @@ import {
 import {
     AttachState,
     IContainer,
-    IFluidCodeDetails,
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
@@ -139,14 +138,14 @@ export class AzureClient {
         };
     }
 
-    private createLoader(containerSchema: ContainerSchema, fluidCodeDetails?: IFluidCodeDetails): Loader {
+    private createLoader(containerSchema: ContainerSchema): Loader {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
         const load = async (): Promise<IFluidModuleWithDetails> => {
             return {
                 module: { fluidExport: runtimeFactory },
-                details: fluidCodeDetails as any,
+                details: { package: "no-dynamic-package", config: {} },
             };
         };
 
