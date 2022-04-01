@@ -45,11 +45,11 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     constructor(
         protected readonly id: string,
         protected readonly manager: GitManager,
-        protected readonly noCacheGitManager: GitManager,
         protected readonly logger: ITelemetryLogger,
         public readonly policies: IDocumentStorageServicePolicies = {},
         private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),
-        private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> = new InMemoryCache()) {
+        private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> = new InMemoryCache(),
+        protected readonly noCacheGitManager?: GitManager) {
         this.summaryUploadManager = new WholeSummaryUploadManager(manager);
     }
 
@@ -184,7 +184,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
                 treeId: versionId,
             },
             async (event) => {
-                const response = disableCache !== undefined && disableCache ?
+                const response = disableCache !== undefined && disableCache && this.noCacheGitManager !== undefined ?
                 await this.noCacheGitManager.getSummary(versionId) :
                 await this.manager.getSummary(versionId);
                 event.end({

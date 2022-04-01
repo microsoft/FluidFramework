@@ -90,12 +90,12 @@ export class DocumentService implements api.IDocumentService {
         this.documentStorageService = new DocumentStorageService(
             this.documentId,
             gitManager,
-            noCacheGitManager,
             this.logger,
             documentStorageServicePolicies,
             this.driverPolicies,
             this.blobCache,
-            this.snapshotTreeCache);
+            this.snapshotTreeCache,
+            noCacheGitManager);
         return this.documentStorageService;
     }
 
