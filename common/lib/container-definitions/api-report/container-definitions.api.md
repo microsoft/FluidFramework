@@ -447,7 +447,7 @@ export type ILoaderOptions = {
     maxClientLeaveWaitTime?: number;
 };
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IPendingLocalState {
     // (undocumented)
     pendingRuntimeState: unknown;
