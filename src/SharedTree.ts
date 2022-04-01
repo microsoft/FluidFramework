@@ -552,8 +552,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		if (isUpdateRequired(loadedSummaryVersion, this.writeFormat)) {
 			this.submitLocalMessage({ type: SharedTreeOpType.Update, version: this.writeFormat });
+		}
 
-			// Sets the write format to the loaded version so that SharedTree continues to write the old version while waiting for the update op to be sequenced.
+		if (compareSummaryFormatVersions(loadedSummaryVersion, this.writeFormat) !== 0) {
+			// Write whatever format the loaded summary uses (this is the current agreed-upon format: it may be updated by an update op)
 			this.changeWriteFormat(loadedSummaryVersion);
 		}
 

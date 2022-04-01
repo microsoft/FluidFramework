@@ -224,7 +224,7 @@ export function runSharedTreeVersioningTests(
 			expect(ops[3].version).to.equal(newVersion);
 		});
 
-		it('can update to a write version higher than the initialized write version', () => {
+		it('Existing client can update to a write version higher than the initialized write version', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const versions = spyOnVersionChanges(tree);
 			const ops = spyOnSubmittedOps(containerRuntimeFactory);
@@ -252,6 +252,34 @@ export function runSharedTreeVersioningTests(
 
 			expect(ops[0].version).to.equal(oldVersion);
 			expect(ops[2].version).to.equal(newVersion);
+		});
+
+		it('New client can update to a write version higher than the initialized version on summary load', () => {
+			const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+				...treeOptions,
+				writeFormat: newVersion,
+			});
+			const ops = spyOnSubmittedOps(containerRuntimeFactory);
+
+			applyNoop(tree);
+			containerRuntimeFactory.processAllMessages();
+			const summary = tree.saveSummary();
+
+			// Load the summary into a tree with older write version; it should recognize the document is already using
+			// the new write version and use that instead.
+			const { tree: olderTree } = setUpTestSharedTree({
+				...treeOptions,
+				containerRuntimeFactory,
+				writeFormat: oldVersion,
+			});
+
+			olderTree.loadSummary(summary);
+			applyNoop(olderTree);
+			containerRuntimeFactory.processAllMessages();
+
+			expect(ops.length).to.equal(2);
+			expect(ops.map((op) => op.type)).to.eql([SharedTreeOpType.Edit, SharedTreeOpType.Edit]);
+			expect(ops.map((op) => op.version)).to.eql([newVersion, newVersion]);
 		});
 
 		it('can load a 0.1.1 summary and access the current view', () => {
