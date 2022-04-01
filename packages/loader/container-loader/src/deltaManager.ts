@@ -60,8 +60,11 @@ export interface IConnectionArgs {
 }
 
 // back-compat: Import it from protocol-base!
-/** Ops that client generates. Everything else is a service op */
-function isClientMessage(message: ISequencedDocumentMessage) {
+/**
+ * Ops that client (container runtime & Container class) generates.
+ * Everything else is a service op
+ */
+ function isClientMessage(message: ISequencedDocumentMessage) {
     switch (message.type) {
         case MessageType.Propose:
         case MessageType.Reject:

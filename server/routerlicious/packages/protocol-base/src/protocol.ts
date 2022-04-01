@@ -24,7 +24,10 @@ export interface IScribeProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-/** Ops that client generates. Everything else is a service op */
+/**
+ * Ops that client (container runtime & Container class) generates.
+ * Everything else is a service op
+ */
 export function isClientMessage(message: ISequencedDocumentMessage) {
     switch (message.type) {
         case MessageType.Propose:
@@ -41,11 +44,11 @@ export function isClientMessage(message: ISequencedDocumentMessage) {
 /**
  * Tells if op is not representing modification of user content in container
  * It includes such things as
- * - Service generates ops
- * - Ops submitted by client:
+ * - Service generates ops (join, leave, noClient, summary ack/nack)
+ * - Some ops submitted by client, with service being recipient:
  *    - Summary op submitted by container runtime
- *    - Quorum ops (propose, reject)
- *    - Noop
+ *    - Protocol (Quorum) ops: propose, reject, Noop
+ *    - Collab control: Noop
  */
 export function isSystemMessage(message: ISequencedDocumentMessage) {
     switch (message.type) {
