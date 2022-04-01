@@ -28,7 +28,8 @@ let odspAuthLock: Promise<void> | undefined;
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
 /**
- * @returns A portion of a webpack config needed to add support for the webpack-dev-server to use the webpack-fluid-loader.
+ * @returns A portion of a webpack config needed to add support for the
+ * webpack-dev-server to use the webpack-fluid-loader.
  */
 export function devServerConfig(baseDir: string, env: RouteOptions) {
     return {
