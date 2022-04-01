@@ -31,7 +31,6 @@ import {
     IDocumentService,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -58,6 +57,21 @@ export interface IConnectionArgs {
     mode?: ConnectionMode;
     fetchOpsFromStorage?: boolean;
     reason: string;
+}
+
+// back-compat: Import it from protocol-base!
+/** Ops that client generates. Everything else is a service op */
+function isClientMessage(message: ISequencedDocumentMessage) {
+    switch (message.type) {
+        case MessageType.Propose:
+        case MessageType.Reject:
+        case MessageType.NoOp:
+        case MessageType.Summarize:
+        case MessageType.Operation:
+                return true;
+        default:
+            return false;
+    }
 }
 
 /**
@@ -747,9 +761,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         // All non-system messages are coming from some client, and should have clientId
         // System messages may have no clientId (but some do, like propose, noop, summarize)
-        assert(
-            message.clientId !== undefined
-            || isSystemMessage(message),
+        // Note: we can see such message.type as "attach" or "chunkedOp" for legacy files before RTM
+        // But these types are no longer supported as they are rolled into "op" by container runtime.
+        assert((message.clientId === null) === !isClientMessage(message),
             0x0ed /* "non-system message have to have clientId" */,
         );
 
@@ -772,6 +786,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 clientId: this.connectionManager.clientId,
             });
         }
+
+        // Client ops: MSN has to be lower than sequence #, as client can continue to send ops with same
+        // reference sequence number as this op.
+        // Sysmte ops (when no clients are connected) are the only ops where equation is possible.
+        const diff = message.sequenceNumber - message.minimumSequenceNumber;
+        if (diff < 0 || diff === 0 && message.clientId !== null) {
+            throw new DataCorruptionError("MSN has to be lower than sequence #",
+                extractSafePropertiesFromMessage(message));
+        }
+
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {

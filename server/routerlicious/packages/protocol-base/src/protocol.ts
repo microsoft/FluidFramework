@@ -24,20 +24,35 @@ export interface IScribeProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-export function isSystemMessage(message: ISequencedDocumentMessage) {
+/** Ops that client generates. Everything else is a service op */
+export function isClientMessage(message: ISequencedDocumentMessage) {
     switch (message.type) {
-        case MessageType.ClientJoin:
-        case MessageType.ClientLeave:
         case MessageType.Propose:
         case MessageType.Reject:
         case MessageType.NoOp:
-        case MessageType.NoClient:
         case MessageType.Summarize:
-        case MessageType.SummaryAck:
-        case MessageType.SummaryNack:
-            return true;
+        case MessageType.Operation:
+                return true;
         default:
             return false;
+    }
+}
+
+/**
+ * Tells if op is not representing modification of user content in container
+ * It includes such things as
+ * - Service generates ops
+ * - Ops submitted by client:
+ *    - Summary op submitted by container runtime
+ *    - Quorum ops (propose, reject)
+ *    - Noop
+ */
+export function isSystemMessage(message: ISequencedDocumentMessage) {
+    switch (message.type) {
+        case MessageType.Operation:
+            return false;
+        default:
+            return true;
     }
 }
 
