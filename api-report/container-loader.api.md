@@ -5,7 +5,6 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
@@ -21,14 +20,14 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
-import { IProvideFluidCodeDetailsComparer } from '@fluidframework/core-interfaces';
+import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IProxyLoaderFactory } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -89,8 +88,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     readonly options: ILoaderOptions;
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
-    // @deprecated (undocumented)
-    raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
     static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string): Promise<Container>;

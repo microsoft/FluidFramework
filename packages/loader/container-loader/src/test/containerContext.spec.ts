@@ -9,10 +9,10 @@ import {
     ILoader,
     IRuntime,
     IRuntimeFactory,
+    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
     FluidObject,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IQuorum,
@@ -69,7 +69,6 @@ describe("ContainerContext Tests", () => {
             sandbox.stub() as any,
             (sandbox.stub() as unknown) as IQuorum,
             (sandbox.stub() as unknown) as ILoader,
-            Sinon.fake(),
             Sinon.fake(),
             Sinon.fake(),
             Sinon.fake(),
