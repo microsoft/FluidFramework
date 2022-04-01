@@ -8,9 +8,9 @@ import {
     INack,
     INackContent,
     ISequencedDocumentMessage,
+    ISignalMessage,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { ISignalMessage } from "@fluidframework/protocol-definitions/src/protocol";
 import { LambdaName } from "./lambdas";
 
 // String identifying the raw operation message
