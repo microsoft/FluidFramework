@@ -12,6 +12,7 @@ import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
+    IDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { Quorum } from "./quorum";
@@ -28,7 +29,7 @@ export interface IScribeProtocolState {
  * Ops that client (container runtime & Container class) generates.
  * Everything else is a service op
  */
-export function isClientMessage(message: ISequencedDocumentMessage) {
+export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage) {
     switch (message.type) {
         case MessageType.Propose:
         case MessageType.Reject:

@@ -64,7 +64,7 @@ export interface IConnectionArgs {
  * Ops that client (container runtime & Container class) generates.
  * Everything else is a service op
  */
- function isClientMessage(message: ISequencedDocumentMessage) {
+ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage) {
     switch (message.type) {
         case MessageType.Propose:
         case MessageType.Reject:
@@ -215,6 +215,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (message === undefined) {
             return -1;
         }
+
+        assert(isClientMessage(message), "client sends non-client message");
 
         this.messageBuffer.push(message);
 
