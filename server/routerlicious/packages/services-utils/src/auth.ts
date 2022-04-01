@@ -48,7 +48,7 @@ export function validateTokenClaims(
  * Generates a document creation JWT token, this token doesn't provide any sort of authorization to the user.
  * But it can be used by other services to validate the document creator identity upon creating a document.
  */
-export function getCreationToken(token: string, key: string, documentId: string, lifetime = 5) {
+export function getCreationToken(token: string, key: string, documentId: string, lifetime = 5 * 60) {
  // Current time in seconds
  const tokenClaims = jwt.decode(token) as ITokenClaims;
 
