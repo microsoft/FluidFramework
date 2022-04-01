@@ -58,9 +58,10 @@
   },
   "devDependencies": {
     "@fluidframework/aqueduct": "^0.58.3000",
+    "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@0.58.2000",
     "@fluidframework/azure-local-service": "^0.1.38773",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
     "@fluidframework/test-client-utils": "^0.58.3000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
@@ -76,5 +77,9 @@
   },
   "peerDependencies": {
     "fluid-framework": "^0.58.0"
+  },
+  "typeValidation": {
+    "version": "0.58.3000",
+    "broken": {}
   }
 }

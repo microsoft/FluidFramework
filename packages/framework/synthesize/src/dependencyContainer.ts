@@ -146,7 +146,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
             for (const parent of this.parents) {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<TMap, T>>;
-                const syn = parent.synthesize<Pick<TMap, T>,{}>(
+                const syn = parent.synthesize<Pick<TMap, T>, Record<string, unknown>>(
                     sp,
                     {});
                 const descriptor = Object.getOwnPropertyDescriptor(syn, t);
