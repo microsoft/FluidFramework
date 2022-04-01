@@ -41,6 +41,7 @@ export type QuorumClientsSnapshot = [string, ISequencedClient][];
 /**
  * Snapshot format for a QuorumProposals
  */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type QuorumProposalsSnapshot = {
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];
