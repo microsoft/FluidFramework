@@ -12,6 +12,7 @@ import {
     FieldSchema,
     TreeSchemaIdentifier,
     emptyField,
+    LocalFieldKey,
 } from "./Schema";
 
 interface Named extends TreeSchema {
@@ -28,7 +29,7 @@ const emptyMap: ReadonlyMap<any, never> = new Map<any, never>();
 const json: Named[] = [];
 
 const jsonObject: Named = {
-    name: "Json.Object",
+    name: "Json.Object" as TreeSchemaIdentifier,
     localFields: emptyMap,
     globalFields: emptySet,
     extraLocalFields: emptyField,
@@ -37,18 +38,21 @@ const jsonObject: Named = {
 };
 
 const jsonArray: Named = {
-    name: "Json.Array",
+    name: "Json.Array" as TreeSchemaIdentifier,
     globalFields: emptySet,
     extraLocalFields: emptyField,
     extraGlobalFields: false,
     localFields: new Map([
-        ["children", { multiplicity: Multiplicity.Sequence, types: jsonTypes }],
+        [
+            "children" as LocalFieldKey,
+            { multiplicity: Multiplicity.Sequence, types: jsonTypes },
+        ],
     ]),
     value: ValueSchema.Nothing,
 };
 
 const jsonNumber: Named = {
-    name: "Json.Number",
+    name: "Json.Number" as TreeSchemaIdentifier,
     localFields: emptyMap,
     globalFields: emptySet,
     extraLocalFields: emptyField,
@@ -57,7 +61,7 @@ const jsonNumber: Named = {
 };
 
 const jsonString: Named = {
-    name: "Json.String",
+    name: "Json.String" as TreeSchemaIdentifier,
     localFields: emptyMap,
     globalFields: emptySet,
     extraLocalFields: emptyField,
@@ -66,7 +70,7 @@ const jsonString: Named = {
 };
 
 const jsonNull: Named = {
-    name: "Json.Null",
+    name: "Json.Null" as TreeSchemaIdentifier,
     localFields: emptyMap,
     globalFields: emptySet,
     extraLocalFields: emptyField,
@@ -75,7 +79,7 @@ const jsonNull: Named = {
 };
 
 const jsonBoolean: Named = {
-    name: "Json.Boolean",
+    name: "Json.Boolean" as TreeSchemaIdentifier,
     localFields: emptyMap,
     globalFields: emptySet,
     extraLocalFields: emptyField,

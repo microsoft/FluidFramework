@@ -14,18 +14,24 @@
  * Optionally validate loaded data against schema.
  * 2. Persist the whole schema. Use the identifier to associate it with schema when loading to check that the schema match.
  */
-export type SchemaIdentifier = string;
+export type SchemaIdentifier = string & {
+    readonly SchemaIdentifier: "3965006b-66d0-41d6-bb04-bd6873b528b4";
+};
 
 /**
  * SchemaIdentifier for a Tree.
  * Also known as "Definition"
  */
-export type TreeSchemaIdentifier = SchemaIdentifier;
+export type TreeSchemaIdentifier = SchemaIdentifier & {
+    readonly TreeSchemaIdentifier: "ffc4b4b6-a4d8-4479-9636-fe6c6a1a4a7f";
+};
 
 /**
  * Key / Name / Label for a field which is scoped to a specific TreeSchema.
  */
-export type LocalFieldKey = string;
+export type LocalFieldKey = string & {
+    readonly TreeSchemaIdentifier: "1108736b-ebb5-4924-9a25-d4dbabd83fc5";
+};
 
 /**
  * SchemaIdentifier for a Field "global field",
@@ -35,7 +41,9 @@ export type LocalFieldKey = string;
  * This can either be done in several ways
  * (keeping the two classes of fields separate, namespaceing/escaping, compressing one into numbers and leaving the other strings, etc.)
  */
-export type GlobalFieldKey = SchemaIdentifier;
+export type GlobalFieldKey = SchemaIdentifier & {
+    readonly TreeSchemaIdentifier: "7cc802f9-3360-4176-bbbf-cab23320d80b";
+};
 
 /**
  * Schema for how many children are allowed in a field.
@@ -221,10 +229,10 @@ export class StoredSchemaRepository implements SchemaRepository {
      * (ex: someone using data as field identifiers might want to reserve all fields identifiers starting with "foo." to have a specific schema).
      * Combined with support for such namespaces in the allowed sets in the schema objects, that might provide a decent alternative to extraFields (which is a bit odd).
      */
-    private readonly fields: Map<LocalFieldKey, FieldSchema> = new Map();
+    private readonly fields: Map<GlobalFieldKey, FieldSchema> = new Map();
     private readonly trees: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 
-    public lookupGLobalFieldSchema(identifier: LocalFieldKey): FieldSchema {
+    public lookupGLobalFieldSchema(identifier: GlobalFieldKey): FieldSchema {
         return this.fields.get(identifier) ?? neverField;
     }
 
@@ -237,7 +245,7 @@ export class StoredSchemaRepository implements SchemaRepository {
      * @returns true iff update was performed.
      */
     public tryUpdateFieldSchema(
-        identifier: LocalFieldKey,
+        identifier: GlobalFieldKey,
         schema: FieldSchema
     ): boolean {
         if (
@@ -336,7 +344,7 @@ export function allowsTreeSuperset(
                 allowsFieldSuperset(
                     repo,
                     original.extraLocalFields,
-                    repo.lookupGLobalFieldSchema(supersetField)
+                    superset.localFields.get(supersetField)
                 )
         )
     ) {
