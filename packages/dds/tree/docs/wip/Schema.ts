@@ -146,6 +146,8 @@ export interface Named<TName> {
     readonly name: TName;
 }
 
+export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
+
 export interface SchemaRepository {
     /**
      * All fields with the specified GlobalFieldKey must comply with the returned schema.
@@ -158,12 +160,15 @@ export interface SchemaRepository {
     lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema | undefined;
 }
 
+export const emptySet: ReadonlySet<never> = new Set();
+export const emptyMap: ReadonlyMap<any, never> = new Map<any, never>();
+
 /**
  * Default field which only permits emptiness.
  */
 export const emptyField: FieldSchema = {
     multiplicity: Multiplicity.Forbidden,
-    types: new Set(),
+    types: emptySet,
 };
 
 /**
@@ -171,15 +176,15 @@ export const emptyField: FieldSchema = {
  */
 export const neverField: FieldSchema = {
     multiplicity: Multiplicity.Value,
-    types: new Set(),
+    types: emptySet,
 };
 
 /**
  * TreeSchema which is impossible for any data to be in schema with.
  */
 export const neverTree: TreeSchema = {
-    localFields: new Map(),
-    globalFields: new Set(),
+    localFields: emptyMap,
+    globalFields: emptySet,
     extraLocalFields: neverField,
     extraGlobalFields: false,
     value: ValueSchema.Nothing,
@@ -198,15 +203,15 @@ export const anyField: FieldSchema = {
  * Note that children under the fields (and global fields) still have to be in schema.
  */
 export const anyTree: TreeSchema = {
-    localFields: new Map(),
-    globalFields: new Set(),
+    localFields: emptyMap,
+    globalFields: emptySet,
     extraLocalFields: anyField,
     extraGlobalFields: true,
     value: ValueSchema.Serializable,
 };
 
 /**
- * Example in memory version showing how stored schema could work.
+ * Example in memory SchemaRepository showing how stored schema could work.
  *
  * Actual version for use with fluid would probably need to either be copy on write, support clone,
  * have rollback/rebase of updates to handle local changes before they are sequenced.
@@ -219,6 +224,11 @@ export const anyTree: TreeSchema = {
  * This means that updating the schema can be done without access to the document contents.
  * As long as the document content edits keep it in schema with the current (or any past) schema,
  * it will always be in schema for all future schema this StoredSchemaRepository might contain.
+ *
+ * Specific users, which have access to the document content, could permit additional kinds of schema changes
+ * (ex: a system which keeps the whole document in memory, or is willing to page through all the data when doing the change)
+ * but the general intended usage pattern is to use a schema on read system (schematize) to apply a more restricted "view schema"
+ * when reading document content.
  */
 export class StoredSchemaRepository implements SchemaRepository {
     /**

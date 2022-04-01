@@ -13,22 +13,18 @@ import {
     TreeSchemaIdentifier,
     emptyField,
     LocalFieldKey,
+    emptyMap,
+    emptySet,
+    NamedTreeSchema,
 } from "./Schema";
-
-interface Named extends TreeSchema {
-    name: TreeSchemaIdentifier;
-}
 
 export const typeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 
 const jsonTypes: Set<TreeSchemaIdentifier> = new Set();
 
-const emptySet: ReadonlySet<never> = new Set();
-const emptyMap: ReadonlyMap<any, never> = new Map<any, never>();
+const json: NamedTreeSchema[] = [];
 
-const json: Named[] = [];
-
-const jsonObject: Named = {
+const jsonObject: NamedTreeSchema = {
     name: "Json.Object" as TreeSchemaIdentifier,
     localFields: emptyMap,
     globalFields: emptySet,
@@ -37,7 +33,7 @@ const jsonObject: Named = {
     value: ValueSchema.Nothing,
 };
 
-const jsonArray: Named = {
+const jsonArray: NamedTreeSchema = {
     name: "Json.Array" as TreeSchemaIdentifier,
     globalFields: emptySet,
     extraLocalFields: emptyField,
@@ -51,7 +47,7 @@ const jsonArray: Named = {
     value: ValueSchema.Nothing,
 };
 
-const jsonNumber: Named = {
+const jsonNumber: NamedTreeSchema = {
     name: "Json.Number" as TreeSchemaIdentifier,
     localFields: emptyMap,
     globalFields: emptySet,
@@ -60,7 +56,7 @@ const jsonNumber: Named = {
     value: ValueSchema.Number,
 };
 
-const jsonString: Named = {
+const jsonString: NamedTreeSchema = {
     name: "Json.String" as TreeSchemaIdentifier,
     localFields: emptyMap,
     globalFields: emptySet,
@@ -69,7 +65,7 @@ const jsonString: Named = {
     value: ValueSchema.String,
 };
 
-const jsonNull: Named = {
+const jsonNull: NamedTreeSchema = {
     name: "Json.Null" as TreeSchemaIdentifier,
     localFields: emptyMap,
     globalFields: emptySet,
@@ -78,7 +74,7 @@ const jsonNull: Named = {
     value: ValueSchema.Nothing,
 };
 
-const jsonBoolean: Named = {
+const jsonBoolean: NamedTreeSchema = {
     name: "Json.Boolean" as TreeSchemaIdentifier,
     localFields: emptyMap,
     globalFields: emptySet,

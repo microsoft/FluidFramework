@@ -5,37 +5,40 @@
  * this is not intended to show what authoring a schema would look like, but rather just show what data a schema needs to capture.
  */
 
-import { FieldContent, Multiplicity, Type, Value } from "./Schema";
+ import {
+    TreeSchema,
+    Multiplicity,
+    ValueSchema,
+    TreeSchemaIdentifier,
+    emptyField,
+    LocalFieldKey,
+    emptyMap,
+    emptySet,
+    NamedTreeSchema,
+} from "./Schema";
 
-const anyField: FieldContent = { multiplicity: Multiplicity.Sequence };
-export function makeAnyType(name: string): Type {
-    return {
-        name,
-        fields: [],
-        extraFields: anyField,
-        value: Value.Serializable,
-    };
-}
-
-export const codePoint: Type = {
-    name: "CodePoint",
-    fields: [],
-    value: Value.Number,
+export const codePoint: NamedTreeSchema = {
+    name: "Primitive.CodePoint" as TreeSchemaIdentifier,
+    localFields: emptyMap,
+    globalFields: emptySet,
+    extraLocalFields: emptyField,
+    extraGlobalFields: false,
+    value: ValueSchema.Number,
 };
 
 /**
  * String made of unicode code points, allowing for sequence editing of a string.
  */
-export const string: Type = {
-    name: "string",
-    fields: [
-        {
-            name: "content",
-            content: {
-                multiplicity: Multiplicity.Sequence,
-                types: [codePoint],
-            },
-        },
-    ],
-    value: Value.Nothing,
+export const string: TreeSchema = {
+    globalFields: emptySet,
+    extraLocalFields: emptyField,
+    extraGlobalFields: false,
+    localFields: new Map([
+        [
+            "children" as LocalFieldKey,
+            { multiplicity: Multiplicity.Sequence, types: new Set([codePoint.name]) },
+        ],
+    ]),
+    value: ValueSchema.Nothing,
 };
+
