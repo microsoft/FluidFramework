@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IFluidHandle, IFluidLoadable, IFluidObject } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     BaseSegment,
     createGroupOp,
@@ -276,11 +276,9 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
     public getItem(row: number, col: number):
         // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-        Jsonable<string | number | boolean | IFluidHandle<IFluidObject & FluidObject & IFluidLoadable>> {
+        Jsonable<string | number | boolean | IFluidHandle> {
         const pos = rowColToPosition(row, col);
-        const { segment, offset } =
-            this.getContainingSegment(pos);
+        const { segment, offset } = this.getContainingSegment(pos);
         if (RunSegment.is(segment)) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return segment.items[offset];

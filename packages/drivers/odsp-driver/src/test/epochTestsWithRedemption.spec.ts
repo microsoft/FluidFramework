@@ -49,7 +49,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
     beforeEach(() => {
         const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
         epochTracker = new EpochTrackerWithRedemption(
-            new LocalPersistentCache(2000),
+            new LocalPersistentCache(),
             {
                 docId: hashedDocumentId,
                 resolvedUrl,
@@ -57,6 +57,10 @@ describe("Tests for Epoch Tracker With Redemption", () => {
             new TelemetryUTLogger());
         epochCallback = new DeferralWithCallback();
         (epochTracker as any).treesLatestDeferral = epochCallback;
+    });
+
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
     });
 
     it.skip("joinSession call should succeed on retrying after snapshot cached read succeeds", async () => {

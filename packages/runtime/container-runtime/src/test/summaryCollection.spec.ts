@@ -52,7 +52,7 @@ const summaryNack: ISummaryNackMessage = {
     timestamp: summaryOp.timestamp + 1,
     type: MessageType.SummaryNack,
     contents: {
-        errorMessage: "Nack",
+        message: "Nack",
         summaryProposal:{summarySequenceNumber: summaryOp.sequenceNumber},
     },
 };

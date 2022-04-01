@@ -15,6 +15,7 @@ import {
     normalizeError,
     wrapError,
     wrapErrorAndLog,
+    isExternalError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -27,17 +28,17 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 
     /**
      * Create a new GenericError
-     * @param errorMessage - Error message
+     * @param message - Error message
      * @param error - inner error object
      * @param props - Telemetry props to include when the error is logged
      */
     constructor(
-        readonly fluidErrorCode: string,
+        message: string,
         readonly error?: any,
         props?: ITelemetryProperties,
     ) {
         // Don't try to log the inner error
-        super(fluidErrorCode, props, new Set(["error"]));
+        super(message, props, new Set(["error"]));
     }
 }
 
@@ -47,9 +48,8 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
     readonly errorType = ContainerErrorType.throttlingError;
 
-    constructor(
+    private constructor(
         message: string,
-        readonly fluidErrorCode: string,
         readonly retryAfterSeconds: number,
         props?: ITelemetryProperties,
     ) {
@@ -57,18 +57,16 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     }
 
     /**
-     * Wrap the given error as a ThrottlingWarning, preserving any safe properties for logging
-     * and prefixing the wrapped error message with messagePrefix.
+     * Wrap the given error as a ThrottlingWarning
+     * Only preserves the error message, and applies the given retry after to the new warning object
      */
     static wrap(
-        error: any,
-        errorCode: string,
+        error: unknown,
         retryAfterSeconds: number,
         logger: ITelemetryLogger,
     ): IThrottlingWarning {
         const newErrorFn =
-            (errMsg: string) => new ThrottlingWarning(errMsg, errorCode, retryAfterSeconds);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            (errMsg: string) => new ThrottlingWarning(errMsg, retryAfterSeconds);
         return wrapErrorAndLog(error, newErrorFn, logger);
     }
 }
@@ -79,9 +77,9 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
     readonly errorType = "usageError";
 
     constructor(
-        readonly fluidErrorCode: string,
+        message: string,
     ) {
-        super(fluidErrorCode, { usageError: true });
+        super(message, { usageError: true });
     }
 }
 
@@ -90,10 +88,10 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
     readonly errorType = ContainerErrorType.clientSessionExpiredError;
 
     constructor(
-        readonly fluidErrorCode: string,
+        message: string,
         readonly expiryMs: number,
     ) {
-        super(fluidErrorCode, { timeoutMs: expiryMs});
+        super(message, { timeoutMs: expiryMs});
     }
 }
 
@@ -106,10 +104,10 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
     readonly canRetry = false;
 
     constructor(
-        readonly fluidErrorCode: string,
+        message: string,
         props: ITelemetryProperties,
     ) {
-        super(fluidErrorCode, { ...props, dataProcessingError: 1 });
+        super(message, { ...props, dataProcessingError: 1 });
     }
 }
 
@@ -121,7 +119,6 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
  */
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
     readonly errorType = ContainerErrorType.dataProcessingError;
-    readonly fluidErrorCode = "";
     readonly canRetry = false;
 
     private constructor(errorMessage: string) {
@@ -160,26 +157,23 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
         const props = {
             dataProcessingError: 1,
             dataProcessingCodepath,
-            ...(sequencedMessage === undefined ? undefined : extractSafePropertiesFromMessage(sequencedMessage))
+            ...(sequencedMessage === undefined ? undefined : extractSafePropertiesFromMessage(sequencedMessage)),
         };
 
         const normalizedError = normalizeError(originalError, { props });
 
-        // Check for errors that originated externally to our code before being normalized.
-        if (normalizedError.errorType === ContainerErrorType.genericError &&
-            normalizedError.getTelemetryProperties().untrustedOrigin === 1
-        ) {
-            // Create a new DataProcessingError using wrapError
-            const dataProcessingError =
-                wrapError(normalizedError, (message: string) => new DataProcessingError(message));
-
-            // Copy over the props above and any others added to this error since first being normalized
-            dataProcessingError.addTelemetryProperties(normalizedError.getTelemetryProperties());
-
-            return dataProcessingError;
+        if (!isExternalError(normalizedError)) {
+            return normalizedError;
         }
 
-        return normalizedError;
+        // Create a new DataProcessingError to wrap this external error
+        const dataProcessingError =
+            wrapError(normalizedError, (message: string) => new DataProcessingError(message));
+
+        // Copy over the props above and any others added to this error since first being normalized
+        dataProcessingError.addTelemetryProperties(normalizedError.getTelemetryProperties());
+
+        return dataProcessingError;
     }
 }
 

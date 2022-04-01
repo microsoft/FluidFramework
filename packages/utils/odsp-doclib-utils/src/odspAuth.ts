@@ -101,7 +101,11 @@ export async function fetchTokens(
     const refreshToken = tokens.refresh_token;
 
     if (accessToken === undefined || refreshToken === undefined) {
-        throwOdspNetworkError("unableToGetAccessToken", tokens.error === "invalid_grant" ? 401 : result.status, result);
+        throwOdspNetworkError(
+            // pre-0.58 error message: unableToGetAccessToken
+            "Unable to get access token",
+            tokens.error === "invalid_grant" ? 401 : result.status,
+            result);
     }
     return { accessToken, refreshToken };
 }

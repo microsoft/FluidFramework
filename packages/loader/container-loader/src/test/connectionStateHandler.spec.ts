@@ -44,8 +44,7 @@ describe("ConnectionStateHandler Tests", () => {
     });
 
     beforeEach(() => {
-        // Quorum proposal rejection removed, delete when protocol-base 0.1035 is integrated.
-        protocolHandler = new ProtocolOpHandler(0, 0, 1, [], [], [], (key, value) => 0, () => {});
+        protocolHandler = new ProtocolOpHandler(0, 0, 1, [], [], [], (key, value) => 0);
         connectionDetails = {
             clientId: pendingClientId,
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

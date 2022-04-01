@@ -6,13 +6,13 @@
  * @fileoverview Definition of the StringProperty class
  */
 
-const _ = require('lodash');
-const { ValueArrayProperty } = require('./valueArrayProperty');
-const { ArrayProperty } = require('./arrayProperty');
-const { MSG } = require('@fluid-experimental/property-common').constants;
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
+const { MSG } = require('@fluid-experimental/property-common').constants;
 const { ConsoleUtils } = require('@fluid-experimental/property-common');
+const _ = require('lodash');
+const { ArrayProperty } = require('./arrayProperty');
 const { BaseProperty } = require('./baseProperty');
+const { ValueArrayProperty } = require('./valueArrayProperty');
 
 var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
 
@@ -25,12 +25,12 @@ var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
 var PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE = {
     pending: 'setAsLiteral',
     dirty: 'setAsLiteral',
-    flags: MODIFIED_STATE_FLAGS.PENDING_CHANGE | MODIFIED_STATE_FLAGS.DIRTY
+    flags: MODIFIED_STATE_FLAGS.PENDING_CHANGE | MODIFIED_STATE_FLAGS.DIRTY,
 };
 var NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE = {
     pending: 'setAsLiteral',
     dirty: undefined,
-    flags: MODIFIED_STATE_FLAGS.PENDING_CHANGE
+    flags: MODIFIED_STATE_FLAGS.PENDING_CHANGE,
 };
 
 var DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE = {
@@ -43,14 +43,14 @@ var DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE = {
     },
     get flags() {
         return this._flags;
-    }
+    },
 };
 
 var STRING_PROPERTY_SET_PROPERTY_VALUE_STATE_FLAGS = [
     undefined,
     NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE,
     DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE,
-    PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE
+    PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE,
 ];
 
 /**
@@ -67,7 +67,7 @@ export class StringProperty extends ValueArrayProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Get the string value
@@ -75,7 +75,7 @@ export class StringProperty extends ValueArrayProperty {
      */
     getValue() {
         return this._dataArrayRef;
-    };
+    }
 
     /**
      * Private helper function to update the internal dirty and pending changes
@@ -113,7 +113,7 @@ export class StringProperty extends ValueArrayProperty {
         }
 
         this._setChanges(pendingChanges, dirtyChanges);
-    };
+    }
 
     _getPendingChanges() {
         if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
@@ -122,7 +122,7 @@ export class StringProperty extends ValueArrayProperty {
         }
 
         return (this._dirty && this._dirty.pending) || {};
-    };
+    }
 
     _getDirtyChanges() {
         if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
@@ -133,7 +133,7 @@ export class StringProperty extends ValueArrayProperty {
         }
 
         return (this._dirty && this._dirty.dirty) || {};
-    };
+    }
 
     /**
      * inserts a string starting at a position and shifts the rest of
@@ -146,7 +146,7 @@ export class StringProperty extends ValueArrayProperty {
     insert(in_position, in_value) {
         ConsoleUtils.assert(_.isString(in_value), MSG.IN_VALUE_MUST_BE_STRING + in_value);
         this._insertRange(in_position, in_value);
-    };
+    }
 
     /**
      * Adds letters to the end of the string
@@ -158,8 +158,7 @@ export class StringProperty extends ValueArrayProperty {
         ConsoleUtils.assert(_.isString(in_value), MSG.IN_VALUE_MUST_BE_STRING + in_value);
         this._insertRange(this._dataArrayRef.length, in_value);
         return this.getLength();
-    };
-
+    }
 
     /**
      * inserts values
@@ -170,7 +169,7 @@ export class StringProperty extends ValueArrayProperty {
         this._checkIsNotReadOnly(true);
         this._insertRangeWithoutDirtying(in_position, in_value);
         this._setDirty();
-    };
+    }
 
     /**
       * Returns the full property type identifier for the ChangeSet including the enum type id
@@ -180,14 +179,14 @@ export class StringProperty extends ValueArrayProperty {
       */
     getFullTypeid(in_hideCollection) {
         return this._typeid;
-    };
+    }
 
     /**
      * returns the String to an empty string.
      */
     clear() {
         this.setValue('');
-    };
+    }
 
     /**
      * removes a given number of elements from the array property and shifts
@@ -215,8 +214,7 @@ export class StringProperty extends ValueArrayProperty {
         this._removeRangeWithoutDirtying(in_offset, in_deleteCount);
         this._setDirty();
         return result;
-    };
-
+    }
 
     /**
      * @inheritdoc
@@ -248,7 +246,7 @@ export class StringProperty extends ValueArrayProperty {
                 if (oldStringLength > 0) {
                     this.removeRange(0, oldStringLength, in_reportToView);
                     return {
-                        remove: [[0, oldStringLength]]
+                        remove: [[0, oldStringLength]],
                     };
                 } else {
                     // the string was already empty, nothing has changed
@@ -268,7 +266,7 @@ export class StringProperty extends ValueArrayProperty {
         if (newStringData.length > oldStringLength) {
             if (newStringData.substring(0, oldStringLength) === this._dataArrayRef) {
                 var appendChanges = {
-                    insert: [[oldStringLength, newStringData.substring(oldStringLength)]]
+                    insert: [[oldStringLength, newStringData.substring(oldStringLength)]],
                 };
                 this.insertRange(oldStringLength, newStringData.substring(oldStringLength), in_reportToView);
                 return appendChanges;
@@ -277,7 +275,7 @@ export class StringProperty extends ValueArrayProperty {
 
         // most simplistic diff method: Remove all existing data and insert the new data
         var simpleChanges = {
-            insert: [[0, newStringData]]
+            insert: [[0, newStringData]],
         };
         if (oldStringLength > 0) {
             simpleChanges.remove = [[0, oldStringLength]];
@@ -285,7 +283,7 @@ export class StringProperty extends ValueArrayProperty {
         }
         this.insertRange(0, newStringData, in_reportToView);
         return simpleChanges;
-    };
+    }
 
     /**
      * Serialize the property
@@ -312,7 +310,7 @@ export class StringProperty extends ValueArrayProperty {
             // returns just the current data
             return this._dataArrayRef;
         }
-    };
+    }
 
     /**
      * @param {string} in_value the new value
@@ -321,7 +319,7 @@ export class StringProperty extends ValueArrayProperty {
     setValue(in_value) {
         this._checkIsNotReadOnly(true);
         this._setValue(in_value, true);
-    };
+    }
 
     /**
      * @param {string} in_values the new values
@@ -331,7 +329,7 @@ export class StringProperty extends ValueArrayProperty {
      */
     _setValues(in_values, in_initial) {
         throw new Error(MSG.NO_VALUE_PROPERTY_SETVALUES);
-    };
+    }
 
     /**
      * @param {string} in_values the new values
@@ -339,15 +337,14 @@ export class StringProperty extends ValueArrayProperty {
      */
     setValues(in_values) {
         StringProperty.prototype._setValues.call(this, in_values, false);
-    };
+    }
 
     /**
      * @throws always - cannot call .getValues on a string. Use .getValue() instead
      */
     getValues() {
         throw new Error(MSG.NO_VALUE_PROPERTY_GETVALUES);
-    };
-
+    }
 
     /**
      * Internal function to update the value of a property
@@ -363,7 +360,6 @@ export class StringProperty extends ValueArrayProperty {
         var castedValue = String(in_value);
         var changed = castedValue !== oldValue;
         if (changed) {
-
             var stringLength = this._dataArrayRef.length;
             if (stringLength > 0) {
                 this._dataArrayRemoveRange(0, stringLength);
@@ -382,7 +378,7 @@ export class StringProperty extends ValueArrayProperty {
             }
         }
         return changed;
-    };
+    }
 
     /**
      * Sets the pending and dirty changesets
@@ -409,7 +405,7 @@ export class StringProperty extends ValueArrayProperty {
         } else {
             ArrayProperty.prototype._setChanges.call(this, in_pending, in_dirty);
         }
-    };
+    }
 
     /**
      * Sets the dirty flags for this property
@@ -424,7 +420,7 @@ export class StringProperty extends ValueArrayProperty {
         }
 
         ArrayProperty.prototype._setDirtyFlags.call(this, in_flags);
-    };
+    }
 
     /**
      * Gets the dirty flags for this property
@@ -438,7 +434,7 @@ export class StringProperty extends ValueArrayProperty {
         }
 
         return ArrayProperty.prototype._getDirtyFlags.call(this);
-    };
+    }
 
     /**
      * @inheritdoc
@@ -459,7 +455,7 @@ export class StringProperty extends ValueArrayProperty {
             // Let's consider it's an ArrayProperty-like changeset
             ArrayProperty.prototype._applyChangeset.call(this, in_changeSet, in_reportToView);
         }
-    };
+    }
 
     /**
      * Calls back the given function with a human-readable string
@@ -471,7 +467,7 @@ export class StringProperty extends ValueArrayProperty {
      */
     _prettyPrint(indent, externalId, printFct) {
         printFct(indent + externalId + this.getId() + ' (' + this.getTypeid() + '): "' + this.value + '"');
-    };
+    }
 
     /**
      * Return a JSON representation of the property.
@@ -484,9 +480,9 @@ export class StringProperty extends ValueArrayProperty {
             context: this._context,
             typeid: this.getTypeid(),
             isConstant: this._isConstant,
-            value: this.value
+            value: this.value,
         };
-    };
+    }
 
     /**
      * Sets the value of a character at a single index.
@@ -503,7 +499,7 @@ export class StringProperty extends ValueArrayProperty {
         }
 
         this.setRange(in_index, in_character);
-    };
+    }
 
     /**
      * sets values in a string starting at an index.
@@ -515,7 +511,7 @@ export class StringProperty extends ValueArrayProperty {
      */
     setRange(in_index, in_string) {
         ArrayProperty.prototype.setRange.call(this, in_index, in_string);
-    };
+    }
 
     /**
      * get a letter at a given index
@@ -524,7 +520,7 @@ export class StringProperty extends ValueArrayProperty {
      */
     get(in_index) {
         return ArrayProperty.prototype.get.call(this, in_index);
-    };
+    }
 
     /**
      * inserts a string starting at a position and shifts the rest of the String to the right.
@@ -540,7 +536,7 @@ export class StringProperty extends ValueArrayProperty {
             in_value = in_value.join('');
         }
         this._insertRange(in_position, in_value);
-    };
+    }
 
     /**
      * Creates and initializes the data array
@@ -548,7 +544,7 @@ export class StringProperty extends ValueArrayProperty {
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = '';
-    };
+    }
 
     /**
      * Returns the length of the data array
@@ -556,7 +552,7 @@ export class StringProperty extends ValueArrayProperty {
      */
     _dataArrayGetLength() {
         return this._dataArrayRef.length;
-    };
+    }
 
     /**
      * Returns the data array's internal buffer
@@ -564,7 +560,7 @@ export class StringProperty extends ValueArrayProperty {
      */
     _dataArrayGetBuffer() {
         return this._dataArrayRef;
-    };
+    }
 
     /**
      * Returns an entry from the data array
@@ -579,7 +575,7 @@ export class StringProperty extends ValueArrayProperty {
         }
 
         return this._dataArrayRef[in_i];
-    };
+    }
 
     /**
      * Set the array to the given new array
@@ -587,7 +583,7 @@ export class StringProperty extends ValueArrayProperty {
      */
     _dataArrayDeserialize(in_newString) {
         this._dataArrayRef = in_newString;
-    };
+    }
 
     /**
      * Inserts a range into the data array
@@ -596,7 +592,7 @@ export class StringProperty extends ValueArrayProperty {
      */
     _dataArrayInsertRange(in_position, in_range) {
         this._dataArrayRef = this._dataArrayRef.substr(0, in_position) + in_range + this._dataArrayRef.substr(in_position);
-    };
+    }
 
     /**
      * Removes a range from the data array
@@ -610,7 +606,7 @@ export class StringProperty extends ValueArrayProperty {
         } else {
             throw Error('DataArray removeRange in_offset + in_deleteCount is out of bounds.');
         }
-    };
+    }
 
     /**
      * Overwrites a range in the data array
@@ -620,8 +616,7 @@ export class StringProperty extends ValueArrayProperty {
     _dataArraySetRange(in_position, in_values) {
         this._dataArrayRef = this._dataArrayRef.substr(0, in_position) + in_values +
             this._dataArrayRef.substr(in_position + in_values.length);
-    };
-
+    }
 
     get value() {
         return this.getValue();

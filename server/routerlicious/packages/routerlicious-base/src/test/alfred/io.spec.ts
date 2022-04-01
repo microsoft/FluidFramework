@@ -81,7 +81,10 @@ describe("Routerlicious", () => {
                     testClientManager = new TestClientManager();
                     const testDbFactory = new TestDbFactory(testData);
                     const mongoManager = new MongoManager(testDbFactory);
+                    const globalDbEnabled = false;
                     const databaseManager = new MongoDatabaseManager(
+                        globalDbEnabled,
+                        mongoManager,
                         mongoManager,
                         collectionNames,
                         collectionNames,
@@ -324,7 +327,10 @@ describe("Routerlicious", () => {
             testTenantManager = new TestTenantManager(url);
             const testDbFactory = new TestDbFactory(testData);
             const mongoManager = new MongoManager(testDbFactory);
+            const globalDbEnabled = false;
             const databaseManager = new MongoDatabaseManager(
+                globalDbEnabled,
+                mongoManager,
                 mongoManager,
                 collectionNames,
                 collectionNames,

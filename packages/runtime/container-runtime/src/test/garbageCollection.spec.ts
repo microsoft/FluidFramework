@@ -99,6 +99,7 @@ describe("Garbage Collection Tests", () => {
         beforeEach(() => {
             closeCalled = false;
             const settings = { "Fluid.GarbageCollection.RunSessionExpiry": "true" };
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
         });
         afterEach(() => {
@@ -106,8 +107,8 @@ describe("Garbage Collection Tests", () => {
         });
 
         it("Session expires for an existing container", async () => {
-            const metadata: IContainerRuntimeMetadata = 
-                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 1 }
+            const metadata: IContainerRuntimeMetadata =
+                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 1 };
             createGarbageCollector(undefined, undefined, metadata);
             clock.tick(1);
             assert(closeCalled, "Close should have been called.");
@@ -115,7 +116,7 @@ describe("Garbage Collection Tests", () => {
 
         it("Session expires for a new container", async () => {
             createGarbageCollector();
-            clock.tick(defaultSessionExpiryDurationMs); 
+            clock.tick(defaultSessionExpiryDurationMs);
             assert(closeCalled, "Close should have been called.");
         });
     });

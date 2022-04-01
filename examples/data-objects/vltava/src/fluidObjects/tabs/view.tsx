@@ -59,8 +59,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
             tabPanel.push(
                 <TabPanel key={id}>
                     <EmbeddedFluidObjectWrapper
-                        id={id}
-                        requestFluidObject={async (compId: string) => this.props.dataModel.getFluidObjectTab(compId)}
+                        getFluidObject={async () => this.props.dataModel.getFluidObjectTabView(id)}
                     />
                 </TabPanel>);
         });

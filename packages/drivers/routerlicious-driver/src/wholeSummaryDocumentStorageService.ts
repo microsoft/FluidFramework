@@ -64,9 +64,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         // Fetch latest summary, cache it, and return its id.
         if (this.firstVersionsCall && count === 1) {
             this.firstVersionsCall = false;
-            const { id, snapshotTree } = await this.fetchAndCacheSnapshotTree(latestSnapshotId);
+            const { id: _id, snapshotTree } = await this.fetchAndCacheSnapshotTree(latestSnapshotId);
             return [{
-                id,
+                id: _id,
                 treeId: snapshotTree.id!,
             }];
         }

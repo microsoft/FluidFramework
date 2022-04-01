@@ -9,9 +9,8 @@ import { bumpVersionCommand } from "../bumpVersion/bumpVersion";
 import { Context, VersionChangeType } from "../bumpVersion/context";
 import { GitRepo } from "../bumpVersion/utils";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { BreakingIncrement } from "./packageValidator";
 import { validateRepo } from "./repoValidator";
-import { enableLogging } from "./validatorUtils";
+import { BreakingIncrement, enableLogging } from "./validatorUtils";
 
 function incrementToVersionChangeType(increment: BreakingIncrement): VersionChangeType | undefined {
     switch (increment) {
@@ -56,7 +55,7 @@ async function main() {
         validationResults.forEach((value, key) => {
             const changeType = incrementToVersionChangeType(value.level);
             if (changeType !== undefined) {
-                bumpVersionCommand(context, key, changeType, false);
+                bumpVersionCommand(context, key, changeType, false, false);
                 console.log(`Version for ${key} has been updated. Create a pre-release and update dependencies to consume it.`);
             }
         })

@@ -234,7 +234,7 @@ describe("client.applyMsg", () => {
         const remoteClient = new TestClient();
         remoteClient.insertTextLocal(0, client.getText());
         remoteClient.startOrUpdateCollaboration("remoteUser");
-        const clients = [client, remoteClient]
+        const clients = [client, remoteClient];
         const logger = new TestClientLogger(clients);
         let seq = 0;
         const initialMsg = client.makeOpMessage(client.insertTextLocal(0, "-"), ++seq);
@@ -399,7 +399,6 @@ describe("client.applyMsg", () => {
         while (messages.length > 0) {
             const msg = messages.shift();
             clients.forEach((c)=>c.applyMsg(msg));
-
         }
         logger.validate();
     });

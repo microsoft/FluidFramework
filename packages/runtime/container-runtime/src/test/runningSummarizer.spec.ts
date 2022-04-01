@@ -95,7 +95,7 @@ describe("Runtime", () => {
                 const contents: ISummaryNack & { retryAfter?: number } = {
                     summaryProposal,
                     retryAfter: retryAfterSeconds,
-                    errorMessage: "test-nack",
+                    message: "test-nack",
                 };
                 mockDeltaManager.emit("op", { contents, type: MessageType.SummaryNack });
 
@@ -680,7 +680,7 @@ describe("Runtime", () => {
                     assert(!ackNackResult.success, "on-demand summary should fail");
                     assert(ackNackResult.data?.summaryNackOp.type === MessageType.SummaryNack,
                         "should be nack");
-                    assert(ackNackResult.data.summaryNackOp.contents.errorMessage === "test-nack",
+                    assert(ackNackResult.data.summaryNackOp.contents.message === "test-nack",
                         "summary nack error should be test-nack");
                 });
 

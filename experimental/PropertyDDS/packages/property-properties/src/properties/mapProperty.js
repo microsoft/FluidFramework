@@ -6,13 +6,13 @@
 /**
  * @fileoverview Definition of the map property class
  */
-const _ = require('lodash');
-const { BaseProperty } = require('./baseProperty');
-const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
-const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProperty');
-const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const { PathHelper, TypeIdHelper } = require('@fluid-experimental/property-changeset');
 const { MSG } = require('@fluid-experimental/property-common').constants;
+const { ConsoleUtils } = require('@fluid-experimental/property-common');
+const _ = require('lodash');
+const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
+const { BaseProperty } = require('./baseProperty');
+const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProperty');
 const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 
 const PATH_TOKENS = BaseProperty.PATH_TOKENS;
@@ -28,7 +28,6 @@ const PATH_TOKENS = BaseProperty.PATH_TOKENS;
  * A MapProperty is a collection class that can contain an dictionary that maps from strings to properties.
  */
 export class MapProperty extends IndexedCollectionBaseProperty {
-
     /**
      * @param {Object} in_params - Input parameters for property creation
      * @param {string|undefined} in_scope - The scope in which the map typeid is defined
@@ -46,7 +45,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 
         /** Contains the actual entries of the map */
         this._dynamicChildren = {};
-    };
+    }
 
     /**
      * Returns the full property type identifier for the ChangeSet including the enum type id
@@ -59,7 +58,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
         } else {
             return TypeIdHelper.createSerializationTypeId(this._typeid, 'map');
         }
-    };
+    }
 
     /**
      * Is this property a leaf node with regard to flattening?
@@ -70,7 +69,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      */
     _isFlattenLeaf() {
         return true;
-    };
+    }
 
     /**
      * Sets multiple values in a map.
@@ -84,7 +83,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     _setValuesInternal(in_values, in_typed) {
         if (this._containsPrimitiveTypes) {
             var that = this;
-            _.each(in_values, function (value, key) {
+            _.each(in_values, function(value, key) {
                 if (that.has(key)) {
                     that.remove(key);
                 }
@@ -93,7 +92,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
             });
         } else {
             var that = this;
-            _.each(in_values, function (value, key) {
+            _.each(in_values, function(value, key) {
                 var property = that.get(String(key), { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
                 // if key exists in set replace its value else insert a new key/value
                 if (property) {
@@ -119,7 +118,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
                 }
             });
         }
-    };
+    }
 
     /**
      * Sets multiple values in a map.
@@ -137,7 +136,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
         }
 
         this._setValuesInternal(in_values, in_typed);
-    };
+    }
 
     /**
      * Sets multiple values in a map.
@@ -156,7 +155,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
         } else {
             this._setValues(in_values, false, false);
         }
-    };
+    }
 
     /**
      * Returns an object with all the nested values contained in this property
@@ -182,7 +181,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
             }
         }
         return result;
-    };
+    }
 
     /**
      * Returns the path segment for a child
@@ -194,7 +193,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      */
     _getPathSegmentForChildNode(in_childNode) {
         return '[' + PathHelper.quotePathSegmentIfNeeded(in_childNode._id) + ']';
-    };
+    }
 
     /**
      * Resolves a direct child node based on the given path segment
@@ -212,7 +211,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
         } else {
             return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
         }
-    };
+    }
 
     /**
      * Inserts a property or value into the map
@@ -239,11 +238,10 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 
             // Insert the entry into the collection
             this._insert(in_key, in_property, true);
-
         } else {
             throw new Error(MSG.NONVALUE_MAP_INSERT_PROP);
         }
-    };
+    }
 
     /**
      * Removes the entry with the given key from the map
@@ -256,7 +254,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
         var item = this.get(in_key);
         this._removeByKey(in_key, true);
         return item;
-    };
+    }
 
     /**
      * Sets the entry with the given key to the property passed in
@@ -287,7 +285,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
             // Make one final report
             this._reportDirtinessToView();
         }
-    };
+    }
 
     /**
      * Returns an Object with all the entries of the map.
@@ -300,7 +298,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      */
     getEntriesReadOnly() {
         return this._dynamicChildren;
-    };
+    }
 
     /**
      * Returns the collection entry with the given key
@@ -347,7 +345,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 
             return prop;
         }
-    };
+    }
 
     /**
      * Checks whether an entry with the given name exists
@@ -357,7 +355,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      */
     has(in_id) {
         return this._dynamicChildren[in_id] !== undefined;
-    };
+    }
 
     /**
      * Returns all entries of the map as an array.
@@ -369,7 +367,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      */
     getAsArray() {
         return _.values(this._dynamicChildren);
-    };
+    }
 
     /**
      * Returns all keys found in the map
@@ -380,7 +378,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      */
     getIds() {
         return Object.keys(this._dynamicChildren);
-    };
+    }
 
     /**
      * Get the scope to which this property belongs to.
@@ -397,18 +395,17 @@ export class MapProperty extends IndexedCollectionBaseProperty {
         } else {
             return this._scope;
         }
-    };
+    }
 
     /**
      * Deletes all values from the Map
      */
     clear() {
         var that = this;
-        this.getIds().forEach(function (id) {
+        this.getIds().forEach(function(id) {
             that.remove(id);
         });
-    };
-
+    }
 }
 
 MapProperty.prototype._typeid = 'BaseProperty';

@@ -2,25 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions*/
+/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview In this file, we will test the relationship property
  *   added to /src/property_factory.js
  */
 const { PropertyFactory } = require('../..');
 
-describe('RelationshipProperty', function () {
-
-    it('should be able to add a relationship property whithin a schema', function () {
+describe('RelationshipProperty', function() {
+    it('should be able to add a relationship property whithin a schema', function() {
         const assetSchema = {
             typeid: 'foo:bar-1.0.0',
             inherits: ['NodeProperty'],
             properties: [
                 {
                     id: 'relationship',
-                    typeid: 'RelationshipProperty'
-                }
-            ]
+                    typeid: 'RelationshipProperty',
+                },
+            ],
         };
         PropertyFactory.register(assetSchema);
         let str = PropertyFactory.create('String');

@@ -37,7 +37,6 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     MessageType,
-    ITrace,
     ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -124,7 +123,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private readonly throttlingIdSet = new Set<string>();
     private timeTillThrottling: number = 0;
 
-    private readonly closeAbortController = new AbortController();
+    public readonly closeAbortController = new AbortController();
 
     private readonly deltaStorageDelayId = uuid();
     private readonly deltaStreamDelayId = uuid();
@@ -184,19 +183,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
-        // Start adding trace for the op.
-        const traces: ITrace[] = [
-            {
-                action: "start",
-                service: "client",
-                timestamp: Date.now(),
-            }];
-
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents: JSON.stringify(contents),
             metadata,
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
-            traces,
             type,
         };
 
@@ -211,11 +201,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.messageBuffer.push(message);
 
+        this.emit("submitOp", message);
+
         if (!batch) {
             this.flush();
         }
 
-        this.emit("submitOp", message);
         return message.clientSequenceNumber;
     }
 
@@ -579,17 +570,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     private disconnectHandler(reason: string) {
-        if (this.messageBuffer.length > 0) {
-            // Behavior is not well defined here RE batches across connections / disconnect.
-            // DeltaManager overall policy - drop all ops on disconnection and rely on
-            // container runtime to deal with resubmitting any ops that did not make it through.
-            // So drop them, but also raise error event to look into details.
-            this.logger.sendErrorEvent({
-                eventName: "OpenBatchOnDisconnect",
-                length: this.messageBuffer.length,
-            });
-            this.messageBuffer.length = 0;
-        }
+        this.messageBuffer.length = 0;
         this.emit("disconnect", reason);
     }
 
@@ -607,7 +588,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
             const throttlingWarning: IThrottlingWarning = ThrottlingWarning.wrap(
                 error,
-                "deltaManagerEmitDelayInfo",
                 delayMs / 1000 /* retryAfterSeconds */,
                 this.logger,
             );
@@ -731,8 +711,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                         // This looks like a data corruption but the culprit has been found instead
                         // to be the file being overwritten in storage.  See PR #5882.
                         const error = new NonRetryableError(
-                            "twoMessagesWithSameSeqNumAndDifferentPayload",
-                            undefined,
+                            // pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
+                            "Found two messages with the same sequenceNumber but different payloads",
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connectionManager.clientId,
@@ -784,18 +764,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.connectionManager.beforeProcessingIncomingOp(message);
 
-        // Add final ack trace.
-        if (message.traces !== undefined && message.traces.length > 0) {
-            message.traces.push({
-                action: "end",
-                service: "client",
-                timestamp: Date.now(),
-            });
-        }
-
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
-            throw new DataCorruptionError("msnMovesBackwards", {
+            // pre-0.58 error message: msnMovesBackwards
+            throw new DataCorruptionError("Found a lower minimumSequenceNumber (msn) than previously recorded", {
                 ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
             });
@@ -803,7 +775,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
-            throw new DataCorruptionError("nonSequentialSequenceNumber", {
+            // pre-0.58 error message: nonSequentialSequenceNumber
+            throw new DataCorruptionError("Found a non-Sequential sequenceNumber", {
                 ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
             });

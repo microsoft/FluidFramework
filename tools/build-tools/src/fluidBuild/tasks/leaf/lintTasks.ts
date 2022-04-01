@@ -74,7 +74,11 @@ export class EsLintTask extends LintBaseTask {
             throw new Error(`Unable to parse options from ${this.configFileFullPath}. ${e}`)
         }
         if (config.parserOptions?.project) {
-            for (const tsConfigPath of config.parserOptions?.project) {
+            // parserOptions.project is type string | string[]
+            const projectArray = typeof config.parserOptions.project === "string"
+                ? [config.parserOptions.project]
+                : config.parserOptions.project;
+            for (const tsConfigPath of projectArray) {
                 this.addTscTask(dependentTasks, { tsConfig: this.getPackageFileFullPath(tsConfigPath) });
             }
         }

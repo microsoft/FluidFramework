@@ -33,6 +33,7 @@ import { describeFullCompat, itExpects } from "@fluidframework/test-version-util
 import {
     getSnapshotTreeFromSerializedContainer,
     ISnapshotTreeWithBlobContents,
+// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/dist/utils";
 
 const detachedContainerRefSeqNumber = 0;

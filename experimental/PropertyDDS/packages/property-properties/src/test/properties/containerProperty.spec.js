@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* globals targets*/
+/* globals targets */
 /* eslint-disable no-unused-expressions */
 /* eslint-disable consistent-return */
 /**
@@ -11,31 +11,29 @@
  *    this will also tests parts of Property Factory that creates Container property
  */
 
-
+const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const PropertyFactory = require('../..').PropertyFactory;
-const MSG = require('@fluid-experimental/property-common').constants.MSG
 
-
-describe('ContainerProperty', function () {
+describe('ContainerProperty', function() {
     beforeEach(() => {
         PropertyFactory._clear();
     });
 
-    describe('Changeset', function () {
-        it('should not add created properties to the changeset on creation', function () {
+    describe('Changeset', function() {
+        it('should not add created properties to the changeset on creation', function() {
             const DefaultPrimitive = {
                 typeid: 'SimpleTest:OptionalPrimitive-1.0.0',
                 properties: [
                     { id: 'num', typeid: 'Uint32' },
                     { id: 'bool', typeid: 'Bool' },
-                    { id: 'string', typeid: 'String' }
-                ]
+                    { id: 'string', typeid: 'String' },
+                ],
             };
 
             const changeset = {
                 Uint32: { num: 0 },
                 Bool: { bool: false },
-                String: { string: '' }
+                String: { string: '' },
             };
 
             PropertyFactory._reregister(DefaultPrimitive);
@@ -45,22 +43,22 @@ describe('ContainerProperty', function () {
             expect(instance._serialize(true, false)).to.be.empty;
         });
 
-        it('should add optional properties that have default values to the changeset on creation', function () {
+        it('should add optional properties that have default values to the changeset on creation', function() {
             const DefaultPrimitive = {
                 typeid: 'SimpleTest:OptionalPrimitive-1.0.0',
                 properties: [
                     { id: 'num', typeid: 'Uint32', value: 111, optional: true },
                     { id: 'bool', typeid: 'Bool', value: true, optional: true },
-                    { id: 'string', typeid: 'String', value: 'basic', optional: true }
-                ]
+                    { id: 'string', typeid: 'String', value: 'basic', optional: true },
+                ],
             };
 
             const changeset = {
                 insert: {
                     Uint32: { num: 111 },
                     Bool: { bool: true },
-                    String: { string: 'basic' }
-                }
+                    String: { string: 'basic' },
+                },
             };
 
             PropertyFactory._reregister(DefaultPrimitive);
@@ -69,14 +67,14 @@ describe('ContainerProperty', function () {
             expect(instance._serialize(true, false)).to.deep.equal(changeset);
         });
 
-        it('should not add optional properties that do not have default values to the changeset on creation', function () {
+        it('should not add optional properties that do not have default values to the changeset on creation', function() {
             const DefaultPrimitive = {
                 typeid: 'SimpleTest:OptionalPrimitive-1.0.0',
                 properties: [
                     { id: 'num', typeid: 'Uint32', optional: true },
                     { id: 'bool', typeid: 'Bool', optional: true },
-                    { id: 'string', typeid: 'String', optional: true }
-                ]
+                    { id: 'string', typeid: 'String', optional: true },
+                ],
             };
 
             PropertyFactory._reregister(DefaultPrimitive);
@@ -86,15 +84,15 @@ describe('ContainerProperty', function () {
         });
     });
 
-    describe('Optional Properties', function () {
-        it('should not exist on creation if no value is specified', function () {
+    describe('Optional Properties', function() {
+        it('should not exist on creation if no value is specified', function() {
             const DefaultPrimitive = {
                 typeid: 'SimpleTest:OptionalPrimitive-1.0.0',
                 properties: [
                     { id: 'num', typeid: 'Uint32', optional: true },
                     { id: 'bool', typeid: 'Bool', optional: true },
-                    { id: 'string', typeid: 'String', optional: true }
-                ]
+                    { id: 'string', typeid: 'String', optional: true },
+                ],
             };
 
             PropertyFactory._reregister(DefaultPrimitive);
@@ -105,14 +103,14 @@ describe('ContainerProperty', function () {
             expect(instance.get('string')).to.be.undefined;
         });
 
-        it('should exist on creation if value is specified', function () {
+        it('should exist on creation if value is specified', function() {
             const DefaultPrimitive = {
                 typeid: 'SimpleTest:OptionalPrimitive-1.0.0',
                 properties: [
                     { id: 'num', typeid: 'Uint32', value: 111, optional: true },
                     { id: 'bool', typeid: 'Bool', value: true, optional: true },
-                    { id: 'string', typeid: 'String', value: 'basic', optional: true }
-                ]
+                    { id: 'string', typeid: 'String', value: 'basic', optional: true },
+                ],
             };
 
             PropertyFactory._reregister(DefaultPrimitive);
@@ -123,14 +121,14 @@ describe('ContainerProperty', function () {
             expect(instance.get('string').getValue()).to.equal('basic');
         });
 
-        it('can be inserted', function () {
+        it('can be inserted', function() {
             const DefaultPrimitive = {
                 typeid: 'SimpleTest:OptionalPrimitive-1.0.0',
                 properties: [
                     { id: 'num', typeid: 'Uint32', optional: true },
                     { id: 'bool', typeid: 'Bool', optional: true },
-                    { id: 'string', typeid: 'String', optional: true }
-                ]
+                    { id: 'string', typeid: 'String', optional: true },
+                ],
             };
 
             PropertyFactory._reregister(DefaultPrimitive);
@@ -155,14 +153,14 @@ describe('ContainerProperty', function () {
             expect(instance.get('string').getValue()).to.equal('basic');
         });
 
-        it('can be removed', function () {
+        it('can be removed', function() {
             const DefaultPrimitive = {
                 typeid: 'SimpleTest:OptionalPrimitive-1.0.0',
                 properties: [
                     { id: 'num', typeid: 'Uint32', value: 111, optional: true },
                     { id: 'bool', typeid: 'Bool', value: true, optional: true },
-                    { id: 'string', typeid: 'String', value: 'basic', optional: true }
-                ]
+                    { id: 'string', typeid: 'String', value: 'basic', optional: true },
+                ],
             };
 
             PropertyFactory._reregister(DefaultPrimitive);
@@ -178,14 +176,14 @@ describe('ContainerProperty', function () {
             expect(instance.get('string')).to.be.undefined;
         });
 
-        it('throws error if inserted property has unknown id', function () {
+        it('throws error if inserted property has unknown id', function() {
             const DefaultPrimitive = {
                 typeid: 'SimpleTest:OptionalPrimitive-1.0.0',
                 properties: [
                     { id: 'num', typeid: 'Uint32', value: 111, optional: true },
                     { id: 'bool', typeid: 'Bool', value: true, optional: true },
-                    { id: 'string', typeid: 'String', value: 'basic', optional: true }
-                ]
+                    { id: 'string', typeid: 'String', value: 'basic', optional: true },
+                ],
             };
 
             PropertyFactory._reregister(DefaultPrimitive);
@@ -196,14 +194,14 @@ describe('ContainerProperty', function () {
             expect(() => { instance.insert('badId', prop); }).to.throw(MSG.CANNOT_INSERT_UNKNOWN_PROPERTY + 'badId');
         });
 
-        it('throws error if inserted property typeid does not match corresponding typeid', function () {
+        it('throws error if inserted property typeid does not match corresponding typeid', function() {
             const DefaultPrimitive = {
                 typeid: 'SimpleTest:OptionalPrimitive-1.0.0',
                 properties: [
                     { id: 'num', typeid: 'Uint32', optional: true },
                     { id: 'bool', typeid: 'Bool', optional: true },
-                    { id: 'string', typeid: 'String', optional: true }
-                ]
+                    { id: 'string', typeid: 'String', optional: true },
+                ],
             };
 
             PropertyFactory._reregister(DefaultPrimitive);
@@ -214,14 +212,14 @@ describe('ContainerProperty', function () {
             expect(() => { instance.insert('num', prop); }).to.throw(MSG.MISMATCHING_PROPERTY_TYPEID);
         });
 
-        it('throws error if attempting to remove a not optional property', function () {
+        it('throws error if attempting to remove a not optional property', function() {
             const DefaultPrimitive = {
                 typeid: 'SimpleTest:OptionalPrimitive-1.0.0',
                 properties: [
                     { id: 'num', typeid: 'Uint32', value: 111 },
                     { id: 'bool', typeid: 'Bool', value: true, optional: true },
-                    { id: 'string', typeid: 'String', value: 'basic', optional: true }
-                ]
+                    { id: 'string', typeid: 'String', value: 'basic', optional: true },
+                ],
             };
 
             PropertyFactory._reregister(DefaultPrimitive);

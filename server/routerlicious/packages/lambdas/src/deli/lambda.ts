@@ -25,6 +25,7 @@ import {
     IContext,
     IControlMessage,
     IDeliState,
+    IDisableNackMessagesControlMessageContents,
     IMessage,
     INackMessage,
     ITicketedSignalMessage,
@@ -204,8 +205,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     // @ts-ignore
     private canClose = false;
 
-    // when set, messages will be nacked based on the provided info
-    private nackMessages: INackMessagesControlMessageContents | undefined;
+    // mapping of enabled nack message types. messages will be nacked based on the provided info
+    private readonly nackMessages: Map<NackMessagesType, INackMessagesControlMessageContents>;
 
     // Session level properties
     private serviceSummaryGenerated: boolean = false;
@@ -254,7 +255,24 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
         this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
         this.logOffset = lastCheckpoint.logOffset;
-        this.nackMessages = lastCheckpoint.nackMessages;
+
+        if (lastCheckpoint.nackMessages) {
+            if (Array.isArray(lastCheckpoint.nackMessages)) {
+                this.nackMessages = new Map(lastCheckpoint.nackMessages);
+            } else {
+                // backwards compat. nackMessages is a INackMessagesControlMessageContents
+                this.nackMessages = new Map();
+
+                // extra check for very old nack messages
+                const identifier = lastCheckpoint.nackMessages.identifier;
+                if (identifier !== undefined) {
+                    this.nackMessages.set(identifier, lastCheckpoint.nackMessages);
+                }
+            }
+        } else {
+            this.nackMessages = new Map();
+        }
+
         // Null coalescing for backward compatibility
         this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas ?? [];
 
@@ -358,17 +376,18 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     }
 
                     // Check if Deli is over the max ops since last summary nack limit
-                    if (this.serviceConfiguration.deli.summaryNackMessages.enable && !this.nackMessages) {
+                    if (this.serviceConfiguration.deli.summaryNackMessages.enable &&
+                        !this.nackMessages.has(NackMessagesType.SummaryMaxOps)) {
                         const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
                         if (opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
                             // this op brings us over the limit
                             // start nacking non-system ops and ops that are submitted by non-summarizers
-                            this.nackMessages = {
+                            this.nackMessages.set(NackMessagesType.SummaryMaxOps, {
                                 identifier: NackMessagesType.SummaryMaxOps,
                                 content: this.serviceConfiguration.deli.summaryNackMessages.nackContent,
                                 allowSystemMessages: true,
                                 allowedScopes: [ScopeType.SummaryWrite],
-                            };
+                            });
                         }
                     }
 
@@ -543,7 +562,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             this.sessionMetric,
             this.sequenceNumber,
             this.durableSequenceNumber,
-            this.nackMessages?.identifier,
+            Array.from(this.nackMessages.keys()),
         );
     }
 
@@ -558,37 +577,38 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         let dataContent = this.extractDataContent(message);
 
         // Check if we should nack this message
-        const nackMessages = this.nackMessages;
-        if (nackMessages && this.serviceConfiguration.deli.enableNackMessages) {
-            let shouldNack = true;
+        if (this.nackMessages.size > 0 && this.serviceConfiguration.deli.enableNackMessages) {
+            for (const nackMessageControlMessageContents of this.nackMessages.values()) {
+                let shouldNack = true;
 
-            if (nackMessages.allowSystemMessages &&
-                (isServiceMessageType(message.operation.type) || !message.clientId)) {
-                // this is a system message. don't nack it
-                shouldNack = false;
-            } else if (nackMessages.allowedScopes) {
-                const clientId = message.clientId;
-                if (clientId) {
-                    const client = this.clientSeqManager.get(clientId);
-                    if (client) {
-                        for (const scope of nackMessages.allowedScopes) {
-                            if (client.scopes.includes(scope)) {
-                                // this client has an allowed scope. don't nack it
-                                shouldNack = false;
-                                break;
+                if (nackMessageControlMessageContents.allowSystemMessages &&
+                    (isServiceMessageType(message.operation.type) || !message.clientId)) {
+                    // this is a system message. don't nack it
+                    shouldNack = false;
+                } else if (nackMessageControlMessageContents.allowedScopes) {
+                    const clientId = message.clientId;
+                    if (clientId) {
+                        const client = this.clientSeqManager.get(clientId);
+                        if (client) {
+                            for (const scope of nackMessageControlMessageContents.allowedScopes) {
+                                if (client.scopes.includes(scope)) {
+                                    // this client has an allowed scope. don't nack it
+                                    shouldNack = false;
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            if (shouldNack) {
-                return this.createNackMessage(
-                    message,
-                    nackMessages.content.code,
-                    nackMessages.content.type,
-                    nackMessages.content.message,
-                    nackMessages.content.retryAfter);
+                if (shouldNack) {
+                    return this.createNackMessage(
+                        message,
+                        nackMessageControlMessageContents.content.code,
+                        nackMessageControlMessageContents.content.type,
+                        nackMessageControlMessageContents.content.message,
+                        nackMessageControlMessageContents.content.retryAfter);
+                }
             }
         }
 
@@ -830,7 +850,15 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 }
 
                 case ControlMessageType.NackMessages: {
-                    this.nackMessages = controlMessage.contents;
+                    const controlContents: INackMessagesControlMessageContents |
+                        IDisableNackMessagesControlMessageContents = controlMessage.contents;
+
+                    if (controlContents.content !== undefined) {
+                        this.nackMessages.set(controlContents.identifier, controlContents);
+                    } else {
+                        this.nackMessages.delete(controlContents.identifier);
+                    }
+
                     break;
                 }
 
@@ -1225,7 +1253,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             signalClientConnectionNumber: this.signalClientConnectionNumber,
             term: this.term,
             lastSentMSN: this.lastSentMSN,
-            nackMessages: this.nackMessages ? { ...this.nackMessages } : undefined,
+            nackMessages: Array.from(this.nackMessages),
             successfullyStartedLambdas: this.successfullyStartedLambdas,
         };
     }
@@ -1370,16 +1398,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * Checks if the nackMessages flag should be reset
      */
     private checkNackMessagesState() {
-        // note: "!this.nackMessages.identifier" is for backwards compat
-        if (this.serviceConfiguration.deli.summaryNackMessages.enable && this.nackMessages &&
-            (!this.nackMessages.identifier ||
-                this.nackMessages.identifier === NackMessagesType.SummaryMaxOps)) {
+        if (this.serviceConfiguration.deli.summaryNackMessages.enable &&
+            this.nackMessages.has(NackMessagesType.SummaryMaxOps)) {
             // Deli is nacking messages due to summary max ops
             // Check if this new dsn gets it out of that state
             const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
             if (opsSinceLastSummary <= this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
                 // stop nacking future messages
-                this.nackMessages = undefined;
+                this.nackMessages.delete(NackMessagesType.SummaryMaxOps);
             }
         }
     }

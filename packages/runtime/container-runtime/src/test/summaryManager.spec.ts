@@ -172,7 +172,6 @@ describe("Summary Manager", () => {
     afterEach(() => {
         clientElection.removeAllListeners();
         summarizer.removeAllListeners();
-        summaryManager.removeAllListeners();
         connectedState.removeAllListeners();
         throttler.delayMs = 0;
         summaryCollection.opsSinceLastAck = 0;

@@ -101,7 +101,6 @@ describe("Errors", () => {
             const dpe = DataProcessingError.create("Some message", "someCodepath");
             assert(dpe instanceof DataProcessingError);
             assert(dpe.errorType === ContainerErrorType.dataProcessingError);
-            assert(dpe.fluidErrorCode === "");
             assert(dpe.getTelemetryProperties().dataProcessingError === 1);
             assert(dpe.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
             assert(dpe.getTelemetryProperties().untrustedOrigin === 1);
@@ -115,12 +114,11 @@ describe("Errors", () => {
             assert((testError as any).stack === originalError.stack);
         });
         it("Should skip coercion for valid Fluid Error", () => {
-            const originalError = new DataCorruptionError("someErrorCode", {});
+            const originalError = new DataCorruptionError("some message", {});
             const coercedError = DataProcessingError.wrapIfUnrecognized(originalError, "someCodepath", undefined);
 
             assert(coercedError as any === originalError);
             assert(coercedError.errorType === ContainerErrorType.dataCorruptionError);
-            assert(coercedError.fluidErrorCode === "someErrorCode");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
         });
@@ -134,7 +132,6 @@ describe("Errors", () => {
 
             assert(coercedError as any === originalError);
             assert(coercedError.errorType === "Some error type");
-            assert(coercedError.fluidErrorCode === "<error predates fluidErrorCode>");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
         });
@@ -145,7 +142,6 @@ describe("Errors", () => {
             assert(coercedError as any !== originalError);
             assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
-            assert(coercedError.fluidErrorCode === "");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
@@ -159,7 +155,6 @@ describe("Errors", () => {
             assert(coercedError as any !== originalError);
             assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
-            assert(coercedError.fluidErrorCode === "");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
@@ -175,7 +170,6 @@ describe("Errors", () => {
             assert(coercedError as any !== originalError);
             assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
-            assert(coercedError.fluidErrorCode === "");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
@@ -203,7 +197,6 @@ describe("Errors", () => {
                 coercedErrors.every(
                     (error) =>
                         typeof error.message === "string" &&
-                        error.fluidErrorCode === "" &&
                         error.errorType === ContainerErrorType.dataProcessingError &&
                         error.getTelemetryProperties().dataProcessingError === 1 &&
                         error.getTelemetryProperties().dataProcessingCodepath === "someCodepath" &&
@@ -227,7 +220,6 @@ describe("Errors", () => {
 
             assert(coercedError.message === originalMessage);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
-            assert(coercedError.fluidErrorCode === "");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
         });
@@ -240,7 +232,6 @@ describe("Errors", () => {
 
             assert(coercedError.message === originalError.message);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
-            assert(coercedError.fluidErrorCode === "");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().dataProcessingCodepath === "someCodepath");
         });

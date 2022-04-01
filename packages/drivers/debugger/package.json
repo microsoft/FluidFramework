@@ -1,9 +1,13 @@
 {
   "name": "@fluidframework/debugger",
-  "version": "0.58.0",
+  "version": "0.58.3000",
   "description": "Fluid Debugger - a tool to play through history of a file",
   "homepage": "https://fluidframework.com",
-  "repository": "https://github.com/microsoft/FluidFramework",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "packages/drivers/debugger"
+  },
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
@@ -29,15 +33,16 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-definitions": "^0.45.0-0",
-    "@fluidframework/driver-utils": "^0.58.0",
-    "@fluidframework/protocol-definitions": "^0.1026.0",
-    "@fluidframework/replay-driver": "^0.58.0",
+    "@fluidframework/driver-definitions": "^0.45.2000-0",
+    "@fluidframework/driver-utils": "^0.58.3000",
+    "@fluidframework/protocol-definitions": "^0.1027.1000",
+    "@fluidframework/replay-driver": "^0.58.3000",
     "jsonschema": "^1.2.6"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
+    "@fluidframework/debugger-previous": "npm:@fluidframework/debugger@0.58.2000",
+    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
@@ -57,5 +62,9 @@
     "rimraf": "^2.6.2",
     "typescript": "~4.1.3",
     "typescript-formatter": "7.1.0"
+  },
+  "typeValidation": {
+    "version": "0.58.3000",
+    "broken": {}
   }
 }

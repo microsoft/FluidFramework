@@ -17,7 +17,7 @@ import { getHashedDocumentId } from "../odspPublicUtils";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
 import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache(2000);
+const createUtLocalCache = () => new LocalPersistentCache();
 
 describe("Tests for Epoch Tracker", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -42,6 +42,10 @@ describe("Tests for Epoch Tracker", () => {
                 resolvedUrl,
             },
             new TelemetryNullLogger());
+    });
+
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
     });
 
     it("Cache, old versions", async () => {

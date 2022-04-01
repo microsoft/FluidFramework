@@ -35,10 +35,9 @@ import {
     MonitoringContext,
     PerformanceEvent,
     TelemetryDataTag,
- } from "@fluidframework/telemetry-utils";
-import { RuntimeHeaders } from ".";
+} from "@fluidframework/telemetry-utils";
 
-import { IGCRuntimeOptions } from "./containerRuntime";
+import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
 import {
     getGCVersion,
@@ -96,7 +95,7 @@ interface IUnreferencedEvent {
     lastSummaryTime?: number;
     externalRequest?: boolean;
     viaHandle?: boolean;
-};
+}
 
 /** Defines the APIs for the runtime object to be passed to the garbage collector. */
 export interface IGarbageCollectionRuntime {
@@ -186,7 +185,7 @@ class UnreferencedStateTracker {
         }
 
         // The node isn't inactive yet. Restart a timer for the duration remaining for it to become inactive.
-        const remainingDurationMs = this.inactiveTimeoutMs - unreferencedDurationMs; 
+        const remainingDurationMs = this.inactiveTimeoutMs - unreferencedDurationMs;
         if (this.timer === undefined) {
             this.timer = new Timer(remainingDurationMs, () => { this._inactive = true; });
         }
@@ -322,7 +321,7 @@ export class GarbageCollector implements IGarbageCollector {
     // per event per node.
     private readonly loggedUnreferencedEvents: Set<string> = new Set();
     // Queue for unreferenced events that should be logged the next time GC runs.
-    private pendingEventsQueue: IUnreferencedEvent[] = [];
+    private readonly pendingEventsQueue: IUnreferencedEvent[] = [];
 
     protected constructor(
         private readonly provider: IGarbageCollectionRuntime,

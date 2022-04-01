@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as React from 'react';
-import { ModalConsumer } from './ModalManager';
+import * as React from "react";
+import { ModalConsumer } from "./ModalManager";
 
 export const ModalRoot: React.FunctionComponent = () => (
   <ModalConsumer>

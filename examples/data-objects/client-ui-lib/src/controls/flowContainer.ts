@@ -4,7 +4,6 @@
  */
 
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";
@@ -21,7 +20,6 @@ export class FlowContainer extends ui.Component {
         element: HTMLDivElement,
         title: string,
         private readonly runtime: IFluidDataStoreRuntime,
-        private readonly context: IFluidDataStoreContext,
         private readonly sharedString: Sequence.SharedString,
     ) {
         super(element);
@@ -42,7 +40,6 @@ export class FlowContainer extends ui.Component {
         this.flowView = new FlowView(
             flowViewDiv,
             this.runtime,
-            this.context,
             this.sharedString,
         );
 

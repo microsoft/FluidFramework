@@ -4,15 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import {
-    IFluidObject,
-    IRequest,
-    IResponse,
-    IFluidCodeDetails,
-    IFluidCodeDetailsComparer,
-    IProvideFluidCodeDetailsComparer,
-    FluidObject,
-} from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import {
     IAudience,
     IContainerContext,
@@ -27,7 +19,17 @@ import {
     ICodeLoader,
     IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions";
+import {
+    IFluidObject,
+    IRequest,
+    IResponse,
+    IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
+    IProvideFluidCodeDetailsComparer,
+    FluidObject,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { isFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
     IClientConfiguration,
     IClientDetails,
@@ -42,9 +44,7 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
@@ -91,15 +91,6 @@ export class ContainerContext implements IContainerContext {
 
     public readonly taggedLogger: ITelemetryLogger;
 
-    /**
-     * Subtlety: returns this.taggedLogger since vanilla this.logger is now deprecated. See IContainerContext for more
-     * details.
-    */
-    /** @deprecated See IContainerContext for more details. */
-    public get logger(): ITelemetryLogger {
-        return this.taggedLogger;
-    }
-
     public get clientId(): string | undefined {
         return this.container.clientId;
     }
@@ -107,8 +98,10 @@ export class ContainerContext implements IContainerContext {
     /** @deprecated Added back to unblock 0.56 integration */
     public get id(): string {
         const resolvedUrl = this.container.resolvedUrl;
-        ensureFluidResolvedUrl(resolvedUrl);
-        return resolvedUrl.id;
+        if (isFluidResolvedUrl(resolvedUrl)) {
+            return resolvedUrl.id;
+        }
+        return "";
     }
 
     public get clientDetails(): IClientDetails {

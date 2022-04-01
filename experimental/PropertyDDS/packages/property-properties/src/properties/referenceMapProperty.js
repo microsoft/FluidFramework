@@ -5,20 +5,18 @@
 /**
  * @fileoverview Definition of the reference map property class
  */
-const _ = require('lodash');
-const { StringMapProperty } = require('./valueMapProperty');
 const { PathHelper, TypeIdHelper } = require('@fluid-experimental/property-changeset');
-const { BaseProperty } = require('./baseProperty');
 const { MSG } = require('@fluid-experimental/property-common').constants;
+const _ = require('lodash');
+const { BaseProperty } = require('./baseProperty');
 const { ContainerProperty } = require('./containerProperty');
 const { ReferenceProperty } = require('./referenceProperty');
-
+const { StringMapProperty } = require('./valueMapProperty');
 
 /**
  * A StringMapProperty which stores reference values
  */
 export class ReferenceMapProperty extends StringMapProperty {
-
     /**
      * @param {Object} in_params - Input parameters for property creation
      *
@@ -30,7 +28,7 @@ export class ReferenceMapProperty extends StringMapProperty {
      */
     constructor(in_params) {
         super(in_params);
-    };
+    }
 
     /**
      * Returns the typeid for the target of this reference
@@ -42,7 +40,7 @@ export class ReferenceMapProperty extends StringMapProperty {
      */
     getReferenceTargetTypeId() {
         return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
-    };
+    }
 
     /**
      * Resolves the referenced property for the given key
@@ -69,7 +67,6 @@ export class ReferenceMapProperty extends StringMapProperty {
             // Forward handling of arrays to the BaseProperty function
             return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
         } else {
-
             var value = this._dynamicChildren[in_ids];
             if (value === undefined ||
                 value === '') {
@@ -77,7 +74,7 @@ export class ReferenceMapProperty extends StringMapProperty {
             }
             return this.getParent().resolvePath(value, in_options);
         }
-    };
+    }
 
     /**
      * Removes the entry with the given key from the map
@@ -90,7 +87,7 @@ export class ReferenceMapProperty extends StringMapProperty {
         var item = this.getValue(in_key);
         this._removeByKey(in_key, true);
         return item;
-    };
+    }
 
     /**
      * Returns an object with all the nested path values
@@ -107,7 +104,7 @@ export class ReferenceMapProperty extends StringMapProperty {
             result[ids[i]] = this.getValue(ids[i]);
         }
         return result;
-    };
+    }
 
     /**
      * Sets or inserts the reference to point to the given property object or to be equal to the given path string.
@@ -126,7 +123,7 @@ export class ReferenceMapProperty extends StringMapProperty {
         }
         var value = ReferenceProperty._convertInputToPath(in_value);
         StringMapProperty.prototype.set.call(this, in_key, value);
-    };
+    }
 
     /**
      * Sets or inserts the reference to point to the given property object or to be equal to the given path string.
@@ -156,7 +153,7 @@ export class ReferenceMapProperty extends StringMapProperty {
     insert(in_key, in_value) {
         var value = ReferenceProperty._convertInputToPath(in_value);
         this._insert(in_key, value, true);
-    };
+    }
 
     /**
      * Checks whether the reference is valid. This is either the case when it is empty or when the referenced
@@ -169,7 +166,7 @@ export class ReferenceMapProperty extends StringMapProperty {
         return this.has(in_key) &&
             (this.getValue(in_key) === '' ||
                 this.get(in_key) !== undefined);
-    };
+    }
 
     /**
      * Returns the string value stored in the map
@@ -178,13 +175,12 @@ export class ReferenceMapProperty extends StringMapProperty {
      */
     getValue(in_key) {
         return this._getValue(in_key);
-    };
+    }
 
     /**
      * @inheritdoc
      */
     _resolvePathSegment(in_segment, in_segmentType) {
-
         // Array tokens are automatically resolved
         if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
             return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
@@ -192,8 +188,7 @@ export class ReferenceMapProperty extends StringMapProperty {
             // Everything else is handled by the implementation in the base property
             return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
         }
-    };
-
+    }
 }
 
 ReferenceMapProperty.prototype._typeid = 'Reference';

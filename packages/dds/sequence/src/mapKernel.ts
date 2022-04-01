@@ -168,7 +168,7 @@ export class MapKernel implements IValueTypeCreator {
     private readonly pendingKeys: Map<string, number> = new Map();
 
     /**
-     * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
+     * This is used to assign a unique id to every outgoing operation and helps in tracking unacked ops.
      */
     private pendingMessageId: number = -1;
 
@@ -636,14 +636,14 @@ export class MapKernel implements IValueTypeCreator {
         if (this.pendingClearMessageId !== -1) {
             if (local) {
                 assert(localOpMetadata !== undefined && localOpMetadata as number < this.pendingClearMessageId,
-                    0x1f1 /* "Received out of order op when there is an unackd clear message" */);
+                    0x1f1 /* "Received out of order op when there is an unacked clear message" */);
             }
-            // If we have an unack'd clear, we can ignore all ops.
+            // If we have an unacked clear, we can ignore all ops.
             return false;
         }
 
         if (this.pendingKeys.has(op.key)) {
-            // Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
+            // Found an unacked op. Clear it from the map if the pendingMessageId in the map matches this message's
             // and don't process the op.
             if (local) {
                 assert(localOpMetadata !== undefined,

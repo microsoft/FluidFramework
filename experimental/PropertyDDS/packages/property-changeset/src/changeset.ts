@@ -13,26 +13,25 @@ import isEmpty from "lodash/isEmpty";
 import extend from "lodash/extend";
 import each from "lodash/each";
 
-//@ts-ignore
+// @ts-ignore
 import { ConsoleUtils, joinPaths, constants } from "@fluid-experimental/property-common";
 
 import { TypeIdHelper } from "./helpers/typeidHelper";
 import { ChangeSetArrayFunctions } from './changeset_operations/array';
 
 import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator";
-import { ConflictType } from './changeset_operations/changesetConflictTypes'
+import { ConflictType } from './changeset_operations/changesetConflictTypes';
 // Add the indexed collection functions into the prototype of the ChangeSet
 import { ChangeSetIndexedCollectionFunctions } from "./changeset_operations/indexedCollection";
 import { isEmptyChangeSet } from "./changeset_operations/isEmptyChangeset";
 import { isReservedKeyword } from "./isReservedKeyword";
 import { Utils } from "./utils";
 import { TemplateValidator } from "./templateValidator";
-import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes"
+import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 
 const { extractContext, isPrimitiveType } = TypeIdHelper;
-
 
 export interface ApplyChangeSetOptions {
     /**
@@ -46,7 +45,6 @@ export interface ApplyChangeSetOptions {
     throwOnTemplateMismatch?: boolean
 }
 
-
 export interface RebaseChangeSetOptions extends ApplyChangeSetOptions {
     rebaseMetaInformation?: object
 }
@@ -54,7 +52,7 @@ export interface RebaseChangeSetOptions extends ApplyChangeSetOptions {
 /**
  * The plain serialization data structure used to encode a ChangeSet.
  */
-export type SerializedChangeSet = any; //@TODO Maybe we should add full type for the ChangeSet
+export type SerializedChangeSet = any; // @TODO Maybe we should add full type for the ChangeSet
 export type ChangeSetType = any;
 export interface ConflictInfo {
     /**
@@ -86,7 +84,6 @@ export class ChangeSet {
     declare public _performApplyAfterOnPropertyIndexedCollection: typeof ChangeSetIndexedCollectionFunctions._performApplyAfterOnPropertyIndexedCollection;
     declare public _rebaseIndexedCollectionChangeSetForProperty: typeof ChangeSetIndexedCollectionFunctions._rebaseIndexedCollectionChangeSetForProperty;
 
-
     _changes: SerializedChangeSet;
     _isNormalized: boolean;
 
@@ -109,15 +106,13 @@ export class ChangeSet {
         this._isNormalized = false;
     }
 
-
     /**
      * Creates a string representation of the change set
      * @returns JSON encoding of the changes in this change set
      */
     toString(): string {
         return JSON.stringify(this._changes);
-    };
-
+    }
 
     /**
      * Returns the serialized changes.
@@ -126,7 +121,7 @@ export class ChangeSet {
      */
     getSerializedChangeSet(): SerializedChangeSet {
         return this._changes;
-    };
+    }
 
     /**
      * Indicates whether this is a normalized ChangeSet. If this is set to true, squashes will not remove empty entries
@@ -136,7 +131,7 @@ export class ChangeSet {
      */
     setIsNormalized(in_isNormalized: boolean) {
         this._isNormalized = in_isNormalized;
-    };
+    }
 
     /**
      * Indicates whether this is a normalized ChangeSet. If this is set to true, squashes will not remove empty entries
@@ -146,7 +141,7 @@ export class ChangeSet {
      */
     getIsNormalized(): boolean {
         return this._isNormalized;
-    };
+    }
 
     /**
      * Clones the ChangeSet
@@ -155,8 +150,7 @@ export class ChangeSet {
      */
     clone(): ChangeSet {
         return new ChangeSet(cloneDeep(this._changes));
-    };
-
+    }
 
     /**
      * Updates this ChangeSet. The result will be the concatenation of the two ChangeSets. First the changes in this
@@ -179,7 +173,7 @@ export class ChangeSet {
         } else {
             this._performApplyAfterOnProperty(this._changes, changes, !this._isNormalized, in_options);
         }
-    };
+    }
 
     /**
      * Applies a changeset to a given property (recursively). The ChangeSet is assumed to be relative to the same
@@ -236,7 +230,7 @@ export class ChangeSet {
                 delete io_basePropertyChanges[typeid];
             }
         }
-    };
+    }
 
     /**
      * Helper function used to apply a new value to a given ChangeSet.
@@ -263,7 +257,7 @@ export class ChangeSet {
                 io_baseChanges[in_baseKey] = newValue;
             }
         }
-    };
+    }
 
     /**
      * Decides based on the given Typeid which applyAfter operation to perform.
@@ -398,7 +392,7 @@ export class ChangeSet {
         } else {
             throw new Error(MSG.UNKNOWN_CONTEXT + splitTypeid.context);
         }
-    };
+    }
 
     /**
      * Rebases a given ChangeSet behind the current ChangeSet.
@@ -418,7 +412,7 @@ export class ChangeSet {
         in_options?: RebaseChangeSetOptions): SerializedChangeSet {
         // We actually only pass this request to the recursive internal function
         return this._rebaseChangeSetForProperty(this._changes, io_changeSet, "", out_conflicts, in_options);
-    };
+    }
 
     /**
      * Internal helper function that performs a rebase on a single property
@@ -599,7 +593,7 @@ export class ChangeSet {
         }
 
         return io_rebasePropertyChangeSet;
-    };
+    }
 
     /**
      * Decides based on the given Typeid which rebase operation to perform
@@ -691,7 +685,7 @@ export class ChangeSet {
         }
 
         return false;
-    };
+    }
 
     /**
      * recursive helper function for ChangeSet.prototype._toReversibleChangeSet
@@ -891,7 +885,7 @@ export class ChangeSet {
                 }
             }
         }
-    };
+    }
 
     /**
      * Converts an irreversible changeset to a reversible changeset
@@ -922,7 +916,7 @@ export class ChangeSet {
                 userData: workspace,
             });
         }
-    };
+    }
 
     /**
      * Converts a reversible changeset to an irreversible changeset
@@ -1044,7 +1038,7 @@ export class ChangeSet {
         Utils.traverseChangeSetRecursively(this._changes, {
             preCallback: callback,
         });
-    };
+    }
 
     /**
      * Helper function to extract the first level paths from a given change set
@@ -1067,7 +1061,7 @@ export class ChangeSet {
         }
 
         return paths;
-    };
+    }
 
     /**
      * recursive helper function for ChangeSet.prototype._toInverseChangeSet
@@ -1203,7 +1197,7 @@ export class ChangeSet {
                 }
             }
         }
-    };
+    }
 
     /**
      * Inverts a reversible ChangeSets
@@ -1224,7 +1218,6 @@ export class ChangeSet {
         }
     }
 }
-
 
 ChangeSet.prototype._performApplyAfterOnPropertyArray = ChangeSetArrayFunctions._performApplyAfterOnPropertyArray;
 ChangeSet.prototype._rebaseArrayChangeSetForProperty = ChangeSetArrayFunctions._rebaseArrayChangeSetForProperty;

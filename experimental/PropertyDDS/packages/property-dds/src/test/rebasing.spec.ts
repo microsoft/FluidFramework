@@ -960,9 +960,9 @@ describe("PropertyDDS", () => {
 
                     // Make local changes for both collaborators
                     prop.setValue(val1);
-                    sharedPropertyTree2.root.get<Int32Property>('int32Prop')?.setValue(val2);
+                    sharedPropertyTree2.root.get<Int32Property>("int32Prop")?.setValue(val2);
 
-                    sharedPropertyTree1.commit()
+                    sharedPropertyTree1.commit();
                     await opProcessingController.ensureSynchronized();
                     await opProcessingController.pauseProcessing();
 
@@ -976,11 +976,8 @@ describe("PropertyDDS", () => {
 
                     // The pending change val2 should be now the new value cross collaborators
                     expect(prop.getValue()).to.equal(val2);
-
                 });
-
             });
-
         }
 
 	describe("Rebasing", () => {

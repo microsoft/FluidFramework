@@ -10,7 +10,7 @@
 /* eslint-disable no-use-before-define */
 
 import Ajv from "ajv";
-import ajvKeywords from "ajv-keywords"
+import ajvKeywords from "ajv-keywords";
 
 import each from "lodash/each";
 import isEqual from "lodash/isEqual";
@@ -30,7 +30,7 @@ import { gt, diff, major, valid, compare } from "semver";
 import traverse from "traverse";
 import { queue } from "async";
 
-//@ts-ignore
+// @ts-ignore
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 import { TemplateSchema } from "./templateSchema";
 import { TypeIdHelper } from "./helpers/typeidHelper";
@@ -40,7 +40,7 @@ const { MSG } = constants;
 
 const ajvFactory = new Ajv({
     allErrors: true,
-    verbose: true
+    verbose: true,
 });
 
 ajvKeywords(ajvFactory, "prohibited");
@@ -48,14 +48,14 @@ ajvKeywords(ajvFactory, "typeof");
 
 const _syntaxValidator = ajvFactory.compile(TemplateSchema);
 
-type ValuesType = { [key: string]: ValuesType }
+type ValuesType = { [key: string]: ValuesType };
 
 type PropertyType = {
     id: string;
     context: string;
     typeid: string;
     values: ValuesType
-}
+};
 
 type PropertiesType = PropertyType[];
 
@@ -70,7 +70,6 @@ export interface PropertySchema {
 }
 
 type SchemaEntityType = PropertySchema | string[] | PropertiesType;
-
 
 /**
  * A weighted enumeration of semver change types. Higher values are more important.
@@ -137,7 +136,6 @@ function isPropertyArray(source: SchemaEntityType): source is PropertiesType {
 // function isSchemaTemplate(source: SchemaEntityType): source is PropertySchema {
 //     return isObject(source) && !Array.isArray(source);
 // }
-
 
 /**
  * An object deep compare with special handling for pset property arrays.
@@ -571,7 +569,7 @@ const _validateSemanticAndSyntax = function(in_template: PropertySchema) {
  * @return {Promise} a promise that resolved to nothing
  * @ignore
  */
-const _validateSemanticAndSyntaxAsync = function(in_template: PropertySchema): Promise<any> {
+const _validateSemanticAndSyntaxAsync = async function(in_template: PropertySchema): Promise<any> {
     return _validateSyntaxAsync.call(this, in_template);
 };
 
@@ -656,7 +654,7 @@ const _validateContext = function(in_template) {
  * @return {Promise} promise that returns without any value and rejects in case of validation error
  * @ignore
  */
-const _validateContextAsync = function(in_template) {
+const _validateContextAsync = async function(in_template) {
     const that = this;
     const context = in_template.context;
 
@@ -709,7 +707,7 @@ const _validateContextAsync = function(in_template) {
         }
 
         return that._inheritsFromAsync(in_template.typeid, "NamedProperty");
-    }).then(function(res) {
+    }).then(async function(res) {
         if (res) {
             return undefined;
         }
@@ -873,7 +871,7 @@ const createContextCheckAsyncQueue = function() {
  * @returns Promise that resolves without any result
  * @ignore
  */
-let _validateSyntaxAsync = function(in_template: PropertySchema): Promise<SchemaValidationResult> {
+let _validateSyntaxAsync = async function(in_template: PropertySchema): Promise<SchemaValidationResult> {
     const that = this;
 
     return new Promise(function(resolve, reject) {
@@ -946,11 +944,10 @@ export interface TemplateValidatorOptions {
 }
 
 const Utils = {
-    psetDeepEquals: function(in_source: PropertySchema, in_target: PropertySchema) {
+    psetDeepEquals(in_source: PropertySchema, in_target: PropertySchema) {
         return _psetDeepEquals.call(this, in_source, in_target).isEqual;
-    }
-}
-
+    },
+};
 
 /**
  *  @description Instantiates a new TemplateValidator. Must be provided with a set of inheritsFrom and hasSchema
@@ -963,10 +960,9 @@ export class TemplateValidator {
     public _hasSchema: (schema: PropertySchema, typeid: string) => boolean;
     public _inheritsFromAsync: (source: PropertySchema, target: PropertySchema) => Promise<boolean>;
     public _hasSchemaAsync: (schema: PropertySchema, typeid: string) => Promise<boolean>;
-    private _allowDraft: boolean;
-    private _skipSemver: boolean;
+    private readonly _allowDraft: boolean;
+    private readonly _skipSemver: boolean;
     constructor(in_params: TemplateValidatorOptions = { skipSemver: false, allowDraft: false}) {
-
         this._skipSemver = in_params ? !!in_params.skipSemver : false;
         this._allowDraft = in_params ? !!in_params.allowDraft : false;
         // Used by validate()
@@ -1082,7 +1078,7 @@ export class TemplateValidator {
         }
 
         return this._resultBuilder.result;
-    };
+    }
 
     /**
      * Validates that all templates conform to the following mandatory rules:
@@ -1106,7 +1102,7 @@ export class TemplateValidator {
      * }
      * It's possible for 'isValid' to be true while 'warnings' contains one or more messages.
      */
-    validateAsync(in_template: PropertySchema, in_templatePrevious?: PropertySchema): Promise<SchemaValidationResult> {
+    async validateAsync(in_template: PropertySchema, in_templatePrevious?: PropertySchema): Promise<SchemaValidationResult> {
         this._resultBuilder = new ValidationResultBuilder(in_template ? in_template.typeid : "");
         _validateBasic.call(this, in_template);
         if (in_templatePrevious) {
@@ -1118,7 +1114,7 @@ export class TemplateValidator {
         return (in_templatePrevious) ?
             this._validateAsyncWithPreviousSchema(in_template, in_templatePrevious) :
             _validateSemanticAndSyntaxAsync.call(this, in_template);
-    };
+    }
 
     /**
      * Called by validateAsync if a previous schema is passed in argument
@@ -1129,7 +1125,7 @@ export class TemplateValidator {
      * @returns promise that resolves to the validation results as an objet. See validateAsync
      * @ignore
      */
-    private _validateAsyncWithPreviousSchema(in_template: PropertySchema, in_templatePrevious: PropertySchema): Promise<SchemaValidationResult> {
+    private async _validateAsyncWithPreviousSchema(in_template: PropertySchema, in_templatePrevious: PropertySchema): Promise<SchemaValidationResult> {
         const that = this;
         return _validateSemanticAndSyntaxAsync.call(that, in_template).then(() => _validateSemanticAndSyntaxAsync.call(that, in_templatePrevious)).then(function() {
             if (!that._resultBuilder.isValid()) {

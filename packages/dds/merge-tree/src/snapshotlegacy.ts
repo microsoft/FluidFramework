@@ -154,10 +154,8 @@ export class SnapshotLegacy {
         const extractSegment =
             // eslint-disable-next-line max-len
             (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined) => {
-                // eslint-disable-next-line eqeqeq
-                if ((segment.seq != UnassignedSequenceNumber) && (segment.seq! <= this.seq!) &&
-                    // eslint-disable-next-line eqeqeq
-                    ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
+                if ((segment.seq !== UnassignedSequenceNumber) && (segment.seq! <= this.seq!) &&
+                    ((segment.removedSeq === undefined) || (segment.removedSeq === UnassignedSequenceNumber) ||
                         (segment.removedSeq > this.seq!))) {
                     if (prev && prev.canAppend(segment)
                         && matchProperties(prev.properties, segment.properties)
@@ -192,8 +190,8 @@ export class SnapshotLegacy {
         // When this condition happens, we might not write out all segments in getSeqLengthSegs()
         // when writing out "body". Issue #1995 tracks following up on the core of the problem.
         // In the meantime, this code makes sure we will write out all segments properly
-        // eslint-disable-next-line eqeqeq
-        if (this.header.segmentsTotalLength != totalLength) {
+
+        if (this.header.segmentsTotalLength !== totalLength) {
             this.logger.sendErrorEvent({
                 eventName: "SegmentsTotalLengthMismatch",
                 totalLength,

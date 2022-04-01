@@ -14,7 +14,6 @@ const { _castFunctors } = require('./primitiveTypeCasts');
  * A primitive property for a boolean value
  */
 export class BoolProperty extends ValueProperty {
-
     /**
      * @param in_params - the parameters
      */
@@ -22,7 +21,7 @@ export class BoolProperty extends ValueProperty {
         super(in_params);
         // default for this property type is 'false'
         this._data = false;
-    };
+    }
 }
 
 BoolProperty.prototype._typeid = 'Bool';

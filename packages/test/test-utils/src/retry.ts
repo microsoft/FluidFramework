@@ -21,7 +21,7 @@ const retry = async <T>(
     }
 
     return Promise.resolve(defaultValue);
-}
+};
 
 /**
  * Simple retry mechanism with linear back off to call

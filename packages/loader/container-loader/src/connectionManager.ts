@@ -29,9 +29,9 @@ import {
     createGenericNetworkError,
     getRetryDelayFromError,
     IAnyDriverError,
-    logNetworkFailure,
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
+    logNetworkFailure,
 } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
@@ -71,7 +71,6 @@ function getNackReconnectInfo(nackContent: INackContent) {
     const canRetry = nackContent.code !== 403;
     const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
     return createGenericNetworkError(
-        `nack [${nackContent.code}]`,
         message,
         { canRetry, retryAfterMs },
         { statusCode: nackContent.code, driverVersion: undefined });
@@ -491,18 +490,15 @@ export class ConnectionManager implements IConnectionManager {
                     throw error;
                 }
 
-                // Log error once - we get too many errors in logs when we are offline,
-                // and unfortunately there is no reliable way to detect that.
-                if (connectRepeatCount === 1) {
-                    logNetworkFailure(
-                        this.logger,
-                        {
-                            delay: delayMs, // milliseconds
-                            eventName: "DeltaConnectionFailureToConnect",
-                            duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
-                        },
-                        origError);
-                }
+                logNetworkFailure(
+                    this.logger,
+                    {
+                        attempts: connectRepeatCount,
+                        delay: delayMs, // milliseconds
+                        eventName: "DeltaConnectionFailureToConnect",
+                        duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                    },
+                    origError);
 
                 lastError = origError;
 
@@ -516,9 +512,10 @@ export class ConnectionManager implements IConnectionManager {
             }
         }
 
-        // If we retried more than once, log an event about how long it took
+        // If we retried more than once, log an event about how long it took (this will not log to error table)
         if (connectRepeatCount > 1) {
-            this.logger.sendTelemetryEvent(
+            logNetworkFailure(
+                this.logger,
                 {
                     eventName: "MultipleDeltaConnectionFailures",
                     attempts: connectRepeatCount,
@@ -857,9 +854,9 @@ export class ConnectionManager implements IConnectionManager {
     // Always connect in write mode after getting nacked.
     private readonly nackHandler = (documentId: string, messages: INack[]) => {
         const message = messages[0];
-        if (this._readonlyPermissions) {
+        if (this._readonlyPermissions === true) {
             this.props.closeHandler(createWriteError("writeOnReadOnlyDocument", { driverVersion: undefined }));
-            return
+            return;
         }
 
         const reconnectInfo = getNackReconnectInfo(message.content);

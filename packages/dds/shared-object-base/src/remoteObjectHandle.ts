@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { RuntimeHeaders } from "@fluidframework/container-runtime"
+import { RuntimeHeaders } from "@fluidframework/container-runtime";
 import {
     IFluidHandle,
     IFluidHandleContext,

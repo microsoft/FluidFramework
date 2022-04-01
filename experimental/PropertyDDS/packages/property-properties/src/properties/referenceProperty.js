@@ -6,14 +6,13 @@
  * @fileoverview Definition of the ReferenceProperty class
  */
 
-const _ = require('lodash');
-const { ValueProperty } = require('./valueProperty');
 const { PathHelper, TypeIdHelper } = require('@fluid-experimental/property-changeset');
-const { BaseProperty } = require('./baseProperty');
-const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
-const { _castFunctors } = require('./primitiveTypeCasts');
 const { MSG } = require('@fluid-experimental/property-common').constants;
-
+const _ = require('lodash');
+const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
+const { BaseProperty } = require('./baseProperty');
+const { _castFunctors } = require('./primitiveTypeCasts');
+const { ValueProperty } = require('./valueProperty');
 
 /**
  * This class serves as a view to read, write and listen to changes in an
@@ -35,7 +34,7 @@ export class ReferenceProperty extends ValueProperty {
         super(in_params);
         // default for this property type is an empty string
         this._data = '';
-    };
+    }
 
     /**
      * Evaluates Reference properties as primitives.
@@ -43,7 +42,7 @@ export class ReferenceProperty extends ValueProperty {
      */
     isPrimitiveType() {
         return true;
-    };
+    }
 
     /**
      * Returns the typeid for the target of this reference
@@ -55,7 +54,7 @@ export class ReferenceProperty extends ValueProperty {
      */
     getReferenceTargetTypeId() {
         return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
-    };
+    }
 
     /**
      * Resolves the referenced property
@@ -102,7 +101,7 @@ export class ReferenceProperty extends ValueProperty {
         } else {
             return resolvedProperty;
         }
-    };
+    }
 
     /**
      * Expand a path returning the value or property at the end.
@@ -121,7 +120,7 @@ export class ReferenceProperty extends ValueProperty {
             return undefined;
         }
         return AbstractStaticCollectionProperty.prototype.resolvePath.call(this, in_path, in_options);
-    };
+    }
 
     /**
      * Checks whether the reference is valid. This is either the case when it is empty or when the referenced
@@ -131,7 +130,7 @@ export class ReferenceProperty extends ValueProperty {
      */
     isReferenceValid() {
         return this.value === '' || this.ref !== undefined;
-    };
+    }
 
     /**
      * Sets the reference to point to the given property object or to be equal to the given path string.
@@ -147,7 +146,7 @@ export class ReferenceProperty extends ValueProperty {
         var value = ReferenceProperty._convertInputToPath(in_value);
         // Forward the call to setValue
         ValueProperty.prototype.setValue.call(this, value);
-    };
+    }
 
     /**
      * Sets the reference to point to the given property object or to be equal to the given path string.
@@ -166,7 +165,6 @@ export class ReferenceProperty extends ValueProperty {
      * @inheritdoc
      */
     _resolvePathSegment(in_segment, in_segmentType) {
-
         // path segments and array tokens are no longer automatically forwarded to the referenced node
         if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN ||
             in_segmentType === PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
@@ -174,7 +172,7 @@ export class ReferenceProperty extends ValueProperty {
         } else {
             return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
         }
-    };
+    }
 
     // Define a property to simplify accessing the referenced path
     get ref() {
@@ -210,7 +208,6 @@ export class ReferenceProperty extends ValueProperty {
         }
         return path;
     }
-
 }
 ReferenceProperty.prototype._castFunctor = _castFunctors.String;
 ReferenceProperty.prototype._typeid = "Reference";

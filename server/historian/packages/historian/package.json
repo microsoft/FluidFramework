@@ -3,7 +3,11 @@
   "version": "0.0.1",
   "description": "Git REST API",
   "homepage": "https://fluidframework.com",
-  "repository": "https://github.com/microsoft/FluidFramework",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "server/historian/packages/historian"
+  },
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/www.js",
@@ -21,8 +25,8 @@
   },
   "dependencies": {
     "@fluidframework/historian-base": "^0.0.1",
-    "@fluidframework/server-services-shared": "^0.1035.0-46466",
-    "@fluidframework/server-services-utils": "^0.1035.0-46466",
+    "@fluidframework/server-services-shared": "^0.1035.0-55212",
+    "@fluidframework/server-services-utils": "^0.1035.0-55212",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",
@@ -37,7 +41,7 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
-    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/compression": "0.0.36",
     "@types/cors": "^2.8.4",
@@ -62,7 +66,6 @@
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-unicorn": "~40.0.0",
     "mocha": "^8.4.0",
-    "moniker": "^0.1.2",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "supertest": "^3.3.0",

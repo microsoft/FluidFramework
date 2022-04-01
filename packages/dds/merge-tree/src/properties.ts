@@ -28,7 +28,7 @@ export function combine(combiningInfo: ICombiningOp, currentValue: any, newValue
         _currentValue = combiningInfo.defaultValue;
     }
     // Fixed set of operations for now
-    /* eslint-disable default-case */
+
     switch (combiningInfo.name) {
         case "incr":
             _currentValue += newValue as number;
@@ -55,8 +55,10 @@ export function combine(combiningInfo: ICombiningOp, currentValue: any, newValue
                 }
             }
             break;
+        default:
+            break;
     }
-    /* eslint-enable default-case */
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return _currentValue;
 }
@@ -67,6 +69,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
             return false;
         } else {
             // For now, straightforward; later use hashing
+
             // eslint-disable-next-line no-restricted-syntax
             for (const key in a) {
                 if (b[key] === undefined) {
@@ -79,6 +82,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
                     return false;
                 }
             }
+
             // eslint-disable-next-line no-restricted-syntax
             for (const key in b) {
                 if (a[key] === undefined) {
@@ -101,9 +105,6 @@ export function extend<T>(
     seq?: number,
 ) {
     if (extension !== undefined) {
-        if ((typeof extension !== "object")) {
-            console.log(`oh my ${extension}`);
-        }
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const key in extension) {
             const v = extension[key];
@@ -153,9 +154,6 @@ export function addProperties(
 
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
     if (extension !== undefined) {
-        if ((typeof extension !== "object")) {
-            console.log(`oh my ${extension}`);
-        }
         // eslint-disable-next-line no-restricted-syntax
         for (const key in extension) {
             if (base[key] === undefined) {

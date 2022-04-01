@@ -194,7 +194,8 @@ export class DataStores implements IDisposable {
         if (this.alreadyProcessed(attachMessage.id)) {
             // TODO: dataStoreId may require a different tag from PackageData #7488
             const error = new DataCorruptionError(
-                "duplicateDataStoreCreatedWithExistingId",
+                // pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
+                "Duplicate DataStore created with existing id",
                 {
                     ...extractSafePropertiesFromMessage(message),
                     dataStoreId: {
@@ -282,7 +283,7 @@ export class DataStores implements IDisposable {
         }
 
         this.aliasMap.set(aliasMessage.alias, currentContext.id);
-        currentContext.setRoot();
+        currentContext.setInMemoryRoot();
         return true;
     }
 

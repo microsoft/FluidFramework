@@ -2,22 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions*/
+/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview In this file, we will test the map property
  *    object described in /src/properties/mapProperty.js
  */
 
-describe('MapProperty', function () {
+describe('MapProperty', function() {
   var PropertyFactory, BaseProperty, ChangeSet, generateGuid, PATH_TOKENS;
   var changeSetWithTwoMapEntries, _, changeSetWithTwoMapEntries_full, removalChangeSet;
   var myNode, mapNode1, mapNode2, map;
 
-  before(function () {
+  before(function() {
     // Get all the objects we need in this test here.
     PropertyFactory = require('../..').PropertyFactory;
     BaseProperty = require('../..').BaseProperty;
-    ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
+    ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
     _ = require('lodash');
     generateGuid = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
     PATH_TOKENS = require('../..').BaseProperty.PATH_TOKENS;
@@ -29,35 +29,35 @@ describe('MapProperty', function () {
       properties: [
         { id: 'stringProperty', typeid: 'String' },
         { id: 'stringProperty2', typeid: 'String' },
-        { id: 'map', context: 'map', typeid: 'NamedProperty' }
-      ]
+        { id: 'map', context: 'map', typeid: 'NamedProperty' },
+      ],
     };
     var AnonymousTestPropertyTemplate = {
       typeid: 'autodesk.tests:AnonymousMapTestPropertyID-1.0.0',
       properties: [
-        { id: 'stringProperty', typeid: 'String' }
-      ]
+        { id: 'stringProperty', typeid: 'String' },
+      ],
     };
 
     var PrimitiveMapPropertyTemplate = {
       typeid: 'autodesk.tests:PrimitiveMap-1.0.0',
       properties: [
-        { id: 'map', context: 'map', typeid: 'Int32' }
-      ]
+        { id: 'map', context: 'map', typeid: 'Int32' },
+      ],
     };
 
     var NonPrimitiveMapPropertyTemplate = {
       typeid: 'autodesk.tests:NonPrimitiveMap-1.0.0',
       properties: [
-        { typeid: 'autodesk.tests:StringProperty-1.0.0', id: 'map', context: 'map' }
-      ]
+        { typeid: 'autodesk.tests:StringProperty-1.0.0', id: 'map', context: 'map' },
+      ],
     };
 
     var StringPropertyTemplate = {
       typeid: 'autodesk.tests:StringProperty-1.0.0',
       properties: [
-        { id: 'stringValue', typeid: 'String' }
-      ]
+        { id: 'stringValue', typeid: 'String' },
+      ],
     };
 
     var ComplexProperty = {
@@ -65,10 +65,10 @@ describe('MapProperty', function () {
       properties: [
         {
           id: 'nested', properties: [
-            { id: 'data', typeid: 'Int32' }
-          ]
-        }
-      ]
+            { id: 'data', typeid: 'Int32' },
+          ],
+        },
+      ],
     };
 
     var ComplexMap = {
@@ -76,10 +76,10 @@ describe('MapProperty', function () {
       properties: [
         {
           id: 'path', properties: [
-            { id: 'map', typeid: 'autodesk.tests:ComplexProperty-1.0.0', context: 'map' }
-          ]
-        }
-      ]
+            { id: 'map', typeid: 'autodesk.tests:ComplexProperty-1.0.0', context: 'map' },
+          ],
+        },
+      ],
     };
 
     PropertyFactory._reregister(TestPropertyTemplate);
@@ -98,12 +98,12 @@ describe('MapProperty', function () {
 
   // Helper functions for the test cases
   var keyCounter = 0;
-  var resetKeyCounter = function () {
+  var resetKeyCounter = function() {
     keyCounter = 0;
   };
 
   // Inserts a node with the given guid (a new one is generated when undefined)
-  var insertNodeInRootWithKeyAndGuid = function (key, guid, root) {
+  var insertNodeInRootWithKeyAndGuid = function(key, guid, root) {
     var node = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
     if (key === undefined) {
       key = 'node' + keyCounter++;
@@ -115,18 +115,18 @@ describe('MapProperty', function () {
   };
 
   // Inserts a new node in the root
-  var insertNodeInRoot = function (root) {
+  var insertNodeInRoot = function(root) {
     insertNodeInRootWithKeyAndGuid(undefined, undefined, root);
   };
 
   // Returns a function that will insert a node with a constant GUID
-  var insertUniqueNodeInRoot = function () {
+  var insertUniqueNodeInRoot = function() {
     var key = 'node' + keyCounter++;
     return insertNodeInRootWithKeyAndGuid.bind(undefined, key, generateGuid());
   };
 
   // Inserts a new node as leaf
-  var insertNodeAsLeaf = function (root) {
+  var insertNodeAsLeaf = function(root) {
     var leaf = root;
     while (leaf._properties.map.getAsArray().length > 0) {
       leaf = leaf._properties.map.getAsArray()[0];
@@ -137,13 +137,13 @@ describe('MapProperty', function () {
   };
 
   // Removes the first node from the root
-  var removeFirstNodeInRoot = function (root) {
+  var removeFirstNodeInRoot = function(root) {
     var firstKey = root._properties.map.getIds()[0];
     root._properties.map.remove(firstKey);
   };
 
   // Modifies the leaf node
-  var modifyLeaf = function (root) {
+  var modifyLeaf = function(root) {
     var leaf = root;
     while (leaf._properties.map.getAsArray().length > 0) {
       leaf = leaf._properties.map.getAsArray()[0];
@@ -151,14 +151,14 @@ describe('MapProperty', function () {
     leaf._properties.stringProperty.value = leaf._properties.stringProperty.value + '+';
   };
 
-  describe('API methods', function () {
+  describe('API methods', function() {
     var myMap, stringProp1, stringProp2;
-    before(function () {
+    before(function() {
       myMap = PropertyFactory.create('autodesk.tests:NonPrimitiveMap-1.0.0')._properties.map;
       stringProp1 = PropertyFactory.create('autodesk.tests:StringProperty-1.0.0');
       stringProp2 = PropertyFactory.create('autodesk.tests:StringProperty-1.0.0');
     });
-    it('.clear should work', function () {
+    it('.clear should work', function() {
       myMap.insert('one', stringProp1);
       myMap.insert('two', stringProp2);
       expect(myMap.getEntriesReadOnly()).to.deep.equal({ 'one': stringProp1, 'two': stringProp2 });
@@ -166,29 +166,29 @@ describe('MapProperty', function () {
       expect(myMap.getEntriesReadOnly()).to.be.empty;
     });
 
-    it('.getAsArray should return an array of map values', function () {
+    it('.getAsArray should return an array of map values', function() {
       myMap.insert('one', stringProp1);
       myMap.insert('two', stringProp2);
       expect(myMap.getAsArray()).to.deep.equal([stringProp1, stringProp2]);
     });
 
-    it('.getFullTypeid should return a string of the typeid with or without collection', function () {
+    it('.getFullTypeid should return a string of the typeid with or without collection', function() {
       expect(myMap.getFullTypeid()).to.equal('map<autodesk.tests:StringProperty-1.0.0>');
       // hideCollection: true
       expect(myMap.getFullTypeid(true)).to.equal('autodesk.tests:StringProperty-1.0.0');
     });
 
-    it('.getTypeid should return a string of the typeid', function () {
+    it('.getTypeid should return a string of the typeid', function() {
       expect(myMap.getTypeid()).to.equal('autodesk.tests:StringProperty-1.0.0');
     });
 
-    it('.getIds should return an array of map keys', function () {
+    it('.getIds should return an array of map keys', function() {
       myMap.insert('one', stringProp1);
       myMap.insert('two', stringProp2);
       expect(myMap.getIds()).to.deep.equal(['one', 'two']);
     });
 
-    it('.remove should remove an item from a map and return the removed item', function () {
+    it('.remove should remove an item from a map and return the removed item', function() {
       myMap.insert('one', stringProp1);
       myMap.insert('two', stringProp2);
       myMap.remove('one');
@@ -196,22 +196,22 @@ describe('MapProperty', function () {
       expect(myMap.remove('two')).to.equal(stringProp2);
     });
 
-    it('.getContext should return map', function () {
+    it('.getContext should return map', function() {
       expect(myMap.getContext()).to.equal('map');
     });
 
-    it('getId should return the id', function () {
+    it('getId should return the id', function() {
       expect(myMap.getId()).to.equal('map');
     });
 
-    afterEach(function () {
+    afterEach(function() {
       myMap.clear();
     });
   });
 
-  describe('get and resolvePath', function () {
+  describe('get and resolvePath', function() {
     var complexMap, complexProperty1, complexProperty2;
-    before(function () {
+    before(function() {
       complexMap = PropertyFactory.create('autodesk.tests:ComplexMap-1.0.0')._properties.path.map;
       complexProperty1 = PropertyFactory.create('autodesk.tests:ComplexProperty-1.0.0');
       complexProperty2 = PropertyFactory.create('autodesk.tests:ComplexProperty-1.0.0');
@@ -221,13 +221,13 @@ describe('MapProperty', function () {
       complexMap.insert('two', complexProperty2);
     });
 
-    it('should resolve a simple path', function () {
+    it('should resolve a simple path', function() {
       expect(complexMap.resolvePath('one.nested.data').getValue()).to.equal(123);
       expect(complexMap.get('one').get('nested').get('data').getValue()).to.equal(123);
       expect(complexMap.get(['one', 'nested', 'data']).getValue()).to.equal(123);
     });
 
-    it('should work with raise path tokens', function () {
+    it('should work with raise path tokens', function() {
       expect(complexMap.resolvePath('../../path.map.one')).to.deep.equal(complexProperty1);
       expect(complexMap.get(PATH_TOKENS.UP).get(PATH_TOKENS.UP).get('path')
         .get('map').get('two')).to.deep.equal(complexProperty2);
@@ -235,7 +235,7 @@ describe('MapProperty', function () {
         .to.deep.equal(complexProperty2);
     });
 
-    it('should work with root tokens', function () {
+    it('should work with root tokens', function() {
       expect(complexMap.resolvePath('/path.map.two')).to.deep.equal(complexProperty2);
       expect(complexMap.get(PATH_TOKENS.ROOT).get('path').get('map').get('two').get('nested')
         .get('data').getValue()).to.equal(456);
@@ -243,14 +243,13 @@ describe('MapProperty', function () {
     });
   });
 
-
-  describe('Testing creation, assignment and serialization', function () {
-    it('should be empty at the beginning', function () {
+  describe('Testing creation, assignment and serialization', function() {
+    it('should be empty at the beginning', function() {
       expect(map.getEntriesReadOnly()).to.be.empty;
       expect(map.serialize({ 'dirtyOnly': true })).to.be.empty;
     });
 
-    it('should be possible to insert into the map', function () {
+    it('should be possible to insert into the map', function() {
       // Test insertion of the first node
       map.insert('node1', mapNode1);
       expect(map.has('node1')).to.be.ok;
@@ -280,35 +279,35 @@ describe('MapProperty', function () {
       expect(changeSetWithTwoMapEntries).to.deep.equal(changeSetWithTwoMapEntries_full);
     });
 
-    it('Should track dirtiness', function () {
+    it('Should track dirtiness', function() {
       map.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
       expect(map.serialize({
         'dirtyOnly': true,
         'includeRootTypeid': false,
-        'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.DIRTY
+        'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.DIRTY,
       })).to.be.empty;
       expect(map.serialize({
         'dirtyOnly': true,
         'includeRootTypeid': false,
-        'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE
+        'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
       })).deep.equal(changeSetWithTwoMapEntries_full);
       expect(map.serialize({ 'dirtyOnly': false })).deep.equal(changeSetWithTwoMapEntries_full);
     });
 
-    it('Should handle removals correctly', function () {
+    it('Should handle removals correctly', function() {
       map.remove('node1');
       expect(mapNode1.getParent()).to.be.undefined;
       map.remove('node2');
       expect(map.serialize({
         'dirtyOnly': true,
         'includeRootTypeid': false,
-        'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE
+        'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
       })).to.be.empty;
       expect(map.serialize({ 'dirtyOnly': false })).to.be.empty;
       removalChangeSet = map.serialize({
         'dirtyOnly': true,
         'includeRootTypeid': false,
-        'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.DIRTY
+        'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.DIRTY,
       });
       expect(removalChangeSet).to.have.all.keys(['remove']);
       expect(removalChangeSet.remove).to.have.length(2);
@@ -316,7 +315,7 @@ describe('MapProperty', function () {
       expect(removalChangeSet.remove).to.contain('node2');
     });
 
-    it('Should support deserialization', function () {
+    it('Should support deserialization', function() {
       // Deserialization should return an identical property
       var deserializedNode = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var deserializedChanges1 = deserializedNode._properties.map.deserialize(changeSetWithTwoMapEntries);
@@ -345,11 +344,11 @@ describe('MapProperty', function () {
           'autodesk.tests:MapTestPropertyID-1.0.0': {
             'node2': {
               'String': {
-                'stringProperty': 'newValue'
-              }
-            }
-          }
-        }
+                'stringProperty': 'newValue',
+              },
+            },
+          },
+        },
       };
       expect(deserializedChanges3).to.deep.equal(expectedChanges);
       expect(deserializedNode._properties.map.serialize({ 'dirtyOnly': true })).to.deep.equal(expectedChanges);
@@ -360,17 +359,16 @@ describe('MapProperty', function () {
       expect(deserializedNode._properties.map.serialize({ 'dirtyOnly': true })).to.deep.equal(removalChangeSet);
     });
 
-    it('Should support deserialization of falsy primitive types', function () {
+    it('Should support deserialization of falsy primitive types', function() {
       var testProp1 = PropertyFactory.create('map<Bool>');
       testProp1.set('entry', false);
       var changes = testProp1.deserialize(testProp1.serialize({ 'dirtyOnly': false }));
       expect(changes).to.be.empty;
     });
 
-    it('Should track modifies', function () {
+    it('Should track modifies', function() {
       var modifyNode1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var modifyNode2 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
-
 
       modifyNode1._properties.map.deserialize(changeSetWithTwoMapEntries);
       modifyNode2._properties.map.deserialize(changeSetWithTwoMapEntries);
@@ -385,7 +383,7 @@ describe('MapProperty', function () {
         .to.deep.equal(modifyNode1._properties.map.serialize({ 'dirtyOnly': false }));
     });
 
-    it('Should support hierarchical properties', function () {
+    it('Should support hierarchical properties', function() {
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node2 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node3 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
@@ -418,7 +416,7 @@ describe('MapProperty', function () {
       expect(child2._properties.stringProperty.value).to.equal('test2');
     });
 
-    it('should be possible to use anonymous properties', function () {
+    it('should be possible to use anonymous properties', function() {
       var rootNode = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var rootNode2 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node1 = PropertyFactory.create('autodesk.tests:AnonymousMapTestPropertyID-1.0.0');
@@ -440,17 +438,17 @@ describe('MapProperty', function () {
       expect(rootNode2.serialize({ 'dirtyOnly': false })).to.be.deep.equal(rootNode.serialize({ 'dirtyOnly': false }));
     });
 
-    it('inserting the same key twice should throw an exception', function () {
+    it('inserting the same key twice should throw an exception', function() {
       var rootNode = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node2 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       rootNode._properties.map.insert('node1', node1);
-      expect(function () {
+      expect(function() {
         rootNode._properties.map.insert('node1', node2);
       }).to.throw();
     });
 
-    it('set should overwrite existing entry', function () {
+    it('set should overwrite existing entry', function() {
       var rootNode = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node2 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
@@ -475,35 +473,34 @@ describe('MapProperty', function () {
       rootNode._properties.map.set('node1', node3);
       expect(rootNode.serialize({ 'dirtyOnly': true })['map<NamedProperty>'].map).to.have.all.keys('insert', 'remove');
       expect(rootNode.serialize({ 'dirtyOnly': true })['map<NamedProperty>'].map.remove).to.have.length(1);
-
     });
 
-    it('set should throw if the value inserted is not a property', function () {
+    it('set should throw if the value inserted is not a property', function() {
       var rootNode = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0')._properties.map;
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       rootNode.insert('node', node1);
-      var incorrectFn = function () {
+      var incorrectFn = function() {
         rootNode.set('node', 8);
       };
       expect(incorrectFn).to.throw();
     });
 
-    it('insert should work when inserting a primitive value', function () {
+    it('insert should work when inserting a primitive value', function() {
       var rootNode = PropertyFactory.create('autodesk.tests:PrimitiveMap-1.0.0')._properties.map;
       rootNode.insert('node0', 1);
-      var correctFn = function () {
+      var correctFn = function() {
         rootNode.insert('node1', 4);
       };
       expect(correctFn).to.not.throw();
     });
 
-    it('inserting the same node twice should be a bug', function () {
+    it('inserting the same node twice should be a bug', function() {
       var rootNode = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node = PropertyFactory.create('autodesk.tests:AnonymousMapTestPropertyID-1.0.0');
 
       // Try to insert the same node object under two keys
       rootNode._properties.map.insert('node', node);
-      expect(function () {
+      expect(function() {
         rootNode._properties.map.insert('node2', node);
       }).to.throw();
 
@@ -512,21 +509,21 @@ describe('MapProperty', function () {
       rootNode._properties.map.insert('node2', node);
     });
 
-    it('setValues should work for primitive maps', function () {
+    it('setValues should work for primitive maps', function() {
       var node = PropertyFactory.create('autodesk.tests:AnonymousMapTestPropertyID-1.0.0');
 
       node.setValues({
-        'stringProperty': 'newString!!'
+        'stringProperty': 'newString!!',
       });
       expect(node.get('stringProperty').getValue()).to.equal('newString!!');
     });
 
-    it('setValues should replace values for primitive types ', function () {
+    it('setValues should replace values for primitive types ', function() {
       var PrimitiveInt32MapTemplate = {
         typeid: 'autodesk.tests:PrimitiveInt32Map-1.0.0',
         properties: [
-          { typeid: 'Int32', id: 'map', context: 'map' }
-        ]
+          { typeid: 'Int32', id: 'map', context: 'map' },
+        ],
       };
 
       PropertyFactory.register(PrimitiveInt32MapTemplate);
@@ -541,15 +538,15 @@ describe('MapProperty', function () {
 
       node.setValues({
         'map': {
-          'firstKey': 333
-        }
+          'firstKey': 333,
+        },
       });
 
       expect(node.get('map').getEntriesReadOnly().firstKey).to.equal(333);
       expect(node.get('map').getEntriesReadOnly().secondKey).to.equal(222);
     });
 
-    it('getValues should work for primitive maps', function () {
+    it('getValues should work for primitive maps', function() {
       var rootNode = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node = PropertyFactory.create('autodesk.tests:AnonymousMapTestPropertyID-1.0.0');
 
@@ -557,19 +554,19 @@ describe('MapProperty', function () {
 
       rootNode._properties.map.setValues({
         'node': {
-          'stringProperty': 'newString!!'
-        }
+          'stringProperty': 'newString!!',
+        },
       });
 
       var expectedResult = {
         node: {
-          'stringProperty': 'newString!!'
-        }
+          'stringProperty': 'newString!!',
+        },
       };
       expect(rootNode._properties.map.getValues()).to.deep.equal(expectedResult);
     });
 
-    it('setValues should work for custom maps', function () {
+    it('setValues should work for custom maps', function() {
       var mapProp = PropertyFactory.create('autodesk.tests:NonPrimitiveMap-1.0.0');
       var string1 = PropertyFactory.create('autodesk.tests:StringProperty-1.0.0');
       var string2 = PropertyFactory.create('autodesk.tests:StringProperty-1.0.0');
@@ -579,12 +576,12 @@ describe('MapProperty', function () {
       mapProp.setValues({
         'map': {
           'firstString': {
-            'stringValue': 'test1'
+            'stringValue': 'test1',
           },
           'secondString': {
-            'stringValue': 'test2'
-          }
-        }
+            'stringValue': 'test2',
+          },
+        },
       });
 
       expect(mapProp.get(['map', 'firstString', 'stringValue']).getValue()).to.equal('test1');
@@ -594,21 +591,20 @@ describe('MapProperty', function () {
 
       expect(mapProp.get(['map', 'firstString', 'stringValue']).getValue()).to.equal('test1_updated');
       expect(mapProp.get(['map', 'secondString', 'stringValue']).getValue()).to.equal('test2');
-
     });
 
-    it('setValues should update values for existing keys and create new ones for non-existing keys', function () {
+    it('setValues should update values for existing keys and create new ones for non-existing keys', function() {
       var mapProp = PropertyFactory.create('autodesk.tests:NonPrimitiveMap-1.0.0');
 
       mapProp.setValues({
         'map': {
           'firstString': {
-            'stringValue': 'test1'
+            'stringValue': 'test1',
           },
           'secondString': {
-            'stringValue': 'test2'
-          }
-        }
+            'stringValue': 'test2',
+          },
+        },
       });
 
       expect(mapProp.get(['map', 'firstString', 'stringValue']).getValue()).to.equal('test1');
@@ -617,12 +613,12 @@ describe('MapProperty', function () {
       mapProp.setValues({
         'map': {
           'secondString': {
-            'stringValue': 'test2-upd'
+            'stringValue': 'test2-upd',
           },
           'thirdString': {
-            'stringValue': 'test3'
-          }
-        }
+            'stringValue': 'test3',
+          },
+        },
       });
 
       expect(mapProp.get(['map', 'firstString', 'stringValue']).getValue()).to.equal('test1');
@@ -632,12 +628,12 @@ describe('MapProperty', function () {
       mapProp.setValues({
         'map': {
           'fourthString': {
-            'stringValue': 'test4'
+            'stringValue': 'test4',
           },
           'thirdString': {
-            'stringValue': 'test3-upd'
-          }
-        }
+            'stringValue': 'test3-upd',
+          },
+        },
       });
 
       expect(mapProp.get(['map', 'firstString', 'stringValue']).getValue()).to.equal('test1');
@@ -646,7 +642,7 @@ describe('MapProperty', function () {
       expect(mapProp.get(['map', 'fourthString', 'stringValue']).getValue()).to.equal('test4');
     });
 
-    it('getValues should work for custom maps', function () {
+    it('getValues should work for custom maps', function() {
       var mapProp = PropertyFactory.create('autodesk.tests:NonPrimitiveMap-1.0.0');
       var string1 = PropertyFactory.create('autodesk.tests:StringProperty-1.0.0');
       var string2 = PropertyFactory.create('autodesk.tests:StringProperty-1.0.0');
@@ -657,28 +653,28 @@ describe('MapProperty', function () {
       mapProp.setValues({
         'map': {
           'firstString': {
-            'stringValue': 'test1'
+            'stringValue': 'test1',
           },
           'secondString': {
-            'stringValue': 'test2'
-          }
-        }
+            'stringValue': 'test2',
+          },
+        },
       });
 
       var expectedResult = {
         'map': {
           'firstString': {
-            'stringValue': 'test1'
+            'stringValue': 'test1',
           },
           'secondString': {
-            'stringValue': 'test2'
-          }
-        }
+            'stringValue': 'test2',
+          },
+        },
       };
       expect(mapProp.getValues()).to.deep.equal(expectedResult);
     });
 
-    it('setValues should create new items from typed properties if key does not exist', function () {
+    it('setValues should create new items from typed properties if key does not exist', function() {
       var mapProp = PropertyFactory.create('autodesk.tests:NonPrimitiveMap-1.0.0');
       var string1 = PropertyFactory.create('autodesk.tests:StringProperty-1.0.0', null, { stringValue: 'test1' });
       var string2 = PropertyFactory.create('autodesk.tests:StringProperty-1.0.0', null, { stringValue: 'test2' });
@@ -686,44 +682,44 @@ describe('MapProperty', function () {
       mapProp.setValues({
         'map': {
           'firstString': string1,
-          'secondString': string2
-        }
+          'secondString': string2,
+        },
       });
 
       expect(mapProp.get(['map', 'firstString', 'stringValue']).getValue()).to.equal('test1');
       expect(mapProp.get(['map', 'secondString', 'stringValue']).getValue()).to.equal('test2');
     });
 
-    it('setValues should create new items from untyped inputs if key does not exist', function () {
+    it('setValues should create new items from untyped inputs if key does not exist', function() {
       var mapProp = PropertyFactory.create('autodesk.tests:NonPrimitiveMap-1.0.0');
 
       mapProp.setValues({
         'map': {
           'firstString': {
-            'stringValue': 'test1'
+            'stringValue': 'test1',
           },
           'secondString': {
-            'stringValue': 'test2'
-          }
-        }
+            'stringValue': 'test2',
+          },
+        },
       });
 
       expect(mapProp.get(['map', 'firstString', 'stringValue']).getValue()).to.equal('test1');
       expect(mapProp.get(['map', 'secondString', 'stringValue']).getValue()).to.equal('test2');
     });
 
-    it('getRelativePath should work', function () {
+    it('getRelativePath should work', function() {
       var rootNode = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var mapProp = PropertyFactory.create('autodesk.tests:NonPrimitiveMap-1.0.0');
       mapProp.setValues({
         'map': {
           'firstString': {
-            'stringValue': 'test1'
+            'stringValue': 'test1',
           },
           'secondString': {
-            'stringValue': 'test2'
-          }
-        }
+            'stringValue': 'test2',
+          },
+        },
       });
       rootNode._properties.map.insert('nestedMap', mapProp);
       expect(mapProp.get(['map', 'firstString']).getRelativePath(rootNode))
@@ -735,7 +731,7 @@ describe('MapProperty', function () {
         .to.equal('../../[firstString].stringValue');
     });
 
-    it('path creation and resolution should work for entries of the map', function () {
+    it('path creation and resolution should work for entries of the map', function() {
       var rootNode = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node = PropertyFactory.create('autodesk.tests:AnonymousMapTestPropertyID-1.0.0');
       rootNode._properties.map.insert('node', node);
@@ -805,7 +801,7 @@ describe('MapProperty', function () {
         '    entry (Map of NodeProperty):\n' +
         '      entry (NodeProperty):\n';
       var prettyStr = '';
-      map3.prettyPrint(function (str) {
+      map3.prettyPrint(function(str) {
         prettyStr += str + '\n';
       });
       expect(prettyStr).to.equal(expectedPrettyStr);
@@ -813,7 +809,7 @@ describe('MapProperty', function () {
     });
   });
 
-  describe('squashing', function () {
+  describe('squashing', function() {
     //
     // Helper function which takes a sequence of callbacks that are successfully executed
     // and the changes applied by the callbacks are separately tracked and squashed in a
@@ -822,7 +818,7 @@ describe('MapProperty', function () {
     // Optionally, a a callback which controls the initial state before the squashing can
     // be given as first parameter
     //
-    var testChangeSetSquashing = function (in_options) {
+    var testChangeSetSquashing = function(in_options) {
       resetKeyCounter();
       var testProperty = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
 
@@ -854,58 +850,58 @@ describe('MapProperty', function () {
       expect(initialChangeset.getSerializedChangeSet()).to.deep.equal(testProperty.serialize({ 'dirtyOnly': false }));
     };
 
-    it('should work for multiple independent inserts', function () {
+    it('should work for multiple independent inserts', function() {
       testChangeSetSquashing({ callbacks: [insertNodeInRoot, insertNodeInRoot, insertNodeInRoot] });
     });
-    it('should work for multiple hierarchical inserts', function () {
+    it('should work for multiple hierarchical inserts', function() {
       testChangeSetSquashing({ callbacks: [insertNodeAsLeaf, insertNodeAsLeaf, insertNodeAsLeaf] });
     });
-    it('should work for inserts followed by removes', function () {
+    it('should work for inserts followed by removes', function() {
       testChangeSetSquashing({
         callbacks: [insertNodeInRoot, insertNodeInRoot, removeFirstNodeInRoot, removeFirstNodeInRoot],
-        post: function (changeset) {
+        post: function(changeset) {
           expect(changeset).to.be.empty;
-        }
+        },
       });
     });
-    it('should work for a tree removal', function () {
+    it('should work for a tree removal', function() {
       testChangeSetSquashing({
         callbacks: [insertNodeAsLeaf, insertNodeAsLeaf, insertNodeAsLeaf, removeFirstNodeInRoot],
-        post: function (changeset) {
+        post: function(changeset) {
           expect(changeset).to.be.empty;
-        }
+        },
       });
     });
 
-    it('should work for modifies in a tree', function () {
+    it('should work for modifies in a tree', function() {
       testChangeSetSquashing({
-        callbacks: [insertNodeAsLeaf, insertNodeAsLeaf, insertNodeAsLeaf, modifyLeaf, modifyLeaf]
+        callbacks: [insertNodeAsLeaf, insertNodeAsLeaf, insertNodeAsLeaf, modifyLeaf, modifyLeaf],
       });
     });
-    it('an insert, modify and a remove should give an empty changeset', function () {
+    it('an insert, modify and a remove should give an empty changeset', function() {
       testChangeSetSquashing({
         callbacks: [insertNodeAsLeaf, insertNodeAsLeaf, modifyLeaf, modifyLeaf, removeFirstNodeInRoot],
-        post: function (changeset) {
+        post: function(changeset) {
           expect(changeset).to.be.empty;
-        }
+        },
       });
     });
-    it('work for modifies after an already existing insert', function () {
+    it('work for modifies after an already existing insert', function() {
       testChangeSetSquashing({
         pre: insertNodeInRoot,
-        callbacks: [modifyLeaf, modifyLeaf]
+        callbacks: [modifyLeaf, modifyLeaf],
       });
     });
-    it('of modify and remove after an already existing insert should work', function () {
+    it('of modify and remove after an already existing insert should work', function() {
       testChangeSetSquashing({
         pre: insertNodeInRoot,
         callbacks: [modifyLeaf, removeFirstNodeInRoot],
-        post: function (changeset) {
+        post: function(changeset) {
           expect(changeset['map<NamedProperty>'].map).to.have.all.keys('remove');
-        }
+        },
       });
     });
-    it('of a replace operation should be possible', function () {
+    it('of a replace operation should be possible', function() {
       // Create two nodes with the same GUID
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node2 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
@@ -913,21 +909,21 @@ describe('MapProperty', function () {
       node2._properties.stringProperty.value = 'testString2';
 
       testChangeSetSquashing({
-        pre: function (root) {
+        pre: function(root) {
           root._properties.map.insert('node1', node1);
         },
         callbacks: [
           removeFirstNodeInRoot,
-          function (root) {
+          function(root) {
             root._properties.map.insert('node2', node2);
-          }
+          },
         ],
-        post: function (changeset) {
+        post: function(changeset) {
           expect(changeset['map<NamedProperty>'].map).to.have.all.keys('remove', 'insert');
-        }
+        },
       });
     });
-    it('should work for nested collections', function () {
+    it('should work for nested collections', function() {
       var node = PropertyFactory.create('NodeProperty');
       var testMap = PropertyFactory.create('map<Bool>');
 
@@ -943,28 +939,28 @@ describe('MapProperty', function () {
       expect(CS.getSerializedChangeSet().insert['map<Bool>'].map).to.have.all.keys('insert');
       expect(CS.getSerializedChangeSet().insert['map<Bool>'].map.insert['test']).to.equal(false);
     });
-    it('should work for a remove in a primitive map that contains another item', function () {
+    it('should work for a remove in a primitive map that contains another item', function() {
       var cs1 = {
         modify: {
           'map<String>': {
             testMap: {
               insert: {
-                test1: 'Hello'
-              }
-            }
-          }
-        }
+                test1: 'Hello',
+              },
+            },
+          },
+        },
       };
       var cs2 = {
         modify: {
           'map<String>': {
             testMap: {
               remove: {
-                test2: 'Goodbye'
-              }
-            }
-          }
-        }
+                test2: 'Goodbye',
+              },
+            },
+          },
+        },
       };
       var combined = new ChangeSet();
       combined.applyChangeSet(cs1);
@@ -974,20 +970,20 @@ describe('MapProperty', function () {
           'map<String>': {
             testMap: {
               insert: {
-                test1: 'Hello'
+                test1: 'Hello',
               },
               remove: {
-                test2: 'Goodbye'
-              }
-            }
-          }
-        }
+                test2: 'Goodbye',
+              },
+            },
+          },
+        },
       });
     });
-    it('should work for maps in arrays', function () {
+    it('should work for maps in arrays', function() {
       testChangeSetSquashing({
         callbacks: [
-          function (root) {
+          function(root) {
             var arrayNode = PropertyFactory.create('array<NodeProperty>');
             arrayNode.push(PropertyFactory.create('NodeProperty'));
 
@@ -997,18 +993,18 @@ describe('MapProperty', function () {
 
             root._properties.map.insert('array', arrayNode);
           },
-          function (root) {
+          function(root) {
             root.resolvePath('map[array][0].boolMap').set('test', true);
           }],
-        post: function (changeset) {
+        post: function(changeset) {
           expect(changeset['map<NamedProperty>'].map.insert['array<NodeProperty>'].array.insert['0'][1]['0']
             .insert['map<Bool>'].boolMap).to.have.all.keys('insert');
-        }
+        },
       });
     });
   });
-  describe('Rebasing', function () {
-    var testRebasing = function (in_options) {
+  describe('Rebasing', function() {
+    var testRebasing = function(in_options) {
       // Prepare the initial state
       var baseProperty1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       if (in_options.prepare) {
@@ -1067,162 +1063,162 @@ describe('MapProperty', function () {
       }
     };
 
-    it('with a NOP should be possible', function () {
+    it('with a NOP should be possible', function() {
       testRebasing({
         op2: insertUniqueNodeInRoot(),
-        compareToSequential: true
+        compareToSequential: true,
       });
     });
 
-    it('with independent inserts should be possible', function () {
+    it('with independent inserts should be possible', function() {
       testRebasing({
         op1: insertUniqueNodeInRoot(),
         op2: insertUniqueNodeInRoot(),
-        compareToSequential: true
+        compareToSequential: true,
       });
     });
 
-    it('with independent removes should be possible', function () {
+    it('with independent removes should be possible', function() {
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
       var node2 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
 
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
           root._properties.map.insert('node1', node1);
           root._properties.map.insert('node2', node2);
         },
-        op1: function (root) {
+        op1: function(root) {
           root._properties.map.remove('node1');
         },
-        op2: function (root) {
+        op2: function(root) {
           root._properties.map.remove('node2');
         },
-        compareToSequential: true
+        compareToSequential: true,
       });
     });
 
-    it('with a modify and a remove should possible', function () {
+    it('with a modify and a remove should possible', function() {
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
 
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
           root._properties.map.insert('node1', node1);
         },
         op1: modifyLeaf,
         op2: removeFirstNodeInRoot,
-        compareToSequential: true
+        compareToSequential: true,
       });
     });
 
-    it('with a remove and a modify should possible', function () {
+    it('with a remove and a modify should possible', function() {
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
 
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
           root._properties.map.insert('node1', node1);
         },
         op1: removeFirstNodeInRoot,
         op2: modifyLeaf,
         compareToSequential: false,
-        checkResult: function (conflicts, changeSet) {
+        checkResult: function(conflicts, changeSet) {
           expect(conflicts).to.have.length(1);
           expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.ENTRY_MODIFIED_AFTER_REMOVE);
           expect(conflicts[0].path).to.be.equal('map[node1]');
           expect(ChangeSet.isEmptyChangeSet(changeSet)).to.be.ok;
-        }
+        },
       });
     });
 
-    it('reported conflicts should be escaped', function () {
+    it('reported conflicts should be escaped', function() {
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
 
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
           root._properties.map.insert('"node"', node1);
         },
         op1: removeFirstNodeInRoot,
         op2: modifyLeaf,
         compareToSequential: false,
-        checkResult: function (conflicts, changeSet) {
+        checkResult: function(conflicts, changeSet) {
           expect(conflicts).to.have.length(1);
           expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.ENTRY_MODIFIED_AFTER_REMOVE);
           expect(conflicts[0].path).to.be.equal('map["\\"node\\""]');
           expect(ChangeSet.isEmptyChangeSet(changeSet)).to.be.ok;
-        }
+        },
       });
     });
 
-    it('with two compatible removes should be possible', function () {
+    it('with two compatible removes should be possible', function() {
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
 
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
           root._properties.map.insert('node1', node1);
         },
-        op1: function (root) {
+        op1: function(root) {
           root._properties.map.remove('node1');
         },
-        op2: function (root) {
+        op2: function(root) {
           root._properties.map.remove('node1');
         },
         compareToSequential: false,
-        checkResult: function (conflicts, changeSet) {
+        checkResult: function(conflicts, changeSet) {
           expect(ChangeSet.isEmptyChangeSet(changeSet)).to.be.ok;
-        }
+        },
       });
     });
 
-    it('with two indendent recursive modifies should be possible', function () {
+    it('with two indendent recursive modifies should be possible', function() {
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
 
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
           root._properties.map.insert('node1', node1);
         },
-        op1: function (root) {
+        op1: function(root) {
           root._properties.map.getAsArray()[0]._properties.stringProperty.value = 'a';
         },
-        op2: function (root) {
+        op2: function(root) {
           root._properties.map.getAsArray()[0]._properties.stringProperty2.value = 'a';
         },
         compareToSequential: true,
-        checkResult: function (conflicts, changeSet) {
+        checkResult: function(conflicts, changeSet) {
           expect(conflicts).to.be.empty;
-        }
+        },
       });
     });
 
-    it('with two conflicting recursive modifies should be possible and report a conflict', function () {
+    it('with two conflicting recursive modifies should be possible and report a conflict', function() {
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
 
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
           root._properties.map.insert('node1', node1);
         },
-        op1: function (root) {
+        op1: function(root) {
           root._properties.map.getAsArray()[0]._properties.stringProperty.value = 'a';
         },
-        op2: function (root) {
+        op2: function(root) {
           root._properties.map.getAsArray()[0]._properties.stringProperty.value = 'a';
         },
         compareToSequential: true,
-        checkResult: function (conflicts, changeSet) {
+        checkResult: function(conflicts, changeSet) {
           expect(conflicts).to.have.length(1);
           expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
           expect(conflicts[0].path).to.be.equal('map[node1].stringProperty');
-        }
+        },
       });
     });
 
-    it('with modify followed by remove+insert should work', function () {
+    it('with modify followed by remove+insert should work', function() {
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
 
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
           root._properties.map.insert('node1', node1);
         },
         op1: modifyLeaf,
-        op2: function (root) {
+        op2: function(root) {
           root._properties.map.remove('node1');
 
           var node2 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
@@ -1230,23 +1226,23 @@ describe('MapProperty', function () {
           root._properties.map.insert('node1', node2);
         },
         compareToSequential: true,
-        checkResult: function (conflicts, changeSet) {
+        checkResult: function(conflicts, changeSet) {
           expect(conflicts).to.have.length(1);
           expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.REMOVE_AFTER_MODIFY);
           expect(conflicts[0].path).to.be.equal('map[node1]');
           expect(changeSet['map<NamedProperty>'].map).to.have.all.keys('remove', 'insert');
-        }
+        },
       });
     });
 
-    it('with remove+insert followed by modify should report conflict', function () {
+    it('with remove+insert followed by modify should report conflict', function() {
       var node1 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
 
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
           root._properties.map.insert('node1', node1);
         },
-        op1: function (root) {
+        op1: function(root) {
           root._properties.map.remove('node1');
 
           var node2 = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
@@ -1255,60 +1251,59 @@ describe('MapProperty', function () {
         },
         op2: modifyLeaf,
         compareToSequential: false,
-        checkResult: function (conflicts, changeSet) {
+        checkResult: function(conflicts, changeSet) {
           expect(conflicts).to.have.length(1);
           expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.ENTRY_MODIFICATION_AFTER_REMOVE_INSERT);
           expect(conflicts[0].path).to.be.equal('map[node1]');
-        }
+        },
       });
     });
 
-    it('with remove+insert followed by remove+insert should report conflict', function () {
+    it('with remove+insert followed by remove+insert should report conflict', function() {
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
           root._properties.map.insert('node', PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0'));
         },
-        op1: function (root) {
+        op1: function(root) {
           root._properties.map.set('node', PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0'));
         },
-        op2: function (root) {
+        op2: function(root) {
           root._properties.map.set('node', PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0'));
         },
         compareToSequential: false,
-        checkResult: function (conflicts, changeSet) {
+        checkResult: function(conflicts, changeSet) {
           expect(conflicts).to.have.length(1);
           expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
           expect(conflicts[0].path).to.be.equal('map[node]');
-        }
+        },
       });
     });
 
-    it('with conflicting inserts should report conflict', function () {
-
+    it('with conflicting inserts should report conflict', function() {
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
         },
-        op1: function (root) {
+        op1: function(root) {
           var node = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
           root._properties.map.insert('node', node);
         },
-        op2: function (root) {
+        op2: function(root) {
           var node = PropertyFactory.create('autodesk.tests:MapTestPropertyID-1.0.0');
           root._properties.map.insert('node', node);
         },
         compareToSequential: false,
-        checkResult: function (conflicts, changeSet) {
+        checkResult: function(conflicts, changeSet) {
           expect(ChangeSet.isEmptyChangeSet(changeSet)).to.be.ok;
           expect(conflicts).to.have.length(1);
           expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.INSERTED_ENTRY_WITH_SAME_KEY);
           expect(conflicts[0].path).to.be.equal('map[node]');
-        }
+        },
       });
     });
 
-    it('should report conflicts for nested collections', function () {
+    it('should report conflicts for nested collections', function() {
       testRebasing({
-        prepare: function (root) {
+        prepare: function(root) {
           var node = PropertyFactory.create('NodeProperty');
           var testMap = PropertyFactory.create('map<Bool>');
           testMap.set('test', false);
@@ -1316,18 +1311,18 @@ describe('MapProperty', function () {
 
           root._properties.map.insert('node', node);
         },
-        op1: function (root) {
+        op1: function(root) {
           root._properties.map.get('node')._properties.boolMap.set('test', true);
         },
-        op2: function (root) {
+        op2: function(root) {
           root._properties.map.get('node')._properties.boolMap.set('test', true);
         },
         compareToSequential: false,
-        checkResult: function (conflicts, changeSet) {
+        checkResult: function(conflicts, changeSet) {
           expect(conflicts).to.have.length(1);
           expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
           expect(conflicts[0].path).to.be.equal('map[node].boolMap[test]');
-        }
+        },
       });
     });
   });

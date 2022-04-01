@@ -14,40 +14,40 @@ var possibleChanges = {
     0: 'insert',
     1: 'modify',
     2: 'remove',
-    3: 'set'
+    3: 'set',
 };
 
-var createTestArrayProp = function () {
+var createTestArrayProp = function() {
     return PropertyFactory.create('autodesk.tests:CustomArrayTestID-1.0.0')._properties.MyCustomArray;
 };
 
-var createRandomProperty = function () {
+var createRandomProperty = function() {
     var node1 = PropertyFactory.create('autodesk.tests:TestID-1.0.0');
     node1._properties.MyFloatProp.value = Math.random() * 100;
     node1._properties.MyIntProp.value = Math.random() * 100;
     return node1;
 };
 
-describe('CustomArrayProperty', function () {
+describe('CustomArrayProperty', function() {
     /**
      * Get all the objects we need in this test here.
      */
-    before(function () {
+    before(function() {
         PropertyFactory = require('../..').PropertyFactory;
         BaseProperty = require('../..').BaseProperty;
         DeterministicRandomGenerator = require('@fluid-experimental/property-common').DeterministicRandomGenerator;
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
+        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
         _ = require('lodash');
         deepCopy = _.cloneDeep;
 
         OurTestTemplate = {
             typeid: 'autodesk.tests:TestID-1.0.0',
             properties: [{
-                id: 'MyFloatProp', typeid: 'Float32'
+                id: 'MyFloatProp', typeid: 'Float32',
             }, {
-                id: 'MyIntProp', typeid: 'Int32'
-            }
-            ]
+                id: 'MyIntProp', typeid: 'Int32',
+            },
+            ],
         };
         PropertyFactory._reregister(OurTestTemplate);
 
@@ -55,8 +55,8 @@ describe('CustomArrayProperty', function () {
             typeid: 'autodesk.tests:CustomArrayTestID-1.0.0',
             properties: [
                 { id: 'MyCustomArray', typeid: 'autodesk.tests:TestID-1.0.0', context: 'array' },
-                { id: 'SomeOtherProperty', typeid: 'String' }
-            ]
+                { id: 'SomeOtherProperty', typeid: 'String' },
+            ],
         };
         PropertyFactory._reregister(OurArrayTestTemplate2);
 
@@ -64,14 +64,14 @@ describe('CustomArrayProperty', function () {
             typeid: 'autodesk.tests:Array.NamedPropertyWithString-1.0.0',
             inherits: 'NamedProperty',
             properties: [{
-                id: 'stringProperty', typeid: 'String'
-            }]
+                id: 'stringProperty', typeid: 'String',
+            }],
         };
         PropertyFactory._reregister(NamedPropertyWithStringTemplate);
     });
 
-    describe('Checking the generalized squash function of a CustomPropertyArrayProperty', function () {
-        it('[random number test] should be squashed to the expected changeset', function (done) {
+    describe('Checking the generalized squash function of a CustomPropertyArrayProperty', function() {
+        it('[random number test] should be squashed to the expected changeset', function(done) {
             try {
                 var arrayProp = createTestArrayProp();
 
@@ -123,14 +123,13 @@ describe('CustomArrayProperty', function () {
                     var serializedDirtyChanges = arrayProp.serialize({
                         'dirtyOnly': true,
                         'includeRootTypeid': false,
-                        'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.DIRTY
+                        'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.DIRTY,
                     });
                     var arrayPropTest = createTestArrayProp();
                     arrayPropTest.deserialize(arrayPropCopy.serialize({ 'dirtyOnly': false }));
                     arrayPropTest.cleanDirty();
                     arrayPropTest.applyChangeSet(serializedDirtyChanges);
                 }
-
             } catch (e) {
                 error = e;
             } finally {
@@ -143,8 +142,8 @@ describe('CustomArrayProperty', function () {
         });
     });
 
-    describe('Path resolution', function () {
-        it('should work for array properties', function () {
+    describe('Path resolution', function() {
+        it('should work for array properties', function() {
             var arrayParent = PropertyFactory.create('autodesk.tests:CustomArrayTestID-1.0.0');
             var arrayProp = arrayParent._properties.MyCustomArray;
 
@@ -171,7 +170,7 @@ describe('CustomArrayProperty', function () {
             expect(myTestArrayProp.getRelativePath(arrayProp)).to.equal('[5]');
 
             // Test exception on parsing error
-            expect(function () { arrayParent.resolvePath('MyCustomArray["abcd"]'); }).to.throw();
+            expect(function() { arrayParent.resolvePath('MyCustomArray["abcd"]'); }).to.throw();
 
             // Test path resolution after insertion
             var newEntry = PropertyFactory.create('autodesk.tests:TestID-1.0.0');
@@ -197,21 +196,21 @@ describe('CustomArrayProperty', function () {
                 insert: [[0, [{
                     typeid: 'autodesk.tests:TestID-1.0.0',
                     Float32: {
-                        MyFloatProp: 16
+                        MyFloatProp: 16,
                     },
                     Int32: {
-                        MyIntProp: 17
-                    }
+                        MyIntProp: 17,
+                    },
                 }, {
                     typeid: 'autodesk.tests:TestID-1.0.0',
                     Float32: {
-                        MyFloatProp: 18
+                        MyFloatProp: 18,
                     },
                     Int32: {
-                        MyIntProp: 19
-                    }
-                }]]
-                ]
+                        MyIntProp: 19,
+                    },
+                }]],
+                ],
             });
             expect(arrayParent.resolvePath('MyCustomArray[0]')._properties.MyIntProp.value).to.equal(17);
             expect(myTestArrayProp.getAbsolutePath()).to.equal('/MyCustomArray[7]');
@@ -220,7 +219,7 @@ describe('CustomArrayProperty', function () {
 
             // Test path resolution after removal
             arrayParent._properties.MyCustomArray.applyChangeSet({
-                remove: [[0, 1]]
+                remove: [[0, 1]],
             });
             expect(arrayParent.resolvePath('MyCustomArray[0]')._properties.MyIntProp.value).to.equal(19);
             expect(myTestArrayProp.getAbsolutePath()).to.equal('/MyCustomArray[6]');
@@ -252,22 +251,22 @@ describe('CustomArrayProperty', function () {
         });
     });
 
-    describe('Sized arrays', function () {
+    describe('Sized arrays', function() {
         // Test fix for an issue where custom array templates with non-zero sizes
         // resulted in the array initially containing objects without a parent.
-        it('should work for custom array property templates with size specified', function () {
+        it('should work for custom array property templates with size specified', function() {
             var TestString = {
                 typeid: 'autodesk.test:test.string-1.0.0',
                 properties: [
-                    { id: 'data', typeid: 'String' }
-                ]
+                    { id: 'data', typeid: 'String' },
+                ],
             };
 
             var TestCustomArray = {
                 typeid: 'autodesk.test:test.customarray-1.0.0',
                 properties: [
-                    { id: 'data', typeid: 'autodesk.test:test.string-1.0.0', context: 'array', length: 3 }
-                ]
+                    { id: 'data', typeid: 'autodesk.test:test.string-1.0.0', context: 'array', length: 3 },
+                ],
             };
             PropertyFactory._reregister(TestString);
             PropertyFactory._reregister(TestCustomArray);
@@ -275,15 +274,15 @@ describe('CustomArrayProperty', function () {
             var sizedArray = PropertyFactory.create('autodesk.test:test.customarray-1.0.0');
             // Prior to the fix to properly parent initial elements, clear() would result in an exception with
             // the message 'Trying to remove a property from an array that has not the array as parent.'
-            var clearArrayFn = function () {
+            var clearArrayFn = function() {
                 sizedArray.resolvePath('data').clear();
             };
             expect(clearArrayFn).to.not.throw();
         });
     });
 
-    describe('Commit', function () {
-        /*it('should not appear in the changeset when committing a change on its sibling', function() {
+    describe('Commit', function() {
+        /* it('should not appear in the changeset when committing a change on its sibling', function() {
           // TODO: This test cannot be implemented in Fluid
           let cm = new HFDM();
           let workspace = cm.createWorkspace();
@@ -307,10 +306,10 @@ describe('CustomArrayProperty', function () {
             checkoutView.getRoot().resolvePath('pset.SomeOtherProperty').setValue('foobar');
             return cm._commit(null, checkoutView);
           });
-        });*/
+        }); */
 
-        describe('Nested collections', function () {
-            it('should support squashing of nested maps', function () {
+        describe('Nested collections', function() {
+            it('should support squashing of nested maps', function() {
                 var nodeProp = PropertyFactory.create('NodeProperty');
                 var arrayProp = PropertyFactory.create('array<BaseProperty>');
                 var testMap = PropertyFactory.create('map<Bool>');
@@ -331,7 +330,7 @@ describe('CustomArrayProperty', function () {
                 expect(arrayChanges.insert[0][1][0].insert['test']).to.equal(false);
             });
 
-            it('should support basic rebasing of nested maps', function () {
+            it('should support basic rebasing of nested maps', function() {
                 var nodeProp = PropertyFactory.create('NodeProperty');
                 var arrayProp = PropertyFactory.create('array<BaseProperty>');
                 var testMap = PropertyFactory.create('map<Bool>');
@@ -353,7 +352,7 @@ describe('CustomArrayProperty', function () {
                 expect(conflicts[0].path).to.be.equal('array[0][test]');
             });
 
-            it('should be deserializable', function () {
+            it('should be deserializable', function() {
                 var testArray = PropertyFactory.create('array<>');
                 testArray.push(PropertyFactory.create('array<>'));
                 var serialized = testArray.serialize({ 'dirtyOnly': false });
@@ -364,11 +363,10 @@ describe('CustomArrayProperty', function () {
             });
         });
 
-        describe('deserialize', function () {
-
+        describe('deserialize', function() {
             // Returns a sequence of random NamedProperties
-            var createRandomEntries = function (in_count) {
-                return _.map(_.range(in_count), function () {
+            var createRandomEntries = function(in_count) {
+                return _.map(_.range(in_count), function() {
                     var property = PropertyFactory.create('autodesk.tests:Array.NamedPropertyWithString-1.0.0');
                     property._properties.stringProperty.value = 'initial';
                     return property;
@@ -378,10 +376,10 @@ describe('CustomArrayProperty', function () {
             // Manually copy the array (we don't use deserialize for the copy
             // here since we want to test that function below and don't want
             // an error here to affect the comparison)
-            var manuallyCopyArray = function (arrayProperty) {
+            var manuallyCopyArray = function(arrayProperty) {
                 var copiedArray = PropertyFactory.create('autodesk.tests:Array.NamedPropertyWithString-1.0.0',
                     'array');
-                var copiedEntries = _.map(arrayProperty.getEntriesReadOnly(), function (entry) {
+                var copiedEntries = _.map(arrayProperty.getEntriesReadOnly(), function(entry) {
                     // Create a named property with the same guid
                     var newNode = PropertyFactory.create('autodesk.tests:Array.NamedPropertyWithString-1.0.0');
                     newNode._properties.guid.value = entry.getGuid();
@@ -394,8 +392,7 @@ describe('CustomArrayProperty', function () {
             };
 
             // Prepare the initial state
-            var initializeArrayForComparison = function (in_count) {
-
+            var initializeArrayForComparison = function(in_count) {
                 // Create an array with named properties
                 var arrayProperty = PropertyFactory.create('NamedProperty', 'array');
                 var entries = createRandomEntries(in_count);
@@ -405,12 +402,12 @@ describe('CustomArrayProperty', function () {
 
                 return {
                     original: arrayProperty,
-                    copy: copiedArray
+                    copy: copiedArray,
                 };
             };
 
             // Counts the changes in the array
-            var countChanges = function (in_testArray) {
+            var countChanges = function(in_testArray) {
                 // First create a copy of the copy to check afterwards whether the changeset is correct
                 var copy2 = manuallyCopyArray(in_testArray.copy);
 
@@ -428,16 +425,15 @@ describe('CustomArrayProperty', function () {
                     in_testArray.original.serialize({ 'dirtyOnly': false }));
 
                 // Count insert, modify and remove operations
-                var insertedCount = _.reduce(deserialized.insert, function (last, insertedRange) {
+                var insertedCount = _.reduce(deserialized.insert, function(last, insertedRange) {
                     return last + insertedRange[1].length;
                 }, 0);
-                var removedCount = _.reduce(deserialized.remove, function (last, removedRange) {
+                var removedCount = _.reduce(deserialized.remove, function(last, removedRange) {
                     return last + removedRange[1];
                 }, 0);
-                var modifiedCount = _.reduce(deserialized.modify, function (last, modifiedRange) {
+                var modifiedCount = _.reduce(deserialized.modify, function(last, modifiedRange) {
                     return last + modifiedRange[1].length;
                 }, 0);
-
 
                 return {
                     insertedCount: insertedCount,
@@ -446,11 +442,11 @@ describe('CustomArrayProperty', function () {
                     totalCount: insertedCount + removedCount + modifiedCount,
                     insertedRanges: deserialized.insert ? deserialized.insert.length : 0,
                     removedRanges: deserialized.remove ? deserialized.remove.length : 0,
-                    modifiedRanges: deserialized.modify ? deserialized.modify.length : 0
+                    modifiedRanges: deserialized.modify ? deserialized.modify.length : 0,
                 };
             };
 
-            it('should report an empty ChangeSet for deserialize without changes', function () {
+            it('should report an empty ChangeSet for deserialize without changes', function() {
                 var testArray = initializeArrayForComparison(50);
 
                 // Check the returned ChangeSet
@@ -462,11 +458,11 @@ describe('CustomArrayProperty', function () {
                     totalCount: 0,
                     insertedRanges: 0,
                     removedRanges: 0,
-                    modifiedRanges: 0
+                    modifiedRanges: 0,
                 });
             });
 
-            it('should report an empty ChangeSet for a length 0 array', function () {
+            it('should report an empty ChangeSet for a length 0 array', function() {
                 var testArray = initializeArrayForComparison(0);
 
                 // Check the returned ChangeSet
@@ -478,18 +474,18 @@ describe('CustomArrayProperty', function () {
                     totalCount: 0,
                     insertedRanges: 0,
                     removedRanges: 0,
-                    modifiedRanges: 0
+                    modifiedRanges: 0,
                 });
             });
 
-            it('should report a compact ChangeSet for simple move in an array of NamedProperties', function () {
+            it('should report a compact ChangeSet for simple move in an array of NamedProperties', function() {
                 var testArray = initializeArrayForComparison(50);
 
                 // Move a segment in the array
                 var entries = [
                     testArray.original.get(45),
                     testArray.original.get(46),
-                    testArray.original.get(47)
+                    testArray.original.get(47),
                 ];
                 testArray.original.removeRange(45, 3);
                 testArray.original.insertRange(3, entries);
@@ -503,11 +499,11 @@ describe('CustomArrayProperty', function () {
                     totalCount: 6,
                     insertedRanges: 1,
                     removedRanges: 1,
-                    modifiedRanges: 0
+                    modifiedRanges: 0,
                 });
             });
 
-            it('should report a compact ChangeSet for simple inserts in an array of NamedProperties', function () {
+            it('should report a compact ChangeSet for simple inserts in an array of NamedProperties', function() {
                 var testArray = initializeArrayForComparison(50);
 
                 testArray.original.insertRange(0, createRandomEntries(5));
@@ -522,11 +518,11 @@ describe('CustomArrayProperty', function () {
                     totalCount: 15,
                     insertedRanges: 3,
                     removedRanges: 0,
-                    modifiedRanges: 0
+                    modifiedRanges: 0,
                 });
             });
 
-            it('should report a compact ChangeSet for simple removes in an array of NamedProperties', function () {
+            it('should report a compact ChangeSet for simple removes in an array of NamedProperties', function() {
                 var testArray = initializeArrayForComparison(50);
 
                 testArray.original.removeRange(0, 5);
@@ -541,11 +537,11 @@ describe('CustomArrayProperty', function () {
                     totalCount: 15,
                     insertedRanges: 0,
                     removedRanges: 3,
-                    modifiedRanges: 0
+                    modifiedRanges: 0,
                 });
             });
 
-            it('should report a compact ChangeSet for simple replaces in an array of NamedProperties', function () {
+            it('should report a compact ChangeSet for simple replaces in an array of NamedProperties', function() {
                 var testArray = initializeArrayForComparison(50);
 
                 testArray.original.removeRange(0, 5);
@@ -565,11 +561,11 @@ describe('CustomArrayProperty', function () {
                     totalCount: 30,
                     insertedRanges: 3,
                     removedRanges: 3,
-                    modifiedRanges: 0
+                    modifiedRanges: 0,
                 });
             });
 
-            it('should report a compact ChangeSet for modifies after inserts and removes', function () {
+            it('should report a compact ChangeSet for modifies after inserts and removes', function() {
                 var testArray = initializeArrayForComparison(50);
 
                 testArray.original.removeRange(5, 5);
@@ -587,11 +583,11 @@ describe('CustomArrayProperty', function () {
                     totalCount: 14,
                     insertedRanges: 1,
                     removedRanges: 1,
-                    modifiedRanges: 2
+                    modifiedRanges: 2,
                 });
             });
 
-            it('should report a compact ChangeSet for a randomized array of NamedProperties', function () {
+            it('should report a compact ChangeSet for a randomized array of NamedProperties', function() {
                 var generator = new DeterministicRandomGenerator('931cff4d-392f-2f41-5c52-2e17965270dc');
                 this.timeout(90000);
 

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import EventEmitter from "events";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import EventEmitter from "events";
 import { BatchTracker } from "../batchTracker";
 
 describe("Runtime", () => {
@@ -20,14 +20,14 @@ describe("Runtime", () => {
         let ticks = 0;
         new BatchTracker(emitter, mockLogger, 5, 100, () => ticks);
 
-        emitter.emit("batchBegin", batchMessage(2))
+        emitter.emit("batchBegin", batchMessage(2));
         emitter.emit("batchEnd", /* error */ undefined, batchMessage(5));
 
-        emitter.emit("batchBegin", batchMessage(1))
+        emitter.emit("batchBegin", batchMessage(1));
         ticks += 10;
         emitter.emit("batchEnd", /* error */ undefined, batchMessage(5));
 
-        emitter.emit("batchBegin", batchMessage(1))
+        emitter.emit("batchBegin", batchMessage(1));
         ticks += 20;
         emitter.emit("batchEnd", new Error(), batchMessage(8));
 
@@ -57,7 +57,7 @@ describe("Runtime", () => {
         new BatchTracker(emitter, mockLogger, 100, 3, () => ticks);
 
         for (let i = 1; i <= 10; i++) {
-            emitter.emit("batchBegin", batchMessage(1))
+            emitter.emit("batchBegin", batchMessage(1));
             ticks += i;
             emitter.emit("batchEnd", /* error */ undefined, batchMessage(i));
         }
@@ -88,8 +88,9 @@ describe("Runtime", () => {
         ]);
     });
 
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const batchMessage = (sequenceNumber: number): ISequencedDocumentMessage => ({
         sequenceNumber,
         referenceSequenceNumber: sequenceNumber,
-    } as ISequencedDocumentMessage)
+    } as ISequencedDocumentMessage);
 });

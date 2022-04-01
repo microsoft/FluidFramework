@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions*/
+/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview In this file, we will test the functions of a EnumProperty object
  *    described in /src/properties/enumProperty.js
@@ -11,18 +11,17 @@
 var PropertyFactory, TestEnumTemplate, TestInlineEnumTemplate, TestEnumArrayTemplate,
     BaseProperty, ChangeSet, TestBaseContainingEnumTemplate, MSG, deepCopy, _;
 
-describe('Test EnumProperty', function () {
+describe('Test EnumProperty', function() {
     /**
      * Get all the objects we need in this test here.
      */
-    before(function () {
+    before(function() {
         PropertyFactory = require('../..').PropertyFactory;
         BaseProperty = require('../..').BaseProperty;
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
-        MSG = require('@fluid-experimental/property-common').constants.MSG
+        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
+        MSG = require('@fluid-experimental/property-common').constants.MSG;
         _ = require('lodash');
         deepCopy = _.cloneDeep;
-
 
         // the following templates are copies from the specification
         // disableling the single quote rule to keep exact copies
@@ -33,8 +32,8 @@ describe('Test EnumProperty', function () {
             properties: [
                 { id: "m", value: 1, annotation: { description: "meter" } },
                 { id: "cm", value: 2, annotation: { description: "centimeter" } },
-                { id: "mm", value: 3, annotation: { description: "millimeter" } }
-            ]
+                { id: "mm", value: 3, annotation: { description: "millimeter" } },
+            ],
         };
         PropertyFactory._reregister(TestEnumTemplate);
 
@@ -48,8 +47,8 @@ describe('Test EnumProperty', function () {
                     properties: [
                         { id: "solid", value: 100, annotation: { description: "solid line" } },
                         { id: "dashed", value: 200, annotation: { description: "dashed line" } },
-                        { id: "dotted", value: 300, annotation: { description: "dotted line" } }
-                    ]
+                        { id: "dotted", value: 300, annotation: { description: "dotted line" } },
+                    ],
                 },
                 {
                     id: "style",
@@ -59,8 +58,8 @@ describe('Test EnumProperty', function () {
                             typeid: "Uint32",
                             annotation: {
                                 description: "border thickness in Pixels",
-                                unit: "Adsk.Core:Units.Imaging-1.0.0"
-                            }
+                                unit: "Adsk.Core:Units.Imaging-1.0.0",
+                            },
                         },
                         {
                             id: "secondLevelInlineEnum",
@@ -68,12 +67,12 @@ describe('Test EnumProperty', function () {
                             properties: [
                                 { id: "A", value: 0, annotation: { description: "The Letter A." } },
                                 { id: "B", value: 76596785, annotation: { description: "The Letter B." } },
-                                { id: "C", value: -199999, annotation: { description: "The Letter C." } }
-                            ]
-                        }
-                    ]
-                }
-            ]
+                                { id: "C", value: -199999, annotation: { description: "The Letter C." } },
+                            ],
+                        },
+                    ],
+                },
+            ],
         };
 
         PropertyFactory._reregister(TestInlineEnumTemplate);
@@ -81,22 +80,22 @@ describe('Test EnumProperty', function () {
         TestBaseContainingEnumTemplate = {
             typeid: 'autodesk.core:CustomWithEnumID-1.0.0',
             properties: [{
-                id: 'MyEnum', typeid: 'autodesk.core:UnitsEnum-1.0.0'
-            }
-            ]
+                id: 'MyEnum', typeid: 'autodesk.core:UnitsEnum-1.0.0',
+            },
+            ],
         };
         PropertyFactory._reregister(TestBaseContainingEnumTemplate);
 
         TestEnumArrayTemplate = {
             typeid: 'autodesk.core:EnumArrayTestID-1.0.0',
             properties: [{
-                id: 'MyEnumArray', typeid: 'autodesk.core:UnitsEnum-1.0.0', context: 'array'
-            }]
+                id: 'MyEnumArray', typeid: 'autodesk.core:UnitsEnum-1.0.0', context: 'array',
+            }],
         };
         PropertyFactory._reregister(TestEnumArrayTemplate);
     });
 
-    it('@bugFix should not modify the registered template', function () {
+    it('@bugFix should not modify the registered template', function() {
         let enumTemplate = {
             typeid: "autodesk.core:testEnum-1.0.0",
             annotation: { description: "The metric units" },
@@ -106,10 +105,10 @@ describe('Test EnumProperty', function () {
                 properties: [
                     { id: "m", value: 1, annotation: { description: "meter" } },
                     { id: "cm", value: 2, annotation: { description: "centimeter" } },
-                    { id: "mm", value: 3, annotation: { description: "millimeter" } }
-                ]
-            }
-            ]
+                    { id: "mm", value: 3, annotation: { description: "millimeter" } },
+                ],
+            },
+            ],
         };
         let copyOfTemplate = deepCopy(enumTemplate);
         PropertyFactory._reregister(enumTemplate);
@@ -117,8 +116,7 @@ describe('Test EnumProperty', function () {
         expect(PropertyFactory.getTemplate(copyOfTemplate.typeid).serialize()).to.deep.equal(copyOfTemplate);
     });
 
-    it('should correctly set/get the Enum values', function () {
-
+    it('should correctly set/get the Enum values', function() {
         var enumProp = PropertyFactory.create('autodesk.core:UnitsEnum-1.0.0');
 
         enumProp.setEnumByString('cm');
@@ -149,21 +147,21 @@ describe('Test EnumProperty', function () {
         expect(firstOne).to.deep.equal(anotherOne);
     });
 
-    it('should throw on setting invalid Enum strings', function () {
+    it('should throw on setting invalid Enum strings', function() {
         var enumProp = PropertyFactory.create('autodesk.core:UnitsEnum-1.0.0');
-        expect(function () {
+        expect(function() {
             enumProp.setEnumByString('BadGuy');
         }).to.throw();
     });
 
-    it('should throw on setting invalid Enum values', function () {
+    it('should throw on setting invalid Enum values', function() {
         var enumProp = PropertyFactory.create('autodesk.core:UnitsEnum-1.0.0');
-        expect(function () {
+        expect(function() {
             enumProp.setValue(23);
         }).to.throw();
     });
 
-    it('should correctly squash Enums', function () {
+    it('should correctly squash Enums', function() {
         var enum1 = PropertyFactory.create('autodesk.core:CustomWithEnumID-1.0.0');
         enum1._properties.MyEnum.value = 1;
         var squashedChangeset = new ChangeSet(enum1.serialize({ 'dirtyOnly': false }));
@@ -176,17 +174,17 @@ describe('Test EnumProperty', function () {
         expect(serializedChangeset).to.deep.equal(squashedChangeset.getSerializedChangeSet());
     });
 
-    it('should have a default value that is the lowest valid value', function () {
+    it('should have a default value that is the lowest valid value', function() {
         var enumProp = PropertyFactory.create('autodesk.core:CustomWithEnumID-1.0.0');
         expect(enumProp.get('MyEnum').value).to.equal(1);
     });
 
-    it('should have a default value of 0 if 0 is a valid value', function () {
+    it('should have a default value of 0 if 0 is a valid value', function() {
         var enumProp = PropertyFactory.create('Adsk.Core:UI.Border-1.0.0');
         expect(enumProp.get('style').get('secondLevelInlineEnum').value).to.equal(0);
     });
 
-    it('should be possible to dynamically add an Enum to a NodeProperty', function () {
+    it('should be possible to dynamically add an Enum to a NodeProperty', function() {
         var enumProp = PropertyFactory.create('autodesk.core:UnitsEnum-1.0.0');
         var myNode = PropertyFactory.create('NodeProperty');
         myNode.insert('myEnum', enumProp);
@@ -200,7 +198,7 @@ describe('Test EnumProperty', function () {
         expect(myNode.serialize({ 'dirtyOnly': false })).to.deep.equal(myNodeCopy.serialize({ 'dirtyOnly': false }));
     });
 
-    it('should correctly rebase Properties containing Enum values and correctly show conflicts', function () {
+    it('should correctly rebase Properties containing Enum values and correctly show conflicts', function() {
         var baseProperty1 = PropertyFactory.create('autodesk.core:CustomWithEnumID-1.0.0');
 
         // Create two copies of this state
@@ -230,8 +228,8 @@ describe('Test EnumProperty', function () {
         // check result
         expect(changeSet1.getSerializedChangeSet()).to.deep.equal({
             'enum<autodesk.core:UnitsEnum-1.0.0>': {
-                MyEnum: 2
-            }
+                MyEnum: 2,
+            },
         });
         expect(conflicts).to.have.length(1);
         expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
@@ -239,7 +237,7 @@ describe('Test EnumProperty', function () {
         expect(conflicts[0].conflictingChange['enum<autodesk.core:UnitsEnum-1.0.0>'].MyEnum).to.be.equal(2);
     });
 
-    it('specialized EnumArrayProperty should work correctly', function () {
+    it('specialized EnumArrayProperty should work correctly', function() {
         var enum1 = PropertyFactory.create('autodesk.core:EnumArrayTestID-1.0.0');
         var enumArray = enum1._properties.MyEnumArray;
         enumArray.insertRange(0, [1, 'cm', 'mm', 3]);
@@ -249,13 +247,13 @@ describe('Test EnumProperty', function () {
         expect(enumArray.serialize()).to.deep.equal(
             {
                 'insert': [
-                    [0, [2, 1, 3]]
-                ]
-            }
+                    [0, [2, 1, 3]],
+                ],
+            },
         );
     });
 
-    it('.setRange should throw an error when in_offset is not an integer', function () {
+    it('.setRange should throw an error when in_offset is not an integer', function() {
         var enum1 = PropertyFactory.create('autodesk.core:EnumArrayTestID-1.0.0');
         var enumArray = enum1._properties.MyEnumArray;
         enumArray.insertRange(0, [1, 'cm', 'mm']);
@@ -263,7 +261,7 @@ describe('Test EnumProperty', function () {
             .to.throw(MSG.NOT_NUMBER);
     });
 
-    it('.setRange should throw an error when in_array is not an array', function () {
+    it('.setRange should throw an error when in_array is not an array', function() {
         var enum1 = PropertyFactory.create('autodesk.core:EnumArrayTestID-1.0.0');
         var enumArray = enum1._properties.MyEnumArray;
         enumArray.insertRange(0, [1, 'cm', 'mm']);
@@ -271,7 +269,7 @@ describe('Test EnumProperty', function () {
             .to.throw(MSG.IN_ARRAY_NOT_ARRAY + 'EnumArrayProperty.setRange');
     });
 
-    it('.set should throw an error when in_offset is not an integer', function () {
+    it('.set should throw an error when in_offset is not an integer', function() {
         var enum1 = PropertyFactory.create('autodesk.core:EnumArrayTestID-1.0.0');
         var enumArray = enum1._properties.MyEnumArray;
         enumArray.insertRange(0, [1, 'cm', 'mm']);
@@ -279,19 +277,19 @@ describe('Test EnumProperty', function () {
             .to.throw(MSG.NOT_NUMBER);
     });
 
-    it('.set should throw an error when in_value is an array', function () {
+    it('.set should throw an error when in_value is an array', function() {
         var enum1 = PropertyFactory.create('autodesk.core:EnumArrayTestID-1.0.0');
         var enumArray = enum1._properties.MyEnumArray;
         enumArray.insertRange(0, [1, 'cm', 'mm']);
         expect(() => { enumArray.set(2, ['m']); }).to.throw(MSG.VALUE_STRING_OR_NUMBER);
     });
 
-    it('isPrimitiveType should evaluate to true', function () {
+    it('isPrimitiveType should evaluate to true', function() {
         var enum1 = PropertyFactory.create(TestEnumTemplate.typeid);
         expect(enum1.isPrimitiveType()).to.equal(true);
     });
 
-    it('.getValidEnumList should return expected enum list', function () {
+    it('.getValidEnumList should return expected enum list', function() {
         var enumProp = PropertyFactory.create('autodesk.core:UnitsEnum-1.0.0');
         var enumList = enumProp.getValidEnumList();
         expect(enumList).to.have.nested.property('m.value', 1);

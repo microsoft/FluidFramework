@@ -37,6 +37,10 @@ export class TestDataObject extends DataObject {
     public get containerRuntime(): ContainerRuntime {
         return this.context.containerRuntime as ContainerRuntime;
     }
+
+    public get _context() {
+        return this.context;
+    }
 }
 
 /**

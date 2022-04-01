@@ -48,6 +48,7 @@ export class SnapshotV1 {
     constructor(
         public mergeTree: MergeTree,
         logger: ITelemetryLogger,
+        private readonly getLongClientId: (id: number) => string,
         public filename?: string,
         public onCompletion?: () => void,
     ) {
@@ -209,8 +210,7 @@ export class SnapshotV1 {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 if (segment.seq! > minSeq) {
                     raw.seq = segment.seq;
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    raw.client = mergeTree.getLongClientId!(segment.clientId);
+                    raw.client = this.getLongClientId(segment.clientId);
                 }
                 // We have already dispensed with removed segments below the MSN and removed segments with unassigned
                 // sequence numbers.  Any remaining removal info should be preserved.
@@ -218,8 +218,17 @@ export class SnapshotV1 {
                     assert(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq,
                         0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */);
                     raw.removedSeq = segment.removedSeq;
+
+                    // back compat for when we split overlap and removed client
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    raw.removedClient = mergeTree.getLongClientId!(segment.removedClientId!);
+                    raw.removedClient = this.getLongClientId(segment.removedClientId!);
+
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const removedClientIds = [segment.removedClientId!];
+                    if(segment.removedClientOverlap !== undefined) {
+                        removedClientIds.push(... segment.removedClientOverlap);
+                    }
+                    raw.removedClientIds = removedClientIds.map((id)=>this.getLongClientId(id));
                 }
 
             // Sanity check that we are preserving either the seq < minSeq or a removed segment's info.

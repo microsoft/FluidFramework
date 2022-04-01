@@ -1,9 +1,13 @@
 {
   "name": "@fluidframework/server-services-utils",
-  "version": "0.1035.0",
+  "version": "0.1035.2000",
   "description": "Fluid server services shared utilities",
   "homepage": "https://fluidframework.com",
-  "repository": "https://github.com/microsoft/FluidFramework",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "server/routerlicious/packages/services-utils"
+  },
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
@@ -47,10 +51,10 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^0.1026.0",
-    "@fluidframework/server-services-client": "^0.1035.0",
-    "@fluidframework/server-services-core": "^0.1035.0",
-    "@fluidframework/server-services-telemetry": "^0.1035.0",
+    "@fluidframework/protocol-definitions": "^0.1027.1000",
+    "@fluidframework/server-services-client": "^0.1035.2000",
+    "@fluidframework/server-services-core": "^0.1035.2000",
+    "@fluidframework/server-services-telemetry": "^0.1035.2000",
     "debug": "^4.1.1",
     "express": "^4.16.3",
     "ioredis": "^4.24.2",
@@ -58,14 +62,14 @@
     "jsonwebtoken": "^8.4.0",
     "nconf": "^0.11.0",
     "serialize-error": "^8.1.0",
-    "sillyname": "0.1.0",
+    "sillyname": "^0.1.0",
     "uuid": "^8.3.1",
     "winston": "^3.3.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.26.0-0",
-    "@fluidframework/server-test-utils": "^0.1035.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
+    "@fluidframework/server-test-utils": "^0.1035.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/debug": "^4.1.5",
     "@types/ioredis": "^4.22.0",

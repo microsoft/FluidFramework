@@ -9,8 +9,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 import React from "react";
 
 interface IEmbeddedFluidObjectWrapperProps {
-    id: string;
-    requestFluidObject(id: string): Promise<FluidObject | undefined>;
+    getFluidObject(): Promise<FluidObject | undefined>;
 }
 
 interface IEmbeddedFluidObjectWrapperState {
@@ -32,7 +31,7 @@ export class EmbeddedFluidObjectWrapper
     }
 
     async componentDidMount() {
-        const fluidObject = await this.props.requestFluidObject(this.props.id);
+        const fluidObject = await this.props.getFluidObject();
         if (fluidObject) {
             const element = <ReactViewAdapter view={fluidObject} />;
             this.setState({ element });
