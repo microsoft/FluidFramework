@@ -186,7 +186,7 @@ export interface ILoaderProps {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeDetailsLoader; //  include BREAKING.md notes
+    readonly codeLoader: ICodeDetailsLoader;
 
     /**
      * A property bag of options used by various layers
@@ -242,7 +242,7 @@ export interface ILoaderServices {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeDetailsLoader; // include BREAKING.md notes
+    readonly codeLoader: ICodeDetailsLoader;
 
     /**
      * A property bag of options used by various layers

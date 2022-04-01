@@ -75,6 +75,8 @@ The `packageInfoSource` argument in `getAbsoluteUrl()` on `@fluidframework/odsp-
 ### Replace ICodeLoader with ICodeDetailsLoader interface
 The interface `ICodeLoader` was deprecated a while ago in previous releases. The alternative for `ICodeLoader` interface is     `ICodeDetailsLoader` interface which can be import from `@fluidframework/container-definitions`. `ICodeLoader` interface will be removed in the next release.
 
+`ILoaderService` and `ILoaderProps` are the two interface are are type to ICodeDetailsLoader only. Please make sure to change their implementation.
+
 ```ts
 export interface ICodeDetailsLoader
  extends Partial<IProvideFluidCodeDetailsComparer> {

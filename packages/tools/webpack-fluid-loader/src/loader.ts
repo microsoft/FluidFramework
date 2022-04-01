@@ -17,6 +17,7 @@ import {
     IFluidPackage,
     IFluidCodeDetails,
     IFluidModuleWithDetails,
+    IFluidModule,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
@@ -92,10 +93,10 @@ export type RouteOptions =
     | ITinyliciousRouteOptions
     | IOdspRouteOptions;
 
-function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModuleWithDetails):
-    IFluidModuleWithDetails {
+async function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule):
+    Promise<IFluidModuleWithDetails> {
     const fluidModuleExport: FluidObject<IProvideRuntimeFactory & IFluidDataStoreFactory> =
-        fluidModule.module.fluidExport; // fluidModule
+        fluidModule.fluidExport; // fluidModule
     if (fluidModuleExport.IRuntimeFactory === undefined) {
         const dataStoreFactory = fluidModuleExport.IFluidDataStoreFactory;
 
@@ -113,10 +114,14 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
                     IRuntimeFactory: runtimeFactory,
                 },
             },
-            details: fluidModule.details,
+            details: { package: packageJson.name, config: { } },
         };
     }
-    return fluidModule;
+
+    return {
+        module: fluidModule,
+        details: { package: packageJson.name, config: { } },
+    };
 }
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
@@ -165,7 +170,7 @@ class WebpackCodeResolver implements IFluidCodeResolver {
  */
 async function createWebLoader(
     documentId: string,
-    fluidModule: IFluidModuleWithDetails,
+    fluidModule: IFluidModule,
     options: RouteOptions,
     urlResolver: MultiUrlResolver,
     codeDetails: IFluidCodeDetails,
@@ -221,7 +226,7 @@ export function isSynchronized() {
 export async function start(
     id: string,
     packageJson: IFluidPackage,
-    fluidModule: IFluidModuleWithDetails,
+    fluidModule: IFluidModule,
     options: RouteOptions,
     div: HTMLDivElement,
 ): Promise<void> {
