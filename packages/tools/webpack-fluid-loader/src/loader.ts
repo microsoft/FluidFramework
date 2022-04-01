@@ -96,7 +96,7 @@ export type RouteOptions =
 async function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule):
     Promise<IFluidModuleWithDetails> {
     const fluidModuleExport: FluidObject<IProvideRuntimeFactory & IFluidDataStoreFactory> =
-        fluidModule.fluidExport; // fluidModule
+        fluidModule.fluidExport;
     if (fluidModuleExport.IRuntimeFactory === undefined) {
         const dataStoreFactory = fluidModuleExport.IFluidDataStoreFactory;
 
