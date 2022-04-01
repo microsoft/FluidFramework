@@ -196,6 +196,9 @@ export class DocumentStorage implements IDocumentStorage {
             isSessionAlive: true,
         };
 
+        winston.info(`Session: ${JSON.stringify(sessionP)}`, { messageMetaData });
+        Lumberjack.info(`Session: ${JSON.stringify(sessionP)}`, lumberjackProperties);
+
         const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
             {
