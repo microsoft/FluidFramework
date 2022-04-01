@@ -71,7 +71,7 @@ export interface IConnectionArgs {
         case MessageType.NoOp:
         case MessageType.Summarize:
         case MessageType.Operation:
-                return true;
+            return true;
         default:
             return false;
     }
@@ -794,7 +794,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         // Client ops: MSN has to be lower than sequence #, as client can continue to send ops with same
         // reference sequence number as this op.
-        // Sysmte ops (when no clients are connected) are the only ops where equation is possible.
+        // System ops (when no clients are connected) are the only ops where equation is possible.
         const diff = message.sequenceNumber - message.minimumSequenceNumber;
         if (diff < 0 || diff === 0 && message.clientId !== null) {
             throw new DataCorruptionError("MSN has to be lower than sequence #",

@@ -1615,6 +1615,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const outboundMessageType: string = type;
         switch (outboundMessageType) {
             case MessageType.Operation:
+                break;
             case MessageType.Summarize: {
                 // github #6451: this is only needed for staging so the server
                 // know when the protocol tree is included

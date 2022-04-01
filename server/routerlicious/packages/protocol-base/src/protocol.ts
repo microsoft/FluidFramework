@@ -36,7 +36,7 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
         case MessageType.NoOp:
         case MessageType.Summarize:
         case MessageType.Operation:
-                return true;
+            return true;
         default:
             return false;
     }
