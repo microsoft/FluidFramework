@@ -105,7 +105,7 @@ export const sessionNumericUuids = new Map(
 export interface ReadonlyIdCompressor
 	extends Omit<
 		IdCompressor,
-		'generateCompressedId' | 'generateCompressedIdRange' | 'takeNextCreationRange' | 'finalizeRange'
+		'generateCompressedId' | 'generateCompressedIdRange' | 'takeNextCreationRange' | 'finalizeCreationRange'
 	> {
 	readonly clusterCapacity: number;
 }
@@ -297,7 +297,7 @@ export class IdCompressorTestNetwork {
 					compressorTo.clusterCapacity = operation;
 				} else {
 					const [range, clientFrom] = operation;
-					compressorTo.finalizeRange(range);
+					compressorTo.finalizeCreationRange(range);
 
 					const ids = IdCreationRange.getIds(range);
 					if (ids !== undefined) {

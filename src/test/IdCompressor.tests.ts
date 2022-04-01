@@ -166,7 +166,7 @@ describe('IdCompressor', () => {
 			compressor2.clusterCapacity = 5;
 
 			compressor2.generateCompressedId(); // one ID, enough to make a cluster
-			compressor1.finalizeRange(compressor2.takeNextCreationRange());
+			compressor1.finalizeCreationRange(compressor2.takeNextCreationRange());
 
 			const localId = compressor1.generateCompressedId();
 			const stableId2 = assertIsStableId(compressor1.decompress(localId));
@@ -177,7 +177,7 @@ describe('IdCompressor', () => {
 		it('unifies overrides with sequential local IDs that have been finalized', () => {
 			const compressor = createCompressor(Client.Client1);
 			const id = compressor.generateCompressedId();
-			compressor.finalizeRange(compressor.takeNextCreationRange());
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			const stableId = assertIsStableId(compressor.decompress(id));
 			const localId2 = compressor.generateCompressedId(stableId);
 			expect(localId2).to.equal(id, 'only one local ID should be allocated for the same sequential uuid');
@@ -193,6 +193,32 @@ describe('IdCompressor', () => {
 			expect(() =>
 				createCompressor(Client.Client1).generateCompressedIdRange(Number.MAX_SAFE_INTEGER + 2)
 			).to.throw('The number of allocated local IDs must not exceed the JS maximum safe integer.');
+		});
+	});
+
+	describe('can enumerate all locally created IDs', () => {
+		const idCount = 10;
+		it('created without finalization', () => {
+			const compressor = createCompressor(Client.Client1);
+			const ids: SessionSpaceCompressedId[] = [];
+			for (let i = 0; i < idCount; i++) {
+				ids.push(compressor.generateCompressedId());
+			}
+			const returnedIds = [...compressor.getAllIdsFromLocalSession()];
+			expect(returnedIds).to.deep.equal(ids);
+		});
+
+		it('created without finalization', () => {
+			const compressor = createCompressor(Client.Client1, 10);
+			const ids: SessionSpaceCompressedId[] = [];
+			for (let i = 0; i < idCount; i++) {
+				if (i === Math.floor(idCount / 2)) {
+					compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+				}
+				ids.push(compressor.generateCompressedId());
+			}
+			const returnedIds = [...compressor.getAllIdsFromLocalSession()];
+			expect(returnedIds).to.deep.equal(ids);
 		});
 	});
 
@@ -295,8 +321,8 @@ describe('IdCompressor', () => {
 			const range1 = compressor.takeNextCreationRange();
 			const id2 = compressor.generateCompressedId(override2);
 			const range2 = compressor.takeNextCreationRange();
-			compressor.finalizeRange(range1);
-			compressor.finalizeRange(range2);
+			compressor.finalizeCreationRange(range1);
+			compressor.finalizeCreationRange(range2);
 			const finalId1 = compressor.normalizeToOpSpace(id1);
 			const finalId2 = compressor.normalizeToOpSpace(id2);
 			expect(isFinalId(finalId1)).to.be.true;
@@ -309,16 +335,18 @@ describe('IdCompressor', () => {
 			const rangeCompressor = createCompressor(Client.Client1);
 			rangeCompressor.generateCompressedIdRange(3);
 			const batchRange = rangeCompressor.takeNextCreationRange();
-			rangeCompressor.finalizeRange(batchRange);
-			expect(() => rangeCompressor.finalizeRange(batchRange)).to.throw('Ranges finalized out of order.');
+			rangeCompressor.finalizeCreationRange(batchRange);
+			expect(() => rangeCompressor.finalizeCreationRange(batchRange)).to.throw('Ranges finalized out of order.');
 
 			// Make a new compressor, as the first one will be left in a bad state
 			const explicitCompressor = createCompressor(Client.Client1);
 			explicitCompressor.generateCompressedId();
 			explicitCompressor.generateCompressedId('override');
 			const explicitRange = explicitCompressor.takeNextCreationRange();
-			explicitCompressor.finalizeRange(explicitRange);
-			expect(() => explicitCompressor.finalizeRange(explicitRange)).to.throw('Ranges finalized out of order.');
+			explicitCompressor.finalizeCreationRange(explicitRange);
+			expect(() => explicitCompressor.finalizeCreationRange(explicitRange)).to.throw(
+				'Ranges finalized out of order.'
+			);
 		});
 
 		it('prevents attempts to finalize ranges out of order', () => {
@@ -327,7 +355,7 @@ describe('IdCompressor', () => {
 			compressor.takeNextCreationRange();
 			compressor.generateCompressedId();
 			const secondRange = compressor.takeNextCreationRange();
-			expect(() => compressor.finalizeRange(secondRange)).to.throw('Ranges finalized out of order.');
+			expect(() => compressor.finalizeCreationRange(secondRange)).to.throw('Ranges finalized out of order.');
 		});
 
 		it('prevents finalizing unacceptably enormous amounts of ID allocation', () => {
@@ -338,8 +366,8 @@ describe('IdCompressor', () => {
 			compressor2.generateCompressedIdRange(integerLargerThanHalfMax);
 			const range1 = compressor1.takeNextCreationRange();
 			const range2 = compressor2.takeNextCreationRange();
-			compressor1.finalizeRange(range1);
-			expect(() => compressor1.finalizeRange(range2)).to.throw(
+			compressor1.finalizeCreationRange(range1);
+			expect(() => compressor1.finalizeCreationRange(range2)).to.throw(
 				'The number of allocated final IDs must not exceed the JS maximum safe integer.'
 			);
 		});
@@ -351,7 +379,7 @@ describe('IdCompressor', () => {
 			const id = compressor.generateCompressedId();
 			const uuid = compressor.decompress(id);
 			expect(compressor.recompress(uuid)).to.equal(id);
-			compressor.finalizeRange(compressor.takeNextCreationRange());
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			expect(compressor.recompress(uuid)).to.equal(id);
 		});
 
@@ -360,7 +388,7 @@ describe('IdCompressor', () => {
 			const override = 'override';
 			const id = compressor.generateCompressedId(override);
 			expect(compressor.recompress(override)).to.equal(id);
-			compressor.finalizeRange(compressor.takeNextCreationRange());
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			expect(compressor.recompress(override)).to.equal(id);
 		});
 
@@ -372,7 +400,7 @@ describe('IdCompressor', () => {
 			const uuid = compressor.decompress(id);
 
 			const compressor2 = createCompressor(Client.Client2);
-			compressor2.finalizeRange(compressor.takeNextCreationRange());
+			compressor2.finalizeCreationRange(compressor.takeNextCreationRange());
 			const finalId1 = compressor2.recompress(uuid);
 			const finalId2 = compressor2.recompress(override);
 			if (finalId1 === undefined || finalId2 === undefined) {
@@ -391,7 +419,7 @@ describe('IdCompressor', () => {
 				.undefined;
 			compressor.generateCompressedId(override);
 			compressor.generateCompressedIdRange(2);
-			compressor.finalizeRange(compressor.takeNextCreationRange());
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			expect(compressor.tryRecompress(stableIdFromNumericUuid(sessionNumericUuids.get(Client.Client1), 4))).to.be
 				.undefined;
 		});
@@ -403,7 +431,7 @@ describe('IdCompressor', () => {
 			const id = compressor.generateCompressedId();
 			const uuid = compressor.decompress(id);
 			expect(isStableId(uuid)).to.be.true;
-			compressor.finalizeRange(compressor.takeNextCreationRange());
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			expect(compressor.decompress(id)).to.equal(uuid);
 		});
 
@@ -430,7 +458,7 @@ describe('IdCompressor', () => {
 		it('can decompress a final ID', () => {
 			const compressor = createCompressor(Client.Client1);
 			const range = compressor.generateCompressedIdRange(1);
-			compressor.finalizeRange(compressor.takeNextCreationRange());
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			const finalId = compressor.normalizeToOpSpace(
 				compressor.getIdsFromRange(range, compressor.localSessionId).get(0)
 			);
@@ -446,7 +474,7 @@ describe('IdCompressor', () => {
 			const override = 'override';
 			const id = compressor.generateCompressedId(override);
 			const range = compressor.takeNextCreationRange();
-			compressor.finalizeRange(range);
+			compressor.finalizeCreationRange(range);
 			const finalId = compressor.normalizeToOpSpace(id);
 			if (isLocalId(finalId)) {
 				expect.fail('Op space ID was finalized but is local');
@@ -493,7 +521,7 @@ describe('IdCompressor', () => {
 		it('can normalize a local ID to op space after finalizing', () => {
 			const compressor = createCompressor(Client.Client1);
 			const id = compressor.generateCompressedId();
-			compressor.finalizeRange(compressor.takeNextCreationRange());
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			const normalized = compressor.normalizeToOpSpace(id);
 			expect(isFinalId(normalized)).to.be.true;
 			expect(id).to.not.equal(normalized);
@@ -514,9 +542,9 @@ describe('IdCompressor', () => {
 			const id = compressor1.generateCompressedId();
 			const normalizedLocal = compressor1.normalizeToOpSpace(id);
 			const range = compressor1.takeNextCreationRange();
-			compressor1.finalizeRange(range);
+			compressor1.finalizeCreationRange(range);
 			const normalizedFinal = compressor1.normalizeToOpSpace(id);
-			compressor2.finalizeRange(range);
+			compressor2.finalizeCreationRange(range);
 			expect(isLocalId(normalizedLocal)).to.be.true;
 			expect(isFinalId(normalizedFinal)).to.be.true;
 			expect(compressor2.normalizeToSessionSpace(normalizedFinal, compressor1.localSessionId)).to.equal(
@@ -541,14 +569,14 @@ describe('IdCompressor', () => {
 			const compressor2 = createCompressor(Client.Client2, undefined, Client.Client2);
 			compressor1.generateCompressedId();
 			const creationRange = compressor1.takeNextCreationRange();
-			compressor1.finalizeRange(creationRange);
-			compressor2.finalizeRange(creationRange);
+			compressor1.finalizeCreationRange(creationRange);
+			compressor2.finalizeCreationRange(creationRange);
 			const [_, serializedWithSession] = expectSerializes(compressor1);
 			const compressorResumed = IdCompressor.deserialize(serializedWithSession);
 			compressorResumed.generateCompressedId();
 			const range2 = compressorResumed.takeNextCreationRange();
-			compressor1.finalizeRange(range2);
-			compressor2.finalizeRange(range2);
+			compressor1.finalizeCreationRange(range2);
+			compressor2.finalizeCreationRange(range2);
 			expect(
 				IdCompressor.deserialize(compressor1.serialize(false), createSessionId()).equals(
 					IdCompressor.deserialize(compressor2.serialize(false), createSessionId()),

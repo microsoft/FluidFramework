@@ -106,7 +106,7 @@ describe('IdCompressor Perf', () => {
 			sessionId = originCompressor.localSessionId;
 			range = originCompressor.generateCompressedIdRange(numIds);
 			const creationRange = originCompressor.takeNextCreationRange();
-			compressor.finalizeRange(creationRange);
+			compressor.finalizeCreationRange(creationRange);
 		};
 		const beforeLocal = () => setupRange(false);
 		const beforeRemote = () => setupRange(true);
@@ -185,7 +185,7 @@ describe('IdCompressor Perf', () => {
 						},
 					};
 
-					compressor.finalizeRange(range);
+					compressor.finalizeCreationRange(range);
 
 					if (isLocal) {
 						lastFinalizedLocalId1 = last;

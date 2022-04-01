@@ -400,7 +400,7 @@ export class IdCompressor {
 				},
 			};
 			// Reserved final IDs are implicitly finalized and no one locally created them, so finalizing immediately is safe.
-			this.finalizeRange(reservedIdRange);
+			this.finalizeCreationRange(reservedIdRange);
 		}
 	}
 
@@ -443,6 +443,16 @@ export class IdCompressor {
 		// All reserved IDs are contiguous and finalized during the Compressor's construction, therefore they are always the lowest
 		// final IDs, beginning at 0
 		return index as SessionSpaceCompressedId & FinalCompressedId;
+	}
+
+	/**
+	 * Returns an iterable of all IDs created by this compressor.
+	 */
+	public *getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId> {
+		// TODO: this will change when final IDs are returned eagerly
+		for (let i = 1; i <= this.localIdCount; i++) {
+			yield -i as LocalCompressedId;
+		}
 	}
 
 	/**
@@ -589,7 +599,7 @@ export class IdCompressor {
 	 * Finalizes the supplied range of IDs (which may be from either a remote or local session).
 	 * @param range the range of session-local IDs to finalize.
 	 */
-	public finalizeRange(range: IdCreationRange): void {
+	public finalizeCreationRange(range: IdCreationRange): void {
 		const { sessionId, attributionInfo } = range;
 
 		const isLocal = sessionId === this.localSessionId;
