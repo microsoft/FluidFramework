@@ -476,6 +476,11 @@ declare module "@fluidframework/core-interfaces" {
     }
 }
 
+/**
+ * @deprecated 0.48, This API will be removed in 0.50
+ * No replacement since it is not expected anyone will depend on this outside container-loader
+ * See https://github.com/microsoft/FluidFramework/issues/9711 for context
+ */
 export interface IPendingLocalState {
     url: string;
     pendingRuntimeState: unknown;
