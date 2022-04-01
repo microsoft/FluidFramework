@@ -250,6 +250,8 @@ export interface IAckSummaryResult {
 // @public
 export interface IBaseSummarizeResult {
     readonly error: any;
+    // (undocumented)
+    readonly minimumSequenceNumber: number;
     readonly referenceSequenceNumber: number;
     // (undocumented)
     readonly stage: "base";

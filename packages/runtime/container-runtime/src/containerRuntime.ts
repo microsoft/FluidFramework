@@ -395,6 +395,7 @@ class ScheduleManagerCore {
     private currentBatchClientId: string | undefined;
     private localPaused = false;
     private timePaused = 0;
+    private batchCount = 0;
 
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -483,14 +484,30 @@ class ScheduleManagerCore {
         this.deltaManager.inbound.pause();
     }
 
-    private resumeQueue(startBatch: number, endBatch: number) {
+    private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage) {
+        const endBatch = messageEndBatch.sequenceNumber;
+        const duration = performance.now() - this.timePaused;
+
+        this.batchCount++;
+        if (this.batchCount % 1000 === 1) {
+            this.logger.sendTelemetryEvent({
+                eventName: "BatchStats",
+                sequenceNumber: endBatch,
+                length: endBatch - startBatch + 1,
+                msnDistance: endBatch - messageEndBatch.minimumSequenceNumber,
+                duration,
+                batchCount: this.batchCount,
+                interrupted: this.localPaused,
+            });
+        }
+
         // Return early if no change in value
         if (!this.localPaused) {
             return;
         }
 
         this.localPaused = false;
-        const duration = performance.now() - this.timePaused;
+
         // Random round number - we want to know when batch waiting paused op processing.
         if (duration > latencyThreshold) {
             this.logger.sendErrorEvent({
@@ -565,7 +582,7 @@ class ScheduleManagerCore {
         } else if (batchMetadata === false) {
             assert(this.pauseSequenceNumber !== undefined, 0x2a0 /* "batch presence was validated above" */);
             // Batch is complete, we can process it!
-            this.resumeQueue(this.pauseSequenceNumber, message.sequenceNumber);
+            this.resumeQueue(this.pauseSequenceNumber, message);
             this.pauseSequenceNumber = undefined;
             this.currentBatchClientId = undefined;
         } else {
@@ -2146,6 +2163,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             await this.deltaManager.inbound.pause();
 
             const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
+            const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
             const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
             // We should be here is we haven't processed be here. If we are of if the last message's sequence number
@@ -2190,7 +2208,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error: continueResult.error };
+                return {
+                    stage: "base",
+                    referenceSequenceNumber: summaryRefSeqNum,
+                    minimumSequenceNumber,
+                    error: continueResult.error,
+                };
             }
 
             // increment summary count
@@ -2213,7 +2236,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     runGC: this.garbageCollector.shouldRunGC,
                 });
             } catch (error) {
-                return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
+                return {
+                    stage: "base",
+                    referenceSequenceNumber: summaryRefSeqNum,
+                    minimumSequenceNumber,
+                    error,
+                };
             }
             const { summary: summaryTree, stats: partialStats } = summarizeResult;
 
@@ -2242,6 +2270,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             };
             const generateSummaryData = {
                 referenceSequenceNumber: summaryRefSeqNum,
+                minimumSequenceNumber,
                 summaryTree,
                 summaryStats,
                 generateDuration: trace.trace().duration,
