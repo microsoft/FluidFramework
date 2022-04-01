@@ -9,10 +9,16 @@ import {
     SummaryObject,
 } from "@fluidframework/protocol-definitions";
 
+/**
+ * Summary tree assembler without stats collection.
+ */
 export class SummaryTreeAssembler {
     private attachmentCounter: number = 0;
     private readonly summaryTree: { [path: string]: SummaryObject } = {};
 
+    /**
+    * Get final summary
+    */
     public get summary(): ISummaryTree {
         return {
             type: SummaryType.Tree,
@@ -20,6 +26,9 @@ export class SummaryTreeAssembler {
         };
     }
 
+    /**
+    * Add blob to summary
+    */
     public addBlob(key: string, content: string | Uint8Array): void {
         this.summaryTree.tree[key] = {
             type: SummaryType.Blob,
@@ -27,6 +36,9 @@ export class SummaryTreeAssembler {
         };
     }
 
+    /**
+    * Add handle to summary
+    */
     public addHandle(
         key: string,
         handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
@@ -39,10 +51,16 @@ export class SummaryTreeAssembler {
         };
     }
 
+    /**
+    * Add tree to summary
+    */
     public addTree(key: string, summary: ISummaryTree): void {
         this.summaryTree[key] = summary;
     }
 
+    /**
+    * Add attachment to summary
+    */
     public addAttachment(id: string) {
         this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
     }

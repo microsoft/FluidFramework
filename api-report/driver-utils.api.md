@@ -37,6 +37,7 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
+import { SummaryType } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
 export class AuthorizationError extends LoggingError implements IAuthorizationError, IFluidErrorBase {
@@ -372,6 +373,15 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 
 // @public (undocumented)
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
+
+// @public
+export class SummaryTreeAssembler {
+    addAttachment(id: string): void;
+    addBlob(key: string, content: string | Uint8Array): void;
+    addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
+    addTree(key: string, summary: ISummaryTree): void;
+    get summary(): ISummaryTree;
+    }
 
 // @public
 export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
