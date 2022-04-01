@@ -7,25 +7,6 @@
 					{
 						"changes": [
 							{
-								"source": {
-									"start": {
-										"side": 1,
-										"referenceTrait": {
-											"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
-											"label": "root"
-										}
-									},
-									"end": {
-										"side": 0,
-										"referenceTrait": {
-											"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
-											"label": "root"
-										}
-									}
-								},
-								"type": 1
-							},
-							{
 								"destination": 0,
 								"source": [
 									[

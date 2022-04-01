@@ -852,6 +852,17 @@ export function runSharedTreeOperationsTests(
 				expect(await sharedTree.edits.tryGetEdit(id)).to.be.undefined;
 			});
 
+			it('correctly handles payloads at the root', () => {
+				const payload = 'foo';
+				const { tree, containerRuntimeFactory } = setUpTestSharedTree({ summarizeHistory: false });
+				tree.applyEdit(Change.setPayload(initialTree.identifier, payload));
+				containerRuntimeFactory.processAllMessages();
+				const summary = tree.saveSummary();
+				const { tree: tree2 } = setUpTestSharedTree({ summarizeHistory: false });
+				tree2.loadSummary(summary);
+				expect(tree2.currentView.tryGetViewNode(tree2.currentView.root)?.payload).to.equal(payload);
+			});
+
 			// TODO:#49901: Enable these tests once we write edit chunk handles to summaries
 			it.skip('does not swallow errors in asynchronous blob uploading', async () => {
 				const errorMessage = 'Simulated exception in uploadBlob';

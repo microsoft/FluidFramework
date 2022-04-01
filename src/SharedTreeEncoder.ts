@@ -8,7 +8,7 @@ import { assert, fail } from './Common';
 import { ChangeCompressor } from './Compression';
 import { compressEdit, decompressEdit, makeChangeCompressor } from './ChangeCompression';
 import { EditLog } from './EditLog';
-import { newEdit, setTraitInternal } from './EditUtilities';
+import { newEdit } from './EditUtilities';
 import { DetachedSequenceId, EditId, TraitLabel } from './Identifiers';
 import { initialTree } from './InitialTree';
 import { NodeIdConverter } from './NodeIdUtilities';
@@ -196,9 +196,20 @@ class SharedTreeEncoder_0_1_1 implements SharedTreeEncoder<ChangeInternal> {
 		const changes: ChangeInternal[] = [];
 		// Generate a set of changes to set the root node's children to that of the root in the currentTree
 		Object.entries(currentTree.traits).forEach(([label, children]) => {
-			changes.push(...setTraitInternal({ parent: rootId, label: label as TraitLabel }, children));
+			const id = 0 as DetachedSequenceId;
+			changes.push(
+				ChangeInternal.build(children, id),
+				ChangeInternal.insert(
+					id,
+					StablePlaceInternal_0_0_2.atStartOf({ parent: rootId, label: label as TraitLabel })
+				)
+			);
 		});
-		assert(currentTree.payload === undefined, 'setValue not yet supported.');
+
+		if (currentTree.payload !== undefined) {
+			changes.push(ChangeInternal.setPayload(rootId, currentTree.payload));
+		}
+
 		assert(
 			currentTree.identifier === initialTree.identifier && currentTree.definition === initialTree.definition,
 			'root definition and identifier should be immutable.'
@@ -348,7 +359,11 @@ class SharedTreeEncoder_0_0_2 implements SharedTreeEncoder<ChangeInternal> {
 				)
 			);
 		});
-		assert(currentTree.payload === undefined, 'setValue not yet supported.');
+
+		if (currentTree.payload !== undefined) {
+			changes.push(ChangeInternal.setPayload(rootId, currentTree.payload));
+		}
+
 		assert(
 			currentTree.identifier === initialTree.identifier && currentTree.definition === initialTree.definition,
 			'root definition and identifier should be immutable.'
