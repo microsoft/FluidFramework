@@ -334,7 +334,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             this.lastInstruction = ticketedMessage.instruction;
 
             switch (ticketedMessage.ticketType) {
-                case TicketType.Sequenced:
+                case TicketType.Sequenced: {
                     // Check for idle write clients.
                     this.checkIdleWriteClients(ticketedMessage);
 
@@ -423,15 +423,22 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     }
 
                     break;
+                }
 
-                case TicketType.Nack:
+                case TicketType.Nack: {
                     this.produceMessage(this.deltasProducer, ticketedMessage.message);
                     break;
+                }
 
-                case TicketType.Signal:
+                case TicketType.Signal: {
                     if (this.signalsProducer) {
                         this.produceMessage(this.signalsProducer, ticketedMessage.message);
                     }
+                    break;
+                }
+
+                default:
+                    // ignore unknown types
                     break;
             }
         }
@@ -574,7 +581,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         // Update and retrieve the minimum sequence number
         const message = rawMessage as IRawOperationMessage;
-        let dataContent = this.extractDataContent(message);
+        const dataContent = this.extractDataContent(message);
 
         // Check if we should nack this message
         if (this.nackMessages.size > 0 && this.serviceConfiguration.deli.enableNackMessages) {
@@ -656,7 +663,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         ...clientJoinMessage.detail,
                         lastKeepAlive: Date.now(),
                     });
-
                 } else {
                     const isNewClient = this.clientSeqManager.upsertClient(
                         clientJoinMessage.clientId,

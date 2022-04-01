@@ -70,44 +70,48 @@ export class BroadcasterLambda implements IPartitionLambda {
                 case SequencedOperationType: {
                     event = "op";
 
-                    const value = baseMessage as ISequencedOperationMessage;
-                    topic = `${value.tenantId}/${value.documentId}`;
+                    const sequencedOperationMessage = baseMessage as ISequencedOperationMessage;
+                    topic = `${sequencedOperationMessage.tenantId}/${sequencedOperationMessage.documentId}`;
                     break;
                 }
 
                 case NackOperationType: {
                     event = "nack";
 
-                    const value = baseMessage as INackMessage;
-                    topic = `client#${value.clientId}`;
+                    const nackMessage = baseMessage as INackMessage;
+                    topic = `client#${nackMessage.clientId}`;
                     break;
                 }
 
                 case SignalOperationType: {
                     event = "signal";
 
-                    const value = baseMessage as ITicketedSignalMessage;
-                    topic = `${value.tenantId}/${value.documentId}`;
+                    const ticketedSignalMessage = baseMessage as ITicketedSignalMessage;
+                    topic = `${ticketedSignalMessage.tenantId}/${ticketedSignalMessage.documentId}`;
 
-                    if (this.clientManager && value.operation) {
-                        const signalContent = JSON.parse(value.operation.content);
+                    if (this.clientManager && ticketedSignalMessage.operation) {
+                        const signalContent = JSON.parse(ticketedSignalMessage.operation.content);
                         const signalType: MessageType | undefined =
                             typeof (signalContent.type) === "number" ? signalContent.type : undefined;
                         switch (signalType) {
                             case MessageType.ClientJoin:
                                 const signalClient: ISignalClient = signalContent.content;
                                 await this.clientManager.addClient(
-                                    value.tenantId,
-                                    value.documentId,
+                                    ticketedSignalMessage.tenantId,
+                                    ticketedSignalMessage.documentId,
                                     signalClient.clientId,
                                     signalClient.client);
                                 break;
 
                             case MessageType.ClientLeave:
                                 await this.clientManager.removeClient(
-                                    value.tenantId,
-                                    value.documentId,
+                                    ticketedSignalMessage.tenantId,
+                                    ticketedSignalMessage.documentId,
                                     signalContent.content);
+                                break;
+
+                            default:
+                                // ignore unknown types
                                 break;
                         }
                     }
