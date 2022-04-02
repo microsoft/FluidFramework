@@ -169,23 +169,26 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             const handler = async () => {
                 if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)) {
                     const result = await this.collection.findOne({ documentId });
-                    const sessionP = result?.session;
-                    if (sessionP !== undefined) {
-                        sessionP.isSessionAlive = false;
+                    const session = result?.session;
+                    if (session !== undefined) {
+                        session.isSessionAlive = false;
                         await this.collection.update(
                             {
                                 documentId,
                             },
                             {
-                                session: sessionP,
+                                session,
                             },
-                            {});
+                            { strict: false });
                         context.log?.info(`Marked isSessionAlive as false for closeType: ${JSON.stringify(closeType)}`
-                        , { messageMetaData });
+                            , { messageMetaData });
                     }
                 }
             };
-            void handler();
+            handler().catch((e) => {
+                context.log?.error(`Failed to handle isSessionAlive with exception ${e}`
+                    , { messageMetaData });
+            });
         });
 
         return deliLambda;

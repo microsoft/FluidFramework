@@ -68,7 +68,7 @@ export async function getSession(documentId: string,
 
     tempSession.isSessionAlive = isSessionAlive;
     const documentSession: IDocumentSession = {
-        documentId,
+        id: documentId,
         hasSessionLocationChanged,
         session: tempSession,
     };

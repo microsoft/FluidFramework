@@ -190,14 +190,14 @@ export class DocumentStorage implements IDocumentStorage {
             lastSummarySequenceNumber: 0,
         };
 
-        const sessionP: ISession = {
+        const session: ISession = {
             ordererUrl,
             historianUrl,
             isSessionAlive: true,
         };
 
-        winston.info(`Session: ${JSON.stringify(sessionP)}`, { messageMetaData });
-        Lumberjack.info(`Session: ${JSON.stringify(sessionP)}`, lumberjackProperties);
+        winston.info(`Session: ${JSON.stringify(session)}`, { messageMetaData });
+        Lumberjack.info(`Session: ${JSON.stringify(session)}`, lumberjackProperties);
 
         const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
@@ -209,7 +209,7 @@ export class DocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
-                session: sessionP,
+                session,
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",

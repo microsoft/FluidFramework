@@ -89,7 +89,7 @@ export function create(
             const ordererUrl = config.get("worker:serverUrl");
             const historianUrl = config.get("worker:blobStorageUrl");
             const documentSession: IDocumentSession = {
-                documentId: id,
+                id,
                 hasSessionLocationChanged: false,
                 session:
                 {
@@ -114,7 +114,7 @@ export function create(
                 historianUrl,
                 values);
 
-            const enableDiscovery = !request.body.enableDiscovery ? false : request.body.enableDiscover as boolean;
+            const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
             if (enableDiscovery) {
                 handleResponse(createP.then(() => documentSession), response, undefined, 201);
             } else {
@@ -134,8 +134,8 @@ export function create(
             const tenantId = getParam(request.params, "tenantId");
             const ordererUrl = config.get("worker:serverUrl");
             const historianUrl = config.get("worker:blobStorageUrl");
-            const documentSessionP = getSession(documentId, ordererUrl, historianUrl, tenantId, documentsCollection);
-            handleResponse(documentSessionP, response, undefined, 201);
+            const documentSession = getSession(documentId, ordererUrl, historianUrl, tenantId, documentsCollection);
+            handleResponse(documentSession, response, undefined, 201);
         });
     return router;
 }

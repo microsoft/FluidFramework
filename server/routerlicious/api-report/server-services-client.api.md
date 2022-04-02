@@ -195,9 +195,9 @@ export interface ICredentials {
 // @public (undocumented)
 export interface IDocumentSession {
     // (undocumented)
-    documentId: string;
-    // (undocumented)
     hasSessionLocationChanged: boolean;
+    // (undocumented)
+    id: string;
     // (undocumented)
     session: ISession;
 }

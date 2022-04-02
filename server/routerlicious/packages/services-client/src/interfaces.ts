@@ -9,7 +9,7 @@ export interface IAlfredTenant {
 }
 
 export interface IDocumentSession {
-    documentId: string;
+    id: string;
 
     hasSessionLocationChanged: boolean;
 
