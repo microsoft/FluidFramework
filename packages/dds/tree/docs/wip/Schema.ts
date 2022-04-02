@@ -152,12 +152,15 @@ export interface SchemaRepository {
     /**
      * All fields with the specified GlobalFieldKey must comply with the returned schema.
      */
-    lookupGLobalFieldSchema(key: GlobalFieldKey): FieldSchema;
+    lookupGlobalFieldSchema(key: GlobalFieldKey): FieldSchema;
 
     /**
      * All trees with the specified identifier must comply with the returned schema.
      */
-    lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema | undefined;
+    lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema;
+
+    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
 export const emptySet: ReadonlySet<never> = new Set();
@@ -242,7 +245,15 @@ export class StoredSchemaRepository implements SchemaRepository {
     private readonly fields: Map<GlobalFieldKey, FieldSchema> = new Map();
     private readonly trees: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 
-    public lookupGLobalFieldSchema(identifier: GlobalFieldKey): FieldSchema {
+    public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema> {
+        return this.fields;
+    }
+
+    public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema> {
+        return this.trees;
+    }
+
+    public lookupGlobalFieldSchema(identifier: GlobalFieldKey): FieldSchema {
         return this.fields.get(identifier) ?? neverField;
     }
 
@@ -261,7 +272,7 @@ export class StoredSchemaRepository implements SchemaRepository {
         if (
             allowsFieldSuperset(
                 this,
-                this.lookupGLobalFieldSchema(identifier),
+                this.lookupGlobalFieldSchema(identifier),
                 schema
             )
         ) {
@@ -325,7 +336,7 @@ export function allowsTreeSuperset(
                 superset.extraGlobalFields ||
                 allowsFieldSuperset(
                     repo,
-                    repo.lookupGLobalFieldSchema(originalField),
+                    repo.lookupGlobalFieldSchema(originalField),
                     emptyField
                 ),
             // true iff the new field can be empty, since it may be empty in original
@@ -333,7 +344,7 @@ export function allowsTreeSuperset(
                 allowsFieldSuperset(
                     repo,
                     emptyField,
-                    repo.lookupGLobalFieldSchema(supersetField)
+                    repo.lookupGlobalFieldSchema(supersetField)
                 )
         )
     ) {
@@ -382,11 +393,11 @@ export function allowsValueSuperset(
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
 export function allowsFieldSuperset(
-    repo: SchemaRepository,
+    originalRepo: SchemaRepository,
     original: FieldSchema,
     superset: FieldSchema
 ): boolean {
-    if (isNeverField(repo, original)) {
+    if (isNeverField(originalRepo, original)) {
         return true;
     }
     if (
@@ -408,6 +419,45 @@ export function allowsFieldSuperset(
     }
     for (const originalType of original.types) {
         if (!superset.types.has(originalType)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * @returns true iff `superset` is a superset of `original`.
+ *
+ * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ *
+ * A version of this that assumes a specific root field could be slightly more permissive in some simple cases,
+ * however if any extra fields and fields with unconstrained types are reachable, it would have to compare everything anyway.
+ */
+export function allowsRepoSuperset(
+    original: SchemaRepository,
+    superset: SchemaRepository
+): boolean {
+    for (const [key, schema] of original.globalFieldSchema) {
+        // TODO: I think its ok to use the field from superset here, but I should confirm it is, and document why.
+        if (
+            !allowsFieldSuperset(
+                original,
+                schema,
+                superset.lookupGlobalFieldSchema(key)
+            )
+        ) {
+            return false;
+        }
+    }
+    for (const [key, schema] of original.treeSchema) {
+        // TODO: I think its ok to use the tree from superset here, but I should confirm it is, and document why.
+        if (
+            !allowsTreeSuperset(
+                original,
+                schema,
+                superset.lookupTreeSchema(key)
+            )
+        ) {
             return false;
         }
     }
@@ -488,10 +538,50 @@ export function isNeverTree(repo: SchemaRepository, tree: TreeSchema): boolean {
         }
     }
     for (const field of tree.globalFields) {
-        if (isNeverField(repo, repo.lookupGLobalFieldSchema(field))) {
+        if (isNeverField(repo, repo.lookupGlobalFieldSchema(field))) {
             return true;
         }
     }
 
     return false;
+}
+
+export enum Compatibility {
+    Compatible,
+    RequiresAdapters,
+    Incompatible,
+}
+
+export type Adapters = {}; // TODO
+
+/**
+ * Determines the compatibility of a stored document (based on its stored schema) with a viewer (based on its view schema).
+ *
+ * Adapters can be provided to handle differences between the two schema.
+ *
+ * TODO: this API violates the parse don't validate design philosophy. It should be wrapped with (or replaced by) a parse style API.
+ */
+export function checkCompatibility(
+    stored: SchemaRepository,
+    view: SchemaRepository,
+    adapters: Adapters
+): {
+    read: Compatibility;
+    write: Compatibility;
+    writeAllowingStoredSchemaUpdates: Compatibility;
+} {
+    // TODO: use adapters
+    const read = allowsRepoSuperset(stored, view)
+        ? Compatibility.Compatible
+        : Compatibility.Incompatible;
+    const write = allowsRepoSuperset(view, stored)
+        ? Compatibility.Compatible
+        : Compatibility.Incompatible;
+
+    // TODO: compute this (and maybe include the set of schema changes needed for it?).
+    // Maybe updates would happen lazily when needed to store data?
+    // When willingness to updates can avoid need for some adapters, how should it be decided if the adapter should be used to avoid the update?
+    const writeAllowingStoredSchemaUpdates = write;
+
+    return { read, write, writeAllowingStoredSchemaUpdates };
 }
