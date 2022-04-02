@@ -92,8 +92,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             resolvedUrl.endpoints.ordererUrl,
         );
 
-        const { documentPostCreateCallback } = this.tokenProvider;
-
         // the backend responds with the actual document ID associated with the new container.
 
         // @TODO: Remove returned "string" type when removing back-compat code
@@ -103,7 +101,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 summary: convertSummaryToCreateNewSummary(appSummary),
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
-                generateToken: documentPostCreateCallback !== undefined,
+                generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
             },
         );
 
@@ -123,8 +121,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
         // is sufficient to determine if the token will be undefined or not.
-        if (token && documentPostCreateCallback !== undefined) {
-            await documentPostCreateCallback(documentId, token);
+        if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
+            await this.tokenProvider.documentPostCreateCallback (documentId, token);
         }
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
