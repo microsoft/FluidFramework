@@ -35,6 +35,11 @@ export class AzureClient {
         container: IFluidContainer;
         services: AzureContainerServices;
     }>;
+    getContainerVersions(id: string, maxCount: number): Promise<AzureContainerVersion[]>;
+    reCreateContainer(id: string, version: string, containerSchema: ContainerSchema): Promise<{
+        container: IFluidContainer;
+        services: AzureContainerServices;
+    }>;
     }
 
 // @public
@@ -54,6 +59,14 @@ export interface AzureConnectionConfig {
 // @public
 export interface AzureContainerServices {
     audience: IAzureAudience;
+}
+
+// @public (undocumented)
+export interface AzureContainerVersion {
+    // (undocumented)
+    date?: string;
+    // (undocumented)
+    id: string;
 }
 
 // @public

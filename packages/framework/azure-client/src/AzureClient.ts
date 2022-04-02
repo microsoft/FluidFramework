@@ -19,7 +19,16 @@ import {
     RootDataObject,
 } from "@fluidframework/fluid-static";
 
-import { AzureClientProps, AzureContainerServices } from "./interfaces";
+import {
+    SummaryType,
+} from "@fluidframework/protocol-definitions";
+
+import {
+    AzureClientProps,
+    AzureConnectionConfig,
+    AzureContainerServices,
+    AzureContainerVersion,
+} from "./interfaces";
 import { AzureAudience } from "./AzureAudience";
 import {
     AzureUrlResolver,
@@ -73,29 +82,61 @@ export class AzureClient {
             config: {},
         });
 
-        const rootDataObject = await requestFluidObject<RootDataObject>(
+        const fluidContainer = await this.createFluidContainer(
             container,
-            "/",
+            this.props.connection,
         );
-        const createNewRequest = createAzureCreateNewRequest(
-            this.props.connection.orderer,
-            this.props.connection.storage,
-            this.props.connection.tenantId,
-        );
-        const fluidContainer = new (class extends FluidContainer {
-            async attach() {
-                if (this.attachState !== AttachState.Detached) {
-                    throw new Error(
-                        "Cannot attach container. Container is not in detached state",
-                    );
-                }
-                await container.attach(createNewRequest);
-                const resolved = container.resolvedUrl;
-                ensureFluidResolvedUrl(resolved);
-                return resolved.id;
-            }
-        })(container, rootDataObject);
+        const services = this.getContainerServices(container);
+        return { container: fluidContainer, services };
+    }
 
+    /**
+     * Recreates new container out of specific version of another container
+     * @param id - Unique ID of the source container in Azure Fluid Relay.
+     * @param version - Unique version of the source container in Azure Fluid Relay.
+     * @param containerSchema - Container schema used to access data objects in the container.
+     * @returns New container instance along with associated services.
+     */
+    public async reCreateContainer(
+        id: string,
+        version: string,
+        containerSchema: ContainerSchema,
+    ): Promise<{
+        container: IFluidContainer;
+        services: AzureContainerServices;
+    }> {
+        const loader = this.createLoader(containerSchema);
+        const url = new URL(this.props.connection.orderer);
+        url.searchParams.append("storage", encodeURIComponent(this.props.connection.storage));
+        url.searchParams.append("tenantId", encodeURIComponent(this.props.connection.tenantId));
+        url.searchParams.append("containerId", encodeURIComponent(id));
+        const sourceContainer = await loader.resolve({ url: url.href });
+
+        if(sourceContainer.resolvedUrl === undefined) {
+            throw new Error(
+                "Source container cannot resolve URL.",
+            );
+        }
+
+        const documentService = await this.documentServiceFactory.createDocumentService(sourceContainer.resolvedUrl);
+        const storage = await documentService.connectToStorage();
+        const handle = {
+            type: SummaryType.Handle,
+            handleType: SummaryType.Tree,
+            handle: version,
+        };
+        const tree = await storage.downloadSummary(handle);
+
+        // getSanitizedSummary is coming through PR: #9650. We will use then sanitized tree for rehydration,
+        // const sanitizedTree = getSanitizedSummary(tree);
+        const container = await loader.rehydrateDetachedContainerFromSnapshot(
+            JSON.stringify(tree),
+        );
+
+        const fluidContainer = await this.createFluidContainer(
+            container,
+            this.props.connection,
+        );
         const services = this.getContainerServices(container);
         return { container: fluidContainer, services };
     }
@@ -128,6 +169,43 @@ export class AzureClient {
         return { container: fluidContainer, services };
     }
 
+    /**
+     * Get the list of versions for specific container
+     * @param id - Unique ID of the source container in Azure Fluid Relay.
+     * @param maxCount - Max number of versions to retreive,
+     * @returns Array of available versions
+     */
+     public async getContainerVersions(
+        id: string,
+        maxCount: number,
+    ): Promise<AzureContainerVersion[]> {
+        const url = new URL(this.props.connection.orderer);
+        url.searchParams.append(
+            "storage",
+            encodeURIComponent(this.props.connection.storage),
+        );
+        url.searchParams.append(
+            "tenantId",
+            encodeURIComponent(this.props.connection.tenantId),
+        );
+        url.searchParams.append("containerId", encodeURIComponent(id));
+
+        const resolvedUrl = await this.urlResolver.resolve({ url: url.href });
+        if (!resolvedUrl) {
+            throw new Error("Unable to resolved URL");
+        }
+        const documentService =
+            await this.documentServiceFactory.createDocumentService(
+                resolvedUrl,
+            );
+        const storage = await documentService.connectToStorage();
+        const versions = await storage.getVersions(null, maxCount);
+
+        return versions.map((item) => {
+            return { id: item.id, date: item.date };
+        });
+    }
+
     private getContainerServices(container: IContainer): AzureContainerServices {
         return {
             audience: new AzureAudience(container),
@@ -146,6 +224,35 @@ export class AzureClient {
             codeLoader,
             logger: this.props.logger,
         });
+    }
+
+    private async createFluidContainer(
+        container: IContainer,
+        connection: AzureConnectionConfig,
+    ): Promise<FluidContainer> {
+        const createNewRequest = createAzureCreateNewRequest(
+            connection.orderer,
+            connection.storage,
+            connection.tenantId,
+        );
+
+        const rootDataObject = await requestFluidObject<RootDataObject>(
+            container,
+            "/",
+        );
+        return new (class extends FluidContainer {
+            async attach() {
+                if (this.attachState !== AttachState.Detached) {
+                    throw new Error(
+                        "Cannot attach container. Container is not in detached state",
+                    );
+                }
+                await container.attach(createNewRequest);
+                const resolved = container.resolvedUrl;
+                ensureFluidResolvedUrl(resolved);
+                return resolved.id;
+            }
+        })(container, rootDataObject);
     }
     // #endregion
 }

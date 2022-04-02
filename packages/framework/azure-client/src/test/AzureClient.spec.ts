@@ -253,4 +253,27 @@ describe("AzureClient", () => {
         const obj = await map1.get("new-pair-id").get();
         assert.ok(obj, "container added dynamic objects incorrectly");
     });
+
+    /**
+     * Scenario: test if Azure Client can get recreate container.
+     *
+     * Expected behavior: an error should not be thrown nor should a rejected promise
+     * be returned.
+     */
+    it("can recreate new container from old document successfully", async () => {
+        const newContainer = (await client.createContainer(schema)).container;
+        const containerId = await newContainer.attach();
+        await new Promise<void>((resolve) => {
+            newContainer.on("connected", () => {
+                resolve();
+            });
+        });
+
+        const resources = client.reCreateContainer(containerId, "latest", schema);
+        await assert.doesNotReject(
+            resources,
+            () => true,
+            "container cannot be retrieved from Azure Fluid Relay",
+        );
+    });
 });

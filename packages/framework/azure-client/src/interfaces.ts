@@ -30,6 +30,15 @@ export interface AzureClientProps {
     readonly logger?: ITelemetryBaseLogger,
 }
 
+export interface AzureContainerVersion {
+    // Version ID
+    id: string;
+
+    // Time when version was generated.
+    // ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
+    date?: string;
+}
+
 /**
  * Parameters for establishing a connection with the Azure Fluid Relay.
  */
