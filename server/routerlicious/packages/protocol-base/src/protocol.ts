@@ -52,13 +52,14 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
  *    - Collab control: Noop
  */
 export function isSystemMessage(message: ISequencedDocumentMessage) {
-    switch (message.type) {
-        case MessageType.Operation:
-            return false;
-        default:
-            return true;
-    }
+    return (message.type !== MessageType.Operation);
 }
+
+// #9732: isSystemMessage to be removed and replaced by isRuntimeMessage usage
+export function isRuntimeMessage(message: ISequencedDocumentMessage) {
+    return (message.type === MessageType.Operation);
+}
+
 
 /**
  * Handles protocol specific ops.

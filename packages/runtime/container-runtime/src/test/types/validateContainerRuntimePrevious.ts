@@ -1413,30 +1413,6 @@ use_old_EnumDeclaration_RuntimeHeaders(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
-* "EnumDeclaration_RuntimeMessage": {"forwardCompat": false}
-*/
-declare function get_old_EnumDeclaration_RuntimeMessage():
-    TypeOnly<old.RuntimeMessage>;
-declare function use_current_EnumDeclaration_RuntimeMessage(
-    use: TypeOnly<current.RuntimeMessage>);
-use_current_EnumDeclaration_RuntimeMessage(
-    get_old_EnumDeclaration_RuntimeMessage());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
-* "EnumDeclaration_RuntimeMessage": {"backCompat": false}
-*/
-declare function get_current_EnumDeclaration_RuntimeMessage():
-    TypeOnly<current.RuntimeMessage>;
-declare function use_old_EnumDeclaration_RuntimeMessage(
-    use: TypeOnly<old.RuntimeMessage>);
-use_old_EnumDeclaration_RuntimeMessage(
-    get_current_EnumDeclaration_RuntimeMessage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
 * "ClassDeclaration_ScheduleManager": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ScheduleManager():

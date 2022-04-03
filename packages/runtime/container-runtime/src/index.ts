@@ -12,7 +12,7 @@ export {
     IContainerRuntimeOptions,
     IRootSummaryTreeWithStats,
     isRuntimeMessage,
-    RuntimeMessage,
+    isContainerRuntimeMessage,
     unpackRuntimeMessage,
     ScheduleManager,
     agentSchedulerId,

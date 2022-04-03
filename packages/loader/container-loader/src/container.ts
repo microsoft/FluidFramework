@@ -1613,6 +1613,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
         const outboundMessageType: string = type;
+        // Please see isRuntimeMessage() check - all runtime messages (except summarize) are wrapped into "op" type
         switch (outboundMessageType) {
             case MessageType.Operation:
                 break;

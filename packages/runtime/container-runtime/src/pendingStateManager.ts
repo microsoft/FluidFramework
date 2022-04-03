@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import Deque from "double-ended-queue";
-import { ContainerRuntime, ContainerMessageType, isRuntimeMessage } from "./containerRuntime";
+import { ContainerRuntime, ContainerMessageType, isContainerRuntimeMessage } from "./containerRuntime";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -252,9 +252,8 @@ export class PendingStateManager implements IDisposable {
      * Listens for ACKs of stashed ops
      */
     private processRemoteMessage(message: ISequencedDocumentMessage) {
-        if (!isRuntimeMessage(message)) {
-            return { localAck: false, localOpMetadata: undefined };
-        }
+        // This has to be unpacked runtime message
+        assert(isContainerRuntimeMessage(message), "Only container runtime messages should arrive here");
 
         // this message was a pending op that was actually sent successfully
         const isOriginalClientId = message.clientId === Array.from(this.previousClientIds)[0] &&

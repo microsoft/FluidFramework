@@ -768,9 +768,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // System messages may have no clientId (but some do, like propose, noop, summarize)
         // Note: we can see such message.type as "attach" or "chunkedOp" for legacy files before RTM
         // But these types are no longer supported as they are rolled into "op" by container runtime.
-        assert((message.clientId === null) === !isClientMessage(message),
-            0x0ed /* "non-system message have to have clientId" */,
-        );
+        if ((message.clientId === null) === isClientMessage(message)) {
+            throw new DataCorruptionError("Mismatch in clientId",
+                {...extractSafePropertiesFromMessage(message), messageType: message.type});
+        }
 
         // TODO Remove after SPO picks up the latest build.
         if (

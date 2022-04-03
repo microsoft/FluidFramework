@@ -357,41 +357,38 @@ const defaultMaxOpSizeInBytes = 768000;
 
 const defaultFlushMode = FlushMode.TurnBased;
 
-export enum RuntimeMessage {
-    FluidDataStoreOp = "component",
-    Attach = "attach",
-    ChunkedOp = "chunkedOp",
-    BlobAttach = "blobAttach",
-    Rejoin = "rejoin",
-    Alias = "alias",
-    Operation = "op",
+// #9732: To be replaced by version in protocol-base
+export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+    return message.type === MessageType.Operation;
 }
 
-export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
+export function isContainerRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+    assert(!isRuntimeMessage(message), "Should call this API only for unpacked runtime messages!");
+    if ((Object.values(ContainerMessageType) as string[]).includes(message.type)) {
         return true;
     }
     return false;
 }
 
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
-    if (message.type === MessageType.Operation) {
-        // legacy op format?
-        if (message.contents.address !== undefined && message.contents.type === undefined) {
-            message.type = ContainerMessageType.FluidDataStoreOp;
-        } else {
-            // new format
-            const innerContents = message.contents as ContainerRuntimeMessage;
-            assert(innerContents.type !== undefined, 0x121 /* "Undefined inner contents type!" */);
-            message.type = innerContents.type;
-            message.contents = innerContents.contents;
-        }
-        assert(isRuntimeMessage(message), 0x122 /* "Message to unpack is not proper runtime message" */);
+export function unpackRuntimeMessage(messageArg: ISequencedDocumentMessage): ISequencedDocumentMessage {
+    // Do shallow copy of message, as methods below will modify it.
+    // There might be multiple container instances receiving same message
+    // We do not need to make deep copy, as each layer will just replace message.content itself,
+    // but would not modify contents details
+    const message = { ...messageArg };
+    assert(isRuntimeMessage(message), "Not container runtime op");
+
+    // legacy op format?
+    if (message.contents.address !== undefined && message.contents.type === undefined) {
+        message.type = ContainerMessageType.FluidDataStoreOp;
     } else {
-        // Legacy format, but it's already "unpacked",
-        // i.e. message.type is actually ContainerMessageType.
-        // Nothing to do in such case.
+        // new format
+        const innerContents = message.contents as ContainerRuntimeMessage;
+        assert(innerContents.type !== undefined, 0x121 /* "Undefined inner contents type!" */);
+        message.type = innerContents.type;
+        message.contents = innerContents.contents;
     }
+    assert(isContainerRuntimeMessage(message), 0x122 /* "Message to unpack is not proper runtime message" */);
     return message;
 }
 
@@ -1630,23 +1627,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.verifyNotClosed();
 
         // If it's not message for runtime, bail out right away.
-        if (!isRuntimeMessage(messageArg)) {
-            return;
-        }
-
-        // Do shallow copy of message, as methods below will modify it.
-        // There might be multiple container instances receiving same message
-        // We do not need to make deep copy, as each layer will just replace message.content itself,
-        // but would not modify contents details
-        let message = { ...messageArg };
+        assert(isRuntimeMessage(messageArg), "Only runtime messages should reach here");
 
         // Surround the actual processing of the operation with messages to the schedule manager indicating
         // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
         // messages once a batch has been fully processed.
-        this.scheduleManager.beforeOpProcessing(message);
+        this.scheduleManager.beforeOpProcessing(messageArg);
 
         try {
-            message = unpackRuntimeMessage(message);
+            let message = unpackRuntimeMessage(messageArg);
 
             // Chunk processing must come first given that we will transform the message to the unchunked version
             // once all pieces are available
@@ -1689,7 +1678,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.resetReconnectCount();
             }
         } catch (e) {
-            this.scheduleManager.afterOpProcessing(e, message);
+            this.scheduleManager.afterOpProcessing(e, messageArg);
             throw e;
         }
     }

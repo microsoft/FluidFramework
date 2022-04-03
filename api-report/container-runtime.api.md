@@ -441,6 +441,9 @@ export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
 }
 
 // @public (undocumented)
+export function isContainerRuntimeMessage(message: ISequencedDocumentMessage): boolean;
+
+// @public (undocumented)
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public
@@ -605,24 +608,6 @@ export enum RuntimeHeaders {
     wait = "wait"
 }
 
-// @public (undocumented)
-export enum RuntimeMessage {
-    // (undocumented)
-    Alias = "alias",
-    // (undocumented)
-    Attach = "attach",
-    // (undocumented)
-    BlobAttach = "blobAttach",
-    // (undocumented)
-    ChunkedOp = "chunkedOp",
-    // (undocumented)
-    FluidDataStoreOp = "component",
-    // (undocumented)
-    Operation = "op",
-    // (undocumented)
-    Rejoin = "rejoin"
-}
-
 // @public
 export class ScheduleManager {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
@@ -712,7 +697,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 }
 
 // @public (undocumented)
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage;
+export function unpackRuntimeMessage(messageArg: ISequencedDocumentMessage): ISequencedDocumentMessage;
 
 
 // (No @packageDocumentation comment for this package)
