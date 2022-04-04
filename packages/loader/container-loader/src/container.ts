@@ -990,7 +990,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public disconnect() {
-        if (!this.closed && this.connectionState !== ConnectionState.Disconnected) {
+        if (!this.closed) {
             this.disconnectInternal();
         }
     }

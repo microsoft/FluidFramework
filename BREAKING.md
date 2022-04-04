@@ -20,6 +20,8 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
 - [IDirectory extends IDisposable](#IDirectory-extends-IDisposable)
 - [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
+- [connected deprecated from IContainer, IFluidContainer, and FluidContainer](#connected-deprecated-from-IContainer-IFluidContainer-and-FluidContainer)
+- [setAutoReconnect and resume deprecated from IContainer and Container](#setAutoReconnect-and-resume-deprecated-from-IContainer-and-Container)
 
 ### Doing operations not allowed on deleted sub directory
 Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory will throw `UsageError` exception now.
@@ -29,6 +31,12 @@ IDirectory has started extending IDisposable. This means that users implementing
 
 ### raiseContainerWarning removed from IContainerContext
 `raiseContainerWarning` property will be removed from `IContainerContext` interface and `ContainerContext` class. Please refer to [raiseContainerWarning property](#Remove-raisecontainerwarning-property) for more details.
+
+### connected deprecated from IContainer, IFluidContainer, and FluidContainer
+`connected` has been deprecated from `IContainer`, `IFluidContainer`, and `FluidContainer`. It will be removed in a future major release. Use `connectionState.connected` property on the respective interfaces/classes instead. Please switch to the new APIs as soon as possible, and provide any feedback to the FluidFramework team if necessary.
+
+### setAutoReconnect and resume deprecated from IContainer and Container
+`setAutoReconnect()` and `resume()` have been deprecated from `IContainer` and `Container`. They will be removed in a future major release. Use `connect()` instead of `setAutoReconnect(true)` and `resume()`, and use `disconnect()` instead of `setAutoReconnect(false)`. Please switch to the new APIs as soon as possible, and provide any feedback to the FluidFramework team if necessary.
 
 ## 0.58 Breaking changes
 - [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from-merge-tree-to-sequence-package)
