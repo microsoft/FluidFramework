@@ -476,11 +476,12 @@ export class RestGitService {
             // Value is not cached - fetch it with the provided function and then cache the value
             return this.fetchAndCache(key, fetch);
         }
+
         if (resolvingSummary) {
             /**
-             * We need to cache the latest summary regardless of the useCache flag. When we fetch the summary at the
-             * first time,we need to update the cache. If not, the following calls with useCache enabled might read
-             * the outdated summary from cache in case of the historian service change.
+             * We set the useCache flag as false when we fetch the summary at the first time. We need to
+             * get the summary from the strage, and update the cache. If not, the following calls with
+             * useCache enabled might read the outdated summary from cache in case of the historian service change.
              */
              return this.fetchAndCache(key, fetch);
         }
