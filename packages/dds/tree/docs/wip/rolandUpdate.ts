@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /*Scenario A
 In a trait foo that contains the nodes [A B C D], three users concurrently attempt the following operations (ordered here from first sequenced to last sequenced):
 User 1: delete B C
