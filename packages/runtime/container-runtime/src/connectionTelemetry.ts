@@ -32,7 +32,7 @@ type IOpPerfTelemetryProperties =
     Pick<ITelemetryProperties, IOpPerfTelemetryRequiredProperties>;
 
 /**
- * We report various latency-related errors when waiting for op roundtrip takes longer than that amout of time.
+ * We collect the timing at various moments in time during the op processing.
  */
 enum OpTimings {
     opSendTimeForLatencyStatistics,
