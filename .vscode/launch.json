@@ -302,21 +302,5 @@
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
         },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Mocha Tests PackageRuntime",
-            "cwd": "${workspaceFolder}/packages/runtime/container-runtime",
-            "program": "${workspaceFolder}/packages/runtime/container-runtime/node_modules/.bin/_mocha",
-            "args": [
-                "--recursive",
-                "dist/test"
-            ],
-            "outFiles": [
-                "${workspaceFolder}/packages/runtime/container-runtime/dist/test/*.js"
-            ],
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen"
-        },
     ]
 }
