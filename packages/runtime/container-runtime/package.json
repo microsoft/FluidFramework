@@ -114,6 +114,9 @@
     "version": "0.58.3000",
     "broken": {
       "0.58.2000": {
+        "ClassDeclaration_ContainerRuntime": {
+          "backCompat": false
+        },
         "InterfaceDeclaration_IBaseSummarizeResult": {
           "forwardCompat": false
         },
