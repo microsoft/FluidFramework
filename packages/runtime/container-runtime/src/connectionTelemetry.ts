@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
@@ -18,19 +18,16 @@ import { assert, performance } from "@fluidframework/common-utils";
  */
 export const latencyThreshold = 5000;
 
-type IOpPerfTelemetryRequiredProperties =
+interface IOpPerfTelemetryProperties {
     /** Track how long op is sitting in inbound queue until it is processed */
-    "durationInboundQueue" |
+    durationInboundQueue: number | undefined;
     /** Measure time outbound op is sitting in queue due to active batch */
-    "durationOutboundQueue" |
+    durationOutboundQueue: number | undefined;
     /** Time spent between DeltaManager's inbound "push" event until the DeltaManager "op" event */
-    "durationInboundToProcessing" |
+    durationInboundToProcessing: number | undefined;
     /** Length of the DeltaManager's inbound queue at the time of the processing */
-    "lenghtInboundQueue";
-
-type IOpPerfTelemetryProperties =
-    Pick<ITelemetryProperties, IOpPerfTelemetryRequiredProperties>;
-
+    lenghtInboundQueue: number | undefined;
+}
 /**
  * We collect the timing at various moments in time during the op processing.
  */
