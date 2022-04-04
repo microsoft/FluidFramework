@@ -438,7 +438,9 @@ export class RestGitService {
         winston.info(`Fetching ${key}`);
         Lumberjack.info(`Fetching ${key}`, this.lumberProperties);
         const value = await fetch();
-        this.setCache(key, value);
+        if (this.cache) {
+            this.setCache(key, value);
+        }
         return value;
     }
 
