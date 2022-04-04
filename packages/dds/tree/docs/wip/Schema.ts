@@ -110,16 +110,20 @@ export interface FieldSchema {
 
 export interface TreeSchema {
     /**
-     * Schema for fields with with specific keys.
+     * Schema for fields with keys scoped to this TreeSchema.
      *
-     * This allows to the FieldSchema directly (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -> FieldSchema map).
-     * Referring to the FieldSchema directly improves interop with extraFields:
-     * It also makes use-cases that want have simple short developer friendly field names able to use those names as the keys, and not need a separate field schema identifier.
-     *
-     * Having a single centralized map indexed by FieldSchemaIdentifier also offers some value: it can be used for fields which have the same meaning in multiple places,
-     * and simplifies document root handling (since the root can just have a special `FieldSchemaIdentifier`).
+     * This refers to the FieldSchema directly (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -> FieldSchema map).
+     * This allows os short friendly field keys which can ergonomically used as field names in code.
+     * It also interoperates well with extraLocalFields being used as a map with arbitrary data as keys.
      */
     readonly localFields: ReadonlyMap<LocalFieldKey, FieldSchema>;
+
+    /**
+     * Schema for fields with keys scoped to the whole document.
+     *
+     * Having a centralized map indexed by FieldSchemaIdentifier can be used for fields which have the same meaning in multiple places,
+     * and simplifies document root handling (since the root can just have a special `FieldSchemaIdentifier`).
+     */
     readonly globalFields: ReadonlySet<GlobalFieldKey>;
 
     /**
@@ -137,8 +141,20 @@ export interface TreeSchema {
      */
     readonly extraLocalFields: FieldSchema;
 
+    /**
+     * If true, GlobalFieldKeys other than the ones listed above in globalFields may be used to store data on this tree node.
+     * Such fields must still be in schema with their global FieldSchema.
+     */
     readonly extraGlobalFields: boolean;
 
+    /**
+     * There are several approaches for how to store actual data in the tree (special node types, special field contents, data on nodes etc.)
+     * as well as several options about how the data should be modeled at this level (byte sequence? javascript type? json?),
+     * as well as options for how much of this would be exposed in the schema language (ex: would all nodes with values be special built-ins, or could any schema add them?)
+     *
+     * A simple easy to do in javascript approach is taken here: this is not intended to be a suggestion of what approach to take, or what to expose in the schema language.
+     * This is simply one approach that can work for modeling them in the internal schema representation.
+     */
     readonly value: ValueSchema;
 }
 
@@ -228,10 +244,19 @@ export const anyTree: TreeSchema = {
  * As long as the document content edits keep it in schema with the current (or any past) schema,
  * it will always be in schema for all future schema this StoredSchemaRepository might contain.
  *
- * Specific users, which have access to the document content, could permit additional kinds of schema changes
- * (ex: a system which keeps the whole document in memory, or is willing to page through all the data when doing the change)
- * but the general intended usage pattern is to use a schema on read system (schematize) to apply a more restricted "view schema"
- * when reading document content.
+ * This approach means that stored schema can be updated to permit data in new formats without having to look at any document content.
+ * This is valuable for large document scenarios where no user has the entire document loaded, but still need to add some new types to the document.
+ *
+ * The ergonomics issues caused by the stored schema permitting all old date-formats can be addressed be using a schema on read system (schematize)
+ * to apply a more restricted "view schema" when reading document content.
+ *
+ * The above design pattern (combining stored and view schema this way to support partial checkouts with stored schema that can be updated)
+ * is the intended usage pattern for typical users, but other configurations of these systems are possible:
+ * Systems which have access to the document content could permit additional kinds of schema changes.
+ * For example, a system which keeps the whole document in memory, or is willing to page through all the data when doing the change could permit:
+ * - arbitrary schema changes as long as all the data currently complies
+ * - schema changes coupled with instructions for how to updated old data
+ * While this is possible, it is not the focus of this design since such users have strictly less implementation constraints.
  */
 export class StoredSchemaRepository implements SchemaRepository {
     /**
