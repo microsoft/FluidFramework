@@ -187,6 +187,7 @@ export class OdspDocumentService implements IDocumentService {
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
+                this.mc.config.getBoolean("Fluid.Driver.Odsp.disableTreesLatestForBinaryWireFormat"),
             );
         }
 

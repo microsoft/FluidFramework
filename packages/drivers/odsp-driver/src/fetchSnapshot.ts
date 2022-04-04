@@ -23,13 +23,14 @@ import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
     fetchAndParseAsJSONHelper,
     fetchArray,
+    fetchHelper,
     getWithRetryForTokenRefresh,
     getWithRetryForTokenRefreshRepeat,
     IOdspResponse,
     ISnapshotContents,
 } from "./odspUtils";
 import { convertOdspSnapshotToSnapsohtTreeAndBlobs } from "./odspSnapshotParser";
-import { parseCompactSnapshotResponse } from "./compactSnapshotParser";
+import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { EpochTracker } from "./epochTracker";
 
@@ -363,49 +364,6 @@ interface ISnapshotRequestAndResponseOptions {
 }
 
 /**
- * This function fetches the older snapshot format which is the json format(IOdspSnapshot).
- * @param odspResolvedUrl - resolved odsp url.
- * @param storageToken - token to do the auth for network request.
- * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
- * @param controller - abort controller if caller needs to abort the network call.
- * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
- * @returns fetched snapshot.
- */
-async function fetchSnapshotContentsCoreV1(
-    odspResolvedUrl: IOdspResolvedUrl,
-    storageToken: string,
-    snapshotOptions: ISnapshotOptions | undefined,
-    controller?: AbortController,
-    epochTracker?: EpochTracker,
-): Promise<ISnapshotRequestAndResponseOptions> {
-    const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
-    const url = `${snapshotUrl}/trees/latest?ump=1`;
-    // The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
-    // Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
-    // This error thrown by server will contain the new redirect location. Look at the 404 error parsing
-    // for futher reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
-    const header = { prefer: "manualredirect" };
-    const { body, headers } = getFormBodyAndHeaders(
-        odspResolvedUrl, storageToken, snapshotOptions, header);
-    headers.accept = "application/json";
-    const fetchOptions = {
-        body,
-        headers,
-        signal: controller?.signal,
-        method: "POST",
-    };
-    const response = await (epochTracker?.fetchAndParseAsJSON<IOdspSnapshot>(url, fetchOptions, "treesLatest", true) ??
-        fetchAndParseAsJSONHelper<IOdspSnapshot>(url, fetchOptions));
-    const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
-    const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return {
-        odspSnapshotResponse: finalSnapshotContents,
-        requestHeaders: headers,
-        requestUrl: url,
-    };
-}
-
-/**
  * This function fetches the binary compact snapshot format. This is an experimental feature
  * and is behind a feature flag.
  * @param odspResolvedUrl - resolved odsp url.
@@ -505,6 +463,18 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
     return numTrees;
 }
 
+/**
+ * This function fetches the snapshot and parse it according to what is mentioned in response headers.
+ * @param odspResolvedUrl - resolved odsp url.
+ * @param storageToken - token to do the auth for network request.
+ * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
+ * @param logger - logger
+ * @param fetchBinarySnapshotFormat - whether to fetch binary snapshot or not.
+ * @param controller - abort controller if caller needs to abort the network call.
+ * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
+ * @param disableTreesLatestForBinaryWireFormat - whether to disable trees/latest to fetch binary wire format
+ * @returns fetched snapshot.
+ */
 export async function downloadSnapshot(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
@@ -513,6 +483,7 @@ export async function downloadSnapshot(
     fetchBinarySnapshotFormat?: boolean,
     controller?: AbortController,
     epochTracker?: EpochTracker,
+    disableTreesLatestForBinaryWireFormat?: boolean,
 ): Promise<ISnapshotRequestAndResponseOptions> {
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
@@ -520,13 +491,58 @@ export async function downloadSnapshot(
         odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
-    if (fetchBinarySnapshotFormat) {
-        // Logging an event here as it is not supposed to be used in production yet and only in experimental mode.
-        logger.sendTelemetryEvent({ eventName: "BinarySnapshotFetched" });
+    // If fetchBinarySnapshotFormat is true but we don't want to use trees latest for this, then we go into this flow
+    // of fetching binary wire format with /content api.
+    if (fetchBinarySnapshotFormat && disableTreesLatestForBinaryWireFormat) {
         return fetchSnapshotContentsCoreV2(odspResolvedUrl, storageToken, snapshotOptions, controller, epochTracker);
-    } else {
-        return fetchSnapshotContentsCoreV1(odspResolvedUrl, storageToken, snapshotOptions, controller, epochTracker);
     }
+
+    const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
+    const url = `${snapshotUrl}/trees/latest?ump=1`;
+    // The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
+    // Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
+    // This error thrown by server will contain the new redirect location. Look at the 404 error parsing
+    // for futher reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
+    const header = {"prefer": "manualredirect"};
+    const { body, headers } = getFormBodyAndHeaders(
+        odspResolvedUrl, storageToken, snapshotOptions, header);
+    const fetchOptions = {
+        body,
+        headers,
+        signal: controller?.signal,
+        method: "POST",
+    };
+    // For now we are keeping both json and ms-fluid values in accept header while fetching as we want to let
+    // the server decide what format it wants to send to the client as we roll it out slowly.
+    if (fetchBinarySnapshotFormat) {
+        headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
+    } else {
+        headers.accept = "application/json";
+    }
+    const response = await (epochTracker?.fetch(url, fetchOptions, "treesLatest", true) ??
+        fetchHelper(url, fetchOptions));
+
+    let finalSnapshotContents: IOdspResponse<ISnapshotContents>;
+    const contentType = response.headers.get("content-type");
+    if (contentType === "application/json") {
+        const text = await response.content.text();
+        const content: IOdspSnapshot = JSON.parse(text);
+        response.propsToLog.bodySize = text.length;
+        const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(content);
+        finalSnapshotContents = { ...response, content: snapshotContents };
+    } else {
+        assert(contentType === "application/ms-fluid", "Content type should be application/ms-fluid");
+        const content = await response.content.arrayBuffer();
+        response.propsToLog.bodySize = content.byteLength;
+        const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
+            new ReadBuffer(new Uint8Array(content)));
+        finalSnapshotContents = { ...response, content: snapshotContents };
+    }
+    return {
+        odspSnapshotResponse: finalSnapshotContents,
+        requestHeaders: headers,
+        requestUrl: url,
+    };
 }
 
 function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {
