@@ -3,9 +3,4 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-    "extends": [
-        "./minimal"
-    ],
-    "rules": {},
-}
+// This file is used only to run `eslint --print-config`. See the README for this project for more information.
