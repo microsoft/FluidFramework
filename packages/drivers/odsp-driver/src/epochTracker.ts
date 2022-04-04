@@ -186,7 +186,7 @@ export class EpochTracker implements IPersistedFileCache {
      * @param addInBody - Pass True if caller wants to add epoch in post body.
      * @param fetchReason - fetch reason to add to the request.
      */
-    public fetch(
+    public async fetch(
         url: string,
         fetchOptions: RequestInit,
         fetchType: FetchType,

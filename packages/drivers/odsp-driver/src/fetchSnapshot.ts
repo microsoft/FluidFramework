@@ -503,7 +503,7 @@ export async function downloadSnapshot(
     // Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
     // This error thrown by server will contain the new redirect location. Look at the 404 error parsing
     // for futher reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
-    const header = {"prefer": "manualredirect"};
+    const header = {prefer: "manualredirect"};
     const { body, headers } = getFormBodyAndHeaders(
         odspResolvedUrl, storageToken, snapshotOptions, header);
     const fetchOptions = {
