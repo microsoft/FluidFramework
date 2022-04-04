@@ -133,7 +133,7 @@ class LiveV1SummarySanitizer {
 
         assert(Array.isArray(quorumValues), "Invalid quorum values");
         const transformedQuorumValues: [string, ICommittedProposal][] = [];
-        for (let quorumValue of quorumValues) {
+        for (const quorumValue of quorumValues) {
             assert(
                 quorumValue !== undefined && quorumValue.length >= 2,
                 "Quorum value not valid",
