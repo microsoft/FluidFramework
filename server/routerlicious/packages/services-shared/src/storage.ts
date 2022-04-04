@@ -333,7 +333,7 @@ export class DocumentStorage implements IDocumentStorage {
 
             // Setting an empty string to deli and scribe denotes that the checkpoints should be loaded from summary.
             const value = inSummary ?
-                await this.createObject(collection, tenantId, documentId, "", "", undefined) :
+                await this.createObject(collection, tenantId, documentId, "", "") :
                 await this.createObject(collection, tenantId, documentId);
 
             return {

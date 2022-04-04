@@ -235,7 +235,7 @@ export class RestGitService {
     }
 
     public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
-        return this.resolveSummary(
+        return this.resolve(
             // Currently, only "container" type summaries are retrieved from storage.
             // In the future, we might want to also retrieve "channels". When that happens,
             // our APIs will change so we specify what type we want to retrieve during
@@ -243,7 +243,8 @@ export class RestGitService {
             this.getSummaryCacheKey("container"),
             async () => this.get<IWholeFlatSummary>(
                 `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`),
-            useCache);
+            useCache,
+            true);
     }
 
     public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
@@ -454,7 +455,10 @@ export class RestGitService {
         }
     }
 
-    private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
+    private async resolve<T>(key: string,
+                             fetch: () => Promise<T>,
+                             useCache: boolean,
+                             resolvingSummary: boolean = false): Promise<T> {
         if (this.cache && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
@@ -471,32 +475,16 @@ export class RestGitService {
 
             // Value is not cached - fetch it with the provided function and then cache the value
             return this.fetchAndCache(key, fetch);
-        } else {
-            return fetch();
         }
-    }
-
-    private async resolveSummary<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
-        if (this.cache && useCache) {
-            // Attempt to grab the value from the cache. Log any errors but don't fail the request
-            const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
-                winston.error(`Error fetching ${key} from cache`, error);
-                Lumberjack.error(`Error fetching ${key} from cache`, this.lumberProperties, error);
-                return undefined;
-            });
-
-            if (cachedValue) {
-                winston.info(`Resolving ${key} from cache`);
-                Lumberjack.info(`Resolving ${key} from cache`, this.lumberProperties);
-                return cachedValue;
-            }
+        if (resolvingSummary) {
+            /**
+             * We need to cache the latest summary regardless of the useCache flag. When we fetch the summary at the
+             * first time,we need to update the cache. If not, the following calls with useCache enabled might read
+             * the outdated summary from cache in case of the historian service change.
+             */
+             return this.fetchAndCache(key, fetch);
         }
-        /**
-         * We need to cache the latest summary regardless of the useCache flag. When we fetch the summary at the first
-         * time,we need to update the cache. If not, the following calls with useCache enabled might read the outdated
-         * summary from cache in case of the historian service change.
-         */
-        return this.fetchAndCache(key, fetch);
+        return fetch();
     }
 
     private getSummaryCacheKey(type: IWholeSummaryPayloadType): string {

@@ -134,8 +134,8 @@ export function create(
             const tenantId = getParam(request.params, "tenantId");
             const ordererUrl = config.get("worker:serverUrl");
             const historianUrl = config.get("worker:blobStorageUrl");
-            const documentSession = getSession(documentId, ordererUrl, historianUrl, tenantId, documentsCollection);
-            handleResponse(documentSession, response, undefined, 201);
+            const documentSession = getSession(ordererUrl, historianUrl, tenantId, documentId, documentsCollection);
+            handleResponse(documentSession, response, undefined, 200);
         });
     return router;
 }

@@ -274,8 +274,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     public handler(rawMessage: IQueuedMessage) {
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
-            const ms: string = `rawMessage.offset: ${rawMessage.offset} <= this.logOffset: ${this.logOffset}`;
-            Lumberjack.info(ms, getLumberBaseProperties(this.documentId, this.tenantId));
+            Lumberjack.info(`rawMessage.offset: ${rawMessage.offset} <= this.logOffset: ${this.logOffset}`,
+                getLumberBaseProperties(this.documentId, this.tenantId));
 
             this.updateCheckpointMessages(rawMessage);
 
