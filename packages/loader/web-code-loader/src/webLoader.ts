@@ -65,9 +65,7 @@ export class WebCodeLoader implements ICodeDetailsLoader {
         if (resolved.resolvedPackageCacheId !== undefined) {
             this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModuleP);
         }
-        const fluidModule = await fluidModuleP;
-
-        return fluidModule;
+        return fluidModuleP;
     }
 
     private async loadModuleFromResolvedCodeDetails(resolved: IResolvedFluidCodeDetails) {
@@ -83,7 +81,7 @@ export class WebCodeLoader implements ICodeDetailsLoader {
 
         let fluidModule: IFluidModule | undefined;
         for (const script of await loadedScriptsP) {
-            const maybeFluidModule = script.entryPoint as any;
+            const maybeFluidModule = script.entryPoint as IFluidModule;
             if (maybeFluidModule.fluidExport !== undefined) {
                 if (fluidModule !== undefined) {
                     throw new Error("Multiple Fluid modules loaded");

@@ -329,7 +329,10 @@ export class ContainerContext implements IContainerContext {
                 details: details ?? codeDetails,
             };
         } else {
-            return loadCodeResult;
+            // If "module" is not in the result, we are using a legacy ICodeLoader.  Fix the result up with details.
+            // Once usage drops to 0 we can remove this compat path.
+            this.taggedLogger.sendTelemetryEvent({ eventName: "LegacyCodeLoader" });
+            return { module: loadCodeResult, details: codeDetails };
         }
     }
     // #endregion

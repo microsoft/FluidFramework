@@ -121,7 +121,6 @@ describe("ContainerContext Tests", () => {
         mockCodeLoader.verify();
     });
 
-    // open an issue to add string typing
     it("Should load code without details", async () => {
         // Arrange
         const proposedCodeDetails = codeDetailsForVersion("2.0.0");
@@ -168,7 +167,6 @@ describe("ContainerContext Tests", () => {
         mockCodeLoader.verify();
     });
 
-    // open an issue to add string typing
     it("Should load code with details", async () => {
         // Arrange
         const proposedCodeDetails = codeDetailsForVersion("2.0.0");
