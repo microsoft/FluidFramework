@@ -2990,7 +2990,7 @@ describe('DataBinder', function() {
       expect(callbackSpyRegistered).toHaveBeenCalledTimes(1);
     });
 
-    it.only('should be possible to modify property and inside requestChangesetPostProcessing and get notified on the changes', function () {
+    it.only('should be possible to modify property and inside requestChangesetPostProcessing and get notified on the changes', function() {
       const callbackSpyRegistered = jest.fn();
       const callbackNestedSpyRegistered = jest.fn();
 
