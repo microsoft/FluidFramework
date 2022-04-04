@@ -4,6 +4,7 @@
  */
 
 import {
+    ICommittedProposal,
     ISummaryTree,
     SummaryType,
     ISummaryBlob,
@@ -131,20 +132,26 @@ class LiveV1SummarySanitizer {
         );
 
         assert(Array.isArray(quorumValues), "Invalid quorum values");
-        const firstQuorumValue = quorumValues[0];
-        assert(
-            firstQuorumValue !== undefined && firstQuorumValue.length >= 2,
-            "First quorum value not valid",
-        );
+        const transformedQuorumValues: [string, ICommittedProposal][] = [];
+        for (let quorumValue of quorumValues) {
+            assert(
+                quorumValue !== undefined && quorumValue.length >= 2,
+                "Quorum value not valid",
+            );
 
-        const codeProposal = firstQuorumValue[this.quorumValIdx];
-        const committedCodeProposal = {
-            key: codeProposal.key,
-            value: codeProposal.value,
-            approvalSequenceNumber: 0,
-            commitSequenceNumber: 0,
-            sequenceNumber: 0,
-        };
+            const codeProposal = quorumValue[this.quorumValIdx];
+            const committedCodeProposal = {
+                key: codeProposal.key,
+                value: codeProposal.value,
+                approvalSequenceNumber: 0,
+                commitSequenceNumber: 0,
+                sequenceNumber: 0,
+            };
+            transformedQuorumValues.push([
+                quorumValue[this.quorumKeyIdx],
+                committedCodeProposal,
+            ]);
+        }
 
         return {
             type: SummaryType.Tree,
@@ -156,9 +163,7 @@ class LiveV1SummarySanitizer {
                 }),
                 quorumMembers: { ...this.emptySummaryBlob },
                 quorumProposals: { ...this.emptySummaryBlob },
-                quorumValues: createBlobItem([
-                    [firstQuorumValue[this.quorumKeyIdx], committedCodeProposal],
-                ]),
+                quorumValues: createBlobItem(transformedQuorumValues),
             },
         };
     }
