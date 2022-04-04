@@ -278,8 +278,8 @@ export interface ISummaryRuntimeOptions {
  * Options for container runtime.
  */
 export interface IContainerRuntimeOptions {
-    summaryOptions?: ISummaryRuntimeOptions;
-    gcOptions?: IGCRuntimeOptions;
+    readonly summaryOptions?: ISummaryRuntimeOptions;
+    readonly gcOptions?: IGCRuntimeOptions;
     /**
      * Affects the behavior while loading the runtime when the data verification check which
      * compares the DeltaManager sequence number (obtained from protocol in summary) to the
@@ -288,13 +288,20 @@ export interface IContainerRuntimeOptions {
      * 2. "log" will log an error event to telemetry, but still continue to load.
      * 3. "bypass" will skip the check entirely. This is not recommended.
      */
-    loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     /**
      * Should the runtime use data store aliasing for creating root datastores.
      * In case of aliasing conflicts, the runtime will raise an exception which does
      * not effect the status of the container.
      */
-    useDataStoreAliasing?: boolean;
+    readonly useDataStoreAliasing?: boolean;
+    /**
+     * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
+     * send all operations to the driver layer, while in TurnBased the operations will be buffered
+     * and then sent them as a single batch at the end of the turn.
+     * By default, flush mode is TurnBased.
+     */
+    readonly flushMode?: FlushMode;
 }
 
 type IRuntimeMessageMetadata = undefined | {
@@ -348,6 +355,8 @@ const maxOpSizeInBytesKey = "Fluid.ContainerRuntime.MaxOpSizeInBytes";
 // to not reach the 1MB limits in socket.io and Kafka.
 const defaultMaxOpSizeInBytes = 768000;
 
+const defaultFlushMode = FlushMode.TurnBased;
+
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
     Attach = "attach",
@@ -395,6 +404,7 @@ class ScheduleManagerCore {
     private currentBatchClientId: string | undefined;
     private localPaused = false;
     private timePaused = 0;
+    private batchCount = 0;
 
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -483,14 +493,30 @@ class ScheduleManagerCore {
         this.deltaManager.inbound.pause();
     }
 
-    private resumeQueue(startBatch: number, endBatch: number) {
+    private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage) {
+        const endBatch = messageEndBatch.sequenceNumber;
+        const duration = performance.now() - this.timePaused;
+
+        this.batchCount++;
+        if (this.batchCount % 1000 === 1) {
+            this.logger.sendTelemetryEvent({
+                eventName: "BatchStats",
+                sequenceNumber: endBatch,
+                length: endBatch - startBatch + 1,
+                msnDistance: endBatch - messageEndBatch.minimumSequenceNumber,
+                duration,
+                batchCount: this.batchCount,
+                interrupted: this.localPaused,
+            });
+        }
+
         // Return early if no change in value
         if (!this.localPaused) {
             return;
         }
 
         this.localPaused = false;
-        const duration = performance.now() - this.timePaused;
+
         // Random round number - we want to know when batch waiting paused op processing.
         if (duration > latencyThreshold) {
             this.logger.sendErrorEvent({
@@ -565,7 +591,7 @@ class ScheduleManagerCore {
         } else if (batchMetadata === false) {
             assert(this.pauseSequenceNumber !== undefined, 0x2a0 /* "batch presence was validated above" */);
             // Batch is complete, we can process it!
-            this.resumeQueue(this.pauseSequenceNumber, message.sequenceNumber);
+            this.resumeQueue(this.pauseSequenceNumber, message);
             this.pauseSequenceNumber = undefined;
             this.currentBatchClientId = undefined;
         } else {
@@ -711,6 +737,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             gcOptions = {},
             loadSequenceNumberVerification = "close",
             useDataStoreAliasing = false,
+            flushMode = defaultFlushMode,
         } = runtimeOptions;
 
         // We pack at data store level only. If isolated channels are disabled,
@@ -806,6 +833,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcOptions,
                 loadSequenceNumberVerification,
                 useDataStoreAliasing,
+                flushMode,
             },
             containerScope,
             logger,
@@ -910,7 +938,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly defaultMaxConsecutiveReconnects = 15;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode: FlushMode = FlushMode.TurnBased;
+    private _flushMode: FlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -1038,6 +1066,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.maxConsecutiveReconnects =
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
 
+        this._flushMode = runtimeOptions.flushMode;
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
@@ -1701,6 +1730,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
+        this.mc.logger.sendTelemetryEvent({
+            eventName: "FlushMode Updated",
+            old: this._flushMode,
+            new: mode,
+        });
+
         // Flush any pending batches if switching to immediate
         if (mode === FlushMode.Immediate) {
             this.flush();
@@ -2146,6 +2181,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             await this.deltaManager.inbound.pause();
 
             const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
+            const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
             const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
             // We should be here is we haven't processed be here. If we are of if the last message's sequence number
@@ -2190,7 +2226,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error: continueResult.error };
+                return {
+                    stage: "base",
+                    referenceSequenceNumber: summaryRefSeqNum,
+                    minimumSequenceNumber,
+                    error: continueResult.error,
+                };
             }
 
             // increment summary count
@@ -2213,7 +2254,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     runGC: this.garbageCollector.shouldRunGC,
                 });
             } catch (error) {
-                return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
+                return {
+                    stage: "base",
+                    referenceSequenceNumber: summaryRefSeqNum,
+                    minimumSequenceNumber,
+                    error,
+                };
             }
             const { summary: summaryTree, stats: partialStats } = summarizeResult;
 
@@ -2242,6 +2288,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             };
             const generateSummaryData = {
                 referenceSequenceNumber: summaryRefSeqNum,
+                minimumSequenceNumber,
                 summaryTree,
                 summaryStats,
                 generateDuration: trace.trace().duration,

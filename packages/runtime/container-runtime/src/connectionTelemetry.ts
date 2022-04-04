@@ -23,10 +23,12 @@ class OpPerfTelemetry {
     private pingLatency: number | undefined;
 
     // Collab window tracking. This is timestamp of %1000 message.
-    private opSendTimeForLatencyStatisticsForMsnStatistics: number | undefined;
+    private sequenceNumberForMsnTracking: number | undefined;
+    private msnTrackingTimestamp: number = 0;
 
     // To track round trip time for every %1000 client message.
     private opSendTimeForLatencyStatistics: number | undefined;
+
     private clientSequenceNumberForLatencyStatistics: number | undefined;
 
     private opTimeSittingInInboundQueue: number | undefined;
@@ -65,7 +67,7 @@ class OpPerfTelemetry {
             }
         });
         this.deltaManager.on("disconnect", () => {
-            this.opSendTimeForLatencyStatisticsForMsnStatistics = undefined;
+            this.sequenceNumberForMsnTracking = undefined;
             this.clientSequenceNumberForLatencyStatistics = undefined;
             this.opTimeSittingInInboundQueue = undefined;
             this.durationSittingInInboundQueue = undefined;
@@ -160,16 +162,19 @@ class OpPerfTelemetry {
         }
 
         // Record collab window max size after every 1000th op.
-        if (sequenceNumber % 1000 === 0) {
-            if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined) {
-                this.logger.sendPerformanceEvent({
-                    eventName: "MsnStatistics",
-                    sequenceNumber,
-                    msnDistance: this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
-                    duration: message.timestamp - this.opSendTimeForLatencyStatisticsForMsnStatistics,
-                });
-            }
-            this.opSendTimeForLatencyStatisticsForMsnStatistics = message.timestamp;
+        if (this.sequenceNumberForMsnTracking === undefined && sequenceNumber % 1000 === 0) {
+            this.sequenceNumberForMsnTracking = sequenceNumber;
+            this.msnTrackingTimestamp = message.timestamp;
+        }
+        if (this.sequenceNumberForMsnTracking !== undefined &&
+                message.minimumSequenceNumber >= this.sequenceNumberForMsnTracking) {
+            this.logger.sendPerformanceEvent({
+                eventName: "MsnStatistics",
+                sequenceNumber,
+                msnDistance: sequenceNumber - this.sequenceNumberForMsnTracking,
+                duration: message.timestamp - this.msnTrackingTimestamp,
+            });
+            this.sequenceNumberForMsnTracking = undefined;
         }
 
         if (this.clientId === message.clientId &&
@@ -195,6 +200,7 @@ class OpPerfTelemetry {
                 duration,
                 category,
                 pingLatency: this.pingLatency,
+                msnDistance: this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
                 durationInboundQueue: this.durationSittingInInboundQueue,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;

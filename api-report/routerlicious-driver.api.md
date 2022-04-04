@@ -99,6 +99,7 @@ export interface IRouterliciousDriverPolicies {
 
 // @public
 export interface ITokenProvider {
+    documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;
     fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 }
