@@ -6,9 +6,9 @@
 import structuredClone from "@ungap/structured-clone";
 
 export function clone<T>(original: T): T {
-	return structuredClone(original) as T;
+    return structuredClone(original) as T;
 }
 
 export function fail(message: string): never {
-	throw new Error(message);
+    throw new Error(message);
 }
