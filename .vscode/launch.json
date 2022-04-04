@@ -301,6 +301,6 @@
             "runtimeArgs": ["--unhandled-rejections=strict"],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
-        },
+        }
     ]
 }
