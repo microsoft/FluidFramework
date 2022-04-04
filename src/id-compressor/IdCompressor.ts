@@ -1144,6 +1144,19 @@ export class IdCompressor {
 		// Check if this local ID has not been finalized yet
 		const { lastFinalizedLocalId } = this.localSession;
 		if (lastFinalizedLocalId === undefined || id < lastFinalizedLocalId) {
+			const override = this.localOverrides.get(id);
+			if (override !== undefined) {
+				const inversionKey = IdCompressor.createInversionKey(override);
+				const compressionMapping =
+					this.clustersAndOverridesInversion.get(inversionKey) ?? fail('Bimap is malformed.');
+				if (
+					!IdCompressor.isClusterInfo(compressionMapping) &&
+					!IdCompressor.isUnfinalizedOverride(compressionMapping) &&
+					compressionMapping.associatedLocalId === id
+				) {
+					return compressionMapping.originalOverridingFinal;
+				}
+			}
 			return id as OpSpaceCompressedId;
 		}
 		const [localBase, [finalBase, cluster]] =

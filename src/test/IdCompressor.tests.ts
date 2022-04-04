@@ -174,6 +174,24 @@ describe('IdCompressor', () => {
 			expect(localId3).to.equal(localId, 'only one local ID should be allocated for the same sequential uuid');
 		});
 
+		it('unifies unfinalized local overrides with final IDs from a remote session', () => {
+			const compressor1 = createCompressor(Client.Client1, 3);
+			const compressor2 = createCompressor(Client.Client2, 3);
+
+			const override = 'override';
+			const local1 = compressor1.generateCompressedId(override);
+			const local2 = compressor2.generateCompressedId(override);
+			const creationRange = compressor2.takeNextCreationRange();
+			compressor1.finalizeCreationRange(creationRange);
+			compressor2.finalizeCreationRange(creationRange);
+
+			expect(compressor1.decompress(local1)).to.equal(override);
+			const final1 = compressor1.normalizeToOpSpace(local1);
+			const final2 = compressor2.normalizeToOpSpace(local2);
+			expect(isFinalId(final1)).to.be.true;
+			expect(final1).to.equal(final2);
+		});
+
 		it('unifies overrides with sequential local IDs that have been finalized', () => {
 			const compressor = createCompressor(Client.Client1);
 			const id = compressor.generateCompressedId();
@@ -208,7 +226,7 @@ describe('IdCompressor', () => {
 			expect(returnedIds).to.deep.equal(ids);
 		});
 
-		it('created without finalization', () => {
+		it('created with finalization', () => {
 			const compressor = createCompressor(Client.Client1, 10);
 			const ids: SessionSpaceCompressedId[] = [];
 			for (let i = 0; i < idCount; i++) {
