@@ -37,7 +37,11 @@ IDirectory has started extending IDisposable. This means that users implementing
 `IContainerRuntimeBase.setFlushMode` is deprecated and will be removed in a future release. FlushMode will become an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977)
 
 ### connected deprecated from IContainer, IFluidContainer, and FluidContainer
-`connected` has been deprecated from `IContainer`, `IFluidContainer`, and `FluidContainer`. It will be removed in a future major release. Use `connectionState.connected` property on the respective interfaces/classes instead. Please switch to the new APIs as soon as possible, and provide any feedback to the FluidFramework team if necessary.
+`connected` has been deprecated from `IContainer`, `IFluidContainer`, and `FluidContainer`. It will be removed in a future major release. Use `connectionState` property on the respective interfaces/classes instead. Please switch to the new APIs as soon as possible, and provide any feedback to the FluidFramework team if necessary.
+``` diff
+- if (fluidContainer.connected)
++ if (fluidContainer.connectionState === ConnectionState.Connected)
+```
 
 ### setAutoReconnect and resume deprecated from IContainer and Container
 `setAutoReconnect()` and `resume()` have been deprecated from `IContainer` and `Container`. They will be removed in a future major release. Use `connect()` instead of `setAutoReconnect(true)` and `resume()`, and use `disconnect()` instead of `setAutoReconnect(false)`. Please switch to the new APIs as soon as possible, and provide any feedback to the FluidFramework team if necessary.
