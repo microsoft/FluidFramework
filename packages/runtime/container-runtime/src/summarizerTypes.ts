@@ -156,6 +156,7 @@ export interface IBaseSummarizeResult {
     readonly error: any;
     /** Reference sequence number as of the generate summary attempt. */
     readonly referenceSequenceNumber: number;
+    readonly minimumSequenceNumber: number;
 }
 
 /** Results of submitSummary after generating the summary tree. */

@@ -5,6 +5,7 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
+import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
@@ -66,6 +67,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get closed(): boolean;
     // (undocumented)
+    get closeSignal(): AbortSignal;
+    // (undocumented)
     get connected(): boolean;
     // (undocumented)
     get connectionState(): ConnectionState;
@@ -88,6 +91,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     readonly options: ILoaderOptions;
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
+    // @deprecated (undocumented)
+    raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
     static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string): Promise<Container>;
