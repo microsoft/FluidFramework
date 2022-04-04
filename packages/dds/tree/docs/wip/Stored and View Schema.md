@@ -116,19 +116,19 @@ Applications which wish to rely entirely on schema-on-read for some or all of th
 
 If existing will always be compatible with the new schema: (new schema permits a superset of what the old one did)
 
-    - Author new more flexible schema.
+-   Author new more flexible schema.
     Use this as applications schema for reading.
     Make which format is written conditional on a flag (which opts into creating data that needs new format).
     Initialize this flag based on if the new schema is written to the document's schema list.
-    - Wait for above to be deployed to most users.
-    - Update or configure app such that it writes the new schema to the document's schema list.
+-   Wait for above to be deployed to most users.
+-   Update or configure app such that it writes the new schema to the document's schema list.
 
 If existing data could be incompatible with the new schema:
 
-    - Author new schema.
-    - Add support for it in the application.
+-   Author new schema.
+-   Add support for it in the application.
     This may optionally be done by using the new schema as the view schema (removing the old one), and providing schematize with a handler to do the update/conversion.
-    - Recurse this algorithm updating the parent to accept the new schema (which in most cases will hit the "If existing data is compatible with the new schema" case.)
+-   Recurse this algorithm updating the parent to accept the new schema (which in most cases will hit the "If existing data is compatible with the new schema" case.)
 
 # Schedule
 
