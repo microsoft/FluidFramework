@@ -575,7 +575,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     removeLocalReference(lref: LocalReference): void;
     // (undocumented)
-    removeRange(start: number, end: number): IMergeTreeRemoveMsg;
+    removeRange(start: number, end: number, sendOp?: boolean): IMergeTreeRemoveMsg;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number;
     // (undocumented)
@@ -639,7 +639,9 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     get ISharedString(): ISharedString;
     removeText(start: number, end: number): IMergeTreeRemoveMsg;
     replaceText(start: number, end: number, text: string, props?: PropertySet): void;
-}
+    // (undocumented)
+    protected rollback(content: any, localOpMetadata: unknown): void;
+    }
 
 // @public (undocumented)
 export class SharedStringFactory implements IChannelFactory {

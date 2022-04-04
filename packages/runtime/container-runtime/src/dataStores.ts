@@ -368,6 +368,13 @@ export class DataStores implements IDisposable {
         context.reSubmit(envelope.contents, localOpMetadata);
     }
 
+    public rollbackDataStoreOp(content: any, localOpMetadata: unknown) {
+        const envelope = content as IEnvelope;
+        const context = this.contexts.get(envelope.address);
+        assert(!!context, 0x160 /* "There should be a store context for the op" */);
+        context.rollback(envelope.contents, localOpMetadata);
+    }
+
     public async applyStashedOp(content: any): Promise<unknown> {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);

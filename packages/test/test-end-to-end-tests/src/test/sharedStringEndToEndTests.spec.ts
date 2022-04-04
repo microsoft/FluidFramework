@@ -14,7 +14,8 @@ import {
     ChannelFactoryRegistry,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { ContainerRuntime, OrderSequentiallyFailureMode } from "@fluidframework/container-runtime";
 
 const stringId = "sharedStringKey";
 const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
@@ -67,5 +68,76 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
         assert.equal(
             newSharedString.getText(), text, "The new container should receive the inserted text on creation");
+    });
+});
+
+describeNoCompat("SharedString orderSequentially", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+    });
+
+    let container: Container;
+    let dataObject: ITestFluidObject;
+    let sharedString: SharedString;
+    let containerRuntime: ContainerRuntime;
+
+    beforeEach(async () => {
+        container = await provider.makeTestContainer(testContainerConfig) as Container;
+        dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+        sharedString = await dataObject.getSharedObject<SharedString>(stringId);
+        containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+    });
+
+    it("Does not rollback when callback successful", () => {
+        const text = "insertion";
+        containerRuntime.orderSequentially(() => {
+            sharedString.insertText(0, text);
+        }, OrderSequentiallyFailureMode.Rollback);
+
+        assert.equal(sharedString.getText(), text, "The retrieved text should match the inserted text.");
+        assert.equal(containerRuntime.disposed, false);
+    });
+
+    it("Segment removed when callback fails", () => {
+        const text = "insertion";
+        const errorMessage = "callback failure";
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedString.insertText(0, text);
+                throw new Error(errorMessage);
+            }, OrderSequentiallyFailureMode.Rollback);
+        } catch(err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal((error as Error).message, errorMessage, "Unexpected error message");
+        assert.equal(sharedString.getText(), "", "The retrieved text should be empty.");
+        assert.equal(containerRuntime.disposed, false);
+    });
+
+    it("Segment removed when callback fails with multiple segments", () => {
+        const text1 = "insertion";
+        const text2 = " here";
+        const text3 = "The ";
+        sharedString.insertText(0, text1);
+        const errorMessage = "callback failure";
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedString.insertText(text1.length, text2);
+                sharedString.insertText(0, text3);
+                throw new Error(errorMessage);
+            }, OrderSequentiallyFailureMode.Rollback);
+        } catch(err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal((error as Error).message, errorMessage, "Unexpected error message");
+        assert.equal(sharedString.getText(), text1, "The retrieved text should match before orderSequentially.");
+        assert.equal(containerRuntime.disposed, false);
     });
 });

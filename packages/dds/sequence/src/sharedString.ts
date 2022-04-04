@@ -48,6 +48,9 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 
 export type SharedStringSegment = TextSegment | Marker;
 
+// Number of insert ops to keep track of for rollback
+const previousInsertMax = 15;
+
 /**
  * The Shared String is a specialized data structure for handling collaborative
  * text. It is based on a more general Sequence data structure but has
@@ -82,6 +85,9 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     }
 
     private readonly mergeTreeTextHelper: MergeTreeTextHelper;
+
+    private readonly previousInserts: IMergeTreeInsertMsg[] = new Array(previousInsertMax);
+    private previousInsertsCount = 0;
 
     constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(document, id, attributes, SharedStringFactory.segmentFromSpec);
@@ -145,6 +151,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         const insertOp = this.client.insertSegmentLocal(pos, segment);
         if (insertOp) {
             this.submitSequenceMessage(insertOp);
+            this.storeInsertOp(insertOp);
         }
     }
 
@@ -160,7 +167,20 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         const insertOp = this.client.insertSegmentLocal(pos, segment);
         if (insertOp) {
             this.submitSequenceMessage(insertOp);
+            this.storeInsertOp(insertOp);
         }
+    }
+
+    /**
+     * Save last set of ops in case of rollback
+     */
+    private storeInsertOp(insertOp: IMergeTreeInsertMsg) {
+        if(this.previousInsertsCount === previousInsertMax) {
+            this.previousInsertsCount--;
+            this.previousInserts.shift();
+        }
+        this.previousInserts[this.previousInsertsCount] = insertOp;
+        this.previousInsertsCount++;
     }
 
     /**
@@ -259,5 +279,15 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
 
     public getMarkerFromId(id: string): ISegment {
         return this.client.getMarkerFromId(id);
+    }
+
+    protected rollback(content: any, localOpMetadata: unknown): void {
+        if (this.previousInsertsCount > 0 && content === this.previousInserts[this.previousInsertsCount - 1]) {
+            const msg = content as IMergeTreeInsertMsg;
+            this.removeRange(msg.pos1, msg.pos1 + (msg.seg as string).length, false);
+            this.previousInsertsCount--;
+        } else {
+            throw new Error("No previous insert");
+        }
     }
 }

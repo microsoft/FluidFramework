@@ -89,6 +89,12 @@ export abstract class LocalChannelContextBase implements IChannelContext {
         this.servicesGetter().value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
+    public rollback(content: any, localOpMetadata: unknown) {
+        assert(this.isLoaded,"Channel should be loaded to rollback ops");
+        assert(this.attached,"Local channel must be attached when rollback op");
+        this.servicesGetter().value.deltaConnection.rollback(content, localOpMetadata);
+    }
+
     public applyStashedOp() {
         throw new Error("no stashed ops on local channel");
     }

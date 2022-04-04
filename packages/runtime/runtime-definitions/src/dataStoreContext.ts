@@ -247,6 +247,8 @@ export interface IFluidDataStoreChannel extends
     reSubmit(type: string, content: any, localOpMetadata: unknown);
 
     applyStashedOp(content: any): Promise<unknown>;
+
+    rollback?(type: string, content: any, localOpMetadata: unknown): void;
 }
 
 export type CreateChildSummarizerNodeFn = (

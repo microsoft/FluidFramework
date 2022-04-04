@@ -196,10 +196,11 @@ describe("Document Dirty", () => {
                 checkDirtyState("after processing value set", false, 1);
             });
 
-            it("marks state as dirty when batch ops are sent and clean when acks are received", async () => {
+            it.only("marks state as dirty when batch ops are sent and clean when acks are received", async () => {
                 dataObject.context.containerRuntime.orderSequentially(() => {
                     sharedMap.set("key1", "value1");
                     sharedMap.set("key2", "value2");
+                    throw new Error("random error");
                 });
 
                 checkDirtyState("after batch value set", true, 0);
