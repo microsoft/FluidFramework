@@ -18,7 +18,7 @@ import {
     createAndAttachContainer,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
-import { ConnectionState, Container } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 
@@ -43,10 +43,10 @@ const ensureContainerConnected = async (container: IContainer) => {
     }
 };
 
-const getPendingStateWithoutClose = async (container: IContainer): Promise<string> => {
+const getPendingStateWithoutClose = (container: IContainer): string => {
     const containerClose = container.close;
     container.close = (message) => assert(message === undefined);
-    const pendingState = await (container as Container).closeAndGetPendingLocalStateAsync();
+    const pendingState = container.closeAndGetPendingLocalState();
     assert(typeof pendingState === "string");
     container.close = containerClose;
     return pendingState;
@@ -71,11 +71,11 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 
     let pendingState: string;
     if (send) {
-        pendingState = await getPendingStateWithoutClose(container);
+        pendingState = getPendingStateWithoutClose(container);
         await args.ensureSynchronized();
         container.close();
     } else {
-        pendingState = await (container as Container).closeAndGetPendingLocalStateAsync();
+        pendingState = container.closeAndGetPendingLocalState();
     }
 
     args.opProcessingController.resumeProcessing();
@@ -404,7 +404,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         [...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
-        const pendingState = await getPendingStateWithoutClose(container);
+        const pendingState = getPendingStateWithoutClose(container);
 
         const container2 = await loader.resolve({ url }, pendingState);
 
@@ -467,7 +467,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         [...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
         // get stashed ops from this container without connecting
-        const morePendingOps = await (container2.container as Container).closeAndGetPendingLocalStateAsync();
+        const morePendingOps = container2.container.closeAndGetPendingLocalState();
 
         const container3 = await loadOffline(provider, { url }, morePendingOps);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3.container, "default");
@@ -512,7 +512,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert(dataStore2.runtime.deltaManager.outbound.paused);
         [...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
-        const morePendingOps = await getPendingStateWithoutClose(container2);
+        const morePendingOps = getPendingStateWithoutClose(container2);
         assert.ok(morePendingOps);
 
         const container3 = await loader.resolve({ url }, morePendingOps);
@@ -539,7 +539,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     it("offline blob upload", async function() {
         // load offline container
         const offlineState = await loader.resolve({ url })
-            .then(async (c) => (c as Container).closeAndGetPendingLocalStateAsync());
+            .then(async (c) => c.closeAndGetPendingLocalState());
         const container = await loadOffline(provider, { url }, offlineState);
         const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
 
@@ -597,7 +597,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         map.set(testKey, testValue);
 
         await detachedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
-        const pendingOps = await (detachedContainer as Container).closeAndGetPendingLocalStateAsync();
+        const pendingOps = detachedContainer.closeAndGetPendingLocalState();
 
         const url2 = await detachedContainer.getAbsoluteUrl("");
         assert.ok(url2);
@@ -622,7 +622,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         map2.set(testKey2, testValue);
 
         await rehydratedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
-        const pendingOps = await (rehydratedContainer as Container).closeAndGetPendingLocalStateAsync();
+        const pendingOps = rehydratedContainer.closeAndGetPendingLocalState();
 
         const url2 = await rehydratedContainer.getAbsoluteUrl("");
         assert.ok(url2);

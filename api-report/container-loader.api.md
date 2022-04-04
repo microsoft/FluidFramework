@@ -65,8 +65,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     closeAndGetPendingLocalState(): string;
     // (undocumented)
-    closeAndGetPendingLocalStateAsync(): Promise<string>;
-    // (undocumented)
     get closed(): boolean;
     // (undocumented)
     get connected(): boolean;

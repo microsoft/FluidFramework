@@ -120,11 +120,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getAudience(): IAudience;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
-    getPendingLocalState(): Promise<IPendingRuntimeState>;
+    getPendingLocalState(): IPendingRuntimeState;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+    // (undocumented)
+    getSnapshotBlobs(): Promise<void>;
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
@@ -139,6 +141,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    // (undocumented)
+    notifyAttaching(snapshot: ISnapshotTree): void;
     // (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)

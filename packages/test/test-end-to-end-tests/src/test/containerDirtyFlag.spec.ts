@@ -39,10 +39,10 @@ async function ensureContainerConnected(container: Container): Promise<void> {
     }
 }
 
-const getPendingStateWithoutClose = async (container: IContainer): Promise<string> => {
+const getPendingStateWithoutClose = (container: IContainer): string => {
     const containerClose = container.close;
     container.close = (message) => assert(message === undefined);
-    const pendingState = await (container as Container).closeAndGetPendingLocalStateAsync();
+    const pendingState = container.closeAndGetPendingLocalState();
     assert(typeof pendingState === "string");
     container.close = containerClose;
     return pendingState;
@@ -65,11 +65,11 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
 
     let pendingState: string;
     if (send) {
-        pendingState = await getPendingStateWithoutClose(container);
+        pendingState = getPendingStateWithoutClose(container);
         await args.ensureSynchronized();
         container.close();
     } else {
-        pendingState = await (container as Container).closeAndGetPendingLocalStateAsync();
+        pendingState = container.closeAndGetPendingLocalState();
     }
 
     args.opProcessingController.resumeProcessing();

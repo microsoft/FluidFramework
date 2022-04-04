@@ -28,38 +28,57 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
         private readonly blobs: ISerializedBaseSnapshotBlobs,
     ) { }
 
-    public static async serialize(
+    public static async serializeTree(
         snapshot: ISnapshotTree,
         storage: IDocumentStorageService,
     ): Promise<ISerializedBaseSnapshotBlobs> {
         const blobs = {};
-        await this.serializeCore(snapshot, blobs, storage);
+        await this.serializeTreeCore(snapshot, blobs, storage);
         return blobs;
     }
 
-    private static async serializeCore(
+    private static async serializeTreeCore(
         tree: ISnapshotTree,
         blobs: ISerializedBaseSnapshotBlobs,
         storage: IDocumentStorageService,
     ) {
         const treePs: Promise<any>[] = [];
         for (const subTree of Object.values(tree.trees)) {
-            treePs.push(this.serializeCore(subTree, blobs, storage));
+            treePs.push(this.serializeTreeCore(subTree, blobs, storage));
         }
         for (const id of Object.values(tree.blobs)) {
-            let blob;
-            if ((tree as any).blobsContents) {
-                // TODO: ISnapshotTreeWithBlobContents needs to be exported from container to avoid this type assertion
-                // (this is the format used in detached container since there is no storage)
-                blob = (tree as any).blobsContents[id];
-            } else {
-                blob = await storage.readBlob(id);
-            }
-            assert(blob, "unable to serialize blob");
+            const blob = await storage.readBlob(id);
             // ArrayBufferLike will not survive JSON.stringify()
             blobs[id] = bufferToString(blob, "utf8");
         }
         return Promise.all(treePs);
+    }
+
+    public static serializeTreeWithBlobContents(
+        snapshot: ISnapshotTree,
+    ): ISerializedBaseSnapshotBlobs {
+        const blobs = {};
+        this.serializeTreeWithBlobContentsCore(snapshot, blobs);
+        return blobs;
+    }
+
+    private static serializeTreeWithBlobContentsCore(
+        tree: ISnapshotTree,
+        blobs: ISerializedBaseSnapshotBlobs,
+    ) {
+        // TODO: ISnapshotTreeWithBlobContents needs to be exported from container to avoid this type assertion
+        // (this is the format used in detached container since there is no storage)
+        const blobsContents: {[path: string]: ArrayBufferLike} = (tree as any).blobsContents;
+        assert(!!blobsContents, "Tree must have blob contents");
+        for (const subTree of Object.values(tree.trees)) {
+            this.serializeTreeWithBlobContentsCore(subTree, blobs);
+        }
+        for (const id of Object.values(tree.blobs)) {
+            const blob = blobsContents[id];
+            assert(!!blob, "Blob must be present in blobsContents");
+            // ArrayBufferLike will not survive JSON.stringify()
+            blobs[id] = bufferToString(blob, "utf8");
+        }
     }
 
     private _storage?: IDocumentStorageService;

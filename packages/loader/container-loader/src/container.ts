@@ -760,10 +760,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public closeAndGetPendingLocalState(): string {
-        throw new Error("TODO: this needs to be made async in container-definitions");
-    }
-
-    public async closeAndGetPendingLocalStateAsync(): Promise<string> {
         // runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
         // container at the same time we get pending state, otherwise this container could reconnect and resubmit with
         // a new clientId and a future container using stale pending state without the new clientId would resubmit them
@@ -773,7 +769,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             0x0d2 /* "resolved url should be valid Fluid url" */);
         assert(!!this._protocolHandler, "Must have a valid protocol handler instance");
         const pendingState: IPendingContainerState = {
-            pendingRuntimeState: await this.context.getPendingLocalState(),
+            pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
             protocol: this._protocolHandler.getProtocolState(),
             term: this._protocolHandler.term,

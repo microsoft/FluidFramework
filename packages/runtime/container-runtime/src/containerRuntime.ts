@@ -850,6 +850,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             pendingRuntimeState.savedOps = [];
         }
 
+        await runtime.getSnapshotBlobs();
+
         return runtime;
     }
 
@@ -952,6 +954,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _connected: boolean;
 
     private readonly savedOps: ISequencedDocumentMessage[] = [];
+    private baseSnapshotBlobs?: ISerializedBaseSnapshotBlobs;
 
     private consecutiveReconnects = 0;
 
@@ -2690,10 +2693,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
     }
 
-    public async getPendingLocalState(): Promise<IPendingRuntimeState> {
+    public notifyAttaching(snapshot: ISnapshotTree) {
+        if (this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) {
+            this.baseSnapshotBlobs = SerializedSnapshotStorage.serializeTreeWithBlobContents(snapshot);
+        }
+    }
+
+    public async getSnapshotBlobs(): Promise<void> {
+        if (!(this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) ||
+            this.attachState !== AttachState.Attached || this.context.pendingLocalState) {
+            return;
+        }
+        assert(!!this.context.baseSnapshot, "Must have a base snapshot");
+        this.baseSnapshotBlobs = await SerializedSnapshotStorage.serializeTree(this.context.baseSnapshot, this.storage);
+    }
+
+    public getPendingLocalState(): IPendingRuntimeState {
         if (!(this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad)) {
             throw new UsageError("can't get state when offline load disabled");
         }
+
         const previousPendingState = this.context.pendingLocalState as IPendingRuntimeState | undefined;
         if (previousPendingState) {
             return {
@@ -2704,9 +2723,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             };
         }
         assert(!!this.context.baseSnapshot, "Must have a base snapshot");
+        assert(!!this.baseSnapshotBlobs, "Must serialize base snapshot blobs before getting runtime state");
         return {
             pending: this.pendingStateManager.getLocalState(),
-            snapshotBlobs: await SerializedSnapshotStorage.serialize(this.context.baseSnapshot, this.storage),
+            snapshotBlobs: this.baseSnapshotBlobs,
             baseSnapshot: this.context.baseSnapshot,
             savedOps: this.savedOps,
         };
