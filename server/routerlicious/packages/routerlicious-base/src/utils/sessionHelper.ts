@@ -7,6 +7,9 @@ import { IDocumentSession, ISession } from "@fluidframework/server-services-clie
 import { IDocument, ICollection } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
+/**
+ * Return to the caller with the status of the session.
+ */
 export async function getSession(ordererUrl: string,
     historianUrl: string,
     tenantId: string,
@@ -36,8 +39,8 @@ export async function getSession(ordererUrl: string,
             lumberjackProperties);
     }
 
-    const deli = JSON.parse(tempDocument.deli);
-    const scribe = JSON.parse(tempDocument.scribe);
+    let tempDeli = tempDocument.deli;
+    let tempScribe = tempDocument.scribe;
     let hasSessionLocationChanged: boolean = false;
     const isSessionAlive: boolean = tempSession !== undefined ? tempSession.isSessionAlive : true;
     if (tempSession !== null && !tempSession.isSessionAlive) {
@@ -46,28 +49,34 @@ export async function getSession(ordererUrl: string,
             (tempSession.historianUrl !== null && tempSession.historianUrl !== historianUrl)) {
             Lumberjack.info(`Reset logOffset, ordererUrl, and historianUrl when switching cluster.`,
                 lumberjackProperties);
+            const deli = JSON.parse(tempDeli);
             deli.logOffset = -1;
+            tempDeli = JSON.stringify(deli);
             tempSession.ordererUrl = ordererUrl;
             tempSession.historianUrl = historianUrl;
             hasSessionLocationChanged = true;
             if (tempDocument.scribe !== "") {
+                const scribe = JSON.parse(tempScribe);
                 scribe.logOffset = -1;
+                tempScribe = JSON.stringify(scribe);
             }
         }
+
+        // Update the status to isSessionAlive, since the session is now active.
         tempSession.isSessionAlive = true;
         await documentsCollection.upsert(
             {
                 documentId,
             },
             {
-                deli: JSON.stringify(deli),
-                scribe: JSON.stringify(scribe),
+                deli: tempDeli,
+                scribe: tempScribe,
                 session: tempSession,
             },
             {});
     }
 
-    // Assign the actual isSessionAlive flag to the returning documentSession
+    // The tempSession.isSessionAlive would be updated as whether the session was alive before the request came.
     tempSession.isSessionAlive = isSessionAlive;
     const documentSession: IDocumentSession = {
         id: documentId,
