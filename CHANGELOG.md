@@ -1,5 +1,20 @@
 # Change Log
 
+## 30.10.1
+
+* build: update package dependencies
+  * Associated pull request: [39282](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39282)
+  * Commit: [f36415518e76d910e1b8d82743ae2612569b717f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f36415518e76d910e1b8d82743ae2612569b717f)
+* refactor: Rewrite Summary compatibility test suite
+  * Associated pull request: [39230](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39230)
+  * Commit: [fa57adff8db8adda80b3cce4f2ce546e3f39a8b5](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/fa57adff8db8adda80b3cce4f2ce546e3f39a8b5)
+* feat: Compress edit chunks
+  * Associated pull request: [39145](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39145)
+  * Commit: [5633a8256bce65be2ee3acfc33b7211b46b06c48](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/5633a8256bce65be2ee3acfc33b7211b46b06c48)
+* fix: Sequential uuids passed as overrides are correctly deduplicated
+  * Associated pull request: [39062](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39062)
+  * Commit: [ab8b111d87cf049459a36c3c6548cf40caf8f45c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ab8b111d87cf049459a36c3c6548cf40caf8f45c)
+
 ## 30.6.0
 
 * improvement: Resubmit old-versioned ops concurrent to an upgrade op
