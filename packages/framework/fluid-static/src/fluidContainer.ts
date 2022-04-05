@@ -74,7 +74,7 @@ export interface IFluidContainerEvents extends IEvent {
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
      * Whether the container is connected to the collaboration session.
-     * @deprecated - 0.58, This API will be removed in 0.60.0
+     * @deprecated - 0.58, This API will be removed in 1.0
      * Check `connectionState === ConnectionState.Connected` instead
      * See https://github.com/microsoft/FluidFramework/issues/9167 for context
      */
