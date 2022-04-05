@@ -24,6 +24,14 @@ import {
 import { hasErrorInstanceId, IFluidErrorBase, isFluidError, isValidLegacyError } from "../fluidErrorBase";
 import { MockLogger } from "../mockLogger";
 
+class TestLoggingError extends LoggingError {
+    errorType: string = "testError";
+
+    constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>) {
+        super(message, props, omitPropsFromLogging);
+    }
+}
+
 describe("Error Logging", () => {
     describe("TelemetryLogger.prepareErrorObject", () => {
         function freshEvent(): ITelemetryBaseEvent {
@@ -229,7 +237,7 @@ describe("Error Logging", () => {
     });
     describe("LoggingError", () => {
         it("ctor props are assigned to the object", () => {
-            const loggingError = new LoggingError(
+            const loggingError = new TestLoggingError(
                 "myMessage",
                 { p1: 1, p2: "two", p3: true, tagged: { value: 4, tag: "PackageData" } });
             const errorAsAny = loggingError as any;
@@ -240,14 +248,14 @@ describe("Error Logging", () => {
             assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: "PackageData" });
         });
         it("errorInstanceId unique each time", () => {
-            const e1 = new LoggingError("1");
-            const e2 = new LoggingError("2");
+            const e1 = new TestLoggingError("1");
+            const e2 = new TestLoggingError("2");
             assert.equal(e1.errorInstanceId.length, 36, "should be guid-length");
             assert.equal(e2.errorInstanceId.length, 36, "should be guid-length");
             assert.notEqual(e1.errorInstanceId, e2.errorInstanceId, "each error instance should get unique id");
         });
         it("getTelemetryProperties extracts all untagged ctor props", () => {
-            const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
+            const loggingError = new TestLoggingError("myMessage", { p1: 1, p2: "two", p3: true });
             const props = loggingError.getTelemetryProperties();
             assert.strictEqual(props.message, "myMessage");
             assert.strictEqual(typeof props.stack, "string");
@@ -257,7 +265,7 @@ describe("Error Logging", () => {
             assert.strictEqual(props.p3, true);
         });
         it("getTelemetryProperties respects omitPropsFromLogging", () => {
-            const loggingError = new LoggingError("myMessage", {}, new Set(["foo"]));
+            const loggingError = new TestLoggingError("myMessage", {}, new Set(["foo"]));
             (loggingError as any).foo = "secrets!";
             (loggingError as any).bar = "normal";
             const props = loggingError.getTelemetryProperties();
@@ -266,7 +274,7 @@ describe("Error Logging", () => {
             assert.strictEqual(props.bar, "normal", "bar should not be omitted");
         });
         it("addTelemetryProperties - adds to object, returned from getTelemetryProperties, overwrites", () => {
-            const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
+            const loggingError = new TestLoggingError("myMessage", { p1: 1, p2: "two", p3: true });
             (loggingError as any).p1 = "should not be overwritten";
             loggingError.addTelemetryProperties(
                 { p1: "ignored", p4: 4, p5: { value: 5, tag: "PackageData" } });
@@ -280,7 +288,7 @@ describe("Error Logging", () => {
             assert.deepStrictEqual(errorAsAny.p5, { value: 5, tag: "PackageData" });
         });
         it("Set valid props via 'as any' - returned from getTelemetryProperties, overwrites", () => {
-            const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
+            const loggingError = new TestLoggingError("myMessage", { p1: 1, p2: "two", p3: true });
             loggingError.addTelemetryProperties({ p1: "should be overwritten" });
             const errorAsAny = loggingError as any;
             errorAsAny.p1 = "one";
@@ -294,7 +302,7 @@ describe("Error Logging", () => {
             assert.deepStrictEqual(props.pii6, { value: 5, tag: "UserData" });
         });
         it("Set invalid props via 'as any' - excluded from getTelemetryProperties, overwrites", () => {
-            const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
+            const loggingError = new TestLoggingError("myMessage", { p1: 1, p2: "two", p3: true });
             const errorAsAny = loggingError as any;
             errorAsAny.p1 = { one: 1 };
             errorAsAny.p4 = null;
@@ -305,16 +313,16 @@ describe("Error Logging", () => {
             assert.strictEqual(props.p5, "REDACTED (arbitrary object)");
         });
         it("addTelemetryProperties - Does not overwrite base class Error fields (untagged)", () => {
-            const loggingError = new LoggingError("myMessage");
+            const loggingError = new TestLoggingError("myMessage");
             const propsWillBeIgnored = { message: "surprise1", stack: "surprise2" };
             loggingError.addTelemetryProperties(propsWillBeIgnored);
             const props = loggingError.getTelemetryProperties();
             delete props.fluidErrorCode; // It's on there for back compat, not trying to test it here
-            const { message, stack, errorInstanceId } = loggingError;
-            assert.deepStrictEqual(props, { message, stack, errorInstanceId }, "addTelemetryProperties should not overwrite existing props");
+            const { message, stack, errorInstanceId, errorType } = loggingError;
+            assert.deepStrictEqual(props, { message, stack, errorInstanceId, errorType }, "addTelemetryProperties should not overwrite existing props");
         });
         it("addTelemetryProperties - Does not overwrite base class Error fields (tagged)", () => {
-            const loggingError = new LoggingError("myMessage");
+            const loggingError = new TestLoggingError("myMessage");
             const propsWillBeIgnored = {
                 message: { value: "Mark Fields", tag: "UserData" },
                 stack: { value: "surprise2", tag: "PackageData" },
@@ -322,11 +330,11 @@ describe("Error Logging", () => {
             loggingError.addTelemetryProperties(propsWillBeIgnored);
             const props = loggingError.getTelemetryProperties();
             delete props.fluidErrorCode; // It's on there for back compat, not trying to test it here
-            const { message, stack, errorInstanceId } = loggingError;
-            assert.deepStrictEqual(props, { message, stack, errorInstanceId }, "addTelemetryProperties should not overwrite existing props");
+            const { message, stack, errorInstanceId, errorType } = loggingError;
+            assert.deepStrictEqual(props, { message, stack, errorInstanceId, errorType }, "addTelemetryProperties should not overwrite existing props");
         });
         it("addTelemetryProperties - Does not overwrite existing telemetry props", () => {
-            const loggingError = new LoggingError("myMessage", { p1: 1 });
+            const loggingError = new TestLoggingError("myMessage", { p1: 1 });
             loggingError.addTelemetryProperties({ p1: "one" });
             assert(loggingError.getTelemetryProperties().p1 === 1);
             loggingError.addTelemetryProperties({ p1: "uno" });
@@ -540,10 +548,6 @@ describe("normalizeError", () => {
                 input: new NamedError("boom"),
                 expectedOutput: typicalOutput("boom", "<<stack from input>>"),
             }),
-            "LoggingError": () => ({
-                input: new LoggingError("boom"),
-                expectedOutput: typicalOutput("boom", "<<stack from input>>"),
-            }),
             "Empty object": () => ({
                 input: {},
                 expectedOutput: typicalOutput("[object Object]", "<<natural stack>>"),
@@ -669,43 +673,51 @@ describe("normalizeError", () => {
     });
 });
 
+// Create an error missing errorType that will not be recognized as a valid Fluid error
+const createExternalError = (m) =>
+Object.assign(new TestLoggingError(m), {
+    errorType: undefined,
+});
+
+const createTestError = (m) => new TestLoggingError(m);
+
 describe("wrapError", () => {
-    it("Copy message and stack", () => {
-        const innerError = new LoggingError("hello");
+    it("Copy message and stack but not props", () => {
+        const innerError = new TestLoggingError("hello", { someProp: 123 });
         innerError.stack = "extra special stack";
-        const newError = wrapError(innerError, (message) => new LoggingError(message));
+        const newError = wrapError(innerError, createTestError);
         assert.equal(newError.message, innerError.message, "messages should match");
         assert.equal(newError.stack, innerError.stack, "stacks should match");
+        assert.equal(newError.getTelemetryProperties().someProp, undefined, "Props shouldn't be brought over");
     });
     it("Include matching errorInstanceId and innerErrorInstanceId in telemetry props", () => {
-        const innerError = new LoggingError("hello");
-        const newError = wrapError(innerError, (message) => new LoggingError(message));
+        const innerError = new TestLoggingError("hello");
+        const newError = wrapError(innerError, createTestError);
         assert(newError.errorInstanceId === innerError.errorInstanceId);
         assert(newError.getTelemetryProperties().innerErrorInstanceId === innerError.errorInstanceId);
     });
     it("Properly set untrustedOrigin", () => {
-        const untrustedError = new LoggingError("untrusted");
+        const untrustedError = createExternalError("untrusted");
 
-        const singleWrapped = wrapError(untrustedError, (message) => new LoggingError(message));
+        const singleWrapped = wrapError(untrustedError, createTestError);
         assert(singleWrapped.getTelemetryProperties().untrustedOrigin === 1);
 
-        const doubleWrapped = wrapError(singleWrapped, (message) => new LoggingError(message));
+        const doubleWrapped = wrapError(singleWrapped, createTestError);
         assert(doubleWrapped.getTelemetryProperties().untrustedOrigin === 1);
 
         const normalizedError = normalizeError(untrustedError);
-        const wrappedNormalized = wrapError(normalizedError, (message) => new LoggingError(message));
+        const wrappedNormalized = wrapError(normalizedError, createTestError);
         assert(wrappedNormalized.getTelemetryProperties().untrustedOrigin === 1);
 
-        const trustedError = new LoggingError("trusted");
-        Object.assign(trustedError, { errorType: "someErrorType" });
-        const wrappedTrusted = wrapError(trustedError, (message) => new LoggingError(message));
+        const trustedError = new TestLoggingError("trusted");
+        const wrappedTrusted = wrapError(trustedError, createTestError);
         assert(wrappedTrusted.getTelemetryProperties().untrustedOrigin === undefined);
     });
 });
 describe("wrapErrorAndLog", () => {
     const mockLogger = new MockLogger();
-    const innerError = new LoggingError("hello");
-    const newError = wrapErrorAndLog(innerError, (message) => new LoggingError(message), mockLogger);
+    const innerError = new TestLoggingError("hello");
+    const newError = wrapErrorAndLog(innerError, createTestError, mockLogger);
     assert(mockLogger.matchEvents([{
         eventName: "WrapError",
         wrappedByErrorInstanceId: newError.errorInstanceId,
@@ -715,14 +727,11 @@ describe("wrapErrorAndLog", () => {
 });
 
 describe("Error Discovery", () => {
-    const createTestError = (m) =>
-        Object.assign(new LoggingError(m), {
-            errorType: "someErrorType",
-        });
     it("isExternalError", () => {
         assert(isExternalError("some string"));
-        assert(isExternalError(new LoggingError("error message")));
+        assert(isExternalError(createExternalError("error message")));
         assert(isExternalError(normalizeError("normalize me but I'm still external")));
+        assert(isExternalError(normalizeError(createExternalError("normalize me but I'm still external"))));
 
         assert(!isExternalError(createTestError("hello")));
 
@@ -732,7 +741,7 @@ describe("Error Discovery", () => {
     });
     it("originatedAsExternalError", () => {
         assert(originatedAsExternalError("some string"));
-        assert(originatedAsExternalError(new LoggingError("error message")));
+        assert(originatedAsExternalError(createExternalError("error message")));
         assert(originatedAsExternalError(normalizeError("normalize me but I'm still external")));
 
         assert(!originatedAsExternalError(createTestError("hello")));
@@ -741,20 +750,23 @@ describe("Error Discovery", () => {
         assert(originatedAsExternalError(wrappedError));
     });
     it("isValidLegacyError", () => {
-        assert(!isValidLegacyError(new LoggingError("hello")));
-        assert(isValidLegacyError(Object.assign(new LoggingError("hello"), { errorType: "someErrorType" })));
+        assert(!isValidLegacyError(createExternalError("hello")));
+        assert(isValidLegacyError(Object.assign(createExternalError("hello"), { errorType: "someErrorType" })));
     });
     it("isFluidError", () => {
-        assert(!isFluidError(new Error("hello")));
-        assert(!isFluidError(new LoggingError("hello")));
-
-        const errorType = "someErrorType";
+        assert(!isFluidError(new Error("hello")),
+            "Plain Error object is not a Fluid Error");
         assert(!isFluidError(
-            Object.assign(new LoggingError("hello"), { errorType, _errorInstanceId: undefined }),
-        ));
+                Object.assign(new Error("hello"), { errorType: "someErrorType", _errorInstanceId: "12345" }),
+            ), "Error with errorType and errorInstanceId but without telemetry prop fns is not a Fluid Error");
+        assert(!isFluidError(createExternalError("hello")),
+            "TestFluidError without errorType is not a Fluid Error");
+        assert(!isFluidError(
+                Object.assign(createTestError("hello"), { _errorInstanceId: undefined }),
+            ), "TestFluidError without errorInstanceId is not a Fluid Error");
         assert(isFluidError(
-            Object.assign(new LoggingError("hello"), { errorType }),
-        ));
+                createTestError("hello"),
+            ), "TestFluidError is a Fluid Error");
     });
     // I copied the old version of isFluidError here, it depends on fluidErrorCode.
     // I want to make sure that an error built on LoggingError that otherwise matches isFluidError
@@ -770,15 +782,18 @@ describe("Error Discovery", () => {
             hasTelemetryPropFunctions(e);
     }
     it("isFluidError (old implementation)", () => {
-        assert(!isFluidError_old(new Error("hello")));
-        assert(!isFluidError_old(new LoggingError("hello")));
-
-        const errorType = "someErrorType";
+        assert(!isFluidError_old(new Error("hello")),
+            "Plain Error object is not a Fluid Error");
         assert(!isFluidError_old(
-            Object.assign(new LoggingError("hello"), { errorType, _errorInstanceId: undefined }),
-        ));
+                Object.assign(new Error("hello"), { errorType: "someErrorType", _errorInstanceId: "12345" }),
+            ), "Error with errorType and errorInstanceId but without telemetry prop fns is not a Fluid Error");
+        assert(!isFluidError_old(createExternalError("hello")),
+            "TestFluidError without errorType is not a Fluid Error");
+        assert(!isFluidError_old(
+                Object.assign(createTestError("hello"), { _errorInstanceId: undefined }),
+            ), "TestFluidError without errorInstanceId is not a Fluid Error");
         assert(isFluidError_old(
-            Object.assign(new LoggingError("hello"), { errorType }),
-        ));
+                createTestError("hello"),
+            ), "TestFluidError is a Fluid Error");
     });
 });
