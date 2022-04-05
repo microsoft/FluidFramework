@@ -956,7 +956,7 @@ export namespace ScenarioG {
 		}],
 	};
 
-	export const e4neg:  Sq.ChangeFrame = {
+	export const e4neg: Sq.ChangeFrame = {
 		ref: 0,
 		minSeq: -4,
 		maxSeq: -4,
@@ -970,7 +970,7 @@ export namespace ScenarioG {
 		}],
 	};
 
-	export const e4pos:  Sq.ChangeFrame = {
+	export const e4pos: Sq.ChangeFrame = {
 		ref: 0,
 		minSeq: 4,
 		maxSeq: 4,
@@ -984,7 +984,7 @@ export namespace ScenarioG {
 		}],
 	};
 
-	export const e4posp:  Sq.ChangeFrame = {
+	export const e4posp: Sq.ChangeFrame = {
 		ref: 0,
 		minSeq: 4,
 		maxSeq: 4,

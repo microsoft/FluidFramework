@@ -9,7 +9,7 @@ export function deepFreeze<T>(object: T): void {
 	// Freeze properties before freezing self
 	for (const name of propNames) {
 		const value = object[name];
-		if (value && typeof value === "object") {
+		if (typeof value === "object") {
 			deepFreeze(value);
 		}
 	}
