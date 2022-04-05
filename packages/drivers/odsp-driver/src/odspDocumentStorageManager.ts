@@ -221,7 +221,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
         private readonly flushCallback: () => Promise<FlushResult>,
-        private readonly disableTreesLatestForBinaryWireFormat?: boolean,
     ) {
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
@@ -600,7 +599,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.hostPolicy.fetchBinarySnapshotFormat,
                 controller,
                 this.epochTracker,
-                this.disableTreesLatestForBinaryWireFormat,
             );
         };
         const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {

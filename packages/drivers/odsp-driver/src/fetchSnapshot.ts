@@ -22,7 +22,6 @@ import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
     fetchAndParseAsJSONHelper,
-    fetchArray,
     fetchHelper,
     getWithRetryForTokenRefresh,
     getWithRetryForTokenRefreshRepeat,
@@ -363,46 +362,6 @@ interface ISnapshotRequestAndResponseOptions {
     requestHeaders: {[index: string]: any},
 }
 
-/**
- * This function fetches the binary compact snapshot format. This is an experimental feature
- * and is behind a feature flag.
- * @param odspResolvedUrl - resolved odsp url.
- * @param storageToken - token to do the auth for network request.
- * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
- * @param controller - abort controller if caller needs to abort the network call.
- * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
- * @returns fetched snapshot.
- */
-async function fetchSnapshotContentsCoreV2(
-    odspResolvedUrl: IOdspResolvedUrl,
-    storageToken: string,
-    snapshotOptions: ISnapshotOptions | undefined,
-    controller?: AbortController,
-    epochTracker?: EpochTracker,
-): Promise<ISnapshotRequestAndResponseOptions> {
-    const fullUrl = `${odspResolvedUrl.siteUrl}/_api/v2.1/drives/${odspResolvedUrl.driveId}/items/${
-        odspResolvedUrl.itemId}/opStream/attachments/latest/content?ump=1`;
-
-    const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, snapshotOptions);
-    const fetchOptions = {
-        body,
-        headers,
-        signal: controller?.signal,
-        method: "POST",
-    };
-
-    const response = await (epochTracker?.fetchArray(fullUrl, fetchOptions, "treesLatest", true) ??
-        fetchArray(fullUrl, fetchOptions));
-    const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
-        new ReadBuffer(new Uint8Array(response.content)));
-    const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
-    return {
-        odspSnapshotResponse: finalSnapshotContents,
-        requestHeaders: headers,
-        requestUrl: fullUrl,
-    };
-}
-
 function getFormBodyAndHeaders(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
@@ -472,7 +431,6 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
  * @param fetchBinarySnapshotFormat - whether to fetch binary snapshot or not.
  * @param controller - abort controller if caller needs to abort the network call.
  * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
- * @param disableTreesLatestForBinaryWireFormat - whether to disable trees/latest to fetch binary wire format
  * @returns fetched snapshot.
  */
 export async function downloadSnapshot(
@@ -483,18 +441,11 @@ export async function downloadSnapshot(
     fetchBinarySnapshotFormat?: boolean,
     controller?: AbortController,
     epochTracker?: EpochTracker,
-    disableTreesLatestForBinaryWireFormat?: boolean,
 ): Promise<ISnapshotRequestAndResponseOptions> {
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
     if(sharingLinkToRedeem) {
         odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
-    }
-
-    // If fetchBinarySnapshotFormat is true but we don't want to use trees latest for this, then we go into this flow
-    // of fetching binary wire format with /content api.
-    if (fetchBinarySnapshotFormat && disableTreesLatestForBinaryWireFormat) {
-        return fetchSnapshotContentsCoreV2(odspResolvedUrl, storageToken, snapshotOptions, controller, epochTracker);
     }
 
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
