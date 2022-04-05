@@ -1,0 +1,488 @@
+{
+	"currentTree": {
+		"definition": "51c58718-47b9-4fe4-ad46-56312f3b9e86",
+		"identifier": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
+		"traits": {
+			"9fb233f7-1df3-5149-b525-45294bbd2910": [
+				{
+					"definition": "90f50da8-a3be-5a7d-a50d-e61819b122ac",
+					"identifier": "ba81d725-efb5-52b7-be54-82e7627b5442",
+					"traits": {
+						"2d33035c-45d4-5179-83e6-8b0cb3d83ad3": [
+							{
+								"definition": "2b0ffe68-4174-543e-99ad-0f52b1e3166d",
+								"identifier": "f5b0150f-e13c-5541-9463-f99ed99e6e6f",
+								"traits": {
+									"9fb233f7-1df3-5149-b525-45294bbd2910": [
+										{
+											"definition": "c01033e4-ec8e-53bd-aca9-93ea05efcc04",
+											"identifier": "d545ce70-2848-538f-b691-ca4a55aad555",
+											"traits": {}
+										},
+										{
+											"definition": "c01033e4-ec8e-53bd-aca9-93ea05efcc04",
+											"identifier": "5bbd22bd-931d-5a1f-a206-4840d8815d78",
+											"traits": {}
+										},
+										{
+											"definition": "072e66e5-0626-5a76-9a98-3225d6eb6fb2",
+											"identifier": "66c6b130-143a-58fa-a011-6561908caff3",
+											"traits": {}
+										},
+										{
+											"definition": "5e24f32a-f495-5f5c-a9e7-5b190c00610b",
+											"identifier": "314a27fb-295e-5788-9c98-54600b5384f6",
+											"traits": {}
+										}
+									]
+								}
+							}
+						],
+						"f23a1761-2709-5768-8536-c91afda752f2": [
+							{
+								"definition": "eaa12219-2ba7-5b59-9dc9-0543f63c4681",
+								"identifier": "341ff29c-e655-5c19-81c7-42d0148cb0a0",
+								"traits": {}
+							}
+						]
+					}
+				}
+			],
+			"f23a1761-2709-5768-8536-c91afda752f2": [
+				{
+					"definition": "2cdcee95-4171-5d61-b0c5-dac3a67e29dd",
+					"identifier": "c2639367-e8f7-563d-939f-8f1320363f92",
+					"traits": {}
+				},
+				{
+					"definition": "072e66e5-0626-5a76-9a98-3225d6eb6fb2",
+					"identifier": "d3bb40ea-5a2a-5214-b439-cdcafd6ed8db",
+					"traits": {}
+				},
+				{
+					"definition": "e7cd47df-e706-55b8-b090-f5722d2cbe33",
+					"identifier": "97424f4a-cd4b-55e8-a931-6fb87a746270",
+					"traits": {}
+				},
+				{
+					"definition": "9fab6d82-d35f-594d-9b48-f1ed9daf07b1",
+					"identifier": "1670fec9-7417-51f7-b214-e16493d48988",
+					"traits": {
+						"f774becb-124d-57e0-8cf2-823e5b34ad68": [
+							{
+								"definition": "ca9eb398-8ce8-581f-b951-7030d9c6f0ee",
+								"identifier": "162980bc-a685-5105-930f-57292f9bdee5",
+								"traits": {}
+							},
+							{
+								"definition": "ca9eb398-8ce8-581f-b951-7030d9c6f0ee",
+								"identifier": "0db53e58-cc4f-5da1-9f03-410a9e4d109d",
+								"traits": {}
+							},
+							{
+								"definition": "e7cd47df-e706-55b8-b090-f5722d2cbe33",
+								"identifier": "f9f486e2-2c71-5b33-8122-3b060a0a2958",
+								"traits": {}
+							},
+							{
+								"definition": "2cdcee95-4171-5d61-b0c5-dac3a67e29dd",
+								"identifier": "0f23889e-ff08-5660-bbff-77168d08ac69",
+								"traits": {}
+							},
+							{
+								"definition": "c01033e4-ec8e-53bd-aca9-93ea05efcc04",
+								"identifier": "6e8a8596-acc3-591f-81a8-134e33d497d8",
+								"traits": {}
+							}
+						]
+					}
+				},
+				{
+					"definition": "5e24f32a-f495-5f5c-a9e7-5b190c00610b",
+					"identifier": "01b07622-f821-5afe-9133-cb9479f8f8d3",
+					"traits": {}
+				},
+				{
+					"definition": "ed50671b-58cb-5f2c-92bb-2be78a31af7c",
+					"identifier": "180c40ae-24ed-5a33-93d6-27c96d0a1895",
+					"traits": {
+						"e80c15b8-059b-56a5-9a3f-5638e1a56316": [
+							{
+								"definition": "ed50671b-58cb-5f2c-92bb-2be78a31af7c",
+								"identifier": "d170a0a2-ad93-5569-8c1e-53faec29048c",
+								"traits": {}
+							}
+						]
+					}
+				},
+				{
+					"definition": "e4b2faa3-5e18-5259-8eb3-20d9fe670294",
+					"identifier": "d59776c1-41b2-55c8-97df-54ec47a28413",
+					"traits": {}
+				},
+				{
+					"definition": "9fab6d82-d35f-594d-9b48-f1ed9daf07b1",
+					"identifier": "b5af70ae-a487-58c2-aa79-33a496b4b9ef",
+					"traits": {
+						"6ce0dce0-6747-5bfe-9a57-91c416313023": [
+							{
+								"definition": "e8decff2-d839-5d0d-9af7-d304d68f2799",
+								"identifier": "ca0f5a0b-63b5-5575-ad81-cb30d80bc3a4",
+								"traits": {
+									"f774becb-124d-57e0-8cf2-823e5b34ad68": [
+										{
+											"definition": "072e66e5-0626-5a76-9a98-3225d6eb6fb2",
+											"identifier": "6e1729aa-60a1-5c7c-9d0e-3c655fcb7306",
+											"traits": {}
+										}
+									]
+								}
+							}
+						]
+					}
+				},
+				{
+					"definition": "e7cd47df-e706-55b8-b090-f5722d2cbe33",
+					"identifier": "cc4eac9b-57a8-5262-a70d-f695b107aa4b",
+					"traits": {
+						"23ade7fd-eab6-5fa3-baa8-b1bef4386879": [
+							{
+								"definition": "90f50da8-a3be-5a7d-a50d-e61819b122ac",
+								"identifier": "51c342d7-a285-522e-9ebd-6cbedf6cfb9b",
+								"traits": {}
+							}
+						]
+					}
+				},
+				{
+					"definition": "ca9eb398-8ce8-581f-b951-7030d9c6f0ee",
+					"identifier": "c00703f8-285b-5f8d-bafd-54e81b25d702",
+					"traits": {}
+				},
+				{
+					"definition": "2cdcee95-4171-5d61-b0c5-dac3a67e29dd",
+					"identifier": "ffbcee94-6b4c-58ed-9785-423a1d57c76b",
+					"traits": {
+						"2545d0cf-3bf3-5fe9-984d-e9dda629a090": [
+							{
+								"definition": "22adc3f5-abec-5230-a427-a3182f149c73",
+								"identifier": "ea5cca55-5d37-56fb-8df1-6fa994098cc6",
+								"traits": {}
+							},
+							{
+								"definition": "2b0ffe68-4174-543e-99ad-0f52b1e3166d",
+								"identifier": "7fb4d7a4-c156-5727-87fc-9bfa58563491",
+								"traits": {}
+							},
+							{
+								"definition": "e7cd47df-e706-55b8-b090-f5722d2cbe33",
+								"identifier": "c20fd3d9-7f13-5192-b67e-8aa0aa21cc02",
+								"traits": {}
+							}
+						],
+						"2d33035c-45d4-5179-83e6-8b0cb3d83ad3": [
+							{
+								"definition": "e7cd47df-e706-55b8-b090-f5722d2cbe33",
+								"identifier": "9d1d4382-7054-5f3f-b9b5-80949e977698",
+								"traits": {}
+							},
+							{
+								"definition": "eaa12219-2ba7-5b59-9dc9-0543f63c4681",
+								"identifier": "ffdd9450-75a4-596c-8db7-f4171080a514",
+								"traits": {}
+							}
+						]
+					}
+				}
+			],
+			"d422fd0f-2604-5fed-beb5-e43b1ceaaa4b": [
+				{
+					"definition": "2b0ffe68-4174-543e-99ad-0f52b1e3166d",
+					"identifier": "11b677cd-2f0f-56de-bbcf-5e6e29aea1e5",
+					"traits": {}
+				}
+			],
+			"e6f8ee23-4a3a-5cd8-85ba-5d02677a1f52": [
+				{
+					"definition": "2b0ffe68-4174-543e-99ad-0f52b1e3166d",
+					"identifier": "5036e662-3524-5a48-a1b4-f9fdd2ed9889",
+					"traits": {}
+				}
+			]
+		}
+	},
+	"sequencedEdits": [
+		{
+			"id": "6fe63bbe-e42f-43da-bc8c-a200499182d1",
+			"changes": [
+				{
+					"destination": 0,
+					"source": [
+						{
+							"definition": "90f50da8-a3be-5a7d-a50d-e61819b122ac",
+							"identifier": "ba81d725-efb5-52b7-be54-82e7627b5442",
+							"traits": {
+								"2d33035c-45d4-5179-83e6-8b0cb3d83ad3": [
+									{
+										"definition": "2b0ffe68-4174-543e-99ad-0f52b1e3166d",
+										"identifier": "f5b0150f-e13c-5541-9463-f99ed99e6e6f",
+										"traits": {
+											"9fb233f7-1df3-5149-b525-45294bbd2910": [
+												{
+													"definition": "c01033e4-ec8e-53bd-aca9-93ea05efcc04",
+													"identifier": "d545ce70-2848-538f-b691-ca4a55aad555",
+													"traits": {}
+												},
+												{
+													"definition": "c01033e4-ec8e-53bd-aca9-93ea05efcc04",
+													"identifier": "5bbd22bd-931d-5a1f-a206-4840d8815d78",
+													"traits": {}
+												},
+												{
+													"definition": "072e66e5-0626-5a76-9a98-3225d6eb6fb2",
+													"identifier": "66c6b130-143a-58fa-a011-6561908caff3",
+													"traits": {}
+												},
+												{
+													"definition": "5e24f32a-f495-5f5c-a9e7-5b190c00610b",
+													"identifier": "314a27fb-295e-5788-9c98-54600b5384f6",
+													"traits": {}
+												}
+											]
+										}
+									}
+								],
+								"f23a1761-2709-5768-8536-c91afda752f2": [
+									{
+										"definition": "eaa12219-2ba7-5b59-9dc9-0543f63c4681",
+										"identifier": "341ff29c-e655-5c19-81c7-42d0148cb0a0",
+										"traits": {}
+									}
+								]
+							}
+						}
+					],
+					"type": 2
+				},
+				{
+					"destination": {
+						"side": 1,
+						"referenceTrait": {
+							"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
+							"label": "9fb233f7-1df3-5149-b525-45294bbd2910"
+						}
+					},
+					"source": 0,
+					"type": 0
+				},
+				{
+					"destination": 0,
+					"source": [
+						{
+							"definition": "2cdcee95-4171-5d61-b0c5-dac3a67e29dd",
+							"identifier": "c2639367-e8f7-563d-939f-8f1320363f92",
+							"traits": {}
+						},
+						{
+							"definition": "072e66e5-0626-5a76-9a98-3225d6eb6fb2",
+							"identifier": "d3bb40ea-5a2a-5214-b439-cdcafd6ed8db",
+							"traits": {}
+						},
+						{
+							"definition": "e7cd47df-e706-55b8-b090-f5722d2cbe33",
+							"identifier": "97424f4a-cd4b-55e8-a931-6fb87a746270",
+							"traits": {}
+						},
+						{
+							"definition": "9fab6d82-d35f-594d-9b48-f1ed9daf07b1",
+							"identifier": "1670fec9-7417-51f7-b214-e16493d48988",
+							"traits": {
+								"f774becb-124d-57e0-8cf2-823e5b34ad68": [
+									{
+										"definition": "ca9eb398-8ce8-581f-b951-7030d9c6f0ee",
+										"identifier": "162980bc-a685-5105-930f-57292f9bdee5",
+										"traits": {}
+									},
+									{
+										"definition": "ca9eb398-8ce8-581f-b951-7030d9c6f0ee",
+										"identifier": "0db53e58-cc4f-5da1-9f03-410a9e4d109d",
+										"traits": {}
+									},
+									{
+										"definition": "e7cd47df-e706-55b8-b090-f5722d2cbe33",
+										"identifier": "f9f486e2-2c71-5b33-8122-3b060a0a2958",
+										"traits": {}
+									},
+									{
+										"definition": "2cdcee95-4171-5d61-b0c5-dac3a67e29dd",
+										"identifier": "0f23889e-ff08-5660-bbff-77168d08ac69",
+										"traits": {}
+									},
+									{
+										"definition": "c01033e4-ec8e-53bd-aca9-93ea05efcc04",
+										"identifier": "6e8a8596-acc3-591f-81a8-134e33d497d8",
+										"traits": {}
+									}
+								]
+							}
+						},
+						{
+							"definition": "5e24f32a-f495-5f5c-a9e7-5b190c00610b",
+							"identifier": "01b07622-f821-5afe-9133-cb9479f8f8d3",
+							"traits": {}
+						},
+						{
+							"definition": "ed50671b-58cb-5f2c-92bb-2be78a31af7c",
+							"identifier": "180c40ae-24ed-5a33-93d6-27c96d0a1895",
+							"traits": {
+								"e80c15b8-059b-56a5-9a3f-5638e1a56316": [
+									{
+										"definition": "ed50671b-58cb-5f2c-92bb-2be78a31af7c",
+										"identifier": "d170a0a2-ad93-5569-8c1e-53faec29048c",
+										"traits": {}
+									}
+								]
+							}
+						},
+						{
+							"definition": "e4b2faa3-5e18-5259-8eb3-20d9fe670294",
+							"identifier": "d59776c1-41b2-55c8-97df-54ec47a28413",
+							"traits": {}
+						},
+						{
+							"definition": "9fab6d82-d35f-594d-9b48-f1ed9daf07b1",
+							"identifier": "b5af70ae-a487-58c2-aa79-33a496b4b9ef",
+							"traits": {
+								"6ce0dce0-6747-5bfe-9a57-91c416313023": [
+									{
+										"definition": "e8decff2-d839-5d0d-9af7-d304d68f2799",
+										"identifier": "ca0f5a0b-63b5-5575-ad81-cb30d80bc3a4",
+										"traits": {
+											"f774becb-124d-57e0-8cf2-823e5b34ad68": [
+												{
+													"definition": "072e66e5-0626-5a76-9a98-3225d6eb6fb2",
+													"identifier": "6e1729aa-60a1-5c7c-9d0e-3c655fcb7306",
+													"traits": {}
+												}
+											]
+										}
+									}
+								]
+							}
+						},
+						{
+							"definition": "e7cd47df-e706-55b8-b090-f5722d2cbe33",
+							"identifier": "cc4eac9b-57a8-5262-a70d-f695b107aa4b",
+							"traits": {
+								"23ade7fd-eab6-5fa3-baa8-b1bef4386879": [
+									{
+										"definition": "90f50da8-a3be-5a7d-a50d-e61819b122ac",
+										"identifier": "51c342d7-a285-522e-9ebd-6cbedf6cfb9b",
+										"traits": {}
+									}
+								]
+							}
+						},
+						{
+							"definition": "ca9eb398-8ce8-581f-b951-7030d9c6f0ee",
+							"identifier": "c00703f8-285b-5f8d-bafd-54e81b25d702",
+							"traits": {}
+						},
+						{
+							"definition": "2cdcee95-4171-5d61-b0c5-dac3a67e29dd",
+							"identifier": "ffbcee94-6b4c-58ed-9785-423a1d57c76b",
+							"traits": {
+								"2545d0cf-3bf3-5fe9-984d-e9dda629a090": [
+									{
+										"definition": "22adc3f5-abec-5230-a427-a3182f149c73",
+										"identifier": "ea5cca55-5d37-56fb-8df1-6fa994098cc6",
+										"traits": {}
+									},
+									{
+										"definition": "2b0ffe68-4174-543e-99ad-0f52b1e3166d",
+										"identifier": "7fb4d7a4-c156-5727-87fc-9bfa58563491",
+										"traits": {}
+									},
+									{
+										"definition": "e7cd47df-e706-55b8-b090-f5722d2cbe33",
+										"identifier": "c20fd3d9-7f13-5192-b67e-8aa0aa21cc02",
+										"traits": {}
+									}
+								],
+								"2d33035c-45d4-5179-83e6-8b0cb3d83ad3": [
+									{
+										"definition": "e7cd47df-e706-55b8-b090-f5722d2cbe33",
+										"identifier": "9d1d4382-7054-5f3f-b9b5-80949e977698",
+										"traits": {}
+									},
+									{
+										"definition": "eaa12219-2ba7-5b59-9dc9-0543f63c4681",
+										"identifier": "ffdd9450-75a4-596c-8db7-f4171080a514",
+										"traits": {}
+									}
+								]
+							}
+						}
+					],
+					"type": 2
+				},
+				{
+					"destination": {
+						"side": 1,
+						"referenceTrait": {
+							"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
+							"label": "f23a1761-2709-5768-8536-c91afda752f2"
+						}
+					},
+					"source": 0,
+					"type": 0
+				},
+				{
+					"destination": 0,
+					"source": [
+						{
+							"definition": "2b0ffe68-4174-543e-99ad-0f52b1e3166d",
+							"identifier": "11b677cd-2f0f-56de-bbcf-5e6e29aea1e5",
+							"traits": {}
+						}
+					],
+					"type": 2
+				},
+				{
+					"destination": {
+						"side": 1,
+						"referenceTrait": {
+							"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
+							"label": "d422fd0f-2604-5fed-beb5-e43b1ceaaa4b"
+						}
+					},
+					"source": 0,
+					"type": 0
+				},
+				{
+					"destination": 0,
+					"source": [
+						{
+							"definition": "2b0ffe68-4174-543e-99ad-0f52b1e3166d",
+							"identifier": "5036e662-3524-5a48-a1b4-f9fdd2ed9889",
+							"traits": {}
+						}
+					],
+					"type": 2
+				},
+				{
+					"destination": {
+						"side": 1,
+						"referenceTrait": {
+							"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
+							"label": "e6f8ee23-4a3a-5cd8-85ba-5d02677a1f52"
+						}
+					},
+					"source": 0,
+					"type": 0
+				}
+			]
+		}
+	],
+	"version": "0.0.2"
+}

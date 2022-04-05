@@ -8,6 +8,7 @@ import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils'
 import { assert } from '../Common';
 import { EditLog } from '../EditLog';
 import { SharedTree } from '../SharedTree';
+import { runSummaryLoadPerfTests } from './utilities/SummaryLoadPerfTests';
 import { createStableEdits, setUpTestSharedTree } from './utilities/TestUtilities';
 
 describe('SharedTree Perf', () => {
@@ -41,5 +42,5 @@ describe('SharedTree Perf', () => {
 		});
 	}
 
-	// TODO: Restore summary perf test suite, using sample summary/tree from fuzzing infrastructure.
+	runSummaryLoadPerfTests('Summary Load');
 });

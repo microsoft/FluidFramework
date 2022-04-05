@@ -199,6 +199,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	/**
 	 * Get a factory for SharedTree to register with the data store.
 	 * @param summarizeHistory - Determines if the history is included in summaries.
+	 * On 0.1.1 documents, due to current code limitations, all clients MUST agree on the value of this boolean.
+	 * Note that this means staged rollout changing this value should not be attempted.
+	 * It is possible to update shared-tree to correctly handle such a staged rollout, but that hasn't been implemented.
+	 * See the skipped test in SharedTreeFuzzTests.ts for more details on this issue.
 	 * @param writeFormat - Determines the format version the SharedTree will write summaries in.
 	 * This format may be updated to a newer (supported) version if a collaborating shared-tree is initialized
 	 * with a newer write version.
