@@ -98,6 +98,7 @@ Applications which wish to rely entirely on schema-on-read for some or all of th
 ## Use as `Stored Schema`
 
 -   Document load: The application can check that their view schema match stored schema, and check that the root has supported content.
+    See `checkCompatibility` in [Schema.ts](./Schema.ts) for an example of how this could work.
 -   Writers: When inserting new content, and updating modified nodes, share-tree can check them against the schema in the document.
     If the schema is missing, it must be added as part of the edit: for this the editing API needs to take in types which can have their desired stored schema queried.
 -   Change application can access schema information: changes can conflict if they violate schema (or maybe only check at end of transaction? Or at special marked places and at end?).
@@ -110,6 +111,7 @@ Applications which wish to rely entirely on schema-on-read for some or all of th
 ## Use as `View Schema`
 
 -   Document load: The application can check that their view schema match stored schema, and check that the root has supported content.
+    See `checkCompatibility` in [Schema.ts](./Schema.ts) for an example of how this could work.
 -   Let app provide handlers/converters to adapt data that does not match the desired view schema (ex: support old formats), and apply them through Schematize.
 
 ## Design-pattern apps can use to handle schema migrations
