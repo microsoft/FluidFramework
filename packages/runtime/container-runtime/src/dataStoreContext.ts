@@ -63,7 +63,7 @@ import {
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
-    LoggingError,
+    GenericFluidError,
     TelemetryDataTag,
     ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
@@ -319,7 +319,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
+        throw new GenericFluidError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {

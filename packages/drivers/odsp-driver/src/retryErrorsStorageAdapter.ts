@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { GenericFluidError } from "@fluidframework/telemetry-utils";
 import {
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
@@ -85,7 +85,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
     private checkStorageDisposed() {
         if (this._disposed) {
             // pre-0.58 error message: storageServiceDisposedCannotRetry
-            throw new LoggingError("Storage Service is disposed. Cannot retry", { canRetry: false });
+            throw new GenericFluidError("Storage Service is disposed. Cannot retry", { canRetry: false });
         }
     }
 

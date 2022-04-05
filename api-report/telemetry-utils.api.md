@@ -67,6 +67,13 @@ export function generateErrorWithStack(): Error;
 // @public (undocumented)
 export function generateStack(): string | undefined;
 
+// @public (undocumented)
+export class GenericFluidError extends LoggingError {
+    constructor(message: string, props?: ITelemetryProperties);
+    // (undocumented)
+    errorType: "genericError";
+}
+
 // @public
 export const getCircularReplacer: () => (key: string, value: any) => any;
 
@@ -156,11 +163,13 @@ export interface ITelemetryLoggerPropertyBags {
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(logger: L): MonitoringContext<L>;
 
 // @public
-export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
-    constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
+export abstract class LoggingError extends Error implements ILoggingError, IFluidErrorBase {
+    protected constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
     addTelemetryProperties(props: ITelemetryProperties): void;
     // (undocumented)
     get errorInstanceId(): string;
+    // (undocumented)
+    abstract errorType: string;
     getTelemetryProperties(): ITelemetryProperties;
     // (undocumented)
     overwriteErrorInstanceId(id: string): void;
