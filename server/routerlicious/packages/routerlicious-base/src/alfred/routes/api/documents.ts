@@ -35,7 +35,8 @@ export function create(
     tenantManager: ITenantManager,
     documentsCollection: ICollection<IDocument>): Router {
     const router: Router = Router();
-
+    const ordererUrl = config.get("worker:serverUrl");
+    const historianUrl = config.get("worker:blobStorageUrl");
     // Whether to enforce server-generated document ids in create doc flow
     const enforceServerGeneratedDocumentId: boolean = config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
 
@@ -75,7 +76,7 @@ export function create(
             singleUseTokenCache,
         }),
         throttle(throttler, winston, commonThrottleOptions),
-        (request, response, next) => {
+        async (request, response, next) => {
             // Tenant and document
             const tenantId = getParam(request.params, "tenantId");
             // If enforcing server generated document id, ignore id parameter
@@ -85,15 +86,6 @@ export function create(
 
             // Summary information
             const summary = request.body.summary;
-
-            // Session information
-            const ordererUrl = config.get("worker:serverUrl");
-            const historianUrl = config.get("worker:blobStorageUrl");
-            const session: ISession = {
-                ordererUrl,
-                historianUrl,
-                isSessionAlive: false,
-            };
 
             // Protocol state
             const { sequenceNumber, values, generateToken = false } = request.body;
@@ -109,37 +101,35 @@ export function create(
                 historianUrl,
                 values);
 
-            // Generate creation token given a jwt from header
             const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
-            const authorizationHeader = request.header("Authorization");
-            const tokenRegex = /Basic (.+)/;
-            const tokenMatch = tokenRegex.exec(authorizationHeader);
-            const token = tokenMatch[1];
 
-            const tenantKeyP = tenantManager.getKey(tenantId);
-
-            handleResponse(Promise.all([createP, tenantKeyP]).then(([_, key]) => {
-                // @TODO: Modify it to return an object only, it returns string for back-compat.
-                if (enableDiscovery && generateToken) {
-                    return {
-                        id,
-                        session,
-                        token: getCreationToken(token, key, id),
-                    };
-                } else if (enableDiscovery && !generateToken) {
-                    return {
-                        id,
-                        session,
-                    };
-                } else if (!enableDiscovery && generateToken) {
-                    return {
-                        id,
-                        token: getCreationToken(token, key, id),
-                    };
-                } else {
-                    return id;
-                }
-            }), response, undefined, 201);
+            // Handle backwards compatibility for older driver versions.
+            // TODO: remove condition once old drivers are phased out and all clients can handle object response
+            const clientAcceptsObjectResponse = enableDiscovery === true || generateToken === true;
+            if (clientAcceptsObjectResponse) {
+              const responseBody = { id, token: undefined, session: undefined };
+              if (generateToken) {
+                // Generate creation token given a jwt from header
+                const authorizationHeader = request.header("Authorization");
+                const tokenRegex = /Basic (.+)/;
+                const tokenMatch = tokenRegex.exec(authorizationHeader);
+                const token = tokenMatch[1];
+                const tenantKey = await tenantManager.getKey(tenantId);
+                responseBody.token = getCreationToken(token, tenantKey, id);
+              }
+              if (enableDiscovery) {
+                // Session information
+                const session: ISession = {
+                   ordererUrl,
+                   historianUrl,
+                   isSessionAlive: false,
+                 };
+                 responseBody.session = session;
+              }
+              handleResponse(createP.then(() => responseBody), response, undefined, 201);
+            } else {
+              handleResponse(createP.then(() => id), response, undefined, 201);
+            }
         });
 
     /**
@@ -152,8 +142,6 @@ export function create(
         async (request, response, next) => {
             const documentId = getParam(request.params, "id");
             const tenantId = getParam(request.params, "tenantId");
-            const ordererUrl = config.get("worker:serverUrl");
-            const historianUrl = config.get("worker:blobStorageUrl");
             const session = getSession(ordererUrl, historianUrl, tenantId, documentId, documentsCollection);
             handleResponse(session, response, undefined, 200);
         });
