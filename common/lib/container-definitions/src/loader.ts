@@ -253,7 +253,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     /**
      * Boolean indicating whether the container is currently connected or not
      * @deprecated - 0.58, This API will be removed in 0.60.0
-     * Use `connectionState.connected` instead
+     * Check `connectionState === ConnectionState.Connected` instead
      * See https://github.com/microsoft/FluidFramework/issues/9167 for context
      */
     readonly connected: boolean;
