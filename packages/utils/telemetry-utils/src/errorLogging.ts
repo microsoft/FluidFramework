@@ -88,10 +88,6 @@ function patchLegacyError(
     }
 }
 
-// errorType "genericError" is used as a default value throughout the code.
-// Note that this matches ContainerErrorType/DriverErrorType's genericError
-const defaultErrorTypeForNormalize = "genericError";
-
 /**
  * Normalize the given error yielding a valid Fluid Error
  * @returns A valid Fluid Error with any provided annotations applied
@@ -115,8 +111,7 @@ export function normalizeError(
 
     // We have to construct a new Fluid Error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
-    const fluidError: IFluidErrorBase = new SimpleFluidError({
-        errorType: defaultErrorTypeForNormalize,
+    const fluidError: IFluidErrorBase = new NormalizedExternalError({
         message,
         stack,
     });
@@ -260,7 +255,7 @@ export function originatedAsExternalError(e: any): boolean {
 export function isExternalError(e: any): boolean {
     return !isValidLegacyError(e) ||
         (e.getTelemetryProperties().untrustedOrigin === 1 &&
-         e.errorType === defaultErrorTypeForNormalize);
+         e.errorType === NormalizedExternalError.normalizedErrorType);
 }
 
 /**
@@ -323,15 +318,18 @@ export const getCircularReplacer = () => {
 
 /**
  * Base class for "trusted" errors we create, whose properties can generally be logged to telemetry safely.
- * All properties set on the object, or passed in (via the constructor or getTelemetryProperties),
+ * All properties set on the object, or passed in (via the constructor or addTelemetryProperties),
  * will be logged in accordance with their tag, if present.
  *
  * PLEASE take care to avoid setting sensitive data on this object without proper tagging!
  */
-export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
+export abstract class LoggingError extends Error implements ILoggingError, IFluidErrorBase {
     private _errorInstanceId = uuid();
     get errorInstanceId() { return this._errorInstanceId; }
     overwriteErrorInstanceId(id: string) { this._errorInstanceId = id; }
+
+    /** @see IFluidErrorBase.errorType */
+    abstract errorType: string;
 
     /** Back-compat to appease isFluidError typeguard in old code that may handle this error */
     // @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
@@ -343,7 +341,7 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
      * @param props - telemetry props to include on the error for when it's logged
      * @param omitPropsFromLogging - properties by name to omit from telemetry props
      */
-    constructor(
+    protected constructor(
         message: string,
         props?: ITelemetryProperties,
         private readonly omitPropsFromLogging: Set<string> = new Set(),
@@ -381,19 +379,30 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
     }
 }
 
+export class GenericFluidError extends LoggingError {
+    errorType: "genericError" = "genericError"; // Used ubiquitously to mean an unspecified fatal error
+
+    constructor(message: string, props?: ITelemetryProperties) {
+        super(message, props);
+    }
+}
+
 /** Simple implementation of IFluidErrorBase, extending LoggingError */
-class SimpleFluidError extends LoggingError implements IFluidErrorBase {
-    readonly errorType: string;
+class NormalizedExternalError extends LoggingError {
+    // errorType "genericError" is used as a default value throughout the code.
+    // Note that this matches ContainerErrorType/DriverErrorType's genericError
+    static readonly normalizedErrorType = "genericError";
+
+    errorType = NormalizedExternalError.normalizedErrorType;
 
     constructor(
         errorProps: Pick<IFluidErrorBase,
             | "message"
             | "stack"
-            | "errorType"
         >,
     ) {
         super(errorProps.message);
-        this.errorType = errorProps.errorType;
+
         if (errorProps.stack !== undefined) {
             overwriteStack(this, errorProps.stack);
         }

@@ -12,7 +12,7 @@ import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Trace } from "@fluidframework/common-utils";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { GenericFluidError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
@@ -527,7 +527,7 @@ export class Client {
             }
 
             if (invalidPositions.length > 0) {
-                throw new LoggingError(
+                throw new GenericFluidError(
                     "RangeOutOfBounds",
                     {
                         usageError: true,
