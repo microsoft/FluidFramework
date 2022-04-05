@@ -1196,6 +1196,7 @@ declare function get_old_InterfaceDeclaration_IProvideRuntimeFactory():
 declare function use_current_InterfaceDeclaration_IProvideRuntimeFactory(
     use: current.IProvideRuntimeFactory);
 use_current_InterfaceDeclaration_IProvideRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideRuntimeFactory());
 
 /*
@@ -1268,6 +1269,7 @@ declare function get_old_InterfaceDeclaration_IRuntime():
 declare function use_current_InterfaceDeclaration_IRuntime(
     use: current.IRuntime);
 use_current_InterfaceDeclaration_IRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRuntime());
 
 /*
@@ -1316,6 +1318,7 @@ declare function get_old_InterfaceDeclaration_IRuntimeFactory():
 declare function use_current_InterfaceDeclaration_IRuntimeFactory(
     use: current.IRuntimeFactory);
 use_current_InterfaceDeclaration_IRuntimeFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRuntimeFactory());
 
 /*

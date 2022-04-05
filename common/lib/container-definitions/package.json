@@ -123,7 +123,8 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
           "forwardCompat": false,
@@ -169,7 +170,8 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
           "forwardCompat": false,
@@ -250,7 +252,8 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
@@ -299,7 +302,8 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
@@ -378,7 +382,8 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
@@ -437,7 +442,8 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
@@ -468,7 +474,8 @@
           "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntime": {
-          "backCompat": false
+          "backCompat": false,
+          "forwardCompat": false
         },
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
@@ -518,11 +525,23 @@
         "InterfaceDeclaration_IRuntimeFactory": {
           "backCompat": false,
           "forwardCompat": false
+        },
+        "InterfaceDeclaration_IRuntime": {
+          "forwardCompat": false
         }
       },
       "0.47.1000": {
         "InterfaceDeclaration_IContainerContext": {
           "backCompat": false
+        },
+        "InterfaceDeclaration_IRuntime": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
+          "forwardCompat": false
         }
       }
     }
