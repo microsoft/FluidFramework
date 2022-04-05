@@ -23,7 +23,7 @@ interface SiblingBasedPlaceAnchor {
 	side: Side;
 	sibling: NodeId;
 	tiebreak: Tiebreak;
-	moveRules: MovementRules;
+	commutativity: Commutativity;
 }
 
 interface ParentBasedPlaceAnchor {
@@ -59,7 +59,7 @@ type RangeBoundary = {
 enum Extremity { Start, End }
 enum Side { Before, After }
 enum Tiebreak { LastToFirst, FirstToLast }
-enum MovementRules { NeverMove, CommutativeMoveInTrait, CommutativeMove }
+enum Commutativity { Full, MoveOnly, DeleteOnly, None }
 
 type NodeId = number;
 type TraitLabel = number | string;
