@@ -16,6 +16,8 @@ If you want to change the shared lint config (that is, this package), you need t
 2. Publish a pre-release package.
 3. Update the core packages to use the pre-release lint config.
 
+When updating the lint config (step 1), run the `build` script for this package and commit any resulting changes.
+
 ### Tracking lint config changes over time
 
 One question that comes up often when we make changes to our lint config is, "what changed?" This applies even when we
@@ -24,8 +26,6 @@ don't make any changes other than upgrading deps, because the dependency upgrade
 ESLint provides a way to print the config that would apply to a file (`--print-config`), so we use this capability to
 print out the applied config as a JSON file. As we make changes to the config, we can print out the config again and get
 a diff to review as part of a PR -- just like we do with API reports for code changes.
-
-When updating the lint config, run the `build` script for this package and commit the resulting changes.
 
 ## Scripts
 
