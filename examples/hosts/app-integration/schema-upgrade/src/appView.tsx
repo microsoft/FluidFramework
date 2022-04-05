@@ -54,7 +54,6 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
         };
     }, [containerKillBit]);
 
-    // eslint-disable-next-line no-null/no-null
     const savedDataRef = useRef<HTMLTextAreaElement>(null);
 
     if (dead) {
@@ -74,7 +73,6 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             // As noted above, in a real scenario we don't need to observe the data in the view.
             // Here we display it visually for demo purposes only.
             .then((savedData) => {
-                // eslint-disable-next-line no-null/no-null
                 if (savedDataRef.current !== null) {
                     savedDataRef.current.value = savedData;
                 }
