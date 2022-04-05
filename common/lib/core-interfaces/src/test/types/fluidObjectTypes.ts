@@ -105,10 +105,39 @@ declare function getIFluidObject(): IFluidObject;
 // validate nested property is FluidObject too
 {
     interface IFoo {
-        z: { z: boolean };
+        z: { z: { z: boolean } };
       }
 
     const foo: FluidObject<IFoo> = getFluidObject();
     // @ts-expect-error "Property 'z' does not exist on type 'FluidObject<IFoo>'."
     useProvider(foo.z);
+}
+
+// validate provider inheritance
+{
+    interface IProvideFooParent{
+        IFooParent: IFooParent
+    }
+
+    interface IFooParent extends Partial<IProvideFooParent>{
+        parent();
+    }
+
+    interface IFooProvideChild {
+        IFooChild: IFooChild
+    }
+
+    interface IFooChild extends IFooParent, Partial<IFooProvideChild>{
+        child();
+    }
+
+    const p: FluidObject<IProvideFooParent> = getFluidObject();
+    useProvider(p.IFooParent?.parent());
+
+    const c: FluidObject<IFooProvideChild> = getFluidObject();
+    // @ts-expect-error Property 'IFooParent' does not exist on type 'FluidObject<IFooProvideChild>'.
+    useProvider(c.IFooParent?.parent());
+    useProvider(c.IFooChild?.child());
+    useProvider(c.IFooChild?.parent());
+    useProvider(c.IFooChild?.IFooParent?.parent());
 }
