@@ -290,7 +290,7 @@ export class ContainerContext implements IContainerContext {
     public notifyAttaching(snapshot: ISnapshotTree) {
         this._baseSnapshot = snapshot;
         // TODO: this will require an API change to remove this type assertion before merging
-        (this.runtime as any).notifyAttaching(snapshot);
+        (this.runtime as any).notifyAttaching?.(snapshot);
         this.runtime.setAttachState(AttachState.Attaching);
     }
 
