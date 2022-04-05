@@ -38,7 +38,7 @@ async function getInventoryListFromContainer(container: IContainer): Promise<IIn
 }
 
 async function getContainerKillBitFromContainer(container: IContainer): Promise<IContainerKillBit> {
-    // Our kill bit is available at the URL "/".
+    // Our kill bit is available at the URL containerKillBitId.
     return requestFluidObject<IContainerKillBit>(container, { url: containerKillBitId });
 }
 
