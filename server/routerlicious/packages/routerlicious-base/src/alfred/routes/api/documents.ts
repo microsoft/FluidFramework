@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/server-services-core";
 import {
     verifyStorageToken,
+    getCreationToken,
     throttle,
     IThrottleMiddlewareOptions,
     getParam,
@@ -85,8 +86,7 @@ export function create(
             const summary = request.body.summary;
 
             // Protocol state
-            const sequenceNumber = request.body.sequenceNumber;
-            const values = request.body.values;
+            const { sequenceNumber, values, generateToken = false } = request.body;
 
             const createP = storage.createDocument(
                 tenantId,
@@ -97,7 +97,23 @@ export function create(
                 crypto.randomBytes(4).toString("hex"),
                 values);
 
-            handleResponse(createP.then(() => id), response, undefined, 201);
+            // Generate creation token given a jwt from header
+            const authorizationHeader = request.header("Authorization");
+            const tokenRegex = /Basic (.+)/;
+            const tokenMatch = tokenRegex.exec(authorizationHeader);
+            const token = tokenMatch[1];
+
+            const tenantKeyP = tenantManager.getKey(tenantId);
+
+            handleResponse(Promise.all([createP, tenantKeyP]).then(([_, key]) => {
+                // @TODO: Modify it to return an object only, it returns string for back-compat.
+                return generateToken
+                    ? {
+                        id,
+                        token: getCreationToken(token, key, id),
+                    }
+                    : id;
+            }), response, undefined, 201);
         });
 
     return router;
