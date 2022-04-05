@@ -1,6 +1,6 @@
 # @fluid-example/app-integration-schema-upgrade
 
-This demo explores importing data from an external source to initialize the container's data with, and then exporting the container's current data back out to that format on demand.
+This demo explores importing data from an external source to initialize the container's data with, and then exporting the container's current data back out to that format on demand.  Note that this demo is not final and has functionality gaps, do not take its current state as a best practice to replicate.
 
 In this implementation, the *app* has the knowledge of the external data and its format.  It reads in and parses the data, and does the work to translate that into operations upon the data object.  The data object itself is unaware that the source of the data is external.  Similarly, the app does the work to iterate through the data object's contents and serialize that back out to the external format.
 

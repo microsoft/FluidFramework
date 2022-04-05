@@ -5,6 +5,7 @@
 
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import React from "react";
 import ReactDOM from "react-dom";
@@ -33,32 +34,12 @@ document.title = documentId;
 
 async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
-    const url = "/";
-    const response = await container.request({ url });
-
-    // Verify the response to make sure we got what we expected.
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve data object at URL: "${url}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response from URL: "${url}"`);
-    }
-
-    return response.value as IInventoryList;
+    return requestFluidObject<IInventoryList>(container, { url: "/" });
 }
 
 async function getContainerKillBitFromContainer(container: IContainer): Promise<IContainerKillBit> {
-    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
-    const url = containerKillBitId;
-    const response = await container.request({ url });
-
-    // Verify the response to make sure we got what we expected.
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve data object at URL: "${url}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response from URL: "${url}"`);
-    }
-
-    return response.value as IContainerKillBit;
+    // Our kill bit is available at the URL "/".
+    return requestFluidObject<IContainerKillBit>(container, { url: containerKillBitId });
 }
 
 async function start(): Promise<void> {

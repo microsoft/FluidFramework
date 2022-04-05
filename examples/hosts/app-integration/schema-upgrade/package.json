@@ -51,6 +51,7 @@
     "@fluidframework/register-collection": "^0.58.3000",
     "@fluidframework/request-handler": "^0.58.3000",
     "@fluidframework/routerlicious-driver": "^0.58.3000",
+    "@fluidframework/runtime-utils": "^0.58.3000",
     "@fluidframework/sequence": "^0.58.3000",
     "@fluidframework/tinylicious-driver": "^0.58.3000",
     "css-loader": "^1.0.0",
