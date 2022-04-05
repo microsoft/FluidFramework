@@ -65,7 +65,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.43.0",
+    "version": "0.43.1000",
     "broken": {
       "0.39.8": {
         "RemovedVariableDeclaration_IFluidConfiguration": {
