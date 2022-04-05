@@ -208,10 +208,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     close(error?: ICriticalContainerError): void;
 
     /**
-     * Closes the container and returns serialized state intended to be
+     * Closes the container and returns serialized local state intended to be
      * given to a newly loaded container
      */
-    closeAndGetPendingLocalState(): Promise<string>;
+    closeAndGetPendingLocalState(): string;
 
     /**
      * Propose new code details that define the code to be loaded
