@@ -9,7 +9,6 @@
         "SharedArrayBuffer": "readonly"
     },
     "ignorePatterns": [],
-    "parser": "D:\\code\\FluidFramework\\common\\build\\eslint-config-fluid\\node_modules\\@typescript-eslint\\parser\\dist\\index.js",
     "parserOptions": {
         "ecmaFeatures": {
             "jsx": true
