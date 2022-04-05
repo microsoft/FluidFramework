@@ -8,8 +8,9 @@ import { Forest } from './Forest';
 import { NodeId, StableNodeId, TraitLabel } from './Identifiers';
 import { iterateChildren } from './EditUtilities';
 import { NodeIdConverter } from './NodeIdUtilities';
-import { HasTraits, Payload, TreeNode } from './persisted-types';
+import { Payload, TreeNode } from './persisted-types';
 import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView';
+import { HasVariadicTraits } from './ChangeTypes';
 
 /**
  * An immutable view of a distributed tree.
@@ -164,20 +165,20 @@ export class TransactionView extends TreeView {
  * Returning undefined means that conversion for the given node was impossible, at which time the entire tree conversion will be aborted
  * and return undefined.
  */
-export function convertTreeNodesToViewNodes<TIn extends HasTraits<TIn>, TOut extends TreeViewNode = TreeViewNode>(
-	root: TIn,
-	convert: (node: TIn) => Omit<TOut, 'traits'>
-): TOut[];
+export function convertTreeNodesToViewNodes<
+	TIn extends HasVariadicTraits<TIn>,
+	TOut extends TreeViewNode = TreeViewNode
+>(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'>): TOut[];
 
 /**
  * Transform an input tree into a list of {@link TreeViewNode}s.
  * @param tree - the input tree
  * @param convert - a conversion function that will run on each node in the input tree to produce the output nodes.
  */
-export function convertTreeNodesToViewNodes<TIn extends HasTraits<TIn>, TOut extends TreeViewNode = TreeViewNode>(
-	root: TIn,
-	convert: (node: TIn) => Omit<TOut, 'traits'> | undefined
-): TOut[] | undefined;
+export function convertTreeNodesToViewNodes<
+	TIn extends HasVariadicTraits<TIn>,
+	TOut extends TreeViewNode = TreeViewNode
+>(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'> | undefined): TOut[] | undefined;
 
 /**
  * Transform an input tree into a list of {@link TreeViewNode}s.
@@ -186,21 +187,21 @@ export function convertTreeNodesToViewNodes<TIn extends HasTraits<TIn>, TOut ext
  * Returning undefined means that conversion for the given node was impossible, at which time the entire tree conversion will be aborted
  * and return undefined.
  */
-export function convertTreeNodesToViewNodes<TIn extends HasTraits<TIn>, TOut extends TreeViewNode = TreeViewNode>(
-	root: TIn,
-	convert: (node: TIn) => Omit<TOut, 'traits'> | undefined
-): TOut[] | undefined {
-	const rootChildIterator = iterateChildren(Object.entries(root.traits))[Symbol.iterator]();
-	const converted = convert(root);
-	if (converted === undefined) {
+export function convertTreeNodesToViewNodes<
+	TIn extends HasVariadicTraits<TIn>,
+	TOut extends TreeViewNode = TreeViewNode
+>(root: TIn, convert: (node: TIn) => Omit<TOut, 'traits'> | undefined): TOut[] | undefined {
+	const convertedRoot = convert(root) as Mutable<TOut>;
+	if (convertedRoot === undefined || root.traits === undefined) {
 		return undefined;
 	}
-	const convertedRoot = converted as Mutable<TOut>;
+	// `convertedRoot` might be the same as `root`, in which case stash the children of `root` before wiping them from `convertedRoot`
+	const rootTraits = (root as unknown as TOut) === convertedRoot ? { traits: root.traits } : root;
 	convertedRoot.traits = new Map();
 	const pendingNodes: {
 		childIterator: Iterator<[TraitLabel, TIn]>;
 		newNode: Mutable<TOut>;
-	}[] = [{ childIterator: rootChildIterator, newNode: convertedRoot }];
+	}[] = [{ childIterator: iterateChildren(rootTraits)[Symbol.iterator](), newNode: convertedRoot }];
 	const resultNodes: TOut[] = [];
 
 	while (pendingNodes.length > 0) {
@@ -212,16 +213,18 @@ export function convertTreeNodesToViewNodes<TIn extends HasTraits<TIn>, TOut ext
 			);
 		} else {
 			const [traitLabel, child] = value as [TraitLabel, TIn];
-			const convertedChild = convert(child);
+			const convertedChild = convert(child) as TOut;
 			if (convertedChild === undefined) {
 				return undefined;
 			}
-			const newChild = convertedChild as Mutable<TOut>;
-			newChild.traits = new Map();
-			pendingNodes.push({
-				childIterator: iterateChildren(Object.entries(child.traits))[Symbol.iterator](),
-				newNode: newChild,
-			});
+			if (child.traits !== undefined) {
+				const childTraits = (child as unknown as TOut) === convertedChild ? { traits: child.traits } : child;
+				(convertedChild as Mutable<TOut>).traits = new Map();
+				pendingNodes.push({
+					childIterator: iterateChildren(childTraits)[Symbol.iterator](),
+					newNode: convertedChild,
+				});
+			}
 
 			const newTraits = newNode.traits as MutableMap<TOut['traits']>;
 			let newTrait = newTraits.get(traitLabel);
@@ -229,7 +232,7 @@ export function convertTreeNodesToViewNodes<TIn extends HasTraits<TIn>, TOut ext
 				newTrait = [];
 				newTraits.set(traitLabel, newTrait);
 			}
-			(newTrait as NodeId[]).push(newChild.identifier);
+			(newTrait as NodeId[]).push(convertedChild.identifier);
 		}
 	}
 

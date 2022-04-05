@@ -32,13 +32,13 @@ import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
 import { getChangeNodeFromViewNode } from '../../SerializationUtilities';
 import { initialTree } from '../../InitialTree';
-import { ChangeInternal, ChangeNode, Edit, NodeData, Payload, WriteFormat } from '../../persisted-types';
+import { ChangeInternal, Edit, NodeData, Payload, WriteFormat } from '../../persisted-types';
 import { TraitLocation, TreeView } from '../../TreeView';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
 import { getNodeId, NodeIdContext, NodeIdConverter } from '../../NodeIdUtilities';
 import { newEdit, setTrait } from '../../EditUtilities';
 import { reservedIdCount, SharedTree } from '../../SharedTree';
-import { Change, StablePlace } from '../../ChangeTypes';
+import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
 import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
@@ -63,7 +63,7 @@ export interface SharedTreeTestingOptions {
 	 */
 	id?: string;
 	/** Node to initialize the SharedTree with. */
-	initialTree?: ChangeNode;
+	initialTree?: BuildNode;
 	/** If false, a MockContainerRuntimeFactory connected to the SharedTree will be returned. */
 	localMode?: boolean;
 	/**
@@ -194,7 +194,7 @@ export interface LocalServerSharedTreeTestingOptions {
 	 */
 	id?: string;
 	/** Node to initialize the SharedTree with. */
-	initialTree?: ChangeNode;
+	initialTree?: BuildNode;
 	/** If set, uses the provider to create the container and create the SharedTree. */
 	testObjectProvider?: TestObjectProvider;
 	/**
@@ -298,12 +298,12 @@ export async function setUpLocalServerTestSharedTree(
 }
 
 /** Sets testTrait to contain `node`. */
-function setTestTree(tree: SharedTree, node: ChangeNode, overrideId?: EditId): EditId {
+function setTestTree(tree: SharedTree, node: BuildNode, overrideId?: EditId): EditId {
 	const trait = testTrait(tree.currentView);
 	if (overrideId === undefined) {
-		return tree.applyEdit(...setTrait(trait, [node])).id;
+		return tree.applyEdit(...setTrait(trait, node)).id;
 	} else {
-		const changes = setTrait(trait, [node]).map((c) => tree.internalizeChange(c));
+		const changes = setTrait(trait, node).map((c) => tree.internalizeChange(c));
 		return tree.applyEditInternal({ changes, id: overrideId }).id;
 	}
 }
@@ -325,7 +325,7 @@ export function createStableEdits(
 	const nodeId = idContext.generateNodeId('ae6b24eb-6fa8-42cc-abd2-48f250b7798f');
 	const node = buildLeaf(nodeId);
 	const insertEmptyNode = newEdit([
-		Change.build([node], 0 as DetachedSequenceId),
+		Change.build(node, 0 as DetachedSequenceId),
 		Change.insert(
 			0 as DetachedSequenceId,
 			StablePlace.atEndOf({ label: testTraitLabel, parent: idContext.convertToNodeId(initialTree.identifier) })

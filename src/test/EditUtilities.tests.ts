@@ -20,8 +20,10 @@ import {
 	RangeValidationResultKind,
 	validateStablePlace,
 	validateStableRange,
+	walkTree,
 } from '../EditUtilities';
 import { ChangeNode, Payload, Side } from '../persisted-types';
+import { BuildTreeNode } from '../ChangeTypes';
 import { refreshTestTree } from './utilities/TestUtilities';
 
 describe('EditUtilities', () => {
@@ -288,6 +290,147 @@ describe('EditUtilities', () => {
 					],
 				},
 			});
+		});
+
+		it('can convert a tree with a grandchild', () => {
+			const grandchild = { ...testTree.buildLeaf(testTree.generateNodeId()), payload: 'g' };
+			const child = { ...testTree.buildLeaf(testTree.generateNodeId()), traits: { main: [grandchild] } };
+			const parent = { ...testTree.buildLeaf(testTree.generateNodeId()), traits: { main: [child] } };
+			const converted = convertTreeNodes<ChangeNode, ChangeNode>(parent, (node) => {
+				if (node.identifier === grandchild.identifier) {
+					return { definition: node.definition, identifier: node.identifier, payload: 'h' };
+				}
+				return node;
+			});
+			expect(converted).to.deep.equal({
+				definition: parent.definition,
+				identifier: parent.identifier,
+				traits: {
+					main: [
+						{
+							definition: child.definition,
+							identifier: child.identifier,
+							traits: {
+								main: [
+									{
+										definition: grandchild.definition,
+										identifier: grandchild.identifier,
+										payload: 'h',
+										traits: {},
+									},
+								],
+							},
+						},
+					],
+				},
+			});
+		});
+
+		it('walks trees in a consistent order', () => {
+			// Construct two trees that are the same but have their traits defined in different orders
+			const buildTreeA: BuildTreeNode = {
+				definition: 'parent',
+				traits: {
+					left: {
+						definition: 'left child',
+						traits: {
+							left: {
+								definition: 'left grandchild under left',
+							},
+							right: {
+								definition: 'right grandchild under left',
+							},
+							main: [
+								{ definition: 'grandchild A under left main' },
+								{ definition: 'grandchild B under left main' },
+								{ definition: 'grandchild C under left main' },
+							],
+						},
+					},
+					right: {
+						definition: 'right child',
+						traits: {
+							left: {
+								definition: 'left grandchild under right',
+							},
+							right: {
+								definition: 'right grandchild under right',
+							},
+							main: [
+								{ definition: 'grandchild A under right main' },
+								{ definition: 'grandchild B under right main' },
+								{ definition: 'grandchild C under right main' },
+							],
+						},
+					},
+					main: [
+						{ definition: 'child A under main' },
+						{ definition: 'child B under main' },
+						{ definition: 'child C under main' },
+					],
+				},
+			};
+
+			const buildTreeB: BuildTreeNode = {
+				definition: 'parent',
+				traits: {
+					right: {
+						definition: 'right child',
+						traits: {
+							left: {
+								definition: 'left grandchild under right',
+							},
+							main: [
+								{ definition: 'grandchild A under right main' },
+								{ definition: 'grandchild B under right main' },
+								{ definition: 'grandchild C under right main' },
+							],
+							right: {
+								definition: 'right grandchild under right',
+							},
+						},
+					},
+					main: [
+						{ definition: 'child A under main' },
+						{ definition: 'child B under main' },
+						{ definition: 'child C under main' },
+					],
+					left: {
+						definition: 'left child',
+						traits: {
+							main: [
+								{ definition: 'grandchild A under left main' },
+								{ definition: 'grandchild B under left main' },
+								{ definition: 'grandchild C under left main' },
+							],
+							right: {
+								definition: 'right grandchild under left',
+							},
+							left: {
+								definition: 'left grandchild under left',
+							},
+						},
+					},
+				},
+			};
+
+			// Record the order in which the tree walk visits each node in each tree
+			const definitionsA: string[] = [];
+			walkTree<BuildTreeNode, number>(
+				buildTreeA,
+				(n) => definitionsA.push(n.definition),
+				(x): x is number => typeof x === 'number'
+			);
+
+			const definitionsB: string[] = [];
+			walkTree<BuildTreeNode, number>(
+				buildTreeB,
+				(n) => definitionsB.push(n.definition),
+				(x): x is number => typeof x === 'number'
+			);
+
+			// The orders should be the same, even though the trees had their traits defined in different orders
+			expect(definitionsA).to.deep.equal(definitionsB);
 		});
 	});
 

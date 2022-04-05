@@ -13,7 +13,7 @@ import {
 	MockFluidDataStoreRuntime,
 } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../../Common';
-import { Definition, DetachedSequenceId, EditId, TraitLabel } from '../../Identifiers';
+import { DetachedSequenceId, EditId, TraitLabel } from '../../Identifiers';
 import { CachingLogViewer } from '../../LogViewer';
 import { EditLog, OrderedEditSet } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
@@ -157,19 +157,18 @@ export function runSharedTreeOperationsTests(
 				const { sharedTree, testTree } = createSimpleTestTree();
 
 				const childNode = testTree.buildLeaf(testTree.generateNodeId());
-				const childId = 0 as DetachedSequenceId;
+				const childId = 0;
 				const childrenTraitLabel = 'children' as TraitLabel;
 				const parentNode = {
 					identifier: testTree.generateNodeId(),
-					definition: 'node' as Definition,
+					definition: 'node',
 					traits: {
-						[childrenTraitLabel]: [childId],
+						[childrenTraitLabel]: childId,
 					},
 				};
-				const parentId = 1 as DetachedSequenceId;
-
-				const buildChild = Change.build([childNode], childId);
-				const buildParent = Change.build([parentNode], parentId);
+				const parentId = 1;
+				const buildChild = Change.build(childNode, childId);
+				const buildParent = Change.build(parentNode, parentId);
 				const insertParent = Change.insert(parentId, StablePlace.before(testTree.left));
 
 				sharedTree.applyEdit(buildChild, buildParent, insertParent);
@@ -189,28 +188,26 @@ export function runSharedTreeOperationsTests(
 				const { sharedTree, testTree } = createSimpleTestTree({ allowMalformed: true });
 
 				const childNode = testTree.buildLeaf();
-				const childId = 0 as DetachedSequenceId;
-				const childrenTraitLabel = 'children' as TraitLabel;
+				const childId = 0;
+				const childrenTraitLabel = 'children';
 				const parentNode: BuildNode = {
 					identifier: testTree.generateNodeId(),
-					definition: 'node' as Definition,
+					definition: 'node',
 					traits: {
-						[childrenTraitLabel]: [childId],
+						[childrenTraitLabel]: childId,
 					},
 				};
-				const parentId = 1 as DetachedSequenceId;
 				const parentNode2: BuildNode = {
 					identifier: testTree.generateNodeId(),
-					definition: 'node' as Definition,
+					definition: 'node',
 					traits: {
-						[childrenTraitLabel]: [childId],
+						[childrenTraitLabel]: childId,
 					},
 				};
-				const parentId2 = 2 as DetachedSequenceId;
 
-				const buildChild = Change.build([childNode], childId);
-				const buildParent = Change.build([parentNode], parentId);
-				const buildParent2 = Change.build([parentNode2], parentId2);
+				const buildChild = Change.build(childNode, childId);
+				const buildParent = Change.build(parentNode, 1);
+				const buildParent2 = Change.build(parentNode2, 2);
 
 				assertNoDelta(sharedTree, () => {
 					// we don't expect this edit application to change anything
@@ -225,7 +222,7 @@ export function runSharedTreeOperationsTests(
 				const detachedNode = testTree.buildLeaf(testTree.generateNodeId());
 				const detachedSequenceId = 0 as DetachedSequenceId;
 				const { id } = sharedTree.applyEdit(
-					Change.build([detachedNode], detachedSequenceId),
+					Change.build(detachedNode, detachedSequenceId),
 					Change.setPayload(detachedNode.identifier, 42),
 					Change.insert(detachedSequenceId, StablePlace.before(testTree.left))
 				);
@@ -244,7 +241,7 @@ export function runSharedTreeOperationsTests(
 				const detachedNewNodeSequenceId = 0 as DetachedSequenceId;
 				const detachedRightNodeSequenceId = 1 as DetachedSequenceId;
 				const { id } = sharedTree.applyEdit(
-					Change.build([detachedNewNode], detachedNewNodeSequenceId),
+					Change.build(detachedNewNode, detachedNewNodeSequenceId),
 					Change.detach(StableRange.only(testTree.right), detachedRightNodeSequenceId),
 					// This change attempts to insert a node under a detached node
 					Change.insert(
@@ -446,8 +443,8 @@ export function runSharedTreeOperationsTests(
 						[
 							{
 								identifier: newNodeId1,
-								definition: 'foo' as Definition,
-								traits: { left: [buildLeaf()], right: [buildLeaf()] },
+								definition: 'foo',
+								traits: { left: buildLeaf(), right: buildLeaf() },
 							},
 						],
 						StablePlace.atStartOf(testTrait(sharedTree1.currentView))
@@ -482,7 +479,7 @@ export function runSharedTreeOperationsTests(
 						parents: [
 							{
 								...parent1Node,
-								traits: { child: [childNode] },
+								traits: { child: childNode },
 							},
 							parent2Node,
 						],

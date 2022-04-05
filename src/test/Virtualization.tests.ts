@@ -32,12 +32,13 @@ describe('SharedTree history virtualization', () => {
 	const expectedFullChunkCount = Math.floor(editCount / editsPerChunk);
 
 	// Create a summary used to test catchup blobbing
-	function createCatchUpSummary(): SharedTreeSummary_0_0_2<Change> {
-		return {
-			currentTree: initialTree,
-			version: WriteFormat.v0_0_2,
-			sequencedEdits: createStableEdits(editCount),
-		};
+	async function createCatchUpSummary(): Promise<SharedTreeSummary_0_0_2<ChangeInternal>> {
+		const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({ writeFormat: WriteFormat.v0_0_2 });
+		for (const edit of createStableEdits(editCount)) {
+			tree.applyEdit(...edit.changes);
+		}
+		await testObjectProvider.ensureSynchronized();
+		return tree.saveSummary() as SharedTreeSummary_0_0_2<ChangeInternal>;
 	}
 
 	beforeEach(async () => {
@@ -118,7 +119,7 @@ describe('SharedTree history virtualization', () => {
 		// Wait for the op to to be submitted and processed across the containers.
 		await testObjectProvider.ensureSynchronized();
 
-		sharedTree.loadSummary(createCatchUpSummary());
+		sharedTree.loadSummary(await createCatchUpSummary());
 
 		await testObjectProvider.ensureSynchronized();
 		expect(catchUpBlobsUploaded).to.equal(expectedFullChunkCount);
@@ -155,7 +156,7 @@ describe('SharedTree history virtualization', () => {
 		await testObjectProvider.ensureSynchronized();
 
 		// Try to load summaries on all the trees
-		const summary = createCatchUpSummary();
+		const summary = await createCatchUpSummary();
 		sharedTree.loadSummary(summary);
 		sharedTree2.loadSummary(summary);
 		sharedTree3.loadSummary(summary);

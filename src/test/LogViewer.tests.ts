@@ -32,7 +32,7 @@ import { Transaction } from '../Transaction';
 import { StableRange } from '../ChangeTypes';
 import { tryConvertToStableRangeInternal_0_0_2 } from '../Conversion002';
 import { expectDefined } from './utilities/TestCommon';
-import { buildStableLeaf, TestTree } from './utilities/TestNode';
+import { buildLeafInternal, TestTree } from './utilities/TestNode';
 import { MockTransaction } from './utilities/MockTransaction';
 import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities';
 
@@ -48,7 +48,7 @@ function getTestTreeLog(testTree: TestTree): EditLog<ChangeInternal> {
 	log.addSequencedEdit(
 		newEdit(
 			InsertInternal.create(
-				[testTree.buildStableLeaf(testTree.left.identifier)],
+				[testTree.buildLeafInternal(testTree.left.identifier)],
 				StablePlaceInternal_0_0_2.atStartOf(testTree.left.traitLocation.stable)
 			)
 		),
@@ -57,7 +57,7 @@ function getTestTreeLog(testTree: TestTree): EditLog<ChangeInternal> {
 	log.addSequencedEdit(
 		newEdit(
 			InsertInternal.create(
-				[testTree.buildStableLeaf(testTree.right.identifier)],
+				[testTree.buildLeafInternal(testTree.right.identifier)],
 				StablePlaceInternal_0_0_2.atStartOf(testTree.right.traitLocation.stable)
 			)
 		),
@@ -73,7 +73,7 @@ function getLogWithNumEdits(nodeIdContext: NodeIdContext, numEdits: number): Edi
 		log.addSequencedEdit(
 			newEdit(
 				InsertInternal.create(
-					[buildStableLeaf(nodeIdContext)],
+					[buildLeafInternal(nodeIdContext)],
 					StablePlaceInternal_0_0_2.atStartOf({ label: testTraitLabel, parent: initialTree.identifier })
 				)
 			),
@@ -104,7 +104,7 @@ function getSimpleLogWithLocalEdits(testTree: TestTree): EditLog<ChangeInternal>
 	logWithLocalEdits.addLocalEdit(
 		newEdit(
 			InsertInternal.create(
-				[testTree.buildStableLeaf()],
+				[testTree.buildLeafInternal()],
 				StablePlaceInternal_0_0_2.atEndOf(testTree.left.traitLocation.stable)
 			)
 		)
@@ -112,7 +112,7 @@ function getSimpleLogWithLocalEdits(testTree: TestTree): EditLog<ChangeInternal>
 	logWithLocalEdits.addLocalEdit(
 		newEdit(
 			InsertInternal.create(
-				[testTree.buildStableLeaf()],
+				[testTree.buildLeafInternal()],
 				StablePlaceInternal_0_0_2.atEndOf(testTree.right.traitLocation.stable)
 			)
 		)
@@ -120,7 +120,7 @@ function getSimpleLogWithLocalEdits(testTree: TestTree): EditLog<ChangeInternal>
 	logWithLocalEdits.addLocalEdit(
 		newEdit(
 			InsertInternal.create(
-				[testTree.buildStableLeaf()],
+				[testTree.buildLeafInternal()],
 				StablePlaceInternal_0_0_2.atEndOf(testTree.left.traitLocation.stable)
 			)
 		)
@@ -240,7 +240,7 @@ function runLogViewerCorrectnessTests(
 				logWithLocalEdits.addSequencedEdit(
 					newEdit(
 						InsertInternal.create(
-							[testTree.buildStableLeaf()],
+							[testTree.buildLeafInternal()],
 							StablePlaceInternal_0_0_2.atStartOf(testTree.right.traitLocation.stable)
 						)
 					),
@@ -398,7 +398,7 @@ describe('CachingLogViewer', () => {
 		simpleLog.addLocalEdit(
 			newEdit(
 				InsertInternal.create(
-					[testTree.buildStableLeaf()],
+					[testTree.buildLeafInternal()],
 					StablePlaceInternal_0_0_2.atEndOf(testTree.right.traitLocation.stable)
 				)
 			)
@@ -406,7 +406,7 @@ describe('CachingLogViewer', () => {
 		simpleLog.addSequencedEdit(
 			newEdit(
 				InsertInternal.create(
-					[testTree.buildStableLeaf()],
+					[testTree.buildLeafInternal()],
 					StablePlaceInternal_0_0_2.atEndOf(testTree.right.traitLocation.stable)
 				)
 			),
@@ -497,7 +497,7 @@ describe('CachingLogViewer', () => {
 		logWithLocalEdits.addLocalEdit(
 			newEdit(
 				InsertInternal.create(
-					[testTree.buildStableLeaf()],
+					[testTree.buildLeafInternal()],
 					StablePlaceInternal_0_0_2.atEndOf(testTree.right.traitLocation.stable)
 				)
 			)
@@ -539,7 +539,7 @@ describe('CachingLogViewer', () => {
 		logWithLocalEdits.addSequencedEdit(
 			newEdit(
 				InsertInternal.create(
-					[testTree.buildStableLeaf()],
+					[testTree.buildLeafInternal()],
 					StablePlaceInternal_0_0_2.atEndOf(testTree.right.traitLocation.stable)
 				)
 			),
@@ -665,7 +665,7 @@ describe('CachingLogViewer', () => {
 			// Add a local edit that will be invalid (inserts a node at a location that doesn't exist)
 			const edit = newEdit(
 				InsertInternal.create(
-					[testTree.buildStableLeaf()],
+					[testTree.buildLeafInternal()],
 					expectDefined(
 						StablePlaceInternal_0_0_2.atEndOf({
 							label: testTraitLabel,
@@ -698,7 +698,7 @@ describe('CachingLogViewer', () => {
 
 			const validEdit1 = newEdit(
 				InsertInternal.create(
-					[testTree.buildStableLeaf()],
+					[testTree.buildLeafInternal()],
 					StablePlaceInternal_0_0_2.atStartOf(testTree.left.traitLocation.stable)
 				)
 			);
@@ -712,7 +712,7 @@ describe('CachingLogViewer', () => {
 
 			const validEdit2 = newEdit(
 				InsertInternal.create(
-					[testTree.buildStableLeaf()],
+					[testTree.buildLeafInternal()],
 					StablePlaceInternal_0_0_2.atStartOf(testTree.left.traitLocation.stable)
 				)
 			);

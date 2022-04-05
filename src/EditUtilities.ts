@@ -6,7 +6,7 @@
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { assertNotUndefined, compareArrays, copyPropertyIfDefined, fail, Mutable } from './Common';
-import { DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers';
+import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers';
 import { getChangeNode_0_0_2FromView } from './SerializationUtilities';
 import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities';
 import {
@@ -26,7 +26,7 @@ import {
 	TreeNodeSequence,
 } from './persisted-types';
 import { TraitLocation, TreeView } from './TreeView';
-import { BuildNode, BuildTreeNode, Change, StablePlace, StableRange } from './ChangeTypes';
+import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes';
 import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities';
 import { TransactionView } from './RevisionView';
 
@@ -177,14 +177,14 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
 /**
  * A node type that does not require its children to be specified
  */
-export type NoTraits<TChild extends HasTraits<unknown>> = Omit<TChild, keyof HasTraits<TChild>>;
+export type NoTraits<TChild extends HasVariadicTraits<unknown>> = Omit<TChild, keyof HasVariadicTraits<TChild>>;
 
 /**
  * Transform an input tree into an isomorphic output tree
  * @param tree - the input tree
  * @param convert - a conversion function that will run on each node in the input tree to produce the output tree.
  */
-export function convertTreeNodes<TIn extends HasTraits<TIn>, TOut extends HasTraits<TOut>>(
+export function convertTreeNodes<TIn extends HasVariadicTraits<TIn>, TOut extends HasTraits<TOut>>(
 	root: TIn,
 	convert: (node: TIn) => NoTraits<TOut>
 ): TOut;
@@ -195,7 +195,7 @@ export function convertTreeNodes<TIn extends HasTraits<TIn>, TOut extends HasTra
  * @param convert - a conversion function that will run on each node in the input tree to produce the output tree. Returning undefined
  * means that conversion for the given node was impossible, at which time the entire tree conversion will be aborted and return undefined.
  */
-export function convertTreeNodes<TIn extends HasTraits<TIn>, TOut extends HasTraits<TOut>>(
+export function convertTreeNodes<TIn extends HasVariadicTraits<TIn>, TOut extends HasTraits<TOut>>(
 	root: TIn,
 	convert: (node: TIn) => NoTraits<TOut> | undefined
 ): TOut | undefined;
@@ -207,7 +207,7 @@ export function convertTreeNodes<TIn extends HasTraits<TIn>, TOut extends HasTra
  * @param isPlaceholder - a predicate which determines if a node is a placeholder
  */
 export function convertTreeNodes<
-	TIn extends HasTraits<TIn | TPlaceholder>,
+	TIn extends HasVariadicTraits<TIn | TPlaceholder>,
 	TOut extends HasTraits<TOut | TPlaceholder>,
 	TPlaceholder
 >(
@@ -225,7 +225,7 @@ export function convertTreeNodes<
  * @param isPlaceholder - a predicate which determines if a node is a placeholder
  */
 export function convertTreeNodes<
-	TIn extends HasTraits<TIn | TPlaceholder>,
+	TIn extends HasVariadicTraits<TIn | TPlaceholder>,
 	TOut extends HasTraits<TOut | TPlaceholder>,
 	TPlaceholder
 >(
@@ -243,7 +243,7 @@ export function convertTreeNodes<
  * @param isPlaceholder - a predicate which determines if the given node is of type TPlaceholder
  */
 export function convertTreeNodes<
-	TIn extends HasTraits<TIn | TPlaceholder>,
+	TIn extends HasVariadicTraits<TIn | TPlaceholder>,
 	TOut extends HasTraits<TOut | TPlaceholder>,
 	TPlaceholder
 >(
@@ -255,17 +255,17 @@ export function convertTreeNodes<
 		return root;
 	}
 
-	const rootChildIterator = iterateChildren(Object.entries(root.traits))[Symbol.iterator]();
-	const converted = convert(root);
-	if (converted === undefined) {
-		return undefined;
+	const convertedRoot = convert(root) as Mutable<TOut>;
+	if (convertedRoot === undefined || root.traits === undefined) {
+		return convertedRoot;
 	}
-	const convertedRoot = converted as Mutable<TOut>;
+	// `convertedRoot` might be the same as `root`, in which case stash the children of `root` before wiping them from `convertedRoot`
+	const rootTraits = (root as unknown as TOut) === convertedRoot ? { traits: root.traits } : root;
 	convertedRoot.traits = {};
 	const pendingNodes: {
 		childIterator: Iterator<[TraitLabel, TIn | TPlaceholder]>;
 		newNode: Mutable<TOut>;
-	}[] = [{ childIterator: rootChildIterator, newNode: convertedRoot }];
+	}[] = [{ childIterator: iterateChildren(rootTraits)[Symbol.iterator](), newNode: convertedRoot }];
 
 	while (pendingNodes.length > 0) {
 		const { childIterator, newNode } = pendingNodes[pendingNodes.length - 1] ?? fail('Undefined node');
@@ -274,20 +274,23 @@ export function convertTreeNodes<
 			pendingNodes.pop();
 		} else {
 			const [traitLabel, child] = value as [TraitLabel, TIn | TPlaceholder];
-			let newChild: Mutable<TOut> | TPlaceholder;
+			let convertedChild: TOut | TPlaceholder;
 			if (!isKnownType(child, isPlaceholder)) {
-				const convertedChild = convert(child);
+				convertedChild = convert(child) as TOut;
 				if (convertedChild === undefined) {
 					return undefined;
 				}
-				newChild = convertedChild as Mutable<TOut>;
-				newChild.traits = {};
-				pendingNodes.push({
-					childIterator: iterateChildren(Object.entries(child.traits))[Symbol.iterator](),
-					newNode: newChild,
-				});
+				if (child.traits !== undefined) {
+					const childTraits =
+						(child as unknown as TOut) === convertedChild ? { traits: child.traits } : child;
+					(convertedChild as Mutable<TOut>).traits = {};
+					pendingNodes.push({
+						childIterator: iterateChildren(childTraits)[Symbol.iterator](),
+						newNode: convertedChild,
+					});
+				}
 			} else {
-				newChild = child;
+				convertedChild = child;
 			}
 			const newTraits = newNode.traits as Mutable<TraitMap<TOut | TPlaceholder>>;
 			let newTrait = newTraits[traitLabel];
@@ -295,7 +298,7 @@ export function convertTreeNodes<
 				newTrait = [];
 				newTraits[traitLabel] = newTrait;
 			}
-			(newTrait as (TOut | TPlaceholder)[]).push(newChild);
+			(newTrait as (TOut | TPlaceholder)[]).push(convertedChild);
 		}
 	}
 
@@ -307,14 +310,14 @@ export function convertTreeNodes<
  * @param tree - the input tree
  * @param visitor - callback invoked for each node in the tree.
  */
-export function walkTreeNodes<TIn extends HasTraits<TIn>>(tree: TIn, visitor: (node: TIn) => void): void;
+export function walkTree<TIn extends HasVariadicTraits<TIn>>(tree: TIn, visitor: (node: TIn) => void): void;
 
 /**
  * Visits an input tree containing placeholders in a depth-first pre-order traversal.
  * @param tree - the input tree
  * @param visitor - callback invoked for each node in the tree. Must return true if the given node is a TPlaceholder.
  */
-export function walkTreeNodes<TIn extends HasTraits<TIn | TPlaceholder>, TPlaceholder = never>(
+export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPlaceholder = never>(
 	tree: TIn | TPlaceholder,
 	visitors:
 		| ((node: TIn) => void)
@@ -322,7 +325,7 @@ export function walkTreeNodes<TIn extends HasTraits<TIn | TPlaceholder>, TPlaceh
 	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder
 ): void;
 
-export function walkTreeNodes<TIn extends HasTraits<TIn | TPlaceholder>, TPlaceholder = never>(
+export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPlaceholder = never>(
 	tree: TIn | TPlaceholder,
 	visitors:
 		| ((node: TIn) => void)
@@ -337,9 +340,7 @@ export function walkTreeNodes<TIn extends HasTraits<TIn | TPlaceholder>, TPlaceh
 	}
 	nodeVisitor?.(tree);
 
-	const childIterators: Iterator<[TraitLabel, TIn | TPlaceholder]>[] = [
-		iterateChildren(Object.entries(tree.traits))[Symbol.iterator](),
-	];
+	const childIterators: Iterator<[TraitLabel, TIn | TPlaceholder]>[] = [iterateChildren(tree)[Symbol.iterator]()];
 
 	while (childIterators.length > 0) {
 		const childIterator = childIterators[childIterators.length - 1] ?? fail('Undefined node');
@@ -352,16 +353,24 @@ export function walkTreeNodes<TIn extends HasTraits<TIn | TPlaceholder>, TPlaceh
 				placeholderVisitor?.(child);
 			} else {
 				nodeVisitor?.(child);
-				childIterators.push(iterateChildren(Object.entries(child.traits))[Symbol.iterator]());
+				childIterators.push(iterateChildren(child)[Symbol.iterator]());
 			}
 		}
 	}
 }
 
-export function* iterateChildren<T>(traits: Iterable<[string, readonly T[]]>): Iterable<[TraitLabel, T]> {
-	for (const [label, trait] of traits) {
-		for (const child of trait) {
-			yield [label as TraitLabel, child];
+export function* iterateChildren<T>(hasTraits: HasVariadicTraits<T>): Iterable<[TraitLabel, T]> {
+	if (hasTraits.traits !== undefined) {
+		for (const [label, trait] of Object.entries(hasTraits.traits).sort()) {
+			if (trait !== undefined) {
+				if (isTreeNodeSequence(trait)) {
+					for (const child of trait) {
+						yield [label as TraitLabel, child];
+					}
+				} else {
+					yield [label as TraitLabel, trait];
+				}
+			}
 		}
 	}
 }
@@ -473,7 +482,7 @@ export function areRevisionViewsSemanticallyEqual(
  * Create a sequence of changes that resets the contents of `trait`.
  * @public
  */
-export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode>): Change[] {
+export function setTrait(trait: TraitLocation, nodes: BuildNode | TreeNodeSequence<BuildNode>): Change[] {
 	const id = 0 as DetachedSequenceId;
 	const traitContents = StableRange.all(trait);
 	return [Change.detach(traitContents), Change.build(nodes, id), Change.insert(id, traitContents.start)];
@@ -723,9 +732,13 @@ export function internalizeBuildNode(
 	nodeIdContext: NodeIdContext
 ): Omit<ChangeNode_0_0_2, 'traits'> {
 	const output = {
-		definition: nodeData.definition,
+		definition: nodeData.definition as Definition,
 		identifier: nodeIdContext.convertToStableNodeId(nodeData.identifier ?? nodeIdContext.generateNodeId()),
 	};
 	copyPropertyIfDefined(nodeData, output, 'payload');
 	return output;
+}
+
+function isTreeNodeSequence<TChild>(sequence: TreeNodeSequence<TChild> | TChild): sequence is TreeNodeSequence<TChild> {
+	return Array.isArray(sequence);
 }

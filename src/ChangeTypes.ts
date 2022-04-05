@@ -3,11 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { DetachedSequenceId, NodeId, TraitLabel, UuidString } from './Identifiers';
+import { NodeId, TraitLabel, UuidString } from './Identifiers';
 import { assert, assertNotUndefined } from './Common';
-import { ConstraintEffect, NodeData, Payload, Side, TreeNode, TreeNodeSequence } from './persisted-types';
+import { ConstraintEffect, NodeData, Payload, Side, TreeNodeSequence } from './persisted-types';
 import { TraitLocation } from './TreeView';
 import { getNodeId } from './NodeIdUtilities';
+
+/**
+ * An object which may have traits with children of the given type underneath it
+ * @public
+ */
+export interface HasVariadicTraits<TChild> {
+	readonly traits?: {
+		readonly [key: string]: TChild | TreeNodeSequence<TChild> | undefined;
+	};
+}
 
 /**
  * The type of a Change
@@ -40,13 +50,15 @@ export type Change = Insert | Detach | Build | SetValue | Constraint;
  * These optimized formats should also be used within tree views.
  * @public
  */
-export type BuildNode = BuildTreeNode | DetachedSequenceId;
+export type BuildNode = BuildTreeNode | number;
 
 /**
  * Node for use in a Build change.
  */
-export interface BuildTreeNode extends Omit<TreeNode<BuildNode, unknown>, 'identifier'> {
+export interface BuildTreeNode extends HasVariadicTraits<BuildNode> {
+	definition: string;
 	identifier?: NodeId;
+	payload?: Payload;
 }
 
 /**
@@ -65,8 +77,8 @@ export interface BuildTreeNode extends Omit<TreeNode<BuildNode, unknown>, 'ident
  * @public
  */
 export interface Build {
-	readonly destination: DetachedSequenceId;
-	readonly source: TreeNodeSequence<BuildNode>;
+	readonly destination: number;
+	readonly source: BuildNode | TreeNodeSequence<BuildNode>;
 	readonly type: typeof ChangeType.Build;
 }
 
@@ -77,7 +89,7 @@ export interface Build {
  */
 export interface Insert {
 	readonly destination: StablePlace;
-	readonly source: DetachedSequenceId;
+	readonly source: number;
 	readonly type: typeof ChangeType.Insert;
 }
 
@@ -89,7 +101,7 @@ export interface Insert {
  * @public
  */
 export interface Detach {
-	readonly destination?: DetachedSequenceId;
+	readonly destination?: number;
 	readonly source: StableRange;
 	readonly type: typeof ChangeType.Detach;
 }
@@ -177,19 +189,19 @@ export interface Constraint {
  * @public
  */
 export const Change = {
-	build: (source: TreeNodeSequence<BuildNode>, destination: DetachedSequenceId): Build => ({
+	build: (source: BuildNode | TreeNodeSequence<BuildNode>, destination: number): Build => ({
 		destination,
 		source,
 		type: ChangeType.Build,
 	}),
 
-	insert: (source: DetachedSequenceId, destination: StablePlace): Insert => ({
+	insert: (source: number, destination: StablePlace): Insert => ({
 		destination,
 		source,
 		type: ChangeType.Insert,
 	}),
 
-	detach: (source: StableRange, destination?: DetachedSequenceId): Detach => ({
+	detach: (source: StableRange, destination?: number): Detach => ({
 		destination,
 		source,
 		type: ChangeType.Detach,
@@ -249,7 +261,7 @@ export const Insert = {
 	 * @returns a Change that inserts 'nodes' into the specified location in the tree.
 	 */
 	create: (nodes: TreeNodeSequence<BuildNode>, destination: StablePlace): Change[] => {
-		const build = Change.build(nodes, 0 as DetachedSequenceId);
+		const build = Change.build(nodes, 0);
 		return [build, Change.insert(build.destination, destination)];
 	},
 };
@@ -263,7 +275,7 @@ export const Move = {
 	 * @returns a Change that moves the specified content to a new location in the tree.
 	 */
 	create: (source: StableRange, destination: StablePlace): Change[] => {
-		const detach = Change.detach(source, 0 as DetachedSequenceId);
+		const detach = Change.detach(source, 0);
 		return [detach, Change.insert(assertNotUndefined(detach.destination), destination)];
 	},
 };

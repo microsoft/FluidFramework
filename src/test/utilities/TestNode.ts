@@ -11,8 +11,8 @@ import { Definition, NodeId, StableNodeId, TraitLabel } from '../../Identifiers'
 import { initialTree } from '../../InitialTree';
 import { NodeIdContext, NodeIdConverter } from '../../NodeIdUtilities';
 import {
+	BuildNodeInternal,
 	ChangeNode,
-	ChangeNode_0_0_2,
 	Payload,
 	TraitLocationInternal_0_0_2,
 	TraitMap,
@@ -66,17 +66,17 @@ export interface TestTree extends TestNode, NodeIdContext {
 	/** The right child node */
 	right: TestNode;
 	/** Create an arbitrary unparented node with the given payload, if specified */
-	buildLeaf(id?: undefined, payload?: Payload): LeafNode<Omit<BuildTreeNode, 'identifier'>>;
+	buildLeaf(id?: undefined, payload?: Payload): LeafNode<BuildTreeNode>;
 	/** Create an arbitrary unparented node with the given identifier and payload, if specified */
 	buildLeaf(id: NodeId, payload?: Payload): LeafNode<ChangeNode>;
 	/** Create an arbitrary unparented node with a new unique ID and the given payload, if specified */
 	buildLeafWithId(payload?: Payload): LeafNode<ChangeNode>;
 	/**
-	 * Generates a leaf {@link ChangeNode}.
+	 * Generates a leaf node for use in internal build changes.
 	 * If no `id` is explicitly provided, one will be generated.
 	 * @param id - Explicit ID to use as the new node's identifier. If not provided, one will be generated.
 	 */
-	buildStableLeaf(id?: NodeId, payload?: Payload): LeafNode<ChangeNode_0_0_2>;
+	buildLeafInternal(id?: NodeId, payload?: Payload): LeafNode<TreeNode<BuildNodeInternal, StableNodeId>>;
 }
 
 /**
@@ -231,8 +231,8 @@ export class SimpleTestTree implements TestTree {
 		return this.buildLeaf(this.generateNodeId(), payload);
 	}
 
-	public buildStableLeaf(id?: NodeId, payload?: Payload): LeafNode<ChangeNode_0_0_2> {
-		return buildStableLeaf(this, id, payload);
+	public buildLeafInternal(id?: NodeId, payload?: Payload): LeafNode<TreeNode<BuildNodeInternal, StableNodeId>> {
+		return buildLeafInternal(this, id, payload);
 	}
 
 	public generateNodeId(override?: string): NodeId {
@@ -331,8 +331,8 @@ export class RefreshingTestTree<T extends TestTree> implements TestTree {
 	public buildLeafWithId(payload?: Payload): LeafNode<ChangeNode> {
 		return this.testTree.buildLeafWithId(payload);
 	}
-	public buildStableLeaf(id?: NodeId, payload?: Payload): LeafNode<ChangeNode_0_0_2> {
-		return this.testTree.buildStableLeaf(id, payload);
+	public buildLeafInternal(id?: NodeId, payload?: Payload): LeafNode<TreeNode<BuildNodeInternal, StableNodeId>> {
+		return this.testTree.buildLeafInternal(id, payload);
 	}
 
 	public generateNodeId(override?: string): NodeId {
@@ -376,14 +376,16 @@ export function buildLeaf(id?: NodeId, payload?: Payload): LeafNode<BuildTreeNod
  * If no `id` is explicitly provided, one will be generated.
  * @param id - Explicit ID to use as the new node's identifier. If not provided, one will be generated.
  */
-export function buildStableLeaf(
+export function buildLeafInternal(
 	nodeIdContext: NodeIdContext,
 	id?: NodeId,
 	payload?: Payload
-): LeafNode<ChangeNode_0_0_2> {
+): LeafNode<TreeNode<BuildNodeInternal, StableNodeId>> {
+	const leaf = buildLeaf(undefined, payload);
 	return {
-		...buildLeaf(undefined, payload),
+		definition: leaf.definition as Definition,
 		identifier: nodeIdContext.convertToStableNodeId(id ?? nodeIdContext.generateNodeId()),
+		traits: {},
 	};
 }
 
