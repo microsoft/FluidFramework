@@ -1,5 +1,32 @@
 # Change Log
 
+## 30.12.0
+
+* feat: Add shared-tree fuzz tests
+  * Associated pull request: [39326](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39326)
+  * Commit: [0925b20e023c09629b1e8589e8910f3b1e24a11c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0925b20e023c09629b1e8589e8910f3b1e24a11c)
+* merge: `releases/2022.03.5` into `master`
+  * Associated pull request: [39332](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39332)
+  * Commit: [f00bb3d22d7e81d0ca783e7959b9a684e8f4cf93](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f00bb3d22d7e81d0ca783e7959b9a684e8f4cf93)
+* fix: Unify local overrides in IdCompressor
+  * Associated pull request: [39462](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39462)
+  * Commit: [bd5448bf248bce2b05698aeb60f00ffcbb4202c0](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/bd5448bf248bce2b05698aeb60f00ffcbb4202c0)
+* build: update package dependencies
+  * Associated pull request: [39455](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39455)
+  * Commit: [62b6601900349676bf3a6639f08982a8c3e3ffbc](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/62b6601900349676bf3a6639f08982a8c3e3ffbc)
+* fix: Handle payloads at the root in no-history summarizers
+  * Associated pull request: [39392](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39392)
+  * Commit: [c8fb13ea422f8fd2ed4b382dae3d85ab4fb414bf](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/c8fb13ea422f8fd2ed4b382dae3d85ab4fb414bf)
+* fix: Always start writing the format used by the summary on summary load
+  * Associated pull request: [39390](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39390)
+  * Commit: [ea937d7188f4c88b1494e66c455e134117da59b8](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ea937d7188f4c88b1494e66c455e134117da59b8)
+* feat: IdCompressor can give out all allocated local IDs
+  * Associated pull request: [39365](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39365)
+  * Commit: [b1f0d85783b0c8695cdbf6afc909d21ab3f7c605](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b1f0d85783b0c8695cdbf6afc909d21ab3f7c605)
+* refactor: Remove implicit IDs from ranges
+  * Associated pull request: [39340](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/39340)
+  * Commit: [88a64d27e8e6ecf461af2ad81fe48142097fbc55](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/88a64d27e8e6ecf461af2ad81fe48142097fbc55)
+
 ## 30.10.1
 
 * build: update package dependencies
