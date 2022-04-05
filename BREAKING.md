@@ -17,12 +17,17 @@ There are a few steps you can take to write a good change note and avoid needing
 # 0.59
 
 ## 0.59 Upcoming changes
+- [Remove ICodeLoader interface](#Remove-ICodeLoader-interface)
+
+### Remove ICodeLoader interface
+ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
 - [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
 - [Remove `@fluidframework/core-interface#fluidPackage.ts`](#Remove-fluidframeworkcore-interfacefluidPackagets)
 - [getAbsoluteUrl() argument type changed](#getAbsoluteUrl-argument-type-changed)
+- [Replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface)
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
@@ -66,6 +71,27 @@ The `packageInfoSource` argument in `getAbsoluteUrl()` on `@fluidframework/odsp-
 +    packageInfoSource?: IContainerPackageInfo,
 + ): Promise<string>;
 ```
+
+### Replace ICodeLoader with ICodeDetailsLoader interface
+The interface `ICodeLoader` was deprecated a while ago in previous releases. The alternative for `ICodeLoader` interface is the `ICodeDetailsLoader` interface which can be imported from `@fluidframework/container-definitions`. `ICodeLoader` interface will be removed in the next release.
+
+In particular, note the `ILoaderService` and `ILoaderProps` interfaces used with the `Loader` class now only support `ICodeDetailsLoader`. If you were using an `ICodeLoader` with these previously, you'll need to update to an `ICodeDetailsLoader`.
+
+```ts
+export interface ICodeDetailsLoader
+ extends Partial<IProvideFluidCodeDetailsComparer> {
+ /**
+  * Load the code module (package) that is capable to interact with the document.
+  *
+  * @param source - Code proposal that articulates the current schema the document is written in.
+  * @returns - Code module entry point along with the code details associated with it.
+  */
+ load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+}
+```
+All codeloaders are now expected to return the object including both the runtime factory and code details of the package that was actually loaded. These code details may be used later then to check whether the currently loaded package `.satisfies()` a constraint.
+
+You can start by returning default code details that were passed into the code loader which used to be our implementation on your behalf if code details were not passed in. Later on, this gives an opportunity to implement more sophisticated code loading where the code loader now can inform about the actual loaded module via the returned details.
 
 # 0.58
 

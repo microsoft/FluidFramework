@@ -13,7 +13,6 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import {
-    ICodeLoader,
     IContainer,
     IFluidModule,
     IHostLoader,
@@ -187,7 +186,7 @@ export interface ILoaderProps {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
 
     /**
      * A property bag of options used by various layers
@@ -243,7 +242,7 @@ export interface ILoaderServices {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
 
     /**
      * A property bag of options used by various layers
