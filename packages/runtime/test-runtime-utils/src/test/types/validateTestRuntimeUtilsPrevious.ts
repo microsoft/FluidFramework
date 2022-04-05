@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IMockContainerRuntimePendingMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IMockContainerRuntimePendingMessage():
@@ -28,7 +28,7 @@ use_current_InterfaceDeclaration_IMockContainerRuntimePendingMessage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IMockContainerRuntimePendingMessage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IMockContainerRuntimePendingMessage():
@@ -40,7 +40,7 @@ use_old_InterfaceDeclaration_IMockContainerRuntimePendingMessage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_InsecureTokenProvider": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_InsecureTokenProvider():
@@ -52,7 +52,7 @@ use_current_ClassDeclaration_InsecureTokenProvider(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_InsecureTokenProvider": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_InsecureTokenProvider():
@@ -64,7 +64,7 @@ use_old_ClassDeclaration_InsecureTokenProvider(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockContainerRuntime": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockContainerRuntime():
@@ -76,7 +76,7 @@ use_current_ClassDeclaration_MockContainerRuntime(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockContainerRuntime": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockContainerRuntime():
@@ -88,7 +88,7 @@ use_old_ClassDeclaration_MockContainerRuntime(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockContainerRuntimeFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockContainerRuntimeFactory():
@@ -100,7 +100,7 @@ use_current_ClassDeclaration_MockContainerRuntimeFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockContainerRuntimeFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockContainerRuntimeFactory():
@@ -112,7 +112,7 @@ use_old_ClassDeclaration_MockContainerRuntimeFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection():
@@ -124,7 +124,7 @@ use_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection():
@@ -136,7 +136,7 @@ use_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockContainerRuntimeForReconnection": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockContainerRuntimeForReconnection():
@@ -148,7 +148,7 @@ use_current_ClassDeclaration_MockContainerRuntimeForReconnection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockContainerRuntimeForReconnection": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockContainerRuntimeForReconnection():
@@ -160,7 +160,7 @@ use_old_ClassDeclaration_MockContainerRuntimeForReconnection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockDeltaConnection": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockDeltaConnection():
@@ -172,7 +172,7 @@ use_current_ClassDeclaration_MockDeltaConnection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockDeltaConnection": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockDeltaConnection():
@@ -184,7 +184,7 @@ use_old_ClassDeclaration_MockDeltaConnection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockDeltaManager": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockDeltaManager():
@@ -196,7 +196,7 @@ use_current_ClassDeclaration_MockDeltaManager(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockDeltaManager": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockDeltaManager():
@@ -208,7 +208,7 @@ use_old_ClassDeclaration_MockDeltaManager(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockDeltaQueue": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockDeltaQueue():
@@ -220,7 +220,7 @@ use_current_ClassDeclaration_MockDeltaQueue(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockDeltaQueue": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockDeltaQueue():
@@ -232,7 +232,7 @@ use_old_ClassDeclaration_MockDeltaQueue(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockEmptyDeltaConnection": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockEmptyDeltaConnection():
@@ -244,7 +244,7 @@ use_current_ClassDeclaration_MockEmptyDeltaConnection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockEmptyDeltaConnection": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockEmptyDeltaConnection():
@@ -256,7 +256,7 @@ use_old_ClassDeclaration_MockEmptyDeltaConnection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockFluidDataStoreContext": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockFluidDataStoreContext():
@@ -268,7 +268,7 @@ use_current_ClassDeclaration_MockFluidDataStoreContext(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockFluidDataStoreContext": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockFluidDataStoreContext():
@@ -280,7 +280,7 @@ use_old_ClassDeclaration_MockFluidDataStoreContext(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockFluidDataStoreRuntime": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockFluidDataStoreRuntime():
@@ -292,7 +292,7 @@ use_current_ClassDeclaration_MockFluidDataStoreRuntime(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockFluidDataStoreRuntime": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockFluidDataStoreRuntime():
@@ -304,7 +304,7 @@ use_old_ClassDeclaration_MockFluidDataStoreRuntime(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockHandle": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockHandle():
@@ -316,7 +316,7 @@ use_current_ClassDeclaration_MockHandle(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockHandle": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockHandle():
@@ -328,7 +328,7 @@ use_old_ClassDeclaration_MockHandle(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockObjectStorageService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockObjectStorageService():
@@ -340,7 +340,7 @@ use_current_ClassDeclaration_MockObjectStorageService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockObjectStorageService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockObjectStorageService():
@@ -352,7 +352,7 @@ use_old_ClassDeclaration_MockObjectStorageService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockQuorum": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockQuorum():
@@ -364,7 +364,7 @@ use_current_ClassDeclaration_MockQuorum(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockQuorum": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockQuorum():
@@ -376,7 +376,7 @@ use_old_ClassDeclaration_MockQuorum(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockSharedObjectServices": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockSharedObjectServices():
@@ -388,7 +388,7 @@ use_current_ClassDeclaration_MockSharedObjectServices(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockSharedObjectServices": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockSharedObjectServices():
@@ -400,7 +400,7 @@ use_old_ClassDeclaration_MockSharedObjectServices(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockStorage": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MockStorage():
@@ -412,7 +412,7 @@ use_current_ClassDeclaration_MockStorage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MockStorage": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MockStorage():

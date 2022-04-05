@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "@fluidframework/aqueduct": "^0.59.1000",
-    "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@0.58.2000",
+    "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@^0.58.0",
     "@fluidframework/azure-local-service": "^0.1.38773",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.27.0",
@@ -79,7 +79,7 @@
     "fluid-framework": "^0.58.0"
   },
   "typeValidation": {
-    "version": "0.58.3000",
+    "version": "0.59.1000",
     "broken": {}
   }
 }

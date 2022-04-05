@@ -70,7 +70,7 @@
   "devDependencies": {
     "@fluid-internal/test-dds-utils": "^0.59.1000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/cell-previous": "npm:@fluidframework/cell@0.58.2000",
+    "@fluidframework/cell-previous": "npm:@fluidframework/cell@^0.58.0",
     "@fluidframework/eslint-config-fluid": "^0.27.0",
     "@fluidframework/mocha-test-setup": "^0.59.1000",
     "@fluidframework/test-runtime-utils": "^0.59.1000",
@@ -97,7 +97,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.58.3000",
+    "version": "0.59.1000",
     "broken": {}
   }
 }
