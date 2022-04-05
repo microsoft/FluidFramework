@@ -397,9 +397,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     constructor(
         private readonly client: Client,
         private readonly label: string,
-        private readonly helpers: IIntervalHelpers<TInterval>) {
-        this.endIntervalTree =
-            new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
+        private readonly helpers: IIntervalHelpers<TInterval>,
+    ) {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.endIntervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
     }
 
     public addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>) {
@@ -835,7 +836,7 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 }
 
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
-    (event: "addInterval" | "deleteInterval",
+    (event: "addInterval" | "changeInterval" | "deleteInterval",
         listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void);
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void);
 }
@@ -970,7 +971,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             this.emitter.emit("change", undefined, serializedInterval);
             this.emit("propertyChanged", interval, deltaProps);
         }
-        this.emit("change", interval, true, undefined);
+        this.emit("changeInterval", interval, true, undefined);
     }
 
     public change(id: string, start?: number, end?: number): TInterval | undefined {
@@ -996,7 +997,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             this.emitter.emit("change", undefined, serializedInterval);
             this.addPendingChange(id, serializedInterval);
         }
-        this.emit("change", interval, true, undefined);
+        this.emit("changeInterval", interval, true, undefined);
         return interval;
     }
 
@@ -1072,11 +1073,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             throw new Error("Attach must be called before accessing intervals");
         }
 
+        let interval: TInterval | undefined;
+
         if (local) {
             // This is an ack from the server. Remove the pending change.
             this.removePendingChange(serializedInterval);
             const id: string = serializedInterval.properties[reservedIntervalIdKey];
-            const interval: TInterval = this.getIntervalById(id);
+            interval = this.getIntervalById(id);
             if (interval) {
                 // Let the propertyManager prune its pending change-properties set.
                 interval.propertyManager?.ackPendingProperties(
@@ -1090,7 +1093,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             // If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
             // should be the winning change.
             const id: string = serializedInterval.properties[reservedIntervalIdKey];
-            let interval: TInterval = this.getIntervalById(id);
+            interval = this.getIntervalById(id);
             if (interval) {
                 let start: number | undefined;
                 let end: number | undefined;
@@ -1112,6 +1115,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 }
                 this.emit("propertyChanged", interval, deltaProps);
             }
+        }
+        if (interval) {
             this.emit("changeInterval", interval, local, op);
         }
     }
