@@ -93,9 +93,6 @@ export class WebCodeLoader implements ICodeDetailsLoader {
         if (fluidModule?.fluidExport === undefined) {
             throw new Error("Entry point of loaded code package not a Fluid module");
         }
-        return {
-            module: fluidModule,
-            details: resolved,
-        };
+        return { module: fluidModule, details: resolved };
     }
 }

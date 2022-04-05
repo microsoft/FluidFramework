@@ -93,7 +93,8 @@ export type RouteOptions =
     | ITinyliciousRouteOptions
     | IOdspRouteOptions;
 
-function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModuleWithDetails {
+function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule):
+    IFluidModuleWithDetails {
     const fluidModuleExport: FluidObject<IProvideRuntimeFactory & IFluidDataStoreFactory> =
         fluidModule.fluidExport;
     if (fluidModuleExport.IRuntimeFactory === undefined) {
