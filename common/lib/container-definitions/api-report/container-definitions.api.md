@@ -526,6 +526,18 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
 
 // @public
+export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
+    // (undocumented)
+    blobsContents: {
+        [path: string]: ArrayBufferLike;
+    };
+    // (undocumented)
+    trees: {
+        [path: string]: ISnapshotTreeWithBlobContents;
+    };
+}
+
+// @public
 export interface IThrottlingWarning extends IErrorBase {
     // (undocumented)
     readonly errorType: ContainerErrorType.throttlingError;
