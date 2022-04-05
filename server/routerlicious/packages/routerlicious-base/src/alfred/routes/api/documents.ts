@@ -126,20 +126,19 @@ export function create(
                         session,
                         token: getCreationToken(token, key, id),
                     };
-                }
-                else if (enableDiscovery && !generateToken) {
+                } else if (enableDiscovery && !generateToken) {
                     return {
                         id,
                         session,
                     };
-                }
-                else if (!enableDiscovery && generateToken) {
+                } else if (!enableDiscovery && generateToken) {
                     return {
                         id,
                         token: getCreationToken(token, key, id),
                     };
+                } else {
+                    return id;
                 }
-                return id;
             }), response, undefined, 201);
         });
 
