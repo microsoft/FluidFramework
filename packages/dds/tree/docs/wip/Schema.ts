@@ -98,12 +98,19 @@ export enum ValueSchema {
 export interface FieldSchema {
     readonly multiplicity: Multiplicity;
     /**
-     * If not specified, child types are unconstrained.
+     * The set of allowed child types.
+     * Providing multiple values here allows polymorphism, tagged union style.
+     *
+     * If not specified, child types are unconstrained (equivalent to the set containing every TreeSchemaIdentifier defined in the document).
      * Note that even when unconstrained, children must still be in-schema for their own type.
      *
      * In the future, this could be extended to allow inlining a TreeSchema here (or some similar structural schema system).
-     * Putting a structural schema here would be an interesting alternative to supporting values on Tree nodes:
-     * ex: we could remove TreeSchema.value and allow ValueType here instead of a type set.
+     * For structural types which could go here, there are a few interesting options:
+     * - Allow replacing the whole set with a structural type for terminal / non-tree data, and use this as a replacement for values on the tree nodes.
+     * - Allow expression structural constraints for child trees, for example requiring specific traits (ex: via TreeSchema), instead of by type.
+     * There are two ways this could work:
+     *      - Constrain the child nodes based on their shape: this makes schema safe editing difficult because nodes would incur extra editing constraints to prevent them from going out of schema based on their location in such a field.
+     *      - Constrain the types allowed based on which types guarantee their data will always meet the constraints. Care would need to be taken to make sure this is sound for the schema updating mechanisms.
      */
     readonly types?: ReadonlySet<TreeSchemaIdentifier>;
 }
@@ -263,7 +270,9 @@ export class StoredSchemaRepository implements SchemaRepository {
      * For now, the schema are just scored in maps.
      * There are a couple reasons we might not want this simple solution long term:
      * 1. We might want an easy/fast copy.
-     * 2. We might want a way to reserve a large namespace of schema with the same schema
+     * 2. We might want a way to reserve a large namespace of schema with the same schema.
+     * The way extraFields has been structured mitigates the need for this, but it still might be useful.
+     *
      * (ex: someone using data as field identifiers might want to reserve all fields identifiers starting with "foo." to have a specific schema).
      * Combined with support for such namespaces in the allowed sets in the schema objects, that might provide a decent alternative to extraFields (which is a bit odd).
      */
