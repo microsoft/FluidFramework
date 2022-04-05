@@ -489,6 +489,7 @@ export async function downloadSnapshot(
             new ReadBuffer(new Uint8Array(content)));
         finalSnapshotContents = { ...response, content: snapshotContents };
     }
+    response.propsToLog.contentType = contentType;
     return {
         odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
