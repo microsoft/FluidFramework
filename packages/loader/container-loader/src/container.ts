@@ -996,7 +996,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private disconnectInternal() {
-        assert(!this.closed, "Attempting to disconnect() a closed DeltaManager");
+        assert(!this.closed, "Attempting to disconnect() a closed Container");
 
         const mode = ReconnectMode.Disabled;
         const currentMode = this._deltaManager.connectionManager.reconnectMode;
