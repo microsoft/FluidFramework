@@ -112,6 +112,27 @@
   },
   "typeValidation": {
     "version": "0.58.3000",
-    "broken": {}
+    "broken": {
+      "0.58.2000": {
+        "InterfaceDeclaration_IBaseSummarizeResult": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IGenerateSummaryTreeResult": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISubmitSummaryOpResult": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IUploadSummaryResult": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_SubmitSummaryResult": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_SubmitSummaryResult": {
+          "forwardCompat": false
+        }
+      }
+    }
   }
 }

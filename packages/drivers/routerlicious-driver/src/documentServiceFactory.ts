@@ -27,7 +27,7 @@ import { parseFluidUrl, replaceDocumentIdInPath, replaceWithDiscoveryUrl } from 
 import { InMemoryCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
-import { IDocumentSession, ISession } from "./contracts";
+import { ISession } from "./contracts";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -93,27 +93,46 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.driverPolicies.enableRestLess,
             resolvedUrl.endpoints.ordererUrl,
         );
-        // the backend responds with the actual document ID associated with the new container.
-        const result: IDocumentSession | string = await ordererRestWrapper.post<IDocumentSession | string>(
+
+        // @TODO: Remove returned "string" type when removing back-compat code
+        const res = await ordererRestWrapper.post<{ id: string, token?: string, session?: ISession } | string>(
             `/documents/${tenantId}`,
             {
                 summary: convertSummaryToCreateNewSummary(appSummary),
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
                 enableDiscovery: this.driverPolicies.enableDiscovery,
+                generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
             },
         );
-        let documentId;
-        let session: ISession;
-        if (typeof result === "string") {
-            documentId = result;
+
+        // For supporting backward compatibility, when the request has generateToken === true, it will return
+        // an object instead of string
+        // @TODO: Remove the logic when no need to support back-compat
+
+        let documentId: string;
+        let token: string | undefined;
+        let session: ISession | undefined;
+
+        if (typeof res === "string") {
+            documentId = res;
         } else {
-            documentId = result.documentId;
-            session = result.session;
-            replaceWithDiscoveryUrl(resolvedUrl, session, parsedUrl);
+            documentId = res.id;
+            token = res.token;
+            session = res.session;
         }
 
-        parsedUrl = parseFluidUrl(resolvedUrl.url);
+        if (this.driverPolicies.enableDiscovery) {
+            replaceWithDiscoveryUrl(resolvedUrl, session, parsedUrl);
+            parsedUrl = parseFluidUrl(resolvedUrl.url);
+        }
+
+        // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
+        // is sufficient to determine if the token will be undefined or not.
+        if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
+            await this.tokenProvider.documentPostCreateCallback (documentId, token);
+        }
+
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
         const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
         if (!deltaStorageUrl) {
@@ -172,10 +191,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             );
 
             // the backend responds with the actual document session associated with the container.
-            const documentSession: IDocumentSession = await ordererRestWrapper.get<IDocumentSession>(
+            const session: ISession = await ordererRestWrapper.get<ISession>(
                 `/documents/${tenantId}/session/${documentId}`,
             );
-            const session = documentSession.session;
             replaceWithDiscoveryUrl(resolvedUrl, session, parsedUrl);
         }
 

@@ -65,6 +65,8 @@ type SummaryGeneratorRequiredTelemetryProperties =
 type SummaryGeneratorOptionalTelemetryProperties =
     /** Reference sequence number as of the generate summary attempt. */
     "referenceSequenceNumber" |
+    /** minimum sequence number (at the reference sequence number) */
+    "minimumSequenceNumber" |
     /** Delta between the current reference sequence number and the reference sequence number of the last attempt */
     "opsSinceLastAttempt" |
     /** Delta between the current reference sequence number and the reference sequence number of the last summary */
@@ -298,6 +300,7 @@ export class SummaryGenerator {
             summarizeTelemetryProps = {
                 ...summarizeTelemetryProps,
                 referenceSequenceNumber,
+                minimumSequenceNumber: summaryData.minimumSequenceNumber,
                 opsSinceLastAttempt: referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
                 opsSinceLastSummary,
             };

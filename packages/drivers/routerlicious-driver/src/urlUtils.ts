@@ -26,7 +26,7 @@ export const createFluidUrl = (domain: string, pathname: string): string =>
 export const replaceWithDiscoveryUrl = (resolvedUrl: IFluidResolvedUrl,
     session: ISession,
     parsedUrl: URLParse): void => {
-    if (session.ordererUrl.includes("https")) {
+    if (session !== undefined && session.ordererUrl.includes("https")) {
         const replacementOrderUrl = new URL(session.ordererUrl);
         const replaceHistorianUrl = new URL(session.historianUrl);
         const deltaStorageUrl = new URL(resolvedUrl.endpoints.deltaStorageUrl);
