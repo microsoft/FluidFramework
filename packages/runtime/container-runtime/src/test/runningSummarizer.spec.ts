@@ -155,6 +155,7 @@ describe("Runtime", () => {
                         return {
                             stage: "submit",
                             referenceSequenceNumber: lastRefSeq,
+                            minimumSequenceNumber: 0,
                             generateDuration: 0,
                             uploadDuration: 0,
                             submitOpDuration: 0,

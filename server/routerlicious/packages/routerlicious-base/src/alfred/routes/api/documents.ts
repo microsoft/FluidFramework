@@ -14,13 +14,14 @@ import {
 } from "@fluidframework/server-services-core";
 import {
     verifyStorageToken,
+    getCreationToken,
     throttle,
     IThrottleMiddlewareOptions,
     getParam,
 } from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import winston from "winston";
-import { IAlfredTenant, IDocumentSession } from "@fluidframework/server-services-client";
+import { IAlfredTenant, ISession } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import { Constants, handleResponse, getSession } from "../../../utils";
@@ -88,20 +89,14 @@ export function create(
             // Session information
             const ordererUrl = config.get("worker:serverUrl");
             const historianUrl = config.get("worker:blobStorageUrl");
-            const documentSession: IDocumentSession = {
-                id,
-                hasSessionLocationChanged: false,
-                session:
-                {
-                    ordererUrl,
-                    historianUrl,
-                    isSessionAlive: false,
-                },
+            const session: ISession = {
+                ordererUrl,
+                historianUrl,
+                isSessionAlive: false,
             };
 
             // Protocol state
-            const sequenceNumber = request.body.sequenceNumber;
-            const values = request.body.values;
+            const { sequenceNumber, values, generateToken = false } = request.body;
 
             const createP = storage.createDocument(
                 tenantId,
@@ -114,12 +109,38 @@ export function create(
                 historianUrl,
                 values);
 
+            // Generate creation token given a jwt from header
             const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
-            if (enableDiscovery) {
-                handleResponse(createP.then(() => documentSession), response, undefined, 201);
-            } else {
-                handleResponse(createP.then(() => id), response, undefined, 201);
-            }
+            const authorizationHeader = request.header("Authorization");
+            const tokenRegex = /Basic (.+)/;
+            const tokenMatch = tokenRegex.exec(authorizationHeader);
+            const token = tokenMatch[1];
+
+            const tenantKeyP = tenantManager.getKey(tenantId);
+
+            handleResponse(Promise.all([createP, tenantKeyP]).then(([_, key]) => {
+                // @TODO: Modify it to return an object only, it returns string for back-compat.
+                if (enableDiscovery && generateToken) {
+                    return {
+                        id,
+                        session,
+                        token: getCreationToken(token, key, id),
+                    };
+                }
+                else if (enableDiscovery && !generateToken) {
+                    return {
+                        id,
+                        session,
+                    };
+                }
+                else if (!enableDiscovery && generateToken) {
+                    return {
+                        id,
+                        token: getCreationToken(token, key, id),
+                    };
+                }
+                return id;
+            }), response, undefined, 201);
         });
 
     /**
@@ -134,8 +155,8 @@ export function create(
             const tenantId = getParam(request.params, "tenantId");
             const ordererUrl = config.get("worker:serverUrl");
             const historianUrl = config.get("worker:blobStorageUrl");
-            const documentSession = getSession(ordererUrl, historianUrl, tenantId, documentId, documentsCollection);
-            handleResponse(documentSession, response, undefined, 200);
+            const session = getSession(ordererUrl, historianUrl, tenantId, documentId, documentsCollection);
+            handleResponse(session, response, undefined, 200);
         });
     return router;
 }

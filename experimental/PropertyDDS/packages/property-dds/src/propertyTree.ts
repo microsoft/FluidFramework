@@ -169,12 +169,14 @@ export class SharedPropertyTree extends SharedObject {
 		// for the serialization of the data structure
 		if (this.listenerCount("localModification") > 0) {
 			const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+            this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
 			const _changeSet = new ChangeSet(changes);
 			if (!isEmpty(_changeSet.getSerializedChangeSet())) {
 				this.emit("localModification", _changeSet);
 			}
-		}
-		this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+		} else {
+            this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+        }
 	}
 
 	public get changeSet(): SerializedChangeSet {

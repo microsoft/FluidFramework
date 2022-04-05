@@ -8,14 +8,6 @@ export interface IAlfredTenant {
     key: string;
 }
 
-export interface IDocumentSession {
-    id: string;
-
-    hasSessionLocationChanged: boolean;
-
-    session: ISession;
-}
-
 export interface ISession {
     ordererUrl: string;
 

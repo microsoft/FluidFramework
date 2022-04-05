@@ -2,96 +2,96 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ExpiryTimeType } from '@fluid-experimental/property-properties';
-import Button from '@material-ui/core/Button';
-import FormControl from '@material-ui/core/FormControl';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import { makeStyles, Theme } from '@material-ui/core/styles';
-import classNames from 'classnames';
-import React, { useEffect, useState } from 'react';
+import { ExpiryTimeType } from "@fluid-experimental/property-properties";
+import Button from "@material-ui/core/Button";
+import FormControl from "@material-ui/core/FormControl";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Radio from "@material-ui/core/Radio";
+import RadioGroup from "@material-ui/core/RadioGroup";
+import { makeStyles, Theme } from "@material-ui/core/styles";
+import classNames from "classnames";
+import React, { useEffect, useState } from "react";
 
-import { IExpiryInfo, IExpiryState, IRepoExpiryGetter, IRepoExpirySetter } from './CommonTypes';
-import { LoadingButton } from './LoadingButton';
-import { CustomChip } from './CustomChip';
-import { ErrorPopup } from './ErrorPopup';
-import { backGroundGrayColor, textDarkColor } from './constants';
-import { InspectorModal } from './InspectorModal';
+import { IExpiryInfo, IExpiryState, IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes";
+import { LoadingButton } from "./LoadingButton";
+import { CustomChip } from "./CustomChip";
+import { ErrorPopup } from "./ErrorPopup";
+import { backGroundGrayColor, textDarkColor } from "./constants";
+import { InspectorModal } from "./InspectorModal";
 
 const useStyles = makeStyles((theme: Theme) => ({
   annotation: {
-    color: textDarkColor + 'b3', // 8 digit hex code with alpha 0.7
-    fontSize: '12px',
+    color: `${ textDarkColor }b3`, // 8 digit hex code with alpha 0.7
+    fontSize: "12px",
   },
   cancelButton: {
-    'margin-right': theme.spacing(1.5),
+    "margin-right": theme.spacing(1.5),
   },
   contentContainer: {
-    'color': textDarkColor,
-    'display': 'flex',
-    'flex-direction': 'column',
-    'justify-content': 'space-between',
+    "color": textDarkColor,
+    "display": "flex",
+    "flex-direction": "column",
+    "justify-content": "space-between",
   },
   deleteButton: {
-    '&:hover': {
-      background: '#C01010',
+    "&:hover": {
+      background: "#C01010",
     },
-    'background': '#DD2222',
-    'color': backGroundGrayColor,
+    "background": "#DD2222",
+    "color": backGroundGrayColor,
   },
   deleteLink: {
-    color: '#FF2222',
+    color: "#FF2222",
   },
   expiryStateChip: {
-    '&.expired': {
-      background: '#FAA21B',
+    "&.expired": {
+      background: "#FAA21B",
     },
-    '&.live': {
-      background: '#87B340',
+    "&.live": {
+      background: "#87B340",
     },
-    'align-items': 'center',
-    'color': 'white',
-    'display': 'inline-flex',
+    "align-items": "center",
+    "color": "white",
+    "display": "inline-flex",
   },
   horizontalButtonContainer: {
-    alignItems: 'center',
-    display: 'flex',
-    justifyContent: 'flex-end',
-    marginTop: '10px',
+    alignItems: "center",
+    display: "flex",
+    justifyContent: "flex-end",
+    marginTop: "10px",
   },
   horizontalContainer: {
-    alignItems: 'center',
-    display: 'flex',
-    justifyContent: 'space-between',
+    alignItems: "center",
+    display: "flex",
+    justifyContent: "space-between",
     marginBottom: theme.spacing(2),
   },
   label: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   legend: {
     marginBottom: theme.spacing(2),
   },
   radioGroup: {
-    '&>*': {
+    "&>*": {
       marginBottom: theme.spacing(1.5),
     },
   },
   selectionLabel: {
-    lineHeight: '1.2',
+    lineHeight: "1.2",
     paddingLeft: theme.spacing(2),
   },
   textButton: {
-    '&:hover': {
-      background: 'transparent',
-      cursor: 'pointer',
-      textDecorationLine: 'underline',
+    "&:hover": {
+      background: "transparent",
+      cursor: "pointer",
+      textDecorationLine: "underline",
     },
-    'align-self': 'flex-end',
-    'padding-bottom': theme.spacing(1.5),
-    'padding-right': '3px',
+    "align-self": "flex-end",
+    "padding-bottom": theme.spacing(1.5),
+    "padding-right": "3px",
   },
-}), { name: 'ExpiryModal' });
+}), { name: "ExpiryModal" });
 
 interface IModalExpiryState {
   expiresIn: string;
@@ -99,7 +99,7 @@ interface IModalExpiryState {
 }
 
 interface IModalState {
-  mode: 'default' | 'expirySelection' | 'deletion';
+  mode: "default" | "expirySelection" | "deletion";
 }
 
 interface IModalPolicyState {
@@ -121,17 +121,17 @@ export interface IExpiryModalProps {
 }
 
 const retentionStrategyDescriptions: { [key in ExpiryTimeType]: string } = {
-  persistent: 'The repo does never expire',
-  temporary: 'The repo expires after 30 days',
-  transient: 'The repo expires after 24 hours',
+  persistent: "The repo does never expire",
+  temporary: "The repo expires after 30 days",
+  transient: "The repo expires after 24 hours",
 };
 
 const lifeCycleDescriptions: { [key in IExpiryState]: string } = {
-  expired: 'Expired State',
-  live: 'Live State',
+  expired: "Expired State",
+  live: "Live State",
 };
 
-const expiryPlaceHolder = 'loading...';
+const expiryPlaceHolder = "loading...";
 
 /**
  * An info modal.
@@ -146,15 +146,15 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
   // It is inevitable though, because handling all state in just one state object doesn't work if we update it several
   // times in nested promises (we'll end up with an inconsistent state because consecutive updates will not be merged
   // properly).
-  const [modalState, setModalState] = useState<IModalState>({ mode: 'default' });
+  const [modalState, setModalState] = useState<IModalState>({ mode: "default" });
   const [modalExpiryState, setModalExpiryState] = useState<IModalExpiryState>({
-    expiresIn: expiryPlaceHolder, expiryState: 'live',
+    expiresIn: expiryPlaceHolder, expiryState: "live",
   });
   const [deletionState, setDeletionState] = useState<IModalDeletionState>({ deleting: false });
-  const [policyState, setPolicyState] = useState<IModalPolicyState>({retentionStrategy: 'temporary', updating: false});
+  const [policyState, setPolicyState] = useState<IModalPolicyState>({retentionStrategy: "temporary", updating: false});
 
   // Get a promise that resolves with the expiry information for the current repository.
-  const getExpiryInfo = (): Promise<IExpiryInfo | void> => {
+  const getExpiryInfo = async (): Promise<IExpiryInfo | void> => {
     return ErrorPopup(getRepoExpiry.bind(null, repositoryUrn!));
   };
 
@@ -168,7 +168,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     if (expiryInfo.when) {
       newState.expiresIn = new Date(expiryInfo.when).toLocaleString();
     } else {
-      newState.expiresIn = 'never';
+      newState.expiresIn = "never";
     }
     return newState;
   };
@@ -182,6 +182,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     if (newState) {
       setModalExpiryState(newState);
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       getExpiryInfo().then((expiryInfo) => {
         if (expiryInfo) {
           newState = expiryInfoToState(expiryInfo);
@@ -195,11 +196,12 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
    * Set the expiry of the current repository to the provided retention policy
    * @param expiryTime The new retention policy/expiry time.
    */
-  const setExpiry = (expiryTime: ExpiryTimeType): Promise<void> => {
+  const setExpiry = async (expiryTime: ExpiryTimeType): Promise<void> => {
     setPolicyState({ ...policyState, updating: true });
     setModalExpiryState({ ...modalExpiryState, expiresIn: expiryPlaceHolder });
     return ErrorPopup(setRepoExpiry.bind(null, repositoryUrn!, expiryTime)).then(() => {
-      setModalState({ mode: 'default' });
+      setModalState({ mode: "default" });
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       getExpiryInfo().then((expiryInfo) => {
         if (expiryInfo) {
           const newState = expiryInfoToState(expiryInfo);
@@ -214,11 +216,11 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     setPolicyState({ ...policyState, retentionStrategy: event.target.value });
   };
 
-  const deleteRepository = (repoUrn: string) => {
+  const deleteRepository = async (repoUrn: string) => {
     setDeletionState({ deleting: true });
     setModalExpiryState({ ...modalExpiryState, expiresIn: expiryPlaceHolder });
     return ErrorPopup(deleteRepo.bind(null, repoUrn)).then(() => {
-      setModalState({ mode: 'default' });
+      setModalState({ mode: "default" });
       setDeletionState({ deleting: false });
       setExpiryState();
     });
@@ -231,11 +233,11 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
   // Renders the modal title
   const renderTitle = () => {
     return (
-      modalState.mode === 'default'
-        ? 'Repository Expiry'
-        : modalState.mode === 'expirySelection'
-          ? 'Set a new retention policy'
-          : 'Delete Repository'
+      modalState.mode === "default"
+        ? "Repository Expiry"
+        : modalState.mode === "expirySelection"
+          ? "Set a new retention policy"
+          : "Delete Repository"
     );
   };
 
@@ -272,14 +274,14 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
             color='primary'
             className={classes.textButton}
             classes={{ textPrimary: classes.deleteLink }}
-            disabled={modalExpiryState.expiresIn === expiryPlaceHolder || modalExpiryState.expiryState === 'expired'}
-            onClick={() => { setModalState({ mode: 'deletion' }); }}
+            disabled={modalExpiryState.expiresIn === expiryPlaceHolder || modalExpiryState.expiryState === "expired"}
+            onClick={() => { setModalState({ mode: "deletion" }); }}
           >
             Delete Repository
           </Button>
         </div>
         <span className={classes.annotation}>
-          {modalExpiryState.expiryState === 'live' ? 'Expiry' : 'Deletion'} date
+          {modalExpiryState.expiryState === "live" ? "Expiry" : "Deletion"} date
         </span>
         <div className={classes!.horizontalContainer}>
           <span>
@@ -290,7 +292,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
             color='primary'
             className={classes.textButton}
             disabled={modalExpiryState.expiresIn === expiryPlaceHolder}
-            onClick={() => { setModalState({ mode: 'expirySelection' }); }}
+            onClick={() => { setModalState({ mode: "expirySelection" }); }}
           >
             Set a new expiry
           </Button>
@@ -333,7 +335,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 
     return (
       <div className={classes.contentContainer}>
-        <FormControl component={'fieldset' as 'div'}>
+        <FormControl component={"fieldset" as "div"}>
           <span className={classes.legend}>Select one of following expiry options:</span>
           <RadioGroup
             aria-label='policy'
@@ -342,9 +344,9 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
             onChange={setRetentionPolicy}
             value={policyState.retentionStrategy}
           >
-            <FormControlLabel value='transient' control={radioButton()} label={renderSelectionLabel('transient')} />
-            <FormControlLabel value='temporary' control={radioButton()} label={renderSelectionLabel('temporary')} />
-            <FormControlLabel value='persistent' control={radioButton()} label={renderSelectionLabel('persistent')} />
+            <FormControlLabel value='transient' control={radioButton()} label={renderSelectionLabel("transient")} />
+            <FormControlLabel value='temporary' control={radioButton()} label={renderSelectionLabel("temporary")} />
+            <FormControlLabel value='persistent' control={radioButton()} label={renderSelectionLabel("persistent")} />
           </RadioGroup>
         </FormControl>
         <div className={classes.horizontalButtonContainer}>
@@ -353,13 +355,13 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
             disabled={policyState.updating}
             variant='outlined'
             className={classes.cancelButton}
-            onClick={() => { setModalState({ mode: 'default' }); }}
+            onClick={() => { setModalState({ mode: "default" }); }}
           >
             Cancel
           </Button>
           <LoadingButton
             color='primary'
-            onClick={() => setExpiry(policyState.retentionStrategy)}
+            onClick={async () => setExpiry(policyState.retentionStrategy)}
             variant='contained'
           >
             Update
@@ -374,7 +376,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     return (
       <div className={classes.contentContainer}>
         Are you sure you want to delete this repository?<br />
-        By deleting it, the Lifecycle State will change to 'Expired' for 30 days before being destroyed.
+        By deleting it, the Lifecycle State will change to &quot;Expired&quot; for 30 days before being destroyed.
         {
           isV1Urn && <span><br />
             Note: You are using a v1 branch urn. You will need to convert it into a v2 urn in order to
@@ -387,13 +389,13 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
             disabled={deletionState.deleting}
             variant='outlined'
             className={classes.cancelButton}
-            onClick={() => { setModalState({ mode: 'default' }); }}
+            onClick={() => { setModalState({ mode: "default" }); }}
           >
             Cancel
           </Button>
           <LoadingButton
             classes={{ contained: classes.deleteButton }}
-            onClick={() => deleteRepository(repositoryUrn!)}
+            onClick={async () => deleteRepository(repositoryUrn!)}
             variant='contained'
           >
             Yes, delete
@@ -405,9 +407,9 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 
   return (
     <InspectorModal title={`${renderTitle()}`}>
-      {modalState.mode === 'default'
+      {modalState.mode === "default"
         ? renderExpiryOverview()
-        : modalState.mode === 'expirySelection'
+        : modalState.mode === "expirySelection"
           ? renderNewExpirySelection()
           : renderDeletionConfirmation()
       }

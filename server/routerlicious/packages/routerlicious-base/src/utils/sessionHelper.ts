@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentSession, ISession } from "@fluidframework/server-services-client";
+import { ISession } from "@fluidframework/server-services-client";
 import { IDocument, ICollection } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
@@ -14,7 +14,7 @@ export async function getSession(ordererUrl: string,
     historianUrl: string,
     tenantId: string,
     documentId: string,
-    documentsCollection: ICollection<IDocument>): Promise<IDocumentSession> {
+    documentsCollection: ICollection<IDocument>): Promise<ISession> {
     const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
     const tempDocument: IDocument = await documentsCollection.findOne({ documentId });
@@ -41,9 +41,8 @@ export async function getSession(ordererUrl: string,
 
     let tempDeli = tempDocument.deli;
     let tempScribe = tempDocument.scribe;
-    let hasSessionLocationChanged: boolean = false;
     const isSessionAlive: boolean = tempSession !== undefined ? tempSession.isSessionAlive : true;
-    if (tempSession !== null && !tempSession.isSessionAlive) {
+    if (tempSession !== undefined && !tempSession.isSessionAlive) {
         // Reset logOffset, ordererUrl, and historianUrl when switching cluster.
         if ((tempSession.ordererUrl !== null && tempSession.ordererUrl !== ordererUrl) ||
             (tempSession.historianUrl !== null && tempSession.historianUrl !== historianUrl)) {
@@ -54,7 +53,6 @@ export async function getSession(ordererUrl: string,
             tempDeli = JSON.stringify(deli);
             tempSession.ordererUrl = ordererUrl;
             tempSession.historianUrl = historianUrl;
-            hasSessionLocationChanged = true;
             if (tempDocument.scribe !== "") {
                 const scribe = JSON.parse(tempScribe);
                 scribe.logOffset = -1;
@@ -78,11 +76,6 @@ export async function getSession(ordererUrl: string,
 
     // The tempSession.isSessionAlive would be updated as whether the session was alive before the request came.
     tempSession.isSessionAlive = isSessionAlive;
-    const documentSession: IDocumentSession = {
-        id: documentId,
-        hasSessionLocationChanged,
-        session: tempSession,
-    };
-    Lumberjack.info(`Returning the documentSession: ${JSON.stringify(documentSession)}`, lumberjackProperties);
-    return documentSession;
+    Lumberjack.info(`Returning the session: ${JSON.stringify(tempSession)}`, lumberjackProperties);
+    return tempSession;
 }

@@ -11,6 +11,7 @@ Alternatively run bump-version at the root of the repo by substituting `bump-ver
 
 ### Create and pushing a release
 
+- major version on `next`
 - minor version on `main`
 - patch version on `release/*` branches
 
@@ -34,7 +35,7 @@ The tool supports virtual patch versioning using the `--virtualPatch` flag.  The
 
 ### Update dependencies across monorepo or independent packages
 
-Note that the dependencies update is all done in the context of the current branch, regardless of what version it is in main or release/* branches
+Note that the dependencies update is all done in the context of the current branch, regardless of what version it is in main, next, or release/* branches
 
 **Example 1**: bumping dependencies `@fluidframework/common-utils`
 
