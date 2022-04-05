@@ -6,12 +6,13 @@
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { AttachmentTreeEntry, BlobTreeEntry } from "@fluidframework/protocol-base";
-import { ISnapshotTree, ITree, ITreeEntry } from "@fluidframework/protocol-definitions";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils";
+import { ISnapshotTree, ITreeEntry, TreeEntry } from "@fluidframework/protocol-definitions";
+import { generateHandleContextPath, SummaryTreeBuilder} from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred, IsoBuffer } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
+import { ISummarizeResult } from "@fluidframework/runtime-definitions";
 
 /**
  * This class represents blob (long string)
@@ -205,7 +206,7 @@ export class BlobManager {
         });
     }
 
-    public snapshot(): ITree {
+    public summarize(): ISummarizeResult {
         // If we have a redirect table it means the container is about to transition to "Attaching" state, so we need
         // to return an actual snapshot containing all the real storage IDs we know about.
         const attachingOrAttached = !!this.redirectTable || this.runtime.attachState !== AttachState.Detached;
@@ -217,7 +218,42 @@ export class BlobManager {
                 JSON.stringify(Array.from(this.redirectTable.entries()))),
             );
         }
-        return { entries };
+
+        return this.summarizeEntries(entries);
+    }
+
+    private summarizeEntries(
+        entries: ITreeEntry[],
+    ): ISummarizeResult {
+        const builder = new SummaryTreeBuilder();
+        for (const entry of entries) {
+            switch (entry.type) {
+                case TreeEntry.Blob: {
+                    const blob = entry.value;
+                    let content: string | Uint8Array;
+                    if (blob.encoding === "base64") {
+                        content = IsoBuffer.from(blob.contents, "base64");
+                    } else {
+                        content = blob.contents;
+                    }
+                    builder.addBlob(entry.path, content);
+                    break;
+                }
+
+                case TreeEntry.Attachment: {
+                    const id = entry.value.id;
+                    builder.addAttachment(id);
+
+                    break;
+                }
+
+                default:
+                    throw new Error("Unexpected TreeEntry type");
+            }
+        }
+
+        const summaryTree = builder.getSummaryTree();
+        return summaryTree;
     }
 
     public setRedirectTable(table: Map<string, string>) {

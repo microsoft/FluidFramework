@@ -91,7 +91,6 @@ import {
 import {
     addBlobToSummary,
     addTreeToSummary,
-    convertToSummaryTree,
     createRootSummarizerNodeWithGC,
     IRootSummarizerNodeWithGC,
     RequestParser,
@@ -1476,13 +1475,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const electedSummarizerContent = JSON.stringify(this.summarizerClientElection?.serialize());
             addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
         }
-        const snapshot = this.blobManager.snapshot();
 
+        const summary = this.blobManager.summarize();
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
         // and the blob manager can handle the tree not existing when loading
-        if (snapshot.entries.length !== 0) {
-            const blobsTree = convertToSummaryTree(snapshot, false);
-            addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
+        if (summary.stats.blobNodeCount !== 0) {
+            addTreeToSummary(summaryTree, blobsTreeName, summary);
         }
 
         if (this.garbageCollector.writeDataAtRoot) {
