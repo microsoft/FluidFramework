@@ -119,5 +119,5 @@ export function getRepoPath(name: string, owner?: string): string {
 }
 
 export function getGitDirectory(repoPath: string, baseDir?: string): string {
-    return baseDir && baseDir !== "" ? `${baseDir}/${repoPath}` : repoPath;
+    return baseDir ? `${baseDir}/${repoPath}` : repoPath;
 }
