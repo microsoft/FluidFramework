@@ -347,6 +347,12 @@ Support additional functionality (prioritize based on users). Some examples we m
 -   more specific multiplicity options
 -   helpers for schema migrations
 -   support and/or helpers for bounded open polymorphism.
+-   allow metadata for app use in view (and maybe stored) schema
+-   default values:
+    -   Maybe default values in stored schema can make schema migrations more flexible (ex: adding value fields), and provide a hint for compression.
+    -   Maybe default values in view schema can provide a API like value fields, but for fields stored as optional? What about defaults for sequences?
+    -   Maybe as a special case ort usage or a more general constants system?
+-   helpers and patterns for enums
 
 # Misc Notes
 
