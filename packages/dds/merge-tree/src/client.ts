@@ -340,6 +340,18 @@ export class Client {
         return this.mergeTree.getMarkerFromId(id);
     }
 
+    public removePendingSegmentGroup() {
+        // just take the last thing off
+        const pendingSegmentGroup = this.mergeTree.pendingSegments?.dequeue();
+        if (!pendingSegmentGroup) {
+            throw new Error("No pending segments");
+        }
+        for (const segment of pendingSegmentGroup.segments) {
+            const segmentSegmentGroup = segment.segmentGroups.dequeue();
+            assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+        }
+    }
+
     /**
      * Performs the remove based on the provided op
      * @param opArgs - The ops args for the op

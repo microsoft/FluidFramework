@@ -140,4 +140,27 @@ describeNoCompat("SharedString orderSequentially", (getTestObjectProvider) => {
         assert.equal(sharedString.getText(), text1, "The retrieved text should match before orderSequentially.");
         assert.equal(containerRuntime.disposed, false);
     });
+
+    it("Split segments removed when callback fails", () => {
+        const text1 = "09";
+        const text2 = "1278";
+        const text3 = "3456";
+        sharedString.insertText(0, text1);
+        const errorMessage = "callback failure";
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedString.insertText(1, text2);
+                sharedString.insertText(3, text3);
+                throw new Error(errorMessage);
+            }, OrderSequentiallyFailureMode.Rollback);
+        } catch(err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal((error as Error).message, errorMessage, "Unexpected error message");
+        assert.equal(sharedString.getText(), text1, "The retrieved text should match before orderSequentially.");
+        assert.equal(containerRuntime.disposed, false);
+    });
 });
