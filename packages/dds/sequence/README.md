@@ -1,24 +1,24 @@
 # @fluidframework/sequence
 
 The **@fluidframework/sequence** packages supports distributed data structures which are list-like.  It includes
-SharedString for storing storing and simultaneously editing a sequence of text. Note that SharedString is a sequence
+SharedString for storing and simultaneously editing a sequence of text. Note that SharedString is a sequence
 DDS but it has additional specialized features and behaviors for working with text.
 
 Sequence DDSes share a common base class, SharedSegmentSequence. For the remainder of this document, the term
 *sequence* refers to this base class.
 
-*Item*s are the individual units that are stored within the sequence (i.e. in a SharedString the items are characters),
+*Item*s are the individual units that are stored within the sequence (e.g. in a SharedString the items are characters),
 but regardless of the type of data stored in the sequence, every item in a sequence is at a specific *position* starting
 at 0, similar to an array. However, sequences differ from arrays in that the positions can move as local and remote
 editors make modifications to the sequence.
 
 As its name suggests, SharedSegmentSequence is composed of *segments*. Segments are the unit that the sequence works
-with internally, and contain items within them. Thus, every segment has a length of at least 1 -- that is, it contains
-at least one item -- and segments may be split and merged arbitrarily as the sequence is edited. This means the length
+with internally, and contain items within them. Thus, every segment has a length of at least 1 — that is, it contains
+at least one item — and segments may be split and merged arbitrarily as the sequence is edited. This means the length
 of the sequence is not the number of segments, but rather the sum of the length of all the segments.
 
 For example, consider a SharedString that is initially empty. User A adds the characters a, b, and c to the
-sequence. Its length is now 3 -- it contains 3 items. Internally, however, the sequence could have either 1, 2, or 3
+sequence. Its length is now 3 — it contains 3 items. Internally, however, the sequence could have either 1, 2, or 3
 segments.
 
 ```bash
@@ -54,7 +54,7 @@ sequence, to insert at the end.
     //   content:
     // positions:
 
-    // insert text at positions 0
+    // insert text at position 0
     sharedString.insertText(0, "hi");
     //   content: hi
     // positions: 01
@@ -164,7 +164,7 @@ see the order of the operations when applying them locally. This enables each cl
 eventually.
 
 In the earlier example, assuming the `k` operation was ordered before the `c` operation, then the `k` would be
-inserted at position 6 first. Then the `c` op is applied -- this is the merge conflict. The `c` op is inserted at the
+inserted at position 6 first. Then the `c` op is applied — this is the merge conflict. The `c` op is inserted at the
 position requested (6), and the `k` is pushed out towards the end of the sequence.
 
 ```bash
@@ -183,7 +183,7 @@ position requested (6), and the `k` is pushed out towards the end of the sequenc
 
 ```
 
-This same logic applies if multiple items are inserted at the same position -- the earlier ordered items will be pushed
+This same logic applies if multiple items are inserted at the same position — the earlier ordered items will be pushed
 towards the end of the sequence as the later items are merged.
 
 ### Merge strategies for remove
@@ -203,7 +203,7 @@ the `k` (positions 6 and 7).
     // positions: 012345
 
     // insert(6, "y")
-    // no merge conflict -- position 6 is empty
+    // no merge conflict — position 6 is empty
     //   content: hi mary
     // positions: 0123456
 
@@ -227,7 +227,7 @@ removed.
 
 Another way to consider this behavior is that a remove operation will only remove content that was inserted earlier in
 the order. Anything inserted after a remove operation will be ignored. The sequence also detects overlapping remove
-operations, and the merge resolution is straightforward -- the data is removed.
+operations, and the merge resolution is straightforward — the data is removed.
 
 As mentioned above, annotate operations behave like operations on SharedMaps. The merge strategy used is last writer
 wins. If two collaborators set the same key on the annotate properties the operation that gets ordered last will
