@@ -47,11 +47,17 @@ export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | unde
 // @public
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary): INormalizedWholeSummary;
 
+// @public (undocumented)
+export const CorrelationIdHeaderName = "x-correlation-id";
+
 // @public
 export function createFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): NetworkError;
 
 // @public (undocumented)
 export const defaultHash = "00000000";
+
+// @public (undocumented)
+export const DriverVersionHeaderName = "x-driver-version";
 
 // @public (undocumented)
 export type ExtendedSummaryObject = SummaryObject | IEmbeddedSummaryHandle;
