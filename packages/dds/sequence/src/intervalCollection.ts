@@ -148,7 +148,7 @@ export class Interval implements ISerializableInterval {
     }
 
     public overlaps(b: Interval) {
-        const result = (this.start < b.end) &&
+        const result = (this.start <= b.end) &&
             (this.end >= b.start);
         return result;
     }
@@ -255,7 +255,7 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     public overlaps(b: SequenceInterval) {
-        const result = (this.start.compare(b.end) < 0) &&
+        const result = (this.start.compare(b.end) <= 0) &&
             (this.end.compare(b.start) >= 0);
         return result;
     }
