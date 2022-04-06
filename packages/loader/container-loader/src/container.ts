@@ -964,7 +964,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
             // If there is gap, we will learn about it once connected, but the gap should be small (if any),
             // assuming that connect() is called quickly after initial container boot.
-            this.connectInternal({ reason: "DocumentOpenResume", fetchOpsFromStorage: false });
+            this.connectInternal({ reason: "DocumentConnect", fetchOpsFromStorage: false });
         }
     }
 
