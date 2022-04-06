@@ -132,11 +132,12 @@ If existing data could be incompatible with the new schema:
     This may optionally be done by using the new schema as the view schema (removing the old one), and providing schematize with a handler to do the update/conversion.
 -   Recurse this algorithm updating the parent to accept the new schema (which in most cases will hit the "If existing data is compatible with the new schema" case.)
 
-## Open questions
+## Open questions in proposed design
 
 How should we deal with transient out of schema states while editing?
 Use edit primitives that avoid this? (ex: swap instead of delete and insert. Maybe a version od detach that inserts a placeholder which has to be replaced with valid data before the transaction ends? That seems like it could make the tree reading API for the middle of transactions messy.)
 
+Should TreeSchema.extraGlobalFields exist, and if not, should be be unconditionally on or off? (See its doc comment).
 # Schedule
 
 What work we need to do for each milestone in #8273
