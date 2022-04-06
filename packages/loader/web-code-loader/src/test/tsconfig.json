@@ -3,13 +3,10 @@
     "compilerOptions": {
         "rootDir": "./",
         "outDir": "../../dist/test",
-        "types": [
-            "node",
-            "mocha"
-        ],
         "declaration": false,
         "declarationMap": false,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "noEmit": true,
     },
     "include": [
         "./**/*"
