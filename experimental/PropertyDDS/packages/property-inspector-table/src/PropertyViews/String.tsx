@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerProperty } from '@fluid-experimental/property-properties';
-import TextField, { TextFieldProps } from '@material-ui/core/TextField';
-import * as React from 'react';
-import { IEditableValueCellProps } from '../EditableValueCell';
-import { getPropertyValue } from '../utils';
+import { ContainerProperty } from "@fluid-experimental/property-properties";
+import TextField, { TextFieldProps } from "@material-ui/core/TextField";
+import * as React from "react";
+import { IEditableValueCellProps } from "../EditableValueCell";
+import { getPropertyValue } from "../utils";
 
 type StringProps = (IEditableValueCellProps & {
   onSubmit: (val: string, props: IEditableValueCellProps) => void,
   TextFieldProps: TextFieldProps,
-  classes: Record<'container' | 'tooltip' | 'info' | 'input' | 'textField', string>,
+  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>,
 });
 
 type HandleKeyDownType = (
@@ -43,7 +43,7 @@ export const StringView: React.FunctionComponent<StringProps> = (props) => {
 
   return (
     <TextField
-      key={rowData.id + value}
+      key={`${rowData.id}${value}`}
       onBlur={onBlur}
       defaultValue={value}
       className={classes.textField}
@@ -51,8 +51,8 @@ export const StringView: React.FunctionComponent<StringProps> = (props) => {
       InputProps={{
         onKeyDown,
         style: {
-          alignItems: 'center',
-          fontSize: '13px',
+          alignItems: "center",
+          fontSize: "13px",
         },
       }}
       {...textFieldProps}

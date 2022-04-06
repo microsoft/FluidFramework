@@ -8,7 +8,7 @@ import { IWebServer, IWebServerFactory, IRunner } from "@fluidframework/server-s
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
-import { IFileSystemManager, IRepositoryManagerFactory } from "./utils";
+import { IFileSystemManagerFactory, IRepositoryManagerFactory } from "./utils";
 
 export class GitrestRunner implements IRunner {
     private server: IWebServer;
@@ -18,14 +18,14 @@ export class GitrestRunner implements IRunner {
         private readonly serverFactory: IWebServerFactory,
         private readonly config: Provider,
         private readonly port: string | number,
-        private readonly fileSystemManager: IFileSystemManager,
+        private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
         private readonly repositoryManagerFactory: IRepositoryManagerFactory) {
     }
 
     public async start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
         // Create the gitrest app
-        const gitrest = app.create(this.config, this.fileSystemManager, this.repositoryManagerFactory);
+        const gitrest = app.create(this.config, this.fileSystemManagerFactory, this.repositoryManagerFactory);
         gitrest.set("port", this.port);
 
         this.server = this.serverFactory.create(gitrest);

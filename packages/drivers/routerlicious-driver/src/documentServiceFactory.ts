@@ -91,15 +91,40 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.driverPolicies.enableRestLess,
             resolvedUrl.endpoints.ordererUrl,
         );
+
         // the backend responds with the actual document ID associated with the new container.
-        const documentId = await ordererRestWrapper.post<string>(
+
+        // @TODO: Remove returned "string" type when removing back-compat code
+        const res = await ordererRestWrapper.post<{ id: string, token?: string } | string>(
             `/documents/${tenantId}`,
             {
                 summary: convertSummaryToCreateNewSummary(appSummary),
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
+                generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
             },
         );
+
+        // For supporting backward compatibility, when the request has generateToken === true, it will return
+        // an object instead of string
+        // @TODO: Remove the logic when no need to support back-compat
+
+        let documentId: string;
+        let token: string | undefined;
+
+        if (typeof res === "string") {
+            documentId = res;
+        } else {
+            documentId = res.id;
+            token = res.token;
+        }
+
+        // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
+        // is sufficient to determine if the token will be undefined or not.
+        if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
+            await this.tokenProvider.documentPostCreateCallback (documentId, token);
+        }
+
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
         const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
         if (!deltaStorageUrl) {
