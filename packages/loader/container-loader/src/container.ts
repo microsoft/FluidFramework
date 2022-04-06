@@ -1482,7 +1482,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
-            let warn = warning as ContainerWarning;
+            const warn = warning as ContainerWarning;
             // Some "warning" events come from outside the container and are logged
             // elsewhere (e.g. summarizing container). We shouldn't log these here.
             if (warn.logged !== true) {
