@@ -216,16 +216,31 @@ export class BlobManager {
      * about this for now because the data is a simple list of blob ids.
      */
     public getGCData(fullGC: boolean = false): IGarbageCollectionData {
+        const getGCNodePath = (blobId: string) => { return `/${BlobManager.basePath}/${blobId}`; };
         const gcData: IGarbageCollectionData = { gcNodes: {} };
         /**
-          * The GC node id is of the format `/_blobs/blobId`. This node is must match the path of the blob handle
-          * returned by the createBlob API because blobs are marked referenced by storing these handles in a referenced
-          * DDS. There are no outbound routes from these nodes as it  can only be referenced by other nodes in the
-          * container but cannot referenced other nodes.
+          * The node path is of the format `/_blobs/blobId`. This path must match the path of the blob handle returned
+          * by the createBlob API because blobs are marked referenced by storing these handles in a referenced DDS.
           */
         this.blobIds.forEach((blobId: string) => {
-            gcData.gcNodes[`/${BlobManager.basePath}/${blobId}`] = [];
+            gcData.gcNodes[getGCNodePath(blobId)] = [];
         });
+
+        /**
+         * For all blobs in the redirect table, the handle returned on creation is based off of the localId. So, these
+         * nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
+         * must also be marked referenced. So, we add a route from the localId node to the storageId node.
+         * Note that for these nodes, we never return a handle with the storageId so we don't need to handle the case
+         * where they become referenced by adding the storageId handle.
+         */
+        if (this.redirectTable !== undefined) {
+            for (const [localId, storageId] of this.redirectTable) {
+                // Add node for the localId and add a route to the storageId node. The storageId node will have been
+                // added above when adding nodes for this.blobIds.
+                gcData.gcNodes[getGCNodePath(localId)] = [getGCNodePath(storageId)];
+            }
+        }
+
         return gcData;
     }
 
@@ -234,14 +249,27 @@ export class BlobManager {
      * @param unusedRoutes - These are the blob node ids that are unused and should be deleted.
      */
     public deleteUnusedRoutes(unusedRoutes: string[]): void {
-        // The routes or blob node ids are in the same format as returned in getGCData - `/_blobs/blobId`.
+        // The routes or blob node paths are in the same format as returned in getGCData - `/_blobs/blobId`.
+        const unusedBlobIds: string[] = [];
         unusedRoutes.forEach((route: string) => {
             const pathParts = route.split("/");
             assert(
                 pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
                 "Invalid blob node id in unused routes.",
             );
-            this.blobIds.delete(pathParts[2]);
+            unusedBlobIds.push(pathParts[2]);
+        });
+        unusedBlobIds.forEach((blobId: string) => {
+            // For unused local blob ids in redirect table, the corresponding storage id must also be unused. This is
+            // because we add route from localId to storageId when generating GC data. So, they should always be
+            // referenced and unreferenced together.
+            const storageId = this.redirectTable?.get(blobId);
+            if (storageId !== undefined) {
+                assert(unusedBlobIds.includes(storageId), "storageId must also be unused when localId is unused.");
+                this.redirectTable?.delete(blobId);
+                return;
+            }
+            this.blobIds.delete(blobId);
         });
     }
 

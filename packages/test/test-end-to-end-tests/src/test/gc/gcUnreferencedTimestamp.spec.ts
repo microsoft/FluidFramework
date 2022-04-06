@@ -21,9 +21,9 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { loadSummarizer, TestDataObject, submitAndAckSummary, getGCStateFromSummary } from "../mockSummarizerClient";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 import { mockConfigProvider } from "./mockConfigProivder";
-import { loadSummarizer, TestDataObject, submitAndAckSummary, getGCStateFromSummary } from "./mockSummarizerClient";
 
 /**
  * Validates that the unreferenced timestamp is correctly set in the GC summary tree. Also, the timestamp is removed

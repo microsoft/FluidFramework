@@ -17,7 +17,7 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { channelsTreeName, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { getGCStateFromSummary, TestDataObject } from "./mockSummarizerClient";
+import { getGCStateFromSummary, TestDataObject } from "../mockSummarizerClient";
 import { mockConfigProvider } from "./mockConfigProivder";
 
 /**

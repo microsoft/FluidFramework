@@ -5,8 +5,9 @@
 
 import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage } from "@fluidframework/container-loader";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { ContainerMessageType, ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
@@ -16,6 +17,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
+import { getGCStateFromSummary } from "./mockSummarizerClient";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
@@ -430,5 +432,136 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const uploadP = Promise.all([dataStore1._runtime.uploadBlob(blob), dataStore2._runtime.uploadBlob(blob)]);
         provider.opProcessingController.resumeProcessing();
         await uploadP;
+    });
+});
+
+/**
+ * Validates that unreferenced blobs are marked as unreferenced and deleted correctly.
+ */
+describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
+    // If deleteUnreferencedContent is true, GC is run in test mode where content that is not referenced is
+    // deleted after each GC run.
+    const tests = (deleteUnreferencedContent: boolean = false) => {
+        const gcContainerConfig: ITestContainerConfig = {
+            runtimeOptions: {
+                gcOptions: {
+                    gcAllowed: true, runGCInTestMode: deleteUnreferencedContent, writeDataAtRoot: true,
+                },
+            },
+        };
+
+        let provider: ITestObjectProvider;
+        let container: IContainer;
+        let containerRuntime: ContainerRuntime;
+        let defaultDataStore: ITestDataObject;
+
+        /**
+         * Returns the referenced / unreferenced state of each node if the GC state in summary.
+         */
+        async function getUnreferencedNodeStates() {
+            await provider.ensureSynchronized();
+            const { summary } = await containerRuntime.summarize({
+                runGC: true,
+                fullTree: true,
+                trackState: false,
+            });
+
+            const gcState = getGCStateFromSummary(summary);
+            assert(gcState !== undefined, "GC tree is not available in the summary");
+
+            const nodeTimestamps: Map<string, "referenced" | "unreferenced"> = new Map();
+            for (const [nodePath, nodeData] of Object.entries(gcState.gcNodes)) {
+                // Unreferenced nodes have unreferenced timestamp associated with them.
+                nodeTimestamps.set(nodePath, nodeData.unreferencedTimestampMs ? "unreferenced" : "referenced");
+            }
+            return nodeTimestamps;
+        }
+
+        beforeEach(async function() {
+            provider = getTestObjectProvider();
+            if (provider.driver.type !== "odsp") {
+                this.skip();
+            }
+            const detachedBlobStorage = new MockDetachedBlobStorage();
+            const loader = provider.makeTestLoader({ ...gcContainerConfig, loaderProps: {detachedBlobStorage}});
+            container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+            defaultDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+            containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+        });
+
+        it("marks attachment blobs as referenced / unreferenced correctly in attached container", async () => {
+            // Attach the container.
+            await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+
+            // Upload an attachment blob and mark it referenced by storing its handle in a DDS.
+            const blobContents = "Blob contents";
+            const blobHandle = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            defaultDataStore._root.set("blob", blobHandle);
+
+            const timestamps1 = await getUnreferencedNodeStates();
+            assert(timestamps1.get(blobHandle.absolutePath) === "referenced", "blob should be referenced");
+
+            // Remove the blob's handle and verify its marked as unreferenced.
+            defaultDataStore._root.delete("blob");
+            const timestamps2 = await getUnreferencedNodeStates();
+            assert(timestamps2.get(blobHandle.absolutePath) === "unreferenced", "blob should be unreferenced");
+
+            // Add the blob's handle back. If deleteUnreferencedContent is true, the blob's node would have been
+            // deleted from the GC state. Else, it would be referenced.
+            defaultDataStore._root.set("blob", blobHandle);
+            const timestamps3 = await getUnreferencedNodeStates();
+            if (deleteUnreferencedContent) {
+                assert(timestamps3.get(blobHandle.absolutePath) === undefined, "blob should not have a GC entry");
+            } else {
+                assert(timestamps3.get(blobHandle.absolutePath) === "referenced", "blob should be referenced again");
+            }
+        });
+
+        it("marks attachment blobs uploaded in detached container as referenced / unreferenced correctly", async () => {
+            // Upload an attachment blobs and mark it referenced.
+            const blobContents = "Blob contents";
+            const blobHandle = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            defaultDataStore._root.set("blob", blobHandle);
+
+            // Attach the container after the blob is uploaded.
+            await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+
+            // Load a second container.
+            const url = getUrlFromItemId((container.resolvedUrl as IOdspResolvedUrl).itemId, provider);
+            const container2 = await provider.makeTestLoader(gcContainerConfig).resolve({ url });
+            const defaultDataStore2 = await requestFluidObject<ITestDataObject>(container2, "/");
+
+            // Validate the blob handle's path is the same as the one in the first container. This is to validate that
+            // we don't expose the storageId for the blob's uploaded in detached container.
+            const blobHandle2 = defaultDataStore2._root.get<IFluidHandle<ArrayBufferLike>>("blob");
+            assert.strictEqual(blobHandle.absolutePath, blobHandle2?.absolutePath,
+                    "The blob handle has a different path in remote container.");
+
+            const timestamps1 = await getUnreferencedNodeStates();
+            assert(timestamps1.get(blobHandle.absolutePath) === "referenced", "blob should be referenced");
+
+            // Remove the blob's handle and verify its marked as unreferenced.
+            defaultDataStore._root.delete("blob");
+            const timestamps2 = await getUnreferencedNodeStates();
+            assert(timestamps2.get(blobHandle.absolutePath) === "unreferenced", "blob should be unreferenced");
+
+            // Add the blob's handle in second container. If deleteUnreferencedContent is true, the blob's node would
+            // have been deleted from the GC state. Else, it would be referenced.
+            defaultDataStore2._root.set("blobContainer2", blobHandle2);
+            const timestamps3 = await getUnreferencedNodeStates();
+            if (deleteUnreferencedContent) {
+                assert(timestamps3.get(blobHandle.absolutePath) === undefined, "blob should not have a GC entry");
+            } else {
+                assert(timestamps3.get(blobHandle.absolutePath) === "referenced", "blob should be referenced again");
+            }
+        });
+    };
+
+    describe("Verify data store state when unreferenced content is marked", () => {
+        tests();
+    });
+
+    describe("Verify data store state when unreferenced content is deleted", () => {
+        tests(true /* deleteUnreferencedContent */);
     });
 });
