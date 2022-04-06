@@ -97,9 +97,13 @@ You can start by returning default code details that were passed into the code l
 
 ## 0.58 Upcoming changes
 - [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
+- [IDirectory extends IDisposable](#IDirectory-extends-IDisposable)
 
 ### Doing operations not allowed on deleted sub directory
 Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory will throw `UsageError` exception now.
+
+### IDirectory extends IDisposable
+IDirectory has started extending IDisposable. This means that users implementing the IDirectory interface needs to implement IDisposable too now.
 
 ## 0.58 Breaking changes
 - [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from-merge-tree-to-sequence-package)
