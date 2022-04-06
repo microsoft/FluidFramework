@@ -200,6 +200,17 @@ describe("Directory", () => {
                 assert(subSubDirectoryDisposed, "sub sub directory should be disposed");
             });
 
+            it("Check number of sub directories", () => {
+                const subDirectory = directory.createSubDirectory("rock1");
+                directory.createSubDirectory("rock2");
+                const childSubDirectory = subDirectory.createSubDirectory("rock1Child");
+                assert.strictEqual(directory.countSubDirectory(), 2, "Should have 2 sub directories");
+                assert(subDirectory.countSubDirectory !== undefined && subDirectory.countSubDirectory() === 1,
+                    "Should have 1 sub directory");
+                assert(childSubDirectory.countSubDirectory !== undefined && subDirectory.countSubDirectory() === 1,
+                    "Should have 0 sub directory");
+            });
+
             it("Rejects a undefined and null key set", () => {
                 assert.throws(() => {
                     directory.set(undefined as any, "testValue");
