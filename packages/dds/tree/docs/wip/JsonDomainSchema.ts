@@ -40,7 +40,7 @@ const jsonArray: NamedTreeSchema = {
     extraGlobalFields: false,
     localFields: new Map([
         [
-            "children" as LocalFieldKey,
+            "items" as LocalFieldKey,
             { multiplicity: Multiplicity.Sequence, types: jsonTypes },
         ],
     ]),
