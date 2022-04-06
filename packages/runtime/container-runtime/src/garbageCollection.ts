@@ -94,6 +94,8 @@ export interface IGCStats {
 
 /** The types of GC nodes in the GC reference graph. */
 export enum GCNodeType {
+    // For node that belong to the root of the GC graph. Currently, this is only "/" for container runtime node.
+    Root = "Root",
     // For nodes that belong to a data store. For example, data store node, DDS node, etc.
     DataStore = "DataStore",
     // For nodes that belong to attachment blobs. For example, all blobs uploaded via BlobManager.

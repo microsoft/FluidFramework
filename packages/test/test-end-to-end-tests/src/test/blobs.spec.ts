@@ -489,7 +489,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
         });
 
-        it("marks attachment blobs as referenced / unreferenced correctly in attached container", async () => {
+        it("collects blobs uploaded in attached container", async () => {
             // Attach the container.
             await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 
@@ -498,27 +498,27 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             const blobHandle = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
             defaultDataStore._root.set("blob", blobHandle);
 
-            const timestamps1 = await getUnreferencedNodeStates();
-            assert(timestamps1.get(blobHandle.absolutePath) === "referenced", "blob should be referenced");
+            const s1 = await getUnreferencedNodeStates();
+            assert(s1.get(blobHandle.absolutePath) === "referenced", "blob should be referenced");
 
             // Remove the blob's handle and verify its marked as unreferenced.
             defaultDataStore._root.delete("blob");
-            const timestamps2 = await getUnreferencedNodeStates();
-            assert(timestamps2.get(blobHandle.absolutePath) === "unreferenced", "blob should be unreferenced");
+            const s2 = await getUnreferencedNodeStates();
+            assert(s2.get(blobHandle.absolutePath) === "unreferenced", "blob should be unreferenced");
 
             // Add the blob's handle back. If deleteUnreferencedContent is true, the blob's node would have been
             // deleted from the GC state. Else, it would be referenced.
             defaultDataStore._root.set("blob", blobHandle);
-            const timestamps3 = await getUnreferencedNodeStates();
+            const s3 = await getUnreferencedNodeStates();
             if (deleteUnreferencedContent) {
-                assert(timestamps3.get(blobHandle.absolutePath) === undefined, "blob should not have a GC entry");
+                assert(s3.get(blobHandle.absolutePath) === undefined, "blob should not have a GC entry");
             } else {
-                assert(timestamps3.get(blobHandle.absolutePath) === "referenced", "blob should be referenced again");
+                assert(s3.get(blobHandle.absolutePath) === "referenced", "blob should be re-referenced");
             }
         });
 
-        it("marks attachment blobs uploaded in detached container as referenced / unreferenced correctly", async () => {
-            // Upload an attachment blobs and mark it referenced.
+        it("collects blobs uploaded in detached container", async () => {
+            // Upload an attachment blob and mark it referenced by storing its handle in a DDS.
             const blobContents = "Blob contents";
             const blobHandle = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
             defaultDataStore._root.set("blob", blobHandle);
@@ -537,22 +537,128 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             assert.strictEqual(blobHandle.absolutePath, blobHandle2?.absolutePath,
                     "The blob handle has a different path in remote container.");
 
-            const timestamps1 = await getUnreferencedNodeStates();
-            assert(timestamps1.get(blobHandle.absolutePath) === "referenced", "blob should be referenced");
+            const s1 = await getUnreferencedNodeStates();
+            assert(s1.get(blobHandle.absolutePath) === "referenced", "blob should be referenced");
 
             // Remove the blob's handle and verify its marked as unreferenced.
             defaultDataStore._root.delete("blob");
-            const timestamps2 = await getUnreferencedNodeStates();
-            assert(timestamps2.get(blobHandle.absolutePath) === "unreferenced", "blob should be unreferenced");
+            const s2 = await getUnreferencedNodeStates();
+            assert(s2.get(blobHandle.absolutePath) === "unreferenced", "blob should be unreferenced");
 
             // Add the blob's handle in second container. If deleteUnreferencedContent is true, the blob's node would
             // have been deleted from the GC state. Else, it would be referenced.
             defaultDataStore2._root.set("blobContainer2", blobHandle2);
-            const timestamps3 = await getUnreferencedNodeStates();
+            const s3 = await getUnreferencedNodeStates();
             if (deleteUnreferencedContent) {
-                assert(timestamps3.get(blobHandle.absolutePath) === undefined, "blob should not have a GC entry");
+                assert(s3.get(blobHandle.absolutePath) === undefined, "blob should not have a GC entry");
             } else {
-                assert(timestamps3.get(blobHandle.absolutePath) === "referenced", "blob should be referenced again");
+                assert(s3.get(blobHandle.absolutePath) === "referenced", "blob should be re-referenced");
+            }
+        });
+
+        it("collects blobs uploaded in detached and de-duped in attached container", async () => {
+            // Upload an attachment blob. We should get a handle with a localId for the blob. Mark it referenced by
+            // storing its handle in a DDS.
+            const blobContents = "Blob contents";
+            const localHandle = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            defaultDataStore._root.set("blob", localHandle);
+
+            // Attach the container after the blob is uploaded.
+            await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+
+            // Upload the same blob. This will get de-duped and we will get back a handle with the stoageId instead of
+            // the localId that we got when uploading in detached container.
+            const storageHandle = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+
+            // Validate that storing the localId handle makes both the localId and storageId nodes as referenced since
+            // localId is simply an alias to the storageId.
+            const s1 = await getUnreferencedNodeStates();
+            assert(s1.get(localHandle.absolutePath) === "referenced", "local id blob should be referenced");
+            assert(s1.get(storageHandle.absolutePath) === "referenced", "storage id blob should also be referenced");
+
+            // Replace the localId handle with the storageId handle. The storageId node should be referenced but the
+            // localId node should be unreferenced. Basically, the alias is deleted.
+            defaultDataStore._root.set("blob", storageHandle);
+            const s2 = await getUnreferencedNodeStates();
+            assert(s2.get(localHandle.absolutePath) === "unreferenced", "local id blob should still be unreferenced");
+            assert(s2.get(storageHandle.absolutePath) === "referenced", "storage id blob should also be referenced");
+
+            // Delete the storageId handle. The storageId node should be unreferenced. If deleteUnreferencedContent is
+            // true, the localId node should be deleted from the GC state. Else, it would be unreferenced.
+            defaultDataStore._root.delete("blob");
+            const s3 = await getUnreferencedNodeStates();
+            assert(s3.get(storageHandle.absolutePath) === "unreferenced", "storage id blob should be unreferenced");
+            if (deleteUnreferencedContent) {
+                assert(s3.get(localHandle.absolutePath) === undefined, "local id blob should not have a GC entry");
+            } else {
+                assert(s3.get(localHandle.absolutePath) === "unreferenced", "local id blob should be unreferenced");
+            }
+
+            // Add the localId handle back. If deleteUnreferencedContent is true, both the nodes would have been
+            // deleted from the GC state. Else, they would both be referenced.
+            defaultDataStore._root.set("blob", localHandle);
+            const s4 = await getUnreferencedNodeStates();
+            if (deleteUnreferencedContent) {
+                assert(s4.get(localHandle.absolutePath) === undefined, "local id blob should not have a GC entry");
+                assert(s4.get(storageHandle.absolutePath) === undefined, "storage id blob should not have a GC entry");
+            } else {
+                assert(s4.get(localHandle.absolutePath) === "referenced", "local id blob should be re-referenced");
+                assert(s4.get(storageHandle.absolutePath) === "referenced", "storage id blob should be re-referenced");
+            }
+        });
+
+        it("collects blobs uploaded and de-duped in detached container", async () => {
+            // Upload couple of attachment blobs with the same content. When these blobs are uploaded to the server,
+            // they will be de-duped and redirect to the same storageId.
+            const blobContents = "Blob contents";
+            const localHandle1 = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+            const localHandle2 = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+
+            // Attach the container after the blob is uploaded.
+            await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+
+            // Upload the same blob. This will get de-duped and we will get back a handle with the stoageId instead of
+            // the localId that we got when uploading in detached container.
+            const storageHandle = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
+
+            // Store the localId1 and localId2 handles. This would make the localId nodes and storageId node referenced.
+            defaultDataStore._root.set("local1", localHandle1);
+            defaultDataStore._root.set("local2", localHandle2);
+            const s1 = await getUnreferencedNodeStates();
+            assert(s1.get(localHandle1.absolutePath) === "referenced", "local id 1 blob should be referenced");
+            assert(s1.get(localHandle2.absolutePath) === "referenced", "local id 2 blob should be referenced");
+            assert(s1.get(storageHandle.absolutePath) === "referenced", "storage id blob should be referenced");
+
+            // Delete the localId1 handle. This would make localId1 node unreferenced.
+            defaultDataStore._root.delete("local1");
+            const s2 = await getUnreferencedNodeStates();
+            assert(s2.get(localHandle1.absolutePath) === "unreferenced", "local id 1 blob should be unreferenced");
+            assert(s2.get(localHandle2.absolutePath) === "referenced", "local id 2 blob should be referenced");
+            assert(s2.get(storageHandle.absolutePath) === "referenced", "storage id blob should be referenced");
+
+            // Delete the localId2 handle. This would make the localId2 node referenced. If deleteUnreferencedContent
+            // is true, localId2 node would be deleted from GC state. Store the storageId handle to keep it referenced.
+            defaultDataStore._root.delete("local2");
+            defaultDataStore._root.set("storage", storageHandle);
+            const s3 = await getUnreferencedNodeStates();
+            assert(s3.get(localHandle2.absolutePath) === "unreferenced", "local id 2 blob should be unreferenced");
+            assert(s3.get(storageHandle.absolutePath) === "referenced", "storage id blob should be referenced");
+            if (deleteUnreferencedContent) {
+                assert(s3.get(localHandle1.absolutePath) === undefined, "local id 1 blob should not have a GC entry");
+            } else {
+                assert(s3.get(localHandle1.absolutePath) === "unreferenced", "local id 1 blob should be unreferenced");
+            }
+
+            // Delete the storageId handle. It should now be unreferenced.
+            defaultDataStore._root.delete("storage");
+            const s4 = await getUnreferencedNodeStates();
+            assert(s4.get(storageHandle.absolutePath) === "unreferenced", "storage id blob should be unreferenced");
+            if (deleteUnreferencedContent) {
+                assert(s4.get(localHandle1.absolutePath) === undefined, "local id blob 1 should not have a GC entry");
+                assert(s4.get(localHandle2.absolutePath) === undefined, "local id blob 2 should not have a GC entry");
+            } else {
+                assert(s4.get(localHandle1.absolutePath) === "unreferenced", "local id blob 1 should be unreferenced");
+                assert(s4.get(localHandle2.absolutePath) === "unreferenced", "local id blob 2 should be unreferenced");
             }
         });
     };

@@ -230,8 +230,8 @@ export class BlobManager {
          * For all blobs in the redirect table, the handle returned on creation is based off of the localId. So, these
          * nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
          * must also be marked referenced. So, we add a route from the localId node to the storageId node.
-         * Note that for these nodes, we never return a handle with the storageId so we don't need to handle the case
-         * where they become referenced by adding the storageId handle.
+         * Note that because of de-duping, there can be multiple localIds that all redirect to the same storageId or
+         * a blob may be referenced via its storageId handle.
          */
         if (this.redirectTable !== undefined) {
             for (const [localId, storageId] of this.redirectTable) {
@@ -250,27 +250,22 @@ export class BlobManager {
      */
     public deleteUnusedRoutes(unusedRoutes: string[]): void {
         // The routes or blob node paths are in the same format as returned in getGCData - `/_blobs/blobId`.
-        const unusedBlobIds: string[] = [];
-        unusedRoutes.forEach((route: string) => {
+        for (const route of unusedRoutes) {
             const pathParts = route.split("/");
             assert(
                 pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
                 "Invalid blob node id in unused routes.",
             );
-            unusedBlobIds.push(pathParts[2]);
-        });
-        unusedBlobIds.forEach((blobId: string) => {
-            // For unused local blob ids in redirect table, the corresponding storage id must also be unused. This is
-            // because we add route from localId to storageId when generating GC data. So, they should always be
-            // referenced and unreferenced together.
-            const storageId = this.redirectTable?.get(blobId);
-            if (storageId !== undefined) {
-                assert(unusedBlobIds.includes(storageId), "storageId must also be unused when localId is unused.");
-                this.redirectTable?.delete(blobId);
-                return;
+            const blobId = pathParts[2];
+
+            // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
+            // corresponding storageId may still be used either directly or via other localIds.
+            if (this.redirectTable?.has(blobId)) {
+                this.redirectTable.delete(blobId);
+                continue;
             }
             this.blobIds.delete(blobId);
-        });
+        }
     }
 
     public summarize(): ISummaryTreeWithStats {
