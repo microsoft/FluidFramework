@@ -325,6 +325,9 @@ The architecture should account for this document and near and long term ideas.
 
 Review and polish `Design-pattern apps can use to handle schema migrations`, including actual APIs, documentation and examples so apps can start planning forward compatibility for documents.
 
+Pick concrete answers for the flexible ares in the design that need to be nailed down for document compatibility.
+This includes how values/primitives work and what our initial set of primitives types will be.
+
 ## M2 or M3
 
 Implement enough functionality to perform the steps in the above design pattern.
@@ -337,7 +340,13 @@ Polish up and finalize schema language, schema aware APIs, and make sure APIs ar
 
 Schema/Shape optimized storage formats, and optimize schematize for these formats and for known stored schema.
 
-Support additional functionality (other options for stored schema, imperative extensions to view schema)
+Support additional functionality (prioritize based on users). Some examples we might do:
+
+-   other options for stored schema
+-   imperative extensions to view schema
+-   more specific multiplicity options
+-   helpers for schema migrations
+-   support and/or helpers for bounded open polymorphism.
 
 # Misc Notes
 
