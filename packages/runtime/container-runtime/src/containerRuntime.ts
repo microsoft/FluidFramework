@@ -2178,7 +2178,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (nodePath.split("/")[1] === BlobManager.basePath) {
             return GCNodeType.Blob;
         }
-        return GCNodeType.Other;
+        assert(false, "GC node should be either data store or blob types");
     }
 
     /**
