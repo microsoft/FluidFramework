@@ -134,9 +134,7 @@
         },
         "TypeAliasDeclaration_SubmitSummaryResult": {
           "forwardCompat": false
-        }
-      },
-      "0.58.3000": {
+        },
         "InterfaceDeclaration_IGeneratedSummaryStats": {
           "forwardCompat": false
         }
