@@ -5,7 +5,10 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { delay, performance } from "@fluidframework/common-utils";
+import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "./network";
+import { pkgVersion } from "./packageVersion";
+import { NonRetryableError } from ".";
 
 /**
  * Interface describing an object passed to various network APIs.
@@ -32,7 +35,7 @@ export interface IProgress {
      * as well as information provided by service (like 429 error asking to wait for some time before retry)
      * @param error - error object returned from the call.
      */
-    retry?(delayInMs: number, error: any): void;
+    onRetry?(delayInMs: number, error: any): void;
 }
 
 export async function runWithRetry<T>(
@@ -61,13 +64,22 @@ export async function runWithRetry<T>(
                 }, err);
                 throw err;
             }
+
+            if (progress.cancel?.aborted === true) {
+                throw new NonRetryableError(
+                    "runWithRetryAborted",
+                    OdspErrorType.fetchTimeout,
+                    { eventName: `runWithRetryAborted_${fetchCallName}`, driverVersion: pkgVersion },
+                );
+            }
+
             numRetries++;
             lastError = err;
             // If the error is throttling error, then wait for the specified time before retrying.
             // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
             retryAfterMs = getRetryDelayFromError(err) ?? Math.min(retryAfterMs * 2, 8000);
-            if (progress.retry) {
-                progress.retry(retryAfterMs, err);
+            if (progress.onRetry) {
+                progress.onRetry(retryAfterMs, err);
             }
             await delay(retryAfterMs);
         }
