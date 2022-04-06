@@ -159,8 +159,6 @@ describe("Runtime", () => {
                             generateDuration: 0,
                             uploadDuration: 0,
                             submitOpDuration: 0,
-                            opsSizesSinceLastSummary: 0,
-                            nonSystemOpsSinceLastSummary: 0,
                             summaryTree: { type: SummaryType.Tree, tree: {} },
                             summaryStats: {
                                 treeNodeCount: 0,
@@ -170,6 +168,8 @@ describe("Runtime", () => {
                                 dataStoreCount: 0,
                                 summarizedDataStoreCount: 0,
                                 unreferencedBlobSize: 0,
+                                opsSizesSinceLastSummary: 0,
+                                nonSystemOpsSinceLastSummary: 0,
                             },
                             handle: "test-handle",
                             clientSequenceNumber: lastClientSeq,

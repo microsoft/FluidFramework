@@ -327,8 +327,6 @@ export class SummaryGenerator {
                         summarizeTelemetryProps = {
                             ...summarizeTelemetryProps,
                             clientSequenceNumber: summaryData.clientSequenceNumber,
-                            opsSizesSinceLastSummary: summaryData.opsSizesSinceLastSummary,
-                            nonSystemOpsSinceLastSummary: summaryData.nonSystemOpsSinceLastSummary,
                         };
                     }
                 }

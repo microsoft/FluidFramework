@@ -2292,6 +2292,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcStateUpdatedDataStoreCount: summarizeResult.gcStats?.updatedDataStoreCount,
                 gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
                 gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
+                opsSizesSinceLastSummary: this.opTracker.opsSizeAccumulator,
+                nonSystemOpsSinceLastSummary: this.opTracker.nonSystemOpCount,
                 ...partialStats,
             };
             const generateSummaryData = {
@@ -2360,8 +2362,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ...uploadData,
                 clientSequenceNumber,
                 submitOpDuration: trace.trace().duration,
-                opsSizesSinceLastSummary: this.opTracker.opsSizeAccumulator,
-                nonSystemOpsSinceLastSummary: this.opTracker.nonSystemOpCount,
             } as const;
 
             this.summarizerNode.completeSummary(handle);

@@ -147,6 +147,10 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcTotalBlobsSize?: number;
     /** The number of gc blobs in this summary. */
     readonly gcBlobNodeCount?: number;
+    /** Sum of the sizes of all op contents since the last summary */
+    readonly opsSizesSinceLastSummary: number;
+    /** Number of non-system ops since the last summary @see isSystemMessage */
+    readonly nonSystemOpsSinceLastSummary: number;
 }
 
 /** Base results for all submitSummary attempts. */
@@ -188,10 +192,6 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
     readonly clientSequenceNumber: number;
     /** Time it took to submit the summarize op to the broadcasting service. */
     readonly submitOpDuration: number;
-    /** Sum of the sizes of all op contents since the last summary */
-    readonly opsSizesSinceLastSummary: number;
-    /** Number of non-system ops since the last summary @see isSystemMessage */
-    readonly nonSystemOpsSinceLastSummary: number;
 }
 
 /**
