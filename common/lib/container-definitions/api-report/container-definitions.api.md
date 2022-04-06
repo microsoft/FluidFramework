@@ -184,7 +184,7 @@ export interface IContainerContext extends IDisposable {
     pendingLocalState?: unknown;
     // (undocumented)
     readonly quorum: IQuorumClients;
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
