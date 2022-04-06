@@ -74,7 +74,7 @@ export async function runWithRetry<T>(
                 throw new NonRetryableError(
                     "runWithRetry was Aborted",
                     OdspErrorType.fetchTimeout,
-                    { driverVersion: pkgVersion },
+                    { driverVersion: pkgVersion, fetchCallName },
                 );
             }
 
