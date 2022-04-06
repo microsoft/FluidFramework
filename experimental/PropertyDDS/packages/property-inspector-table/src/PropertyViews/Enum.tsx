@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerProperty } from '@fluid-experimental/property-properties';
-import MenuItem from '@material-ui/core/MenuItem';
-import Select, { SelectProps } from '@material-ui/core/Select';
-import * as React from 'react';
-import { IEditableValueCellProps } from '../EditableValueCell';
-import { IInspectorRow } from '../InspectorTableTypes';
-import { Utils } from '../typeUtils';
-import { getPropertyValue } from '../utils';
+import { ContainerProperty } from "@fluid-experimental/property-properties";
+import MenuItem from "@material-ui/core/MenuItem";
+import Select, { SelectProps } from "@material-ui/core/Select";
+import * as React from "react";
+import { IEditableValueCellProps } from "../EditableValueCell";
+import { IInspectorRow } from "../InspectorTableTypes";
+import { Utils } from "../typeUtils";
+import { getPropertyValue } from "../utils";
 
 type ValType = string | number | boolean;
 
 type EnumProps = (IEditableValueCellProps & {
   onSubmit: (val: ValType, props: IEditableValueCellProps) => void,
   SelectProps: SelectProps,
-  classes: Record<'container' | 'tooltip' | 'info' | 'input' | 'textField', string>,
+  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>,
 });
 
 type GetOptionsType = (
@@ -52,7 +52,7 @@ export const EnumView: React.FunctionComponent<EnumProps> = (props) => {
 
   return (
     <Select
-      key={rowData.id + value}
+      key={`${rowData.id}${value}`}
       onChange={(event) => onSubmit(event.target.value as ValType, props)}
       value={value}
       disabled={rowData.isConstant || rowData.parentIsConstant || readOnly}
