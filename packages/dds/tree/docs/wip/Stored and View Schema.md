@@ -122,21 +122,109 @@ Applications which wish to rely entirely on schema-on-read for some or all of th
 
 ## Design-pattern apps can use to handle schema migrations
 
-If existing will always be compatible with the new schema: (new schema permits a superset of what the old one did)
+To support making changes to schema used in existing documents:
 
--   Author new more flexible schema.
-    Use this as applications schema for reading.
-    Make which format is written conditional on a flag (which opts into creating data that needs new format).
-    Initialize this flag based on if the new schema is written to the document's schema list.
+If existing data will always be compatible with the new schema: (new schema permits a superset of what the old one did)
+
+-   Author new more flexible schema with same type identifier.
+-   Ensure app can properly handle documents containing the new format but does not switch documents to the new format.
+    There are a few approaches: (TODO: we should pick one of these, and document how to actually do it cleanly)
+    -   Use new schema as the view schema, and be careful when editing.
+    -   Have the app support both view schema (new and old):
+        have schematize pick which to use based on which is the stored schema.
+    -   Make which format is written for new content conditional on a flag (which opts into creating data that needs new format).
+        Initialize this flag based on if the new schema is compatible with the stored schema.
 -   Wait for above to be deployed to most users.
--   Update or configure app such that it writes the new schema to the document's schema list.
+-   Update or configure app such that it writes the new schema to the document's stored schema, and starts thus using the new functionality that enables.
 
 If existing data could be incompatible with the new schema:
 
--   Author new schema.
+-   Author new schema (with a new type identifier)
 -   Add support for it in the application.
     This may optionally be done by using the new schema as the view schema (removing the old one), and providing schematize with a handler to do the update/conversion.
 -   Recurse this algorithm updating the parent to accept the new schema (which in most cases will hit the "If existing data is compatible with the new schema" case.)
+
+### Schema Versioning
+
+This migration strategy results in two kinds of changes to schema:
+
+1. An updated copy of a schema new schema with a new type identifier.
+2. An updated copy of a schema with the same type identifier (and tolerates strictly more trees that the old version).
+
+In both of these cases, the keeping the old schema around in the application source code is useful, but in different ways.
+This section covers a pattern for managing this such that applications are able to efficiently manage all these which accumulate over time,
+meaning that we do not place any O(number of old schema) complexity into any code.
+
+Old schema in case #2 only need to be kept until the migration is complete, meaning deployed application are allow to write the new more flexible format.
+During the migration, both can be kept, and a test can be used to confirm that the new schema actually permits a superset of what the old one did.
+Once the migration is done, all code depending on the old schema can be deleted (which should just be the old schema itself, support for creating data in that format when inserting it into the document, and the above mentioned test).
+The two schema could be kept strait by calling them `*CompatibilitySchema` and `*Schema` respectively.
+It would also be possible to express the new one a a declarative upgrade to the old one (via a set of relaxations to parts of it), and then replace it with a normally coded one (not based on the old one) when deleting the old one.
+
+Old schema in case #1 has much longer term implications: they need to live forever to support old documents.
+In this case, the schema have different identifiers, which could either be random (ex: UUID), or a developer friendly name including a version.
+The old schema, and handlers which can upgrade the data to the new format, get packed into a library which can be loaded into schematize to provide legacy schema support.
+The old schema will not need to be mentioned anywhere else in source code (it may be mentioned in documents though!).
+
+### Schema Migration examples
+
+As we don't have a schema language yet, consider this schema Pseudocode.
+
+If we start with:
+
+```typescript
+// We need some way to express the unique identifiers. Just going to add them after the name for the API for now, and use versions not UUIDs for this example.
+Canvas:CanvasV1{
+    items: Circle | Point
+}
+
+Circle:CircleV1{
+    center: Point
+    radius: number
+}
+
+Point:PointV1{
+    x: number
+    y: number
+}
+```
+
+Then update this doing the desired schema change.
+This is our new view schema:
+
+```typescript
+Canvas:CanvasV1{
+    items: Circle | Point // Note this implicitly refers to CircleV2 now.
+}
+
+Circle:CircleV2{
+    center: Point
+    diameter: number // Changed from radius
+}
+
+Point:PointV1{
+    x: number
+    y: number
+}
+```
+
+To enable support for legacy documents we separately package
+
+```typescript
+// The original canvas schema, moved/renamed out of the way (Case #2 above: kept until migration is finished).
+// TODO: details on how we se this during the migration to avoid premature format updates before rollout is complete.
+CanvasCompatibility:CanvasV1{
+    items: CircleV1 | Point
+}
+
+// The original circle schema, moved/renamed out of the way (Case #1 above: kept forever)
+CircleV1:CircleV1{
+    center: Point
+    radius: number
+}
+```
+
+And with CircleV1, we provide an adapter for use with schematize that can handle a CircleV1 when a Circle (aka Circlev2) is expected.
 
 ## Open questions in proposed design
 
