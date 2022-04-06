@@ -447,6 +447,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._deltaManager.readOnlyInfo;
     }
 
+    public get closeSignal(): AbortSignal {
+        return this._deltaManager.closeAbortController.signal;
+    }
+
     /**
      * Tracks host requiring read-only mode.
      */
@@ -849,7 +853,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         ),
                         "containerAttach",
                         this.mc.logger,
-                        {}, // progress
+                        {
+                            cancel: this.closeSignal,
+                        }, // progress
                     );
                 }
                 const resolvedUrl = this.service.resolvedUrl;

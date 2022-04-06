@@ -15,6 +15,8 @@ import {
     IExternalWriterConfig,
     IRepositoryManager,
     IFileSystemManager,
+    IFileSystemManagerFactory,
+    IRepoManagerParams,
 } from "./definitions";
 
 export class IsomorphicGitRepositoryManager implements IRepositoryManager {
@@ -343,38 +345,40 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
 
     constructor(
         private readonly baseDir: string,
-        private readonly fileSystemManager: IFileSystemManager,
+        private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
     ) { }
 
-    public async create(owner: string, name: string): Promise<IsomorphicGitRepositoryManager> {
+    public async create(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
         // Verify that both inputs are valid folder names
-        const repoPath = helpers.getRepoPath(owner, name);
+        const repoPath = helpers.getRepoPath(params.repoOwner, params.repoName);
+        const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
         const directoryPath = `${this.baseDir}/${repoPath}`;
 
         // Create and then cache the repository
         await isomorphicGit.init({
-            fs: this.fileSystemManager,
-            gitdir: `${this.baseDir}/${repoPath}`,
+            fs: fileSystemManager,
+            gitdir: directoryPath,
             bare: true,
         });
 
         this.repositoryCache.add(repoPath);
         const repoManager = new IsomorphicGitRepositoryManager(
-            this.fileSystemManager,
-            owner,
-            name,
+            fileSystemManager,
+            params.repoOwner,
+            params.repoName,
             directoryPath);
-        winston.info(`Created a new repo for owner ${owner} reponame: ${name}`);
+        winston.info(`Created a new repo for owner ${params.repoOwner} reponame: ${params.repoName}`);
 
         return repoManager;
     }
 
-    public async open(owner: string, name: string): Promise<IsomorphicGitRepositoryManager> {
-        const repoPath = helpers.getRepoPath(owner, name);
+    public async open(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
+        const repoPath = helpers.getRepoPath(params.repoOwner, params.repoName);
         const directoryPath = `${this.baseDir}/${repoPath}`;
+        const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
 
         if (!(this.repositoryCache.has(repoPath))) {
-            const repoExists = await helpers.exists(this.fileSystemManager, directoryPath);
+            const repoExists = await helpers.exists(fileSystemManager, directoryPath);
             if (!repoExists || !repoExists.isDirectory()) {
                 winston.info(`Repo does not exist ${directoryPath}`);
                 // services-client/getOrCreateRepository depends on a 400 response code
@@ -385,9 +389,9 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
         }
 
         const repoManager = new IsomorphicGitRepositoryManager(
-            this.fileSystemManager,
-            owner,
-            name,
+            fileSystemManager,
+            params.repoOwner,
+            params.repoName,
             directoryPath);
         return repoManager;
     }
