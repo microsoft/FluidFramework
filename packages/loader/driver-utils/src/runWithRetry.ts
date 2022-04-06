@@ -66,10 +66,15 @@ export async function runWithRetry<T>(
             }
 
             if (progress.cancel?.aborted === true) {
+                logger.sendTelemetryEvent({
+                    eventName: `${fetchCallName}_runWithRetryAborted`,
+                    retry: numRetries,
+                    duration: performance.now() - startTime,
+                }, err);
                 throw new NonRetryableError(
-                    "runWithRetryAborted",
+                    "runWithRetry was Aborted",
                     OdspErrorType.fetchTimeout,
-                    { eventName: `runWithRetryAborted_${fetchCallName}`, driverVersion: pkgVersion },
+                    { driverVersion: pkgVersion },
                 );
             }
 
