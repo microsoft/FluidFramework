@@ -1055,7 +1055,7 @@ export class MergeTree {
     }
 
     private makeBlock(childCount: number) {
-        const block = new HierMergeBlock(childCount);
+        const block: MergeBlock = new HierMergeBlock(childCount);
         block.ordinal = "";
         return block;
     }
