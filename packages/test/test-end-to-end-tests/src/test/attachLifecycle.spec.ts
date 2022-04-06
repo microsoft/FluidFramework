@@ -56,9 +56,9 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
             const provider = getTestObjectProvider();
             const timeoutDurationMs = this.timeout() / 2;
             let containerUrl: IResolvedUrl | undefined;
-            const sharedStringRegistry: [string | undefined, IChannelFactory][] =
+            const channelFactoryRegistry: [string | undefined, IChannelFactory][] =
                 [[SharedStringFactory.Type, SharedString.getFactory()]];
-            const containerConfig = { registry: sharedStringRegistry };
+            const containerConfig = { registry: channelFactoryRegistry };
 
             // act code block
             {
