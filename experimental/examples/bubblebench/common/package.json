@@ -56,7 +56,7 @@
     "@fluid-experimental/tree": "^0.59.1000",
     "@fluidframework/aqueduct": "^0.59.1000",
     "@fluidframework/container-definitions": "^0.48.1000-0",
-    "@fluidframework/core-interfaces": "^0.42.0",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
     "@fluidframework/datastore-definitions": "^0.59.1000",
     "@fluidframework/map": "^0.59.1000",
     "@fluidframework/view-interfaces": "^0.59.1000",
