@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^0.42.0",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
     "@fluidframework/driver-definitions": "^0.46.1000-0",
     "@fluidframework/protocol-definitions": "^0.1028.1000-0"
   },
@@ -452,15 +452,19 @@
       },
       "0.45.0": {
         "InterfaceDeclaration_ICodeDetailsLoader": {
+          "forwardCompat": false,
           "backCompat": false
         },
         "InterfaceDeclaration_ICodeLoader": {
+          "forwardCompat": false,
           "backCompat": false
         },
         "InterfaceDeclaration_IFluidModule": {
+          "forwardCompat": false,
           "backCompat": false
         },
         "InterfaceDeclaration_IFluidModuleWithDetails": {
+          "forwardCompat": false,
           "backCompat": false
         },
         "InterfaceDeclaration_IProvideRuntimeFactory": {
@@ -500,15 +504,19 @@
           "backCompat": false
         },
         "InterfaceDeclaration_ICodeDetailsLoader": {
+          "forwardCompat": false,
           "backCompat": false
         },
         "InterfaceDeclaration_ICodeLoader": {
+          "forwardCompat": false,
           "backCompat": false
         },
         "InterfaceDeclaration_IFluidModule": {
+          "forwardCompat": false,
           "backCompat": false
         },
         "InterfaceDeclaration_IFluidModuleWithDetails": {
+          "forwardCompat": false,
           "backCompat": false
         },
         "InterfaceDeclaration_IProvideRuntimeFactory": {
@@ -521,9 +529,13 @@
         }
       },
       "0.47.1000": {
-        "InterfaceDeclaration_IContainerContext": {
-          "backCompat": false
-        }
+        "InterfaceDeclaration_IContainerContext": {"forwardCompat": false, "backCompat": false },
+        "InterfaceDeclaration_ICodeDetailsLoader": {"forwardCompat": false, "backCompat": false},
+        "InterfaceDeclaration_ICodeLoader": {"forwardCompat": false, "backCompat": false},
+        "InterfaceDeclaration_IFluidModule": {"forwardCompat": false, "backCompat": false},
+        "InterfaceDeclaration_IFluidModuleWithDetails": {"forwardCompat": false,"backCompat": false},
+        "InterfaceDeclaration_IRuntimeFactory": {"forwardCompat": false, "backCompat": false},
+        "InterfaceDeclaration_IProvideRuntimeFactory": {"forwardCompat": false, "backCompat": false}
       }
     }
   }

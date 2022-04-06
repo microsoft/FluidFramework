@@ -259,6 +259,7 @@ declare function get_old_InterfaceDeclaration_ICodeDetailsLoader():
 declare function use_current_InterfaceDeclaration_ICodeDetailsLoader(
     use: current.ICodeDetailsLoader);
 use_current_InterfaceDeclaration_ICodeDetailsLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICodeDetailsLoader());
 
 /*
@@ -284,6 +285,7 @@ declare function get_old_InterfaceDeclaration_ICodeLoader():
 declare function use_current_InterfaceDeclaration_ICodeLoader(
     use: current.ICodeLoader);
 use_current_InterfaceDeclaration_ICodeLoader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICodeLoader());
 
 /*
@@ -815,6 +817,7 @@ declare function get_old_InterfaceDeclaration_IFluidModule():
 declare function use_current_InterfaceDeclaration_IFluidModule(
     use: current.IFluidModule);
 use_current_InterfaceDeclaration_IFluidModule(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidModule());
 
 /*
@@ -840,6 +843,7 @@ declare function get_old_InterfaceDeclaration_IFluidModuleWithDetails():
 declare function use_current_InterfaceDeclaration_IFluidModuleWithDetails(
     use: current.IFluidModuleWithDetails);
 use_current_InterfaceDeclaration_IFluidModuleWithDetails(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidModuleWithDetails());
 
 /*
