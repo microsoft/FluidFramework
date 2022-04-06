@@ -529,13 +529,34 @@
         }
       },
       "0.47.1000": {
-        "InterfaceDeclaration_IContainerContext": {"forwardCompat": false, "backCompat": false },
-        "InterfaceDeclaration_ICodeDetailsLoader": {"forwardCompat": false, "backCompat": false},
-        "InterfaceDeclaration_ICodeLoader": {"forwardCompat": false, "backCompat": false},
-        "InterfaceDeclaration_IFluidModule": {"forwardCompat": false, "backCompat": false},
-        "InterfaceDeclaration_IFluidModuleWithDetails": {"forwardCompat": false,"backCompat": false},
-        "InterfaceDeclaration_IRuntimeFactory": {"forwardCompat": false, "backCompat": false},
-        "InterfaceDeclaration_IProvideRuntimeFactory": {"forwardCompat": false, "backCompat": false}
+        "InterfaceDeclaration_IContainerContext": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ICodeDetailsLoader": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ICodeLoader": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModule": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModuleWithDetails": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "forwardCompat": false,
+          "backCompat": false
+        }
       }
     }
   }
