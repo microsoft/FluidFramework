@@ -1,5 +1,11 @@
 # Stored and View Schema
 
+This document generally covers where we can store schema, and how they can be used, and not the specifics of what the schemas actually do.
+Another way to put that is this is about what the fluid tree needs from a schema system, and what options that leaves for how such a schema system could work,
+and is not about how to use those options to actually build a schema system (and thus not what options the schema system exposes to application authors)
+
+An example schema system is included which does take a position on exactly what the schema system could do, but its more intended as a demonstration of how a usable schema system could meet the requirements of view and stored schema as defined in this document, and not as a final design: it makes lots of subjective choices while the point of this document is to define the solution space.
+
 # Definitions
 
 -   `stored data` : data stored in the Fluid container by the tree dds.
@@ -134,10 +140,87 @@ If existing data could be incompatible with the new schema:
 
 ## Open questions in proposed design
 
-How should we deal with transient out of schema states while editing?
+### How should we deal with transient out of schema states while editing?
+
 Use edit primitives that avoid this? (ex: swap instead of delete and insert. Maybe a version od detach that inserts a placeholder which has to be replaced with valid data before the transaction ends? That seems like it could make the tree reading API for the middle of transactions messy.)
 
+### What to do with TreeSchema.extraGlobalFields?
+
 Should TreeSchema.extraGlobalFields exist, and if not, should be be unconditionally on or off? (See its doc comment).
+
+### Do we need bounded open polymorphism?
+
+Definitions for adjectives used with polymorphism:
+
+-   unbounded: all types/values are permitted.
+-   bounded: constrained by something (ex: an explicit list of types, a structural interface type (like a typescript or Go interface), a nominal interface (which the type must declare it implements, like a java interface or typescript class with protected members))
+-   open: does not require modifying the declaration of the field to create a new type which can be used in it.
+-   closed: requires modifying the declaration of the field to create a new type which can be used in it.
+
+The example schema system includes bounded closed polymorphism (via unions in fields), and unbounded open polymorphism (via fields with unconstrained types).
+It however does not support bounded open polymorphism.
+If support for bounded open polymorphism was added, it would done my modifying FieldSchema.type: see its doc comment for details.
+
+There are a few reasons to leave bounded open polymorphism out of initial versions:
+
+-   it is possible to add in the future without breaking existing documents and could be incrementally adopted in new and updated schema.
+    Thus there is little cost to delaying its implementation.
+-   there are several ways it could be implemented.
+    This means we will have to make some design decisions which will take time, and might be able to make better informed later.
+-   it complicates the implementation, requiring time to test and implement.
+
+## Approaches for bounded open polymorphism
+
+Despite these reasons to delay worrying about it, it is worth outlining some of the approaches which are practical to make sure they are sufficient to handle the desired use-cases:
+deciding which of these approaches we actually want is a separate issue.
+
+Before listing the approaches, its important to note what we really care about is enabling applications to do bounded open polymorphism.
+This distinction is important for 2 reasons:
+
+1. Applications may want to constrain the types based on what the application can do with the types, not the structural shape of their data (ex: canvas might want to limit its children to things the app has code to draw, not things that have some particular fields, like a top left point).
+2. There are some ways we can implement bounded open polymorphism like patterns at the app level without requiring direct support in the schema system.
+
+Some approaches for bounded open polymorphism at the applications level:
+
+-   Build view schema with a closed set of types on app load or build:
+    The application can compute a closed set of types which meet it's requirements
+    (which can be structural (ex: require specific fields), nominal (specific types opt in to some named set of types they want to be included in) and/or behavioral (all types supporting some specific functionality/[behavior](https://en.wikipedia.org/wiki/Aspect-oriented_programming))).
+    This can be used to programmatically construct a schema using closed polymorphism while exposing it as open polymorphism to the application authors/schema language.
+    This has the issue that different applications might come up with different sets of types, so this approach is mainly suitable for view schema.
+    There are a few options for how to handle the stored schema (listed below)
+    Note that all these approaches potentially have to deal with cases where the app's view schema does not match the stored schema.
+    If one group controls all the apps and the versions of them in use, its possible to ensure that all apps support all types that will occur in the stored schema, and tooling could be made fore this (ex: generate the set of types as a build step, check in the results and ensure it only grows, then be careful with version roll-outs to roll out view support for types before versions that insert them).
+    -   initially use the same schema used for view. Update later (ex: when a different app performs an edit inserting something the first app doesn't support)
+    -   just list the minimal set of types actually used in the document in that field, and update the field schema to allow new types when needed used.
+    -   use open polymorphism
+-   The above, but hand code the type lists.
+    It should be possible to get build errors if you don't update it, so this should be practical if all allowed types are statically known when building the app (ex: no dynamically loaded plugins that add extra types)
+-   Use open polymorphism in the stored and view schema: handle unexpected values in the app.
+-   Build a nominal open polymorphism system into the schema, allowing types to explicitly declare they are a member of a particular typeset/interface.
+    Compatibility between stored and view schema can include checking these align.
+-   Add a structural constraints that can be applied to field's children.
+    There are a few design choices for this:
+    -   How deep does it go?
+        -   Allow constraints to apply further constraints on the children recursively.
+        -   Allow only constraining the immediate children beyond the constraints their type implies.
+    -   Are the constraints applied to types or values?
+        -   Types: compute, based only on the schema, which types are allowed under which constraints.
+            This only permits types where all possible values meet the constraints. `allowsTreeSuperset` can compute if a type is allowed.
+        -   Values: compute, based only on the value, if its allowed under which constraints.
+            For example a type with an optional field could be placed under a constraint which required it, if the particular instance of the value had the field.
+            This adds more `context` (same tree might be valid in one place and invalid in another due to these constraints).
+            This would be difficult to support as stored schema due to needing to reject edits that are in schema for the type, but violate a structural constraint.
+            Making this work soundly when combined with concurrent moves which change which structural constraints apply would be hard.
+
+## Inheritance Notes
+
+Inheritance is a conflation of a specific kind of nominal bounded open polymorphism with reuse of implementation/declaration for some common parts of the types.
+These aspects can be separated, allowing for a more flexible system than one based on inheritance.
+
+Inheritance is sometimes useful for concisely expressing specific types:
+we can gain this benefit by we can implementing it as is syntactic sugar for some reuse mechanism
+(ex: a way to include fields from another type or standalone set of fields) combined with some bounded open polymorphism mechanism (pick from the above approaches).
+
 # Schedule
 
 What work we need to do for each milestone in #8273
@@ -193,3 +276,9 @@ This static typing could be used to provide:
 
 Regardless of the typescript typing, the stored schema can be checked against the view schema to skip schematize where possible.
 Schema-supersettting can be also used to determine if a schema is safe for reading but not writing.
+
+## Reuse and Polymorphism
+
+This document generally covers where we can store, and how they can be used, and not the specifics of what the schemas actually do.
+Another way to put that is this is about what the fluid tree needs from a schema system, and what options that leaves for how such a schema system could work,
+and is not about how to use those options to actually build a schema system.
