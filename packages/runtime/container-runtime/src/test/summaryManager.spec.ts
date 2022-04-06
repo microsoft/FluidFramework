@@ -108,6 +108,7 @@ describe("Summary Manager", () => {
         extends TypedEventEmitter<ISummarizerClientElectionEvents>
         implements ISummarizerClientElection {
         public electedClientId: string | undefined;
+        public get electedParentId() { return this.electedClientId; }
 
         public electClient(clientId: string | undefined) {
             this.electedClientId = clientId;
@@ -190,7 +191,7 @@ describe("Summary Manager", () => {
         assertState(SummaryManagerState.Off, "connected but other client elected");
         clientElection.electClient(thisClientId);
         await flushPromises();
-        assertState(SummaryManagerState.Starting, "should request summarizer");
+        assertState(SummaryManagerState.Running, "should request summarizer");
         assertRequests(1, "should have requested summarizer");
         completeSummarizerRequest();
         await flushPromises();
@@ -212,7 +213,7 @@ describe("Summary Manager", () => {
         assertState(SummaryManagerState.Off, "elected but not yet connected");
         connectedState.connect();
         await flushPromises();
-        assertState(SummaryManagerState.Starting, "should request summarizer");
+        assertState(SummaryManagerState.Running, "should request summarizer");
         assertRequests(1, "should have requested summarizer");
         completeSummarizerRequest();
         await flushPromises();
@@ -234,7 +235,7 @@ describe("Summary Manager", () => {
         assertState(SummaryManagerState.Off, "connected but not yet elected");
         clientElection.electClient(thisClientId);
         await flushPromises();
-        assertState(SummaryManagerState.Starting, "should request summarizer");
+        assertState(SummaryManagerState.Running, "should request summarizer");
         assertRequests(1, "should have requested summarizer");
         completeSummarizerRequest();
         await flushPromises();
@@ -242,7 +243,7 @@ describe("Summary Manager", () => {
         summarizer.stop(); // Simulate summarizer stopping itself
         summarizer.runDeferred.resolve();
         await flushPromises();
-        assertState(SummaryManagerState.Starting, "should restart itself");
+        assertState(SummaryManagerState.Running, "should restart itself");
         assertRequests(2, "should have requested a new summarizer");
         completeSummarizerRequest();
         await flushPromises();
@@ -280,7 +281,7 @@ describe("Summary Manager", () => {
             });
             clientElection.electClient(thisClientId);
             await flushPromises();
-            assertState(SummaryManagerState.Starting, "should enter starting state immediately");
+            assertState(SummaryManagerState.Running, "should enter starting state immediately");
             assertRequests(1, "should request summarizer immediately, bypassing initial delay");
             completeSummarizerRequest();
             await flushPromises();
