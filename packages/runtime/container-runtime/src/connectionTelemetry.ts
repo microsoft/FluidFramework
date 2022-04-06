@@ -18,32 +18,34 @@ import { assert, performance } from "@fluidframework/common-utils";
  */
 export const latencyThreshold = 5000;
 
-// Stages in OpPerfTelemetry that fire in the following oder:
-// 1) "submitOp" event
-// 2) DeltaManager's outbound "push" event
-// 3) DeltaManager's inbound "push" event
-// 4) Start of op processing (no explicit event for)
-// 5) DeltaManager "op" event(time to process an op)
+// Phases in OpPerfTelemetry:
+// 1.	Op sits in a buffer in DeltaManager (DM) queue, then in outbound queue for some time.
+// 	 - Note: We do not differentiate these two today in telemetry, but first one is due to batches,
+//           second one might happen due to outbound queue being paused.
+// 2.	Op is sent to service and back.
+// 3.	Op sits in inbound queue.
+// 4.	Op is processed.
 interface IOpPerfTelemetryProperties {
-    /** Measure time outbound op is sitting in queue due to active batch: Time between (1) and (2) */
-    durationOutboundQueue: number | undefined;
-    /** Track how long op is sitting in inbound queue until it is processed: Time between (2) and (3) */
-    durationInboundQueue: number | undefined;
-    /** Time spent between DeltaManager's inbound "push" event (3) until the DeltaManager "op" event (5) */
-    durationInboundToProcessing: number | undefined;
-    /** Length of the DeltaManager's inbound queue at the time of the Deltamanager's inbound "push" event (3) */
-    lenghtInboundQueue: number | undefined;
+    /** Measure time between (1) and (2) - Measure time outbound op is sitting in queue due to active batch */
+    durationOutboundQueue: number;
+    /** Measure time between (2) and (3) - Track how long op is sitting in inbound queue until it is processed */
+    durationInboundQueue: number;
+    /** Measure time between (3) and (4) - Time between DM's inbound "push" event until DM's "op" event */
+    durationInboundToProcessing: number;
+    /** Length of the DeltaManager's inbound queue at the time of the DM's inbound "push" event (3) */
+    lenghtInboundQueue: number;
 }
+
 /**
- * We collect the timing at various moments in time during the op processing.
+ * Timings collected at various moments during the op processing.
  */
  interface IOpPerfTimings {
      /** Starting time for (1) */
-    opStartTimeForLatencyStatistics: number | undefined;
+    opStartTimeForLatencyStatistics: number;
      /** Starting time for (2) */
-     opStartTimeSittingInboundQueue: number | undefined;
+     opStartTimeSittingInboundQueue: number;
      /** Starting time for (3) */
-     opStartTimeInboundPushEvent: number | undefined;
+     opStartTimeInboundPushEvent: number;
 }
 
 class OpPerfTelemetry {
