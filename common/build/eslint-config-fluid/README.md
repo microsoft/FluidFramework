@@ -16,7 +16,7 @@ If you want to change the shared lint config (that is, this package), you need t
 2. Publish a pre-release package.
 3. Update the core packages to use the pre-release lint config.
 
-When updating the lint config (step 1), run the `build` script for this package and commit any resulting changes.
+When updating the lint config (step 1), run `npm run print-config` and commit any resulting changes.
 
 ### Tracking lint config changes over time
 

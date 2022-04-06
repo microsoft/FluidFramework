@@ -12,12 +12,10 @@
   "author": "Microsoft and contributors",
   "main": "index.js",
   "scripts": {
-    "build": "npm run print-config",
-    "build:ci": "npm run build",
-    "cleanup-printed-configs": "node scripts/cleanup-printed-configs.js ./printed-configs",
+    "cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
     "print-config": "concurrently npm:print-config:default npm:print-config:test && npm run cleanup-printed-configs",
-    "print-config:default": "eslint --config index.js --print-config src/file.ts > printed-configs/default.json",
-    "print-config:test": "eslint --config index.js --print-config src/test/file.ts > printed-configs/test.json"
+    "print-config:default": "eslint --config ./index.js --print-config ./src/file.ts > ./printed-configs/default.json",
+    "print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json"
   },
   "dependencies": {
     "@rushstack/eslint-patch": "~1.1.0",
