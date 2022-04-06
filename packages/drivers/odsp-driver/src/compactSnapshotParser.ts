@@ -19,6 +19,7 @@ import {
 } from "./zipItDataRepresentationUtils";
 
 export const snapshotMinReadVersion = "1.0";
+export const currentReadVersion = "1.0";
 
 interface ISnapshotSection {
     snapshotTree: ISnapshotTree,
@@ -132,7 +133,7 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
         0x20f /* "Driver min read version should >= to server minReadVersion" */);
     assert(records.cv.toString() >= snapshotMinReadVersion,
         0x210 /* "Snapshot should be created with minReadVersion or above" */);
-
+    assert(currentReadVersion === records.cv.toString(), "Create Version should be equal to currentReadVersion");
     return {
         ...readSnapshotSection(records.snapshot),
         blobs: readBlobSection(records.blobs),
