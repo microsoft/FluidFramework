@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/tree",
+  "name": "@fluid-internal/tree",
   "version": "0.56.0",
   "private": true,
   "description": "Tree",
