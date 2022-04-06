@@ -11,9 +11,6 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
-  "main": "dist/index.js",
-  "module": "lib/index.js",
-  "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "npm run build:test",
