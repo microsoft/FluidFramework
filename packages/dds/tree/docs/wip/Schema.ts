@@ -156,15 +156,14 @@ export interface TreeSchema {
     /**
      * Constraint for local fields not mentioned in `localFields`.
      *
-     * Allowing extraFields enables using trees like a map without having to insert localFields for all the keys.
+     * Allows using using the local fields as a map, with the keys being LocalFieldKeys and the values being constrained by this FieldSchema.
      *
-     * This implementation currently does not allow extra fields that are globalFields:
-     * nothing prevents adding support for this,
-     * either as part of these extra fields (and requiring them to meet this FieldSchema as well as their own),
-     * or as a separate construct.
-     * Support for them is simply omitted as it is not required by the use-cases in of this example implementation.
+     * To forbid this map like usage, use {@link emptyField} here.
      *
-     * Usually `Multiplicity.Value` should NOT be used here since no nodes can ever be in schema are in schema if you use `Multiplicity.Value` here (that would require infinite children).
+     * Usually `Multiplicity.Value` should NOT be used here since no nodes can ever be in schema are in schema if you use `Multiplicity.Value` here
+     * (that would require infinite children).
+     * This pattern, which produces a schema which can never be met, is used by @link neverTree},
+     * and can be useful in special cases (like a default stored schema when none is specified).
      */
     readonly extraLocalFields: FieldSchema;
 
