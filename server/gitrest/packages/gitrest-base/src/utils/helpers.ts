@@ -106,12 +106,12 @@ export async function retrieveLatestFullSummaryFromStorage(
  */
 export function getRepoPath(name: string, owner?: string): string {
     // `name` needs to be always present and valid.
-    if (!name || name === "" || path.parse(name).dir !== "") {
+    if (!name || path.parse(name).dir !== "") {
         throw new NetworkError(400, `Invalid repo name provided.`);
     }
 
     // When `owner` is present, it needs to be valid.
-    if (owner && (owner === "" || path.parse(owner).dir !== "")) {
+    if (owner && path.parse(owner).dir !== "") {
         throw new NetworkError(400, `Invalid repo owner provided.`);
     }
 
