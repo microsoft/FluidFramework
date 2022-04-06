@@ -106,7 +106,7 @@ Applications which wish to rely entirely on schema-on-read for some or all of th
     but initial version will just detect violations and mark as conflicted.
 -   We can ways to update existing schema:
     -   Could support OP that changes a schema in a way where all data that was accepted by the old schema is accepted by the new one (ex: add optional fields (if compatible with extra fields), move required field into extraFields, add a type to a field).
-    -   Could even do things like apply a change to all nodes with a specific type to enable edits which modify a schema and update data atomically (ex: alter table like from sql). THis does not work with partial checkouts well.
+    -   Could even do things like apply a change to all nodes with a specific type to enable edits which modify a schema and update data atomically (ex: alter table like from sql). This does not work with partial checkouts well.
 
 ## Use as `View Schema`
 
@@ -131,6 +131,11 @@ If existing data could be incompatible with the new schema:
 -   Add support for it in the application.
     This may optionally be done by using the new schema as the view schema (removing the old one), and providing schematize with a handler to do the update/conversion.
 -   Recurse this algorithm updating the parent to accept the new schema (which in most cases will hit the "If existing data is compatible with the new schema" case.)
+
+## Open questions
+
+How should we deal with transient out of schema states while editing?
+Use edit primitives that avoid this? (ex: swap instead of delete and insert. Maybe a version od detach that inserts a placeholder which has to be replaced with valid data before the transaction ends? That seems like it could make the tree reading API for the middle of transactions messy.)
 
 # Schedule
 
