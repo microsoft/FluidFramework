@@ -13,9 +13,9 @@ const sortJson = require("sort-json");
     const files = await fs.promises.readdir(sourcePath);
 
     for (const file of files) {
-        let filePath = path.join(sourcePath, file);
-        let content = fs.readFileSync(filePath);
-        let json = JSON.parse(content);
+        const filePath = path.join(sourcePath, file);
+        const content = fs.readFileSync(filePath);
+        const json = JSON.parse(content);
 
         // Remove the parser property because it's an absolute path and will vary based on the local environment.
         delete json.parser;
