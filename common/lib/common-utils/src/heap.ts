@@ -76,6 +76,7 @@ export class Heap<T> {
         this.swap(1, this.count());
         const x = this.L.pop();
         this.fixdown(1);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return x!.value;
     }
 
@@ -96,7 +97,7 @@ export class Heap<T> {
     /**
      * Allows for heap to be updated after a node's value changes
      */
-    public update(node: IHeapNode<T>) {
+    public update(node: IHeapNode<T>): void {
         const k = node.position;
         if (this.isGreaterThanParent(k)) {
             this.fixup(k);
@@ -110,11 +111,11 @@ export class Heap<T> {
      *
      * @param node - the node to remove from the heap
      */
-    public remove(node: IHeapNode<T>) {
+    public remove(node: IHeapNode<T>): void {
         // Move the node we want to remove to the end of the array
         const position = node.position;
         this.swap(node.position, this.L.length - 1);
-        this.L.splice(this.L.length - 1);
+        this.L.splice(-1);
 
         // Update the swapped node assuming we didn't remove the end of the list
         if (position !== this.L.length) {
@@ -127,11 +128,11 @@ export class Heap<T> {
      *
      * @returns the number of elements in the Heap
      */
-    public count() {
+    public count(): number {
         return this.L.length - 1;
     }
 
-    private fixup(pos: number) {
+    private fixup(pos: number): void {
         let k = pos;
         while (this.isGreaterThanParent(k)) {
             const parent = k >> 1;
@@ -144,7 +145,7 @@ export class Heap<T> {
         return k > 1 && (this.comp.compare(this.L[k >> 1].value, this.L[k].value) > 0);
     }
 
-    private fixdown(pos: number) {
+    private fixdown(pos: number): void {
         let k = pos;
         while ((k << 1) <= this.count()) {
             let j = k << 1;
@@ -159,7 +160,7 @@ export class Heap<T> {
         }
     }
 
-    private swap(k: number, j: number) {
+    private swap(k: number, j: number): void {
         const tmp = this.L[k];
         this.L[k] = this.L[j];
         this.L[k].position = k;

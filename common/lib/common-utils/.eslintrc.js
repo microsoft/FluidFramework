@@ -5,16 +5,34 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid"
+        "@fluidframework/eslint-config-fluid/recommended"
     ],
     "parserOptions": {
-        "project": [ "./tsconfig.json", "./src/test/mocha/tsconfig.json", "./src/test/jest/tsconfig.json", "./src/test/types/tsconfig.json" ]
+        "project": [
+            "./tsconfig.json",
+            "./src/test/mocha/tsconfig.json",
+            "./src/test/jest/tsconfig.json",
+            "./src/test/types/tsconfig.json",
+        ]
     },
     "rules": {
-        "@typescript-eslint/no-non-null-assertion": "off",
-        "@typescript-eslint/strict-boolean-expressions": "off",
-        "no-bitwise": "off",
-        "no-null/no-null": "off",
-        "prefer-rest-params": "off"
-    }
+        "import/no-nodejs-modules": "error",
+    },
+    "overrides": [
+        {
+            // Rules only for test files
+            "files": [
+                "**/*.spec.ts",
+                "src/test/**"
+            ],
+            "rules": {
+                "@typescript-eslint/explicit-function-return-type": "off",
+                "unicorn/consistent-function-scoping": [
+                    "error", {
+                        "checkArrowFunctions": false
+                    }
+                ],
+            },
+        }
+    ],
 }

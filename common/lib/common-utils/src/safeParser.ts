@@ -9,13 +9,12 @@
  * @param json - the JSON string to parse
  * @returns the result JSON.parse is successful, undefined if exception happens
  */
-export function safelyParseJSON(json: string) {
+export function safelyParseJSON(json: string): any {
     let parsed;
     try {
         parsed = JSON.parse(json);
-    } catch (e) {
+    } catch {
         //
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return parsed;
 }

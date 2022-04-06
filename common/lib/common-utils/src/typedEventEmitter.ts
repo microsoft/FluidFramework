@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+// eslint-disable-next-line import/no-nodejs-modules, unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 import { IEvent, TransformedEvent, IEventTransformer, IEventProvider } from "@fluidframework/common-definitions";
 

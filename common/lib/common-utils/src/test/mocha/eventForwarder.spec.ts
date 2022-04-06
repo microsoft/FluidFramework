@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules, unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
+// eslint-disable-next-line import/no-nodejs-modules, unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 import { IErrorEvent } from "@fluidframework/common-definitions";
 import { EventForwarder } from "../..";
@@ -80,8 +82,8 @@ describe("Loader", () => {
                 it("Should remove listeners", () => {
                     let listener1Results = "";
                     let listener2Results = "";
-                    const listener1 = (value: string) => { listener1Results += value; };
-                    const listener2 = (value: string) => { listener2Results += value; };
+                    const listener1 = (value: string): void => { listener1Results += value; };
+                    const listener2 = (value: string): void => { listener2Results += value; };
                     forwarder.on(testEvent, listener1);
                     forwarder.on(testEvent, listener2);
                     source.emit(testEvent, "a");
@@ -101,8 +103,8 @@ describe("Loader", () => {
                 it("Forwarder should not be considered a listener to source unless forwarder has listeners", () => {
                     let sourceCount = 0;
                     let forwarderCount = 0;
-                    const sourceListener = () => sourceCount++;
-                    const forwarderListener = () => forwarderCount++;
+                    const sourceListener = (): number => sourceCount++;
+                    const forwarderListener = (): number => forwarderCount++;
 
                     // no listeners should throw
                     assert.throws(() => source.emit(errorEvent));
@@ -136,7 +138,7 @@ describe("Loader", () => {
                 });
 
                 it("Should unsubscribe all event listeners when disposed", () => {
-                    const disposedListener = () => assert.fail("Should be disposed");
+                    const disposedListener = (): void => assert.fail("Should be disposed");
 
                     // verify listeners
                     forwarder.on(testEvent, disposedListener);

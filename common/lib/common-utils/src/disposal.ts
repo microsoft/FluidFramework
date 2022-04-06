@@ -9,6 +9,7 @@ export function doIfNotDisposed<T>(
     disposable: IDisposable,
     f: (...args: any[]) => T,
 ): (...args: any[]) => T {
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     return (...args: any[]) => {
         if (disposable.disposed) {
             throw new Error("Already disposed");

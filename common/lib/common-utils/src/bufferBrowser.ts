@@ -76,7 +76,7 @@ export class IsoBuffer extends Uint8Array {
      * Convert the buffer to a string.
      * Only supports encoding the whole string (unlike the Node Buffer equivalent)
      * and only utf8 and base64 encodings
-     * @param encoding
+     * @param encoding - the encoding to use
      */
     public toString(encoding?: string): string {
         return Uint8ArrayToString(this, encoding);
@@ -93,12 +93,13 @@ export class IsoBuffer extends Uint8Array {
         // Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
         } else if (value !== null && typeof value === "object" && isArrayBuffer(value.buffer)) {
             // Support currently for full array, no view ports! (though it can be added in future)
-            assert(value.byteOffset === 0, 0x000 /* "nonzero isobuffer byte offset" */);
-            assert(value.byteLength === value.buffer.byteLength, 0x001 /* "unexpected isobuffer byte length" */);
+            assert(value.byteOffset === 0, 0x0_00 /* "nonzero isobuffer byte offset" */);
+            assert(value.byteLength === value.buffer.byteLength, 0x0_01 /* "unexpected isobuffer byte length" */);
             return IsoBuffer.fromArrayBuffer(value.buffer, encodingOrOffset as number | undefined, length);
         } else if (isArrayBuffer(value)) {
             return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
         } else {
+            // eslint-disable-next-line unicorn/error-message
             throw new TypeError();
         }
     }
@@ -110,6 +111,7 @@ export class IsoBuffer extends Uint8Array {
             offset > arrayBuffer.byteLength ||
             validLength < 0 ||
             validLength + offset > arrayBuffer.byteLength) {
+            // eslint-disable-next-line unicorn/error-message
             throw new RangeError();
         }
 
@@ -142,7 +144,7 @@ export class IsoBuffer extends Uint8Array {
     /**
      * Sanitize a base64 string to provide to base64-js library.  base64-js
      * is not as tolerant of the same malformed base64 as Node's Buffer is.
-     * @param str
+     * @param str - the string to sanitize
      */
     private static sanitizeBase64(str: string): string {
         let sanitizedStr = str;

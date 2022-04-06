@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules, unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
 import { RangeTracker } from "../..";
 

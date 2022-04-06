@@ -14,8 +14,8 @@ describe("Buffer isomorphism", () => {
             "比特币", // non-ascii range
             "😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
             "\u0080\u0080", // invalid sequence of utf-8 continuation codes
-            "\ud800", // single utf-16 surrogate without pair
-            "\u2962\u0000\uffff\uaaaa", // garbage
+            "\uD800", // single utf-16 surrogate without pair
+            "\u2962\u0000\uFFFF\uAAAA", // garbage
         ];
 
         for (const item of testArray) {
@@ -25,6 +25,7 @@ describe("Buffer isomorphism", () => {
             expect(nodeBuffer.toString()).toEqual(browserBuffer.toString());
         }
 
+        // eslint-disable-next-line no-lone-blocks
         {
             const nodeBuffer = BufferNode.IsoBuffer.from(testArray[1]);
             const browserBuffer = BufferBrowser.IsoBuffer.from(testArray[1]);
@@ -86,18 +87,18 @@ describe("Buffer isomorphism", () => {
             "8J+YgvCfkoHwn4+84oCN4pmC77iP8J+SgfCfj7zigI3wn5KB4oCN4pmC", // 😂💁🏼‍♂️💁🏼‍💁‍♂
         ];
 
-        for (let i = 0; i < testArrayUtf8.length; i++) {
-            const nodeBuffer1 = BufferNode.IsoBuffer.from(testArrayUtf8[i]);
+        for (const [i, element] of testArrayUtf8.entries()) {
+            const nodeBuffer1 = BufferNode.IsoBuffer.from(element);
             expect(nodeBuffer1.toString("base64")).toEqual(testArrayBase64[i]);
 
             const nodeBuffer2 = BufferNode.IsoBuffer.from(nodeBuffer1.toString("base64"), "base64");
-            expect(nodeBuffer2.toString()).toEqual(testArrayUtf8[i]);
+            expect(nodeBuffer2.toString()).toEqual(element);
 
-            const browserBuffer1 = BufferBrowser.IsoBuffer.from(testArrayUtf8[i]);
+            const browserBuffer1 = BufferBrowser.IsoBuffer.from(element);
             expect(browserBuffer1.toString("base64")).toEqual(testArrayBase64[i]);
 
             const browserBuffer2 = BufferBrowser.IsoBuffer.from(browserBuffer1.toString("base64"), "base64");
-            expect(browserBuffer2.toString()).toEqual(testArrayUtf8[i]);
+            expect(browserBuffer2.toString()).toEqual(element);
         }
     });
 

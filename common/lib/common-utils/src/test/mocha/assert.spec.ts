@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules, unicorn/prefer-node-protocol
 import { strict } from "assert";
 import { assert } from "../../assert";
 
@@ -12,10 +13,10 @@ describe("Assert", () => {
         for (const shortCode of ["0x000", "0x03a", "0x200", "0x4321"]) {
             try {
                 assert(false, Number.parseInt(shortCode, 16));
-            } catch (e) {
-                strict(e instanceof Error, "not an error");
+            } catch (error) {
+                strict(error instanceof Error, "not an error");
                 strict.strictEqual(
-                    e.message,
+                    error.message,
                     shortCode,
                     "incorrect short code format");
             }

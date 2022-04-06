@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules, unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { PromiseCache } from "../..";
@@ -38,6 +39,7 @@ describe("PromiseCache", () => {
 
             const addOrGet_WhenPresent = await pc.addOrGet(
                 1,
+                // eslint-disable-next-line unicorn/error-message
                 async () => { throw new Error(); },
             );
             assert.equal(addOrGet_WhenPresent, "one");
@@ -73,6 +75,7 @@ describe("PromiseCache", () => {
 
             const add_WhenPresent = pc.add(
                 1,
+                // eslint-disable-next-line unicorn/error-message
                 async () => { throw new Error(); },
             );
             assert.equal(add_WhenPresent, false);

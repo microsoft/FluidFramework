@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+// eslint-disable-next-line import/no-nodejs-modules, unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
+// eslint-disable-next-line import/no-nodejs-modules, unicorn/prefer-node-protocol
 import process from "process";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { PromiseTimer, Timer, IPromiseTimerResult } from "../..";
@@ -239,6 +240,7 @@ describe("Timers", () => {
             );
         }
 
+        // eslint-disable-next-line unicorn/consistent-function-scoping
         async function tickAndFlush(ms: number) {
             clock.tick(ms);
             await flushPromises();

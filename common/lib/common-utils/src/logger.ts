@@ -34,9 +34,9 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 export class TelemetryNullLogger implements ITelemetryLogger {
     public send(event: ITelemetryBaseEvent): void {
     }
-    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {
     }
-    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {
     }
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
     }

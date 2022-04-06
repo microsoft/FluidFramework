@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules, unicorn/prefer-node-protocol
 import fs from "fs";
+// eslint-disable-next-line import/no-nodejs-modules, unicorn/prefer-node-protocol
 import http from "http";
+// eslint-disable-next-line import/no-nodejs-modules, unicorn/prefer-node-protocol
 import path from "path";
 import rewire from "rewire";
 import * as HashNode from "../../hashFileNode";
@@ -34,7 +37,7 @@ async function evaluateBrowserHash(
     // convert the file to a string to pass into page.evaluate because
     // Buffer/Uint8Array are not directly jsonable
     const fileCharCodeString = Array.prototype.map.call(file, (byte) => {
-        return String.fromCharCode(byte);
+        return String.fromCodePoint(byte);
     }).join("");
 
     // puppeteer has issues with calling crypto through page.exposeFunction but not directly,
@@ -45,23 +48,23 @@ async function evaluateBrowserHash(
     const hashCharCodeString = await (page.evaluate(async (fn, f, alg) => {
         // convert back into Uint8Array
         const fileCharCodes = Array.prototype.map.call([...f], (char) => {
-            return char.charCodeAt(0) as number;
+            return char.codePointAt(0) as number;
         }) as number[];
         const fileUint8 = Uint8Array.from(fileCharCodes);
 
         // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-        const hashFn = Function(`"use strict"; return ( ${fn} );`);
+        const hashFn = new Function(`"use strict"; return ( ${fn} );`);
         const pageHashArray = await (hashFn()(fileUint8, alg) as Promise<Uint8Array>);
 
         // Similarly, return the hash array as a string instead of a Uint8Array
         return Array.prototype.map.call(pageHashArray, (byte) => {
-            return String.fromCharCode(byte);
+            return String.fromCodePoint(byte);
         }).join("");
     }, browserHashFn, fileCharCodeString, algorithm) as Promise<string>);
 
     // reconstruct the Uint8Array from the string
     const charCodes = Array.prototype.map.call([...hashCharCodeString], (char) => {
-        return char.charCodeAt(0) as number;
+        return char.codePointAt(0) as number;
     }) as number[];
     const hashArray = Uint8Array.from(charCodes);
     return HashBrowser.__get__("encodeDigest")(hashArray, hashEncoding) as string;
@@ -74,7 +77,7 @@ async function evaluateBrowserHash(
 async function evaluateBrowserGitHash(page, file: Buffer): Promise<string> {
     // Add the prefix for git hashing
     const size = file.byteLength;
-    const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
+    const filePrefix = `blob ${size.toString()}${String.fromCodePoint(0)}`;
     const prefixBuffer = Buffer.from(filePrefix, "utf-8");
     const hashBuffer = Buffer.concat([prefixBuffer, file], prefixBuffer.length + file.length);
     return evaluateBrowserHash(page, hashBuffer);
@@ -100,10 +103,12 @@ describe("Common-Utils", () => {
         // Navigate to the local test server so crypto is available
         await page.goto("http://localhost:8080", { waitUntil: "load", timeout: 0 });
 
+        /* eslint-disable unicorn/prefer-module */
         xmlFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/book.xml`));
         svgFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/bindy.svg`));
         pdfFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/aka.pdf`));
         gifFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/grid.gif`));
+        /* eslint-enable unicorn/prefer-module */
     });
 
     afterAll(() => {
