@@ -112,14 +112,7 @@
         "@typescript-eslint/explicit-member-accessibility": [
             "error",
             {
-                "accessibility": "explicit",
-                "overrides": {
-                    "accessors": "explicit",
-                    "constructors": "explicit",
-                    "methods": "explicit",
-                    "parameterProperties": "explicit",
-                    "properties": "explicit"
-                }
+                "accessibility": "explicit"
             }
         ],
         "@typescript-eslint/explicit-module-boundary-types": [
@@ -132,7 +125,7 @@
             "off"
         ],
         "@typescript-eslint/member-delimiter-style": [
-            "error"
+            "warn"
         ],
         "@typescript-eslint/naming-convention": [
             "error",
@@ -496,7 +489,7 @@
             }
         ],
         "import/no-unused-modules": [
-            "error",
+            "warn",
             {
                 "missingExports": true
             }

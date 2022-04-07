@@ -121,13 +121,6 @@ module.exports = {
             "error",
             {
                 accessibility: "explicit",
-                overrides: {
-                    accessors: "explicit",
-                    constructors: "explicit",
-                    methods: "explicit",
-                    properties: "explicit",
-                    parameterProperties: "explicit"
-                }
             },
         ],
 
