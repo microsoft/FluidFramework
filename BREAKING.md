@@ -14,6 +14,94 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 0.59
+
+## 0.59 Upcoming changes
+- [Remove ICodeLoader interface](#Remove-ICodeLoader-interface)
+
+### Remove ICodeLoader interface
+ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
+
+## 0.59 Breaking changes
+- [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
+- [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
+- [Remove `@fluidframework/core-interface#fluidPackage.ts`](#Remove-fluidframeworkcore-interfacefluidPackagets)
+- [getAbsoluteUrl() argument type changed](#getAbsoluteUrl-argument-type-changed)
+- [Replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface)
+- [IFluidModule.fluidExport is no longer an IFluidObject](#IFluidModule.fluidExport-is-no-longer-an-IFluidObject)
+- [IContainerContext.scope is no longer an IFluidObject](#IContainerContext.scope-is-no-longer-an-IFluidObject)
+
+### Removing Commit from TreeEntry and commits from SnapShotTree
+Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
+These should not be used and there is no replacement provided.
+
+### raiseContainerWarning removed from IContainerContext
+`raiseContainerWarning` property will be removed from `IContainerContext` interface and `ContainerContext` class. Please refer to [raiseContainerWarning property](#Remove-raisecontainerwarning-property) for more details.
+
+### Remove `@fluidframework/core-interface#fluidPackage.ts`
+All the interfaces and const from `fluidPackage.ts` were moved to `@fluidframework/container-definitions` in previous release. Please refer to: [Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`](#Moved-fluidframeworkcore-interfacefluidPackagets-to-fluidframeworkcontainer-definitionfluidPackagets). It is now removed from `@fluidframework/core-interface#fluidPackage.ts`. Import the following interfaces and const from `@fluidframework/container-definitions`:
+- `IFluidPackageEnvironment`
+- `IFluidPackage`
+- `isFluidPackage`
+- `IFluidCodeDetailsConfig`
+- `IFluidCodeDetailsConfig`
+- `IFluidCodeDetails`
+- `IFluidCodeDetailsComparer`
+- `IProvideFluidCodeDetailsComparer`
+- `IFluidCodeDetailsComparer`
+
+### `getAbsoluteUrl()` argument type changed
+The `packageInfoSource` argument in `getAbsoluteUrl()` on `@fluidframework/odsp-driver`, `@fluidframework/iframe-driver`, and `@fluidframework/driver-definitions` is typed to `IContainerPackageInfo` interface only.
+
+```diff
+- getAbsoluteUrl(
+-    resolvedUrl: IResolvedUrl,
+-    relativeUrl: string,
+-    packageInfoSource?: IFluidCodeDetails | IContainerPackageInfo,
+- ): Promise<string>;
+
++ interface IContainerPackageInfo {
++    /**
++     * Container package name.
++     */
++    name: string;
++ }
+
++ getAbsoluteUrl(
++    resolvedUrl: IResolvedUrl,
++    relativeUrl: string,
++    packageInfoSource?: IContainerPackageInfo,
++ ): Promise<string>;
+```
+
+### Replace ICodeLoader with ICodeDetailsLoader interface
+The interface `ICodeLoader` was deprecated a while ago in previous releases. The alternative for `ICodeLoader` interface is the `ICodeDetailsLoader` interface which can be imported from `@fluidframework/container-definitions`. `ICodeLoader` interface will be removed in the next release.
+
+In particular, note the `ILoaderService` and `ILoaderProps` interfaces used with the `Loader` class now only support `ICodeDetailsLoader`. If you were using an `ICodeLoader` with these previously, you'll need to update to an `ICodeDetailsLoader`.
+
+```ts
+export interface ICodeDetailsLoader
+ extends Partial<IProvideFluidCodeDetailsComparer> {
+ /**
+  * Load the code module (package) that is capable to interact with the document.
+  *
+  * @param source - Code proposal that articulates the current schema the document is written in.
+  * @returns - Code module entry point along with the code details associated with it.
+  */
+ load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+}
+```
+All codeloaders are now expected to return the object including both the runtime factory and code details of the package that was actually loaded. These code details may be used later then to check whether the currently loaded package `.satisfies()` a constraint.
+
+You can start by returning default code details that were passed into the code loader which used to be our implementation on your behalf if code details were not passed in. Later on, this gives an opportunity to implement more sophisticated code loading where the code loader now can inform about the actual loaded module via the returned details.
+
+### IFluidModule.fluidExport is no longer an IFluidObject
+IFluidObject is no longer part of the type of IFluidModule.fluidExport. IFluidModule.fluidExport is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+
+### IContainerContext.scope is no longer an IFluidObject
+IFluidObject is no longer part of the type of IContainerContext.scope. IContainerContext.scope is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+
+
 # 0.58
 
 ## 0.58 Upcoming changes

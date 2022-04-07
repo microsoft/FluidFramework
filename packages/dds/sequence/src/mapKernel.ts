@@ -309,11 +309,11 @@ export class MapKernel implements IValueTypeCreator {
                 if (key === changed.key) {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     resolve(this.get<T>(changed.key)!);
-                    this.eventEmitter.removeListener("valueChanged", callback);
+                    this.eventEmitter.removeListener("create", callback);
                 }
             };
 
-            this.eventEmitter.on("valueChanged", callback);
+            this.eventEmitter.on("create", callback);
         });
     }
 
@@ -550,7 +550,7 @@ export class MapKernel implements IValueTypeCreator {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
-        this.eventEmitter.emit("valueChanged", event, local, op, this.eventEmitter);
+        this.eventEmitter.emit("create", event, local, op, this.eventEmitter);
     }
 
     /**

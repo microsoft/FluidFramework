@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IFluidModuleWithDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
@@ -45,8 +45,13 @@ async function getContainerKillBitFromContainer(container: IContainer): Promise<
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
-    const module = { fluidExport: new InventoryListContainerRuntimeFactory() };
-    const codeLoader = { load: async () => module };
+    const load = async (): Promise<IFluidModuleWithDetails> => {
+        return {
+            module: { fluidExport: new InventoryListContainerRuntimeFactory() },
+            details: { package: "no-dynamic-package", config: {} },
+        };
+    };
+    const codeLoader = { load };
 
     const loader = new Loader({
         urlResolver: tinyliciousService.urlResolver,

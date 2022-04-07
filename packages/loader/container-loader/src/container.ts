@@ -14,8 +14,6 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
-    IFluidCodeDetails,
-    isFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -30,6 +28,8 @@ import {
     IPendingLocalState,
     ReadOnlyInfo,
     IContainerLoadMode,
+    IFluidCodeDetails,
+    isFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
@@ -92,7 +92,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { ReconnectMode, IConnectionManagerFactoryArgs } from "./contracts";
+import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
@@ -969,21 +969,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectToDeltaStream(args);
     }
 
-    /**
-     * @deprecated 0.56, will be removed in next release from IContainerContext
-     * Raise non-critical error to host. Calling this API will not close container.
-     * For critical errors, please call Container.close(error).
-     * @param error - an error to raise
-     */
-    public raiseContainerWarning(warning: ContainerWarning) {
-        // Some "warning" events come from outside the container and are logged
-        // elsewhere (e.g. summarizing container). We shouldn't log these here.
-        if (warning.logged !== true) {
-            this.logContainerError(warning);
-        }
-        this.emit("warning", warning);
-    }
-
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         if (this.resolvedUrl === undefined) {
             return undefined;
@@ -992,7 +977,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.urlResolver.getAbsoluteUrl(
             this.resolvedUrl,
             relativeUrl,
-            this._context?.codeDetails);
+            getPackageName(this._context?.codeDetails));
     }
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
@@ -1497,7 +1482,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
-            this.raiseContainerWarning(warning);
+            const warn = warning as ContainerWarning;
+            // Some "warning" events come from outside the container and are logged
+            // elsewhere (e.g. summarizing container). We shouldn't log these here.
+            if (warn.logged !== true) {
+                this.logContainerError(warn);
+            }
+            this.emit("warning", warn);
         });
 
         deltaManager.on("readonly", (readonly) => {
@@ -1770,7 +1761,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler.quorum),
             loader,
-            (warning: ContainerWarning) => this.raiseContainerWarning(warning),
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),

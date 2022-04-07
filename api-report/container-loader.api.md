@@ -5,13 +5,11 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { ICodeLoader } from '@fluidframework/container-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerEvents } from '@fluidframework/container-definitions';
@@ -21,14 +19,14 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
-import { IProvideFluidCodeDetailsComparer } from '@fluidframework/core-interfaces';
+import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IProxyLoaderFactory } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -91,8 +89,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     readonly options: ILoaderOptions;
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
-    // @deprecated (undocumented)
-    raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
     static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string): Promise<Container>;
@@ -160,7 +156,7 @@ export interface ILoaderOptions extends ILoaderOptions_2 {
 
 // @public
 export interface ILoaderProps {
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
     readonly configProvider?: IConfigProviderBase;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
@@ -173,7 +169,7 @@ export interface ILoaderProps {
 
 // @public
 export interface ILoaderServices {
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;

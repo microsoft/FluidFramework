@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IChannel": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IChannel():
@@ -28,7 +28,7 @@ use_current_InterfaceDeclaration_IChannel(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IChannel": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IChannel():
@@ -40,7 +40,7 @@ use_old_InterfaceDeclaration_IChannel(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IChannelAttributes": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IChannelAttributes():
@@ -52,7 +52,7 @@ use_current_InterfaceDeclaration_IChannelAttributes(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IChannelAttributes": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IChannelAttributes():
@@ -64,7 +64,7 @@ use_old_InterfaceDeclaration_IChannelAttributes(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IChannelFactory": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IChannelFactory():
@@ -76,7 +76,7 @@ use_current_InterfaceDeclaration_IChannelFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IChannelFactory": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IChannelFactory():
@@ -88,7 +88,7 @@ use_old_InterfaceDeclaration_IChannelFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IChannelServices": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IChannelServices():
@@ -100,7 +100,7 @@ use_current_InterfaceDeclaration_IChannelServices(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IChannelServices": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IChannelServices():
@@ -112,7 +112,7 @@ use_old_InterfaceDeclaration_IChannelServices(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IChannelStorageService": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IChannelStorageService():
@@ -124,7 +124,7 @@ use_current_InterfaceDeclaration_IChannelStorageService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IChannelStorageService": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IChannelStorageService():
@@ -136,7 +136,7 @@ use_old_InterfaceDeclaration_IChannelStorageService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IDeltaConnection": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDeltaConnection():
@@ -148,7 +148,7 @@ use_current_InterfaceDeclaration_IDeltaConnection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IDeltaConnection": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDeltaConnection():
@@ -160,7 +160,7 @@ use_old_InterfaceDeclaration_IDeltaConnection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IDeltaHandler": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDeltaHandler():
@@ -172,7 +172,7 @@ use_current_InterfaceDeclaration_IDeltaHandler(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IDeltaHandler": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDeltaHandler():
@@ -184,7 +184,7 @@ use_old_InterfaceDeclaration_IDeltaHandler(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IFluidDataStoreRuntime": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidDataStoreRuntime():
@@ -196,7 +196,7 @@ use_current_InterfaceDeclaration_IFluidDataStoreRuntime(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IFluidDataStoreRuntime": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidDataStoreRuntime():
@@ -208,7 +208,7 @@ use_old_InterfaceDeclaration_IFluidDataStoreRuntime(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IFluidDataStoreRuntimeEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidDataStoreRuntimeEvents():
@@ -220,7 +220,7 @@ use_current_InterfaceDeclaration_IFluidDataStoreRuntimeEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IFluidDataStoreRuntimeEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidDataStoreRuntimeEvents():
@@ -232,7 +232,7 @@ use_old_InterfaceDeclaration_IFluidDataStoreRuntimeEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_Jsonable": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_Jsonable():
@@ -244,7 +244,7 @@ use_current_TypeAliasDeclaration_Jsonable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_Jsonable": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_Jsonable():
@@ -256,7 +256,7 @@ use_old_TypeAliasDeclaration_Jsonable(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_Serializable": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_Serializable():
@@ -268,7 +268,7 @@ use_current_TypeAliasDeclaration_Serializable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_Serializable": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_Serializable():
