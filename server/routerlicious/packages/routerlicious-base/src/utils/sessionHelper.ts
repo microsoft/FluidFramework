@@ -19,7 +19,7 @@ export async function getSession(ordererUrl: string,
 
     const tempDocument: IDocument = await documentsCollection.findOne({ documentId });
     let tempSession: ISession = tempDocument.session;
-    if (tempSession === undefined) {
+    if (!tempSession) {
         tempSession = {
             ordererUrl,
             historianUrl,
@@ -41,11 +41,11 @@ export async function getSession(ordererUrl: string,
 
     let tempDeli = tempDocument.deli;
     let tempScribe = tempDocument.scribe;
-    const isSessionAlive: boolean = tempSession !== undefined ? tempSession.isSessionAlive : true;
-    if (tempSession !== undefined && !tempSession.isSessionAlive) {
+    const isSessionAlive: boolean = tempSession ? tempSession.isSessionAlive : true;
+    if (tempSession && !tempSession.isSessionAlive) {
         // Reset logOffset, ordererUrl, and historianUrl when switching cluster.
-        if ((tempSession.ordererUrl !== null && tempSession.ordererUrl !== ordererUrl) ||
-            (tempSession.historianUrl !== null && tempSession.historianUrl !== historianUrl)) {
+        if ((tempSession.ordererUrl !== undefined && tempSession.ordererUrl !== ordererUrl) ||
+            (tempSession.historianUrl !== undefined && tempSession.historianUrl !== historianUrl)) {
             Lumberjack.info(`Reset logOffset, ordererUrl, and historianUrl when switching cluster.`,
                 lumberjackProperties);
             const deli = JSON.parse(tempDeli);
