@@ -162,7 +162,7 @@ export class Historian implements IHistorian {
         };
     }
 
-    private getQueryString(queryString?: {}): Record<string, unknown> {
+    private getQueryString(queryString?: Record<string, unknown>): Record<string, unknown> {
         if (this.cacheBust) {
             return {
                 cacheBust: Date.now(),

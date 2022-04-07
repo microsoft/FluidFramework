@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/schemas",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "Centralized package for storing schemas used by the samples.",
   "homepage": "https://fluidframework.com",
   "repository": {

@@ -143,6 +143,10 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly summarizedDataStoreCount: number;
     /** The number of data stores whose GC reference state was updated in this summary. */
     readonly gcStateUpdatedDataStoreCount?: number;
+    /** The size of the gc blobs in this summary. */
+    readonly gcTotalBlobsSize?: number;
+    /** The number of gc blobs in this summary. */
+    readonly gcBlobNodeCount?: number;
 }
 
 /** Base results for all submitSummary attempts. */
@@ -152,6 +156,7 @@ export interface IBaseSummarizeResult {
     readonly error: any;
     /** Reference sequence number as of the generate summary attempt. */
     readonly referenceSequenceNumber: number;
+    readonly minimumSequenceNumber: number;
 }
 
 /** Results of submitSummary after generating the summary tree. */

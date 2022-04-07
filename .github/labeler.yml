@@ -1,78 +1,10 @@
-# This file is a map of labels to repo glob paths. See https://github.com/marketplace/actions/labeler
-# for more details.
+# This file is used as the configuration for srvaroa/labeler
 
-"area: build":
-  - ".github/*"
-  - ".github/workflows/**"
-  - "tools/pipelines/**"
-
-"area: contributor experience":
-  - ".vscode/**"
-
-"area: dds":
-  - experimental/dds/**
-  - packages/dds/**
-
-"area: dds: propertydds":
-  - experimental/PropertyDDS/**
-
-"area: dds: sharedstring":
-  - packages/dds/sequence/**
-
-"area: definitions":
-  - common/lib/container-definitions/**
-  - common/lib/core-interfaces/**
-  - common/lib/driver-definitions/**
-
-"area: dev experience":
-  - experimental/framework/**
-
-"area: driver":
-  - packages/drivers/**
-
-"area: examples":
-  - examples/**
-  - experimental/examples/**
-
-"area: framework":
-  - packages/framework/**
-
-"area: loader":
-  - packages/loader/**
-
-"area: odsp-driver":
-  - packages/drivers/*odsp*/**
-  - packages/utils/odsp-doclib-utils/**
-
-# Add "area: repo" label to any root or .github changes
-"area: repo":
-  - any: ["*", ".github/**", "!BREAKING.md"]
-
-"area: runtime":
-  - packages/runtime/**
-
-"area: server":
-  - server/**
-
-"area: test":
-  - packages/test/**
-
-"area: tools":
-  - any: ["common/build/**", "tools/**", "tools/pipelines/**"]
-
-"area: website":
-  - any: ["docs/**", "!docs/content/**"]
-
-"breaking change":
-  - BREAKING.md
-
-dependencies:
-  - lerna-package-lock.json
-  - package-lock.json
-
-documentation:
-  - docs/content/**
-
-# flag changes to public APIs so they can be reviewed to see if they're breaking
-"public api change":
-  - "**/api-report/**"
+version: 1
+labels:
+- label: "base: main"
+  base-branch: "main"
+- label: "base: next"
+  base-branch: "next"
+- label: "base: release"
+  base-branch: "^release/.*"

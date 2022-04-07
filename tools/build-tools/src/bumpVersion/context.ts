@@ -8,12 +8,13 @@ import * as path from "path";
 import { VersionBag, ReferenceVersionBag } from "./versionBag";
 import { commonOptions } from "../common/commonOptions";
 import { Timer } from "../common/timer";
-import { GitRepo, fatal, prereleaseSatisfies } from "./utils";
 import { getPackageManifest } from "../common/fluidUtils";
 import { FluidRepo, IPackageManifest } from "../common/fluidRepo";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
+import { GitRepo } from "./gitRepo";
+import { fatal, prereleaseSatisfies } from "./utils";
 
 import * as semver from "semver";
 

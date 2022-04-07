@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { BaseProxifiedProperty } from '@fluid-experimental/property-proxy';
-import { IRepoExpiryGetter, IRepoExpirySetter } from './CommonTypes';
-import { BaseProperty } from '@fluid-experimental/property-properties'
-import { IInspectorSearchState } from './utils';
+import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
+import { BaseProperty } from "@fluid-experimental/property-properties";
+import { IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes";
+import { IInspectorSearchState } from "./utils";
 
 export interface IColumns {
   dataGetter?: (params: IDataGetterParameter) => React.ReactNode | null;
@@ -59,7 +59,7 @@ export interface IDataCreationOptions {
   options?: any;
 }
 
-export type IInspectorColumnsKeys = 'context' | 'name' | 'type' | 'value';
+export type IInspectorColumnsKeys = "context" | "name" | "type" | "value";
 
 export interface IInspectorTableProps {
   /**

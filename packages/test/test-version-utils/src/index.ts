@@ -4,7 +4,6 @@
  */
 export { mochaGlobalSetup } from "./compatConfig";
 export * from "./compatUtils";
-export * from "./packageVersion";
 export * from "./testApi";
 export * from "./itExpects";
 export * from "./describeCompat";

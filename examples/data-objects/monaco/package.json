@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/monaco",
-  "version": "0.58.2000",
+  "version": "0.58.3000",
   "description": "Monaco code editor",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -39,21 +39,21 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/example-utils": "^0.58.2000",
-    "@fluidframework/aqueduct": "^0.58.2000",
+    "@fluid-example/example-utils": "^0.58.3000",
+    "@fluidframework/aqueduct": "^0.58.3000",
     "@fluidframework/container-definitions": "^0.47.1000",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/merge-tree": "^0.58.2000",
-    "@fluidframework/runtime-definitions": "^0.58.2000",
-    "@fluidframework/sequence": "^0.58.2000",
-    "@fluidframework/view-interfaces": "^0.58.2000",
+    "@fluidframework/merge-tree": "^0.58.3000",
+    "@fluidframework/runtime-definitions": "^0.58.3000",
+    "@fluidframework/sequence": "^0.58.3000",
+    "@fluidframework/view-interfaces": "^0.58.3000",
     "@types/node": "^14.18.0",
     "monaco-editor": "^0.15.6"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.58.2000",
+    "@fluid-tools/webpack-fluid-loader": "^0.58.3000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",

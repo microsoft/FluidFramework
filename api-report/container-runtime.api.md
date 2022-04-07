@@ -250,6 +250,8 @@ export interface IAckSummaryResult {
 // @public
 export interface IBaseSummarizeResult {
     readonly error: any;
+    // (undocumented)
+    readonly minimumSequenceNumber: number;
     readonly referenceSequenceNumber: number;
     // (undocumented)
     readonly stage: "base";
@@ -311,12 +313,13 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    readonly flushMode?: FlushMode;
     // (undocumented)
-    gcOptions?: IGCRuntimeOptions;
-    loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    readonly gcOptions?: IGCRuntimeOptions;
+    readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     // (undocumented)
-    summaryOptions?: ISummaryRuntimeOptions;
-    useDataStoreAliasing?: boolean;
+    readonly summaryOptions?: ISummaryRuntimeOptions;
+    readonly useDataStoreAliasing?: boolean;
 }
 
 // @public
@@ -356,7 +359,9 @@ export interface IGCStats {
 // @public
 export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly dataStoreCount: number;
+    readonly gcBlobNodeCount?: number;
     readonly gcStateUpdatedDataStoreCount?: number;
+    readonly gcTotalBlobsSize?: number;
     readonly summarizedDataStoreCount: number;
 }
 
