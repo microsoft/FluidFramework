@@ -194,7 +194,7 @@ export function create(
                 getExternalWriterParams(request.query?.config as string | undefined),
                 persistLatestFullSummary,
             ));
-        handleResponse(resultP, response, 201);
+        handleResponse(resultP, response, undefined, undefined, 201);
     });
 
     /**
@@ -222,7 +222,7 @@ export function create(
                 getExternalWriterParams(request.query?.config as string | undefined),
                 persistLatestFullSummary,
             ));
-        handleResponse(resultP, response, 204);
+        handleResponse(resultP, response, undefined, undefined, 204);
     });
 
     return router;

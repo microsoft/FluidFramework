@@ -18,6 +18,7 @@ import {
     IThrottleMiddlewareOptions,
     getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams } from "@fluidframework/server-services";
 import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
@@ -197,6 +198,7 @@ export function create(
      */
     router.get(
         ["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
+        validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
@@ -223,6 +225,7 @@ export function create(
      */
     router.get(
         "/raw/:tenantId/:id",
+        validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
@@ -244,6 +247,7 @@ export function create(
      */
     router.get(
         "/:tenantId/:id",
+        validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {

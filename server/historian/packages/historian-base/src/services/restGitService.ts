@@ -17,13 +17,14 @@ import {
     RestWrapper,
     IWholeFlatSummary,
     IWholeSummaryPayloadType,
+    NetworkError,
 } from "@fluidframework/server-services-client";
 import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { getRequestErrorTranslator } from "../utils";
+import { containsPathTraversal, getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
@@ -59,6 +60,10 @@ export class RestGitService {
         private readonly cache?: ICache,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
         private readonly storageName?: string) {
+        if (containsPathTraversal(documentId)) {
+            // Prevent attempted directory traversal.
+            throw new NetworkError(400, `Invalid document id: ${documentId}`);
+        }
         let defaultHeaders: AxiosRequestHeaders;
         if (storageName !== undefined) {
             defaultHeaders = {
