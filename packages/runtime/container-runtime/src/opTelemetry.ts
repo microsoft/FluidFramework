@@ -60,7 +60,7 @@ export class OpTracker {
         return message.sequenceNumber;
     }
 
-    private static messageHasData(message: ISequencedDocumentMessage) : message is ISequencedDocumentSystemMessage {
+    private static messageHasData(message: ISequencedDocumentMessage): message is ISequencedDocumentSystemMessage {
         return (message as ISequencedDocumentSystemMessage).data !== undefined;
     }
 
