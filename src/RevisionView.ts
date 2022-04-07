@@ -33,24 +33,18 @@ export class RevisionView extends TreeView {
 		root: T,
 		idConverter: NodeIdConverter,
 		expensiveValidation?: boolean
-	): RevisionView | undefined;
+	): RevisionView;
 
 	public static fromTree<T extends TreeNode<T, NodeId> | TreeNode<T, StableNodeId>>(
 		root: T,
 		idConverterOrExpensiveValidation?: NodeIdConverter | boolean,
 		expensiveValidation = false
-	): RevisionView | undefined {
+	): RevisionView {
 		if (typeof idConverterOrExpensiveValidation === 'object') {
-			const rootId = idConverterOrExpensiveValidation.tryConvertToNodeId(root.identifier);
-			if (rootId === undefined) {
-				return undefined;
-			}
+			const rootId = idConverterOrExpensiveValidation.convertToNodeId(root.identifier as StableNodeId);
 
 			const treeViewNodes = convertTreeNodesToViewNodes(root, (node) => {
-				const identifier = idConverterOrExpensiveValidation.tryConvertToNodeId(node.identifier);
-				if (identifier === undefined) {
-					return undefined;
-				}
+				const identifier = idConverterOrExpensiveValidation.convertToNodeId(node.identifier as StableNodeId);
 				const viewNode = {
 					definition: node.definition,
 					identifier,
@@ -59,19 +53,15 @@ export class RevisionView extends TreeView {
 				return viewNode;
 			});
 
-			if (treeViewNodes === undefined) {
-				return undefined;
-			}
-
 			return new RevisionView(rootId, Forest.create(expensiveValidation).add(treeViewNodes));
 		} else {
 			return new RevisionView(
-				root.identifier,
+				root.identifier as NodeId,
 				Forest.create(expensiveValidation).add(
 					convertTreeNodesToViewNodes(root, (node) => {
 						const viewNode = {
 							definition: node.definition,
-							identifier: node.identifier,
+							identifier: node.identifier as NodeId,
 						};
 						copyPropertyIfDefined(node, viewNode, 'payload');
 						return viewNode;

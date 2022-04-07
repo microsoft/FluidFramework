@@ -38,7 +38,7 @@ export function runSummaryLoadPerfTests(title: string): void {
 		let tree: SharedTree;
 		// All summary tests use the same setup.
 		const before = async () => {
-			({ tree } = await setUpLocalServerTestSharedTree({}));
+			({ tree } = await setUpLocalServerTestSharedTree({ writeFormat: WriteFormat.v0_0_2 }));
 		};
 
 		const tests = [
@@ -79,6 +79,7 @@ async function generateRandomTree(
 	);
 	const { testObjectProvider } = await performFuzzActions(generator, seed, true);
 	const { tree: finalTree } = await setUpLocalServerTestSharedTree({ testObjectProvider, summarizeHistory });
+	await testObjectProvider.ensureSynchronized();
 	return finalTree;
 }
 
@@ -92,6 +93,7 @@ async function writeSummaryTestTrees(): Promise<void> {
 	const tree011 = await generateRandomTree(seed, 1000, WriteFormat.v0_1_1, true);
 	const tree002NoHistory = await generateRandomTree(seed, 1000, WriteFormat.v0_0_2, false);
 	const tree011NoHistory = await generateRandomTree(seed, 1000, WriteFormat.v0_1_1, false);
+
 	expectAssert(areRevisionViewsSemanticallyEqual(tree002.currentView, tree002, tree011.currentView, tree011));
 	expectAssert(
 		areRevisionViewsSemanticallyEqual(tree002.currentView, tree002, tree002NoHistory.currentView, tree002NoHistory)
@@ -112,10 +114,15 @@ function loadSummaryTestFiles(): {
 	summaryFileWithHistory_0_1_1: string;
 	summaryFileNoHistory_0_1_1: string;
 } {
-	const summaryFileWithHistory_0_0_2 = fs.readFileSync(join(directory, 'summary-0-0-2.json'), 'utf8');
-	const summaryFileNoHistory_0_0_2 = fs.readFileSync(join(directory, 'summary-no-history-0-0-2.json'), 'utf8');
-	const summaryFileWithHistory_0_1_1 = fs.readFileSync(join(directory, 'summary-0-1-1.json'), 'utf8');
-	const summaryFileNoHistory_0_1_1 = fs.readFileSync(join(directory, 'summary-no-history-0-1-1.json'), 'utf8');
+	const readFile = (name: string): string => {
+		const contents = fs.readFileSync(join(directory, name), 'utf-8');
+		// Round-trip the file so that performance testing summary doesn't require parsing unnecessary/unrealistic whitespace
+		return JSON.stringify(JSON.parse(contents));
+	};
+	const summaryFileWithHistory_0_0_2 = readFile('summary-0-0-2.json');
+	const summaryFileNoHistory_0_0_2 = readFile('summary-no-history-0-0-2.json');
+	const summaryFileWithHistory_0_1_1 = readFile('summary-0-1-1.json');
+	const summaryFileNoHistory_0_1_1 = readFile('summary-no-history-0-1-1.json');
 
 	// Note: We don't bother writing/reading a "blobs" file for this test suite because loading a serialized summary
 	// with history should never involve attempting to get any of those blobs.

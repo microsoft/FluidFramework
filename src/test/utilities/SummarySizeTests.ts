@@ -39,7 +39,7 @@ interface SummarySizeTestEntry {
 const summarySizeTests: SummarySizeTestEntry[] = [
 	{
 		edits: (testTree) => [Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))],
-		expectedSize: 1707,
+		expectedSize: 1101,
 		description: 'when inserting a node',
 	},
 	{
@@ -50,7 +50,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 			}
 			return edits;
 		},
-		expectedSize: 21209,
+		expectedSize: 11147,
 		description: 'with 50 inserts',
 	},
 	{
@@ -61,7 +61,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 				[Change.setPayload(node.identifier, 10)],
 			];
 		},
-		expectedSize: 1843,
+		expectedSize: 1198,
 		description: 'when inserting and setting a node',
 	},
 	{
@@ -72,12 +72,12 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 				[Delete.create(StableRange.only(node))],
 			];
 		},
-		expectedSize: 1853,
+		expectedSize: 1251,
 		description: 'when inserting and deleting a node',
 	},
 	{
 		edits: (testTree) => [Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))],
-		expectedSize: 1853,
+		expectedSize: 1251,
 		description: 'when inserting and reverting a node',
 		revertEdits: true,
 	},
@@ -85,7 +85,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		edits: (testTree) => [
 			Insert.create([makeLargeTestTree(testTree)], StablePlace.atStartOf(testTree.right.traitLocation)),
 		],
-		expectedSize: 2057093,
+		expectedSize: 161202,
 		description: 'when inserting a large tree',
 	},
 	{
@@ -96,7 +96,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 				Move.create(StableRange.only(largeTree), StablePlace.atEndOf(testTree.left.traitLocation)),
 			];
 		},
-		expectedSize: 2057470,
+		expectedSize: 161472,
 		description: 'when inserting and moving a large tree',
 	},
 ];
@@ -139,7 +139,7 @@ export function runSummarySizeTests(
 				for (let i = changes.length - 1; i >= 0; i--) {
 					const editIndex = tree.edits.getIndexOfId(edits[i].id);
 					const edit = tree.edits.getEditInSessionAtIndex(editIndex) as Edit<ChangeInternal>;
-					const reverted = revert(edit.changes, tree.logViewer.getRevisionViewInSession(editIndex), tree);
+					const reverted = revert(edit.changes, tree.logViewer.getRevisionViewInSession(editIndex));
 					if (reverted !== undefined) {
 						tree.applyEditInternal(reverted);
 					}
@@ -151,6 +151,7 @@ export function runSummarySizeTests(
 
 			const summary = tree.saveSerializedSummary();
 			const summarySize = IsoBuffer.from(summary).byteLength;
+			// TODO: make lte when 0.1.1 is settled
 			expect(summarySize).to.equal(expectedSummarySize);
 		}
 

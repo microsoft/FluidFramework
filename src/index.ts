@@ -20,7 +20,23 @@ export { initialTree } from './InitialTree';
 export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta, Forest, ForestNode, ParentData } from './Forest';
 export { sharedTreeAssertionErrorType, isSharedTreeEvent, Result } from './Common';
-export * from './Identifiers';
+export type {
+	CompressedId,
+	Definition,
+	DetachedSequenceId,
+	EditId,
+	InternedStringId,
+	FinalCompressedId,
+	LocalCompressedId,
+	NodeId,
+	NodeIdBrand,
+	StableNodeId,
+	SessionSpaceCompressedId,
+	SessionUnique,
+	TraitLabel,
+	UuidString,
+} from './Identifiers';
+export { isDetachedSequenceId } from './Identifiers';
 export type { OrderedEditSet, EditHandle } from './EditLog';
 export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
@@ -41,18 +57,13 @@ export {
 	ChangeInternal,
 	ChangeNode,
 	ChangeNode_0_0_2,
-	SharedTreeEditOp,
 	EditLogSummary,
 	FluidEditHandle,
 	SharedTreeSummaryBase,
-	SharedTreeSummary,
 	EditWithoutId,
 	PlaceholderTree,
-	CompressedPlaceholderTree,
 	EditBase,
 	HasTraits,
-	VersionedOp,
-	SharedTreeOpType,
 	InsertInternal,
 	DetachInternal,
 	BuildInternal,
@@ -63,14 +74,22 @@ export {
 	StablePlaceInternal_0_0_2,
 	StableRangeInternal_0_0_2,
 	NodeData,
-	CompressedTraits,
-	CompressedChangeNode,
 	TraitMap,
 	ChangeTypeInternal,
 	TraitLocationInternal_0_0_2,
 	WriteFormat,
+	ConstraintInternal_0_0_2,
+	StablePlaceInternal,
+	StableRangeInternal,
+	BuildNodeInternal_0_0_2,
+	BuildInternal_0_0_2,
+	InsertInternal_0_0_2,
+	DetachInternal_0_0_2,
+	SetValueInternal_0_0_2,
+	TraitLocationInternal,
 } from './persisted-types';
 export {
+	SharedTreeFactory,
 	SharedTree,
 	EditCommittedHandler,
 	SequencedEditAppliedHandler,
@@ -78,9 +97,7 @@ export {
 	SequencedEditAppliedEventArguments,
 	EditApplicationOutcome,
 	ISharedTreeEvents,
-	SharedTreeFactoryOptions,
 } from './SharedTree';
-export { SharedTreeFactory } from './Factory';
 export * from './EventTypes';
 export {
 	setTrait,
@@ -107,7 +124,6 @@ export {
 	FailingTransactionState,
 	ChangeResult,
 } from './Transaction';
-export { SummaryContents } from './Summary';
 export {
 	NodeInTrait,
 	PlaceIndex,

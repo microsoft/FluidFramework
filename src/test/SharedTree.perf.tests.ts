@@ -23,7 +23,7 @@ describe('SharedTree Perf', () => {
 
 				const edits = createStableEdits(count, tree);
 				for (let i = 0; i < count; i++) {
-					tree.applyEdit(...edits[i].changes);
+					tree.applyEditInternal(edits[i].changes);
 				}
 
 				containerRuntimeFactory.processAllMessages();

@@ -13,8 +13,6 @@ import type {
 	DetachedSequenceId,
 	UuidString,
 } from '../Identifiers';
-import { assert, assertNotUndefined } from '../Common';
-import { getNodeId } from '../NodeIdUtilities';
 
 /**
  * Defines a place relative to sibling.
@@ -210,19 +208,15 @@ export enum SharedTreeOpType {
 /**
  * SharedTreeOp containing a version stamp marking the write format of the tree which submitted it.
  */
-export interface VersionedOp {
+export interface VersionedOp<Version extends WriteFormat = WriteFormat> {
 	/** The supported SharedTree write version, see {@link WriteFormat}. */
-	readonly version: WriteFormat;
+	readonly version: Version;
 }
 
 /**
  * Requirements for SharedTree ops.
  */
-export type SharedTreeOp<TChange = unknown> =
-	| SharedTreeEditOp<TChange>
-	| SharedTreeHandleOp
-	| SharedTreeNoOp
-	| SharedTreeUpdateOp;
+export type SharedTreeOp_0_0_2 = SharedTreeEditOp_0_0_2 | SharedTreeNoOp | SharedTreeUpdateOp;
 
 /**
  * Op which has no application semantics. This op can be useful for triggering other
@@ -244,24 +238,10 @@ export interface SharedTreeUpdateOp extends VersionedOp {
 /**
  * A SharedTree op that includes edit information, and optionally a list of interned strings.
  */
-export interface SharedTreeEditOp<TChange> extends VersionedOp {
+export interface SharedTreeEditOp_0_0_2 extends VersionedOp<WriteFormat.v0_0_2> {
 	readonly type: SharedTreeOpType.Edit;
 	/** The collection of changes to apply. */
-	readonly edit: Edit<TChange>;
-	/** The list of interned strings to retrieve the original strings of interned edits. */
-	readonly internedStrings?: readonly string[];
-}
-
-/**
- * A SharedTree op that includes edit handle information.
- * The handle corresponds to an edit chunk in the edit log.
- */
-export interface SharedTreeHandleOp extends VersionedOp {
-	readonly type: SharedTreeOpType.Handle;
-	/** The serialized handle to an uploaded edit chunk. */
-	readonly editHandle: string;
-	/** The index of the first edit in the chunk that corresponds to the handle. */
-	readonly startRevision: number;
+	readonly edit: Edit<ChangeInternal_0_0_2>;
 }
 
 /**
@@ -290,13 +270,14 @@ export interface SharedTreeSummaryBase {
  * TODO:#49901: Remove export when this format is no longer written.
  * @internal
  */
-export interface SharedTreeSummary_0_0_2<TChange> extends SharedTreeSummaryBase {
+export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
+	readonly version: WriteFormat.v0_0_2;
+
 	readonly currentTree: ChangeNode_0_0_2;
 	/**
 	 * A list of edits.
 	 */
-	readonly sequencedEdits: readonly Edit<TChange>[];
-	readonly version: WriteFormat.v0_0_2;
+	readonly sequencedEdits: readonly Edit<ChangeInternal_0_0_2>[];
 }
 
 /**
@@ -316,23 +297,28 @@ export enum ChangeTypeInternal {
  * {@inheritdoc (Change:type)}
  * @public
  */
-export type ChangeInternal = InsertInternal | DetachInternal | BuildInternal | SetValueInternal | ConstraintInternal;
+export type ChangeInternal_0_0_2 =
+	| InsertInternal_0_0_2
+	| DetachInternal_0_0_2
+	| BuildInternal_0_0_2
+	| SetValueInternal_0_0_2
+	| ConstraintInternal_0_0_2;
 
 /**
  * {@inheritdoc BuildNode}
  * @public
  */
-export type BuildNodeInternal = TreeNode<BuildNodeInternal, StableNodeId> | DetachedSequenceId;
+export type BuildNodeInternal_0_0_2 = TreeNode<BuildNodeInternal_0_0_2, StableNodeId> | DetachedSequenceId;
 
 /**
  * {@inheritdoc Build}
  * @public
  */
-export interface BuildInternal {
+export interface BuildInternal_0_0_2 {
 	/** {@inheritdoc Build.destination } */
 	readonly destination: DetachedSequenceId;
 	/** {@inheritdoc Build.source } */
-	readonly source: TreeNodeSequence<BuildNodeInternal>;
+	readonly source: TreeNodeSequence<BuildNodeInternal_0_0_2>;
 	/** {@inheritdoc Build."type" } */
 	readonly type: typeof ChangeTypeInternal.Build;
 }
@@ -341,7 +327,7 @@ export interface BuildInternal {
  * {@inheritdoc (Insert:interface)}
  * @public
  */
-export interface InsertInternal {
+export interface InsertInternal_0_0_2 {
 	/** {@inheritdoc (Insert:interface).destination } */
 	readonly destination: StablePlaceInternal_0_0_2;
 	/** {@inheritdoc (Insert:interface).source } */
@@ -354,7 +340,7 @@ export interface InsertInternal {
  * {@inheritdoc Detach}
  * @public
  */
-export interface DetachInternal {
+export interface DetachInternal_0_0_2 {
 	/** {@inheritdoc Detach.destination } */
 	readonly destination?: DetachedSequenceId;
 	/** {@inheritdoc Detach.source } */
@@ -367,7 +353,7 @@ export interface DetachInternal {
  * {@inheritdoc SetValue}
  * @public
  */
-export interface SetValueInternal {
+export interface SetValueInternal_0_0_2 {
 	/** {@inheritdoc SetValue.nodeToModify } */
 	readonly nodeToModify: StableNodeId;
 	/** {@inheritdoc SetValue.payload } */
@@ -403,7 +389,7 @@ export enum ConstraintEffect {
  * {@inheritdoc Constraint}
  * @public
  */
-export interface ConstraintInternal {
+export interface ConstraintInternal_0_0_2 {
 	/** {@inheritdoc Constraint.toConstrain } */
 	readonly toConstrain: StableRangeInternal_0_0_2;
 	/** {@inheritdoc Constraint.identityHash } */
@@ -421,96 +407,6 @@ export interface ConstraintInternal {
 	/** {@inheritdoc Constraint."type" } */
 	readonly type: typeof ChangeTypeInternal.Constraint;
 }
-
-// Note: Documentation of this constant is merged with documentation of the `ChangeInternal` interface.
-/**
- * @public
- */
-export const ChangeInternal = {
-	build: (source: TreeNodeSequence<BuildNodeInternal>, destination: DetachedSequenceId): BuildInternal => ({
-		destination,
-		source,
-		type: ChangeTypeInternal.Build,
-	}),
-
-	insert: (source: DetachedSequenceId, destination: StablePlaceInternal_0_0_2): InsertInternal => ({
-		destination,
-		source,
-		type: ChangeTypeInternal.Insert,
-	}),
-
-	detach: (source: StableRangeInternal_0_0_2, destination?: DetachedSequenceId): DetachInternal => ({
-		destination,
-		source,
-		type: ChangeTypeInternal.Detach,
-	}),
-
-	setPayload: (nodeToModify: NodeData<StableNodeId> | StableNodeId, payload: Payload): SetValueInternal => ({
-		nodeToModify: getNodeId(nodeToModify),
-		payload,
-		type: ChangeTypeInternal.SetValue,
-	}),
-
-	clearPayload: (nodeToModify: NodeData<StableNodeId> | StableNodeId): SetValueInternal => ({
-		nodeToModify: getNodeId(nodeToModify),
-		// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface above.)
-		// eslint-disable-next-line no-null/no-null
-		payload: null,
-		type: ChangeTypeInternal.SetValue,
-	}),
-
-	constraint: (
-		toConstrain: StableRangeInternal_0_0_2,
-		effect: ConstraintEffect,
-		identityHash?: UuidString,
-		length?: number,
-		contentHash?: UuidString,
-		parentNode?: StableNodeId,
-		label?: TraitLabel
-	): ConstraintInternal => ({
-		toConstrain,
-		effect,
-		identityHash,
-		length,
-		contentHash,
-		parentNode,
-		label,
-		type: ChangeTypeInternal.Constraint,
-	}),
-};
-
-/**
- * {@inheritdoc Delete }
- * @public
- */
-export const DeleteInternal = {
-	/** {@inheritdoc Delete.create } */
-	create: (stableRange: StableRangeInternal_0_0_2): ChangeInternal => ChangeInternal.detach(stableRange),
-};
-
-/**
- * {@inheritdoc (Insert:variable) }
- * @public
- */
-export const InsertInternal = {
-	/** {@inheritdoc (Insert:variable).create } */
-	create: (nodes: TreeNodeSequence<BuildNodeInternal>, destination: StablePlaceInternal_0_0_2): ChangeInternal[] => {
-		const build = ChangeInternal.build(nodes, 0 as DetachedSequenceId);
-		return [build, ChangeInternal.insert(build.destination, destination)];
-	},
-};
-
-/**
- * {@inheritdoc Move }
- * @public
- */
-export const MoveInternal = {
-	/** {@inheritdoc Move.create } */
-	create: (source: StableRangeInternal_0_0_2, destination: StablePlaceInternal_0_0_2): ChangeInternal[] => {
-		const detach = ChangeInternal.detach(source, 0 as DetachedSequenceId);
-		return [detach, ChangeInternal.insert(assertNotUndefined(detach.destination), destination)];
-	},
-};
 
 /**
  * {@inheritdoc (StablePlace:interface) }
@@ -543,82 +439,3 @@ export interface StableRangeInternal_0_0_2 {
 	/** {@inheritdoc (StableRange:interface).end } */
 	readonly end: StablePlaceInternal_0_0_2;
 }
-
-/**
- * The remainder of this file consists of factory methods duplicated with those for StableRange/StablePlace and are maintained while
- * the new persisted version of SharedTree ops/summaries is rolled out.
- */
-
-/**
- * @public
- */
-export const StablePlaceInternal_0_0_2 = {
-	/**
-	 * @returns The location directly before `node`.
-	 */
-	before: (node: NodeData<StableNodeId> | StableNodeId): StablePlaceInternal_0_0_2 => ({
-		side: Side.Before,
-		referenceSibling: getNodeId(node),
-	}),
-	/**
-	 * @returns The location directly after `node`.
-	 */
-	after: (node: NodeData<StableNodeId> | StableNodeId): StablePlaceInternal_0_0_2 => ({
-		side: Side.After,
-		referenceSibling: getNodeId(node),
-	}),
-	/**
-	 * @returns The location at the start of `trait`.
-	 */
-	atStartOf: (trait: TraitLocationInternal_0_0_2): StablePlaceInternal_0_0_2 => ({
-		side: Side.After,
-		referenceTrait: trait,
-	}),
-	/**
-	 * @returns The location at the end of `trait`.
-	 */
-	atEndOf: (trait: TraitLocationInternal_0_0_2): StablePlaceInternal_0_0_2 => ({
-		side: Side.Before,
-		referenceTrait: trait,
-	}),
-};
-
-/**
- * @public
- */
-export const StableRangeInternal_0_0_2 = {
-	/**
-	 * Factory for producing a `StableRange` from a start `StablePlace` to an end `StablePlace`.
-	 * @example
-	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
-	 */
-	from: (
-		start: StablePlaceInternal_0_0_2
-	): { to: (end: StablePlaceInternal_0_0_2) => StableRangeInternal_0_0_2 } => ({
-		to: (end: StablePlaceInternal_0_0_2): StableRangeInternal_0_0_2 => {
-			if (start.referenceTrait && end.referenceTrait) {
-				const message = 'StableRange must be constructed with endpoints from the same trait';
-				assert(start.referenceTrait.parent === end.referenceTrait.parent, message);
-				assert(start.referenceTrait.label === end.referenceTrait.label, message);
-			}
-			return { start, end };
-		},
-	}),
-	/**
-	 * @returns a `StableRange` which contains only the provided `node`.
-	 * Both the start and end `StablePlace` objects used to anchor this `StableRange` are in terms of the passed in node.
-	 */
-	only: (node: NodeData<StableNodeId> | StableNodeId): StableRangeInternal_0_0_2 => ({
-		start: StablePlaceInternal_0_0_2.before(node),
-		end: StablePlaceInternal_0_0_2.after(node),
-	}),
-	/**
-	 * @returns a `StableRange` which contains everything in the trait.
-	 * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
-	 * it does not use sibling anchoring.
-	 */
-	all: (trait: TraitLocationInternal_0_0_2): StableRangeInternal_0_0_2 => ({
-		start: StablePlaceInternal_0_0_2.atStartOf(trait),
-		end: StablePlaceInternal_0_0_2.atEndOf(trait),
-	}),
-};

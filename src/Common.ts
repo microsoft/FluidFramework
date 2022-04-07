@@ -400,6 +400,10 @@ export function compareBtrees<K, V>(treeA: BTree<K, V>, treeB: BTree<K, V>, comp
 	return diff === undefined;
 }
 
+export function backmap<K, V>(forwardmap: Map<V, K>): Map<K, V> {
+	return new Map(map(forwardmap, ([key, value]) => [value, key]));
+}
+
 /**
  * A developer facing (non-localized) error message.
  * TODO: better error system.
@@ -448,7 +452,7 @@ export namespace Result {
 	 */
 	export function mapOk<TOkIn, TOkOut, TError>(
 		result: Result<TOkIn, TError>,
-		map: (TOkIn) => TOkOut
+		map: (ok: TOkIn) => TOkOut
 	): Result<TOkOut, TError> {
 		return isOk(result) ? ok(map(result.result)) : result;
 	}
@@ -460,7 +464,7 @@ export namespace Result {
 	 */
 	export function mapError<TOk, TErrorIn, TErrorOut>(
 		result: Result<TOk, TErrorIn>,
-		map: (TErrorIn) => TErrorOut
+		map: (error: TErrorIn) => TErrorOut
 	): Result<TOk, TErrorOut> {
 		return isError(result) ? error(map(result.error)) : result;
 	}
@@ -516,3 +520,16 @@ export interface ClosedMap<K, V> extends Omit<Map<K, V>, 'delete' | 'clear'> {
  * Change the given property Prop of type T to have a type of TPropNew
  */
 export type ChangePropType<T, Prop extends keyof T, TPropNew> = Omit<T, Prop> & { [_ in Prop]: TPropNew };
+
+type Primitive = string | number | bigint | boolean | null | symbol | undefined;
+
+/**
+ * Recursively replace all properties with type assignable to type TReplace in T with properties of type TWith.
+ */
+export type ReplaceRecursive<T, TReplace, TWith> = T extends TReplace
+	? TWith
+	: T extends Primitive
+	? T
+	: {
+			[P in keyof T]: ReplaceRecursive<T[P], TReplace, TWith>;
+	  };

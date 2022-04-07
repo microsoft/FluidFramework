@@ -12,17 +12,26 @@ import { SharedTree } from '../SharedTree';
 import {
 	ChangeInternal,
 	Edit,
-	editsPerChunk,
+	Payload,
+	reservedIdCount,
 	FluidEditHandle,
 	SharedTreeSummary,
-	SharedTreeSummary_0_0_2,
 	WriteFormat,
+	editsPerChunk,
 } from '../persisted-types';
-import { Change } from '../ChangeTypes';
 import { SharedTreeDiagnosticEvent } from '../EventTypes';
-import { StringInterner } from '../StringInterner';
-import { TreeCompressor_0_1_1 } from '../TreeCompressor';
-import { applyNoop, createStableEdits, setUpLocalServerTestSharedTree } from './utilities/TestUtilities';
+import { IdCompressor } from '../id-compressor';
+import { createSessionId } from '../id-compressor/NumericUuid';
+import { SharedTreeEncoder_0_1_1 } from '../SharedTreeEncoder';
+import { CachingLogViewer } from '../LogViewer';
+import { GenericTransaction, Transaction } from '../Transaction';
+import { RevisionView } from '../RevisionView';
+import {
+	applyNoop,
+	createStableEdits,
+	makeNodeIdContext,
+	setUpLocalServerTestSharedTree,
+} from './utilities/TestUtilities';
 
 describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
@@ -32,13 +41,32 @@ describe('SharedTree history virtualization', () => {
 	const expectedFullChunkCount = Math.floor(editCount / editsPerChunk);
 
 	// Create a summary used to test catchup blobbing
-	async function createCatchUpSummary(): Promise<SharedTreeSummary_0_0_2<ChangeInternal>> {
-		const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({ writeFormat: WriteFormat.v0_0_2 });
-		for (const edit of createStableEdits(editCount)) {
-			tree.applyEdit(...edit.changes);
+	function createCatchUpSummary(numberOfEdits: number, payload?: (i: number) => Payload): SharedTreeSummary {
+		const idCompressor = new IdCompressor(createSessionId(), reservedIdCount);
+		const context = makeNodeIdContext(idCompressor);
+		const edits = createStableEdits(numberOfEdits, context, payload);
+		idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
+		const editLog = new EditLog<ChangeInternal>();
+		for (let i = 0; i < edits.length; i++) {
+			editLog.addSequencedEdit(edits[i], { sequenceNumber: i + 1, referenceSequenceNumber: i });
 		}
-		await testObjectProvider.ensureSynchronized();
-		return tree.saveSummary() as SharedTreeSummary_0_0_2<ChangeInternal>;
+		const logViewer = new CachingLogViewer(
+			editLog,
+			RevisionView.fromTree(initialTree, context, true),
+			undefined,
+			true,
+			undefined,
+			undefined,
+			(view) => new GenericTransaction(view, new Transaction.Policy())
+		);
+		const encoder = new SharedTreeEncoder_0_1_1(true);
+		return encoder.encodeSummary(
+			editLog,
+			logViewer.getRevisionViewInSession(Number.POSITIVE_INFINITY),
+			context,
+			context,
+			idCompressor.serialize(false)
+		);
 	}
 
 	beforeEach(async () => {
@@ -73,7 +101,7 @@ describe('SharedTree history virtualization', () => {
 
 	// Adds edits to sharedTree1 to make up the specified number of chunks.
 	const addNewEditChunks = async (numberOfChunks = 1, additionalEdits = 0) => {
-		const expectedEdits: Edit<ChangeInternal>[] = [];
+		const expectedEdits: Edit<unknown>[] = [];
 
 		// Add some edits to create a chunk with.
 		while (expectedEdits.length < (sharedTree.edits as EditLog).editsPerChunk * numberOfChunks + additionalEdits) {
@@ -89,9 +117,9 @@ describe('SharedTree history virtualization', () => {
 	};
 
 	it('can upload edit chunks and load chunks from handles', async () => {
-		const expectedEdits: Edit<ChangeInternal>[] = await addNewEditChunks();
+		const expectedEdits: Edit<unknown>[] = await addNewEditChunks();
 
-		const summary = sharedTree.saveSummary() as SharedTreeSummary<Change>;
+		const summary = sharedTree.saveSummary() as SharedTreeSummary;
 
 		const { editHistory } = summary;
 		const { editChunks } = assertNotUndefined(editHistory);
@@ -119,12 +147,12 @@ describe('SharedTree history virtualization', () => {
 		// Wait for the op to to be submitted and processed across the containers.
 		await testObjectProvider.ensureSynchronized();
 
-		sharedTree.loadSummary(await createCatchUpSummary());
+		sharedTree.loadSummary(createCatchUpSummary(250));
 
 		await testObjectProvider.ensureSynchronized();
 		expect(catchUpBlobsUploaded).to.equal(expectedFullChunkCount);
 
-		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary<Change>;
+		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
 		const { editChunks } = assertNotUndefined(editHistory);
 		expect(editChunks.length).to.equal(expectedFullChunkCount + 1);
 		expect(typeof (editChunks[0].chunk as FluidEditHandle).get).to.equal('function');
@@ -135,10 +163,12 @@ describe('SharedTree history virtualization', () => {
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
 			summarizeHistory: true,
+			writeFormat: WriteFormat.v0_1_1,
 		});
 		const { tree: sharedTree3 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
 			summarizeHistory: true,
+			writeFormat: WriteFormat.v0_1_1,
 		});
 
 		let catchUpBlobsUploaded = 0;
@@ -156,7 +186,7 @@ describe('SharedTree history virtualization', () => {
 		await testObjectProvider.ensureSynchronized();
 
 		// Try to load summaries on all the trees
-		const summary = await createCatchUpSummary();
+		const summary = createCatchUpSummary(250);
 		sharedTree.loadSummary(summary);
 		sharedTree2.loadSummary(summary);
 		sharedTree3.loadSummary(summary);
@@ -184,7 +214,7 @@ describe('SharedTree history virtualization', () => {
 	it('correctly saves handles and their corresponding starting revisions to the summary', async () => {
 		await addNewEditChunks(4);
 
-		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary<Change>;
+		const { editHistory } = sharedTree.saveSummary() as SharedTreeSummary;
 		const { editChunks } = assertNotUndefined(editHistory);
 		expect(editChunks.length).to.equal(4);
 
@@ -208,16 +238,16 @@ describe('SharedTree history virtualization', () => {
 		});
 
 		// All shared trees should have no edits or chunks
-		expect((sharedTree.saveSummary() as SharedTreeSummary<Change>).editHistory?.editChunks.length).to.equal(0);
-		expect((sharedTree2.saveSummary() as SharedTreeSummary<Change>).editHistory?.editChunks.length).to.equal(0);
-		expect((sharedTree3.saveSummary() as SharedTreeSummary<Change>).editHistory?.editChunks.length).to.equal(0);
+		expect((sharedTree.saveSummary() as SharedTreeSummary).editHistory?.editChunks.length).to.equal(0);
+		expect((sharedTree2.saveSummary() as SharedTreeSummary).editHistory?.editChunks.length).to.equal(0);
+		expect((sharedTree3.saveSummary() as SharedTreeSummary).editHistory?.editChunks.length).to.equal(0);
 
 		await addNewEditChunks();
 
 		// All shared trees should have the new handle
-		const sharedTreeSummary = sharedTree.saveSummary() as SharedTreeSummary<Change>;
-		const sharedTree2Summary = sharedTree2.saveSummary() as SharedTreeSummary<Change>;
-		const sharedTree3Summary = sharedTree3.saveSummary() as SharedTreeSummary<Change>;
+		const sharedTreeSummary = sharedTree.saveSummary() as SharedTreeSummary;
+		const sharedTree2Summary = sharedTree2.saveSummary() as SharedTreeSummary;
+		const sharedTree3Summary = sharedTree3.saveSummary() as SharedTreeSummary;
 		const sharedTreeChunk = assertNotUndefined(sharedTreeSummary.editHistory).editChunks[0].chunk;
 		const sharedTree2Chunk = assertNotUndefined(sharedTree2Summary.editHistory).editChunks[0].chunk;
 		const sharedTree3Chunk = assertNotUndefined(sharedTree3Summary.editHistory).editChunks[0].chunk;
@@ -286,31 +316,14 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('does not upload blobs larger than 4MB', async () => {
-		const numberOfEdits = 1000;
-		expect(numberOfEdits).to.be.greaterThanOrEqual(1000); // Blobbing is hardcoded to 1000 edits
+		const numberOfEdits = editsPerChunk;
 		const fourMegas = 2 ** 22;
-		const bigPayload = 'a'.repeat(fourMegas / numberOfEdits);
-		const edits = createStableEdits(numberOfEdits, undefined, () => bigPayload);
-
-		const interner = new StringInterner();
-		const treeCompressor = new TreeCompressor_0_1_1<never>();
-		const fakeSummary: SharedTreeSummary<Change> = {
-			version: WriteFormat.v0_1_1,
-			currentTree: treeCompressor.compress(initialTree, interner),
-			editHistory: {
-				editChunks: [
-					{
-						startRevision: 0,
-						chunk: edits.map((e) => ({ changes: e.changes })),
-					},
-				],
-				editIds: edits.map((e) => e.id),
-			},
-			internedStrings: interner.getSerializable(),
-		};
-
+		// Without the 1.1, we would generate 100 edits of size roughly 40kb here, but not all of them end up in the first edit chunk
+		// due to some setup edits.
+		// So we'd barely land within the 4MB limit. Bumping each payload size by 10% is enough to account for this.
+		const bigPayload = 'a'.repeat(Math.ceil((1.1 * fourMegas) / numberOfEdits));
+		const fakeSummary = createCatchUpSummary(numberOfEdits, () => bigPayload);
 		sharedTree.loadSummary(fakeSummary);
-
 		// `ensureSynchronized` does not guarantee blob upload
 		await new Promise((resolve) => setImmediate(resolve));
 		await testObjectProvider.ensureSynchronized();

@@ -2,44 +2,45 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { TreeCompressor } from './Compression';
-import { Definition, DetachedSequenceId, InternedStringId, isDetachedSequenceId, TraitLabel } from './Identifiers';
-import { StringInterner } from './StringInterner';
+import { isDetachedSequenceId } from './Identifiers';
+import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, TraitLabel } from './Identifiers';
+import type { StringInterner } from './StringInterner';
 import type { CompressedTraits, CompressedPlaceholderTree, PlaceholderTree } from './persisted-types';
+import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities';
 
 /**
- * {@link TreeCompressor} implementation which compresses a given {@link PlaceholderTree}
+ * Compresses a given {@link PlaceholderTree}
  * (Such as a {@link ChangeNode} or {@link BuildNode}) into an array,
  * while also string interning all node {@link Definition}s and {@link TraitLabel}s.
  * See {@link CompressedPlaceholderTree} for format.
  */
-export class TreeCompressor_0_1_1<TPlaceholder extends DetachedSequenceId | never>
-	implements TreeCompressor<TPlaceholder, CompressedPlaceholderTree<TPlaceholder>>
-{
+export class TreeCompressor<TPlaceholder extends DetachedSequenceId | never> {
 	/**
-	 * {@inheritdoc TreeCompressor.compress}
+	 * @param node - The {@link PlaceholderTree} to compress.
+	 * @param interner - The StringInterner to use to intern strings.
 	 */
-	public compress(
+	public compress<TId extends OpSpaceNodeId>(
 		node: PlaceholderTree<TPlaceholder>,
-		interner: StringInterner
-	): CompressedPlaceholderTree<TPlaceholder> {
+		interner: StringInterner,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
+	): CompressedPlaceholderTree<TId, TPlaceholder> {
 		if (isDetachedSequenceId(node)) {
 			return node;
 		}
 
-		const compressedNode: CompressedPlaceholderTree<TPlaceholder> = [
-			node.identifier,
+		const compressedNode: CompressedPlaceholderTree<TId, TPlaceholder> = [
+			idNormalizer.normalizeToOpSpace(node.identifier),
 			interner.getInternId(node.definition),
 		];
 
 		// Omit traits if empty and payload is undefined.
 		const traits = Object.entries(node.traits);
 		if (traits.length > 0 || node.payload !== undefined) {
-			const compressedTraits: CompressedTraits<TPlaceholder> = [];
+			const compressedTraits: CompressedTraits<TId, TPlaceholder> = [];
 			for (const [label, trait] of traits) {
 				compressedTraits.push(
 					interner.getInternId(label),
-					trait.map((child) => this.compress(child, interner))
+					trait.map((child) => this.compress(child, interner, idNormalizer))
 				);
 			}
 			compressedNode.push(compressedTraits);
@@ -53,11 +54,13 @@ export class TreeCompressor_0_1_1<TPlaceholder extends DetachedSequenceId | neve
 	}
 
 	/**
-	 * {@inheritdoc TreeCompressor.decompress}
+	 * @param node - The node in array format to decompress
+	 * @param interner - The StringInterner to use to obtain the original strings from their intern
 	 */
-	public decompress(
-		node: CompressedPlaceholderTree<TPlaceholder>,
-		interner: StringInterner
+	public decompress<TId extends OpSpaceNodeId>(
+		node: CompressedPlaceholderTree<TId, TPlaceholder>,
+		interner: StringInterner,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
 	): PlaceholderTree<TPlaceholder> {
 		if (isDetachedSequenceId(node)) {
 			return node;
@@ -72,10 +75,12 @@ export class TreeCompressor_0_1_1<TPlaceholder extends DetachedSequenceId | neve
 				const compressedLabel = compressedTraits[i] as InternedStringId;
 				const compressedChildren = compressedTraits[i + 1] as (
 					| TPlaceholder
-					| CompressedPlaceholderTree<TPlaceholder>
+					| CompressedPlaceholderTree<TId, TPlaceholder>
 				)[];
 
-				const decompressedTraits = compressedChildren.map((child) => this.decompress(child, interner));
+				const decompressedTraits = compressedChildren.map((child) =>
+					this.decompress(child, interner, idNormalizer)
+				);
 
 				const label = interner.getString(compressedLabel) as TraitLabel;
 				traits[label] = decompressedTraits;
@@ -83,7 +88,7 @@ export class TreeCompressor_0_1_1<TPlaceholder extends DetachedSequenceId | neve
 		}
 
 		const decompressedNode = {
-			identifier,
+			identifier: idNormalizer.normalizeToSessionSpace(identifier),
 			definition,
 			traits,
 			...(payload !== undefined ? { payload } : {}),

@@ -4,29 +4,24 @@
  */
 
 import { expect } from 'chai';
-import { DetachedSequenceId, NodeId, StableNodeId, TraitLabel } from '../Identifiers';
+import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
 import { assert } from '../Common';
 import { getChangeNodeFromViewNode } from '../SerializationUtilities';
 import { GenericTransaction, Transaction } from '../Transaction';
 import {
 	ChangeInternal,
-	ChangeNode_0_0_2,
+	ChangeNode,
 	ChangeTypeInternal,
 	ConstraintEffect,
 	EditStatus,
 	InsertInternal,
+	SetValueInternal,
 	Side,
-	StablePlaceInternal_0_0_2,
-	StableRangeInternal_0_0_2,
+	StablePlaceInternal,
+	StableRangeInternal,
 } from '../persisted-types';
 import { StablePlace, StableRange } from '../ChangeTypes';
-import {
-	tryConvertToChangeNode,
-	tryConvertToStablePlaceInternal_0_0_2,
-	tryConvertToStableRangeInternal_0_0_2,
-} from '../Conversion002';
 import { deepCompareNodes, PlaceValidationResult, RangeValidationResultKind } from '../EditUtilities';
-import { expectDefined } from './utilities/TestCommon';
 import { SimpleTestTree } from './utilities/TestNode';
 import { refreshTestTree, testTrait, testTraitLabel } from './utilities/TestUtilities';
 
@@ -35,15 +30,13 @@ describe('Transaction', () => {
 	const testTree = refreshTestTree(
 		undefined,
 		(t) => {
-			transaction = Transaction.factory(t.view, t);
+			transaction = Transaction.factory(t.view);
 		},
 		true
 	);
 	describe('Constraints', () => {
-		function getTestTrait(): StableRangeInternal_0_0_2 {
-			return expectDefined(
-				tryConvertToStableRangeInternal_0_0_2(StableRange.all(testTrait(transaction.view)), testTree)
-			);
+		function getTestTrait(): StableRangeInternal {
+			return StableRange.all(testTrait(transaction.view));
 		}
 
 		it('can be met', () => {
@@ -55,8 +48,8 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Applied);
 		});
 		it('can be unmet', () => {
-			const badId = testTree.convertToStableNodeId(testTree.generateNodeId('not in tree'));
-			const invalidStableRange: StableRangeInternal_0_0_2 = {
+			const badId = testTree.generateNodeId('not in tree');
+			const invalidStableRange: StableRangeInternal = {
 				start: { side: Side.After, referenceSibling: badId },
 				end: { side: Side.Before },
 			};
@@ -89,7 +82,7 @@ describe('Transaction', () => {
 			const badId = testTree.generateNodeId('not in tree');
 			transaction.applyChange({
 				toConstrain: {
-					start: { side: Side.After, referenceSibling: testTree.convertToStableNodeId(badId) },
+					start: { side: Side.After, referenceSibling: badId },
 					end: { side: Side.Before },
 				},
 				effect: ConstraintEffect.ValidRetry,
@@ -131,13 +124,12 @@ describe('Transaction', () => {
 				toConstrain: getTestTrait(),
 				effect: ConstraintEffect.InvalidAndDiscard,
 				type: ChangeTypeInternal.Constraint,
-				parentNode: testTree.stable.identifier,
+				parentNode: testTree.identifier,
 			});
 			expect(transaction.status).equals(EditStatus.Applied);
 		});
 		it('parent can be unmet', () => {
-			const badId = testTree.generateNodeId('not in tree');
-			const parentNode = testTree.convertToStableNodeId(badId);
+			const parentNode = testTree.generateNodeId('not in tree');
 			const constraint = {
 				toConstrain: getTestTrait(),
 				effect: ConstraintEffect.InvalidAndDiscard,
@@ -190,10 +182,10 @@ describe('Transaction', () => {
 
 	describe('SetValue', () => {
 		it('can be invalid if the node does not exist', () => {
-			const change = {
-				nodeToModify: '7969ee2e-5418-43db-929a-4e9a23c5499d' as StableNodeId,
+			const change: SetValueInternal = {
+				nodeToModify: testTree.generateNodeId(),
 				payload: {},
-				type: ChangeTypeInternal.SetValue as ChangeTypeInternal.SetValue,
+				type: ChangeTypeInternal.SetValue,
 			};
 			transaction.applyChange(change);
 
@@ -210,7 +202,7 @@ describe('Transaction', () => {
 		it('can change payload', () => {
 			const payload = { foo: {} };
 			transaction.applyChange({
-				nodeToModify: testTree.stable.identifier,
+				nodeToModify: testTree.identifier,
 				payload, // Arbitrary payload.
 				type: ChangeTypeInternal.SetValue,
 			});
@@ -222,7 +214,7 @@ describe('Transaction', () => {
 		for (const payload of [0, '', [], {}]) {
 			it(`can set payload to ${JSON.stringify(payload)}`, () => {
 				transaction.applyChange({
-					nodeToModify: testTree.stable.identifier,
+					nodeToModify: testTree.identifier,
 					payload,
 					type: ChangeTypeInternal.SetValue,
 				});
@@ -232,7 +224,7 @@ describe('Transaction', () => {
 		}
 
 		it('can clear an unset payload', () => {
-			transaction.applyChange(ChangeInternal.clearPayload(testTree.stable.identifier));
+			transaction.applyChange(ChangeInternal.clearPayload(testTree.identifier));
 			expect(transaction.status).equals(EditStatus.Applied);
 			expect({}.hasOwnProperty.call(transaction.view.getViewNode(testTree.identifier), 'payload')).to.be.false;
 			expect({}.hasOwnProperty.call(getChangeNodeFromViewNode(transaction.view, testTree.identifier), 'payload'))
@@ -241,14 +233,14 @@ describe('Transaction', () => {
 
 		it('can clear a set payload', () => {
 			transaction.applyChange({
-				nodeToModify: testTree.stable.identifier,
+				nodeToModify: testTree.identifier,
 				payload: {},
 				type: ChangeTypeInternal.SetValue,
 			});
 
 			expect(transaction.status).equals(EditStatus.Applied);
 			expect(transaction.view.getViewNode(testTree.identifier).payload).not.undefined;
-			transaction.applyChange(ChangeInternal.clearPayload(testTree.stable.identifier));
+			transaction.applyChange(ChangeInternal.clearPayload(testTree.identifier));
 			expect(transaction.status).equals(EditStatus.Applied);
 			expect({}.hasOwnProperty.call(transaction.view.getViewNode(testTree.identifier), 'payload')).to.be.false;
 			expect({}.hasOwnProperty.call(getChangeNodeFromViewNode(transaction.view, testTree.identifier), 'payload'))
@@ -265,7 +257,7 @@ describe('Transaction', () => {
 				const change = ChangeInternal.insert(
 					// Non-existent detached id
 					1 as DetachedSequenceId,
-					{ referenceSibling: testTree.stable.identifier, side: Side.After }
+					{ referenceSibling: testTree.identifier, side: Side.After }
 				);
 				transaction.applyChange(change);
 				expect(transaction.status).equals(EditStatus.Malformed);
@@ -278,14 +270,14 @@ describe('Transaction', () => {
 				});
 			});
 			it('when the target place is malformed', () => {
-				const transaction = Transaction.factory(testTree.view, testTree);
+				const transaction = Transaction.factory(testTree.view);
 				transaction.applyChange(ChangeInternal.build([testTree.buildLeafInternal()], buildId));
 
-				const referenceTrait = testTree.left.traitLocation.stable;
+				const referenceTrait = testTree.left.traitLocation;
 				const malformedPlace = {
 					// A place is malformed if it has both a reference trait and a reference sibling
 					referenceTrait,
-					referenceSibling: testTree.left.stable.identifier,
+					referenceSibling: testTree.left.identifier,
 					side: Side.Before,
 				};
 				const change = ChangeInternal.insert(buildId, malformedPlace);
@@ -303,10 +295,10 @@ describe('Transaction', () => {
 		});
 		it('can be invalid when the target place is invalid', () => {
 			const badId = testTree.generateNodeId('not in tree');
-			const transaction = Transaction.factory(testTree.view, testTree);
+			const transaction = Transaction.factory(testTree.view);
 			transaction.applyChange(ChangeInternal.build([testTree.buildLeafInternal()], buildId));
 			const place = {
-				referenceSibling: testTree.convertToStableNodeId(badId),
+				referenceSibling: badId,
 				side: Side.After,
 			};
 			const change = ChangeInternal.insert(buildId, place);
@@ -323,23 +315,15 @@ describe('Transaction', () => {
 		});
 		[Side.Before, Side.After].forEach((side) => {
 			it(`can insert a node at the ${side === Side.After ? 'beginning' : 'end'} of a trait`, () => {
-				const transaction = Transaction.factory(testTree.view, testTree);
+				const transaction = Transaction.factory(testTree.view);
 				const newNodeId = testTree.generateNodeId();
 				const newNode = testTree.buildLeafInternal(newNodeId);
 				transaction.applyChanges(
 					InsertInternal.create(
 						[newNode],
-						expectDefined(
-							side === Side.After
-								? tryConvertToStablePlaceInternal_0_0_2(
-										StablePlace.atStartOf(testTree.left.traitLocation),
-										testTree
-								  )
-								: tryConvertToStablePlaceInternal_0_0_2(
-										StablePlace.atEndOf(testTree.left.traitLocation),
-										testTree
-								  )
-						)
+						side === Side.After
+							? StablePlace.atStartOf(testTree.left.traitLocation)
+							: StablePlace.atEndOf(testTree.left.traitLocation)
 					)
 				);
 				expect(transaction.view.getTrait(testTree.left.traitLocation)).deep.equals(
@@ -347,15 +331,16 @@ describe('Transaction', () => {
 				);
 			});
 			it(`can insert a node ${side === Side.Before ? 'before' : 'after'} another node`, () => {
-				const transaction = Transaction.factory(testTree.view, testTree);
-				const newNodeId = testTree.generateNodeId();
-				const newNode = testTree.buildLeafInternal(newNodeId);
+				const transaction = Transaction.factory(testTree.view);
+				const newNode = testTree.buildLeafInternal();
 
 				transaction.applyChanges(
-					InsertInternal.create([newNode], { referenceSibling: testTree.left.stable.identifier, side })
+					InsertInternal.create([newNode], { referenceSibling: testTree.left.identifier, side })
 				);
 				expect(transaction.view.getTrait(testTree.left.traitLocation)).deep.equals(
-					side === Side.Before ? [newNodeId, testTree.left.identifier] : [testTree.left.identifier, newNodeId]
+					side === Side.Before
+						? [newNode.identifier, testTree.left.identifier]
+						: [testTree.left.identifier, newNode.identifier]
 				);
 			});
 		});
@@ -408,13 +393,13 @@ describe('Transaction', () => {
 
 		it('is invalid when a node already exists with the given identifier', () => {
 			// Build two nodes with the same identifier
-			const identifier = testTree.convertToStableNodeId(testTree.generateNodeId());
-			const node1: ChangeNode_0_0_2 = {
+			const identifier = testTree.generateNodeId();
+			const node1: ChangeNode = {
 				identifier,
 				definition: SimpleTestTree.definition,
 				traits: {},
 			};
-			const node2: ChangeNode_0_0_2 = {
+			const node2: ChangeNode = {
 				identifier,
 				definition: SimpleTestTree.definition,
 				traits: {},
@@ -436,8 +421,8 @@ describe('Transaction', () => {
 
 		it('is invalid to build a node that has already been inserted', () => {
 			// Build new node using identifier already in use in the tree
-			const newNode: ChangeNode_0_0_2 = {
-				identifier: testTree.left.stable.identifier,
+			const newNode: ChangeNode = {
+				identifier: testTree.left.identifier,
 				definition: SimpleTestTree.definition,
 				traits: {},
 			};
@@ -450,23 +435,18 @@ describe('Transaction', () => {
 		});
 
 		it('can build a detached node', () => {
-			const transaction = Transaction.factory(testTree.view, testTree);
+			const transaction = Transaction.factory(testTree.view);
 			const newNode = testTree.buildLeafInternal();
-			const identifier = testTree.convertToNodeId(newNode.identifier);
 			transaction.applyChange(ChangeInternal.build([newNode], 0 as DetachedSequenceId));
 			expect(transaction.status).equals(EditStatus.Applied);
-			expect(transaction.view.hasNode(identifier)).is.true;
-			expect(transaction.view.tryGetParentViewNode(identifier)).is.undefined;
-			expect(
-				deepCompareNodes(
-					getChangeNodeFromViewNode(transaction.view, identifier),
-					expectDefined(tryConvertToChangeNode(newNode, testTree))
-				)
-			).to.be.true;
+			expect(transaction.view.hasNode(newNode.identifier)).is.true;
+			expect(transaction.view.tryGetParentViewNode(newNode.identifier)).is.undefined;
+			expect(deepCompareNodes(getChangeNodeFromViewNode(transaction.view, newNode.identifier), newNode)).to.be
+				.true;
 		});
 
 		it("can be malformed if detached sequence id doesn't exist", () => {
-			const transaction = Transaction.factory(testTree.view, testTree);
+			const transaction = Transaction.factory(testTree.view);
 			const detachedSequenceId = 0 as DetachedSequenceId;
 			const change = {
 				destination: 1 as DetachedSequenceId,
@@ -491,11 +471,11 @@ describe('Transaction', () => {
 			const emptyTrait: NodeId[] = [];
 			traits.set(testTree.left.traitLabel, emptyTrait);
 
-			const transaction = Transaction.factory(testTree.view, testTree);
+			const transaction = Transaction.factory(testTree.view);
 			const detachedSequenceId = 0 as DetachedSequenceId;
 			transaction.applyChange(ChangeInternal.build([nodeWithEmpty], detachedSequenceId));
 			expect(transaction.status).equals(EditStatus.Applied);
-			const viewNodeWithEmpty = transaction.view.getViewNode(testTree.convertToNodeId(nodeWithEmpty.identifier));
+			const viewNodeWithEmpty = transaction.view.getViewNode(nodeWithEmpty.identifier);
 			expect(viewNodeWithEmpty.traits.size).to.equal(0);
 		});
 	});
@@ -504,14 +484,12 @@ describe('Transaction', () => {
 		it('can be malformed if the target range is malformed', () => {
 			const malformedPlace = {
 				// A place is malformed if it has both a reference trait and a reference sibling
-				referenceTrait: testTree.left.traitLocation.stable,
-				referenceSibling: testTree.left.stable.identifier,
+				referenceTrait: testTree.left.traitLocation,
+				referenceSibling: testTree.left.identifier,
 				side: Side.Before,
 			};
-			const range = StableRangeInternal_0_0_2.from(malformedPlace).to(
-				StablePlaceInternal_0_0_2.after(testTree.right.stable)
-			);
-			const change = ChangeInternal.detach(expectDefined(range));
+			const range = StableRangeInternal.from(malformedPlace).to(StablePlaceInternal.after(testTree.right));
+			const change = ChangeInternal.detach(range);
 			// Supplied StableRange is malformed
 			transaction.applyChange(change);
 			expect(transaction.status).equals(EditStatus.Malformed);
@@ -530,12 +508,9 @@ describe('Transaction', () => {
 		});
 		it('can be malformed if the destination sequence id is already in use', () => {
 			transaction.applyChange(
-				ChangeInternal.detach(StableRangeInternal_0_0_2.only(testTree.left.stable), 0 as DetachedSequenceId)
+				ChangeInternal.detach(StableRangeInternal.only(testTree.left), 0 as DetachedSequenceId)
 			);
-			const change = ChangeInternal.detach(
-				StableRangeInternal_0_0_2.only(testTree.right.stable),
-				0 as DetachedSequenceId
-			);
+			const change = ChangeInternal.detach(StableRangeInternal.only(testTree.right), 0 as DetachedSequenceId);
 			// Supplied StableRange is malformed
 			transaction.applyChange(change);
 			expect(transaction.status).equals(EditStatus.Malformed);
@@ -548,9 +523,9 @@ describe('Transaction', () => {
 			});
 		});
 		it('can be invalid if the target range is invalid', () => {
-			const range = StableRangeInternal_0_0_2.from(
-				StablePlaceInternal_0_0_2.atEndOf(testTree.left.traitLocation.stable)
-			).to(StablePlaceInternal_0_0_2.atStartOf(testTree.left.traitLocation.stable));
+			const range = StableRangeInternal.from(StablePlaceInternal.atEndOf(testTree.left.traitLocation)).to(
+				StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+			);
 			const change = ChangeInternal.detach(range);
 			// Start place is before end place
 			transaction.applyChange(change);
@@ -565,7 +540,7 @@ describe('Transaction', () => {
 			});
 		});
 		it('can delete a node', () => {
-			transaction.applyChange(ChangeInternal.detach(StableRangeInternal_0_0_2.only(testTree.left.stable)));
+			transaction.applyChange(ChangeInternal.detach(StableRangeInternal.only(testTree.left)));
 			expect(transaction.view.hasNode(testTree.left.identifier)).is.false;
 		});
 	});
@@ -573,12 +548,8 @@ describe('Transaction', () => {
 	describe('Composite changes', () => {
 		it('can form a node move', () => {
 			const detachedId = 0 as DetachedSequenceId;
-			transaction.applyChange(
-				ChangeInternal.detach(StableRangeInternal_0_0_2.only(testTree.left.stable), detachedId)
-			);
-			transaction.applyChange(
-				ChangeInternal.insert(detachedId, StablePlaceInternal_0_0_2.after(testTree.right.stable))
-			);
+			transaction.applyChange(ChangeInternal.detach(StableRangeInternal.only(testTree.left), detachedId));
+			transaction.applyChange(ChangeInternal.insert(detachedId, StablePlaceInternal.after(testTree.right)));
 			expect(transaction.view.getTrait(testTree.left.traitLocation)).deep.equals([]);
 			expect(transaction.view.getTrait(testTree.right.traitLocation)).deep.equals([
 				testTree.right.identifier,
@@ -590,9 +561,7 @@ describe('Transaction', () => {
 			// Ex: given A -> B -> C, a wrap insert of D around B would produce A -> D -> B -> C
 			const leftNodeDetachedId = 0 as DetachedSequenceId;
 			const parentDetachedId = 1 as DetachedSequenceId;
-			transaction.applyChange(
-				ChangeInternal.detach(StableRangeInternal_0_0_2.only(testTree.left.stable), leftNodeDetachedId)
-			);
+			transaction.applyChange(ChangeInternal.detach(StableRangeInternal.only(testTree.left), leftNodeDetachedId));
 			// This is node D, from the example
 			const wrappingParentId = testTree.generateNodeId();
 			const wrappingParentNode = testTree.buildLeafInternal(wrappingParentId);
@@ -609,15 +578,7 @@ describe('Transaction', () => {
 				)
 			);
 			transaction.applyChange(
-				ChangeInternal.insert(
-					parentDetachedId,
-					expectDefined(
-						tryConvertToStablePlaceInternal_0_0_2(
-							StablePlace.atStartOf(testTree.left.traitLocation),
-							testTree
-						)
-					)
-				)
+				ChangeInternal.insert(parentDetachedId, StablePlace.atStartOf(testTree.left.traitLocation))
 			);
 			const leftTrait = transaction.view.getTrait(testTree.left.traitLocation);
 			expect(leftTrait).deep.equals([wrappingParentId]);
@@ -632,11 +593,9 @@ describe('Transaction', () => {
 			const leftNodeDetachedId = 0 as DetachedSequenceId;
 			const rightNodeDetachedId = 1 as DetachedSequenceId;
 			const detachedIdSubtree = 2 as DetachedSequenceId;
+			transaction.applyChange(ChangeInternal.detach(StableRangeInternal.only(testTree.left), leftNodeDetachedId));
 			transaction.applyChange(
-				ChangeInternal.detach(StableRangeInternal_0_0_2.only(testTree.left.stable), leftNodeDetachedId)
-			);
-			transaction.applyChange(
-				ChangeInternal.detach(StableRangeInternal_0_0_2.only(testTree.right.stable), rightNodeDetachedId)
+				ChangeInternal.detach(StableRangeInternal.only(testTree.right), rightNodeDetachedId)
 			);
 
 			const detachedNodeId = testTree.generateNodeId();
@@ -649,15 +608,7 @@ describe('Transaction', () => {
 			};
 			transaction.applyChange(ChangeInternal.build([detachedSubtree], detachedIdSubtree));
 			transaction.applyChange(
-				ChangeInternal.insert(
-					detachedIdSubtree,
-					expectDefined(
-						tryConvertToStablePlaceInternal_0_0_2(
-							StablePlace.atStartOf(testTree.left.traitLocation),
-							testTree
-						)
-					)
-				)
+				ChangeInternal.insert(detachedIdSubtree, StablePlace.atStartOf(testTree.left.traitLocation))
 			);
 			expect(transaction.view.getTrait(testTree.right.traitLocation)).deep.equals([]);
 			expect(transaction.view.getTrait(testTree.left.traitLocation)).deep.equals([detachedNodeId]);
@@ -675,28 +626,20 @@ describe('Transaction', () => {
 		});
 
 		it('can build and insert a tree with the same identity as that of a detached subtree', () => {
-			const transaction = Transaction.factory(testTree.view, testTree);
-			transaction.applyChange(ChangeInternal.detach(StableRangeInternal_0_0_2.only(testTree.left.stable)));
+			const transaction = Transaction.factory(testTree.view);
+			transaction.applyChange(ChangeInternal.detach(StableRangeInternal.only(testTree.left)));
 			const idOfDetachedNodeToInsert = 1 as DetachedSequenceId;
 			expect(transaction.view.getTrait(testTree.left.traitLocation)).deep.equals([]);
 
-			const newNode: ChangeNode_0_0_2 = {
-				identifier: testTree.left.stable.identifier,
+			const newNode: ChangeNode = {
+				identifier: testTree.left.identifier,
 				definition: SimpleTestTree.definition,
 				traits: {},
 			};
 
 			transaction.applyChange(ChangeInternal.build([newNode], idOfDetachedNodeToInsert));
 			transaction.applyChange(
-				ChangeInternal.insert(
-					idOfDetachedNodeToInsert,
-					expectDefined(
-						tryConvertToStablePlaceInternal_0_0_2(
-							StablePlace.atStartOf(testTree.left.traitLocation),
-							testTree
-						)
-					)
-				)
+				ChangeInternal.insert(idOfDetachedNodeToInsert, StablePlace.atStartOf(testTree.left.traitLocation))
 			);
 			expect(transaction.view.getTrait(testTree.left.traitLocation)).deep.equals([testTree.left.identifier]);
 		});

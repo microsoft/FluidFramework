@@ -5,9 +5,8 @@
 
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { v4 as uuidv4 } from 'uuid';
-import { assertNotUndefined, compareArrays, copyPropertyIfDefined, fail, Mutable } from './Common';
+import { compareArrays, copyPropertyIfDefined, fail, Mutable } from './Common';
 import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers';
-import { getChangeNode_0_0_2FromView } from './SerializationUtilities';
 import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities';
 import {
 	BuildNodeInternal,
@@ -19,16 +18,18 @@ import {
 	NodeData,
 	Payload,
 	Side,
-	StablePlaceInternal_0_0_2,
-	StableRangeInternal_0_0_2,
-	TraitLocationInternal_0_0_2,
+	StablePlaceInternal,
+	StableRangeInternal,
+	TraitLocationInternal,
 	TraitMap,
+	TreeNode,
 	TreeNodeSequence,
 } from './persisted-types';
 import { TraitLocation, TreeView } from './TreeView';
 import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes';
 import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities';
 import { TransactionView } from './RevisionView';
+import { getChangeNode_0_0_2FromView } from './SerializationUtilities';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -192,17 +193,6 @@ export function convertTreeNodes<TIn extends HasVariadicTraits<TIn>, TOut extend
 /**
  * Transform an input tree into an isomorphic output tree
  * @param tree - the input tree
- * @param convert - a conversion function that will run on each node in the input tree to produce the output tree. Returning undefined
- * means that conversion for the given node was impossible, at which time the entire tree conversion will be aborted and return undefined.
- */
-export function convertTreeNodes<TIn extends HasVariadicTraits<TIn>, TOut extends HasTraits<TOut>>(
-	root: TIn,
-	convert: (node: TIn) => NoTraits<TOut> | undefined
-): TOut | undefined;
-
-/**
- * Transform an input tree into an isomorphic output tree
- * @param tree - the input tree
  * @param convert - a conversion function that will run on each (non-placeholder) node in the input tree to produce the output tree.
  * @param isPlaceholder - a predicate which determines if a node is a placeholder
  */
@@ -222,24 +212,6 @@ export function convertTreeNodes<
  * @param convert - a conversion function that will run on each (non-placeholder) node in the input tree to produce the output tree.
  * Returning undefined means that conversion for the given node was impossible, at which time the entire tree conversion will be aborted
  * and return undefined.
- * @param isPlaceholder - a predicate which determines if a node is a placeholder
- */
-export function convertTreeNodes<
-	TIn extends HasVariadicTraits<TIn | TPlaceholder>,
-	TOut extends HasTraits<TOut | TPlaceholder>,
-	TPlaceholder
->(
-	root: TIn | TPlaceholder,
-	convert: (node: TIn) => NoTraits<TOut> | undefined,
-	isPlaceholder: (node: TIn | TPlaceholder) => node is TPlaceholder
-): TOut | TPlaceholder | undefined;
-
-/**
- * Transform an input tree into an isomorphic output tree
- * @param tree - the input tree
- * @param convert - a conversion function that will run on each (non-placeholder) node in the input tree to produce the output tree.
- * Returning undefined means that conversion for the given node was impossible, at which time the entire tree conversion will be aborted
- * and return undefined.
  * @param isPlaceholder - a predicate which determines if the given node is of type TPlaceholder
  */
 export function convertTreeNodes<
@@ -248,15 +220,15 @@ export function convertTreeNodes<
 	TPlaceholder
 >(
 	root: TIn | TPlaceholder,
-	convert: (node: TIn) => NoTraits<TOut> | undefined,
+	convert: (node: TIn) => NoTraits<TOut>,
 	isPlaceholder?: (node: TIn | TPlaceholder) => node is TPlaceholder
-): TOut | TPlaceholder | undefined {
+): TOut | TPlaceholder {
 	if (isKnownType(root, isPlaceholder)) {
 		return root;
 	}
 
 	const convertedRoot = convert(root) as Mutable<TOut>;
-	if (convertedRoot === undefined || root.traits === undefined) {
+	if (root.traits === undefined) {
 		return convertedRoot;
 	}
 	// `convertedRoot` might be the same as `root`, in which case stash the children of `root` before wiping them from `convertedRoot`
@@ -277,9 +249,6 @@ export function convertTreeNodes<
 			let convertedChild: TOut | TPlaceholder;
 			if (!isKnownType(child, isPlaceholder)) {
 				convertedChild = convert(child) as TOut;
-				if (convertedChild === undefined) {
-					return undefined;
-				}
 				if (child.traits !== undefined) {
 					const childTraits =
 						(child as unknown as TOut) === convertedChild ? { traits: child.traits } : child;
@@ -493,11 +462,11 @@ export function setTrait(trait: TraitLocation, nodes: BuildNode | TreeNodeSequen
  * @internal
  */
 export function setTraitInternal(
-	trait: TraitLocationInternal_0_0_2,
+	trait: TraitLocationInternal,
 	nodes: TreeNodeSequence<BuildNodeInternal>
 ): ChangeInternal[] {
 	const id = 0 as DetachedSequenceId;
-	const traitContents = StableRangeInternal_0_0_2.all(trait);
+	const traitContents = StableRangeInternal.all(trait);
 	return [
 		ChangeInternal.detach(traitContents),
 		ChangeInternal.build(nodes, id),
@@ -512,8 +481,7 @@ export function setTraitInternal(
  */
 export function validateStablePlace(
 	view: TreeView,
-	place: StablePlaceInternal_0_0_2,
-	idConverter: NodeIdConverter
+	place: StablePlaceInternal
 ):
 	| {
 			result: PlaceValidationResult.Valid;
@@ -545,38 +513,27 @@ export function validateStablePlace(
 	}
 
 	if (referenceSibling !== undefined) {
-		const sibling = idConverter.tryConvertToNodeId(referenceSibling);
-		if (sibling === undefined || !view.hasNode(sibling)) {
+		if (!view.hasNode(referenceSibling)) {
 			return { result: PlaceValidationResult.MissingSibling };
 		}
 
 		// Detached nodes and the root are invalid anchors.
-		if (view.tryGetTraitLabel(sibling) === undefined) {
+		if (view.tryGetTraitLabel(referenceSibling) === undefined) {
 			return { result: PlaceValidationResult.SiblingIsRootOrDetached };
 		}
 
-		return { result: PlaceValidationResult.Valid, side: place.side, referenceSibling: sibling };
+		return { result: PlaceValidationResult.Valid, side: place.side, referenceSibling };
 	}
 
-	const t = assertNotUndefined(referenceTrait);
-	const parent = idConverter.tryConvertToNodeId(t.parent);
-	let trait: TraitLocation | undefined;
-	if (parent !== undefined) {
-		trait = {
-			label: t.label,
-			parent,
-		};
-	}
-
-	if (trait === undefined) {
+	if (referenceTrait === undefined) {
 		return { result: PlaceValidationResult.MissingParent };
 	}
 
-	if (!view.hasNode(trait.parent)) {
+	if (!view.hasNode(referenceTrait.parent)) {
 		return { result: PlaceValidationResult.MissingParent };
 	}
 
-	return { result: PlaceValidationResult.Valid, side: place.side, referenceTrait: trait };
+	return { result: PlaceValidationResult.Valid, side: place.side, referenceTrait };
 }
 
 /**
@@ -602,10 +559,9 @@ export type BadPlaceValidationResult = Exclude<PlaceValidationResult, PlaceValid
  */
 export function validateStableRange(
 	view: TreeView,
-	range: StableRangeInternal_0_0_2,
-	idConverter: NodeIdConverter
+	range: StableRangeInternal
 ):
-	| { result: RangeValidationResultKind.Valid; start: StablePlace; end: StablePlace }
+	| { result: RangeValidationResultKind.Valid; start: StablePlaceInternal; end: StablePlaceInternal }
 	| { result: Exclude<RangeValidationResult, RangeValidationResultKind.Valid> } {
 	/* A StableRange is valid if the following conditions are met:
 	 *     1. Its start and end places are valid.
@@ -614,14 +570,14 @@ export function validateStableRange(
 	 */
 	const { start, end } = range;
 
-	const validatedStart = validateStablePlace(view, start, idConverter);
+	const validatedStart = validateStablePlace(view, start);
 	if (validatedStart.result !== PlaceValidationResult.Valid) {
 		return {
 			result: { kind: RangeValidationResultKind.BadPlace, place: start, placeFailure: validatedStart.result },
 		};
 	}
 
-	const validatedEnd = validateStablePlace(view, end, idConverter);
+	const validatedEnd = validateStablePlace(view, end);
 	if (validatedEnd.result !== PlaceValidationResult.Valid) {
 		return { result: { kind: RangeValidationResultKind.BadPlace, place: end, placeFailure: validatedEnd.result } };
 	}
@@ -665,7 +621,7 @@ export type RangeValidationResult =
 	| RangeValidationResultKind.Inverted
 	| {
 			kind: RangeValidationResultKind.BadPlace;
-			place: StablePlaceInternal_0_0_2;
+			place: StablePlaceInternal;
 			placeFailure: BadPlaceValidationResult;
 	  };
 
@@ -726,14 +682,14 @@ export function deepCloneStableRange(range: StableRange): StableRange {
 	return { start: deepCloneStablePlace(range.start), end: deepCloneStablePlace(range.end) };
 }
 
-/** Convert a tree used in a Build change into its internal representation */
+/** Convert a node used in a Build change into its internal representation */
 export function internalizeBuildNode(
 	nodeData: BuildTreeNode,
 	nodeIdContext: NodeIdContext
-): Omit<ChangeNode_0_0_2, 'traits'> {
+): Omit<TreeNode<BuildNodeInternal, NodeId>, 'traits'> {
 	const output = {
 		definition: nodeData.definition as Definition,
-		identifier: nodeIdContext.convertToStableNodeId(nodeData.identifier ?? nodeIdContext.generateNodeId()),
+		identifier: nodeData.identifier ?? nodeIdContext.generateNodeId(),
 	};
 	copyPropertyIfDefined(nodeData, output, 'payload');
 	return output;

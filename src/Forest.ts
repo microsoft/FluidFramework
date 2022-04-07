@@ -4,7 +4,7 @@
  */
 
 import BTree from 'sorted-btree';
-import { fail, assert, copyPropertyIfDefined, compareBtrees, compareStrings } from './Common';
+import { fail, assert, copyPropertyIfDefined, compareBtrees, compareFiniteNumbers } from './Common';
 import { compareForestNodes } from './ForestUtilities';
 import { NodeId, TraitLabel } from './Identifiers';
 import { NodeData, Payload } from './persisted-types';
@@ -93,7 +93,7 @@ export class Forest {
 			this.nodes = data.nodes;
 			this.expensiveValidation = data.expensiveValidation;
 		} else {
-			this.nodes = new BTree<NodeId, ForestNodeWithParentage>(undefined, compareStrings);
+			this.nodes = new BTree<NodeId, ForestNodeWithParentage>(undefined, compareFiniteNumbers);
 			this.expensiveValidation = data ?? false;
 		}
 		if (this.expensiveValidation) {

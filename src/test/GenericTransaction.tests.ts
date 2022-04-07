@@ -18,13 +18,13 @@ describe('GenericTransaction', () => {
 				return target[prop];
 			},
 		});
-		const transaction = MockTransaction.factory(testTree.view, testTree);
+		const transaction = MockTransaction.factory(testTree.view);
 		transaction.applyChanges([{}, {}] as unknown as ChangeInternal[], trappedPath);
 		expect(transaction.status).equals(EditStatus.Applied);
 	});
 
 	it('reflects failure status when validateOnClose is not successful', () => {
-		const transaction = MockTransaction.factory(testTree.view, testTree, {
+		const transaction = MockTransaction.factory(testTree.view, {
 			statusOnClose: EditStatus.Invalid,
 		});
 		const result = transaction.close();

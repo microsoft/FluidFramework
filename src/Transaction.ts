@@ -4,7 +4,7 @@
  */
 
 import { assert, copyPropertyIfDefined, fail, Result } from './Common';
-import { NodeId, DetachedSequenceId, TraitLabel, isDetachedSequenceId, StableNodeId } from './Identifiers';
+import { NodeId, DetachedSequenceId, TraitLabel, isDetachedSequenceId } from './Identifiers';
 import { rangeFromStableRange } from './TreeViewUtilities';
 import {
 	BuildInternal,
@@ -17,8 +17,8 @@ import {
 	EditStatus,
 	InsertInternal,
 	SetValueInternal,
-	StablePlaceInternal_0_0_2,
-	StableRangeInternal_0_0_2,
+	StablePlaceInternal,
+	StableRangeInternal,
 } from './persisted-types';
 import {
 	detachRange,
@@ -31,7 +31,6 @@ import {
 	RangeValidationResultKind,
 } from './EditUtilities';
 import { RevisionView, TransactionView } from './RevisionView';
-import { NodeIdConverter } from './NodeIdUtilities';
 import { ReconciliationChange, ReconciliationPath } from './ReconciliationPath';
 import { TreeViewNode } from './TreeView';
 
@@ -39,7 +38,7 @@ import { TreeViewNode } from './TreeView';
  * A function which can produce a Transaction from a RevisionView
  * @public
  */
-export type TransactionFactory = (view: RevisionView, nodeIdConverter: NodeIdConverter) => GenericTransaction;
+export type TransactionFactory = (view: RevisionView) => GenericTransaction;
 
 /**
  * Result of applying a transaction.
@@ -428,8 +427,8 @@ export namespace Transaction {
 	/**
 	 * Makes a new {@link GenericTransaction} that follows the {@link Transaction.Policy} policy.
 	 */
-	export function factory(view: RevisionView, nodeIdConverter: NodeIdConverter): GenericTransaction {
-		return new GenericTransaction(view, new Policy(nodeIdConverter));
+	export function factory(view: RevisionView): GenericTransaction {
+		return new GenericTransaction(view, new Policy());
 	}
 
 	type ValidState = SucceedingTransactionState;
@@ -442,11 +441,6 @@ export namespace Transaction {
 		 * Maps detached sequences of nodes to their NodeIds
 		 */
 		protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]> = new Map();
-
-		/**
-		 * @param nodeIdManager - Used for node creation and identifier conversion
-		 */
-		public constructor(protected readonly nodeIdConverter: NodeIdConverter) {}
 
 		/**
 		 * Resolves change with Result.Ok
@@ -514,11 +508,11 @@ export namespace Transaction {
 				});
 			}
 
-			let idAlreadyPresent: StableNodeId | undefined;
-			let duplicateIdInBuild: StableNodeId | undefined;
-			let invalidId: StableNodeId | undefined;
+			let idAlreadyPresent: NodeId | undefined;
+			let duplicateIdInBuild: NodeId | undefined;
+			let invalidId: NodeId | undefined;
 			let detachedSequenceNotFound: DetachedSequenceId | undefined;
-			const map = new Map<StableNodeId, TreeViewNode>();
+			const map = new Map<NodeId, TreeViewNode>();
 			const newIds = this.createViewNodesForTree(
 				change.source,
 				(id, viewNode) => {
@@ -532,9 +526,6 @@ export namespace Transaction {
 					}
 					map.set(id, viewNode);
 					return false;
-				},
-				(stableId) => {
-					invalidId = stableId;
 				},
 				(detachedId) => {
 					detachedSequenceNotFound = detachedId;
@@ -591,7 +582,7 @@ export namespace Transaction {
 				});
 			}
 
-			const validatedDestination = validateStablePlace(state.view, change.destination, this.nodeIdConverter);
+			const validatedDestination = validateStablePlace(state.view, change.destination);
 			if (validatedDestination.result !== PlaceValidationResult.Valid) {
 				return Result.error({
 					status:
@@ -613,7 +604,7 @@ export namespace Transaction {
 		}
 
 		private applyDetach(state: ValidState, change: DetachInternal): ChangeResult {
-			const validatedSource = validateStableRange(state.view, change.source, this.nodeIdConverter);
+			const validatedSource = validateStableRange(state.view, change.source);
 			if (validatedSource.result !== RangeValidationResultKind.Valid) {
 				return Result.error({
 					status:
@@ -659,7 +650,7 @@ export namespace Transaction {
 			assert(change.identityHash === undefined, 'identityHash constraint is not implemented');
 			assert(change.contentHash === undefined, 'contentHash constraint is not implemented');
 
-			const validatedChange = validateStableRange(state.view, change.toConstrain, this.nodeIdConverter);
+			const validatedChange = validateStableRange(state.view, change.toConstrain);
 			if (validatedChange.result !== RangeValidationResultKind.Valid) {
 				return validatedChange.result !== RangeValidationResultKind.PlacesInDifferentTraits &&
 					validatedChange.result !== RangeValidationResultKind.Inverted &&
@@ -708,8 +699,7 @@ export namespace Transaction {
 				});
 			}
 
-			const parentId = this.nodeIdConverter.convertToStableNodeId(end.trait.parent);
-			if (change.parentNode !== undefined && change.parentNode !== parentId) {
+			if (change.parentNode !== undefined && change.parentNode !== end.trait.parent) {
 				return Result.error({
 					status: EditStatus.Invalid,
 					failure: {
@@ -741,15 +731,14 @@ export namespace Transaction {
 		}
 
 		private applySetValue(state: ValidState, change: SetValueInternal): ChangeResult {
-			const nodeToModify = this.nodeIdConverter.tryConvertToNodeId(change.nodeToModify);
-			if (nodeToModify === undefined || !state.view.hasNode(nodeToModify)) {
+			if (!state.view.hasNode(change.nodeToModify)) {
 				return Result.error({
 					status: EditStatus.Invalid,
 					failure: { kind: FailureKind.UnknownId, change, id: change.nodeToModify },
 				});
 			}
 
-			const newView = state.view.setNodeValue(nodeToModify, change.payload);
+			const newView = state.view.setNodeValue(change.nodeToModify, change.payload);
 			return Result.ok(newView);
 		}
 
@@ -761,8 +750,7 @@ export namespace Transaction {
 		 */
 		protected createViewNodesForTree(
 			sequence: Iterable<BuildNodeInternal>,
-			onCreateNode: (stableId: StableNodeId, node: TreeViewNode) => boolean,
-			onInvalidId: (stableId: StableNodeId) => void,
+			onCreateNode: (stableId: NodeId, node: TreeViewNode) => boolean,
 			onInvalidDetachedId: (sequenceId: DetachedSequenceId) => void
 		): NodeId[] | undefined {
 			const topLevelIds: NodeId[] = [];
@@ -776,12 +764,7 @@ export namespace Transaction {
 					topLevelIds.push(...detachedIds);
 				} else {
 					unprocessed.push(buildNode);
-					const nodeId = this.nodeIdConverter.tryConvertToNodeId(buildNode.identifier);
-					if (nodeId === undefined) {
-						onInvalidId(buildNode.identifier);
-						return undefined;
-					}
-					topLevelIds.push(nodeId);
+					topLevelIds.push(buildNode.identifier);
 				}
 			}
 			while (unprocessed.length > 0) {
@@ -802,12 +785,7 @@ export namespace Transaction {
 									}
 									childIds.push(...detachedIds);
 								} else {
-									const nodeId = this.nodeIdConverter.tryConvertToNodeId(child.identifier);
-									if (nodeId === undefined) {
-										onInvalidId(child.identifier);
-										return undefined;
-									}
-									childIds.push(nodeId);
+									childIds.push(child.identifier);
 									unprocessed.push(child);
 								}
 							}
@@ -815,13 +793,8 @@ export namespace Transaction {
 						}
 					}
 				}
-				const identifier = this.nodeIdConverter.tryConvertToNodeId(node.identifier);
-				if (identifier === undefined) {
-					onInvalidId(node.identifier);
-					return undefined;
-				}
 				const newNode: TreeViewNode = {
-					identifier,
+					identifier: node.identifier,
 					definition: node.definition,
 					traits,
 				};
@@ -970,7 +943,7 @@ export namespace Transaction {
 		/**
 		 * ID of duplicated node
 		 */
-		readonly id: StableNodeId;
+		readonly id: NodeId;
 	}
 
 	/**
@@ -988,7 +961,7 @@ export namespace Transaction {
 		/**
 		 * ID of already in use node
 		 */
-		readonly id: StableNodeId;
+		readonly id: NodeId;
 	}
 
 	/**
@@ -1006,7 +979,7 @@ export namespace Transaction {
 		/**
 		 * The unknown ID
 		 */
-		readonly id: StableNodeId;
+		readonly id: NodeId;
 	}
 
 	/**
@@ -1024,7 +997,7 @@ export namespace Transaction {
 		/**
 		 * The faulting place
 		 */
-		readonly place: StablePlaceInternal_0_0_2;
+		readonly place: StablePlaceInternal;
 		/**
 		 * The reason for the failure
 		 */
@@ -1046,7 +1019,7 @@ export namespace Transaction {
 		/**
 		 * Faulting range
 		 */
-		readonly range: StableRangeInternal_0_0_2;
+		readonly range: StableRangeInternal;
 		/**
 		 * The reason for the failure
 		 */
@@ -1085,7 +1058,7 @@ export namespace Transaction {
 		  }
 		| {
 				readonly kind: ConstraintViolationKind.BadParent;
-				readonly actual: StableNodeId;
+				readonly actual: NodeId;
 		  }
 		| {
 				readonly kind: ConstraintViolationKind.BadLabel;

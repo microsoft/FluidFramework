@@ -10,13 +10,7 @@ import Prando from 'prando';
 import { expect } from 'chai';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
-import {
-	IdCompressor,
-	IdRangeDescriptor,
-	isLocalId,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-} from '../../id-compressor/IdCompressor';
+import { IdCompressor, IdRangeDescriptor, isLocalId } from '../../id-compressor/IdCompressor';
 import {
 	assertIsStableId,
 	createSessionId,
@@ -25,9 +19,13 @@ import {
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../../id-compressor/NumericUuid';
-import { SessionId, StableId, SessionSpaceCompressedId } from '../../Identifiers';
-import { IdCreationRange } from '../../id-compressor/IdRange';
-import { FinalCompressedId } from '../..';
+import { FinalCompressedId, SessionId, StableId, SessionSpaceCompressedId } from '../../Identifiers';
+import { getIds } from '../../id-compressor/IdRange';
+import type {
+	IdCreationRange,
+	SerializedIdCompressorWithOngoingSession,
+	SerializedIdCompressorWithNoSession,
+} from '../../id-compressor';
 
 /** Identifies a compressor in a network */
 export enum Client {
@@ -299,7 +297,7 @@ export class IdCompressorTestNetwork {
 					const [range, clientFrom] = operation;
 					compressorTo.finalizeCreationRange(range);
 
-					const ids = IdCreationRange.getIds(range);
+					const ids = getIds(range);
 					if (ids !== undefined) {
 						let overrideIndex = 0;
 						const overrides = ids.overrides;

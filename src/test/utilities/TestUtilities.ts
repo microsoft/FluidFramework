@@ -4,7 +4,7 @@
  */
 
 import { resolve } from 'path';
-import { v4, v5 as uuidv5 } from 'uuid';
+import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
@@ -23,22 +23,32 @@ import {
 } from '@fluidframework/test-utils';
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { assert } from '@fluidframework/common-utils';
 import type { IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails, IFluidHandle } from '@fluidframework/core-interfaces';
-import { DetachedSequenceId, EditId, NodeId, StableNodeId } from '../../Identifiers';
-import { fail, identity } from '../../Common';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { DetachedSequenceId, EditId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from '../../Identifiers';
+import { assert, fail, identity, ReplaceRecursive } from '../../Common';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
 import { getChangeNodeFromViewNode } from '../../SerializationUtilities';
 import { initialTree } from '../../InitialTree';
-import { ChangeInternal, Edit, NodeData, Payload, WriteFormat } from '../../persisted-types';
+import {
+	ChangeInternal,
+	Edit,
+	NodeData,
+	Payload,
+	reservedIdCount,
+	SharedTreeOp,
+	SharedTreeOp_0_0_2,
+	WriteFormat,
+} from '../../persisted-types';
 import { TraitLocation, TreeView } from '../../TreeView';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
-import { getNodeId, NodeIdContext, NodeIdConverter } from '../../NodeIdUtilities';
+import { getNodeId, getNodeIdContext, NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities';
 import { newEdit, setTrait } from '../../EditUtilities';
-import { reservedIdCount, SharedTree } from '../../SharedTree';
+import { SharedTree } from '../../SharedTree';
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
+import { convertEditIds } from '../../IdConversion';
 import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
@@ -82,7 +92,7 @@ export interface SharedTreeTestingOptions {
 	 */
 	summarizeHistory?: boolean;
 	/**
-	 * If not set, summaries will be written in format 0.0.2.
+	 * If not set, summaries will be written in format 0.1.1.
 	 */
 	writeFormat?: WriteFormat;
 	/**
@@ -125,7 +135,10 @@ export function setUpTestSharedTree(
 	}
 
 	// Enable expensiveValidation
-	const factory = SharedTree.getFactory(summarizeHistory === undefined ? true : summarizeHistory, writeFormat);
+	const factory = SharedTree.getFactory(
+		writeFormat ?? WriteFormat.v0_1_1,
+		summarizeHistory === undefined || summarizeHistory === true ? { uploadEditChunks: true } : false
+	);
 	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true);
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
@@ -240,9 +253,10 @@ export async function setUpLocalServerTestSharedTree(
 		[
 			treeId,
 			SharedTree.getFactory(
-				summarizeHistory === undefined ? true : summarizeHistory,
-				writeFormat,
-				uploadEditChunks === undefined ? true : uploadEditChunks
+				writeFormat ?? WriteFormat.v0_1_1,
+				summarizeHistory === undefined || summarizeHistory === true
+					? { uploadEditChunks: uploadEditChunks ?? true }
+					: false
 			),
 		],
 	];
@@ -314,9 +328,9 @@ function setTestTree(tree: SharedTree, node: BuildNode, overrideId?: EditId): Ed
  */
 export function createStableEdits(
 	numberOfEdits: number,
-	idContext: NodeIdContext = makeTestNodeContext(),
+	idContext: NodeIdContext = makeNodeIdContext(),
 	payload: (i: number) => Payload = identity
-): Edit<Change>[] {
+): Edit<ChangeInternal>[] {
 	if (numberOfEdits === 0) {
 		return [];
 	}
@@ -325,18 +339,18 @@ export function createStableEdits(
 	const nodeId = idContext.generateNodeId('ae6b24eb-6fa8-42cc-abd2-48f250b7798f');
 	const node = buildLeaf(nodeId);
 	const insertEmptyNode = newEdit([
-		Change.build(node, 0 as DetachedSequenceId),
-		Change.insert(
+		ChangeInternal.build([node], 0 as DetachedSequenceId),
+		ChangeInternal.insert(
 			0 as DetachedSequenceId,
 			StablePlace.atEndOf({ label: testTraitLabel, parent: idContext.convertToNodeId(initialTree.identifier) })
 		),
 	]);
 
-	const edits: Edit<Change>[] = [{ ...insertEmptyNode, id: uuidv5('test', uuidNamespace) as EditId }];
+	const edits: Edit<ChangeInternal>[] = [{ ...insertEmptyNode, id: uuidv5('test', uuidNamespace) as EditId }];
 
 	// Every subsequent edit is a set payload
 	for (let i = 1; i < numberOfEdits; i++) {
-		const edit = newEdit([Change.setPayload(nodeId, payload(i))]);
+		const edit = newEdit([ChangeInternal.setPayload(nodeId, payload(i))]);
 		edits.push({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 	}
 
@@ -433,16 +447,32 @@ export function setUpTestTree(idSource?: IdCompressor | SharedTree, expensiveVal
 	const source = idSource ?? new IdCompressor(createSessionId(), reservedIdCount);
 	if (source instanceof SharedTree) {
 		assert(source.edits.length === 0, 'tree must be a new SharedTree');
-		const simpleTestTree = new SimpleTestTree(source, expensiveValidation);
+		const getNormalizer = () => getIdNormalizerFromSharedTree(source);
+		const contextWrapper = {
+			normalizeToOpSpace: (id: NodeId) => getNormalizer().normalizeToOpSpace(id),
+			normalizeToSessionSpace: (id: OpSpaceNodeId, sessionId: SessionId) =>
+				getNormalizer().normalizeToSessionSpace(id, sessionId),
+			get localSessionId() {
+				return getNormalizer().localSessionId;
+			},
+		};
+		const simpleTestTree = new SimpleTestTree(source, contextWrapper, expensiveValidation);
 		setTestTree(source, simpleTestTree);
 		return simpleTestTree;
 	}
 
-	if (source instanceof IdCompressor) {
-		return new SimpleTestTree(makeTestNodeContext(source), expensiveValidation);
-	}
+	const context = makeNodeIdContext(source);
+	return new SimpleTestTree(context, context, expensiveValidation);
+}
 
-	return new SimpleTestTree(source, expensiveValidation);
+/**
+ * Gets an id normalizer from the provided shared-tree. This is
+ */
+export function getIdNormalizerFromSharedTree(sharedTree: SharedTree): NodeIdNormalizer<OpSpaceNodeId> {
+	return (
+		((sharedTree as any).idNormalizer as NodeIdNormalizer<OpSpaceNodeId>) ??
+		fail('Failed to find SharedTree normalizer')
+	);
 }
 
 /**
@@ -459,23 +489,16 @@ export function refreshTestTree(
 	}, fn);
 }
 
-function makeTestNodeContext(_idCompressor?: IdCompressor): NodeIdContext {
-	// TODO:#70358: Use IdCompressor
-	// const compressor = idCompressor ?? new IdCompressor(createSessionId(), reservedIdCount);
-	return {
-		generateNodeId: (_override?: string) => v4() as NodeId,
-		convertToNodeId: (id: StableNodeId) => id,
-		tryConvertToNodeId: (id: StableNodeId) => id,
-		convertToStableNodeId: (id: NodeId) => id,
-		tryConvertToStableNodeId: (id: NodeId) => id,
-	};
+export function makeNodeIdContext(idCompressor?: IdCompressor): NodeIdContext & NodeIdNormalizer<OpSpaceNodeId> {
+	const compressor = idCompressor ?? new IdCompressor(createSessionId(), reservedIdCount);
+	return getNodeIdContext(compressor);
 }
 
 /**
  * Applies an arbitrary edit to the given SharedTree which leaves the tree in the same state that it was before the edit.
  * This is useful for test scenarios that want to apply edits but don't care what they do.
  */
-export function applyNoop(tree: SharedTree): Edit<ChangeInternal> {
+export function applyNoop(tree: SharedTree): Edit<unknown> {
 	return tree.applyEdit(...noopEdit(tree.currentView));
 }
 
@@ -496,4 +519,60 @@ export function noopEdit(view: TreeView): Change[] {
 /** Translate an ID in one context to an ID in another */
 export function translateId(id: NodeId | NodeData<NodeId>, from: NodeIdConverter, to: NodeIdConverter): NodeId {
 	return to.convertToNodeId(from.convertToStableNodeId(getNodeId(id)));
+}
+
+export function normalizeId(tree: SharedTree, id: NodeId): OpSpaceNodeId {
+	const normalizer = getIdNormalizerFromSharedTree(tree);
+	return normalizer.normalizeToOpSpace(id);
+}
+
+export function normalizeIds(tree: SharedTree, ...ids: NodeId[]): OpSpaceNodeId[] {
+	const normalizer = getIdNormalizerFromSharedTree(tree);
+	return ids.map((id) => normalizer.normalizeToOpSpace(id));
+}
+
+export function idsAreEqual(treeA: SharedTree, idsA: NodeId[], treeB: SharedTree, idsB: NodeId[]): boolean {
+	if (idsA.length !== idsB.length) {
+		return false;
+	}
+	const contextA = getIdNormalizerFromSharedTree(treeA);
+	const contextB = getIdNormalizerFromSharedTree(treeB);
+	for (let i = 0; i < idsA.length; i++) {
+		if (contextA.normalizeToOpSpace(idsA[i]) !== contextB.normalizeToOpSpace(idsB[i])) {
+			return false;
+		}
+	}
+	return true;
+}
+
+export function normalizeEdit(
+	tree: SharedTree,
+	edit: Edit<ChangeInternal>
+): Edit<ReplaceRecursive<ChangeInternal, NodeId, OpSpaceNodeId>> {
+	const context = getIdNormalizerFromSharedTree(tree);
+	return convertEditIds(edit, (id) => context.normalizeToOpSpace(id));
+}
+
+export function stabilizeEdit(
+	tree: SharedTree,
+	edit: Edit<ChangeInternal>
+): Edit<ReplaceRecursive<ChangeInternal, NodeId, StableNodeId>> {
+	return convertEditIds(edit, (id) => tree.convertToStableNodeId(id));
+}
+
+/**
+ * Spies on all future ops submitted to `containerRuntimeFactory`. When ops are submitted, they will be `push`ed into the
+ * returned array.
+ */
+export function spyOnSubmittedOps<Op extends SharedTreeOp | SharedTreeOp_0_0_2>(
+	containerRuntimeFactory: MockContainerRuntimeFactory
+): Op[] {
+	const ops: Op[] = [];
+	const originalPush = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
+	containerRuntimeFactory.pushMessage = (message: Partial<ISequencedDocumentMessage>) => {
+		const { contents } = message;
+		ops.push(contents as Op);
+		originalPush(message);
+	};
+	return ops;
 }

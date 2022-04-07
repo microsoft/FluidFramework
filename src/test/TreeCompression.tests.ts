@@ -5,12 +5,13 @@
 
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import type { Definition, DetachedSequenceId, InternedStringId, NodeId, TraitLabel } from '../Identifiers';
+import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, TraitLabel } from '../Identifiers';
+import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities';
 import { CompressedPlaceholderTree, PlaceholderTree } from '../persisted-types';
 import { RevisionView } from '../RevisionView';
 import { StringInterner } from '../StringInterner';
-import { TreeCompressor_0_1_1 } from '../TreeCompressor';
-import { setUpTestTree } from './utilities/TestUtilities';
+import { TreeCompressor } from '../TreeCompressor';
+import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities';
 
 /**
  * Verifies a tree can round-trip through compression/decompression. Optionally also asserts the compressed state
@@ -21,18 +22,19 @@ import { setUpTestTree } from './utilities/TestUtilities';
  */
 function testCompression<TPlaceholder extends DetachedSequenceId | never>(
 	tree: PlaceholderTree<TPlaceholder>,
-	compressed?: CompressedPlaceholderTree<TPlaceholder>,
+	idNormalizer: ContextualizedNodeIdNormalizer<OpSpaceNodeId>,
+	compressed?: CompressedPlaceholderTree<OpSpaceNodeId, TPlaceholder>,
 	roundTripAsserter?: (tree: PlaceholderTree<TPlaceholder>, roundTrippedTree: PlaceholderTree<TPlaceholder>) => void
 ): void {
 	const interner = new StringInterner();
-	const treeCompressor = new TreeCompressor_0_1_1<TPlaceholder>();
-	const compressedTree = treeCompressor.compress(tree, interner);
+	const treeCompressor = new TreeCompressor<TPlaceholder>();
+	const compressedTree = treeCompressor.compress(tree, interner, idNormalizer);
 	if (compressed !== undefined) {
 		expect(compressedTree).to.deep.equal(compressed);
 	}
 	const internedStrings = interner.getSerializable();
 	const newInterner = new StringInterner(internedStrings);
-	const decompressedTree = treeCompressor.decompress(compressedTree, newInterner);
+	const decompressedTree = treeCompressor.decompress(compressedTree, newInterner, idNormalizer);
 	if (roundTripAsserter) {
 		roundTripAsserter(tree, decompressedTree);
 	} else {
@@ -51,11 +53,13 @@ function internedId(n: number): InternedStringId {
 describe('TreeCompression', () => {
 	it('noops on a placeholder root tree', () => {
 		const placeholderId = 42 as DetachedSequenceId;
-		testCompression(placeholderId, placeholderId);
+		const context = makeNodeIdContext();
+		testCompression(placeholderId, scopeIdNormalizer(context), placeholderId);
 	});
 
 	it('can compress trees containing nested DetachedSequenceIds', () => {
-		const id = uuidv4() as NodeId;
+		const context = makeNodeIdContext();
+		const id = context.generateNodeId();
 		const detachedSequenceId = 43 as DetachedSequenceId;
 		const tree: PlaceholderTree<DetachedSequenceId> = {
 			identifier: id,
@@ -64,33 +68,40 @@ describe('TreeCompression', () => {
 				someTrait: [detachedSequenceId],
 			},
 		};
-		testCompression(tree, [id, internedId(0), [internedId(1), [detachedSequenceId]]]);
+		testCompression(tree, scopeIdNormalizer(context), [
+			context.normalizeToOpSpace(id),
+			internedId(0),
+			[internedId(1), [detachedSequenceId]],
+		]);
 	});
 
 	it('omits traits and payload fields on empty leaf nodes', () => {
-		const id = uuidv4() as NodeId;
+		const context = makeNodeIdContext();
+		const id = context.generateNodeId();
 		const tree: PlaceholderTree = {
 			identifier: id,
 			definition: 'node' as Definition,
 			traits: {},
 		};
-		testCompression(tree, [id, internedId(0)]);
+		testCompression(tree, scopeIdNormalizer(context), [context.normalizeToOpSpace(id), internedId(0)]);
 	});
 
 	it('handles payloads on leaves', () => {
-		const id = uuidv4() as NodeId;
+		const context = makeNodeIdContext();
+		const id = context.generateNodeId();
 		const tree: PlaceholderTree = {
 			identifier: id,
 			definition: 'node' as Definition,
 			traits: {},
 			payload: 5,
 		};
-		testCompression(tree, [id, internedId(0), [], 5]);
+		testCompression(tree, scopeIdNormalizer(context), [context.normalizeToOpSpace(id), internedId(0), [], 5]);
 	});
 
 	it('handles intermediate nodes without payloads', () => {
-		const parentId = uuidv4() as NodeId;
-		const childId = uuidv4() as NodeId;
+		const context = makeNodeIdContext();
+		const parentId = context.generateNodeId();
+		const childId = context.generateNodeId();
 		const parentDefinition = 'def1' as Definition;
 		const childDefinition = 'def2' as Definition;
 		const tree: PlaceholderTree = {
@@ -106,12 +117,17 @@ describe('TreeCompression', () => {
 				],
 			},
 		};
-		testCompression(tree, [parentId, internedId(0), [internedId(1), [[childId, internedId(2)]]]]);
+		testCompression(tree, scopeIdNormalizer(context), [
+			context.normalizeToOpSpace(parentId),
+			internedId(0),
+			[internedId(1), [[context.normalizeToOpSpace(childId), internedId(2)]]],
+		]);
 	});
 
 	it('handles intermediate nodes with payloads', () => {
-		const parentId = uuidv4() as NodeId;
-		const childId = uuidv4() as NodeId;
+		const context = makeNodeIdContext();
+		const parentId = context.generateNodeId();
+		const childId = context.generateNodeId();
 		const parentDefinition = 'def1' as Definition;
 		const childDefinition = 'def2' as Definition;
 		const payload = 'parentPayload';
@@ -129,21 +145,27 @@ describe('TreeCompression', () => {
 			},
 			payload,
 		};
-		testCompression(tree, [parentId, internedId(0), [internedId(1), [[childId, internedId(2)]]], payload]);
+		testCompression(tree, scopeIdNormalizer(context), [
+			context.normalizeToOpSpace(parentId),
+			internedId(0),
+			[internedId(1), [[context.normalizeToOpSpace(childId), internedId(2)]]],
+			payload,
+		]);
 	});
 
 	it('handles traits with multiple nodes', () => {
 		const tree = setUpTestTree();
 		testCompression<never>(
 			tree,
+			scopeIdNormalizer(tree),
 			[
-				tree.identifier,
+				tree.normalizeToOpSpace(tree.identifier),
 				internedId(0),
 				[
 					internedId(1),
-					[[tree.left.identifier, internedId(0)]],
+					[[tree.normalizeToOpSpace(tree.left.identifier), internedId(0)]],
 					internedId(2),
-					[[tree.right.identifier, internedId(0)]],
+					[[tree.normalizeToOpSpace(tree.right.identifier), internedId(0)]],
 				],
 			],
 			// SimpleTestTree contains extra properties, so deep compare as objects is insufficient. The revision view strategy
@@ -158,8 +180,9 @@ describe('TreeCompression', () => {
 	});
 
 	it('can round trip a tree with several levels', () => {
+		const context = makeNodeIdContext();
 		const makeLeaf = (): PlaceholderTree => ({
-			identifier: uuidv4() as NodeId,
+			identifier: context.generateNodeId(),
 			definition: uuidv4() as Definition,
 			traits: {},
 		});
@@ -171,7 +194,7 @@ describe('TreeCompression', () => {
 			}
 
 			return {
-				identifier: uuidv4() as NodeId,
+				identifier: context.generateNodeId(),
 				definition: uuidv4() as Definition,
 				traits: {
 					[uuidv4() as TraitLabel]: [makeTreeWithHeight(height - 1)],
@@ -180,6 +203,6 @@ describe('TreeCompression', () => {
 			};
 		};
 
-		testCompression(makeTreeWithHeight(3));
+		testCompression(makeTreeWithHeight(3), scopeIdNormalizer(context));
 	});
 });

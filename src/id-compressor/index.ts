@@ -8,3 +8,6 @@
  */
 
 export * from './IdCompressor';
+export * from './IdRange';
+export * from './persisted-types';
+export { createSessionId } from './NumericUuid';

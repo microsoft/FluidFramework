@@ -5,7 +5,7 @@
 
 import { IsoBuffer } from '@fluidframework/common-utils';
 import type { EditLog } from './EditLog';
-import type { FluidEditHandle, EditChunkContents, ChangeInternal } from './persisted-types';
+import type { ChangeInternal, EditChunkContents, FluidEditHandle } from './persisted-types';
 import type { SharedTree } from './SharedTree';
 
 /**
@@ -29,7 +29,7 @@ export interface UploadedEditChunkContents {
  */
 export async function getUploadedEditChunkContents(sharedTree: SharedTree): Promise<UploadedEditChunkContents[]> {
 	const editChunks: UploadedEditChunkContents[] = [];
-	const { editChunks: editsOrHandles } = (sharedTree.edits as EditLog<ChangeInternal>).getEditLogSummary(true);
+	const { editChunks: editsOrHandles } = (sharedTree.edits as EditLog<ChangeInternal>).getEditLogSummary();
 	for (const { chunk } of editsOrHandles) {
 		if (!Array.isArray(chunk)) {
 			const handle = chunk as FluidEditHandle;

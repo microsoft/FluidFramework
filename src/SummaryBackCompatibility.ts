@@ -58,11 +58,11 @@ export interface SummaryStatistics extends ITelemetryProperties {
  * @returns SummaryStatistics.
  * @throws If statistics could not be obtained from the summary.
  */
-export function getSummaryStatistics<TChange>(summary: SharedTreeSummaryBase): SummaryStatistics {
+export function getSummaryStatistics(summary: SharedTreeSummaryBase): SummaryStatistics {
 	const { version } = summary;
 
 	if (version === WriteFormat.v0_1_1) {
-		const { editHistory } = summary as SharedTreeSummary<TChange>;
+		const { editHistory } = summary as SharedTreeSummary;
 
 		if (editHistory !== undefined) {
 			if (typeof editHistory !== 'object') {
@@ -84,7 +84,7 @@ export function getSummaryStatistics<TChange>(summary: SharedTreeSummaryBase): S
 			fail('Missing fields on edit log summary');
 		}
 	} else if (version === WriteFormat.v0_0_2) {
-		const { sequencedEdits } = summary as SharedTreeSummary_0_0_2<TChange>;
+		const { sequencedEdits } = summary as SharedTreeSummary_0_0_2;
 
 		return {
 			formatVersion: version,

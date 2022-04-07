@@ -9,6 +9,7 @@ import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests';
 import { runSummarySizeTests } from './utilities/SummarySizeTests';
 import { runPendingLocalStateTests } from './utilities/PendingLocalStateTests';
 import { runSharedTreeVersioningTests } from './utilities/SharedTreeVersioningTests';
+import { runSummaryTests } from './Summary.tests';
 import { runSharedTreeFuzzTests } from './fuzz/SharedTreeFuzzTests';
 
 describe('SharedTree', () => {
@@ -16,8 +17,9 @@ describe('SharedTree', () => {
 		runSharedTreeOperationsTests('using write format 0.0.2', WriteFormat.v0_0_2, setUpTestSharedTree);
 		runSharedTreeOperationsTests('using write format 0.1.1', WriteFormat.v0_1_1, setUpTestSharedTree);
 	});
+	runSummaryTests('Summaries');
 	runSummarySizeTests('Summary size', setUpLocalServerTestSharedTree);
-	runPendingLocalStateTests('Pending local state', setUpTestSharedTree, setUpLocalServerTestSharedTree);
+	runPendingLocalStateTests('Stashed ops', setUpLocalServerTestSharedTree);
 	runSharedTreeVersioningTests('Versioning', setUpTestSharedTree);
 	runSharedTreeFuzzTests('Fuzz tests with local server');
 });

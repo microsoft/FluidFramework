@@ -12,9 +12,8 @@ import {
 	IdRangeDescriptor,
 	isFinalId,
 	isLocalId,
-	SerializedIdCompressorWithNoSession,
 } from '../id-compressor/IdCompressor';
-import { IdCreationRange, UnackedLocalId } from '../id-compressor/IdRange';
+import { IdCreationRange, UnackedLocalId, SerializedIdCompressorWithNoSession } from '../id-compressor';
 import { createSessionId, numericUuidFromStableId, stableIdFromNumericUuid } from '../id-compressor/NumericUuid';
 import {
 	CompressedId,

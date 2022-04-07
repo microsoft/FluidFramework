@@ -6,16 +6,16 @@
 			1,
 			[
 				[
-					1028,
+					1026,
 					2,
 					[
 						3,
 						[
-							[1024, 4, [], 99],
-							[1025, 5, [6, [[1027, 7, [], "payload"]]]]
+							[1027, 4, [], 99],
+							[1024, 5, [6, [[1025, 7, [], "payload"]]]]
 						],
 						8,
-						[[1029, 9]]
+						[[1028, 9]]
 					]
 				]
 			]
@@ -25,14 +25,14 @@
 		"editChunks": [
 			{
 				"startRevision": 0,
-				"chunk": { "type": "__fluid_handle__", "url": "/_blobs/eb3134050ee11b5431b00ee331c6ce0216255d60" }
+				"chunk": { "type": "__fluid_handle__", "url": "/_blobs/67f1516cc200307654cc333b9d7d2fc18a975d6d" }
 			},
 			{
 				"startRevision": 100,
 				"chunk": [
-					{ "changes": [{ "nodeToModify": 1024, "payload": 97, "type": 3 }] },
-					{ "changes": [{ "nodeToModify": 1024, "payload": 98, "type": 3 }] },
-					{ "changes": [{ "nodeToModify": 1024, "payload": 99, "type": 3 }] }
+					{ "changes": [{ "nodeToModify": 1027, "payload": 97, "type": 3 }] },
+					{ "changes": [{ "nodeToModify": 1027, "payload": 98, "type": 3 }] },
+					{ "changes": [{ "nodeToModify": 1027, "payload": 99, "type": 3 }] }
 				]
 			}
 		],
@@ -159,7 +159,21 @@
 		"version": "0.0.1",
 		"reservedIdCount": 1024,
 		"clusterCapacity": 512,
-		"sessions": [["968bee41-bcf7-46d2-8035-6eb163b76c4c"]],
-		"clusters": [[0, 512, 6]]
+		"sessions": [["79590933-1c70-4fda-817a-adab57c20318"]],
+		"clusters": [
+			[
+				0,
+				512,
+				6,
+				[
+					[0, "968bee41-bcf7-46d2-8035-6eb163b76c4d"],
+					[1, "968bee41-bcf7-46d2-8035-6eb163b76c4f"],
+					[2, "968bee41-bcf7-46d2-8035-6eb163b76c50"],
+					[3, "968bee41-bcf7-46d2-8035-6eb163b76c4c"],
+					[4, "968bee41-bcf7-46d2-8035-6eb163b76c51"],
+					[5, "968bee41-bcf7-46d2-8035-6eb163b76c4e"]
+				]
+			]
+		]
 	}
 }

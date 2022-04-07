@@ -12,6 +12,7 @@ import type { WriteFormat } from '../../persisted-types';
 import type { Build, Detach, Insert, SetValue } from '../../ChangeTypes';
 import type { TreeView } from '../../TreeView';
 import type { NodeId } from '../../Identifiers';
+import type { NodeIdGenerator } from '../../NodeIdUtilities';
 
 export interface FuzzTestState {
 	rand: Prando;
@@ -93,6 +94,7 @@ export type FuzzChange = FuzzInsert | FuzzDelete | FuzzMove | FuzzSetPayload;
 
 export interface TreeContext {
 	view: TreeView;
+	idGenerator: NodeIdGenerator;
 	idList: NodeId[];
 	dataStoreRuntime: IFluidDataStoreRuntime;
 }

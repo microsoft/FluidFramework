@@ -12,7 +12,6 @@ import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { RevisionView } from './RevisionView';
 import { EditingResult, Transaction, TransactionFactory } from './Transaction';
-import { NodeIdConverter } from './NodeIdUtilities';
 
 /**
  * Callback for when an edit is applied (meaning the result of applying it to a particular revision is computed).
@@ -258,7 +257,7 @@ export class CachingLogViewer implements LogViewer {
 	/**
 	 * Create a new LogViewer
 	 * @param log - the edit log which revisions will be based on.
-	 * @param baseTree - the tree used in the view corresponding to the 0th revision. Defaults to `initialTree`.
+	 * @param baseTree - the tree used in the view corresponding to the 0th revision.
 	 * @param knownRevisions - a set of [sequencedRevision, view] pairs that are known (have been precomputed) at construction time.
 	 * These revisions are guaranteed to never be evicted from the cache.
 	 * @param expensiveValidation - Iff true, additional correctness assertions will be run during LogViewer operations.
@@ -268,7 +267,6 @@ export class CachingLogViewer implements LogViewer {
 	public constructor(
 		log: EditLog<ChangeInternal>,
 		baseView: RevisionView,
-		private readonly nodeIdConverter: NodeIdConverter,
 		knownRevisions: [Revision, EditCacheEntry][] = [],
 		expensiveValidation = false,
 		processEditStatus: EditStatusCallback = noop,
@@ -458,9 +456,7 @@ export class CachingLogViewer implements LogViewer {
 			cached = true;
 		} else {
 			reconciliationPath = this.reconciliationPathFromEdit(edit.id);
-			editingResult = this.transactionFactory(prevView, this.nodeIdConverter)
-				.applyChanges(edit.changes, reconciliationPath)
-				.close();
+			editingResult = this.transactionFactory(prevView).applyChanges(edit.changes, reconciliationPath).close();
 			cached = false;
 		}
 

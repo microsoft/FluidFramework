@@ -8,23 +8,16 @@ import { IContainer } from '@fluidframework/container-definitions';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import { ITestFluidObject, ITestObjectProvider } from '@fluidframework/test-utils';
 import { fail } from '../../Common';
-import { SharedTreeOp, SharedTreeOpType, WriteFormat } from '../../persisted-types';
+import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types';
 import type { EditLog } from '../../EditLog';
-import { EditCommittedEventArguments, SharedTree } from '../../SharedTree';
-import { SharedTreeEvent } from '../../EventTypes';
-import { newEdit } from '../../EditUtilities';
+import { SharedTree } from '../../SharedTree';
 import { Insert, StablePlace } from '../../ChangeTypes';
-import { getSharedTreeEncoder } from '../../SharedTreeEncoder';
-import { TestTree } from './TestNode';
 import {
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
 	setUpTestTree,
-	SharedTreeTestingComponents,
-	SharedTreeTestingOptions,
+	stabilizeEdit,
 } from './TestUtilities';
-
-type WithApplyStashedOp<T> = T & { applyStashedOp(op: SharedTreeOp): void };
 
 async function withContainerOffline<TReturn>(
 	provider: ITestObjectProvider,
@@ -46,7 +39,6 @@ async function withContainerOffline<TReturn>(
  */
 export function runPendingLocalStateTests(
 	title: string,
-	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents,
 	setUpLocalServerTestSharedTree: (
 		options: LocalServerSharedTreeTestingOptions
 	) => Promise<LocalServerSharedTreeTestingComponents>
@@ -54,89 +46,71 @@ export function runPendingLocalStateTests(
 	describe(title, () => {
 		const documentId = 'documentId';
 
-		describe('applyStashedOp', () => {
-			function makeTree(): { tree: WithApplyStashedOp<SharedTree>; testTree: TestTree } {
-				// Unit testing the contract of applyStashedOp without normal public access point through fluid services
-				// requires access violation (as it is protected on SharedTree).
-				const { tree } = setUpTestSharedTree();
-				return { tree: tree as WithApplyStashedOp<SharedTree>, testTree: setUpTestTree(tree) };
-			}
-
-			for (const version of [WriteFormat.v0_0_2, WriteFormat.v0_1_1]) {
-				it(`applies edit ops with version ${version} locally`, async () => {
-					const { tree, testTree } = makeTree();
-					const editCommittedLog: EditCommittedEventArguments[] = [];
-					tree.on(SharedTreeEvent.EditCommitted, (args) => {
-						editCommittedLog.push(args);
+		[WriteFormat.v0_0_2 /* TODO: Enable when stashed ops are supported: WriteFormat.v0_1_1 */].forEach(
+			(writeFormat) => {
+				it(`is applied to all connected containers (v${writeFormat})`, async () => {
+					const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
+						id: documentId,
+						writeFormat,
 					});
+					const testTree = setUpTestTree(tree);
+					const { tree: tree2 } = await setUpLocalServerTestSharedTree({
+						id: documentId,
+						testObjectProvider,
+						writeFormat,
+					});
+					const url = (await container.getAbsoluteUrl('/')) ?? fail('Container unable to resolve "/".');
+					await testObjectProvider.ensureSynchronized();
 					const initialEditLogLength = tree.edits.length;
-					const edit = newEdit(
-						Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.left.traitLocation)).map(
-							(change) => tree.internalizeChange(change)
-						)
+
+					const { pendingLocalState, actionReturn: edit } = await withContainerOffline(
+						testObjectProvider,
+						container,
+						() =>
+							tree.applyEdit(
+								...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.left))
+							) as Edit<ChangeInternal>
+					);
+					await testObjectProvider.ensureSynchronized();
+					const leftTraitAfterOfflineClose = tree2.currentView.getTrait(
+						testTree.left.traitLocation.translate(tree2)
+					);
+					const loader = testObjectProvider.makeTestLoader();
+
+					// Simulate reconnect of user 1; a new container will be created which passes the stashed local state in its
+					// load request.
+					const container3 = await loader.resolve({ url }, pendingLocalState);
+					const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, '/');
+					const tree3 = await dataObject3.getSharedObject<SharedTree>(documentId);
+					expect((tree3.editsInternal as EditLog<ChangeInternal>).isLocalEdit(edit.id)).to.be.true; // Kludge
+
+					await testObjectProvider.ensureSynchronized();
+
+					expect(leftTraitAfterOfflineClose.length).to.equal(
+						1,
+						'Second tree should not receive edits made by first tree after it went offline.'
+					);
+					expect(tree3.currentView.getTrait(testTree.left.traitLocation.translate(tree3)).length).to.equal(
+						2,
+						'Tree which loaded with stashed pending edits should apply them.'
+					);
+					expect(tree2.currentView.getTrait(testTree.left.traitLocation.translate(tree2)).length).to.equal(
+						2,
+						'Tree collaborating with a client that applies stashed pending edits should see them.'
 					);
 
-					const encoder = getSharedTreeEncoder(version, true);
-					const op = encoder.encodeEditOp(edit, (semiSerialized) => semiSerialized);
-					tree.applyStashedOp(op);
-
-					expect(tree.edits.length).to.equal(initialEditLogLength + 1);
-					expect(await tree.edits.tryGetEdit(edit.id)).to.deep.equal(edit);
-					expect(editCommittedLog.length).to.equal(1);
-					expect(editCommittedLog[0].editId).to.equal(edit.id);
-					expect(editCommittedLog[0].local).to.equal(true);
+					const stableEdit = stabilizeEdit(tree, edit);
+					expect(
+						stabilizeEdit(tree2, (await tree2.editsInternal.tryGetEdit(edit.id)) ?? fail())
+					).to.deep.equal(stableEdit);
+					expect(
+						stabilizeEdit(tree3, (await tree3.editsInternal.tryGetEdit(edit.id)) ?? fail())
+					).to.deep.equal(stableEdit);
+					expect(tree2.edits.length).to.equal(initialEditLogLength + 1);
+					expect(tree3.edits.length).to.equal(initialEditLogLength + 1);
 				});
 			}
-
-			it('applies NoOps without error', () => {
-				const { tree } = makeTree();
-				tree.applyStashedOp({ type: SharedTreeOpType.NoOp });
-			});
-
-			// Note: No test for handle ops in this suite as they rely on blob support, which is unsupported by fluid test mocks.
-		});
-
-		it('is applied to all connected containers', async () => {
-			const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
-				id: documentId,
-			});
-			const testTree = setUpTestTree(tree);
-			const { tree: tree2 } = await setUpLocalServerTestSharedTree({ id: documentId, testObjectProvider });
-			const url = (await container.getAbsoluteUrl('/')) ?? fail('Container unable to resolve "/".');
-			await testObjectProvider.ensureSynchronized();
-
-			const { pendingLocalState, actionReturn: edit } = await withContainerOffline(
-				testObjectProvider,
-				container,
-				() => tree.applyEdit(...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.left)))
-			);
-			await testObjectProvider.ensureSynchronized();
-			const leftTraitAfterOfflineClose = tree2.currentView.getTrait(testTree.left.traitLocation.translate(tree2));
-			const loader = testObjectProvider.makeTestLoader();
-
-			// Simulate reconnect of user 1; a new container will be created which passes the stashed local state in its
-			// load request.
-			const container3 = await loader.resolve({ url }, pendingLocalState);
-			const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, '/');
-			const tree3 = await dataObject3.getSharedObject<SharedTree>(documentId);
-			await testObjectProvider.ensureSynchronized();
-
-			expect(leftTraitAfterOfflineClose.length).to.equal(
-				1,
-				'Second tree should not receive edits made by first tree after it went offline.'
-			);
-			expect(tree3.currentView.getTrait(testTree.left.traitLocation.translate(tree3)).length).to.equal(
-				2,
-				'Tree which loaded with stashed pending edits should apply them.'
-			);
-			expect(tree2.currentView.getTrait(testTree.left.traitLocation.translate(tree2)).length).to.equal(
-				2,
-				'Tree collaborating with a client that applies stashed pending edits should see them.'
-			);
-
-			expect(await tree2.edits.tryGetEdit(edit?.id)).to.not.be.undefined;
-			expect(await tree3.edits.tryGetEdit(edit?.id)).to.not.be.undefined;
-		});
+		);
 
 		it('Deals with stashed handle ops gracefully', async () => {
 			// Setup

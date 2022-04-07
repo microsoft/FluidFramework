@@ -188,11 +188,11 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		return StableRange.from(start).to(end);
 	}
 
-	function treeGenerator(state: FuzzTestState): BuildNode {
+	function treeGenerator(state: FuzzTestState, context: TreeContext): BuildNode {
 		const { rand } = state;
 		const treeType = rand.nextArrayItem(['leaf', 'stick', 'balanced']);
 		const makeNode = (traits?: TraitMap<BuildNode>): BuildNode => ({
-			identifier: uuid(rand) as NodeId,
+			identifier: context.idGenerator.generateNodeId(),
 			definition: definitionGenerator(state),
 			traits: traits ?? {},
 		});
@@ -236,7 +236,9 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 			build: {
 				type: ChangeType.Build,
 				destination: id,
-				source: Array.from({ length: state.rand.nextInt(1, maxTreeSequenceSize) }, () => treeGenerator(state)),
+				source: Array.from({ length: state.rand.nextInt(1, maxTreeSequenceSize) }, () =>
+					treeGenerator(state, context)
+				),
 			},
 			insert: {
 				type: ChangeType.Insert,
@@ -359,7 +361,12 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		const { tree } = activeCollaborators[index];
 		const view = tree.currentView;
 		const idList = getIdList(view);
-		const contents = await baseEditGenerator(state, { view, idList, dataStoreRuntime: tree.getRuntime() });
+		const contents = await baseEditGenerator(state, {
+			view,
+			idList,
+			dataStoreRuntime: tree.getRuntime(),
+			idGenerator: tree,
+		});
 		if (contents === done) {
 			return done;
 		}

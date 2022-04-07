@@ -10,34 +10,24 @@
 								"destination": 0,
 								"source": [
 									[
-										"d5e0851e-bf85-5ca6-b57f-88aeb7e04d54",
+										1028,
 										0,
 										[
 											1,
 											[
-												["89483af1-a533-5667-8e9c-2d318600cf09", 2, [], 99],
-												[
-													"f02e8a74-1b75-58c8-9039-292a161a4305",
-													3,
-													[4, [["b4b23ada-c487-5583-b288-06f8d19960ee", 5, [], "payload"]]]
-												]
+												[1024, 2, [], 99],
+												[1025, 3, [4, [[1027, 5, [], "payload"]]]]
 											],
 											6,
-											[["69b3fdda-9c11-590d-b336-3e97b18b0342", 7]]
+											[[1029, 7]]
 										]
 									]
 								],
 								"type": 5
 							},
 							{
-								"destination": {
-									"side": 1,
-									"referenceTrait": {
-										"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
-										"label": "root"
-									}
-								},
 								"source": 0,
+								"destination": { "side": 1, "referenceTrait": { "label": "root", "parent": 0 } },
 								"type": 0
 							}
 						]
@@ -45,8 +35,15 @@
 				]
 			}
 		],
-		"editIds": ["b34bcdb0-8062-4796-bb97-5cf1eefcb925"]
+		"editIds": ["5793b281-ec51-48be-bb0d-70cdbc8cef44"]
 	},
 	"version": "0.1.1",
-	"internedStrings": ["Root", "left", "A", "C", "leaf", "E", "right", "B"]
+	"internedStrings": ["Root", "left", "A", "C", "leaf", "E", "right", "B"],
+	"idCompressor": {
+		"version": "0.0.1",
+		"reservedIdCount": 1024,
+		"clusterCapacity": 512,
+		"sessions": [["968bee41-bcf7-46d2-8035-6eb163b76c4c"]],
+		"clusters": [[0, 512, 6]]
+	}
 }

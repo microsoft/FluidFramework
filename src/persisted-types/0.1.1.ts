@@ -2,17 +2,46 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { DetachedSequenceId, EditId, InternedStringId, NodeId } from '../Identifiers';
+import { assert, assertNotUndefined, ReplaceRecursive } from '../Common';
+// These are re-exported from a persisted-types file.
+import {
+	IdCreationRange,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+} from '../id-compressor';
 import type {
-	BuildInternal,
-	ChangeInternal,
+	DetachedSequenceId,
+	EditId,
+	FinalNodeId,
+	InternedStringId,
+	NodeId,
+	OpSpaceNodeId,
+	SessionId,
+	TraitLabel,
+	UuidString,
+} from '../Identifiers';
+import {
+	BuildInternal_0_0_2,
 	ChangeTypeInternal,
+	ConstraintEffect,
+	ConstraintInternal_0_0_2,
+	DetachInternal_0_0_2,
+	Edit,
 	EditWithoutId,
+	InsertInternal_0_0_2,
+	NodeData,
 	Payload,
+	SetValueInternal_0_0_2,
+	SharedTreeNoOp,
+	SharedTreeOpType,
 	SharedTreeSummaryBase,
+	SharedTreeUpdateOp,
+	Side,
+	StablePlaceInternal_0_0_2,
 	TraitLocationInternal_0_0_2,
 	TreeNode,
 	TreeNodeSequence,
+	VersionedOp,
 	WriteFormat,
 } from './0.0.2';
 
@@ -27,11 +56,10 @@ export interface TraitLocationInternal extends Omit<TraitLocationInternal_0_0_2,
 /**
  * Alternating list of label then children list under that label.
  * The label is interned, and children are {@link CompressedPlaceholderTree}.
- * @public
  */
-export type CompressedTraits<TPlaceholder extends number | never> = (
+export type CompressedTraits<TId extends OpSpaceNodeId, TPlaceholder extends number | never> = (
 	| InternedStringId
-	| (CompressedPlaceholderTree<TPlaceholder> | TPlaceholder)[]
+	| (CompressedPlaceholderTree<TId, TPlaceholder> | TPlaceholder)[]
 )[];
 
 /**
@@ -41,14 +69,14 @@ export type CompressedTraits<TPlaceholder extends number | never> = (
  * Payload is omitted if empty, and traits will be an empty subarray if no traits exist but a payload exists.
  * If both traits and payload does not exist, then both are omitted.
  * All trait labels and node definitions are also string interned.
- * @public
+ * @internal
  */
-export type CompressedPlaceholderTree<TPlaceholder extends number | never> =
+export type CompressedPlaceholderTree<TId extends OpSpaceNodeId, TPlaceholder extends number | never> =
 	| TPlaceholder
 	| [
-			NodeId,
+			TId,
 			InternedStringId, // The node Definition's interned string ID
-			CompressedTraits<TPlaceholder>?,
+			CompressedTraits<TId, TPlaceholder>?,
 			Payload?
 	  ];
 
@@ -60,9 +88,8 @@ export type ChangeNode = TreeNode<ChangeNode, NodeId>;
 
 /**
  * A ChangeNode that has been compressed into a {@link CompressedPlaceholderTree}.
- * @public
  */
-export type CompressedChangeNode = CompressedPlaceholderTree<never>;
+export type CompressedChangeNode<TId extends OpSpaceNodeId> = CompressedPlaceholderTree<TId, never>;
 
 /**
  * The contents of a SharedTree summary for write format 0.1.1.
@@ -70,18 +97,25 @@ export type CompressedChangeNode = CompressedPlaceholderTree<never>;
  * the edits needed to get from `initialTree` to the current tree,
  * and the interned strings that can be used to retrieve the interned summary.
  */
-export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {
-	readonly currentTree?: CompressedChangeNode;
+export interface SharedTreeSummary extends SharedTreeSummaryBase {
+	readonly version: WriteFormat.v0_1_1;
+
+	readonly currentTree?: CompressedChangeNode<FinalNodeId>;
 
 	/**
 	 * Information that can populate an edit log.
 	 */
-	readonly editHistory?: EditLogSummary<TChange, FluidEditHandle>;
+	readonly editHistory: EditLogSummary<CompressedChangeInternal<FinalNodeId>, FluidEditHandle>;
 
 	/**
 	 * List of interned strings to retrieve interned summaries with.
 	 */
 	readonly internedStrings?: readonly string[];
+
+	/**
+	 * Information about all IDs compressed in the summary
+	 */
+	readonly idCompressor: SerializedIdCompressorWithNoSession | SerializedIdCompressorWithOngoingSession;
 }
 
 /**
@@ -128,7 +162,7 @@ export type EditChunkContents = EditChunkContents_0_1_1;
 
 export interface EditChunkContents_0_1_1 {
 	version: WriteFormat.v0_1_1;
-	edits: readonly EditWithoutId<CompressedChangeInternal>[];
+	edits: readonly EditWithoutId<CompressedChangeInternal<FinalNodeId>>[];
 	internedStrings: readonly string[];
 }
 
@@ -141,25 +175,315 @@ export const editsPerChunk = 100;
  * Compressed change format type.
  * Encodes the same information as a {@link ChangeInternal}, but uses a more compact object format for `build` changes.
  */
-export type CompressedChangeInternal<TCompressedTree = CompressedBuildNode> =
-	| Exclude<ChangeInternal, BuildInternal>
-	| CompressedBuildInternal<TCompressedTree>;
+export type CompressedChangeInternal<TId extends OpSpaceNodeId> =
+	| ReplaceRecursive<Exclude<ChangeInternal, BuildInternal>, NodeId, TId>
+	| CompressedBuildInternal<TId>;
 
 /**
  * A compressed version of {@link BuildInternal} where the source is a sequence of compressed nodes.
- * @public
  */
-export interface CompressedBuildInternal<TCompressedTree = CompressedBuildNode> {
+export interface CompressedBuildInternal<TId extends OpSpaceNodeId> {
 	/** {@inheritdoc Build.destination } */
 	readonly destination: DetachedSequenceId;
 	/** A sequence of nodes to build in some compressed format. */
-	readonly source: TreeNodeSequence<TCompressedTree>;
+	readonly source: TreeNodeSequence<CompressedBuildNode<TId>>;
 	/** {@inheritdoc Build."type" } */
 	readonly type: typeof ChangeTypeInternal.CompressedBuild;
 }
 
 /**
  * A BuildNode that has been compressed into a {@link CompressedPlaceholderTree}.
+ */
+export type CompressedBuildNode<TId extends OpSpaceNodeId> = CompressedPlaceholderTree<TId, DetachedSequenceId>;
+
+/**
+ * {@inheritdoc (Change:type)}
  * @public
  */
-export type CompressedBuildNode = CompressedPlaceholderTree<DetachedSequenceId>;
+export type ChangeInternal = InsertInternal | DetachInternal | BuildInternal | SetValueInternal | ConstraintInternal;
+
+/**
+ * {@inheritdoc BuildNode}
+ * @public
+ */
+export type BuildNodeInternal = TreeNode<BuildNodeInternal, NodeId> | DetachedSequenceId;
+
+/**
+ * {@inheritdoc Build}
+ * @public
+ */
+export interface BuildInternal extends Omit<BuildInternal_0_0_2, 'source'> {
+	readonly source: TreeNodeSequence<BuildNodeInternal>;
+}
+
+/**
+ * {@inheritdoc (Insert:interface)}
+ * @public
+ */
+export interface InsertInternal extends Omit<InsertInternal_0_0_2, 'destination'> {
+	/** {@inheritdoc (Insert:interface).destination } */
+	readonly destination: StablePlaceInternal;
+}
+
+/**
+ * {@inheritdoc Detach}
+ * @public
+ */
+export interface DetachInternal extends Omit<DetachInternal_0_0_2, 'source'> {
+	/** {@inheritdoc Detach.source } */
+	readonly source: StableRangeInternal;
+}
+
+/**
+ * {@inheritdoc SetValue}
+ * @public
+ */
+export interface SetValueInternal extends Omit<SetValueInternal_0_0_2, 'nodeToModify'> {
+	/** {@inheritdoc SetValue.nodeToModify } */
+	readonly nodeToModify: NodeId;
+}
+
+/**
+ * {@inheritdoc Constraint}
+ * @public
+ */
+export interface ConstraintInternal extends Omit<ConstraintInternal_0_0_2, 'toConstrain' | 'parentNode'> {
+	/** {@inheritdoc Constraint.toConstrain } */
+	readonly toConstrain: StableRangeInternal;
+	/** {@inheritdoc Constraint.parentNode } */
+	readonly parentNode?: NodeId;
+}
+
+// Note: Documentation of this constant is merged with documentation of the `ChangeInternal` interface.
+/**
+ * @public
+ */
+export const ChangeInternal = {
+	build: (source: TreeNodeSequence<BuildNodeInternal>, destination: DetachedSequenceId): BuildInternal => ({
+		destination,
+		source,
+		type: ChangeTypeInternal.Build,
+	}),
+
+	insert: (source: DetachedSequenceId, destination: StablePlaceInternal): InsertInternal => ({
+		destination,
+		source,
+		type: ChangeTypeInternal.Insert,
+	}),
+
+	detach: (source: StableRangeInternal, destination?: DetachedSequenceId): DetachInternal => ({
+		destination,
+		source,
+		type: ChangeTypeInternal.Detach,
+	}),
+
+	setPayload: (nodeToModify: NodeData<NodeId> | NodeId, payload: Payload): SetValueInternal => ({
+		nodeToModify: getNodeId(nodeToModify),
+		payload,
+		type: ChangeTypeInternal.SetValue,
+	}),
+
+	clearPayload: (nodeToModify: NodeData<NodeId> | NodeId): SetValueInternal => ({
+		nodeToModify: getNodeId(nodeToModify),
+		// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface above.)
+		// eslint-disable-next-line no-null/no-null
+		payload: null,
+		type: ChangeTypeInternal.SetValue,
+	}),
+
+	constraint: (
+		toConstrain: StableRangeInternal,
+		effect: ConstraintEffect,
+		identityHash?: UuidString,
+		length?: number,
+		contentHash?: UuidString,
+		parentNode?: NodeId,
+		label?: TraitLabel
+	): ConstraintInternal => ({
+		toConstrain,
+		effect,
+		identityHash,
+		length,
+		contentHash,
+		parentNode,
+		label,
+		type: ChangeTypeInternal.Constraint,
+	}),
+};
+
+/**
+ * {@inheritdoc Delete }
+ * @public
+ */
+export const DeleteInternal = {
+	/** {@inheritdoc Delete.create } */
+	create: (stableRange: StableRangeInternal): ChangeInternal => ChangeInternal.detach(stableRange),
+};
+
+/**
+ * {@inheritdoc (Insert:variable) }
+ * @public
+ */
+export const InsertInternal = {
+	/** {@inheritdoc (Insert:variable).create } */
+	create: (nodes: TreeNodeSequence<BuildNodeInternal>, destination: StablePlaceInternal): ChangeInternal[] => {
+		const build = ChangeInternal.build(nodes, 0 as DetachedSequenceId);
+		return [build, ChangeInternal.insert(build.destination, destination)];
+	},
+};
+
+/**
+ * {@inheritdoc Move }
+ * @public
+ */
+export const MoveInternal = {
+	/** {@inheritdoc Move.create } */
+	create: (source: StableRangeInternal, destination: StablePlaceInternal): ChangeInternal[] => {
+		const detach = ChangeInternal.detach(source, 0 as DetachedSequenceId);
+		return [detach, ChangeInternal.insert(assertNotUndefined(detach.destination), destination)];
+	},
+};
+
+/**
+ * {@inheritdoc (StablePlace:interface) }
+ * @public
+ */
+export interface StablePlaceInternal extends Omit<StablePlaceInternal_0_0_2, 'referenceSibling' | 'referenceTrait'> {
+	/**
+	 * {@inheritdoc (StablePlace:interface).referenceSibling }
+	 */
+	readonly referenceSibling?: NodeId;
+
+	/**
+	 * {@inheritdoc (StablePlace:interface).referenceTrait }
+	 */
+	readonly referenceTrait?: TraitLocationInternal;
+}
+
+/**
+ * {@inheritdoc (StableRange:interface) }
+ * @public
+ */
+export interface StableRangeInternal {
+	/** {@inheritdoc (StableRange:interface).start } */
+	readonly start: StablePlaceInternal;
+	/** {@inheritdoc (StableRange:interface).end } */
+	readonly end: StablePlaceInternal;
+}
+
+/**
+ * The remainder of this file consists of factory methods duplicated with those for StableRange/StablePlace and are maintained while
+ * the new persisted version of SharedTree ops/summaries is rolled out.
+ */
+
+/**
+ * @public
+ */
+export const StablePlaceInternal = {
+	/**
+	 * @returns The location directly before `node`.
+	 */
+	before: (node: NodeData<NodeId> | NodeId): StablePlaceInternal => ({
+		side: Side.Before,
+		referenceSibling: getNodeId(node),
+	}),
+	/**
+	 * @returns The location directly after `node`.
+	 */
+	after: (node: NodeData<NodeId> | NodeId): StablePlaceInternal => ({
+		side: Side.After,
+		referenceSibling: getNodeId(node),
+	}),
+	/**
+	 * @returns The location at the start of `trait`.
+	 */
+	atStartOf: (trait: TraitLocationInternal): StablePlaceInternal => ({
+		side: Side.After,
+		referenceTrait: trait,
+	}),
+	/**
+	 * @returns The location at the end of `trait`.
+	 */
+	atEndOf: (trait: TraitLocationInternal): StablePlaceInternal => ({
+		side: Side.Before,
+		referenceTrait: trait,
+	}),
+};
+
+/**
+ * @public
+ */
+export const StableRangeInternal = {
+	/**
+	 * Factory for producing a `StableRange` from a start `StablePlace` to an end `StablePlace`.
+	 * @example
+	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
+	 */
+	from: (start: StablePlaceInternal): { to: (end: StablePlaceInternal) => StableRangeInternal } => ({
+		to: (end: StablePlaceInternal): StableRangeInternal => {
+			if (start.referenceTrait && end.referenceTrait) {
+				const message = 'StableRange must be constructed with endpoints from the same trait';
+				assert(start.referenceTrait.parent === end.referenceTrait.parent, message);
+				assert(start.referenceTrait.label === end.referenceTrait.label, message);
+			}
+			return { start, end };
+		},
+	}),
+	/**
+	 * @returns a `StableRange` which contains only the provided `node`.
+	 * Both the start and end `StablePlace` objects used to anchor this `StableRange` are in terms of the passed in node.
+	 */
+	only: (node: NodeData<NodeId> | NodeId): StableRangeInternal => ({
+		start: StablePlaceInternal.before(node),
+		end: StablePlaceInternal.after(node),
+	}),
+	/**
+	 * @returns a `StableRange` which contains everything in the trait.
+	 * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
+	 * it does not use sibling anchoring.
+	 */
+	all: (trait: TraitLocationInternal): StableRangeInternal => ({
+		start: StablePlaceInternal.atStartOf(trait),
+		end: StablePlaceInternal.atEndOf(trait),
+	}),
+};
+
+/**
+ * Discriminated union of valid 0.0.1 SharedTree op types.
+ */
+export type SharedTreeOp = SharedTreeEditOp | SharedTreeHandleOp | SharedTreeUpdateOp | SharedTreeNoOp;
+
+export interface SharedTreeEditOp extends VersionedOp<WriteFormat.v0_1_1> {
+	readonly type: SharedTreeOpType.Edit;
+	/** The collection of changes to apply. */
+	readonly edit: Edit<CompressedChangeInternal<OpSpaceNodeId>>;
+	/** The list of interned strings to retrieve the original strings of interned edits. */
+	readonly internedStrings?: readonly string[];
+	/** Contains all the IDs generated by the originating client since the last sent op */
+	readonly idRange: IdCreationRange;
+}
+
+/**
+ * A SharedTree op that includes edit handle information.
+ * The handle corresponds to an edit chunk in the edit log.
+ */
+export interface SharedTreeHandleOp extends VersionedOp<WriteFormat.v0_1_1> {
+	readonly type: SharedTreeOpType.Handle;
+	/** The serialized handle to an uploaded edit chunk. */
+	readonly editHandle: string;
+	/** The index of the first edit in the chunk that corresponds to the handle. */
+	readonly startRevision: number;
+}
+
+/** The number of IDs that a SharedTree reserves for current or future internal use */
+// This value must never change
+export const reservedIdCount = 1024;
+
+/** The SessionID of the Upgrade Session */
+// This UUID must never change
+export const ghostSessionId = '79590933-1c70-4fda-817a-adab57c20318' as SessionId;
+
+/** Accepts either a node or a node's identifier, and returns the identifier */
+function getNodeId<TId>(node: TId | NodeData<TId>): TId {
+	return (node as NodeData<TId>).identifier ?? (node as TId);
+}

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { DetachedSequenceId, isDetachedSequenceId, NodeId, StableNodeId } from './Identifiers';
+import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers';
 import { assert, fail } from './Common';
-import { getChangeNode_0_0_2FromViewNode } from './SerializationUtilities';
 import { rangeFromStableRange } from './TreeViewUtilities';
 import {
 	ChangeInternal,
@@ -14,17 +13,15 @@ import {
 	SetValueInternal,
 	InsertInternal,
 	BuildNodeInternal,
-	StableRangeInternal_0_0_2,
-	TreeNode,
 	Side,
+	StableRangeInternal,
 } from './persisted-types';
 import { Transaction } from './Transaction';
 import { RangeValidationResultKind, validateStableRange } from './EditUtilities';
 import { StablePlace } from './ChangeTypes';
-import { tryConvertToStablePlaceInternal_0_0_2 } from './Conversion002';
 import { RevisionView } from './RevisionView';
-import { NodeIdConverter } from './NodeIdUtilities';
 import { TreeView } from './TreeView';
+import { getChangeNodeFromViewNode } from './SerializationUtilities';
 
 /**
  * Given a sequence of changes, produces an inverse sequence of changes, i.e. the minimal changes required to revert the given changes
@@ -38,18 +35,14 @@ import { TreeView } from './TreeView';
  * TODO:#68574: Pass a view that corresponds to the appropriate fluid reference sequence number rather than the view just before
  * @internal
  */
-export function revert(
-	changes: readonly ChangeInternal[],
-	before: RevisionView,
-	nodeIdConverter: NodeIdConverter
-): ChangeInternal[] | undefined {
+export function revert(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined {
 	const result: ChangeInternal[] = [];
 
-	const builtNodes = new Map<DetachedSequenceId, StableNodeId[]>();
-	const detachedNodes = new Map<DetachedSequenceId, StableNodeId[]>();
+	const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
+	const detachedNodes = new Map<DetachedSequenceId, NodeId[]>();
 
 	// Open edit on revision to update it as changes are walked through
-	const editor = Transaction.factory(before, nodeIdConverter);
+	const editor = Transaction.factory(before);
 	// Apply `edit`, generating an inverse as we go.
 	for (const change of changes) {
 		// Generate an inverse of each change
@@ -61,14 +54,14 @@ export function revert(
 				assert(!detachedNodes.has(destination), `Cannot revert Build: destination is already used by a Detach`);
 				builtNodes.set(
 					destination,
-					source.reduce((ids: StableNodeId[], curr: BuildNodeInternal) => {
+					source.reduce((ids: NodeId[], curr: BuildNodeInternal) => {
 						if (isDetachedSequenceId(curr)) {
 							const nodesForDetachedSequence =
 								builtNodes.get(curr) ?? fail('detached sequence must have associated built nodes');
 
 							ids.push(...nodesForDetachedSequence);
 						} else {
-							ids.push((curr as TreeNode<BuildNodeInternal, StableNodeId>).identifier);
+							ids.push(curr.identifier);
 						}
 						return ids;
 					}, [])
@@ -95,7 +88,7 @@ export function revert(
 			}
 			case ChangeTypeInternal.Detach: {
 				const { destination } = change;
-				const invert = createInvertedDetach(change, editor.view, nodeIdConverter);
+				const invert = createInvertedDetach(change, editor.view);
 				if (invert === undefined) {
 					// Cannot revert a detach whose source does not exist in the tree
 					// TODO:68574: May not be possible once associated todo in `createInvertedDetach` is addressed
@@ -115,7 +108,7 @@ export function revert(
 				break;
 			}
 			case ChangeTypeInternal.SetValue: {
-				const invert = createInvertedSetValue(change, editor.view, nodeIdConverter);
+				const invert = createInvertedSetValue(change, editor.view);
 				if (invert === undefined) {
 					// Cannot revert a set for a node that does not exist in the tree
 					// TODO:68574: May not be possible once associated todo in `createInvertedSetValue` is addressed
@@ -144,13 +137,13 @@ export function revert(
  */
 function createInvertedInsert(
 	insert: InsertInternal,
-	nodesInserted: readonly StableNodeId[],
+	nodesInserted: readonly NodeId[],
 	saveDetached = false
 ): ChangeInternal {
 	const leftmostNode = nodesInserted[0];
 	const rightmostNode = nodesInserted[nodesInserted.length - 1];
 
-	const source: StableRangeInternal_0_0_2 = {
+	const source: StableRangeInternal = {
 		start: {
 			referenceSibling: leftmostNode,
 			side: Side.Before,
@@ -194,10 +187,9 @@ function createInvertedInsert(
  */
 function createInvertedDetach(
 	detach: DetachInternal,
-	viewBeforeChange: TreeView,
-	idConverter: NodeIdConverter
-): { invertedDetach: ChangeInternal[]; detachedNodeIds: StableNodeId[] } | undefined {
-	const validatedSource = validateStableRange(viewBeforeChange, detach.source, idConverter);
+	viewBeforeChange: TreeView
+): { invertedDetach: ChangeInternal[]; detachedNodeIds: NodeId[] } | undefined {
+	const validatedSource = validateStableRange(viewBeforeChange, detach.source);
 	if (validatedSource.result !== RangeValidationResultKind.Valid) {
 		// TODO:#68574: having the reference view would potentially allow us to revert some detaches that currently conflict
 		return undefined;
@@ -234,23 +226,10 @@ function createInvertedDetach(
 		};
 	}
 
-	const insertDestination_0_0_2 = tryConvertToStablePlaceInternal_0_0_2(insertDestination, idConverter);
-	if (insertDestination_0_0_2 === undefined) {
-		return undefined;
-	}
-
-	const detachedStableNodeIds: StableNodeId[] = [];
-	for (const nodeId of detachedNodeIds) {
-		const stableNodeId = idConverter.tryConvertToStableNodeId(nodeId);
-		if (stableNodeId === undefined) {
-			return undefined;
-		}
-		detachedStableNodeIds.push(stableNodeId);
-	}
 	if (detach.destination !== undefined) {
 		return {
-			invertedDetach: [ChangeInternal.insert(detach.destination, insertDestination_0_0_2)],
-			detachedNodeIds: detachedStableNodeIds,
+			invertedDetach: [ChangeInternal.insert(detach.destination, insertDestination)],
+			detachedNodeIds,
 		};
 	}
 
@@ -258,29 +237,21 @@ function createInvertedDetach(
 	return {
 		invertedDetach: [
 			ChangeInternal.build(
-				detachedNodeIds.map((id) => getChangeNode_0_0_2FromViewNode(viewBeforeChange, id, idConverter)),
+				detachedNodeIds.map((id) => getChangeNodeFromViewNode(viewBeforeChange, id)),
 				detachedSequenceId
 			),
-			ChangeInternal.insert(detachedSequenceId, insertDestination_0_0_2),
+			ChangeInternal.insert(detachedSequenceId, insertDestination),
 		],
-		detachedNodeIds: detachedStableNodeIds,
+		detachedNodeIds,
 	};
 }
 
 /**
  * The inverse of a SetValue is a SetValue that sets the value to what it was prior to the change.
  */
-function createInvertedSetValue(
-	setValue: SetValueInternal,
-	viewBeforeChange: TreeView,
-	idConverter: NodeIdConverter
-): ChangeInternal[] | undefined {
+function createInvertedSetValue(setValue: SetValueInternal, viewBeforeChange: TreeView): ChangeInternal[] | undefined {
 	const { nodeToModify } = setValue;
-	const nodeId = idConverter.tryConvertToNodeId(nodeToModify);
-	if (nodeId === undefined) {
-		return undefined;
-	}
-	const node = viewBeforeChange.tryGetViewNode(nodeId);
+	const node = viewBeforeChange.tryGetViewNode(nodeToModify);
 	if (node === undefined) {
 		// TODO:68574: With a reference view, may be able to better resolve conflicting sets
 		return undefined;

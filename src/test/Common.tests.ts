@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { filter, find, getOrCreate, identity, map, memoizeGetter, reduce } from '../Common';
 
-describe('SharedTree common', () => {
+describe('Common', () => {
 	it('function memoizeGetter() correctly memoizes', () => {
 		let x = 0;
 		const getAndInc = () => x++;

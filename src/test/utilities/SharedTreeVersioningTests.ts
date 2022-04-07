@@ -3,32 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import type { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
-import { Move, StableRange, StablePlace } from '../../ChangeTypes';
+import { Move, StableRange, StablePlace, Insert, BuildNode } from '../../ChangeTypes';
+import { Mutable } from '../../Common';
 import { EditLog } from '../../EditLog';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
-import { SharedTreeOp, SharedTreeOpType, WriteFormat } from '../../persisted-types';
+import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
+import { SharedTreeOpType, TreeNodeSequence, WriteFormat } from '../../persisted-types';
 import { SharedTree } from '../../SharedTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
-import { applyNoop, setUpTestTree, SharedTreeTestingComponents, SharedTreeTestingOptions } from './TestUtilities';
-
-/**
- * Spies on all future ops submitted to `containerRuntimeFactory`. When ops are submitted
- * @param containerRuntimeFactory
- * @returns
- */
-function spyOnSubmittedOps(containerRuntimeFactory: MockContainerRuntimeFactory): SharedTreeOp[] {
-	const ops: SharedTreeOp[] = [];
-	const originalPush = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
-	containerRuntimeFactory.pushMessage = (message: Partial<ISequencedDocumentMessage>) => {
-		const { contents } = message;
-		ops.push(contents as SharedTreeOp);
-		originalPush(message);
-	};
-	return ops;
-}
+import { applyTestEdits } from '../Summary.tests';
+import { buildLeaf } from './TestNode';
+import {
+	applyNoop,
+	setUpLocalServerTestSharedTree,
+	setUpTestTree,
+	SharedTreeTestingComponents,
+	SharedTreeTestingOptions,
+	spyOnSubmittedOps,
+} from './TestUtilities';
 
 function spyOnVersionChanges(tree: SharedTree): WriteFormat[] {
 	const versions: WriteFormat[] = [];
@@ -78,13 +71,12 @@ export function runSharedTreeVersioningTests(
 			});
 
 			const testTree = setUpTestTree(tree);
+			const rootStableId = testTree.stable.identifier;
 			containerRuntimeFactory.processAllMessages();
 			const summary = tree.saveSummary();
 			const ops = spyOnSubmittedOps(containerRuntimeFactory);
 			newerTree.loadSummary(summary);
-			tree.applyEdit(
-				...Move.create(StableRange.only(testTree.left.stable), StablePlace.after(testTree.right.stable))
-			);
+			tree.applyEdit(...Move.create(StableRange.only(testTree.left), StablePlace.after(testTree.right)));
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify even though one edit was applied, 2 edit ops were sent due to the version upgrade.
@@ -99,10 +91,10 @@ export function runSharedTreeVersioningTests(
 			expect(ops[2].version).to.equal(newVersion);
 
 			// Verify both trees apply the updated op.
-			const handle = new TreeNodeHandle(tree.currentView, testTree.identifier);
+			const handle = new TreeNodeHandle(tree.currentView, tree.convertToNodeId(rootStableId));
 			expect(handle.traits[testTree.left.traitLabel]).to.equal(undefined);
 			expect(handle.traits[testTree.right.traitLabel].length).to.equal(2);
-			const handle2 = new TreeNodeHandle(newerTree.currentView, testTree.identifier);
+			const handle2 = new TreeNodeHandle(newerTree.currentView, newerTree.convertToNodeId(rootStableId));
 			expect(handle2.traits[testTree.left.traitLabel]).to.equal(undefined);
 			expect(handle2.traits[testTree.right.traitLabel].length).to.equal(2);
 		});
@@ -178,6 +170,7 @@ export function runSharedTreeVersioningTests(
 
 			// Update occurs after the handler is added to the old edit log
 			newerContainerRuntimeFactory.processAllMessages();
+			expect(newerTree.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
 			expect(versions).to.have.length(2);
 			expect(versions[1]).to.equal(newVersion);
 
@@ -208,6 +201,7 @@ export function runSharedTreeVersioningTests(
 			newerTree.loadSummary(summary);
 			applyNoop(newerTree);
 			newerContainerRuntimeFactory.processAllMessages();
+			expect(newerTree.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
 			applyNoop(newerTree);
 
 			expect(ops.length).to.equal(4);
@@ -238,6 +232,9 @@ export function runSharedTreeVersioningTests(
 			const { tree: newerTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
 			newerTree.loadSummary(summary);
 			containerRuntimeFactory.processAllMessages();
+
+			expect(tree.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
+			expect(newerTree.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
 
 			// Apply another arbitrary edit to the initial tree, which should now be using the new write version.
 			applyNoop(tree);
@@ -297,7 +294,113 @@ export function runSharedTreeVersioningTests(
 			const summary = tree.saveSummary();
 			const { tree: newTree } = setUpTestSharedTree({ containerRuntimeFactory, ...options });
 			newTree.loadSummary(summary);
+			expect(newTree.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
 			expect(() => newTree.currentView).to.not.throw();
+		});
+
+		it('upgrades properly when no edits are sent', async () => {
+			// Starts in 0.0.2 (so no upgrade)
+			const { testObjectProvider, tree: tree1 } = await setUpLocalServerTestSharedTree({
+				writeFormat: WriteFormat.v0_0_2,
+			});
+
+			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
+				writeFormat: WriteFormat.v0_1_1,
+				testObjectProvider,
+			});
+
+			expect(tree1.getWriteFormat()).to.equal(WriteFormat.v0_0_2);
+			expect(tree2.getWriteFormat()).to.equal(WriteFormat.v0_0_2);
+
+			await testObjectProvider.ensureSynchronized();
+
+			expect(tree1.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
+			expect(tree1.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
+			expect(tree1.equals(tree2)).to.be.true;
+		});
+
+		it('generates unique IDs after upgrading from 0.0.2', async () => {
+			const idCount = 100;
+
+			const { testObjectProvider, tree: tree } = await setUpLocalServerTestSharedTree({
+				writeFormat: WriteFormat.v0_0_2,
+			});
+
+			applyTestEdits(tree);
+
+			const nodeIds = new Set<NodeId>();
+			const stableIds = new Set<StableNodeId>();
+			for (let i = 0; i < idCount; i++) {
+				const id = tree.generateNodeId();
+				nodeIds.add(id);
+				stableIds.add(tree.convertToStableNodeId(id));
+			}
+
+			// New tree joins, causes an upgrade
+			await setUpLocalServerTestSharedTree({
+				writeFormat: WriteFormat.v0_1_1,
+				testObjectProvider,
+			});
+
+			await testObjectProvider.ensureSynchronized();
+			expect(tree.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
+
+			for (let i = 0; i < idCount; i++) {
+				// No IDs should be generated that were already generated before the update
+				const id = tree.generateNodeId();
+				expect(nodeIds.has(id)).to.be.false;
+				expect(stableIds.has(tree.convertToStableNodeId(id))).to.be.false;
+			}
+			expect(tree.equals(tree)).to.be.true;
+		});
+
+		it('converts IDs correctly after upgrading from 0.0.2', async () => {
+			const { testObjectProvider, tree: tree1 } = await setUpLocalServerTestSharedTree({
+				writeFormat: WriteFormat.v0_0_2,
+			});
+
+			const idCount = 10;
+			const ids: [NodeId, StableNodeId][] = [];
+			for (let i = 0; i < idCount; i++) {
+				const id = tree1.generateNodeId();
+				ids.push([id, tree1.convertToStableNodeId(id)]);
+			}
+
+			// Use some of the IDs in edits, but leave others unused.
+			// They should all be valid and usable after upgrade.
+			const builds: Mutable<TreeNodeSequence<BuildNode>> = [];
+			for (let i = 1; i < ids.length; i += 2) {
+				builds.push(buildLeaf(ids[i][0], i));
+			}
+			tree1.applyEdit(
+				...Insert.create(
+					builds,
+					StablePlace.atEndOf({ parent: tree1.currentView.root, label: 'foo' as TraitLabel })
+				)
+			);
+
+			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
+				writeFormat: WriteFormat.v0_1_1,
+				testObjectProvider,
+			});
+
+			await testObjectProvider.ensureSynchronized();
+			expect(tree1.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
+			expect(tree2.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
+
+			const view = tree1.currentView;
+			for (let i = 0; i < ids.length; i++) {
+				const [nodeIdBefore, stableIdBefore] = ids[i];
+				expect(tree1.convertToStableNodeId(nodeIdBefore)).to.equal(stableIdBefore);
+				if (i % 2 === 0) {
+					expect(view.hasNode(nodeIdBefore)).to.be.false;
+				} else {
+					expect(view.hasNode(nodeIdBefore)).to.be.true;
+					const node = view.getViewNode(nodeIdBefore);
+					expect(node.payload).to.equal(i);
+				}
+			}
+			expect(tree1.equals(tree2)).to.be.true;
 		});
 	});
 }

@@ -4,7 +4,6 @@
  */
 
 import { Result } from '../../Common';
-import { NodeIdConverter } from '../../NodeIdUtilities';
 import { ChangeInternal, EditStatus } from '../../persisted-types';
 import { RevisionView } from '../../RevisionView';
 import { ChangeResult, GenericTransaction, GenericTransactionPolicy, Transaction } from '../../Transaction';
@@ -26,11 +25,7 @@ export namespace MockTransaction {
 	 *
 	 * @internal
 	 */
-	export function factory(
-		view: RevisionView,
-		_idConverter: NodeIdConverter,
-		options: Options = defaultOptions
-	): GenericTransaction {
+	export function factory(view: RevisionView, options: Options = defaultOptions): GenericTransaction {
 		return new GenericTransaction(view, new Policy(options));
 	}
 

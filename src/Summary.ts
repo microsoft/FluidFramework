@@ -3,31 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-object-base';
-import { assertNotUndefined } from './Common';
+import { fail } from './Common';
+import type { IdCompressor } from './id-compressor';
+import type { EditLogSummary, SharedTreeSummaryBase, ChangeNode, ChangeInternal } from './persisted-types';
 import type { EditHandle } from './EditLog';
-import { EditLogSummary, SharedTreeSummaryBase, ChangeNode, WriteFormat } from './persisted-types';
-
-/**
- * Format version for summaries that are written.
- * When next changing the format, we should add a new format version variable for the edit-specific summaries and assign it an independent
- * version number.
- */
-export const formatVersion = WriteFormat.v0_0_2;
 
 /**
  * The contents of a SharedTree summary, converted to a common internal format that can be
  * loaded into a SharedTree.
  * @internal
  */
-export interface SummaryContents<TChange> {
+export interface SummaryContents {
 	readonly currentTree?: ChangeNode;
 
 	/**
 	 * Information that can populate an edit log.
 	 */
-	readonly editHistory: EditLogSummary<TChange, EditHandle<TChange>>;
+	readonly editHistory: EditLogSummary<ChangeInternal, EditHandle<ChangeInternal>>;
+
+	/**
+	 * Information about all IDs compressed in the summary
+	 */
+	readonly idCompressor: IdCompressor;
 }
 
 /**
@@ -39,5 +38,5 @@ export interface SummaryContents<TChange> {
  * @param bind - The object handle required to serialize handles in the summary
  */
 export function serialize(summary: SharedTreeSummaryBase, serializer: IFluidSerializer, bind: IFluidHandle): string {
-	return assertNotUndefined(serializeHandles(summary, serializer, bind));
+	return serializeHandles(summary, serializer, bind) ?? fail();
 }

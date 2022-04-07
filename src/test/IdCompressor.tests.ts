@@ -28,7 +28,8 @@ import {
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid';
-import { IdCreationRange, UnackedLocalId } from '../id-compressor/IdRange';
+import { getIds } from '../id-compressor/IdRange';
+import type { UnackedLocalId } from '../id-compressor';
 import {
 	createCompressor,
 	performFuzzActions,
@@ -312,7 +313,7 @@ describe('IdCompressor', () => {
 			}
 			const range = compressor.takeNextCreationRange();
 			let newLastTakenId = lastTakenId;
-			let idsActual = IdCreationRange.getIds(range);
+			let idsActual = getIds(range);
 			if (overrides.length === 0) {
 				expect(idsActual).to.be.undefined;
 			} else {
@@ -812,7 +813,7 @@ describe('IdCompressor', () => {
 			network.deliverOperations(DestinationClient.All);
 
 			const range1 = network.allocateAndSendIds(Client.Client1, 1, { 0: override });
-			const overrides1 = expectDefined(IdCreationRange.getIds(range1)?.overrides);
+			const overrides1 = expectDefined(getIds(range1)?.overrides);
 			const id1 = compressor1.normalizeToSessionSpace(overrides1[0][0], compressor1.localSessionId);
 			const opNormalizedLocal1 = compressor1.normalizeToOpSpace(id1);
 			expect(isLocalId(opNormalizedLocal1)).to.be.true;
@@ -824,7 +825,7 @@ describe('IdCompressor', () => {
 			expect(isFinalId(finalId1)).to.be.true;
 
 			const range2 = network.allocateAndSendIds(Client.Client2, 2, { 1: override });
-			const overrides2 = expectDefined(IdCreationRange.getIds(range2)?.overrides);
+			const overrides2 = expectDefined(getIds(range2)?.overrides);
 			const id2 = compressor2.normalizeToSessionSpace(overrides2[0][0], compressor2.localSessionId);
 			const opNormalizedLocal2 = compressor2.normalizeToOpSpace(id2);
 			expect(isLocalId(opNormalizedLocal2)).to.be.true;
