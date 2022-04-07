@@ -264,7 +264,6 @@ declare function get_old_InterfaceDeclaration_ICodeDetailsLoader():
 declare function use_current_InterfaceDeclaration_ICodeDetailsLoader(
     use: TypeOnly<current.ICodeDetailsLoader>);
 use_current_InterfaceDeclaration_ICodeDetailsLoader(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICodeDetailsLoader());
 
 /*
@@ -277,7 +276,6 @@ declare function get_current_InterfaceDeclaration_ICodeDetailsLoader():
 declare function use_old_InterfaceDeclaration_ICodeDetailsLoader(
     use: TypeOnly<old.ICodeDetailsLoader>);
 use_old_InterfaceDeclaration_ICodeDetailsLoader(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICodeDetailsLoader());
 
 /*
@@ -290,7 +288,6 @@ declare function get_old_InterfaceDeclaration_ICodeLoader():
 declare function use_current_InterfaceDeclaration_ICodeLoader(
     use: TypeOnly<current.ICodeLoader>);
 use_current_InterfaceDeclaration_ICodeLoader(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICodeLoader());
 
 /*
@@ -303,7 +300,6 @@ declare function get_current_InterfaceDeclaration_ICodeLoader():
 declare function use_old_InterfaceDeclaration_ICodeLoader(
     use: TypeOnly<old.ICodeLoader>);
 use_old_InterfaceDeclaration_ICodeLoader(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICodeLoader());
 
 /*
@@ -364,7 +360,6 @@ declare function get_old_InterfaceDeclaration_IContainerContext():
 declare function use_current_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<current.IContainerContext>);
 use_current_InterfaceDeclaration_IContainerContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -822,7 +817,6 @@ declare function get_old_InterfaceDeclaration_IFluidModule():
 declare function use_current_InterfaceDeclaration_IFluidModule(
     use: TypeOnly<current.IFluidModule>);
 use_current_InterfaceDeclaration_IFluidModule(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidModule());
 
 /*
@@ -835,7 +829,6 @@ declare function get_current_InterfaceDeclaration_IFluidModule():
 declare function use_old_InterfaceDeclaration_IFluidModule(
     use: TypeOnly<old.IFluidModule>);
 use_old_InterfaceDeclaration_IFluidModule(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidModule());
 
 /*
@@ -848,7 +841,6 @@ declare function get_old_InterfaceDeclaration_IFluidModuleWithDetails():
 declare function use_current_InterfaceDeclaration_IFluidModuleWithDetails(
     use: TypeOnly<current.IFluidModuleWithDetails>);
 use_current_InterfaceDeclaration_IFluidModuleWithDetails(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidModuleWithDetails());
 
 /*
@@ -861,7 +853,6 @@ declare function get_current_InterfaceDeclaration_IFluidModuleWithDetails():
 declare function use_old_InterfaceDeclaration_IFluidModuleWithDetails(
     use: TypeOnly<old.IFluidModuleWithDetails>);
 use_old_InterfaceDeclaration_IFluidModuleWithDetails(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidModuleWithDetails());
 
 /*
@@ -1210,7 +1201,6 @@ declare function get_old_InterfaceDeclaration_IProvideRuntimeFactory():
 declare function use_current_InterfaceDeclaration_IProvideRuntimeFactory(
     use: TypeOnly<current.IProvideRuntimeFactory>);
 use_current_InterfaceDeclaration_IProvideRuntimeFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideRuntimeFactory());
 
 /*
@@ -1223,7 +1213,6 @@ declare function get_current_InterfaceDeclaration_IProvideRuntimeFactory():
 declare function use_old_InterfaceDeclaration_IProvideRuntimeFactory(
     use: TypeOnly<old.IProvideRuntimeFactory>);
 use_old_InterfaceDeclaration_IProvideRuntimeFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideRuntimeFactory());
 
 /*
@@ -1332,7 +1321,6 @@ declare function get_old_InterfaceDeclaration_IRuntimeFactory():
 declare function use_current_InterfaceDeclaration_IRuntimeFactory(
     use: TypeOnly<current.IRuntimeFactory>);
 use_current_InterfaceDeclaration_IRuntimeFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRuntimeFactory());
 
 /*
@@ -1345,7 +1333,6 @@ declare function get_current_InterfaceDeclaration_IRuntimeFactory():
 declare function use_old_InterfaceDeclaration_IRuntimeFactory(
     use: TypeOnly<old.IRuntimeFactory>);
 use_old_InterfaceDeclaration_IRuntimeFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IRuntimeFactory());
 
 /*

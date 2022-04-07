@@ -113,7 +113,7 @@
   "typeValidation": {
     "version": "0.59.1000",
     "broken": {
-      "0.58.2000": {
+      "0.58.2002": {
         "InterfaceDeclaration_IBaseSummarizeResult": {
           "forwardCompat": false
         },
