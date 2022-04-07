@@ -499,9 +499,7 @@ export class MapKernel implements IValueTypeCreator {
     public trySubmitMessage(op: any, localOpMetadata: unknown): boolean {
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.messageHandlers.get(type)!.submit(op as IMapOperation, localOpMetadata);
-            return true;
+            throw new Error("SharedIntervals do not support reconnect.");
         }
         return false;
     }
