@@ -490,6 +490,7 @@ export class ConnectionManager implements IConnectionManager {
                     throw error;
                 }
 
+                // Since the error is retryable this will not log to the error table
                 logNetworkFailure(
                     this.logger,
                     {
