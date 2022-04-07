@@ -371,8 +371,6 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
         Lumberjack.info(
             `Consumer processing message from kafka with size= ${message.size}`,
         );
-        console.log(`Consumer processing message from kafka with size= ${message.size}`);
-
 		if (!this.assignedPartitions.has(partition)) {
 			/*
 				It is possible for node-rdkafka to send us messages for old partitions after a rebalance is processed.

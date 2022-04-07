@@ -296,7 +296,6 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
                                 Lumberjack.info(
                                     `Producer sending msg to kafka with size= ${message.length}`,
                                 );
-                                console.log(`Producer sending msg to kafka with size= ${message.length}`);
 								this.emit("produced", boxcarMessage, offset, message.length);
 							}
 						},
