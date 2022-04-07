@@ -17,11 +17,11 @@ import { Container } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 /**
- * These tests validate that new fluid objects such as data stores and DDSs become visible correctly. For example,
+ * These tests validate that new Fluid objects such as data stores and DDSs become visible correctly. For example,
  * new non-root data stores should not become visible (or reachable from root) until their handles are added to a
  * visible DDS.
  */
-describeNoCompat("New fluid objects visibility", (getTestObjectProvider) => {
+describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let container1: IContainer;
     let containerRuntime1: IContainerRuntime;
