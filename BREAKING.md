@@ -28,6 +28,7 @@ ICodeLoader interface was deprecated a while ago and will be removed in the next
 - [Remove `@fluidframework/core-interface#fluidPackage.ts`](#Remove-fluidframeworkcore-interfacefluidPackagets)
 - [getAbsoluteUrl() argument type changed](#getAbsoluteUrl-argument-type-changed)
 - [Replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface)
+- [IFluidModule.fluidExport is no longer an IFluidObject](#IFluidModule.fluidExport-is-no-longer-an-IFluidObject)
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
@@ -92,6 +93,9 @@ export interface ICodeDetailsLoader
 All codeloaders are now expected to return the object including both the runtime factory and code details of the package that was actually loaded. These code details may be used later then to check whether the currently loaded package `.satisfies()` a constraint.
 
 You can start by returning default code details that were passed into the code loader which used to be our implementation on your behalf if code details were not passed in. Later on, this gives an opportunity to implement more sophisticated code loading where the code loader now can inform about the actual loaded module via the returned details.
+
+### IFluidModule.fluidExport is no longer an IFluidObject
+IFluidObject is no longer part of the type of IFluidModule.fluidExport. IFluidModule.fluidExport is still a [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
 
 # 0.58
 
