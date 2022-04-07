@@ -101,6 +101,16 @@ IFluidObject is no longer part of the type of IFluidModule.fluidExport. IFluidMo
 ### IContainerContext.scope is no longer an IFluidObject
 IFluidObject is no longer part of the type of IContainerContext.scope. IContainerContext.scope is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
 
+### IFluidHandle generic's default no longer includes IFluidObject
+IFluidObject is no longer part of the type of IFluidHandle generic's default.
+
+``` diff
+- IFluidHandle<T = IFluidObject & FluidObject & IFluidLoadable>
++ IFluidHandle<T = FluidObject & IFluidLoadable>
+```
+
+This will affect the result of all `get()` calls on IFluidHandle's, and the default return will no longer be and IFluidObject by default. IFluidHandle generic's default is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+
 
 # 0.58
 
