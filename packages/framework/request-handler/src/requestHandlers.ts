@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
     IResponse,
     IRequest,
     IFluidHandle,
