@@ -54,7 +54,11 @@
             "error"
         ],
         "@typescript-eslint/brace-style": [
-            "error"
+            "warn",
+            "1tbs",
+            {
+                "allowSingleLine": true
+            }
         ],
         "@typescript-eslint/comma-dangle": [
             "error",
@@ -96,7 +100,7 @@
             "off"
         ],
         "@typescript-eslint/explicit-function-return-type": [
-            "error",
+            "warn",
             {
                 "allowConciseArrowFunctionExpressionsStartingWithVoid": false,
                 "allowDirectConstAssertionInArrowFunctions": true,
@@ -189,7 +193,16 @@
             "error"
         ],
         "@typescript-eslint/no-magic-numbers": [
-            "error"
+            "off",
+            {
+                "ignore": [
+                    0,
+                    1,
+                    -1
+                ],
+                "ignoreArrayIndexes": true,
+                "ignoreDefaultValues": true
+            }
         ],
         "@typescript-eslint/no-misused-new": [
             "error"
@@ -1016,7 +1029,7 @@
             "error"
         ],
         "unicorn/prefer-at": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-code-point": [
             "error"

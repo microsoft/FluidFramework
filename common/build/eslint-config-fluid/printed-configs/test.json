@@ -57,7 +57,11 @@
             "error"
         ],
         "@typescript-eslint/brace-style": [
-            "error"
+            "warn",
+            "1tbs",
+            {
+                "allowSingleLine": true
+            }
         ],
         "@typescript-eslint/comma-dangle": [
             "error",
@@ -99,7 +103,7 @@
             "off"
         ],
         "@typescript-eslint/explicit-function-return-type": [
-            "error",
+            "warn",
             {
                 "allowConciseArrowFunctionExpressionsStartingWithVoid": false,
                 "allowDirectConstAssertionInArrowFunctions": true,
@@ -192,7 +196,16 @@
             "error"
         ],
         "@typescript-eslint/no-magic-numbers": [
-            "error"
+            "off",
+            {
+                "ignore": [
+                    0,
+                    1,
+                    -1
+                ],
+                "ignoreArrayIndexes": true,
+                "ignoreDefaultValues": true
+            }
         ],
         "@typescript-eslint/no-misused-new": [
             "error"
@@ -486,7 +499,7 @@
             }
         ],
         "import/no-unused-modules": [
-            "error",
+            "off",
             {
                 "missingExports": true
             }
@@ -498,7 +511,17 @@
             "off"
         ],
         "jest/expect-expect": [
-            "warn"
+            "error",
+            {
+                "assertFunctionNames": [
+                    "assert",
+                    "assert.*",
+                    "expect",
+                    "strict",
+                    "strict.*",
+                    "test*"
+                ]
+            }
         ],
         "jest/no-commented-out-tests": [
             "warn"
@@ -602,7 +625,7 @@
             "error"
         ],
         "mocha/no-mocha-arrows": [
-            "error"
+            "off"
         ],
         "mocha/no-nested-tests": [
             "error"
@@ -986,7 +1009,7 @@
             "error"
         ],
         "unicorn/consistent-function-scoping": [
-            "error"
+            "off"
         ],
         "unicorn/custom-error-definition": [
             "off"
@@ -1151,7 +1174,7 @@
             "error"
         ],
         "unicorn/prefer-at": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-code-point": [
             "error"

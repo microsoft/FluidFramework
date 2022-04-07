@@ -67,7 +67,13 @@ module.exports = {
         "@typescript-eslint/array-type": "error",
 
         // Enforce consistent brace style for blocks.
-        "@typescript-eslint/brace-style": "error",
+        "@typescript-eslint/brace-style": [
+            "warn",
+            "1tbs",
+            {
+                "allowSingleLine": true,
+            },
+        ],
 
         // Use dangling commas where possible.
         "@typescript-eslint/comma-dangle": [
@@ -163,7 +169,7 @@ module.exports = {
         // API documentation. For example, type inference might decide a function returns a concrete type
         // instead of an interface. This has no runtime impact, but would cause compilation problems.
         "@typescript-eslint/explicit-function-return-type": [
-            "error",
+            "warn",
             {
                 "allowExpressions": true,
                 "allowTypedFunctionExpressions": true,
@@ -176,15 +182,23 @@ module.exports = {
         // Forbids the use of classes as namespaces.
         "@typescript-eslint/no-extraneous-class": "error",
 
-        // This rule disallows explicit type declarations for inferrable types. Disabled because sometimes explicit
-        // type declarations help readability.
+        // This rule disallows explicit type declarations for inferrable types. Disabled because sometimes explicit type
+        // declarations help readability.
         "@typescript-eslint/no-inferrable-types": "off",
 
         // Disallow this keywords outside of classes or class-like objects.
         "@typescript-eslint/no-invalid-this": "error",
 
-        // Disallow magic numbers.
-        "@typescript-eslint/no-magic-numbers": "error",
+        // Disallow magic numbers. Disabled because our automatic assert tagging spits out magic numbers.
+        "@typescript-eslint/no-magic-numbers": [
+            "off",
+            {
+                // 0, 1, and -1 are ok
+                "ignore": [0, 1, -1],
+                "ignoreArrayIndexes": true,
+                "ignoreDefaultValues": true,
+            }
+        ],
 
         // Disallows non-null assertions using the `!` postfix operator.
         "@typescript-eslint/no-non-null-assertion": "error",
@@ -350,6 +364,9 @@ module.exports = {
 
         // Requires a default case in switch statements.
         "default-case": "error",
+
+        // Superseded by @typescript-eslint/dot-notation.
+        "dot-notation": "off",
 
         // Disabled becuase it doesn't work well for all our files.
         "editorconfig/indent": "off",
@@ -608,6 +625,10 @@ module.exports = {
             }
         ],
 
+        // Move function definitions to the highest possible scope.
+        "unicorn/consistent-function-scoping": "error",
+
+        // Disabled because it's too nit-picky.
         "unicorn/empty-brace-spaces": "off",
 
         // Enforces all linted files to have their names in a certain case style and lowercase file extension.
@@ -628,7 +649,8 @@ module.exports = {
         "unicorn/numeric-separators-style": "off",
 
         // Prefer .at() method for index access and String#charAt().
-        "unicorn/prefer-at": "error",
+        // Disabled because we need to upgrade TypeScript to 4.5+ to use the ES2022 stuff like .at().
+        "unicorn/prefer-at": "off",
 
         // Disabled because the node protocol causes problems, especially for isomorphic packages.
         "unicorn/prefer-node-protocol": "off",
@@ -640,9 +662,16 @@ module.exports = {
         {
             // Rules only for TypeScript files
             "files": ["*.ts", "*.tsx"],
+            "rules": {}
+        },
+        {
+            // Rules only for type validation files
+            "files": ["**/types/*validate*Previous.ts"],
             "rules": {
-                "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
-                "no-unused-expressions": "off", // Superseded by @typescript-eslint/no-unused-expressions
+                "@typescript-eslint/comma-spacing": "off",
+                "@typescript-eslint/consistent-type-imports": "off",
+                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-unsafe-argument": "off",
             }
         },
         {
@@ -653,9 +682,38 @@ module.exports = {
                 "plugin:mocha/recommended",
             ],
             "rules": {
+                // Tests use hardcoded magic numbers regularly.
+                "@typescript-eslint/no-magic-numbers": "off",
+
                 // Superseded by jest/unbound-method.
                 "@typescript-eslint/unbound-method": "off",
+
+                // Disabled for test projects since they often don't have exports.
+                "import/no-unused-modules": "off",
+
+                "jest/expect-expect": [
+                    "error",
+                    {
+                        "assertFunctionNames": [
+                            "assert",
+                            "assert.*",
+                            "expect",
+                            "strict",
+                            "strict.*",
+                            "test*",
+                        ]
+                    }
+                ],
+
+                // Jest-specific version of @typescript-eslint/unbound-method.
                 "jest/unbound-method": "error",
+
+                // Disabled because we use arrow functions in our mocha tests often.
+                "mocha/no-mocha-arrows": "off",
+
+                // Disabled because it's noisy in test projects.
+                "unicorn/consistent-function-scoping": "off",
+
             },
             "plugins": [
                 // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-jest
