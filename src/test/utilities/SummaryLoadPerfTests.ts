@@ -12,7 +12,7 @@ import { performFuzzActions } from '../fuzz/SharedTreeFuzzTests';
 import { makeOpGenerator, take } from '../fuzz/Generators';
 import { expectAssert } from '../Summary.tests';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
-import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from './TestUtilities';
+import { setUpLocalServerTestSharedTree, setUpTestSharedTree, testDocumentsPathBase } from './TestUtilities';
 
 const directory = join(testDocumentsPathBase, 'summary-load-perf-tests');
 
@@ -35,12 +35,6 @@ export function runSummaryLoadPerfTests(title: string): void {
 			// blobsFile: string;
 		} = loadSummaryTestFiles();
 
-		let tree: SharedTree;
-		// All summary tests use the same setup.
-		const before = async () => {
-			({ tree } = await setUpLocalServerTestSharedTree({ writeFormat: WriteFormat.v0_0_2 }));
-		};
-
 		const tests = [
 			{ title: 'load 0.0.2 format without history', file: summaryFileNoHistory_0_0_2 },
 			{ title: 'load 0.0.2 format with history', file: summaryFileWithHistory_0_0_2 },
@@ -52,8 +46,10 @@ export function runSummaryLoadPerfTests(title: string): void {
 			benchmark({
 				type: BenchmarkType.Measurement,
 				title,
-				before,
-				benchmarkFn: () => tree.loadSerializedSummary(file),
+				benchmarkFn: () => {
+					const { tree } = setUpTestSharedTree({ writeFormat: WriteFormat.v0_0_2 });
+					tree.loadSerializedSummary(file);
+				},
 			});
 		}
 	});
