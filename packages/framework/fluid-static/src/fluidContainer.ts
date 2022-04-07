@@ -5,7 +5,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { AttachState, IContainer, ConnectionState } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
@@ -74,8 +74,16 @@ export interface IFluidContainerEvents extends IEvent {
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
      * Whether the container is connected to the collaboration session.
+     * @deprecated - 0.58, This API will be removed in 1.0
+     * Check `connectionState === ConnectionState.Connected` instead
+     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
      */
     readonly connected: boolean;
+
+    /**
+     * Provides the current connected state of the container
+     */
+    readonly connectionState: ConnectionState;
 
      /**
      * A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service.
@@ -182,6 +190,13 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      */
     public get connected() {
         return this.container.connected;
+    }
+
+    /**
+     * {@inheritDoc IFluidContainer.connectionState}
+     */
+     public get connectionState(): ConnectionState {
+        return this.container.connectionState;
     }
 
     /**
