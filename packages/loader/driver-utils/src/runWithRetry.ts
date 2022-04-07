@@ -5,10 +5,11 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { delay, performance } from "@fluidframework/common-utils";
-import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "./network";
 import { pkgVersion } from "./packageVersion";
 import { NonRetryableError } from ".";
+
 
 /**
  * Interface describing an object passed to various network APIs.
@@ -61,6 +62,7 @@ export async function runWithRetry<T>(
                     eventName: `${fetchCallName}_cancel`,
                     retry: numRetries,
                     duration: performance.now() - startTime,
+                    fetchCallName,
                 }, err);
                 throw err;
             }
@@ -70,10 +72,11 @@ export async function runWithRetry<T>(
                     eventName: `${fetchCallName}_runWithRetryAborted`,
                     retry: numRetries,
                     duration: performance.now() - startTime,
+                    fetchCallName,
                 }, err);
                 throw new NonRetryableError(
                     "runWithRetry was Aborted",
-                    OdspErrorType.fetchTimeout,
+                    DriverErrorType.genericError,
                     { driverVersion: pkgVersion, fetchCallName },
                 );
             }
@@ -94,6 +97,7 @@ export async function runWithRetry<T>(
             eventName: `${fetchCallName}_lastError`,
             retry: numRetries,
             duration: performance.now() - startTime,
+            fetchCallName,
         },
         lastError);
     }
