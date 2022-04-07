@@ -17,19 +17,14 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
 export interface IQuorum extends ISharedObject<IQuorumEvents> {
-    // (undocumented)
     delete(key: string): void;
-    // (undocumented)
     get(key: string): any;
-    // (undocumented)
     getPending(key: string): any;
-    // (undocumented)
     has(key: string): boolean;
-    // (undocumented)
     set(key: string, value: any): void;
 }
 
-// @public (undocumented)
+// @public
 export interface IQuorumEvents extends ISharedObjectEvents {
     (event: "pending" | "accepted", listener: (key: string) => void): any;
 }
@@ -40,14 +35,10 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     // (undocumented)
     applyStashedOp(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): Quorum;
-    // (undocumented)
     delete(key: string): void;
-    // (undocumented)
     get(key: string): any;
     static getFactory(): IChannelFactory;
-    // (undocumented)
     getPending(key: string): any;
-    // (undocumented)
     has(key: string): boolean;
     // @internal (undocumented)
     protected initializeLocalCore(): void;
@@ -59,7 +50,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal
     protected reSubmitCore(): void;
-    // (undocumented)
     set(key: string, value: any): void;
     // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;

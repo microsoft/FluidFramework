@@ -169,7 +169,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * @param runtime - data store runtime the quorum belongs to
      * @param id - optional name of the quorum
      */
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+    public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
         this.incomingOp.on("set", this.handleIncomingSet);
@@ -182,16 +183,25 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         });
     }
 
+    /**
+     * {@inheritDoc IQuorum.has}
+     */
     public has(key: string): boolean {
         return this.values.get(key)?.accepted !== undefined;
     }
 
+    /**
+     * {@inheritDoc IQuorum.get}
+     */
     public get(key: string): any {
         return this.values.get(key)?.accepted?.value;
     }
 
-    // TODO: Should this return differently for a value of undefined vs. a pending delete?
+    /**
+     * {@inheritDoc IQuorum.getPending}
+     */
     public getPending(key: string): any {
+        // TODO: Should this return differently for a value of undefined vs. a pending delete?
         const pending = this.values.get(key)?.pending;
         if (pending === undefined || pending.type === "delete") {
             return undefined;
@@ -200,6 +210,9 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         return pending.value;
     }
 
+    /**
+     * {@inheritDoc IQuorum.set}
+     */
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     public set(key: string, value: any): void {
         // TODO: handle detached scenario, just auto accept basically
@@ -215,6 +228,9 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.submitLocalMessage(setOp);
     }
 
+    /**
+     * {@inheritDoc IQuorum.delete}
+     */
     public delete(key: string): void {
         // TODO: handle detached scenario, just auto accept basically
 
