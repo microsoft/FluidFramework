@@ -74,7 +74,9 @@
     "version": "0.48.1000",
     "broken": {
       "0.47.1000": {
-        "InterfaceDeclaration_IContainerContext": {"backCompat": false }
+        "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false
+        }
       }
     }
   }
