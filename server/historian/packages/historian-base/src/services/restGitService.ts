@@ -482,8 +482,8 @@ export class RestGitService {
         if (resolvingSummary) {
             /**
              * We set the useCache flag as false when we fetch the summary at the first time. We need to
-             * get the summary from the strage, and update the cache. If not, the following calls with
-             * useCache enabled might read the outdated summary from cache in case of the historian service change.
+             * get the summary from the storage, and update the cache. If not, the following calls with
+             * useCache enabled might read the outdated summary from cache in case of the cluster change.
              */
              return this.fetchAndCache(key, fetch);
         }
