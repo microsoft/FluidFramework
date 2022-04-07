@@ -7,6 +7,7 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
 import { isSystemMessage } from "@fluidframework/protocol-base";
 
@@ -40,10 +41,11 @@ export class OpTracker {
         deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
             // Some messages my already have string contents at this point,
             // so stringifying them again will add inaccurate overhead.
-            const stringContents = typeof message.contents === "string" ?
+            const messageContent = typeof message.contents === "string" ?
                 message.contents :
                 JSON.stringify(message.contents);
-            this.messageSize[OpTracker.messageId(message)] = stringContents.length;
+            const messageData = OpTracker.messageHasData(message) ? message.data : "";
+            this.messageSize[OpTracker.messageId(message)] = messageContent.length + messageData.length;
         });
 
         deltaManager.on("op", (message: ISequencedDocumentMessage) => {
@@ -56,6 +58,10 @@ export class OpTracker {
 
     private static messageId(message: ISequencedDocumentMessage): number {
         return message.sequenceNumber;
+    }
+
+    private static messageHasData(message: ISequencedDocumentMessage) : message is ISequencedDocumentSystemMessage {
+        return (message as ISequencedDocumentSystemMessage).data !== undefined;
     }
 
     public reset() {
