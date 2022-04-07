@@ -690,7 +690,7 @@ module.exports = {
                         "assertFunctionNames": [
                             "assert",
                             "assert.*",
-                            "expect",
+                            "expect*",
                             "strict",
                             "strict.*",
                             "test*",
