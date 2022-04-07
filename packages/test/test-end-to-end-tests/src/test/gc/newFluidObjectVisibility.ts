@@ -4,7 +4,11 @@
  */
 
 import assert from "assert";
+import { IContainer } from "@fluidframework/container-definitions";
+import { Container } from "@fluidframework/container-loader";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
+import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import {
@@ -12,16 +16,13 @@ import {
     ITestDataObject,
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 /**
  * These tests validate that new Fluid objects such as data stores and DDSs become visible correctly. For example,
  * new non-root data stores should not become visible (or reachable from root) until their handles are added to a
  * visible DDS.
  */
-describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
+describeNoCompat.only("New Fluid objects visibility", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let container1: IContainer;
     let containerRuntime1: IContainerRuntime;
@@ -66,6 +67,19 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
         return dataObject;
     }
 
+    async function getAndValidateDataObject(
+        fromDataObject: ITestDataObject,
+        key: string,
+        container: IContainer,
+    ): Promise<ITestDataObject> {
+        const dataObjectHandle = fromDataObject._root.get<IFluidHandle<ITestDataObject>>(key);
+        assert(dataObjectHandle !== undefined, `Data object handle for key ${key} not found`);
+        const dataObject = await dataObjectHandle.get();
+        await assert.doesNotReject(requestTestObjectWithoutWait(container, dataObject._context.id),
+            `Data object for key ${key} must be visible`);
+        return dataObject;
+    }
+
     async function ensureContainerConnected(container: Container): Promise<void> {
         if (!container.connected) {
             return new Promise((resolve) => container.once("connected", () => resolve()));
@@ -99,7 +113,15 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
          * Validates that non-root data stores are not visible until their handles are added to a visible DDS.
          * Also, they are visible in remote clients and can send ops.
          */
-        it("validates that non-root data stores become visible correctly", async () => {
+        it("validates that non-root data stores become visible correctly", async function() {
+            /**
+             * This test fails in detached container because of https://github.com/microsoft/FluidFramework/issues/9127.
+             * To be enabled once the bug is fixed.
+             */
+            if (detachedMode) {
+                this.skip();
+            }
+
             const dataObject2 = await createNonRootDataObject(container1, containerRuntime1);
             dataObject1._root.set("dataObject2", dataObject2.handle);
 
@@ -117,12 +139,7 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
             const container2 = await provider.loadTestContainer();
             await provider.ensureSynchronized();
             const dataObject1C2 = await requestTestObjectWithoutWait(container2, "default");
-
-            const dataObject2HandleC2 = dataObject1C2._root.get<IFluidHandle<ITestDataObject>>("dataObject2");
-            assert(dataObject2HandleC2 !== undefined, "Data object 2 handle not found in container 2");
-            const dataObject2C2 = await dataObject2HandleC2.get();
-            await assert.doesNotReject(requestTestObjectWithoutWait(container2, dataObject2C2._context.id),
-                "Data object 2 must be visible in second container");
+            const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2", container2);
 
             // Send ops for the data store in both local and remote container and validate that the ops are successfully
             // processed.
@@ -137,7 +154,15 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
          * Validates that non-root data stores that have other non-root data stores as dependencies are not visible
          * until the parent data store is visible. Also, they are visible in remote clients and can send ops.
          */
-        it("validates that non-root data store and its dependencies become visible correctly", async () => {
+        it("validates that non-root data store and its dependencies become visible correctly", async function() {
+            /**
+             * This test fails in detached container because of https://github.com/microsoft/FluidFramework/issues/9127.
+             * To be enabled once the bug is fixed.
+             */
+            if (detachedMode) {
+                this.skip();
+            }
+
             const dataObject2 = await createNonRootDataObject(container1, containerRuntime1);
             const dataObject3 = await createNonRootDataObject(container1, containerRuntime1);
 
@@ -165,18 +190,8 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
             const container2 = await provider.loadTestContainer();
             await provider.ensureSynchronized();
             const dataObject1C2 = await requestTestObjectWithoutWait(container2, "default");
-
-            const dataObject2HandleC2 = dataObject1C2._root.get<IFluidHandle<ITestDataObject>>("dataObject2");
-            assert(dataObject2HandleC2 !== undefined, "Data object 2 handle not found in container 2");
-            const dataObject2C2 = await dataObject2HandleC2.get();
-            await assert.doesNotReject(requestTestObjectWithoutWait(container2, dataObject2C2._context.id),
-                "Data object 2 must be visible in second container");
-
-            const dataObject3HandleC2 = dataObject2C2._root.get<IFluidHandle<ITestDataObject>>("dataObject3");
-            assert(dataObject3HandleC2 !== undefined, "Data object 3 handle not found in container 2");
-            const dataObject3C2 = await dataObject3HandleC2.get();
-            await assert.doesNotReject(requestTestObjectWithoutWait(container2, dataObject3C2._context.id),
-                "Data object 3 must be visible in second container");
+            const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2", container2);
+            const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3", container2);
 
             // Send ops for the data stores in both local and remote container and validate that the ops are
             // successfully processed.
@@ -214,12 +229,7 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
             const container2 = await provider.loadTestContainer();
             await provider.ensureSynchronized();
             const dataObject2C2 = await requestTestObjectWithoutWait(container2, "rootDataStore");
-
-            const dataObject3HandleC2 = dataObject2C2._root.get<IFluidHandle<ITestDataObject>>("dataObject3");
-            assert(dataObject3HandleC2 !== undefined, "Data object 3 handle not found in container 2");
-            const dataObject3C2 = await dataObject3HandleC2.get();
-            await assert.doesNotReject(requestTestObjectWithoutWait(container2, dataObject3C2._context.id),
-                "Data object 3 must be visible in second container");
+            const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3", container2);
 
             // Send ops for both data stores in both local and remote container and validate that the ops are
             // successfully processed.
@@ -233,17 +243,119 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
             assert.strictEqual(dataObject3._root.get("key2"), "value2");
             assert.strictEqual(dataObject3C2._root.get("key1"), "value1");
         });
+
+        /**
+         * Validates that DDSes created in non-root data stores become visible and can send ops when the data store
+         * becomes globally visible to all clients.
+         */
+         it("validates that DDSs in non-root data stores become visible correctly", async () => {
+            const dataObject2 = await createNonRootDataObject(container1, containerRuntime1);
+
+            // Create a DDS when data store is not visible and store its handle.
+            const map1 = SharedMap.create(dataObject2._runtime);
+            dataObject2._root.set("map1", map1.handle);
+
+            dataObject1._root.set("dataObject2", dataObject2.handle);
+
+            // Create a DDS after data store is locally visible and store its handle.
+            const map2 = SharedMap.create(dataObject2._runtime);
+            dataObject2._root.set("map2", map2.handle);
+
+            if (detachedMode) {
+                await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
+                await ensureContainerConnected(container1 as Container);
+            }
+
+            // Create a DDS after data store is globally visible and store its handle.
+            const map3 = SharedMap.create(dataObject2._runtime);
+            dataObject2._root.set("map3", map3.handle);
+
+            // Load a second container.
+            const container2 = await provider.loadTestContainer();
+            await provider.ensureSynchronized();
+            const dataObject1C2 = await requestTestObjectWithoutWait(container2, "default");
+            const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2", container2);
+
+            // Validate that the DDSs are present in the second container.
+            const map1C2 = await (dataObject2C2._root.get<IFluidHandle<SharedMap>>("map1"))?.get();
+            assert(map1C2 !== undefined, "map1 not found in second container");
+            const map2C2 = await (dataObject2C2._root.get<IFluidHandle<SharedMap>>("map2"))?.get();
+            assert(map2C2 !== undefined, "map2 not found in second container");
+            const map3C2 = await (dataObject2C2._root.get<IFluidHandle<SharedMap>>("map3"))?.get();
+            assert(map3C2 !== undefined, "map3 not found in second container");
+
+            // Send ops for all the DDSs created above in both local and remote container and validate that the ops are
+            // successfully processed.
+            map1.set("key1", "value1");
+            map1C2.set("key2", "value2");
+            map2.set("key1", "value1");
+            map2C2.set("key2", "value2");
+            map3.set("key1", "value1");
+            map3C2.set("key2", "value2");
+            await provider.ensureSynchronized();
+            assert.strictEqual(map1.get("key2"), "value2");
+            assert.strictEqual(map1C2.get("key1"), "value1");
+            assert.strictEqual(map2.get("key2"), "value2");
+            assert.strictEqual(map2C2.get("key1"), "value1");
+            assert.strictEqual(map3.get("key2"), "value2");
+            assert.strictEqual(map3C2.get("key1"), "value1");
+        });
+
+        /**
+         * Validates that DDSes created in root data stores become visible and can send ops when the data store
+         * becomes globally visible to all clients.
+         */
+         it("validates that DDSs in root data stores become visible correctly", async () => {
+            const dataObject2 = await createRootDataObject(container1, containerRuntime1, "rootDataStore");
+
+            // Create a DDS after data store is locally visible and store its handle.
+            const map1 = SharedMap.create(dataObject2._runtime);
+            dataObject2._root.set("map1", map1.handle);
+
+            // Adding handle of the non-root data store to a visible DDS should make it visible (reachable)
+            // from the root.
+            await assert.doesNotReject(requestTestObjectWithoutWait(container1, dataObject2._context.id),
+                "Data object 2 must be visible from root after its handle is added");
+
+            if (detachedMode) {
+                await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
+                await ensureContainerConnected(container1 as Container);
+            }
+
+            // Create a DDS after data store is globally visible and store its handle.
+            const map2 = SharedMap.create(dataObject2._runtime);
+            dataObject2._root.set("map2", map2.handle);
+
+            // Load a second container.
+            const container2 = await provider.loadTestContainer();
+            await provider.ensureSynchronized();
+            const dataObject2C2 = await requestFluidObject<ITestDataObject>(container2, "rootDataStore");
+
+            // Validate that the DDSs are present in the second container.
+            const map1C2 = await (dataObject2C2._root.get<IFluidHandle<SharedMap>>("map1"))?.get();
+            assert(map1C2 !== undefined, "map1 not found in second container");
+            const map2C2 = await (dataObject2C2._root.get<IFluidHandle<SharedMap>>("map2"))?.get();
+            assert(map2C2 !== undefined, "map2 not found in second container");
+
+            // Send ops for all the DDSs created above in both local and remote container and validate that the ops are
+            // successfully processed.
+            map1.set("key1", "value1");
+            map1C2.set("key2", "value2");
+            map2.set("key1", "value1");
+            map2C2.set("key2", "value2");
+            await provider.ensureSynchronized();
+            assert.strictEqual(map1.get("key2"), "value2");
+            assert.strictEqual(map1C2.get("key1"), "value1");
+            assert.strictEqual(map2.get("key2"), "value2");
+            assert.strictEqual(map2C2.get("key1"), "value1");
+        });
     };
 
-    /**
-     * The tests fail in detached container because of https://github.com/microsoft/FluidFramework/issues/9127. To
-     * be enabled once the bug is fixed.
-     */
-    describe.skip("New data stores visibility in detached container", () => {
+    describe("Detached container", () => {
         tests(true /* detachedMode */);
     });
 
-    describe("New data stores visibility in attached container", () => {
+    describe("Attached container", () => {
         tests(false /* detachedMode */);
     });
 });
