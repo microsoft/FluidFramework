@@ -42,7 +42,7 @@ export interface IFluidCodeDetailsConfig {
 export const IFluidHandle: keyof IProvideFluidHandle;
 
 // @public
-export interface IFluidHandle<T = IFluidObject & FluidObject & IFluidLoadable> extends IProvideFluidHandle {
+export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly absolutePath: string;
     attachGraph(): void;
