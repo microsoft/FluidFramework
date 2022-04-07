@@ -17,13 +17,6 @@ module.exports = {
                     "error",
                     {
                         accessibility: "explicit",
-                        overrides: {
-                            accessors: "explicit",
-                            constructors: "no-public",
-                            methods: "explicit",
-                            properties: "explicit",
-                            parameterProperties: "explicit"
-                        }
                     },
                 ],
 
