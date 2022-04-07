@@ -69,11 +69,13 @@ export class OdspSummaryUploadManager {
         referenceSequenceNumber: number,
         tree: api.ISummaryTree,
     ): Promise<IWriteSummaryResponse> {
+        const enableContainerTypeSummaryUpload = this.mc.config.getBoolean("Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload");
+        const containsProtocolTree = enableContainerTypeSummaryUpload &&
+            Object.keys(tree.tree).includes(".protocol");
         const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
             tree,
             ".app",
-            "",
         );
         const snapshot: IOdspSummaryPayload = {
             entries: snapshotTree.entries!,
@@ -81,7 +83,7 @@ export class OdspSummaryUploadManager {
             sequenceNumber: referenceSequenceNumber,
             // no ack handle implies this is initial summary after empty file creation.
             // send container payload so server will use it without a summary op
-            type: parentHandle === undefined ? "container" : "channel",
+            type: containsProtocolTree || parentHandle === undefined ? "container" : "channel",
         };
 
         return getWithRetryForTokenRefresh(async (options) => {
@@ -109,6 +111,8 @@ export class OdspSummaryUploadManager {
                     blobs,
                     size: postBody.length,
                     referenceSequenceNumber,
+                    type: snapshot.type,
+                    enableContainerTypeSummaryUpload,
                 },
                 async () => {
                     const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
@@ -137,7 +141,6 @@ export class OdspSummaryUploadManager {
         parentHandle: string | undefined,
         tree: api.ISummaryTree,
         rootNodeName: string,
-        path: string = "",
         markUnreferencedNodes: boolean = this.mc.config.getBoolean("Fluid.Driver.Odsp.MarkUnreferencedNodes") ?? true,
     ) {
         const snapshotTree: IOdspSummaryTree = {
@@ -157,14 +160,12 @@ export class OdspSummaryUploadManager {
             // property is not present, the tree entry is considered referenced. If the property is present and is
             // true (which is the only value it can have), the tree entry is considered unreferenced.
             let unreferenced: true | undefined;
-            const currentPath = path === "" ? `${rootNodeName}/${key}` : `${path}/${key}`;
             switch (summaryObject.type) {
                 case api.SummaryType.Tree: {
                     const result = await this.convertSummaryToSnapshotTree(
                         parentHandle,
                         summaryObject,
-                        rootNodeName,
-                        currentPath);
+                        rootNodeName);
                     value = result.snapshotTree;
                     unreferenced = markUnreferencedNodes ? summaryObject.unreferenced : undefined;
                     blobs += result.blobs;

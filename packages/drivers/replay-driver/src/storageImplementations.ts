@@ -171,7 +171,11 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
     public readonly protocolName = "fluid-static-storage:";
     public constructor(protected readonly storage: IDocumentStorageService) { }
 
-    public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        fileURL: IResolvedUrl,
+        logger?: ITelemetryLogger,
+        clientIsSummarizer?: boolean,
+    ): Promise<IDocumentService> {
         return new StaticStorageDocumentService(this.storage);
     }
 
@@ -180,6 +184,7 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
         logger: ITelemetryLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         throw new Error("Not implemented");
     }

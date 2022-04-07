@@ -90,6 +90,7 @@ describe("Data Store Creation Tests", () => {
                 get IFluidDataStoreRegistry() { return globalRegistry; },
                 get: async (pkg) => globalRegistryEntries.get(pkg),
             };
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IFluidDataStoreRegistry: globalRegistry,
                 on: (event, listener) => { },

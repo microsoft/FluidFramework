@@ -117,8 +117,8 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
     // (undocumented)
     static create(from: number, to: number, documentServiceFactory: IDocumentServiceFactory): ReplayDocumentServiceFactory;
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName: any;
 }
@@ -159,9 +159,9 @@ export class StaticStorageDocumentService implements IDocumentService {
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(storage: IDocumentStorageService);
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger: ITelemetryLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger: ITelemetryLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
-    createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService>;
+    createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "fluid-static-storage:";
     // (undocumented)

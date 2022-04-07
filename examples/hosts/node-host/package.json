@@ -31,7 +31,7 @@
     "@fluidframework/container-definitions": "^0.47.1000",
     "@fluidframework/container-loader": "^0.58.3000",
     "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.45.1000",
+    "@fluidframework/driver-definitions": "^0.45.2000-0",
     "@fluidframework/protocol-definitions": "^0.1027.1000",
     "@fluidframework/routerlicious-driver": "^0.58.3000",
     "@fluidframework/routerlicious-host": "^0.58.3000",
@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
