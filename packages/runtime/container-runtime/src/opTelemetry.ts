@@ -43,15 +43,19 @@ export class OpTracker {
             const stringContents = typeof message.contents === "string" ?
                 message.contents :
                 JSON.stringify(message.contents);
-            this.messageSize[message.clientSequenceNumber] = stringContents.length;
+            this.messageSize[OpTracker.messageId(message)] = stringContents.length;
         });
 
         deltaManager.on("op", (message: ISequencedDocumentMessage) => {
             this._nonSystemOpCount += isSystemMessage(message) ? 0 : 1;
-            const id = message.clientSequenceNumber;
+            const id = OpTracker.messageId(message);
             this._opsSizeAccumulator += this.messageSize[id] ?? 0;
             this.messageSize.delete(id);
         });
+    }
+
+    private static messageId(message: ISequencedDocumentMessage): number {
+        return message.sequenceNumber;
     }
 
     public reset() {
