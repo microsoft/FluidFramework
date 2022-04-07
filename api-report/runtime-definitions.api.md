@@ -93,6 +93,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
     request(request: IRequest): Promise<IResponse>;
+    // @deprecated
     setFlushMode(mode: FlushMode): void;
     submitSignal(type: string, content: any): void;
     // (undocumented)
@@ -377,6 +378,7 @@ export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRe
 
 // @public (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
+
 
 // (No @packageDocumentation comment for this package)
 

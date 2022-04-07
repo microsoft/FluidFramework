@@ -107,12 +107,20 @@ IFluidObject is no longer part of the type of IContainerContext.scope. IContaine
 ## 0.58 Upcoming changes
 - [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
 - [IDirectory extends IDisposable](#IDirectory-extends-IDisposable)
+- [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
+- [`IContainerRuntimeBase.setFlushMode` is deprecated](#icontainerruntimebasesetflushmode-is-deprecated)
 
 ### Doing operations not allowed on deleted sub directory
 Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory will throw `UsageError` exception now.
 
 ### IDirectory extends IDisposable
 IDirectory has started extending IDisposable. This means that users implementing the IDirectory interface needs to implement IDisposable too now.
+
+### raiseContainerWarning removed from IContainerContext
+`raiseContainerWarning` property will be removed from `IContainerContext` interface and `ContainerContext` class. Please refer to [raiseContainerWarning property](#Remove-raisecontainerwarning-property) for more details.
+
+### `IContainerRuntimeBase.setFlushMode` is deprecated
+`IContainerRuntimeBase.setFlushMode` is deprecated and will be removed in a future release. FlushMode will become an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977)
 
 ## 0.58 Breaking changes
 - [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from-merge-tree-to-sequence-package)
