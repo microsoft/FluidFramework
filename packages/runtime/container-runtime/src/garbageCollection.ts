@@ -93,14 +93,25 @@ export interface IGCStats {
 }
 
 /** The types of GC nodes in the GC reference graph. */
-export enum GCNodeType {
+export const GCNodeType = {
     // Nodes that are for data stores.
-    DataStore = "DataStore",
+    DataStore: "DataStore",
     // Nodes that are for attachment blobs, i.e., blobs uploaded via BlobManager.
-    Blob = "Blob",
+    Blob: "Blob",
     // Nodes that are neither data store not blobs. For example, root node and DDS nodes.
-    Other = "Other",
-}
+    Other: "Other",
+};
+export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
+
+/** The types of GC nodes in the GC reference graph. */
+// export enum GCNodeType {
+//     // Nodes that are for data stores.
+//     DataStore = "DataStore",
+//     // Nodes that are for attachment blobs, i.e., blobs uploaded via BlobManager.
+//     Blob = "Blob",
+//     // Nodes that are neither data store not blobs. For example, root node and DDS nodes.
+//     Other = "Other",
+// }
 
 /** The event that is logged when unreferenced node is used after a certain time. */
 interface IUnreferencedEvent {
