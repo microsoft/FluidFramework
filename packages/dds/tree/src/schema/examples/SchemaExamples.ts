@@ -1,8 +1,14 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /**
  * Misc example schema.
  *
  * Note this is written using the "Example internal schema representation types":
- * this is not intended to show what authoring a schema would look like, but rather just show what data a schema needs to capture.
+ * this is not intended to show what authoring a schema would look like,
+ * but rather just show what data a schema needs to capture.
  */
 
  import {
@@ -10,12 +16,14 @@
     Multiplicity,
     ValueSchema,
     TreeSchemaIdentifier,
-    emptyField,
     LocalFieldKey,
+    NamedTreeSchema,
+} from "../Schema";
+import {
+    emptyField,
     emptyMap,
     emptySet,
-    NamedTreeSchema,
-} from "./Schema";
+} from "../SpecialSchema";
 
 export const codePoint: NamedTreeSchema = {
     name: "Primitive.CodePoint" as TreeSchemaIdentifier,
@@ -41,4 +49,3 @@ export const string: TreeSchema = {
     ]),
     value: ValueSchema.Nothing,
 };
-

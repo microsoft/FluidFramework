@@ -2,7 +2,8 @@
  * Example schema for a json domain.
  *
  * Note this is written using the "Example internal schema representation types":
- * this is not intended to show what authoring a schema would look like, but rather just show what data a schema needs to capture.
+ * this is not intended to show what authoring a schema would look like,
+ * but rather just show what data a schema needs to capture.
  */
 
 import {
@@ -11,12 +12,14 @@ import {
     ValueSchema,
     FieldSchema,
     TreeSchemaIdentifier,
-    emptyField,
     LocalFieldKey,
+    NamedTreeSchema,
+} from "../Schema";
+import {
+    emptyField,
     emptyMap,
     emptySet,
-    NamedTreeSchema,
-} from "./Schema";
+} from "../SpecialSchema";
 
 export const typeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 
