@@ -1,7 +1,7 @@
 # Stored and View Schema
 
 This document generally covers where we can store schema, and how they can be used, and not the specifics of what the schemas actually do.
-Another way to put that is this is about what the fluid tree needs from a schema system, and what options that leaves for how such a schema system could work,
+Another way to put that is this is about what the Fluid tree needs from a schema system, and what options that leaves for how such a schema system could work,
 and is not about how to use those options to actually build a schema system (and thus not what options the schema system exposes to application authors)
 
 An example schema system is included which does take a position on exactly what the schema system could do, but its more intended as a demonstration of how a usable schema system could meet the requirements of view and stored schema as defined in this document, and not as a final design: it makes lots of subjective choices while the point of this document is to define the solution space.
@@ -383,5 +383,5 @@ Schema-supersettting can be also used to determine if a schema is safe for readi
 ## Reuse and Polymorphism
 
 This document generally covers where we can store, and how they can be used, and not the specifics of what the schemas actually do.
-Another way to put that is this is about what the fluid tree needs from a schema system, and what options that leaves for how such a schema system could work,
+Another way to put that is this is about what the Fluid tree needs from a schema system, and what options that leaves for how such a schema system could work,
 and is not about how to use those options to actually build a schema system.
