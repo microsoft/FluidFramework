@@ -136,7 +136,7 @@ module.exports = {
         "@typescript-eslint/explicit-module-boundary-types": "error",
 
         // Standardize using semicolons to delimit members for interfaces and type literals.
-        "@typescript-eslint/member-delimiter-style": "error",
+        "@typescript-eslint/member-delimiter-style": "warn",
 
         // Our guideline is to only use leading underscores on private members when required to avoid a conflict between
         // private fields and a public property.
@@ -436,7 +436,7 @@ module.exports = {
 
         // Requires that modules have a export.
         "import/no-unused-modules": [
-            "error",
+            "warn",
             {
                 "missingExports": true
             }
