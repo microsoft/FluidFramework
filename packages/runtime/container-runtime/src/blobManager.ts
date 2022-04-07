@@ -5,14 +5,13 @@
 
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { AttachmentTreeEntry, BlobTreeEntry } from "@fluidframework/protocol-base";
-import { ISnapshotTree, ITreeEntry, TreeEntry } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISummarizeResult } from "@fluidframework/runtime-definitions";
+import { ISummarizeResult, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 /**
  * This class represents blob (long string)
@@ -206,27 +205,21 @@ export class BlobManager {
         });
     }
 
-    public summarize(): ISummarizeResult {
+    public summarize(): ISummaryTreeWithStats {
         // If we have a redirect table it means the container is about to transition to "Attaching" state, so we need
         // to return an actual snapshot containing all the real storage IDs we know about.
         const attachingOrAttached = !!this.redirectTable || this.runtime.attachState !== AttachState.Detached;
         const blobIds = attachingOrAttached ? this.blobIds : this.detachedBlobIds;
-        const entries: ITreeEntry[] = [...blobIds].map((id) => new AttachmentTreeEntry(id, id));
-        if (this.redirectTable && this.redirectTable.size > 0) {
-            entries.push(new BlobTreeEntry(
-                BlobManager.redirectTableBlobName,
-                JSON.stringify(Array.from(this.redirectTable.entries()))),
-            );
-        }
-
         const builder = new SummaryTreeBuilder();
-        for (const entry of entries) {
-            if (entry.type === TreeEntry.Attachment) {
-                const id = entry.value.id;
-                builder.addAttachment(id);
-            } else {
-                throw new Error("Unexpected TreeEntry type");
-            }
+        blobIds.forEach((blobId) => {
+            builder.addAttachment(blobId);
+        });
+
+        if (this.redirectTable && this.redirectTable.size > 0) {
+            builder.addBlob(
+                BlobManager.redirectTableBlobName,
+                JSON.stringify(Array.from(this.redirectTable.entries())),
+            );
         }
 
         return builder.getSummaryTree();

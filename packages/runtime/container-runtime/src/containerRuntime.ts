@@ -1476,7 +1476,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
         }
 
-        const summary = this.blobManager.summarize() as ISummaryTreeWithStats;
+        const summary = this.blobManager.summarize();
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
         // and the blob manager can handle the tree not existing when loading
         if (Object.keys(summary.summary.tree).length > 0) {
