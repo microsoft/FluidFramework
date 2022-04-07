@@ -10,7 +10,6 @@ import { canRetryOnError, getRetryDelayFromError } from "./network";
 import { pkgVersion } from "./packageVersion";
 import { NonRetryableError } from ".";
 
-
 /**
  * Interface describing an object passed to various network APIs.
  * It allows caller to control cancellation, as well as learn about any delays.
