@@ -383,7 +383,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _context: ContainerContext | undefined;
     private get context() {
         if (this._context === undefined) {
-            throw new Error("Attempted to access context before it was defined");
+            throw new GenericError("Attempted to access context before it was defined");
         }
         return this._context;
     }
