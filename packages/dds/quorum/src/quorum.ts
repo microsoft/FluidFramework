@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 
 // import { assert } from "@fluidframework/common-utils";
@@ -141,7 +142,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * @param id - optional name of the quorum
      * @returns newly created quorum (but not attached yet)
      */
-    public static create(runtime: IFluidDataStoreRuntime, id?: string) {
+    public static create(runtime: IFluidDataStoreRuntime, id?: string): Quorum {
         return runtime.createChannel(id, QuorumFactory.Type) as Quorum;
     }
 
@@ -199,12 +200,14 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         return pending.value;
     }
 
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     public set(key: string, value: any): void {
         // TODO: handle detached scenario, just auto accept basically
 
         const setOp: IQuorumSetOperation = {
             type: "set",
             key,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             value,
             refSeq: this.runtime.deltaManager.lastSequenceNumber,
         };
@@ -224,7 +227,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.submitLocalMessage(deleteOp);
     }
 
-    private readonly handleIncomingSet = (key: string, value: any, refSeq: number, setSequenceNumber: number) => {
+    private readonly handleIncomingSet = (key: string, value: any, refSeq: number, setSequenceNumber: number): void => {
         const currentValue = this.values.get(key);
         // A proposal is valid if the value is unknown
         // or if it was made with knowledge of the most recently accepted value
@@ -238,6 +241,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         const accepted = currentValue?.accepted;
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         this.values.set(key, { accepted, pending: { type: "set", value, sequenceNumber: setSequenceNumber }});
 
         this.emit("pending", key);
@@ -249,7 +253,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.submitLocalMessage(noOp);
     };
 
-    private readonly handleIncomingDelete = (key: string, refSeq: number, deleteSequenceNumber: number) => {
+    private readonly handleIncomingDelete = (key: string, refSeq: number, deleteSequenceNumber: number): void => {
         const currentValue = this.values.get(key);
         // A proposal is valid if the value is unknown
         // or if it was made with knowledge of the most recently accepted value
@@ -274,7 +278,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.submitLocalMessage(noOp);
     };
 
-    private readonly handleIncomingNoOp = (minimumSequenceNumber: number) => {
+    private readonly handleIncomingNoOp = (minimumSequenceNumber: number): void => {
         // Run through each of the values, find any pending that should now be considered settled because the MSN has
         // passed when they were sequenced.
         for (const [key, value] of this.values) {
@@ -283,6 +287,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
                 // The pending value has settled
                 if (pending.type === "set") {
                     this.values.set(key, {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         accepted: { value: pending.value, sequenceNumber: minimumSequenceNumber },
                         pending: undefined,
                     });
@@ -311,20 +316,20 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<[string, QuorumValue][]>(storage, snapshotFileName);
-        content.forEach(([key, value]) => {
+        for (const [key, value] of content) {
             this.values.set(key, value);
-        });
+        }
     }
 
     /**
      * @internal
      */
-    protected initializeLocalCore() { }
+    protected initializeLocalCore(): void { }
 
     /**
      * @internal
      */
-    protected onDisconnect() {
+    protected onDisconnect(): void {
         this.disconnectWatcher.emit("disconnect");
     }
 
@@ -333,7 +338,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * TODO It's probably ok to resubmit these?
      * @internal
      */
-    protected reSubmitCore() { }
+    protected reSubmitCore(): void { }
 
     /**
      * Process a quorum operation
@@ -344,7 +349,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * For messages from a remote client, this will be undefined.
      * @internal
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
         if (message.type === MessageType.Operation) {
             const op = message.contents as IQuorumOperation;
 
@@ -367,7 +372,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         }
     }
 
-    public applyStashedOp() {
+    public applyStashedOp(): void {
         throw new Error("not implemented");
     }
 }

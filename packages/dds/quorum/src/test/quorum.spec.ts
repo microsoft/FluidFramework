@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
 import {
     MockFluidDataStoreRuntime,
@@ -15,7 +16,7 @@ import { Quorum } from "../quorum";
 import { QuorumFactory } from "../quorumFactory";
 import { IQuorum } from "../interfaces";
 
-function createConnectedQuorum(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+function createConnectedQuorum(id: string, runtimeFactory: MockContainerRuntimeFactory): Quorum {
     // Create and connect a Quorum.
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -29,7 +30,7 @@ function createConnectedQuorum(id: string, runtimeFactory: MockContainerRuntimeF
     return quorum;
 }
 
-const createLocalQuorum = (id: string) =>
+const createLocalQuorum = (id: string): Quorum =>
     new Quorum(id, new MockFluidDataStoreRuntime(), QuorumFactory.Attributes);
 
 describe("Quorum", () => {
@@ -67,7 +68,7 @@ describe("Quorum", () => {
             const expectedKey = "key";
             const expectedValue = "value";
             const quorum1AcceptanceP = new Promise<void>((resolve) => {
-                const watchForPending = (pendingKey: string) => {
+                const watchForPending = (pendingKey: string): void => {
                     if (pendingKey === expectedKey) {
                         assert.strictEqual(
                             quorum1.getPending(expectedKey),
@@ -83,7 +84,7 @@ describe("Quorum", () => {
 
                         // Doing this synchronously after validating pending, since processAllMessages() won't permit
                         // us to pause after the set but before the noop.
-                        const watchForAccepted = (acceptedKey: string) => {
+                        const watchForAccepted = (acceptedKey: string): void => {
                             if (acceptedKey === expectedKey) {
                                 assert.strictEqual(
                                     quorum1.getPending(expectedKey),
@@ -105,7 +106,7 @@ describe("Quorum", () => {
                 quorum1.on("pending", watchForPending);
             });
             const quorum2AcceptanceP = new Promise<void>((resolve) => {
-                const watchForPending = (pendingKey: string) => {
+                const watchForPending = (pendingKey: string): void => {
                     if (pendingKey === expectedKey) {
                         assert.strictEqual(
                             quorum2.getPending(expectedKey),
@@ -121,7 +122,7 @@ describe("Quorum", () => {
 
                         // Doing this synchronously after validating pending, since processAllMessages() won't permit
                         // us to pause after the set but before the noop.
-                        const watchForAccepted = (acceptedKey: string) => {
+                        const watchForAccepted = (acceptedKey: string): void => {
                             if (acceptedKey === expectedKey) {
                                 assert.strictEqual(
                                     quorum2.getPending(expectedKey),

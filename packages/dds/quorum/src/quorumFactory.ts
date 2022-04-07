@@ -25,11 +25,11 @@ export class QuorumFactory implements IChannelFactory {
         packageVersion: pkgVersion,
     };
 
-    public get type() {
+    public get type(): string {
         return QuorumFactory.Type;
     }
 
-    public get attributes() {
+    public get attributes(): IChannelAttributes {
         return QuorumFactory.Attributes;
     }
 
