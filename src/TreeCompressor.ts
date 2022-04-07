@@ -5,8 +5,36 @@
 import { isDetachedSequenceId } from './Identifiers';
 import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, TraitLabel } from './Identifiers';
 import type { StringInterner } from './StringInterner';
-import type { CompressedTraits, CompressedPlaceholderTree, PlaceholderTree } from './persisted-types';
+import type { CompressedTraits, CompressedPlaceholderTree, PlaceholderTree, Payload } from './persisted-types';
 import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities';
+import { assert, fail } from './Common';
+
+/**
+ * Compresses a given {@link PlaceholderTree} into a more compact serializable format.
+ */
+export interface TreeCompressor<TPlaceholder extends DetachedSequenceId | never> {
+	/**
+	 * @param node - The {@link PlaceholderTree} to compress.
+	 * @param interner - The StringInterner to use to intern strings.
+	 * @param idNormalizer - A normalizer to transform node IDs into op-space
+	 */
+	compress<TId extends OpSpaceNodeId>(
+		node: PlaceholderTree<TPlaceholder>,
+		interner: StringInterner,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
+	): CompressedPlaceholderTree<TId, TPlaceholder>;
+
+	/**
+	 * @param node - The {@link PlaceholderTree} to compress.
+	 * @param interner - The StringInterner to use to intern strings.
+	 * @param idNormalizer - A normalizer to transform node IDs into op-space
+	 */
+	decompress<TId extends OpSpaceNodeId>(
+		node: CompressedPlaceholderTree<TId, TPlaceholder>,
+		interner: StringInterner,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
+	): PlaceholderTree<TPlaceholder>;
+}
 
 /**
  * Compresses a given {@link PlaceholderTree}
@@ -14,12 +42,19 @@ import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities';
  * while also string interning all node {@link Definition}s and {@link TraitLabel}s.
  * See {@link CompressedPlaceholderTree} for format.
  */
-export class TreeCompressor<TPlaceholder extends DetachedSequenceId | never> {
-	/**
-	 * @param node - The {@link PlaceholderTree} to compress.
-	 * @param interner - The StringInterner to use to intern strings.
-	 */
+export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | never>
+	implements TreeCompressor<TPlaceholder>
+{
 	public compress<TId extends OpSpaceNodeId>(
+		node: PlaceholderTree<TPlaceholder>,
+		interner: StringInterner,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
+	): CompressedPlaceholderTree<TId, TPlaceholder> {
+		this.previousId = undefined;
+		return this.compressI(node, interner, idNormalizer);
+	}
+
+	private compressI<TId extends OpSpaceNodeId>(
 		node: PlaceholderTree<TPlaceholder>,
 		interner: StringInterner,
 		idNormalizer: ContextualizedNodeIdNormalizer<TId>
@@ -28,35 +63,41 @@ export class TreeCompressor<TPlaceholder extends DetachedSequenceId | never> {
 			return node;
 		}
 
-		const compressedNode: CompressedPlaceholderTree<TId, TPlaceholder> = [
-			idNormalizer.normalizeToOpSpace(node.identifier),
-			interner.getInternId(node.definition),
-		];
+		const internedDefinition = interner.getInternId(node.definition);
+		const normalizedId = idNormalizer.normalizeToOpSpace(node.identifier);
+		const compressedId = canElideId(this.previousId, normalizedId) ? undefined : normalizedId;
+		this.previousId = normalizedId;
+		const compressedTraits: CompressedTraits<TId, TPlaceholder> = [];
 
 		// Omit traits if empty and payload is undefined.
-		const traits = Object.entries(node.traits);
+		const traits = Object.entries(node.traits).sort();
 		if (traits.length > 0 || node.payload !== undefined) {
-			const compressedTraits: CompressedTraits<TId, TPlaceholder> = [];
 			for (const [label, trait] of traits) {
 				compressedTraits.push(
 					interner.getInternId(label),
-					trait.map((child) => this.compress(child, interner, idNormalizer))
+					trait.map((child) => this.compressI(child, interner, idNormalizer))
 				);
 			}
-			compressedNode.push(compressedTraits);
 		}
 
-		if (node.payload !== undefined) {
-			compressedNode.push(node.payload);
+		const payloadTraits = node.payload !== undefined ? [node.payload, ...compressedTraits] : compressedTraits;
+		if (payloadTraits.length > 0) {
+			if (compressedId !== undefined) {
+				return [internedDefinition, compressedId, payloadTraits];
+			}
+			return [internedDefinition, payloadTraits];
 		}
 
-		return compressedNode;
+		if (compressedId !== undefined) {
+			return [internedDefinition, compressedId];
+		}
+
+		return [internedDefinition];
 	}
 
-	/**
-	 * @param node - The node in array format to decompress
-	 * @param interner - The StringInterner to use to obtain the original strings from their intern
-	 */
+	/** The ID that was compressed or decompressed most recently */
+	private previousId?: OpSpaceNodeId;
+
 	public decompress<TId extends OpSpaceNodeId>(
 		node: CompressedPlaceholderTree<TId, TPlaceholder>,
 		interner: StringInterner,
@@ -65,13 +106,43 @@ export class TreeCompressor<TPlaceholder extends DetachedSequenceId | never> {
 		if (isDetachedSequenceId(node)) {
 			return node;
 		}
+		const rootId = node[1];
+		assert(typeof rootId === 'number', 'Root node was compressed with no ID');
+		this.previousId = rootId;
+		return this.decompressI(node, interner, idNormalizer);
+	}
 
-		const [identifier, internedDefinition, compressedTraits, payload] = node;
+	private decompressI<TId extends OpSpaceNodeId>(
+		node: CompressedPlaceholderTree<TId, TPlaceholder>,
+		interner: StringInterner,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
+	): PlaceholderTree<TPlaceholder> {
+		if (isDetachedSequenceId(node)) {
+			return node;
+		}
+
+		let compressedId: TId | undefined;
+		let compressedTraits: CompressedTraits<TId, TPlaceholder> | undefined;
+		let payload: Payload | undefined;
+		const [internedDefinition, idOrPayloadTraits, payloadTraits] = node;
+		if (idOrPayloadTraits !== undefined) {
+			if (typeof idOrPayloadTraits === 'number') {
+				compressedId = idOrPayloadTraits;
+				if (payloadTraits !== undefined) {
+					({ compressedTraits, payload } = this.parseTraitsAndPayload(payloadTraits));
+				}
+			} else {
+				({ compressedTraits, payload } = this.parseTraitsAndPayload(idOrPayloadTraits));
+			}
+		}
+
 		const definition = interner.getString(internedDefinition) as Definition;
+		const identifier = compressedId ?? (getNextElidedId(this.previousId ?? fail()) as TId);
+		this.previousId = identifier;
 
 		const traits = {};
 		if (compressedTraits !== undefined) {
-			for (let i = 0; i < Object.entries(compressedTraits).length; i += 2) {
+			for (let i = 0; i < Object.entries(compressedTraits).sort().length; i += 2) {
 				const compressedLabel = compressedTraits[i] as InternedStringId;
 				const compressedChildren = compressedTraits[i + 1] as (
 					| TPlaceholder
@@ -79,7 +150,7 @@ export class TreeCompressor<TPlaceholder extends DetachedSequenceId | never> {
 				)[];
 
 				const decompressedTraits = compressedChildren.map((child) =>
-					this.decompress(child, interner, idNormalizer)
+					this.decompressI(child, interner, idNormalizer)
 				);
 
 				const label = interner.getString(compressedLabel) as TraitLabel;
@@ -96,4 +167,44 @@ export class TreeCompressor<TPlaceholder extends DetachedSequenceId | never> {
 
 		return decompressedNode;
 	}
+
+	private parseTraitsAndPayload<TId extends OpSpaceNodeId>(
+		traitsAndPayload: [Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>
+	): {
+		compressedTraits: CompressedTraits<TId, TPlaceholder>;
+		payload?: Payload;
+	} {
+		if (traitsAndPayload.length % 2 === 1) {
+			return {
+				compressedTraits: traitsAndPayload.slice(1),
+				payload: traitsAndPayload[0],
+			};
+		}
+
+		return {
+			compressedTraits: traitsAndPayload,
+		};
+	}
+}
+
+function getNextElidedId<TId extends OpSpaceNodeId>(id: TId): TId {
+	const numericId: number = id;
+	if (numericId < 0) {
+		return (numericId - 1) as TId;
+	}
+
+	return (numericId + 1) as TId;
+}
+
+function canElideId<TId extends OpSpaceNodeId>(previousId: TId | undefined, id: TId): boolean {
+	if (previousId === undefined) {
+		return false;
+	}
+
+	const numericId: number = previousId;
+	if (numericId < 0) {
+		return id === numericId - 1;
+	}
+
+	return id === numericId + 1;
 }

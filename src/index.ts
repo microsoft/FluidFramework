@@ -38,7 +38,8 @@ export type {
 } from './Identifiers';
 export { isDetachedSequenceId } from './Identifiers';
 export type { OrderedEditSet, EditHandle } from './EditLog';
-export { LogViewer, Revision } from './LogViewer';
+export { LogViewer } from './LogViewer';
+export { Revision } from './RevisionValueCache';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
 export { LazyCheckout } from './LazyCheckout';
 export { EagerCheckout } from './EagerCheckout';
@@ -107,8 +108,8 @@ export {
 	PlaceValidationResult,
 	RangeValidationResult,
 	RangeValidationResultKind,
-	comparePayloads,
 } from './EditUtilities';
+export { comparePayloads } from './PayloadUtilities';
 export {
 	Transaction,
 	TransactionFactory,

@@ -46,7 +46,7 @@ import {
 import { RevisionView } from './RevisionView';
 import { StringInterner } from './StringInterner';
 import { SummaryContents } from './Summary';
-import { TreeCompressor } from './TreeCompressor';
+import { InterningTreeCompressor } from './TreeCompressor';
 import {
 	createSessionId,
 	hasOngoingSession,
@@ -62,7 +62,7 @@ import { convertEditIds, convertNodeDataIds } from './IdConversion';
  * @internal
  */
 export class SharedTreeEncoder_0_1_1 {
-	private readonly treeCompressor = new TreeCompressor<never>();
+	private readonly treeCompressor = new InterningTreeCompressor<never>();
 	private readonly changeCompressor = new ChangeCompressor(this.treeCompressor);
 
 	public constructor(private readonly summarizeHistory: boolean) {}

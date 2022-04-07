@@ -24,7 +24,7 @@ import {
 import { ChangeCompressor, compressEdit, decompressEdit } from '../ChangeCompression';
 import { StablePlace, StableRange } from '../ChangeTypes';
 import { newEdit, newEditId } from '../EditUtilities';
-import { TreeCompressor } from '../TreeCompressor';
+import { TreeCompressor, InterningTreeCompressor } from '../TreeCompressor';
 import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities';
 import { convertStableRangeIds } from '../IdConversion';
 import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities';
@@ -36,7 +36,7 @@ class TestTreeCompressor<TPlaceholder extends DetachedSequenceId | never> implem
 	public compressTreeCalls: PlaceholderTree<TPlaceholder>[] = [];
 	public decompressTreeCalls: CompressedPlaceholderTree<OpSpaceNodeId, TPlaceholder>[] = [];
 
-	public constructor(private readonly treeCompressor = new TreeCompressor<TPlaceholder>()) {}
+	public constructor(private readonly treeCompressor = new InterningTreeCompressor<TPlaceholder>()) {}
 
 	public compress<TId extends OpSpaceNodeId>(
 		node: PlaceholderTree<TPlaceholder>,
@@ -129,7 +129,9 @@ describe('ChangeCompression', () => {
 			changes: [
 				{
 					destination: 0 as DetachedSequenceId,
-					source: [new TreeCompressor().compress(tree, new StringInterner(), scopeIdNormalizer(tree))],
+					source: [
+						new InterningTreeCompressor().compress(tree, new StringInterner(), scopeIdNormalizer(tree)),
+					],
 					type: ChangeTypeInternal.CompressedBuild,
 				},
 				{

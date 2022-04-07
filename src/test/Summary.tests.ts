@@ -10,7 +10,7 @@ import { v5 } from 'uuid';
 import { Change, Delete, Move, StablePlace, StableRange } from '../ChangeTypes';
 import { assert, RecursiveMutable } from '../Common';
 import { areRevisionViewsSemanticallyEqual } from '../EditUtilities';
-import { Definition, DetachedSequenceId, EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers';
+import { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers';
 import { initialTree } from '../InitialTree';
 import {
 	editsPerChunk,
@@ -56,8 +56,8 @@ export function applyTestEdits(sharedTree: SharedTree): void {
 	 *                 [E('payload')]
 	 */
 
-	const cDetachedId = 0 as DetachedSequenceId;
-	const rootDetachedId = 1 as DetachedSequenceId;
+	const cDetachedId = 0;
+	const rootDetachedId = 1;
 	const aId = uuid.getNextNodeId();
 	const cId = uuid.getNextNodeId();
 	const dId = uuid.getNextNodeId();
@@ -66,14 +66,13 @@ export function applyTestEdits(sharedTree: SharedTree): void {
 		Change.build(
 			[
 				{
-					definition: 'C' as Definition,
+					definition: 'C',
 					identifier: cId,
 					traits: {
 						leaf: [
 							{
-								definition: 'E' as Definition,
+								definition: 'E',
 								identifier: uuid.getNextNodeId(),
-								traits: {},
 								payload: 'payload',
 							},
 						],
@@ -85,14 +84,14 @@ export function applyTestEdits(sharedTree: SharedTree): void {
 		Change.build(
 			[
 				{
-					definition: 'Root' as Definition,
+					definition: 'Root',
 					identifier: uuid.getNextNodeId(),
 					traits: {
-						left: [{ definition: 'A' as Definition, identifier: aId, traits: {} }],
+						left: [{ definition: 'A', identifier: aId }],
 						right: [
-							{ definition: 'B' as Definition, identifier: uuid.getNextNodeId(), traits: {} },
+							{ definition: 'B', identifier: uuid.getNextNodeId() },
 							cDetachedId,
-							{ definition: 'D' as Definition, identifier: dId, traits: {} },
+							{ definition: 'D', identifier: dId },
 						],
 					},
 				},

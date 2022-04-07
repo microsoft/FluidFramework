@@ -4,7 +4,7 @@
  */
 import { assert, assertNotUndefined, ReplaceRecursive } from '../Common';
 // These are re-exported from a persisted-types file.
-import {
+import type {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
@@ -73,12 +73,10 @@ export type CompressedTraits<TId extends OpSpaceNodeId, TPlaceholder extends num
  */
 export type CompressedPlaceholderTree<TId extends OpSpaceNodeId, TPlaceholder extends number | never> =
 	| TPlaceholder
-	| [
-			TId,
-			InternedStringId, // The node Definition's interned string ID
-			CompressedTraits<TId, TPlaceholder>?,
-			Payload?
-	  ];
+	| [InternedStringId] // The node Definition's interned string ID
+	| [InternedStringId, TId]
+	| [InternedStringId, [Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>]
+	| [InternedStringId, TId, [Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>];
 
 /**
  * JSON-compatible Node type. Objects of this type will be persisted in internal change objects (under Edits) in the SharedTree history.
@@ -477,7 +475,7 @@ export interface SharedTreeHandleOp extends VersionedOp<WriteFormat.v0_1_1> {
 
 /** The number of IDs that a SharedTree reserves for current or future internal use */
 // This value must never change
-export const reservedIdCount = 1024;
+export const reservedIdCount = 10;
 
 /** The SessionID of the Upgrade Session */
 // This UUID must never change

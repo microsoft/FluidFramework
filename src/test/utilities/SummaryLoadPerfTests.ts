@@ -74,7 +74,11 @@ async function generateRandomTree(
 		})
 	);
 	const { testObjectProvider } = await performFuzzActions(generator, seed, true);
-	const { tree: finalTree } = await setUpLocalServerTestSharedTree({ testObjectProvider, summarizeHistory });
+	const { tree: finalTree } = await setUpLocalServerTestSharedTree({
+		testObjectProvider,
+		summarizeHistory,
+		writeFormat,
+	});
 	await testObjectProvider.ensureSynchronized();
 	return finalTree;
 }

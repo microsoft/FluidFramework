@@ -6,9 +6,8 @@
 import { copyPropertyIfDefined, fail, Mutable, MutableMap } from './Common';
 import { Forest } from './Forest';
 import { NodeId, StableNodeId, TraitLabel } from './Identifiers';
-import { iterateChildren } from './EditUtilities';
 import { NodeIdConverter } from './NodeIdUtilities';
-import { Payload, TreeNode } from './persisted-types';
+import { Payload, TreeNode, TreeNodeSequence } from './persisted-types';
 import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView';
 import { HasVariadicTraits } from './ChangeTypes';
 
@@ -227,4 +226,27 @@ export function convertTreeNodesToViewNodes<
 	}
 
 	return resultNodes;
+}
+
+/**
+ * Returns an iterable of the supplied node's traits in a stable order.
+ */
+export function* iterateChildren<T>(hasTraits: HasVariadicTraits<T>): Iterable<[TraitLabel, T]> {
+	if (hasTraits.traits !== undefined) {
+		for (const [label, trait] of Object.entries(hasTraits.traits).sort()) {
+			if (trait !== undefined) {
+				if (isTreeNodeSequence(trait)) {
+					for (const child of trait) {
+						yield [label as TraitLabel, child];
+					}
+				} else {
+					yield [label as TraitLabel, trait];
+				}
+			}
+		}
+	}
+}
+
+function isTreeNodeSequence<TChild>(sequence: TreeNodeSequence<TChild> | TChild): sequence is TreeNodeSequence<TChild> {
+	return Array.isArray(sequence);
 }

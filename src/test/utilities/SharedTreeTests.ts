@@ -13,7 +13,7 @@ import {
 	MockFluidDataStoreRuntime,
 } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../../Common';
-import { DetachedSequenceId, EditId, OpSpaceNodeId, TraitLabel } from '../../Identifiers';
+import { EditId, OpSpaceNodeId, TraitLabel } from '../../Identifiers';
 import { CachingLogViewer } from '../../LogViewer';
 import { EditLog, OrderedEditSet } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
@@ -42,7 +42,7 @@ import { SharedTreeEvent } from '../../EventTypes';
 import { BuildNode, Change, ChangeType, Delete, Insert, Move, StablePlace, StableRange } from '../../ChangeTypes';
 import { convertTreeNodes, deepCompareNodes } from '../../EditUtilities';
 import { serialize, SummaryContents } from '../../Summary';
-import { TreeCompressor } from '../../TreeCompressor';
+import { InterningTreeCompressor } from '../../TreeCompressor';
 import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder';
 import { sequencedIdNormalizer } from '../../NodeIdUtilities';
 import { convertNodeDataIds } from '../../IdConversion';
@@ -229,7 +229,7 @@ export function runSharedTreeOperationsTests(
 				const { sharedTree, testTree } = createSimpleTestTree({ allowInvalid: true });
 
 				const detachedNode = testTree.buildLeaf(testTree.generateNodeId());
-				const detachedSequenceId = 0 as DetachedSequenceId;
+				const detachedSequenceId = 0;
 				const { id } = sharedTree.applyEdit(
 					Change.build(detachedNode, detachedSequenceId),
 					Change.setPayload(detachedNode.identifier, 42),
@@ -247,8 +247,8 @@ export function runSharedTreeOperationsTests(
 				const { sharedTree, testTree } = createSimpleTestTree({ allowInvalid: true });
 
 				const detachedNewNode = testTree.buildLeaf();
-				const detachedNewNodeSequenceId = 0 as DetachedSequenceId;
-				const detachedRightNodeSequenceId = 1 as DetachedSequenceId;
+				const detachedNewNodeSequenceId = 0;
+				const detachedRightNodeSequenceId = 1;
 				const { id } = sharedTree.applyEdit(
 					Change.build(detachedNewNode, detachedNewNodeSequenceId),
 					Change.detach(StableRange.only(testTree.right), detachedRightNodeSequenceId),
@@ -355,7 +355,7 @@ export function runSharedTreeOperationsTests(
 				const { sharedTree } = createSimpleTestTree({ allowMalformed: true });
 
 				assertNoDelta(sharedTree, () => {
-					sharedTree.applyEdit(Change.build([], 0 as DetachedSequenceId));
+					sharedTree.applyEdit(Change.build([], 0));
 				});
 			});
 
@@ -633,7 +633,7 @@ export function runSharedTreeOperationsTests(
 
 				let editId!: EditId;
 				assertNoDelta(sharedTree1, () => {
-					const build = Change.build([], 0 as DetachedSequenceId);
+					const build = Change.build([], 0);
 					editId = sharedTree2.applyEdit(build).id;
 					containerRuntimeFactory.processAllMessages();
 				});
@@ -1274,7 +1274,7 @@ export function runSharedTreeOperationsTests(
 
 					const summary = tree.saveSummary() as SharedTreeSummary;
 					const interner = new StringInterner();
-					const treeCompressor = new TreeCompressor();
+					const treeCompressor = new InterningTreeCompressor();
 					const expectedCompressedTree = treeCompressor.compress(
 						getChangeNodeFromView(tree.currentView),
 						interner,

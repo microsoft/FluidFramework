@@ -6,7 +6,16 @@
 import BTree from 'sorted-btree';
 import LRU from 'lru-cache';
 import { assert, fail, compareFiniteNumbers } from './Common';
-import { Revision } from './LogViewer';
+
+/**
+ * A revision corresponds to an index in an `EditLog`.
+ *
+ * It is associated with the output `RevisionView` of applying the edit at the index to the previous revision.
+ * For example:
+ *  - revision 0 corresponds to the initialRevision.
+ *  - revision 1 corresponds to the output of editLog[0] applied to the initialRevision.
+ */
+export type Revision = number;
 
 /**
  * A cache of `TValue`s corresponding to `Revision`s.

@@ -405,6 +405,8 @@ export class IdCompressor {
 		assert(reservedIdCount >= 0, 'reservedIdCount must be non-negative');
 		this.localSession = this.createSession(localSessionId, attributionInfo);
 		if (reservedIdCount > 0) {
+			const clusterCapacity = this.clusterCapacity;
+			this.clusterCapacity = reservedIdCount;
 			const reservedIdRange: IdCreationRange = {
 				sessionId: reservedSessionId,
 				ids: {
@@ -414,6 +416,7 @@ export class IdCompressor {
 			};
 			// Reserved final IDs are implicitly finalized and no one locally created them, so finalizing immediately is safe.
 			this.finalizeCreationRange(reservedIdRange);
+			this.clusterCapacity = clusterCapacity;
 		}
 	}
 

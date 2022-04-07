@@ -6,16 +6,16 @@
 			1,
 			[
 				[
-					1026,
 					2,
+					12,
 					[
 						3,
 						[
-							[1027, 4, [], 99],
-							[1024, 5, [6, [[1025, 7, [], "payload"]]]]
+							[4, [99]],
+							[5, 10, [6, [[7, ["payload"]]]]]
 						],
 						8,
-						[[1028, 9]]
+						[[9, 14]]
 					]
 				]
 			]
@@ -25,14 +25,14 @@
 		"editChunks": [
 			{
 				"startRevision": 0,
-				"chunk": { "type": "__fluid_handle__", "url": "/_blobs/67f1516cc200307654cc333b9d7d2fc18a975d6d" }
+				"chunk": { "type": "__fluid_handle__", "url": "/_blobs/5121dc994aec0b3ccaa1aa0ae4c9dd662697f84d" }
 			},
 			{
 				"startRevision": 100,
 				"chunk": [
-					{ "changes": [{ "nodeToModify": 1027, "payload": 97, "type": 3 }] },
-					{ "changes": [{ "nodeToModify": 1027, "payload": 98, "type": 3 }] },
-					{ "changes": [{ "nodeToModify": 1027, "payload": 99, "type": 3 }] }
+					{ "changes": [{ "nodeToModify": 13, "payload": 97, "type": 3 }] },
+					{ "changes": [{ "nodeToModify": 13, "payload": 98, "type": 3 }] },
+					{ "changes": [{ "nodeToModify": 13, "payload": 99, "type": 3 }] }
 				]
 			}
 		],
@@ -157,7 +157,7 @@
 	],
 	"idCompressor": {
 		"version": "0.0.1",
-		"reservedIdCount": 1024,
+		"reservedIdCount": 10,
 		"clusterCapacity": 512,
 		"sessions": [["79590933-1c70-4fda-817a-adab57c20318"]],
 		"clusters": [

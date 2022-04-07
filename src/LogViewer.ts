@@ -7,7 +7,7 @@ import Denque from 'denque';
 import { assert, fail, noop } from './Common';
 import { EditLog, SequencedOrderedEditId } from './EditLog';
 import { EditId } from './Identifiers';
-import { RevisionValueCache } from './RevisionValueCache';
+import { Revision, RevisionValueCache } from './RevisionValueCache';
 import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { RevisionView } from './RevisionView';
@@ -137,16 +137,6 @@ export type CachedEditingResult = AttemptedEditResultCacheEntry & {
 	readonly before: RevisionView;
 	readonly changes: readonly ChangeInternal[];
 };
-
-/**
- * A revision corresponds to an index in an `EditLog`.
- *
- * It is associated with the output `RevisionView` of applying the edit at the index to the previous revision.
- * For example:
- *  - revision 0 corresponds to the initialRevision.
- *  - revision 1 corresponds to the output of editLog[0] applied to the initialRevision.
- */
-export type Revision = number;
 
 /**
  * Creates `RevisionView`s for the revisions in an `EditLog`

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { compareArrays, copyPropertyIfDefined, fail, Mutable } from './Common';
 import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers';
@@ -16,7 +15,6 @@ import {
 	Edit,
 	HasTraits,
 	NodeData,
-	Payload,
 	Side,
 	StablePlaceInternal,
 	StableRangeInternal,
@@ -28,8 +26,9 @@ import {
 import { TraitLocation, TreeView } from './TreeView';
 import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes';
 import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities';
-import { TransactionView } from './RevisionView';
+import { iterateChildren, TransactionView } from './RevisionView';
 import { getChangeNode_0_0_2FromView } from './SerializationUtilities';
+import { comparePayloads } from './PayloadUtilities';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -56,123 +55,6 @@ export function newEdit<TEdit>(changes: readonly TEdit[]): Edit<TEdit> {
  */
 export function newEditId(): EditId {
 	return uuidv4() as EditId;
-}
-
-/**
- * @returns true if two `Payloads` are identical.
- * May return false for equivalent payloads encoded differently.
- *
- * Object field order and object identity are not considered significant, and are ignored by this function.
- * (This is because they may not be preserved through roundtrip).
- *
- * For other information which fluid would lose on serialization round trip,
- * behavior is unspecified other than this this function is reflective (all payloads are equal to themselves)
- * and commutative (argument order does not matter).
- *
- * This means that any Payload is equal to itself and a deep clone of itself.
- *
- * Payloads might not be equal to a version of themselves that has been serialized then deserialized.
- * If they are serialized then deserialized again, the two deserialized objects will compare equal,
- * however the serialized strings may be unequal (due to field order for objects being unspecified).
- *
- * Fluid will cause lossy operations due to use of JSON.stringify().
- * This includes:
- * - Loss of object identity
- * - Loss of field order (may be ordered arbitrarily)
- * - -0 becomes +0
- * - NaN, Infinity, -Infinity all become null
- * - custom toJSON functions may cause arbitrary behavior
- * - functions become undefined or null
- * - non enumerable properties (including prototype) are lost
- * - more (this is not a complete list)
- *
- * Inputs must not contain cyclic references other than fields set to their immediate parent (for the JavaScript feature detection pattern).
- *
- * IFluidHandle instances (detected via JavaScript feature detection pattern) are only compared by absolutePath.
- *
- * TODO:#54095: Is there a better way to do this comparison?
- * @public
- */
-export function comparePayloads(a: Payload, b: Payload): boolean {
-	// === is not reflective because of how NaN is handled, so use Object.is instead.
-	// This treats -0 and +0 as different.
-	// Since -0 is not preserved in serialization round trips,
-	// it can be handed in any way that is reflective and commutative, so this is fine.
-	if (Object.is(a, b)) {
-		return true;
-	}
-
-	// Primitives which are equal would have early returned above, so now if the values are not both objects, they are unequal.
-	if (typeof a !== 'object' || typeof b !== 'object') {
-		return false;
-	}
-
-	// null is of type object, and needs to be treated as distinct from the empty object.
-	// Handling it early also avoids type errors trying to access its keys.
-	// Rationale: 'undefined' payloads are reserved for future use (see 'SetValue' interface).
-	// eslint-disable-next-line no-null/no-null
-	if (a === null || b === null) {
-		return false;
-	}
-
-	// Special case IFluidHandles, comparing them only by their absolutePath
-	// Detect them using JavaScript feature detection pattern: they have a `IFluidHandle` field that is set to the parent object.
-	{
-		const aHandle = a as IFluidHandle;
-		const bHandle = b as IFluidHandle;
-		if (aHandle.IFluidHandle === a) {
-			if (bHandle.IFluidHandle !== b) {
-				return false;
-			}
-			return a.absolutePath === b.absolutePath;
-		}
-	}
-
-	// Fluid Serialization (like Json) only keeps enumerable properties, so we can ignore non-enumerable ones.
-	const aKeys = Object.keys(a);
-	const bKeys = Object.keys(b);
-
-	if (aKeys.length !== bKeys.length) {
-		return false;
-	}
-
-	// make sure objects with numeric keys (or no keys) compare unequal to arrays.
-	if (a instanceof Array !== b instanceof Array) {
-		return false;
-	}
-
-	// Fluid Serialization (like Json) orders object fields arbitrarily, so reordering fields is not considered considered a change.
-	// Therefor the keys arrays must be sorted here.
-	if (!(a instanceof Array)) {
-		aKeys.sort();
-		bKeys.sort();
-	}
-
-	// First check keys are equal.
-	// This will often early exit, and thus is worth doing as a separate pass than recursive check.
-	if (!compareArrays(aKeys, bKeys)) {
-		return false;
-	}
-
-	for (let i = 0; i < aKeys.length; i++) {
-		const aItem: Payload = a[aKeys[i]];
-		const bItem: Payload = b[bKeys[i]];
-
-		// The JavaScript feature detection pattern, used for IFluidHandle, uses a field that is set to the parent object.
-		// Detect this pattern and special case it to avoid infinite recursion.
-		const aSelf = Object.is(aItem, a);
-		const bSelf = Object.is(bItem, b);
-		if (aSelf !== bSelf) {
-			return false;
-		}
-		if (!aSelf) {
-			if (!comparePayloads(aItem, bItem)) {
-				return false;
-			}
-		}
-	}
-
-	return true;
 }
 
 /**
@@ -227,13 +109,10 @@ export function convertTreeNodes<
 		return root;
 	}
 
-	const convertedRoot = convert(root) as Mutable<TOut>;
-	if (root.traits === undefined) {
-		return convertedRoot;
-	}
+	const convertedRoot = convert(root) as TOut;
 	// `convertedRoot` might be the same as `root`, in which case stash the children of `root` before wiping them from `convertedRoot`
 	const rootTraits = (root as unknown as TOut) === convertedRoot ? { traits: root.traits } : root;
-	convertedRoot.traits = {};
+	(convertedRoot as Mutable<TOut>).traits = {};
 	const pendingNodes: {
 		childIterator: Iterator<[TraitLabel, TIn | TPlaceholder]>;
 		newNode: Mutable<TOut>;
@@ -252,12 +131,12 @@ export function convertTreeNodes<
 				if (child.traits !== undefined) {
 					const childTraits =
 						(child as unknown as TOut) === convertedChild ? { traits: child.traits } : child;
-					(convertedChild as Mutable<TOut>).traits = {};
 					pendingNodes.push({
 						childIterator: iterateChildren(childTraits)[Symbol.iterator](),
 						newNode: convertedChild,
 					});
 				}
+				(convertedChild as Mutable<TOut>).traits = {};
 			} else {
 				convertedChild = child;
 			}
@@ -323,22 +202,6 @@ export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPla
 			} else {
 				nodeVisitor?.(child);
 				childIterators.push(iterateChildren(child)[Symbol.iterator]());
-			}
-		}
-	}
-}
-
-export function* iterateChildren<T>(hasTraits: HasVariadicTraits<T>): Iterable<[TraitLabel, T]> {
-	if (hasTraits.traits !== undefined) {
-		for (const [label, trait] of Object.entries(hasTraits.traits).sort()) {
-			if (trait !== undefined) {
-				if (isTreeNodeSequence(trait)) {
-					for (const child of trait) {
-						yield [label as TraitLabel, child];
-					}
-				} else {
-					yield [label as TraitLabel, trait];
-				}
 			}
 		}
 	}
@@ -693,8 +556,4 @@ export function internalizeBuildNode(
 	};
 	copyPropertyIfDefined(nodeData, output, 'payload');
 	return output;
-}
-
-function isTreeNodeSequence<TChild>(sequence: TreeNodeSequence<TChild> | TChild): sequence is TreeNodeSequence<TChild> {
-	return Array.isArray(sequence);
 }

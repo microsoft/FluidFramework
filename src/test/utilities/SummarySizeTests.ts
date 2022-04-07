@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { expect } from 'chai';
-import { Definition, EditId, TraitLabel } from '../../Identifiers';
+import { Definition, EditId, SessionId, TraitLabel } from '../../Identifiers';
 import { Change, Delete, Insert, Move, StablePlace, StableRange } from '../../ChangeTypes';
 import { SharedTree } from '../../SharedTree';
 import { ChangeInternal, ChangeNode, Edit, TraitMap } from '../../persisted-types';
 import { revert } from '../../HistoryEditFactory';
+import { IdCompressor } from '../../id-compressor';
 import { TestTree } from './TestNode';
 import {
 	LocalServerSharedTreeTestingComponents,
@@ -39,7 +39,7 @@ interface SummarySizeTestEntry {
 const summarySizeTests: SummarySizeTestEntry[] = [
 	{
 		edits: (testTree) => [Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))],
-		expectedSize: 1101,
+		expectedSize: 1075,
 		description: 'when inserting a node',
 	},
 	{
@@ -50,7 +50,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 			}
 			return edits;
 		},
-		expectedSize: 11147,
+		expectedSize: 10680,
 		description: 'with 50 inserts',
 	},
 	{
@@ -61,7 +61,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 				[Change.setPayload(node.identifier, 10)],
 			];
 		},
-		expectedSize: 1198,
+		expectedSize: 1170,
 		description: 'when inserting and setting a node',
 	},
 	{
@@ -72,12 +72,12 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 				[Delete.create(StableRange.only(node))],
 			];
 		},
-		expectedSize: 1251,
+		expectedSize: 1223,
 		description: 'when inserting and deleting a node',
 	},
 	{
 		edits: (testTree) => [Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))],
-		expectedSize: 1251,
+		expectedSize: 1223,
 		description: 'when inserting and reverting a node',
 		revertEdits: true,
 	},
@@ -85,7 +85,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		edits: (testTree) => [
 			Insert.create([makeLargeTestTree(testTree)], StablePlace.atStartOf(testTree.right.traitLocation)),
 		],
-		expectedSize: 161202,
+		expectedSize: 76979,
 		description: 'when inserting a large tree',
 	},
 	{
@@ -96,7 +96,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 				Move.create(StableRange.only(largeTree), StablePlace.atEndOf(testTree.left.traitLocation)),
 			];
 		},
-		expectedSize: 161472,
+		expectedSize: 77243,
 		description: 'when inserting and moving a large tree',
 	},
 ];
@@ -151,6 +151,7 @@ export function runSummarySizeTests(
 
 			const summary = tree.saveSerializedSummary();
 			const summarySize = IsoBuffer.from(summary).byteLength;
+			console.log(summary);
 			// TODO: make lte when 0.1.1 is settled
 			expect(summarySize).to.equal(expectedSummarySize);
 		}
@@ -164,6 +165,10 @@ export function runSummarySizeTests(
 }
 
 function makeLargeTestTree(testTree: TestTree, nodesPerTrait = 10, traitsPerLevel = 2, levels = 2): ChangeNode {
+	const specialSession = '9f858704-89f6-4923-abf3-14fc986e717f' as SessionId;
+	// ensure uuids for traits and definitions are stable
+	const compressor = new IdCompressor(specialSession, 0);
+	const uuidv4 = (): string => compressor.decompress(compressor.generateCompressedId());
 	const definition = uuidv4() as Definition;
 
 	const traitLabels: TraitLabel[] = [];

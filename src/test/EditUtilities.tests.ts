@@ -12,7 +12,6 @@ import { Definition, NodeId } from '../Identifiers';
 import { getChangeNodeFromView } from '../SerializationUtilities';
 import { noop } from '../Common';
 import {
-	comparePayloads,
 	convertTreeNodes,
 	deepCompareNodes,
 	internalizeBuildNode,
@@ -23,7 +22,8 @@ import {
 	walkTree,
 } from '../EditUtilities';
 import { BuildNodeInternal, ChangeNode, Payload, Side, TreeNode } from '../persisted-types';
-import { BuildTreeNode } from '../ChangeTypes';
+import { BuildNode, BuildTreeNode } from '../ChangeTypes';
+import { comparePayloads } from '../PayloadUtilities';
 import { refreshTestTree } from './utilities/TestUtilities';
 
 describe('EditUtilities', () => {
@@ -228,6 +228,28 @@ describe('EditUtilities', () => {
 				isNumber
 			);
 			expect(converted).to.deep.equal({ definition: '_def', identifier: id, payload: 'payload2', traits: {} });
+		});
+
+		it('creates empty trait objects for the root', () => {
+			const node: BuildTreeNode = { ...testTree.buildLeaf(testTree.generateNodeId()) };
+			const converted = convertTreeNodes<BuildTreeNode, TreeNode<BuildNodeInternal, NodeId>, number>(
+				node,
+				(n) => internalizeBuildNode(n, testTree),
+				isNumber
+			);
+			assert(typeof converted !== 'number', 'unexpected detached ID');
+			expect(converted.traits).to.not.be.undefined;
+		});
+
+		it('creates empty trait objects for children', () => {
+			const node: BuildNode = { ...testTree.buildLeaf(), traits: { main: { ...testTree.buildLeaf() } } };
+			const converted = convertTreeNodes<BuildTreeNode, TreeNode<BuildNodeInternal, NodeId>, number>(
+				node,
+				(n) => internalizeBuildNode(n, testTree),
+				isNumber
+			);
+			assert(typeof converted !== 'number', 'unexpected detached ID');
+			expect(converted.traits).to.not.be.undefined;
 		});
 
 		it('can convert a tree with children', () => {

@@ -5,12 +5,21 @@
 
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, TraitLabel } from '../Identifiers';
+import { assert } from '../Common';
+import { createSessionId, IdCompressor, isFinalId, isLocalId } from '../id-compressor';
+import type {
+	Definition,
+	DetachedSequenceId,
+	InternedStringId,
+	NodeId,
+	OpSpaceNodeId,
+	TraitLabel,
+} from '../Identifiers';
 import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities';
-import { CompressedPlaceholderTree, PlaceholderTree } from '../persisted-types';
+import { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types';
 import { RevisionView } from '../RevisionView';
 import { StringInterner } from '../StringInterner';
-import { TreeCompressor } from '../TreeCompressor';
+import { InterningTreeCompressor } from '../TreeCompressor';
 import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities';
 
 /**
@@ -27,7 +36,7 @@ function testCompression<TPlaceholder extends DetachedSequenceId | never>(
 	roundTripAsserter?: (tree: PlaceholderTree<TPlaceholder>, roundTrippedTree: PlaceholderTree<TPlaceholder>) => void
 ): void {
 	const interner = new StringInterner();
-	const treeCompressor = new TreeCompressor<TPlaceholder>();
+	const treeCompressor = new InterningTreeCompressor<TPlaceholder>();
 	const compressedTree = treeCompressor.compress(tree, interner, idNormalizer);
 	if (compressed !== undefined) {
 		expect(compressedTree).to.deep.equal(compressed);
@@ -69,8 +78,8 @@ describe('TreeCompression', () => {
 			},
 		};
 		testCompression(tree, scopeIdNormalizer(context), [
-			context.normalizeToOpSpace(id),
 			internedId(0),
+			context.normalizeToOpSpace(id),
 			[internedId(1), [detachedSequenceId]],
 		]);
 	});
@@ -83,7 +92,7 @@ describe('TreeCompression', () => {
 			definition: 'node' as Definition,
 			traits: {},
 		};
-		testCompression(tree, scopeIdNormalizer(context), [context.normalizeToOpSpace(id), internedId(0)]);
+		testCompression(tree, scopeIdNormalizer(context), [internedId(0), context.normalizeToOpSpace(id)]);
 	});
 
 	it('handles payloads on leaves', () => {
@@ -95,7 +104,7 @@ describe('TreeCompression', () => {
 			traits: {},
 			payload: 5,
 		};
-		testCompression(tree, scopeIdNormalizer(context), [context.normalizeToOpSpace(id), internedId(0), [], 5]);
+		testCompression(tree, scopeIdNormalizer(context), [internedId(0), context.normalizeToOpSpace(id), [5]]);
 	});
 
 	it('handles intermediate nodes without payloads', () => {
@@ -118,9 +127,9 @@ describe('TreeCompression', () => {
 			},
 		};
 		testCompression(tree, scopeIdNormalizer(context), [
-			context.normalizeToOpSpace(parentId),
 			internedId(0),
-			[internedId(1), [[context.normalizeToOpSpace(childId), internedId(2)]]],
+			context.normalizeToOpSpace(parentId),
+			[internedId(1), [[internedId(2)]]],
 		]);
 	});
 
@@ -146,10 +155,9 @@ describe('TreeCompression', () => {
 			payload,
 		};
 		testCompression(tree, scopeIdNormalizer(context), [
-			context.normalizeToOpSpace(parentId),
 			internedId(0),
-			[internedId(1), [[context.normalizeToOpSpace(childId), internedId(2)]]],
-			payload,
+			context.normalizeToOpSpace(parentId),
+			[payload, internedId(1), [[internedId(2)]]],
 		]);
 	});
 
@@ -159,13 +167,13 @@ describe('TreeCompression', () => {
 			tree,
 			scopeIdNormalizer(tree),
 			[
-				tree.normalizeToOpSpace(tree.identifier),
 				internedId(0),
+				tree.normalizeToOpSpace(tree.identifier),
 				[
 					internedId(1),
-					[[tree.normalizeToOpSpace(tree.left.identifier), internedId(0)]],
+					[[internedId(0), tree.normalizeToOpSpace(tree.left.identifier)]],
 					internedId(2),
-					[[tree.normalizeToOpSpace(tree.right.identifier), internedId(0)]],
+					[[internedId(0)]], // Right ID should be elided, but no others
 				],
 			],
 			// SimpleTestTree contains extra properties, so deep compare as objects is insufficient. The revision view strategy
@@ -204,5 +212,78 @@ describe('TreeCompression', () => {
 		};
 
 		testCompression(makeTreeWithHeight(3), scopeIdNormalizer(context));
+	});
+
+	it('elides IDs that span multiple children or cousins', () => {
+		const reservedIdCount = 4;
+		const idCompressor = new IdCompressor(createSessionId(), reservedIdCount);
+		const context = makeNodeIdContext(idCompressor);
+		// Order of IDs:  [-1, -2, -3, -4, 0, 1, 2, -5, 3, -6, -6]
+		// After elision: [-1,  _,  _,  _, 0, _, _, -5, 3, -6, -6]
+		const localIds = [...Array(6).keys()].map((_) => context.generateNodeId());
+		localIds.forEach((id) => assert(isLocalId(id)));
+		const finalIds = [...Array(reservedIdCount).keys()].map((_, i) => idCompressor.getReservedId(i) as NodeId);
+		finalIds.forEach((id) => assert(isFinalId(id)));
+
+		function node(
+			identifier: NodeId,
+			traits?: TraitMap<TreeNode<PlaceholderTree, NodeId>>
+		): TreeNode<PlaceholderTree, NodeId> {
+			return {
+				identifier,
+				definition: 'def' as Definition,
+				traits: traits ?? {},
+			};
+		}
+
+		const tree: PlaceholderTree = node(localIds[0], {
+			zebra: [node(localIds[5]), node(localIds[5])],
+			maganio: [
+				node(localIds[3]),
+				node(finalIds[0], {
+					pardesio: [node(finalIds[2]), node(localIds[4]), node(finalIds[3])],
+					hortonio: [node(finalIds[1])],
+				}),
+			],
+			aardvark: [
+				node(localIds[1], {
+					basketball: [node(localIds[2])],
+				}),
+			],
+		});
+
+		const nodeDef = internedId(0);
+
+		function id(id: NodeId): OpSpaceNodeId {
+			return context.normalizeToOpSpace(id);
+		}
+
+		testCompression<never>(tree, scopeIdNormalizer(context), [
+			nodeDef,
+			id(tree.identifier),
+			[
+				internedId(1), // aardvark
+				[[nodeDef, [internedId(2), [[nodeDef]]]]],
+				internedId(3), // maganio
+				[
+					[nodeDef],
+					[
+						nodeDef,
+						id(finalIds[0]),
+						[
+							internedId(4), // hortonio
+							[[nodeDef]],
+							internedId(5), // pardesio
+							[[nodeDef], [nodeDef, id(localIds[4])], [nodeDef, id(finalIds[3])]],
+						],
+					],
+				],
+				internedId(6), // zebra
+				[
+					[nodeDef, id(localIds[5])],
+					[nodeDef, id(localIds[5])],
+				],
+			],
+		]);
 	});
 });
