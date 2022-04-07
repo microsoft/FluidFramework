@@ -639,11 +639,11 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Called by GC to know if a node belongs to a data store or not. Nodes of children of data stores (such as DDS)
-     * also belong to data stores. Data store node paths are of the format "/dataStoreId/...".
+     * Called by GC to know if a node is a data store or not. Data store ids are of the format "/dataStoreId".
      */
     public isDataStoreNode(nodePath: string): boolean {
-        if (this.contexts.has(nodePath.split("/")[1])) {
+        const pathParts = nodePath.split("/");
+        if (pathParts.length === 2 && this.contexts.has(pathParts[1])) {
             return true;
         }
         return false;

@@ -2172,16 +2172,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * to the blob manager.
      */
     public getNodeType(nodePath: string): GCNodeType {
-        if (nodePath === "/") {
-            return GCNodeType.Root;
-        }
         if (this.dataStores.isDataStoreNode(nodePath)) {
             return GCNodeType.DataStore;
         }
         if (nodePath.split("/")[1] === BlobManager.basePath) {
             return GCNodeType.Blob;
         }
-        assert(false, "GC node should be either data store or blob types");
+        // Root node ("/") and DDS nodes belong to "Other" category.
+        return GCNodeType.Other;
     }
 
     /**
