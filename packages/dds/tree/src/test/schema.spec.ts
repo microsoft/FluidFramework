@@ -14,7 +14,8 @@ import {
 import {
 	FieldSchema, GlobalFieldKey, LocalFieldKey, Multiplicity, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "../schema/Schema";
-import { anyField, anyTree, emptyField, emptyMap, emptySet, neverField, neverTree } from "../schema/SpecialSchema";
+import { emptyField, emptyMap, emptySet } from "../schema/Builders";
+import { anyField, anyTree, neverField, neverTree } from "../schema/SpecialSchema";
 import { StoredSchemaRepository } from "../schema/StoredSchemaRepository";
 
 describe("Schema", () => {
@@ -154,9 +155,9 @@ function testPartialOrder<T>(compare: (a: T, b: T) => boolean, values: T[], expe
 
 	// This can is brute forced in O(n^3) time below:
 	// Violations:
-	const reflexivity = [];
-	const antisymmetry = [];
-	const transitivity = [];
+	const reflexivity: T[] = [];
+	const antisymmetry: T[][] = [];
+	const transitivity: T[][] = [];
 
 	const expectedEqualMap: Map<T, Set<T>> = new Map();
 	for (const group of expectedEqual) {

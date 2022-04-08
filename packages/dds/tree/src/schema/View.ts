@@ -36,7 +36,7 @@ export class Adapters {
 export function checkCompatibility(
     stored: SchemaRepository,
     view: SchemaRepository,
-    adapters: Adapters,
+    adapters?: Adapters,
 ): {
     read: Compatibility;
     write: Compatibility;
@@ -50,11 +50,12 @@ export function checkCompatibility(
         ? Compatibility.Compatible
         : Compatibility.Incompatible;
 
-    // TODO: compute this (and maybe include the set of schema changes needed for it?).
+    // TODO: compute this properly (and maybe include the set of schema changes needed for it?).
     // Maybe updates would happen lazily when needed to store data?
     // When willingness to updates can avoid need for some adapters,
     // how should it be decided if the adapter should be used to avoid the update?
-    const writeAllowingStoredSchemaUpdates = write;
+    // TODO: is this case actually bi-variant, making this correct if we did it for each schema independently?
+    const writeAllowingStoredSchemaUpdates = Math.min(read, write);
 
     return { read, write, writeAllowingStoredSchemaUpdates };
 }

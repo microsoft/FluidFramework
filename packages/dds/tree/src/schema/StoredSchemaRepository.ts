@@ -64,8 +64,8 @@ export class StoredSchemaRepository implements SchemaRepository {
      * Combined with support for such namespaces in the allowed sets in the schema objects,
      * that might provide a decent alternative to extraFields (which is a bit odd).
      */
-    private readonly fields: Map<GlobalFieldKey, FieldSchema> = new Map();
-    private readonly trees: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
+    protected readonly fields: Map<GlobalFieldKey, FieldSchema> = new Map();
+    protected readonly trees: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 
     public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema> {
         return this.fields;
