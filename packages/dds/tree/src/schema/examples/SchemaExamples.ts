@@ -23,7 +23,7 @@ import {
     emptyField,
     emptyMap,
     emptySet,
-} from "../SpecialSchema";
+} from "../Builders";
 
 export const codePoint: NamedTreeSchema = {
     name: "Primitive.CodePoint" as TreeSchemaIdentifier,

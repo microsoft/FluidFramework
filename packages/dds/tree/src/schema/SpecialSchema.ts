@@ -4,30 +4,13 @@
  */
 
 import { FieldSchema, Multiplicity, TreeSchema, ValueSchema } from "./Schema";
+import { emptySet, emptyMap } from "./Builders";
 
 /**
  * Some special schema for edge cases that are used by the schema system itself.
  * None of these should be used to store actual data, but are instead part of the schema type system,
  * encoding things like top and bottom types, and default schema.
  */
-
-/**
- * Empty readonly set.
- */
-export const emptySet: ReadonlySet<never> = new Set();
-
-/**
- * Empty readonly map.
- */
-export const emptyMap: ReadonlyMap<any, never> = new Map<any, never>();
-
-/**
- * Default field which only permits emptiness.
- */
-export const emptyField: FieldSchema = {
-    multiplicity: Multiplicity.Forbidden,
-    types: emptySet,
-};
 
 /**
  * FieldSchema which is impossible for any data to be in schema with.

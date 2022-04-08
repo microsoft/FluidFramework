@@ -19,7 +19,7 @@ import {
     emptyField,
     emptyMap,
     emptySet,
-} from "../SpecialSchema";
+} from "../Builders";
 
 export const typeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 

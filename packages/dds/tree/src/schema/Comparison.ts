@@ -11,7 +11,7 @@ import {
     FieldSchema,
     Multiplicity,
 } from "./Schema";
-import { emptyField } from "./SpecialSchema";
+import { emptyField } from "./Builders";
 
 /**
  * @returns true iff `superset` is a superset of `original`.
