@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { expect } from 'chai';
 import { Move, StableRange, StablePlace, Insert, BuildNode } from '../../ChangeTypes';
 import { Mutable } from '../../Common';
 import { EditLog } from '../../EditLog';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
 import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
-import { SharedTreeOpType, TreeNodeSequence, WriteFormat } from '../../persisted-types';
+import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types';
 import { SharedTree } from '../../SharedTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { applyTestEdits } from '../Summary.tests';
@@ -401,6 +402,74 @@ export function runSharedTreeVersioningTests(
 				}
 			}
 			expect(tree1.equals(tree2)).to.be.true;
+		});
+
+		describe('telemetry', () => {
+			const events: ITelemetryBaseEvent[] = [];
+			const logger = { send: (event) => events.push(event) };
+			beforeEach(() => {
+				events.length = 0;
+			});
+
+			it('emits RequestVersionUpdate events', () => {
+				const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, logger });
+				const { tree: newerTree } = setUpTestSharedTree({
+					containerRuntimeFactory,
+					...secondTreeOptions,
+					logger,
+				});
+
+				newerTree.loadSummary(tree.saveSummary());
+				expect(
+					events.some(
+						(event) =>
+							event.eventName === 'SharedTree:RequestVersionUpdate' &&
+							event.versionTo === newVersion &&
+							event.versionFrom === oldVersion &&
+							event.category === 'generic'
+					)
+				).to.equal(true);
+			});
+
+			it('emits VersionUpdate events', () => {
+				const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, logger });
+				const { tree: newerTree } = setUpTestSharedTree({
+					containerRuntimeFactory,
+					...secondTreeOptions,
+					logger,
+				});
+
+				newerTree.loadSummary(tree.saveSummary());
+				const matchesVersionUpdate = (event: ITelemetryBaseEvent) =>
+					event.eventName === 'SharedTree:VersionUpdate_end' &&
+					event.version === newVersion &&
+					event.category === 'performance' &&
+					typeof event.duration === 'number';
+
+				expect(events.some(matchesVersionUpdate)).to.equal(false);
+				containerRuntimeFactory.processAllMessages();
+				expect(events.some(matchesVersionUpdate)).to.equal(true);
+			});
+
+			it('emits error events on VersionUpdate failure', () => {
+				const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, logger });
+				const op: SharedTreeUpdateOp = {
+					type: SharedTreeOpType.Update,
+					version: newVersion,
+				};
+				containerRuntimeFactory.pushMessage({ contents: op });
+				(tree.editsInternal as EditLog).getLocalEdits = () => {
+					throw new Error('Simulated issue in update');
+				};
+				const matchesFailedVersionUpdate = (event: ITelemetryBaseEvent) =>
+					event.eventName === 'SharedTree:VersionUpdate_cancel' &&
+					event.category === 'error' &&
+					event.error === 'Simulated issue in update';
+
+				expect(events.some(matchesFailedVersionUpdate)).to.equal(false);
+				expect(() => containerRuntimeFactory.processAllMessages()).to.throw(/Simulated issue in update/);
+				expect(events.some(matchesFailedVersionUpdate)).to.equal(true);
+			});
 		});
 	});
 }

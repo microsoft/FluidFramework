@@ -684,6 +684,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		if (isUpdateRequired(loadedSummaryVersion, this.writeFormat)) {
 			this.submitOp({ type: SharedTreeOpType.Update, version: this.writeFormat });
+			this.logger.sendTelemetryEvent({
+				eventName: 'RequestVersionUpdate',
+				versionFrom: loadedSummaryVersion,
+				versionTo: this.writeFormat,
+			});
 		}
 
 		if (compareSummaryFormatVersions(loadedSummaryVersion, this.writeFormat) !== 0) {
@@ -1032,34 +1037,34 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	private processVersionUpdate(version: WriteFormat) {
 		if (isUpdateRequired(this.writeFormat, version)) {
-			try {
-				if (compareSummaryFormatVersions(version, WriteFormat.v0_1_1) >= 0) {
-					this.upgradeFrom_0_0_2_to_0_1_1();
-				} else {
-					throw new Error(`Updating to version ${version} is not supported.`);
-				}
+			PerformanceEvent.timedExec(
+				this.logger,
+				{ eventName: 'VersionUpdate', version },
+				() => {
+					if (compareSummaryFormatVersions(version, WriteFormat.v0_1_1) >= 0) {
+						this.upgradeFrom_0_0_2_to_0_1_1();
+					} else {
+						throw new Error(`Updating to version ${version} is not supported.`);
+					}
 
-				this.changeWriteFormat(version);
+					this.changeWriteFormat(version);
 
-				// The edit log may contain some local edits submitted after the version update op was submitted but
-				// before we receive the message it has been sequenced. Since these edits must be sequenced after the version
-				// update op, they will be discarded. These edits are then re-submitted using the new format.
-				for (const edit of this.editLog.getLocalEdits()) {
-					this.submitEditOp(edit);
-				}
+					// The edit log may contain some local edits submitted after the version update op was submitted but
+					// before we receive the message it has been sequenced. Since these edits must be sequenced after the version
+					// update op, they will be discarded. These edits are then re-submitted using the new format.
+					for (const edit of this.editLog.getLocalEdits()) {
+						this.submitEditOp(edit);
+					}
 
-				if (this.currentIsOldest) {
-					this.uploadCatchUpBlobs();
+					if (this.currentIsOldest) {
+						this.uploadCatchUpBlobs();
+					}
+				},
+				{
+					end: true,
+					cancel: 'error',
 				}
-			} catch (error) {
-				this.logger.sendErrorEvent(
-					{
-						eventName: 'VersionUpdateFailure',
-					},
-					error
-				);
-				throw error;
-			}
+			);
 		}
 	}
 
