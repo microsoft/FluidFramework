@@ -163,7 +163,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 
     public create() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
         this.sharedString = SharedString.create(this.runtime);
         this.root.set(textId, this.sharedString.handle);
@@ -172,7 +172,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 
     public async load() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
         const handle = this.root.get<IFluidHandle<SharedString>>(textId);
         if (handle === undefined) {
