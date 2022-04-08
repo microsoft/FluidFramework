@@ -158,6 +158,12 @@ describe("AzureClient", () => {
         );
     });
 
+    /**
+     * Scenario: test if Azure Client can get an existing container and connect
+     *
+     * Expected behavior: an error should not be thrown nor should a rejected promise
+     * be returned.
+     */
     it("can connect existing Azure Fluid Relay container", async () => {
         const container = (await client.createContainer(schema)).container;
         const containerId = await container.attach();
@@ -168,6 +174,11 @@ describe("AzureClient", () => {
         });
 
         const containerGet = (await client.getContainer(containerId, schema)).container;
+        await new Promise<void>((resolve) => {
+            containerGet.on("connected", () => {
+                resolve();
+            });
+        });
         assert.strictEqual(
             containerGet.connectionState,
             ConnectionState.Connected,
