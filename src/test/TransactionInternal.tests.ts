@@ -313,6 +313,18 @@ describe('Transaction', () => {
 				placeFailure: PlaceValidationResult.MissingSibling,
 			});
 		});
+		it('a detached node with a payload', () => {
+			const transaction = TransactionInternal.factory(testTree.view);
+			const payload = 42;
+			const detachedId = 0 as DetachedSequenceId;
+			transaction.applyChanges([
+				ChangeInternal.setPayload(testTree.left.identifier, payload),
+				ChangeInternal.detach(StableRange.only(testTree.left), detachedId),
+				ChangeInternal.insert(detachedId, StablePlace.atStartOf(testTree.left.traitLocation)),
+			]);
+			expect(transaction.view.getTrait(testTree.left.traitLocation)).deep.equals([testTree.left.identifier]);
+			expect(transaction.view.getViewNode(testTree.left.identifier).payload).to.equal(payload);
+		});
 		[Side.Before, Side.After].forEach((side) => {
 			it(`can insert a node at the ${side === Side.After ? 'beginning' : 'end'} of a trait`, () => {
 				const transaction = TransactionInternal.factory(testTree.view);

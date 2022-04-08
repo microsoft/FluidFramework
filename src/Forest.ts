@@ -9,12 +9,8 @@ import { NodeId, TraitLabel } from './Identifiers';
 import { comparePayloads } from './PayloadUtilities';
 import { NodeData, Payload } from './persisted-types';
 
-type Optional<T> = {
-	[P in keyof T]: T[P] | undefined;
-};
-
 /**
- * A node that can be contained within a Forest.
+ * A node that can be contained within a Forest
  *
  * @public
  */
@@ -22,8 +18,24 @@ export interface ForestNode extends NodeData<NodeId> {
 	readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
 }
 
-interface ForestNodeWithParentage extends ForestNode, Optional<ParentData> {
-	readonly _brand: unique symbol;
+/**
+ * A node within a Forest that has a parent (and is therefore not the root node)
+ *
+ * @public
+ */
+export interface ParentedForestNode extends ForestNode, ParentData {}
+
+/**
+ * Check whether or not the given node in a forest is parented
+ *
+ * @public
+ */
+export function isParentedForestNode(node: ForestNode): node is ParentedForestNode {
+	const parentedNode = node as ForestNode & Partial<ParentedForestNode>;
+	const hasParent = parentedNode.parentId !== undefined;
+	const hasTraitParent = parentedNode.traitParent !== undefined;
+	assert(hasParent === hasTraitParent, 'node must have either both parent and traitParent set or neither');
+	return hasParent;
 }
 
 /**
@@ -55,7 +67,7 @@ export interface Delta<NodeId> {
 }
 
 interface ForestState {
-	nodes: BTree<NodeId, ForestNodeWithParentage>;
+	nodes: BTree<NodeId, ForestNode>;
 	expensiveValidation: boolean;
 }
 
@@ -70,7 +82,7 @@ export class Forest {
 	 * Contains the nodes in the forest.
 	 * Used as an immutable data-structure: must not be modified.
 	 */
-	private readonly nodes: BTree<NodeId, ForestNodeWithParentage>;
+	private readonly nodes: BTree<NodeId, ForestNode>;
 
 	/**
 	 * If true, consistency checks will be applied after forest operations.
@@ -93,7 +105,7 @@ export class Forest {
 			this.nodes = data.nodes;
 			this.expensiveValidation = data.expensiveValidation;
 		} else {
-			this.nodes = new BTree<NodeId, ForestNodeWithParentage>(undefined, compareFiniteNumbers);
+			this.nodes = new BTree<NodeId, ForestNode>(undefined, compareFiniteNumbers);
 			this.expensiveValidation = data ?? false;
 		}
 		if (this.expensiveValidation) {
@@ -139,7 +151,7 @@ export class Forest {
 					const child = mutableNodes.get(childId);
 					if (child !== undefined) {
 						// A child already exists in the forest, and its parent is now being added
-						assert(child.parentId === undefined, 'can not give a child multiple parents');
+						assert(!isParentedForestNode(child), 'can not give a child multiple parents');
 						const parentedChild = {
 							definition: child.definition,
 							identifier: child.identifier,
@@ -149,7 +161,7 @@ export class Forest {
 						};
 						copyPropertyIfDefined(child, parentedChild, 'payload');
 						// Overwrite the existing child with its parented version
-						mutableNodes.set(childId, parentedChild as ForestNodeWithParentage);
+						mutableNodes.set(childId, parentedChild);
 					} else {
 						// The child hasn't been added yet, so record its parentage to use when it is added below
 						childToParent.set(childId, { parentId: identifier, traitParent: traitLabel });
@@ -171,10 +183,10 @@ export class Forest {
 					...parentData,
 				};
 				copyPropertyIfDefined(node, child, 'payload');
-				mutableNodes.set(node.identifier, child as ForestNodeWithParentage);
+				mutableNodes.set(node.identifier, child);
 			} else {
 				// This is a node that has no parent. Add it with no parentage information.
-				mutableNodes.set(node.identifier, node as ForestNodeWithParentage);
+				mutableNodes.set(node.identifier, node);
 			}
 		}
 
@@ -216,8 +228,8 @@ export class Forest {
 
 		for (const childId of childIds) {
 			mutableNodes.editRange(childId, childId, true, (_, n) => {
-				assert(n.parentId === undefined, 'can not attach node that already has a parent');
-				const breakVal: { value: ForestNodeWithParentage } = {
+				assert(!isParentedForestNode(n), 'can not attach node that already has a parent');
+				const breakVal: { value: ParentedForestNode } = {
 					value: {
 						...n,
 						parentId,
@@ -271,13 +283,14 @@ export class Forest {
 		mutableNodes.set(parentId, { ...parentNode, traits });
 		for (const childId of detached) {
 			mutableNodes.editRange(childId, childId, true, (_, n) => {
-				const breakVal: { value: ForestNodeWithParentage } = {
+				const breakVal: { value: ForestNode } = {
 					value: {
-						...n,
-						parentId: undefined,
-						traitParent: undefined,
+						definition: n.definition,
+						identifier: n.identifier,
+						traits: n.traits,
 					},
 				};
+				copyPropertyIfDefined(n, breakVal.value, 'payload');
 				return breakVal;
 			});
 		}
@@ -307,7 +320,7 @@ export class Forest {
 		} else {
 			delete newNode.payload;
 		}
-		mutableNodes.set(nodeId, newNode as ForestNodeWithParentage);
+		mutableNodes.set(nodeId, newNode);
 		return new Forest({
 			nodes: mutableNodes,
 			expensiveValidation: this.expensiveValidation,
@@ -352,24 +365,21 @@ export class Forest {
 		});
 	}
 
-	private deleteRecursive(
-		mutableNodes: BTree<NodeId, ForestNodeWithParentage>,
-		id: NodeId,
-		deleteChildren: boolean
-	): void {
+	private deleteRecursive(mutableNodes: BTree<NodeId, ForestNode>, id: NodeId, deleteChildren: boolean): void {
 		const node = mutableNodes.get(id) ?? fail('node to delete must exist');
-		assert(node.parentId === undefined && node.traitParent === undefined, 'deleted nodes must be unparented');
+		assert(!isParentedForestNode(node), 'deleted nodes must be unparented');
 		mutableNodes.delete(id);
 		for (const trait of node.traits.values()) {
 			for (const childId of trait) {
 				mutableNodes.editRange(childId, childId, true, (_, n) => {
-					const breakVal: { value: ForestNodeWithParentage } = {
+					const breakVal: { value: ForestNode } = {
 						value: {
-							...n,
-							parentId: undefined,
-							traitParent: undefined,
+							definition: n.definition,
+							identifier: n.identifier,
+							traits: n.traits,
 						},
 					};
+					copyPropertyIfDefined(n, breakVal.value, 'payload');
 					return breakVal;
 				});
 
@@ -387,12 +397,7 @@ export class Forest {
 	public assertConsistent(): void {
 		const checkedChildren = new Set<NodeId>([]);
 		for (const [nodeId, node] of this.nodes.entries(undefined, [])) {
-			assert(
-				(node.parentId === undefined) === (node.traitParent === undefined),
-				'node must have either both parent and traitParent set or neither'
-			);
-
-			if (node.parentId !== undefined && node.traitParent !== undefined) {
+			if (isParentedForestNode(node)) {
 				const parent = this.get(node.parentId);
 				const trait = parent.traits.get(node.traitParent);
 				assert(trait !== undefined);
@@ -404,6 +409,7 @@ export class Forest {
 				for (const childId of trait) {
 					const child = this.nodes.get(childId);
 					assert(child, 'child in trait is not in forest');
+					assert(isParentedForestNode(child), 'child is not parented');
 					assert(child.parentId === node.identifier, 'child parent pointer is incorrect');
 					assert(
 						!checkedChildren.has(childId),
@@ -428,10 +434,8 @@ export class Forest {
 			fail('NodeId not found');
 		}
 
-		return {
-			parentId: child.parentId ?? fail('Node is not parented'),
-			traitParent: child.traitParent ?? fail('Node is not parented'),
-		};
+		assert(isParentedForestNode(child), 'Node is not parented');
+		return { parentId: child.parentId, traitParent: child.traitParent };
 	}
 
 	/**
@@ -439,11 +443,7 @@ export class Forest {
 	 */
 	public tryGetParent(id: NodeId): ParentData | undefined {
 		const child = this.nodes.get(id);
-		if (child === undefined) {
-			return undefined;
-		}
-
-		if (child.parentId === undefined || child.traitParent === undefined) {
+		if (child === undefined || !isParentedForestNode(child)) {
 			return undefined;
 		}
 

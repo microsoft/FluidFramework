@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from './Common';
+import { assert, copyPropertyIfDefined, fail } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
-import { Delta, Forest } from './Forest';
+import { Delta, Forest, isParentedForestNode } from './Forest';
 import { NodeData, Side } from './persisted-types';
 
 /**
@@ -22,7 +22,10 @@ export interface TraitLocation {
  * @public
  */
 export interface TreeViewNode extends NodeData<NodeId> {
+	/** The IDs of the children under this node */
 	readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
+	/** The parent and trait under which this node resides. Undefined iff this is the root node of the tree (i.e. {@link initialTree}). */
+	readonly parentage?: TraitLocation;
 }
 
 /**
@@ -118,12 +121,27 @@ export abstract class TreeView {
 
 	/** @returns the node associated with the given id in this view. Fails if the node does not exist in this view. */
 	public getViewNode(id: NodeId): TreeViewNode {
-		return this.forest.get(id);
+		return this.tryGetViewNode(id) ?? fail('NodeId not found');
 	}
 
 	/** @returns the node associated with the given id in this view, or undefined if the node does not exist in this view */
 	public tryGetViewNode(id: NodeId): TreeViewNode | undefined {
-		return this.forest.tryGet(id);
+		const forestNode = this.forest.tryGet(id);
+		if (forestNode !== undefined && isParentedForestNode(forestNode)) {
+			const viewNode: TreeViewNode = {
+				definition: forestNode.definition,
+				identifier: forestNode.identifier,
+				traits: forestNode.traits,
+				parentage: {
+					label: forestNode.traitParent,
+					parent: forestNode.parentId,
+				},
+			};
+			copyPropertyIfDefined(forestNode, viewNode, 'payload');
+			return viewNode;
+		}
+
+		return forestNode;
 	}
 
 	/**

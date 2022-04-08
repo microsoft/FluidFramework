@@ -9,11 +9,12 @@ import { RevisionView } from '../RevisionView';
 import { ChangeNode } from '../persisted-types';
 import { refreshTestTree } from './utilities/TestUtilities';
 import { TestNode } from './utilities/TestNode';
+import { expectDefined } from './utilities/TestCommon';
 
 describe('TreeView', () => {
-	describe('can compute deltas', () => {
-		const testTree = refreshTestTree();
+	const testTree = refreshTestTree();
 
+	describe('can compute deltas', () => {
 		it('that are the same object', () => {
 			const view = testTree.view;
 			expect(view.delta(view)).deep.equals({
@@ -148,5 +149,17 @@ describe('TreeView', () => {
 			expect(delta.removed).deep.equals([]);
 			expect(delta.added).deep.equals([]);
 		});
+	});
+
+	it('correctly returns node parentage', () => {
+		const view = testTree.view;
+		for (const node of view) {
+			const parentNode = view.tryGetParentViewNode(node.identifier);
+			if (parentNode !== undefined) {
+				const parentage = expectDefined(node.parentage);
+				expect(parentage.label).to.equal(view.getTraitLabel(node.identifier));
+				expect(parentage.parent).to.equal(parentNode.identifier);
+			}
+		}
 	});
 });
