@@ -1,6 +1,9 @@
 {
-	"extends": "../../.nycrc.json",
+	"all": true,
 	"include": ["dist/**", "src/**"],
+	"cache-dir": "nyc/.cache",
+	"temp-directory": "nyc/.nyc_output",
+	"report-dir": "nyc/report",
 	"exclude": [
 		"**/{test,tests}/**",
 		"**/**.{test,tests}.{js,jsx,ts,tsx}",

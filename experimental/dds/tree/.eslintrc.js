@@ -1,18 +1,14 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 module.exports = {
 	extends: ['@fluidframework/eslint-config-fluid/eslint7'],
-	// This setting is the same as in fluid. However, specifying it here causes the parser module to be evaluated relative
-	// to shared-tree, which references @typescript-eslint/parser@~4.2.0 rather than @2.17.0. The former supports more advanced array
-	// types which are used in several modules.
-	parser: '@typescript-eslint/parser',
 	root: true,
 	rules: {
-		// Recover "noUnusedLocals" behavior as part of linting.
-		'@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
+		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
+		// '@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
 		'@typescript-eslint/quotes': [
 			'error',
 			'single',
@@ -35,10 +31,6 @@ module.exports = {
 		'@typescript-eslint/no-shadow': 'off',
 		'no-shadow': 'off',
 		'prefer-arrow/prefer-arrow-functions': 'off',
-		'no-redeclare': 'off', // Persisted type factories need to be classes to pass the typescript version of this rule
-
-		'import/no-cycle': 'warn', // TODO:#72204: Promote to error
-		'import/no-self-import': 'error',
 	},
 	overrides: [
 		{
