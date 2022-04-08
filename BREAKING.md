@@ -29,7 +29,7 @@ ICodeLoader interface was deprecated a while ago and will be removed in the next
 - [getAbsoluteUrl() argument type changed](#getAbsoluteUrl-argument-type-changed)
 - [Replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface)
 - [IFluidModule.fluidExport is no longer an IFluidObject](#IFluidModule.fluidExport-is-no-longer-an-IFluidObject)
-- [IContainerContext.scope is no longer an IFluidObject](#IContainerContext.scope-is-no-longer-an-IFluidObject)
+- [Scope is no longer an IFluidObject](#scope-is-no-longer-an-IFluidObject)
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
@@ -98,8 +98,9 @@ You can start by returning default code details that were passed into the code l
 ### IFluidModule.fluidExport is no longer an IFluidObject
 IFluidObject is no longer part of the type of IFluidModule.fluidExport. IFluidModule.fluidExport is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
 
-### IContainerContext.scope is no longer an IFluidObject
-IFluidObject is no longer part of the type of IContainerContext.scope. IContainerContext.scope is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+### Scope is no longer an IFluidObject
+IFluidObject is no longer part of the type of IContainerContext.scope or IContainerRuntime.scope.
+Scope is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
 
 ### IFluidHandle generic's default no longer includes IFluidObject
 IFluidObject is no longer part of the type of IFluidHandle generic's default.
