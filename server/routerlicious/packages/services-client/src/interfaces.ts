@@ -7,3 +7,11 @@ export interface IAlfredTenant {
     id: string;
     key: string;
 }
+
+export interface ISession {
+    ordererUrl: string;
+
+    historianUrl: string;
+
+    isSessionAlive: boolean;
+}
