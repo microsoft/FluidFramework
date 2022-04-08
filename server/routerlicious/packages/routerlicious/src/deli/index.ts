@@ -110,8 +110,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         tenantManager,
         combinedProducer,
         reverseProducer,
-        core.DefaultServiceConfiguration,
-        globalDbMongoManager);
+        core.DefaultServiceConfiguration);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {
