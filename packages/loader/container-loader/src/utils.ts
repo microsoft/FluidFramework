@@ -46,11 +46,12 @@ export function parseUrl(url: string): IParsedUrl | undefined {
 function convertSummaryToSnapshotWithEmbeddedBlobContents(
     summary: ISummaryTree,
 ): ISnapshotTree {
-    const treeNode = {
+    const treeNode: ISnapshotTree = {
         blobs: {},
         trees: {},
         commits: {},
         id: uuid(),
+        unreferenced: summary.unreferenced,
     };
     const keys = Object.keys(summary.tree);
     for (const key of keys) {

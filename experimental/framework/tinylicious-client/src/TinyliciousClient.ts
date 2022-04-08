@@ -8,12 +8,14 @@ import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
+    RootDataObject,
 } from "@fluid-experimental/fluid-static";
 import {
     IDocumentServiceFactory,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
@@ -77,7 +79,7 @@ export class TinyliciousClientInstance {
     private async getFluidContainerAndServices(
         container: Container,
     ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]>  {
-        const rootDataObject = (await container.request({ url: "/" })).value;
+        const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer = new FluidContainer(container, rootDataObject);
         const containerServices = this.getContainerServices(container);
         return [fluidContainer, containerServices];

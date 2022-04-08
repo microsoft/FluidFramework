@@ -14,5 +14,6 @@ export * from "./readAndParse";
 export * from "./fluidResolvedUrl";
 export * from "./summaryForCreateNew";
 export * from "./parallelRequests";
+export * from "./prefetchDocumentStorageService";
 export * from "./networkUtils";
 export * from "./runWithRetry";

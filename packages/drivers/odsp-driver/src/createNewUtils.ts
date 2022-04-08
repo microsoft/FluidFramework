@@ -46,6 +46,7 @@ function convertSummaryTreeToIOdspSnapshotCore(
                 trees.push({
                     type: "tree",
                     path: currentPath,
+                    unreferenced: summaryObject.unreferenced,
                 });
                 convertSummaryTreeToIOdspSnapshotCore(summaryObject, trees, blobs, currentPath);
                 break;

@@ -220,7 +220,9 @@ export function convertToSummaryTreeWithStats(
         }
     }
 
-    return builder.getSummaryTree();
+    const summaryTree = builder.getSummaryTree();
+    summaryTree.summary.unreferenced = snapshot.unreferenced;
+    return summaryTree;
 }
 
 /**
@@ -274,7 +276,10 @@ export function convertSnapshotTreeToSummaryTree(
         const subtree = convertSnapshotTreeToSummaryTree(tree);
         builder.addWithStats(key, subtree);
     }
-    return builder.getSummaryTree();
+
+    const summaryTree = builder.getSummaryTree();
+    summaryTree.summary.unreferenced = snapshot.unreferenced;
+    return summaryTree;
 }
 
 /**
@@ -318,5 +323,6 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
     }
     return {
         entries,
+        unreferenced: summaryTree.unreferenced,
     };
 }
