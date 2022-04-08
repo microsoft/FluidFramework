@@ -11,6 +11,8 @@ import {
     MongoManager,
     IThrottler,
     ICache,
+    ICollection,
+    IDocument,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -49,7 +51,7 @@ export function create(
     appTenants: IAlfredTenant[],
     operationsDbMongoManager: MongoManager,
     producer: IProducer,
-    globalDbMongoManager?: MongoManager) {
+    documentsCollection: ICollection<IDocument>) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
@@ -111,7 +113,7 @@ export function create(
         storage,
         producer,
         appTenants,
-        globalDbMongoManager);
+        documentsCollection);
 
     app.use("/public", cors(), express.static(path.join(__dirname, "../../public")));
     app.use(routes.api);
