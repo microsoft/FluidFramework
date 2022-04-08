@@ -180,7 +180,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion }});
 
-        if (isCreateContainer && this.driverPolicies.enableDiscovery) {
+        if (!isCreateContainer && this.driverPolicies.enableDiscovery) {
             const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
             const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
                 tenantId,
