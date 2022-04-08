@@ -202,7 +202,7 @@ export class DeltaScheduler {
     // (undocumented)
     batchEnd(): void;
     // (undocumented)
-    static readonly processingTime = 20;
+    static readonly processingTime = 50;
     }
 
 // @public (undocumented)
