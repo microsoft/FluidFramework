@@ -95,14 +95,6 @@ describe("LocalTestServer", () => {
         loaderContainerTracker.reset();
     });
 
-    describe("Document.existing", () => {
-        it("Validate document is new for user1 1 and exists for client 2", () => {
-            assert.equal(dataObject1.runtime.existing, false, "Document already exists");
-            assert.equal(dataObject2.runtime.existing, true, "Document does not exist on the server");
-            assert.notEqual(sharedString2, undefined, "Document does not contain a SharedString");
-        });
-    });
-
     describe("Attach Op Handlers on Both Clients", () => {
         it("Validate messaging", async () => {
             let user1ReceivedMsgCount: number = 0;

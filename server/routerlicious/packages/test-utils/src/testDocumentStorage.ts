@@ -4,10 +4,11 @@
  */
 
 import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
-import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
+import { IGitCache, IGitManager, ISession } from "@fluidframework/server-services-client";
 import {
     IDatabaseManager,
     IDeliState,
+    IDocument,
     IDocumentDetails,
     IDocumentStorage,
     IScribe,
@@ -40,7 +41,7 @@ export class TestDocumentStorage implements IDocumentStorage {
     /**
      * Retrieves database details for the given document
      */
-    public async getDocument(tenantId: string, documentId: string): Promise<any> {
+    public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
         const collection = await this.databaseManager.getDocumentCollection();
         return collection.findOne({ documentId, tenantId });
     }
@@ -57,9 +58,12 @@ export class TestDocumentStorage implements IDocumentStorage {
         summary: ISummaryTree,
         sequenceNumber: number,
         term: number,
+        initialHash: string,
+        ordererUrl: string,
+        historianUrl: string,
         values: [string, ICommittedProposal][],
     ): Promise<IDocumentDetails> {
-        const tenant = await this.tenantManager.getTenant(tenantId);
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
 
         const blobsShaCache = new Set<string>();
@@ -100,12 +104,14 @@ export class TestDocumentStorage implements IDocumentStorage {
         const deli: IDeliState = {
             clients: undefined,
             durableSequenceNumber: sequenceNumber,
+            expHash1: initialHash,
             logOffset: -1,
             sequenceNumber,
             epoch: undefined,
             term: 1,
             lastSentMSN: 0,
             nackMessages: undefined,
+            successfullyStartedLambdas: [],
         };
 
         const scribe: IScribe = {
@@ -120,9 +126,17 @@ export class TestDocumentStorage implements IDocumentStorage {
             },
             sequenceNumber,
             lastClientSummaryHead: undefined,
+            lastSummarySequenceNumber: 0,
         };
 
         const collection = await this.databaseManager.getDocumentCollection();
+
+        const session: ISession = {
+            ordererUrl,
+            historianUrl,
+            isSessionAlive: true,
+        };
+
         const result = await collection.findOrCreate(
             {
                 documentId,
@@ -132,6 +146,7 @@ export class TestDocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
+                session,
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
@@ -159,14 +174,14 @@ export class TestDocumentStorage implements IDocumentStorage {
     }
 
     public async getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]> {
-        const tenant = await this.tenantManager.getTenant(tenantId);
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
 
         return gitManager.getCommits(documentId, count);
     }
 
     public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
-        const tenant = await this.tenantManager.getTenant(tenantId);
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
 
         return gitManager.getCommit(sha);
@@ -187,6 +202,7 @@ export class TestDocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: undefined,
                 documentId,
+                session: undefined,
                 scribe: undefined,
                 tenantId,
                 version: "0.1",

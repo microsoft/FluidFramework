@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TagName } from "@fluid-example/flow-util-lib";
 import { FlowDocument } from "../document";
+import { TagName } from "../util";
 import { debug } from "./debug";
 
 const enum ClipboardFormat {

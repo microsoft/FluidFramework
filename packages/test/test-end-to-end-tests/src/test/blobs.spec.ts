@@ -4,39 +4,68 @@
  */
 
 import { strict as assert } from "assert";
-import { stringToBuffer, bufferToString } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { IDetachedBlobStorage } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ReferenceType } from "@fluidframework/merge-tree";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
+import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeFullCompat, describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { ReferenceType } from "@fluidframework/merge-tree";
-import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 const testContainerConfig: ITestContainerConfig = {
-    runtimeOptions: flattenRuntimeOptions({
+    runtimeOptions: {
         summaryOptions: {
             initialSummarizerDelayMs: 20,
             summaryConfigOverrides: { maxOps: 1 },
         },
-    }),
+    },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
+class MockDetachedBlobStorage implements IDetachedBlobStorage {
+    public readonly blobs = new Map<string, ArrayBufferLike>();
+
+    public get size() { return this.blobs.size; }
+
+    public getBlobIds(): string[] {
+        return Array.from(this.blobs.keys());
+    }
+
+    public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
+        const id = this.size.toString();
+        this.blobs.set(id, content);
+        return { id };
+    }
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        const blob = this.blobs.get(blobId);
+        assert(blob);
+        return blob;
+    }
+}
+
 describeFullCompat("blobs", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    beforeEach(async () => {
+    beforeEach(async function() {
         provider = getTestObjectProvider();
+        // Currently FRS does not support blob API.
+        if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+            this.skip();
+        }
     });
+
     it("attach sends an op", async function() {
         const container = await provider.makeTestContainer(testContainerConfig);
 
-        const blobOpP = new Promise<void>((res, rej) => container.on("op", (op) => {
+        const blobOpP = new Promise<void>((resolve, reject) => container.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                op.metadata?.blobId ? res() : rej(new Error("no op metadata"));
+                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
             }
         }));
 
@@ -61,19 +90,25 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         const container2 = await provider.loadTestContainer(testContainerConfig);
         const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
-        const blobHandle = await dataStore2._root.wait<IFluidHandle<ArrayBufferLike>>(testKey);
+        await provider.ensureSynchronized();
+
+        const blobHandle = dataStore2._root.get<IFluidHandle<ArrayBufferLike>>(testKey);
         assert(blobHandle);
         assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), testString);
     });
 
     it("loads from snapshot", async function() {
+        // GitHub Issue: #9534
+        if(provider.driver.type === "odsp") {
+            this.skip();
+        }
         const container1 = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container1, "default");
 
-        const attachOpP = new Promise<void>((res, rej) => container1.on("op", (op) => {
+        const attachOpP = new Promise<void>((resolve, reject) => container1.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                op.metadata?.blobId ? res() : rej(new Error("no op metadata"));
+                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
             }
         }));
 
@@ -141,7 +176,8 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         // validate on remote container, local container, and container loaded from summary
         for (const container of [container1, container2, await provider.loadTestContainer(testContainerConfig)]) {
             const dataStore2 = await requestFluidObject<ITestDataObject>(container, "default");
-            const handle = await dataStore2._root.wait<IFluidHandle<SharedString>>("sharedString");
+            await provider.ensureSynchronized();
+            const handle = dataStore2._root.get<IFluidHandle<SharedString>>("sharedString");
             assert(handle);
             const sharedString2 = await handle.get();
 
@@ -151,7 +187,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         }
     });
 
-    it("correctly handles simultaneous identical blob upload", async () => {
+    it("correctly handles simultaneous identical blob upload on one container", async () => {
         const container = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
         const blob = stringToBuffer("some different yet still random text", "utf-8");
@@ -159,30 +195,239 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         // upload the blob twice and make sure nothing bad happens.
         await Promise.all([dataStore._runtime.uploadBlob(blob), dataStore._runtime.uploadBlob(blob)]);
     });
-});
-
-// this functionality was added in 0.42 and can be added to the compat-enabled
-// tests above when runtime version is bumped to 0.44
-describeNoCompat("blobs", (getTestObjectProvider) => {
-    let provider: ITestObjectProvider;
-    beforeEach(async () => {
-        provider = getTestObjectProvider();
-    });
 
     it("uploadBlob() rejects when runtime is disposed", async () => {
         const container = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
 
-        (container.deltaManager as any)._inbound.pause();
-
-        const blobOpP = new Promise<void>((res) => container.deltaManager.on("submitOp", (op) => {
+        const blobOpP = new Promise<void>((resolve) => container.deltaManager.on("submitOp", (op) => {
             if (op.contents.includes("blobAttach")) {
-                res();
+                (container.deltaManager as any)._inbound.pause();
+                resolve();
             }
         }));
         const blobP = dataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8"));
         await blobOpP;
         container.close();
-        await assert.rejects(blobP, "promise returned by uploadBlob() did not reject when runtime was disposed");
+        await assert.rejects(blobP, /runtime disposed/);
+    });
+});
+
+// TODO: #7684
+const getUrlFromItemId = (itemId: string, provider: ITestObjectProvider): string => {
+    assert(provider.driver.type === "odsp");
+    assert(itemId);
+    const url = (provider.driver as any).getUrlFromItemId(itemId);
+    assert(url && typeof url === "string");
+    return url;
+};
+
+// this functionality was added in 0.47 and can be added to the compat-enabled
+// tests above when the LTS version is bumped > 0.47
+describeNoCompat("blobs", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(async function() {
+        provider = getTestObjectProvider();
+        // Currently FRS does not support blob API.
+        if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+            this.skip();
+        }
+    });
+
+    itExpects("works in detached container", [
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
+    ], async function() {
+        // GitHub issue: #9534
+        if(provider.driver.type === "tinylicious") {
+            this.skip();
+        }
+        const detachedBlobStorage = new MockDetachedBlobStorage();
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        const blobHandle = await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8"));
+        assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
+
+        dataStore._root.set("my blob", blobHandle);
+        assert.strictEqual(bufferToString(await (dataStore._root.get("my blob")).get(), "utf-8"), text);
+
+        const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
+        }
+        await attachP;
+
+        // make sure we're getting the blob from actual storage
+        detachedBlobStorage.blobs.clear();
+
+        // old handle still works
+        assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
+        // new handle works
+        assert.strictEqual(bufferToString(await (dataStore._root.get("my blob")).get(), "utf-8"), text);
+    });
+
+    it("serialize/rehydrate container with blobs", async function() {
+        const loader = provider.makeTestLoader(
+            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
+        const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const serializeDataStore = await requestFluidObject<ITestDataObject>(serializeContainer, "default");
+        const blobHandle = await serializeDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8"));
+        assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
+
+        serializeDataStore._root.set("my blob", blobHandle);
+        assert.strictEqual(bufferToString(await (serializeDataStore._root.get("my blob")).get(), "utf-8"), text);
+
+        const snapshot = serializeContainer.serialize();
+        const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+        const rehydratedDataStore = await requestFluidObject<ITestDataObject>(rehydratedContainer, "default");
+        assert.strictEqual(bufferToString(await rehydratedDataStore._root.get("my blob").get(), "utf-8"), text);
+    });
+
+    itExpects("redirect table saved in snapshot",[
+        { eventName: "fluid:telemetry:Container:ContainerClose", message: "0x202" },
+    ], async function() {
+        if(provider.driver.type === "tinylicious") {
+            this.skip();
+        }
+        const detachedBlobStorage = new MockDetachedBlobStorage();
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
+        const detachedContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const detachedDataStore = await requestFluidObject<ITestDataObject>(detachedContainer, "default");
+
+        detachedDataStore._root.set("my blob",
+            await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")));
+        detachedDataStore._root.set("my same blob",
+            await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")));
+        detachedDataStore._root.set("my other blob",
+            await detachedDataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8")));
+
+        const attachP = detachedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
+        }
+        await attachP;
+        detachedBlobStorage.blobs.clear();
+
+        const url = getUrlFromItemId((detachedContainer.resolvedUrl as IOdspResolvedUrl).itemId, provider);
+        const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
+
+        const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
+        await provider.ensureSynchronized();
+        assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
+    });
+
+    itExpects("serialize/rehydrate then attach", [
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
+    ], async function() {
+        // GitHub issue: #9534
+        if(provider.driver.type === "tinylicious") {
+            this.skip();
+        }
+        const loader = provider.makeTestLoader(
+            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
+        const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(serializeContainer, "default");
+        dataStore._root.set("my blob", await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")));
+
+        const snapshot = serializeContainer.serialize();
+        serializeContainer.close();
+        const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+
+        const attachP = rehydratedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
+        }
+        await attachP;
+
+        const url = getUrlFromItemId((rehydratedContainer.resolvedUrl as IOdspResolvedUrl).itemId, provider);
+        const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
+        const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
+        await provider.ensureSynchronized();
+        assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
+    });
+
+    itExpects("serialize/rehydrate multiple times then attach", [
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
+    ], async function() {
+        // GitHub issue: #9534
+        if(provider.driver.type === "tinylicious") {
+            this.skip();
+        }
+        const loader = provider.makeTestLoader(
+            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
+        let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        dataStore._root.set("my blob", await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")));
+
+        let snapshot;
+        for (const _ of Array(5)) {
+            snapshot = container.serialize();
+            container.close();
+            container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+        }
+
+        const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
+        }
+        await attachP;
+
+        const url = getUrlFromItemId((container.resolvedUrl as IOdspResolvedUrl).itemId, provider);
+        const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
+        const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
+        await provider.ensureSynchronized();
+        assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
+    });
+
+    it("rehydrating without detached blob storage results in error", async function() {
+        const detachedBlobStorage = new MockDetachedBlobStorage();
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
+        const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(serializeContainer, "default");
+        dataStore._root.set("my blob", await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")));
+
+        const snapshot = serializeContainer.serialize();
+        serializeContainer.close();
+
+        const loaderWithNoBlobStorage = provider.makeTestLoader(testContainerConfig);
+        await assert.rejects(loaderWithNoBlobStorage.rehydrateDetachedContainerFromSnapshot(snapshot));
+    });
+
+    // regression test for https://github.com/microsoft/FluidFramework/issues/9702
+    // this was fixed in 0.58.3000
+    it("correctly handles simultaneous identical blob upload on separate containers", async () => {
+        const container1 = await provider.makeTestContainer(testContainerConfig);
+        const container2 = await provider.loadTestContainer(testContainerConfig);
+        const dataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
+        const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
+        const blob = stringToBuffer("some different yet still random text", "utf-8");
+
+        // pause so the ops are in flight at the same time
+        await provider.opProcessingController.pauseProcessing();
+
+        // upload the blob twice and make sure nothing bad happens.
+        const uploadP = Promise.all([dataStore1._runtime.uploadBlob(blob), dataStore2._runtime.uploadBlob(blob)]);
+        provider.opProcessingController.resumeProcessing();
+        await uploadP;
     });
 });

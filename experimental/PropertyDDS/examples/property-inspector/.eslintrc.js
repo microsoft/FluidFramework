@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: ["@fluidframework/eslint-config-fluid/eslint7"],
+	extends: ["@fluidframework/eslint-config-fluid"],
     "parserOptions": {
         "project": ["./tsconfig.json"]
     },

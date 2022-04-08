@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
     FluidObjectMap,
     IViewConverter,
@@ -58,7 +58,7 @@ export function getViewFromFluid<
         return viewConverter(viewState, partialFluidState, fluidObjectMap);
     } else {
         const partialViewState: Partial<SV> = {};
-        const valueAsIFluidHandle = (value as IFluidObject).IFluidHandle;
+        const valueAsIFluidHandle = (value as FluidObject<IFluidHandle>).IFluidHandle;
         const convertedValue = valueAsIFluidHandle !== undefined
             ? fluidObjectMap.get(valueAsIFluidHandle.absolutePath)
             : value;

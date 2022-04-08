@@ -92,7 +92,7 @@ export class CopyfilesTask extends LeafTask {
         }
 
         const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg!);
-        const srcFiles = await globFn(srcGlob);
+        const srcFiles = await globFn(srcGlob, { nodir: true });
         const directory = toPosixPath(this.node.pkg.directory);
         const dstPath = directory + "/" + this.copyDstArg;
         const dstFiles = srcFiles.map(match => {
@@ -105,7 +105,7 @@ export class CopyfilesTask extends LeafTask {
                 }
                 currRelPath = currRelPath.substring(index + 1);
             }
-            
+
             return path.join(dstPath, currRelPath);
         });
         return this.isFileSame(srcFiles, dstFiles);

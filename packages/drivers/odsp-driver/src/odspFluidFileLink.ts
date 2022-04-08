@@ -100,7 +100,9 @@ function decodeOdspFluidDataStoreLocator(
     };
 }
 
-const locatorQueryParamName = "nav";
+// This parameter is provided by host in the resolve request and it contains information about the file
+// like driveId, itemId, siteUrl, datastorePath, packageName etc.
+export const locatorQueryParamName = "nav";
 
 /**
  * Embeds Fluid data store locator data into given ODSP url

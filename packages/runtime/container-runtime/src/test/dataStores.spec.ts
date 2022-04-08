@@ -12,10 +12,11 @@ import { IContainerRuntimeMetadata, nonDataStorePaths } from "../summaryFormat";
 describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("getSummaryForDatastores", () => {
-            const enabledMetadata: IContainerRuntimeMetadata = { summaryFormatVersion: 1 };
+            const enabledMetadata: IContainerRuntimeMetadata = { summaryFormatVersion: 1, message: undefined };
             const disabledMetadata: IContainerRuntimeMetadata = {
                 summaryFormatVersion: 1,
                 disableIsolatedChannels: true,
+                message: undefined,
             };
 
             const emptyTree = (id: string): ISnapshotTree => ({

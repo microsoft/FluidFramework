@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluidframework/webpack-fluid-loader");
+const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 
@@ -20,7 +20,7 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: require.resolve("ts-loader"),
             }]
         },
         output: {

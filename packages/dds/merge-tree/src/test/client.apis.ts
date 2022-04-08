@@ -6,16 +6,20 @@
 /* eslint-disable guard-for-in, no-restricted-syntax */
 
 import { strict as assert } from "assert";
-import * as MergeTree from "../";
-import * as Properties from "../properties";
+import { Client } from "../client";
+import {
+    createMap,
+    matchProperties,
+    PropertySet,
+} from "../properties";
 import { TestClient } from "./testClient";
 
 function checkGetPropertiesAtPos(
-    client: MergeTree.Client,
+    client: Client,
     pos: number,
-    props?: Properties.PropertySet, verbose = false) {
+    props?: PropertySet, verbose = false) {
     const propsRetrieved = client.getPropertiesAtPosition(pos);
-    const result = Properties.matchProperties(props, propsRetrieved);
+    const result = matchProperties(props, propsRetrieved);
     if ((!result) && verbose) {
         console.log(`At pos: ${pos}`);
         console.log("Expected props");
@@ -34,7 +38,7 @@ function checkGetPropertiesAtPos(
 export function clientGetPropertiesAtPositionTest() {
     const client = new TestClient();
     client.insertTextLocal(0, "the cat is on the mat");
-    const props = MergeTree.createMap<any>();
+    const props = createMap<any>();
     props.prop1 = 10;
     client.insertTextLocal(4, "fuzzy, fuzzy ", props);
 
@@ -46,7 +50,7 @@ export function clientGetPropertiesAtPositionTest() {
     return (testResult1 === testResult2 === testResult3 === testResult4 === true);
 }
 
-function checkGetSegmentExtentsOfPos(client: MergeTree.Client, pos: number, posStart: number,
+function checkGetSegmentExtentsOfPos(client: Client, pos: number, posStart: number,
     posAfterEnd: number, verbose = false) {
     const segExtents = client.getRangeExtentsOfPosition(pos);
     const result = segExtents.posStart === posStart && segExtents.posAfterEnd === posAfterEnd;
@@ -61,7 +65,7 @@ function checkGetSegmentExtentsOfPos(client: MergeTree.Client, pos: number, posS
 export function clientGetSegmentExtentsOfPositionTest() {
     const client = new TestClient();
     client.insertTextLocal(0, "the cat is on the mat");
-    const props = MergeTree.createMap<any>();
+    const props = createMap<any>();
     props.prop1 = 10;
     client.insertTextLocal(4, "fuzzy, fuzzy ", props);
     client.insertTextLocal(8, "more fuzzy text", {});

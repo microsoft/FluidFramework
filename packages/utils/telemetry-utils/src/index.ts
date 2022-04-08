@@ -3,7 +3,20 @@
  * Licensed under the MIT License.
  */
 export * from "./debugLogger";
+export * from "./errorLogging";
 export * from "./eventEmitterWithErrorHandling";
 export * from "./events";
+export * from "./fluidErrorBase";
 export * from "./logger";
+export * from "./mockLogger";
+export * from "./thresholdCounter";
 export * from "./utils";
+export {
+    MonitoringContext,
+    IConfigProviderBase,
+    sessionStorageConfigProvider,
+    mixinMonitoringContext,
+    IConfigProvider,
+    ConfigTypes,
+    loggerToMonitoringContext,
+} from "./config";

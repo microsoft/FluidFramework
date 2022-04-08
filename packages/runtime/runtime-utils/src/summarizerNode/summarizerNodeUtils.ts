@@ -20,16 +20,35 @@ const baseSummaryTreeKey = "_baseSummary";
 const outstandingOpsBlobKey = "_outstandingOps";
 const maxDecodeDepth = 100;
 
+/**
+ * Return value of refreshSummaryAck function. There can be three different scenarios based on the passed params:
+ * 1. The latest summary was not udpated.
+ * 2. The latest summary was updated and the summary corresponding to the params was tracked by this client.
+ * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this case, the
+ *    latest summary is updated based on the downloaded snapshot which is also returned.
+ */
+export type RefreshSummaryResult = {
+    latestSummaryUpdated: false,
+} | {
+    latestSummaryUpdated: true,
+    wasSummaryTracked: true,
+} | {
+    latestSummaryUpdated: true,
+    wasSummaryTracked: false,
+    snapshot: ISnapshotTree,
+};
+
 export interface ISummarizerNodeRootContract {
     startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
     completeSummary(proposalHandle: string): void;
     clearSummary(): void;
     refreshLatestSummary(
         proposalHandle: string | undefined,
+        summaryRefSeq: number,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
-    ): Promise<void>;
+    ): Promise<RefreshSummaryResult>;
 }
 
 /** Path for nodes in a tree with escaped special characters */
@@ -168,7 +187,6 @@ export function decodeSummary(
                             if (newEarliestSeq <= latestSeq) {
                                 logger.sendTelemetryEvent({
                                     eventName:"DuplicateOutstandingOps",
-                                    category: "generic",
                                     // eslint-disable-next-line max-len
                                     message: `newEarliestSeq <= latestSeq in decodeSummary: ${newEarliestSeq} <= ${latestSeq}`,
                                 });

@@ -25,8 +25,6 @@ export class TreeNodeHandle implements TreeNode<TreeNodeHandle, NodeId> {
 	}
 
 	public get payload(): Payload | undefined {
-		// This is necessary, because Payload aliases any
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.node.payload;
 	}
 

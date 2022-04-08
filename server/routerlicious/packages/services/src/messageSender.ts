@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { EmptyTaskMessageSender, ITaskMessage, ITaskMessageSender } from "@fluidframework/server-services-core";
 import * as amqp from "amqplib";
 import * as winston from "winston";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 class RabbitmqTaskSender implements ITaskMessageSender {
     private readonly events = new EventEmitter();
@@ -31,6 +32,7 @@ class RabbitmqTaskSender implements ITaskMessageSender {
         }
         await Promise.all(queuePromises);
         winston.info(`Rabbitmq task queues ready to produce!`);
+        Lumberjack.info(`Rabbitmq task queues ready to produce!`);
 
         this.connection.on("error", (error) => {
             this.events.emit("error", error);

@@ -4,6 +4,7 @@
  */
 
 import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
 import morgan from "morgan";
@@ -21,6 +22,7 @@ const split = require("split");
 const stream = split().on("data", (message) => {
     if (message !== undefined) {
         winston.info(message);
+        Lumberjack.info(message);
     }
 });
 
@@ -43,6 +45,7 @@ export function create(
         app.use(morgan((tokens, req, res) => {
             const messageMetaData = {
                 method: tokens.method(req, res),
+                pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
@@ -51,6 +54,7 @@ export function create(
                 serviceName: "riddler",
                 eventName: "http_requests",
             };
+            logRequestMetric(messageMetaData);
             winston.info("request log generated", { messageMetaData });
             return undefined;
         }));

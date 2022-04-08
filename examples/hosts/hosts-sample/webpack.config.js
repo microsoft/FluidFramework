@@ -7,7 +7,7 @@ const path = require('path');
 
 module.exports = {
     entry: {
-        main: './src/index.ts'
+        main: './src/app.ts'
     },
     devtool: 'source-map',
     mode: 'development',
@@ -15,12 +15,12 @@ module.exports = {
         rules: [
             {
                 test: /\.tsx?$/,
-                use: 'ts-loader',
+                use: require.resolve('ts-loader'),
                 exclude: /node_modules/
             },
             {
                 test: /\.js$/,
-                use: ["source-map-loader"],
+                use: [require.resolve("source-map-loader")],
                 enforce: "pre"
             }
         ]

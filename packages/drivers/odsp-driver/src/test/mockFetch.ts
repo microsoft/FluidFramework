@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/ban-types */
 import assert from "assert";
-import sinon from "sinon";
+import { stub } from "sinon";
 import * as fetchModule from "node-fetch";
 
 export const createResponse = async (headers: { [key: string]: string }, response: any | undefined, status: number) =>
@@ -29,7 +29,7 @@ export async function mockFetchMultiple<T>(
     responses: (() => Promise<object>)[],
     type: FetchCallType = "single",
 ): Promise<T> {
-    const fetchStub = sinon.stub(fetchModule, "default");
+    const fetchStub = stub(fetchModule, "default");
     fetchStub.callsFake(async () => {
         if (type === "external") {
             fetchStub.restore();

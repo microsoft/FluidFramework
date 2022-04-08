@@ -4,6 +4,7 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
+import { ITicketedMessage } from "./messages";
 
 export interface IQueuedMessage {
     topic: string;
@@ -53,6 +54,12 @@ export interface IConsumer {
     commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void>;
 
     /**
+     * Returns the offset of the latest consumsed message
+     * May return undefined if a consumer is not tracking this
+     */
+    getLatestMessageOffset(partitionId: number): number | undefined;
+
+    /**
      * Event handlers
      */
     on(event: "connected" | "disconnected" | "closed" | "paused" | "resumed", listener: () => void): this;
@@ -74,7 +81,7 @@ export interface IPendingMessage {
     message: string;
 }
 
-export interface IProducer {
+export interface IProducer<T = ITicketedMessage> {
     /**
      * Returns true if the producer is connected
      */
@@ -82,9 +89,9 @@ export interface IProducer {
 
     /**
      * Sends the message to a queue
+     * @param partitionId Specify this to send the messages to a specific partition. Only RdkafkaProducer supports this.
      */
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    send(messages: object[], tenantId: string, documentId: string): Promise<void>;
+    send(messages: T[], tenantId: string, documentId: string, partitionId?: number): Promise<void>;
 
     /**
      * Closes the underlying connection

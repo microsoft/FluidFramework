@@ -6,3 +6,4 @@ export * from "./clientIdGenerator";
 export * from "./messageGenerator";
 export * from "./noOpLambda";
 export * from "./random";
+export * from "./telemetryHelper";

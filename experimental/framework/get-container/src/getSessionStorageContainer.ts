@@ -4,9 +4,10 @@
  */
 
 import {
+    IContainer,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { LocalResolver, LocalDocumentServiceFactory, LocalSessionStorageDbFactory } from "@fluidframework/local-driver";
 
@@ -24,7 +25,7 @@ export async function getSessionStorageContainer(
     documentId: string,
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
-): Promise<Container> {
+): Promise<IContainer> {
     let deltaConnection = deltaConnectionMap.get(documentId);
     if (deltaConnection === undefined) {
         deltaConnection = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
@@ -45,22 +46,16 @@ export async function getSessionStorageContainer(
         codeLoader,
     });
 
-    let container: Container;
+    let container: IContainer;
 
     if (createNew) {
         // We're not actually using the code proposal (our code loader always loads the same module regardless of the
-        // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
+        // proposal), but the IContainer will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
         container = await loader.createDetachedContainer({ package: "", config: {} });
         await container.attach({ url });
     } else {
         container = await loader.resolve({ url });
-        // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
-        // new container here, where we expect this to be loading an existing container.
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (!container.existing) {
-            throw new Error("Attempted to load a non-existing container");
-        }
     }
 
     return container;

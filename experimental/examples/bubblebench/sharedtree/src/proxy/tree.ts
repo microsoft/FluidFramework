@@ -83,6 +83,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
         return new Proxy(this, {
             get(target, key) {
                 if (typeof key !== "symbol" && !isNaN(key as unknown as number)) {
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                     const index = parseInt(key as string, 10);
                     const view = tree.currentView;
                     const childrenIds = view.getTrait({ parent: nodeId, label: "items" as TraitLabel });
@@ -94,6 +95,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
             },
             set(target, key, value) {
                 if (typeof key !== "symbol" && !isNaN(key as unknown as number)) {
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                     const index = parseInt(key as string, 10);
                     const view = tree.currentView;
                     const childrenIds = view.getTrait({ parent: nodeId, label: "items" as TraitLabel });

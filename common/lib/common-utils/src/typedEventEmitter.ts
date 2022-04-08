@@ -10,7 +10,7 @@ import { IEvent, TransformedEvent, IEventTransformer, IEventProvider } from "@fl
 // this allow us to correctly handle either type
 export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any) } ? E : never;
 
-export type TypedEventTransform<TThis, TEvent extends IEvent> =
+export type TypedEventTransform<TThis, TEvent> =
     // Event emitter supports some special events for the emitter itself to use
     // this exposes those events for the TypedEventEmitter.
     // Since we know what the shape of these events are, we can describe them directly via a TransformedEvent
@@ -18,14 +18,14 @@ export type TypedEventTransform<TThis, TEvent extends IEvent> =
     // eslint-disable-next-line max-len
     TransformedEvent<TThis, "newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> &
     // Expose all the events provides by TEvent
-    IEventTransformer<TThis, TEvent> &
+    IEventTransformer<TThis, TEvent & IEvent> &
     // Add the default overload so this is covertable to EventEmitter regardless of environment
     TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
 /**
  * Event Emitter helper class the supports emitting typed events
  */
-export class TypedEventEmitter<TEvent extends IEvent> extends EventEmitter implements IEventProvider<TEvent> {
+export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {
     constructor() {
         super();
         this.addListener = super.addListener.bind(this) as TypedEventTransform<this, TEvent>;

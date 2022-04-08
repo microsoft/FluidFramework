@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { gcTreeKey } from "./garbageCollection";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -66,22 +70,62 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
     return 0;
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
     return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
 
-export interface IContainerRuntimeMetadata {
+export type GCVersion = number;
+export interface IContainerRuntimeMetadata extends ICreateContainerMetadata {
     readonly summaryFormatVersion: 1;
+    /** The last message processed at the time of summary. Only primitive propertiy types are added to the summary. */
+    readonly message: ISummaryMetadataMessage | undefined;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
-    /** 1 to enable GC, 0 to disable GC, undefined defaults to disabled. */
-    readonly gcFeature?: 0 | 1;
+    /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
+    readonly gcFeature?: GCVersion;
+    /** Counter of the last summary happened, increments every time we summarize */
+    readonly summaryCount?: number;
+    /** If this is present, the session for this container will expire after this time and the container will close */
+    readonly sessionExpiryTimeoutMs?: number;
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function getMetadataFormatVersion(metadata: IContainerRuntimeMetadata | undefined): number {
+export interface ICreateContainerMetadata {
+    /** Runtime version of the container when it was first created */
+    createContainerRuntimeVersion?: string;
+    /** Timestamp of the container when it was first created */
+    createContainerTimestamp?: number;
+}
+
+/** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
+export type ISummaryMetadataMessage = Pick<ISequencedDocumentMessage,
+    | "clientId"
+    | "clientSequenceNumber"
+    | "minimumSequenceNumber"
+    | "referenceSequenceNumber"
+    | "sequenceNumber"
+    | "timestamp"
+    | "type">;
+
+/**
+ * Extracts the properties from an ISequencedDocumentMessage as defined by ISummaryMetadataMessage. This message is
+ * added to the metadata blob in summary.
+ */
+export const extractSummaryMetadataMessage = (
+    message?: ISequencedDocumentMessage,
+): ISummaryMetadataMessage | undefined => message === undefined ? undefined : {
+    clientId: message.clientId,
+    clientSequenceNumber: message.clientSequenceNumber,
+    minimumSequenceNumber: message.minimumSequenceNumber,
+    referenceSequenceNumber: message.referenceSequenceNumber,
+    sequenceNumber: message.sequenceNumber,
+    timestamp: message.timestamp,
+    type: message.type,
+};
+
+export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): number {
     /**
+     * Version 2+: Introduces runtime sequence number for data verification.
+     *
      * Version 1+: Introduces .metadata blob and .channels trees for isolation of
      * data store trees from container-level objects.
      * Also introduces enableGC option stored in the summary.
@@ -92,18 +136,17 @@ export function getMetadataFormatVersion(metadata: IContainerRuntimeMetadata | u
     return metadata?.summaryFormatVersion ?? 0;
 }
 
+export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
+export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function rootHasIsolatedChannels(metadata: IContainerRuntimeMetadata | undefined): boolean {
+export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
     return !!metadata && !metadata.disableIsolatedChannels;
 }
 
-export function gcFeature(
-    metadata: IContainerRuntimeMetadata | undefined,
-): Required<IContainerRuntimeMetadata>["gcFeature"] {
+export function getGCVersion(metadata?: IContainerRuntimeMetadata): GCVersion {
     if (!metadata) {
         // Force to 0/disallowed in prior versions
         return 0;
@@ -119,7 +162,7 @@ export const protocolTreeName = ".protocol";
  * isolated data stores namespace. Without the namespace, this must
  * be used to prevent name collisions with data store IDs.
  */
-export const nonDataStorePaths = [protocolTreeName, ".logTail", ".serviceProtocol", blobsTreeName];
+export const nonDataStorePaths = [protocolTreeName, ".logTail", ".serviceProtocol", blobsTreeName, gcTreeKey];
 
 export const dataStoreAttributesBlobName = ".component";
 
@@ -147,4 +190,20 @@ export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats
         tree: { [channelsTreeName]: summarizeResult.summary },
     };
     summarizeResult.stats.treeNodeCount++;
+}
+
+export async function getFluidDataStoreAttributes(
+    storage: IDocumentStorageService,
+    snapshot: ISnapshotTree,
+): Promise<ReadFluidDataStoreAttributes> {
+    const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
+        storage, snapshot.blobs[dataStoreAttributesBlobName]);
+    // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
+    // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
+    // However the feature of loading a detached container from snapshot, is added when the
+    // snapshotFormatVersion is at least "0.1" (1), so we don't expect it to be anything else.
+    const formatVersion = getAttributesFormatVersion(attributes);
+    assert(formatVersion > 0,
+        0x1d5 /* `Invalid snapshot format version ${attributes.snapshotFormatVersion}` */);
+    return attributes;
 }

@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideFluidUserInformation>> { }
-}
-
 export const IFluidUserInformation: keyof IProvideFluidUserInformation = "IFluidUserInformation";
 
 export interface IProvideFluidUserInformation {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidObject, IRequest, IRequestHeader, IResponse } from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest, IRequestHeader, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
 import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
@@ -73,7 +73,7 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
  *  3. the request url starts with "/" and is followed by a query param, such as /?key=value
  * Returns a 404 error for any other url.
  */
-export function defaultFluidObjectRequestHandler(fluidObject: IFluidObject, request: IRequest): IResponse {
+export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, request: IRequest): IResponse {
     if (request.url === "" || request.url === "/" || request.url.startsWith("/?")) {
         return { mimeType: "fluid/object", status: 200, value: fluidObject };
     } else {

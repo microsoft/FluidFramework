@@ -382,5 +382,40 @@ describe("PropertyTree", () => {
 			expect(prundedData.remoteChanges.length).to.be.equal(3);
 			expect(Object.keys(prundedData.unrebasedRemoteChanges).length).to.equal(2);
 		});
+		it("Prune should not prune commits with an empty remote head", () => {
+			/**
+			 * REMOTE CHANGES:       * --(A,1)
+			 * UNREBASED CHANGES:     \--(A,1)
+			 */
+			const msn = 1;
+			const remoteChanges: IPropertyTreeMessage[] = [
+				{
+					op: OpKind.ChangeSet,
+					changeSet: {},
+					guid: "A",
+					referenceGuid: "",
+					remoteHeadGuid: "",
+					localBranchStart: undefined,
+                    metadata: undefined,
+				},
+			];
+			const unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage> = {};
+			unrebasedRemoteChanges.A = {
+				op: OpKind.ChangeSet,
+				changeSet: {},
+				guid: "A",
+				referenceGuid: "",
+				remoteHeadGuid: "",
+				localBranchStart: undefined,
+				sequenceNumber: 1,
+                metadata: undefined,
+			};
+
+			const prundedData = SharedPropertyTree.prune(msn, remoteChanges, unrebasedRemoteChanges);
+
+			expect(prundedData.prunedCount).to.equal(0);
+			expect(prundedData.remoteChanges.length).to.be.equal(1);
+			expect(Object.keys(prundedData.unrebasedRemoteChanges).length).to.equal(1);
+		});
 	});
 });

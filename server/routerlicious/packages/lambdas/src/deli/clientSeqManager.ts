@@ -65,6 +65,7 @@ export class ClientSequenceNumberManager {
      * @param canEvict Flag indicating whether or not we can evict the client (branch clients cannot be evicted)
      * @param scopes scope of the client
      * @param nack Flag indicating whether we have nacked this client
+     * @param serverMetadata Optional server provided metadata to associate with the client
      * Returns false if the same client has been added earlier.
      */
     public upsertClient(
@@ -74,13 +75,20 @@ export class ClientSequenceNumberManager {
         timestamp: number,
         canEvict: boolean,
         scopes: string[] = [],
-        nack: boolean = false): boolean {
+        nack: boolean = false,
+        serverMetadata: any = undefined): boolean {
         const client = this.clientNodeMap.get(clientId);
         if (client) {
             client.value.referenceSequenceNumber = referenceSequenceNumber;
             client.value.clientSequenceNumber = clientSequenceNumber;
             client.value.lastUpdate = timestamp;
             client.value.nack = nack;
+
+            if (serverMetadata) {
+                // update serverMetadata if it's provided
+                client.value.serverMetadata = serverMetadata;
+            }
+
             this.clientSeqNumbers.update(client);
             return false;
         }
@@ -94,6 +102,7 @@ export class ClientSequenceNumberManager {
             nack,
             referenceSequenceNumber,
             scopes,
+            serverMetadata,
         });
         this.clientNodeMap.set(clientId, newNode);
         return true;

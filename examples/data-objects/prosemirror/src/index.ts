@@ -3,55 +3,59 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IContainerContext,
-    IRuntime,
-    IRuntimeFactory,
-} from "@fluidframework/container-definitions";
+import { mountableViewRequestHandler } from "@fluidframework/aqueduct";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
-import {
-    innerRequestHandler,
-    buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
-import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { fluidExport as smde } from "./prosemirror";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { buildRuntimeRequestHandler } from "@fluidframework/request-handler";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { requestFluidObject, RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { MountableView } from "@fluidframework/view-adapters";
+import { fluidExport as smde, ProseMirror, ProseMirrorView } from "./prosemirror";
 
-const defaultComponent = smde.type;
+export { ProseMirror, ProseMirrorFactory, ProseMirrorView } from "./prosemirror";
 
-class ProseMirrorFactory implements IRuntimeFactory {
-    public get IRuntimeFactory() { return this; }
+const defaultComponentId = "default";
 
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+const viewRequestHandler = async (request: RequestParser, runtime: IContainerRuntime) => {
+    if (request.pathParts.length === 0) {
+        const objectRequest = RequestParser.create({
+            url: ``,
+            headers: request.headers,
+        });
+        const proseMirror = await requestFluidObject<ProseMirror>(
+            await runtime.getRootDataStore(defaultComponentId),
+            objectRequest);
+        return { status: 200, mimeType: "fluid/view", value: new ProseMirrorView(proseMirror.collabManager) };
+    }
+};
+
+class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+        await runtime.createRootDataStore(smde.type, defaultComponentId);
+    }
+
+    public async preInitialize(
+        context: IContainerContext,
+        existing: boolean,
+    ): Promise<ContainerRuntime> {
         const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-            [defaultComponent, Promise.resolve(smde)],
+            [smde.type, Promise.resolve(smde)],
         ]);
-
-        const defaultComponentId = "default";
 
         const runtime = await ContainerRuntime.load(
             context,
             registry,
             buildRuntimeRequestHandler(
-                defaultRouteRequestHandler(defaultComponentId),
-                innerRequestHandler,
-            ));
-
-        // Flush mode to manual to batch operations within a turn
-        runtime.setFlushMode(FlushMode.Manual);
-
-        // On first boot create the base component
-        if (!runtime.existing) {
-            await runtime.createRootDataStore(defaultComponent, defaultComponentId);
-        }
+                mountableViewRequestHandler(MountableView, [viewRequestHandler]),
+            ),
+            undefined, // runtimeOptions
+            undefined, // containerScope
+            existing,
+        );
 
         return runtime;
     }
 }
 
-export const fluidExport = new ProseMirrorFactory();
-
-// eslint-disable-next-line @typescript-eslint/promise-function-async, prefer-arrow/prefer-arrow-functions
-export function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return fluidExport.instantiateRuntime(context);
-}
+export const fluidExport = new ProseMirrorRuntimeFactory();

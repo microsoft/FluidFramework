@@ -418,7 +418,7 @@ describe('InspectorTable', () => {
     let expanded;
     beforeAll(async () => {
       ({ workspace } = await initializeWorkspace());
-      expanded =  Object.keys(expandAll(workspace));
+      expanded = Object.keys(expandAll(workspace));
     });
 
     it('should expand nonprimitives', () => {

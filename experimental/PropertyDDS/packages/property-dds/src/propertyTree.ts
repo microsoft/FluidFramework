@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-internal-modules */
+import isEmpty from "lodash/isEmpty";
+import findIndex from "lodash/findIndex";
+import range from "lodash/range";
+import {copy as cloneDeep} from "fastest-json-copy";
+import { Packr } from "msgpackr";
+
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	ISequencedDocumentMessage,
-	ITree,
 	MessageType,
 	FileMode,
 	TreeEntry,
@@ -18,20 +25,20 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 
-import { bufferToString, assert } from "@fluidframework/common-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { bufferToString, stringToBuffer, assert } from "@fluidframework/common-utils";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 
 import {
 	ChangeSet,
 	Utils as ChangeSetUtils,
-    rebaseToRemoteChanges,
+	rebaseToRemoteChanges,
 } from "@fluid-experimental/property-changeset";
 
 import { PropertyFactory, BaseProperty, NodeProperty } from "@fluid-experimental/property-properties";
 
 import { v4 as uuidv4 } from "uuid";
-import _ from "lodash";
 import axios from "axios";
 import { PropertyTreeFactory } from "./propertyTreeFactory";
 
@@ -153,17 +160,23 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	private scopeFutureDeltasToPaths(paths?: string[]) {
-		const socket = (this.runtime.deltaManager as any).deltaManager.connection.socket;
+		const socket = (this.runtime.deltaManager as any).deltaManager.connectionManager.connection.socket;
 		socket.emit("partial_checkout", { paths });
 	}
 
 	public _reportDirtinessToView() {
-		const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
-		const _changeSet = new ChangeSet(changes);
-		if (!_.isEmpty(_changeSet.getSerializedChangeSet())) {
-			this.emit("localModification", _changeSet);
-		}
-		this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+		// Check whether anybody is listening. If not, we don't want to pay the price
+		// for the serialization of the data structure
+		if (this.listenerCount("localModification") > 0) {
+			const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+            this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+			const _changeSet = new ChangeSet(changes);
+			if (!isEmpty(_changeSet.getSerializedChangeSet())) {
+				this.emit("localModification", _changeSet);
+			}
+		} else {
+            this._root.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
+        }
 	}
 
 	public get changeSet(): SerializedChangeSet {
@@ -171,12 +184,12 @@ export class SharedPropertyTree extends SharedObject {
 		return this.tipView;
 	}
 
-    public get activeCommit(): IPropertyTreeMessage {
-        if(this.localChanges.length > 0) {
-            return this.localChanges[this.localChanges.length - 1];
-        } else {
-            return this.remoteChanges[this.remoteChanges.length - 1];
-        }
+	public get activeCommit(): IPropertyTreeMessage {
+		if(this.localChanges.length > 0) {
+			return this.localChanges[this.localChanges.length - 1];
+		} else {
+			return this.remoteChanges[this.remoteChanges.length - 1];
+		}
 	}
 	public get root(): NodeProperty {
 		return this._root as NodeProperty;
@@ -185,17 +198,17 @@ export class SharedPropertyTree extends SharedObject {
 	public commit(metadata?: Metadata, submitEmptyChange?: boolean) {
 		const changes = this._root._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
 
-        let doSubmit = !!submitEmptyChange;
+		let doSubmit = !!submitEmptyChange;
 
-        // if no override provided dont submit unless metadata are provided
-        if (submitEmptyChange === undefined) {
-            doSubmit =  metadata !== undefined;
-        }
+		// if no override provided dont submit unless metadata are provided
+		if (submitEmptyChange === undefined) {
+			doSubmit = metadata !== undefined;
+		}
 
-        if (doSubmit || !_.isEmpty(changes)) {
-            this.applyChangeSet(changes, metadata || {});
-            this.root.cleanDirty();
-        }
+		if (doSubmit || !isEmpty(changes)) {
+			this.applyChangeSet(changes, metadata || {});
+			this.root.cleanDirty();
+		}
 	}
 
 	private applyChangeSet(changeSet: SerializedChangeSet, metadata: Metadata) {
@@ -221,9 +234,9 @@ export class SharedPropertyTree extends SharedObject {
 
 		// Queue the op for transmission to the Fluid service.
 		if (this.transmissionsHaveBeenStopped) {
-			this.enqueuedMessages.push(_.cloneDeep(change));
+			this.enqueuedMessages.push(cloneDeep(change));
 		} else {
-			this.submitLocalMessage(change);
+			this.submitLocalMessage(cloneDeep(change));
 		}
 	}
 
@@ -277,7 +290,7 @@ export class SharedPropertyTree extends SharedObject {
 				case OpKind.ChangeSet:
 					// If the op originated locally from this client, we've already accounted for it
 					// by advancing the state.  Otherwise, advance the PRNG now.
-					this._applyRemoteChangeSet(_.cloneDeep(content));
+					this._applyRemoteChangeSet(cloneDeep(content));
 					break;
 				default:
 					break;
@@ -335,6 +348,12 @@ export class SharedPropertyTree extends SharedObject {
 				if (visitor.remoteHeadGuid === visitor.referenceGuid && remoteChangeMap.has(visitor.referenceGuid)) {
 					visitedRemoteChanges.add(visitor.referenceGuid);
 				}
+
+				// If we have a change that refers to the start of the history (remoteHeadGuid === ""), we have to
+				// keep all remote Changes until this change has been processed
+				if (visitor.remoteHeadGuid === "") {
+					visitedRemoteChanges.add(remoteChanges[0].guid);
+				}
 			}
 		}
 		let pruned = 0;
@@ -373,7 +392,7 @@ export class SharedPropertyTree extends SharedObject {
 		this.remoteChanges = remoteChanges;
 		this.unrebasedRemoteChanges = unrebasedRemoteChanges;
 	}
-	public snapshotCore(serializer: IFluidSerializer): ITree {
+	public summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		this.pruneHistory();
 		const snapshot: ISnapshot = {
 			branchGuid: this.handle.absolutePath.split("/").pop() as string,
@@ -382,7 +401,7 @@ export class SharedPropertyTree extends SharedObject {
 			numChunks: 0,
 		};
 
-		const chunks: ITreeEntry[] = [];
+		const builder = new SummaryTreeBuilder();
 		if (!this.useMH) {
 			// If the MH is not used, we have to include the tip view, the remote changes and the received
 			// deltas to the summary
@@ -391,54 +410,21 @@ export class SharedPropertyTree extends SharedObject {
 				remoteChanges: this.remoteChanges,
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
-			const chunkSize = 64 * 1024; // Default limit seems to be 100k
-			let serializedSummary =
-				serializer !== undefined ? serializer.stringify(summary, this.handle) : JSON.stringify(summary);
-
-			// JSON.stringify does not escape unicode characters. As a consequence,
-			// the chunking code below could create chunks which are bigger than the
-			// allowed limit after encoding the JSON via UTF8 encoding. To make sure
-			// the encoded string stays within the size limit, we replace unicode characters
-			// with the cooresponding escapes. This way, it won't change size when encoded as
-			// utf8
-			serializedSummary = serializedSummary.replace(
-				/[\u007F-\uFFFF]/g,
-				// eslint-disable-next-line prefer-template
-				(c) => `\\u${("0000" + c.charCodeAt(0).toString(16)).substr(-4)}`,
-			);
+			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
+			const packr = new Packr();
+			const serializedSummary = packr.pack(summary);
 
 			for (let pos = 0, i = 0; pos < serializedSummary.length; pos += chunkSize, i++) {
-				chunks.push({
-					path: `summaryChunk_${i}`,
-					mode: FileMode.File,
-					type: TreeEntry.Blob,
-					value: {
-						contents: serializedSummary.substr(pos, chunkSize),
-						encoding: "utf-8",
-					},
-				});
+				builder.addBlob(`summaryChunk_${i}`,
+								bufferToString(serializedSummary.slice(pos, pos + chunkSize), "base64"));
+				snapshot.numChunks++;
 			}
-			snapshot.numChunks = chunks.length;
 		}
 
-		return {
-			entries: [
-				{
-					path: "properties",
-					mode: FileMode.File,
-					type: TreeEntry.Blob,
-					value: {
-						contents:
-							serializer !== undefined
-								? serializer.stringify(snapshot, this.handle)
-								: JSON.stringify(snapshot),
-						encoding: "utf-8",
-					},
-				},
-				...chunks,
-			],
-			id: undefined,
-		};
+		builder.addBlob("properties", serializer !== undefined
+			? serializer.stringify(snapshot, this.handle)
+			: JSON.stringify(snapshot));
+		return builder.getSummaryTree();
 	}
 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
@@ -446,22 +432,28 @@ export class SharedPropertyTree extends SharedObject {
 		const handleTableChunk = await storage.readBlob("properties");
 		const utf8 = bufferToString(handleTableChunk, "utf8");
 
-		const serializer = runtime.IFluidSerializer;
-		const snapshot: ISnapshot = serializer !== undefined ? serializer.parse(utf8) : JSON.parse(utf8);
+		const snapshot: ISnapshot = this.serializer.parse(utf8);
 		this.useMH = snapshot.useMH;
 
 		try {
 			if (!snapshot.useMH) {
 				// We load all chunks
-				const chunks = await Promise.all(
-					_.range(snapshot.numChunks).map(async (i) => {
-						return bufferToString(await storage.readBlob(`summaryChunk_${i}`), "utf8");
+				const chunks: ArrayBufferLike[] = await Promise.all(
+					range(snapshot.numChunks).map(async (i) => {
+						const buffer = bufferToString(await storage.readBlob(`summaryChunk_${i}`), "utf8");
+						return stringToBuffer(buffer, "base64");
 					}),
 				);
 
-				const serializedSummary = _.reduce(chunks, (a, b) => a + b, "");
-				const snapshotSummary: ISnapshotSummary =
-					serializer !== undefined ? serializer.parse(serializedSummary) : JSON.parse(serializedSummary);
+				const totalLength = chunks.reduce((a, b) => a + b.byteLength, 0);
+				const serializedSummary = new Uint8Array(totalLength);
+				chunks.reduce((offset, chunk) => {
+					serializedSummary.set(new Uint8Array(chunk), offset);
+					return offset + chunk.byteLength;
+				}, 0);
+
+				const packr = new Packr();
+				const snapshotSummary = packr.unpack(serializedSummary);
 				if (
 					snapshotSummary.remoteChanges === undefined ||
 					snapshotSummary.remoteTipView === undefined ||
@@ -481,7 +473,7 @@ export class SharedPropertyTree extends SharedObject {
 						this.options.paths,
 					);
 				}
-				this.tipView = _.cloneDeep(this.remoteTipView);
+				this.tipView = cloneDeep(this.remoteTipView);
 
 				this.skipSequenceNumber = 0;
 			} else {
@@ -504,7 +496,7 @@ export class SharedPropertyTree extends SharedObject {
 				}
 
 				this.tipView = materializedView;
-				this.remoteTipView = _.cloneDeep(this.tipView);
+				this.remoteTipView = cloneDeep(this.tipView);
 				this.remoteChanges = [];
 
 				let missingDeltas: ISequencedDocumentMessage[] = [];
@@ -549,23 +541,31 @@ export class SharedPropertyTree extends SharedObject {
 			this.remoteTipView = {};
 			this.remoteChanges = [];
 		} finally {
-			this._root.deserialize(this.tipView);
+			this._root.deserialize(this.tipView, undefined, false, false);
+			const _changeSet = new ChangeSet(this.tipView);
+			if (!isEmpty(_changeSet.getSerializedChangeSet())) {
+				this.emit("localModification", _changeSet);
+			}
 			this.root.cleanDirty();
 		}
 	}
 
-	protected registerCore() { }
 	protected onDisconnect() { }
 
 	private _applyLocalChangeSet(change: IPropertyTreeMessage) {
 		const changeSetWrapper = new ChangeSet(this.tipView);
 		changeSetWrapper.applyChangeSet(change.changeSet);
 
-		this.localChanges.push(change);
+		if (this.runtime.attachState === AttachState.Detached) {
+			const remoteChangeSetWrapper = new ChangeSet(this.remoteTipView);
+			remoteChangeSetWrapper.applyChangeSet(change.changeSet);
+		} else {
+			this.localChanges.push(change);
+		}
 	}
 
 	private _applyRemoteChangeSet(change: IRemotePropertyTreeMessage) {
-		this.unrebasedRemoteChanges[change.guid] = _.cloneDeep(change);
+		this.unrebasedRemoteChanges[change.guid] = cloneDeep(change);
 
 		// This is the first message in the history of the document.
 		if (this.remoteChanges.length !== 0) {
@@ -607,9 +607,9 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	getRebasedChanges(startGuid: string, endGuid?: string) {
-		const startIndex = _.findIndex(this.remoteChanges, (c) => c.guid === startGuid);
-		if (endGuid) {
-			const endIndex = _.findIndex(this.remoteChanges, (c) => c.guid === endGuid);
+		const startIndex = findIndex(this.remoteChanges, (c) => c.guid === startGuid);
+		if (endGuid !== undefined) {
+			const endIndex = findIndex(this.remoteChanges, (c) => c.guid === endGuid);
 			return this.remoteChanges.slice(startIndex + 1, endIndex + 1);
 		}
 		return this.remoteChanges.slice(startIndex + 1);
@@ -620,7 +620,7 @@ export class SharedPropertyTree extends SharedObject {
 		pendingChanges: SerializedChangeSet,
 		newTipDelta: SerializedChangeSet,
 	): boolean {
-		let rebaseBaseChangeSet = _.cloneDeep(change.changeSet);
+		let rebaseBaseChangeSet = cloneDeep(change.changeSet);
 
 		const accumulatedChanges: SerializedChangeSet = {};
 		const conflicts = [] as any[];
@@ -645,12 +645,12 @@ export class SharedPropertyTree extends SharedObject {
 
 			const rebaseMetaInformation = new Map();
 
-			const copiedChangeSet = new ChangeSet(_.cloneDeep(this.localChanges[i].changeSet));
+			const copiedChangeSet = new ChangeSet(cloneDeep(this.localChanges[i].changeSet));
 			new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(this.localChanges[i].changeSet, conflicts, {
 				applyAfterMetaInformation: rebaseMetaInformation,
 			});
 
-			copiedChangeSet._toInverseChangeSet();
+			copiedChangeSet.toInverseChangeSet();
 			copiedChangeSet.applyChangeSet(rebaseBaseChangeSet);
 			copiedChangeSet.applyChangeSet(this.localChanges[i].changeSet, {
 				applyAfterMetaInformation: rebaseMetaInformation,
@@ -664,7 +664,7 @@ export class SharedPropertyTree extends SharedObject {
 		const pendingChangesRebaseMetaInformation = new Map();
 		const deltaToTipCS = new ChangeSet(newTipDelta);
 		deltaToTipCS.applyChangeSet(pendingChanges);
-		deltaToTipCS._toInverseChangeSet();
+		deltaToTipCS.toInverseChangeSet();
 
 		// Perform a rebase of the pending changes
 		new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(pendingChanges, conflicts, {
@@ -674,14 +674,15 @@ export class SharedPropertyTree extends SharedObject {
 		// Compute the delta between the old tip (including pending changes)
 		// and the new tip (not including the rebased pending changes)
 		deltaToTipCS.applyChangeSet(rebaseBaseChangeSet);
-		deltaToTipCS.applyChangeSet(pendingChanges, {
-			applyAfterMetaInformation: pendingChangesRebaseMetaInformation,
-		});
 
-		// Update the the tip view
-		this.tipView = _.cloneDeep(this.remoteTipView);
-		const changeSet = new ChangeSet(this.tipView);
-		changeSet.applyChangeSet(accumulatedChanges);
+		// Update the tip view
+		if (!this.tipView) {
+			this.tipView = cloneDeep(this.remoteTipView);
+			const changeSet = new ChangeSet(this.tipView);
+			changeSet.applyChangeSet(accumulatedChanges);
+		} else {
+			new ChangeSet(this.tipView).applyChangeSet(newTipDelta);
+		}
 
 		return true;
 	}

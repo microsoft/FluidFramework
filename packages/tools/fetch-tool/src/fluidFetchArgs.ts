@@ -11,6 +11,7 @@ export let dumpMessageStats = false;
 export let dumpSnapshotStats = false;
 export let dumpSnapshotTrees = false;
 export let dumpSnapshotVersions = false;
+export let overWrite = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
 export let paramUnpackAggregatedBlobs = true;
@@ -30,6 +31,7 @@ export const messageTypeFilter = new Set<string>();
 
 export let paramURL: string | undefined;
 export let paramJWT: string;
+export let paramAzureKey: string;
 
 export let connectToWebSocket = false;
 
@@ -48,6 +50,7 @@ const optionsArray =
         ["--stat", "Show both messages & snapshot stats"],
         ["--filter:messageType <type>", "filter message by <type>"],
         ["--jwt <token>", "token to be used for routerlicious URLs"],
+        ["--azureKey <key>", "secret key for Azure Fluid Relay instance"],
         ["--numSnapshotVersions <number>", "Number of versions to load (default:10)"],
         ["--noUnpack", "Do not unpack aggregated blobs"],
         ["--actualPayload", "Do not format json payloads nicely, preserve actual bytes / formatting in storage"],
@@ -66,12 +69,35 @@ export function printUsage() {
     }
 }
 
+// Can be used in unit test to pass in customized argument values
+// More argument options can be added when needed
+export function setArguments(values: {
+    saveDir: string,
+    paramURL: string
+    dumpMessages?: boolean,
+    dumpMessageStats?: boolean,
+    dumpSnapshotStats?: boolean,
+    dumpSnapshotTrees?: boolean,
+    overWrite?: boolean }) {
+    paramSaveDir = values.saveDir;
+    paramURL = values.paramURL;
+    dumpMessages = values.dumpMessages ?? dumpMessages;
+    dumpMessageStats = values.dumpMessageStats ?? dumpMessageStats;
+    dumpSnapshotStats = values.dumpSnapshotStats ?? dumpSnapshotStats;
+    dumpSnapshotTrees = values.dumpSnapshotTrees ?? dumpSnapshotTrees;
+    overWrite = values.overWrite ?? overWrite;
+}
+
 export function parseArguments() {
     for (let i = 2; i < process.argv.length; i++) {
         const arg = process.argv[i];
         switch (arg) {
             case "--dump:rawmessage":
                 dumpMessages = true;
+                break;
+            case "--dump:rawmessage:overwrite":
+                dumpMessages = true;
+                overWrite = true;
                 break;
             case "--stat:message":
                 dumpMessageStats = true;
@@ -95,8 +121,12 @@ export function parseArguments() {
             case "--help":
                 printUsage();
                 process.exit(0);
+            // fallthrough
             case "--jwt":
                 paramJWT = parseStrArg(i++, "jwt token");
+                break;
+            case "--azureKey":
+                paramAzureKey = parseStrArg(i++, "Azure Fluid Relay key");
                 break;
             case "--forceTokenReauth":
                 paramForceTokenReauth = true;

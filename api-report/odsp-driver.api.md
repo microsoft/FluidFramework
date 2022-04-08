@@ -6,10 +6,12 @@
 
 import { DriverPreCheckInfo } from '@fluidframework/driver-definitions';
 import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
+import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
 import { IdentityType } from '@fluidframework/odsp-driver-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import type { io } from 'socket.io-client';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
 import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
@@ -20,13 +22,20 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
+import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
 import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 
 // @public
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 
 // @public (undocumented)
-export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest;
+export enum ClpCompliantAppHeader {
+    // (undocumented)
+    isClpCompliantApp = "X-CLP-Compliant-App"
+}
+
+// @public
+export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createLinkType?: ShareLinkTypes): IRequest;
 
 // @public
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
@@ -38,13 +47,19 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
 export function getApiRoot(origin: string): string;
 
 // @public (undocumented)
-export function getHashedDocumentId(driveId: string, itemId: string): string;
+export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
 // @public
 export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | undefined;
 
 // @public
 export function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined>;
+
+// @public (undocumented)
+export interface IClpCompliantAppHeader {
+    // (undocumented)
+    [ClpCompliantAppHeader.isClpCompliantApp]: boolean;
+}
 
 // @public (undocumented)
 export interface ISharingLinkHeader {
@@ -62,13 +77,13 @@ export function isOdcUrl(url: string | URL): boolean;
 export function isSpoUrl(url: string): boolean;
 
 // @public (undocumented)
+export const locatorQueryParamName = "nav";
+
+// @public (undocumented)
 export const OdcApiSiteOrigin = "https://api.onedrive.com";
 
 // @public (undocumented)
 export const OdcFileSiteOrigin = "https://1drv.ms";
-
-// @public @deprecated (undocumented)
-export type OdspDocumentInfo = OdspFluidDataStoreLocator;
 
 // @public
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
@@ -77,16 +92,16 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore i
 
 // @public
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
-    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, getSocketIOClient: () => Promise<SocketIOClientStatic>, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
+    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, getSocketIOClient: () => Promise<typeof io>, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // (undocumented)
     readonly protocolName = "fluid-odsp:";
-}
+    }
 
 // @public (undocumented)
 export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
@@ -96,10 +111,8 @@ export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentService
 // @public
 export class OdspDriverUrlResolver implements IUrlResolver {
     constructor();
-    // @deprecated (undocumented)
-    createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest;
     // (undocumented)
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, codeDetails?: IFluidCodeDetails): Promise<string>;
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo | IFluidCodeDetails): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
 }
@@ -108,11 +121,9 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     constructor(shareLinkFetcherProps?: ShareLinkFetcherProps | undefined, logger?: ITelemetryBaseLogger, appName?: string | undefined);
     appendDataStorePath(requestUrl: URL, pathToAppend: string): string | undefined;
-    // @deprecated (undocumented)
-    createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest;
-    static createDocumentUrl(baseUrl: string, driverInfo: OdspDocumentInfo): string;
+    static createDocumentUrl(baseUrl: string, driverInfo: OdspFluidDataStoreLocator): string;
     static createNavParam(locator: OdspFluidDataStoreLocator): string;
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, dataStorePath: string, codeDetails?: IFluidCodeDetails): Promise<string>;
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, dataStorePath: string, packageInfoSource?: IContainerPackageInfo | IFluidCodeDetails): Promise<string>;
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
     }
 
@@ -129,7 +140,7 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 }
 
 // @public
-export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined): Promise<boolean>;
+export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean): Promise<boolean>;
 
 // @public
 export interface ShareLinkFetcherProps {

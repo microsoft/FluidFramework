@@ -217,3 +217,10 @@ export const isChildProcess = process.argv.includes("--childProcess");
  * Performance test suites are tagged with this to allow filtering to only performance tests.
  */
 export const performanceTestSuiteTag = "@Benchmark";
+
+/**
+ * Reporter output location
+ */
+export interface ReporterOptions {
+    reportDir?: string;
+}

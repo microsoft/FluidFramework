@@ -64,7 +64,7 @@ async function getDeltasFromStorage(
     toTerm: number,
     fromSeq?: number,
     toSeq?: number): Promise<ISequencedDocumentMessage[]> {
-    const query: any = { documentId, tenantId };
+    const query: any = { documentId, tenantId, scheduledDeletionTime: { $exists: false } };
     query["operation.term"] = {};
     query["operation.sequenceNumber"] = {};
     query["operation.term"].$gte = fromTerm;
@@ -92,7 +92,7 @@ async function getDeltasFromSummaryAndStorage(
     documentId: string,
     from?: number,
     to?: number) {
-    const tenant = await tenantManager.getTenant(tenantId);
+    const tenant = await tenantManager.getTenant(tenantId, documentId);
     const gitManager = tenant.gitManager;
 
     const existingRef = await gitManager.getRef(encodeURIComponent(documentId));

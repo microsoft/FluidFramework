@@ -5,34 +5,29 @@
 
 import { strict } from "assert";
 import fs from "fs";
-import * as API from "@fluid-internal/client-api";
-import { assert } from "@fluidframework/common-utils";
-import { Container, Loader } from "@fluidframework/container-loader";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
-import {
-    IFluidDataStoreRuntime,
-    IChannelFactory,
-    IChannelAttributes,
-    IChannelServices,
-    IChannel,
-} from "@fluidframework/datastore-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
+import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-    IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
-import {
-    IFluidDataStoreContext,
-    IGarbageCollectionData,
-    IChannelSummarizeResult,
-} from "@fluidframework/runtime-definitions";
+import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
+import stringify from "json-stable-stringify";
+import {
+    excludeChannelContentDdsFactories,
+    ReplayDataStoreFactory,
+    ReplayRuntimeFactory,
+} from "./replayFluidFactories";
+import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
+import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
 
+const normalizeOpts: ISnapshotNormalizerConfig =
+    {excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f)=>f.type)};
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.
@@ -40,10 +35,10 @@ import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
 export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
     const normalizedSnapshot: IFileSnapshot = {
         commits: {},
-        tree: getNormalizedSnapshot(snapshot.tree),
+        tree: getNormalizedSnapshot(snapshot.tree, normalizeOpts),
     };
     for (const commit of Object.keys(snapshot.commits)) {
-        normalizedSnapshot.commits[commit] = getNormalizedSnapshot(snapshot.commits[commit]);
+        normalizedSnapshot.commits[commit] = getNormalizedSnapshot(snapshot.commits[commit], normalizeOpts);
     }
     return normalizedSnapshot;
 }
@@ -51,11 +46,11 @@ export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapsho
 export function compareWithReferenceSnapshot(
     snapshot: IFileSnapshot,
     referenceSnapshotFilename: string,
-    errorHandler: (desciption: string, error?: any) => void,
+    errorHandler: (description: string, error?: any) => void,
 ) {
     // Read the reference snapshot and covert it to normalized IFileSnapshot.
     const referenceSnapshotString = fs.readFileSync(`${referenceSnapshotFilename}.json`, "utf-8");
-    const referenceSnapshot = getNormalizedFileSnapshot(JSON.parse(referenceSnapshotString));
+    const referenceSnapshot = JSON.parse(referenceSnapshotString);
 
     /**
      * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
@@ -67,10 +62,12 @@ export function compareWithReferenceSnapshot(
     const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
     const normalizedSnapshot = JSON.parse(
-        JSON.stringify(snapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
+        stringify(getNormalizedFileSnapshot(snapshot), {space: 2})
+            .replace(packageVersionRegex, packageVersionPlaceholder),
     );
     const normalizedReferenceSnapshot = JSON.parse(
-        JSON.stringify(referenceSnapshot, undefined, 2).replace(packageVersionRegex, packageVersionPlaceholder),
+        stringify(getNormalizedFileSnapshot(referenceSnapshot), {space: 2})
+            .replace(packageVersionRegex, packageVersionPlaceholder),
     );
 
     // Put the assert in a try catch block, so that we can report errors, if any.
@@ -81,134 +78,14 @@ export function compareWithReferenceSnapshot(
     }
 }
 
-class UnknownChannel implements IChannel {
-    constructor(
-        public readonly id: string,
-        public readonly attributes: IChannelAttributes,
-        services: IChannelServices)
-    {
-        services.deltaConnection.attach({
-            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
-            },
-            setConnectionState: (connected: boolean) => {
-            },
-            reSubmit: (content: any, localOpMetadata: unknown) => {
-            },
-            applyStashedOp: (content: any) => {
-            },
-        });
-    }
-
-    get IFluidLoadable() { return this; }
-    get handle(): IFluidHandle {
-        throw new Error("not implemented");
-    }
-
-    public summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult {
-        return {
-            gcData: { gcNodes: {} },
-            stats: {
-                treeNodeCount: 0,
-                blobNodeCount: 0,
-                handleNodeCount: 0,
-                totalBlobSize: 0,
-            },
-            summary: {
-                type: SummaryType.Tree,
-                tree: { },
-            },
-        };
-    }
-
-    public isAttached() { return true; }
-
-    public connect(services: IChannelServices): void {}
-
-    public getGCData(): IGarbageCollectionData {
-        return { gcNodes: {} };
-    }
-}
-
-class UnknownChannelFactory implements IChannelFactory {
-    readonly type = "Unknown DDS";
-    readonly attributes: IChannelAttributes = {
-        type: "Unknown DDS",
-        snapshotFormatVersion: "1.0",
-        packageVersion: "1.0",
-    };
-
-    async load(
-        runtime: IFluidDataStoreRuntime,
-        id: string,
-        services: IChannelServices,
-        channelAttributes: Readonly<IChannelAttributes>,
-    ): Promise<IChannel> {
-        return new UnknownChannel(id, channelAttributes, services);
-    }
-
-    create(runtime: IFluidDataStoreRuntime, id: string): IChannel {
-        throw new Error("Not implemented");
-    }
-}
-
-class ObjectRegistryWithUnknownChannels implements ISharedObjectRegistry {
-    private static readonly types = new Set<string>();
-
-    constructor(private readonly base: ISharedObjectRegistry) {}
-    public get(name: string): IChannelFactory | undefined {
-        const res = this.base.get(name);
-        if (res) {
-            return res;
-        }
-        if (!ObjectRegistryWithUnknownChannels.types.has(name)) {
-            ObjectRegistryWithUnknownChannels.types.add(name);
-            console.error(`DDS of type ${name} can't be created`);
-        }
-        return new UnknownChannelFactory();
-    }
-}
-
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-function mixinDataStoreWithAnyChannel(
-    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
-{
-    return class RuntimeWithRequestHandler extends Base {
-        constructor(
-            dataStoreContext: IFluidDataStoreContext,
-            sharedObjectRegistry: ISharedObjectRegistry,
-        ) {
-            super(dataStoreContext, new ObjectRegistryWithUnknownChannels(sharedObjectRegistry));
-        }
-    } as typeof FluidDataStoreRuntime;
-}
-
-/**
- * URL Resolver object
- */
-class ContainerUrlResolver implements IUrlResolver {
-    constructor(private readonly cache?: Map<string, IResolvedUrl>) {
-    }
-
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (!this.cache.has(request.url)) {
-            return Promise.reject(new Error(`ContainerUrlResolver can't resolve ${request}`));
-        }
-        return this.cache.get(request.url);
-    }
-
-    public async getAbsoluteUrl(
-        resolvedUrl: IResolvedUrl,
-        relativeUrl: string,
-    ): Promise<string> {
-        throw new Error("Not implemented");
-    }
-}
-
 export async function loadContainer(
     documentServiceFactory: IDocumentServiceFactory,
     documentName: string,
+    strictChannels: boolean,
     logger?: TelemetryLogger,
-): Promise<Container> {
+    requestHandlers?: RuntimeRequestHandler[],
+    loaderOptions?: ILoaderOptions,
+): Promise<IContainer> {
     const resolved: IFluidResolvedUrl = {
         endpoints: {
             deltaStorageUrl: "example.com",
@@ -220,57 +97,73 @@ export async function loadContainer(
         type: "fluid",
         url: `fluid-file://localhost:6000/fluid/${documentName}`,
     };
+    const urlResolver = new ReplayUrlResolver(
+        new Map<string, IResolvedUrl>([[resolved.url, resolved]]),
+    );
 
-    const urlResolver = new ContainerUrlResolver(
-        new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
-    const chaincode = new API.Chaincode(
-        () => { throw new Error("Can't close Document"); },
-        mixinDataStoreWithAnyChannel());
+    const dataStoreFactory = new ReplayDataStoreFactory(
+        strictChannels
+            ? undefined
+            : mixinDataStoreWithAnyChannel());
+    // List of data store registries in container runtime.
+    const dataStoreRegistries = new Map([
+        ["_scheduler", Promise.resolve(dataStoreFactory)],
+        ["@ms/atmentions", Promise.resolve(dataStoreFactory)],
+        ["@ms/augloop", Promise.resolve(dataStoreFactory)],
+        ["@ms/catalog", Promise.resolve(dataStoreFactory)],
+        ["@ms/scriptor", Promise.resolve(dataStoreFactory)],
+        ["@ms/discover", Promise.resolve(dataStoreFactory)],
+        ["@ms/registro", Promise.resolve(dataStoreFactory)],
+        ["@ms/formula", Promise.resolve(dataStoreFactory)],
+        ["@ms/application-services", Promise.resolve(dataStoreFactory)],
+        ["@ms/undo-stack", Promise.resolve(dataStoreFactory)],
+        ["@ms/commanding-surface", Promise.resolve(dataStoreFactory)],
+        ["@ms/dias", Promise.resolve(dataStoreFactory)],
+        ["@ms/scriptor/Titulo", Promise.resolve(dataStoreFactory)],
+        ["@fluidx/tasks", Promise.resolve(dataStoreFactory)],
+        ["@ms/tablero/TableroView", Promise.resolve(dataStoreFactory)],
+        ["@ms/tablero/TableroDocument", Promise.resolve(dataStoreFactory)],
+        ["@fluid-example/table-document/TableDocument", Promise.resolve(dataStoreFactory)],
+        ["LastEditedComponent", Promise.resolve(dataStoreFactory)],
+        ["OfficeRootComponent", Promise.resolve(dataStoreFactory)],
+        ["OneNoteRootComponentType", Promise.resolve(dataStoreFactory)],
+    ]);
+
     // Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
     // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
-    const codeLoader = new API.CodeLoader({
-        summaryOptions: { generateSummaries: false, maxOpsSinceLastSummary: 100000 }},
-        [
-            ["_scheduler", Promise.resolve(chaincode)],
-            ["@ms/atmentions", Promise.resolve(chaincode)],
-            ["@ms/augloop", Promise.resolve(chaincode)],
-            ["@ms/catalog", Promise.resolve(chaincode)],
-            ["@ms/scriptor", Promise.resolve(chaincode)],
-            ["@ms/discover", Promise.resolve(chaincode)],
-            ["@ms/registro", Promise.resolve(chaincode)],
-            ["@ms/formula", Promise.resolve(chaincode)],
-            ["@ms/application-services", Promise.resolve(chaincode)],
-            ["@ms/undo-stack", Promise.resolve(chaincode)],
-            ["@ms/commanding-surface", Promise.resolve(chaincode)],
-            ["@ms/dias", Promise.resolve(chaincode)],
-            ["@ms/scriptor/Titulo", Promise.resolve(chaincode)],
-            ["@fluidx/tasks", Promise.resolve(chaincode)],
-            ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
-            ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
-            ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
-            ["LastEditedComponent", Promise.resolve(chaincode)],
-            ["OfficeRootComponent", Promise.resolve(chaincode)],
-            ["OneNoteRootComponentType", Promise.resolve(chaincode)],
-        ]);
+    const runtimeOptions: IContainerRuntimeOptions = {
+        summaryOptions: { disableSummaries: true, maxOpsSinceLastSummary: 100000 },
+        gcOptions: { writeDataAtRoot: true },
+    };
+    const codeLoader = new ReplayCodeLoader(
+        new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers),
+    );
 
-    // Make sure any package (string[]) is resolved as well.
-    (chaincode as any).IFluidDataStoreRegistry = chaincode;
-    (chaincode as any).get = async () => Promise.resolve(chaincode);
-
-    const options = {};
-
-    // Load the Fluid document
+    // Load the Fluid document while forcing summarizeProtocolTree option
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        options,
+        options: loaderOptions
+            ? { ...loaderOptions, summarizeProtocolTree: true }
+            : { summarizeProtocolTree: true },
         logger,
     });
-    const container: Container = await loader.resolve({ url: resolved.url });
 
-    assert(container.existing,
-        0x1c4 /* "Container does not exist!" */); // ReplayFileDeltaConnection.create() guarantees that
+    return loader.resolve({ url: resolved.url });
+}
 
-    return container;
+export async function uploadSummary(container: IContainer) {
+    const response = await container.request({ url: "/containerRuntime" });
+    const runtime = response.value as ContainerRuntime;
+    const summaryResult = await runtime.summarize({
+        fullTree: true,
+        trackState: false,
+        fullGC: true,
+    });
+    return runtime.storage.uploadSummaryWithContext(summaryResult.summary, {
+        referenceSequenceNumber: 0,
+        proposalHandle: undefined,
+        ackHandle: undefined,
+    });
 }

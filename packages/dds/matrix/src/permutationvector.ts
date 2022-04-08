@@ -20,11 +20,12 @@ import {
     LocalReference,
     ReferenceType,
 } from "@fluidframework/merge-tree";
-import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
-import { FileMode, TreeEntry, ITree } from "@fluidframework/protocol-definitions";
-import { ObjectStoragePartition } from "@fluidframework/runtime-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { HandleTable, Handle, isHandleValid } from "./handletable";
-import { serializeBlob, deserializeBlob } from "./serialization";
+import { deserializeBlob } from "./serialization";
 import { HandleCache } from "./handlecache";
 import { VectorUndoProvider } from "./undoprovider";
 
@@ -75,7 +76,7 @@ export class PermutationSegment extends BaseSegment {
         // it is included if the undo stack continues to unwind to the original insertion.
         //
         // Out of paranoia we link and unlink in separate loops to avoid mutating the underlying
-        // set during enumeration.  In pratice, this is unlikely to matter since there should be
+        // set during enumeration.  In practice, this is unlikely to matter since there should be
         // exactly 0 or 1 items in the enumeration.
         for (const group of this.trackingCollection.trackingGroups) {
             group.link(destination);
@@ -282,22 +283,16 @@ export class PermutationVector extends Client {
         // have not yet been submitted.
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.findReconnectionPostition(containingSegment, localSeq) + containingOffset!;
+        return this.findReconnectionPosition(containingSegment, localSeq) + containingOffset!;
     }
 
-    // Constructs an ITreeEntry for the cell data.
-    public snapshot(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer): ITree {
-        return {
-            entries: [
-                {
-                    mode: FileMode.Directory,
-                    path: SnapshotPath.segments,
-                    type: TreeEntry.Tree,
-                    value: super.snapshot(runtime, handle, serializer, /* catchUpMsgs: */[]),
-                },
-                serializeBlob(handle, SnapshotPath.handleTable, this.handleTable.snapshot(), serializer),
-            ],
-        };
+    // Constructs an ISummaryTreeWithStats for the cell data.
+    public summarize(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer):
+        ISummaryTreeWithStats {
+        const builder = new SummaryTreeBuilder();
+        builder.addWithStats(SnapshotPath.segments, super.summarize(runtime, handle, serializer, /* catchUpMsgs: */[]));
+        builder.addBlob(SnapshotPath.handleTable, serializer.stringify(this.handleTable.getSummaryContent(), handle));
+        return builder.getSummaryTree();
     }
 
     public async load(
@@ -335,7 +330,7 @@ export class PermutationVector extends Client {
             case MergeTreeDeltaType.INSERT:
                 // Pass 1: Perform any internal maintenance first to avoid reentrancy.
                 for (const { segment, position } of ranges) {
-                    // HACK: We need to include the allocated handle in the segment's JSON reperesntation
+                    // HACK: We need to include the allocated handle in the segment's JSON representation
                     //       for snapshots, but need to ignore the remote client's handle allocations when
                     //       processing remote ops.
                     segment.reset();

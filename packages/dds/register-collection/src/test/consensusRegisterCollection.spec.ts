@@ -134,7 +134,7 @@ describe("ConsensusRegisterCollection", () => {
 
             it("summarize", async () => {
                 await writeAndProcessMsg("key1", "val1.1");
-                const summaryTree = crc.summarize().summary;
+                const summaryTree = crc.getAttachSummary().summary;
                 assert(Object.keys(summaryTree.tree).length === 1, "summarize should return a tree with single blob");
                 const serialized = (summaryTree.tree.header as ISummaryBlob)?.content as string;
                 assert(serialized, "summarize should return a tree with blob with contents");

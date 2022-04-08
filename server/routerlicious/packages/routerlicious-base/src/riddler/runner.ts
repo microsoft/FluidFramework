@@ -3,17 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import * as http from "http";
 import { Deferred } from "@fluidframework/common-utils";
-import { MongoManager, IRunner, ISecretManager } from "@fluidframework/server-services-core";
+import {
+    MongoManager,
+    IRunner,
+    ISecretManager,
+    IWebServerFactory,
+    IWebServer,
+} from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as winston from "winston";
 import * as app from "./app";
 
 export class RiddlerRunner implements IRunner {
-    private server: http.Server;
+    private server: IWebServer;
     private runningDeferred: Deferred<void>;
 
     constructor(
+        private readonly serverFactory: IWebServerFactory,
         private readonly collectionName: string,
         private readonly port: string | number,
         private readonly mongoManager: MongoManager,
@@ -40,11 +47,12 @@ export class RiddlerRunner implements IRunner {
             this.secretManager);
         riddler.set("port", this.port);
 
-        this.server = http.createServer(riddler);
+        this.server = this.serverFactory.create(riddler);
+        const httpServer = this.server.httpServer;
 
-        this.server.listen(this.port);
-        this.server.on("error", (error) => this.onError(error));
-        this.server.on("listening", () => this.onListening());
+        httpServer.listen(this.port);
+        httpServer.on("error", (error) => this.onError(error));
+        httpServer.on("listening", () => this.onListening());
 
         return this.runningDeferred.promise;
     }
@@ -52,9 +60,14 @@ export class RiddlerRunner implements IRunner {
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
-        this.server.close(() => {
-            this.runningDeferred.resolve();
-        });
+        this.server.close().then(
+            () => {
+                this.runningDeferred.resolve();
+            },
+            (error) => {
+                this.runningDeferred.reject(error);
+            },
+        );
         return this.runningDeferred.promise;
     }
 
@@ -87,10 +100,11 @@ export class RiddlerRunner implements IRunner {
      * Event listener for HTTP server "listening" event.
      */
     private onListening() {
-        const addr = this.server.address();
+        const addr = this.server.httpServer.address();
         const bind = typeof addr === "string"
             ? `pipe ${addr}`
             : `port ${addr.port}`;
         winston.info(`Listening on ${bind}`);
+        Lumberjack.info(`Listening on ${bind}`);
     }
 }

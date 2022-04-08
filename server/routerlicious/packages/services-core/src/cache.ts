@@ -15,5 +15,5 @@ export interface ICache {
     /**
      * Sets a cache value
      */
-    set(key: string, value: string): Promise<void>;
+    set(key: string, value: string, expireAfterSeconds?: number): Promise<void>;
 }

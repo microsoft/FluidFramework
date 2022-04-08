@@ -13,7 +13,7 @@ import {
     IWebSocketServer,
     RequestListener,
 } from "@fluidframework/server-services-core";
-import { Socket } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { WebServer } from "./webServer";
 
 class SocketIoSocket implements IWebSocket {
@@ -21,7 +21,7 @@ class SocketIoSocket implements IWebSocket {
         return this.socket.id;
     }
 
-    constructor(private readonly socket: SocketIO.Socket) {
+    constructor(private readonly socket: Socket) {
     }
 
     public on(event: string, listener: (...args: any[]) => void) {
@@ -29,9 +29,7 @@ class SocketIoSocket implements IWebSocket {
     }
 
     public async join(id: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.socket.join(id, (error) => error ? reject(error) : resolve());
-        });
+        return this.socket.join(id);
     }
 
     public async emit(event: string, ...args: any[]) {
@@ -43,7 +41,7 @@ class SocketIoSocket implements IWebSocket {
     }
 
     public async broadcastToRoom(roomId: string, event: string, ...args: any) {
-        this.socket.to(roomId).broadcast.emit(event, ...args);
+        this.socket.to(roomId).emit(event, ...args);
     }
 
     public disconnect(close?: boolean): void {
@@ -52,7 +50,7 @@ class SocketIoSocket implements IWebSocket {
 }
 
 class SocketIoServer extends EventEmitter implements IWebSocketServer {
-    constructor(server: http.Server, private readonly io: SocketIO.Server) {
+    constructor(server: http.Server, private readonly io: Server) {
         super();
 
         this.io.attach(server);
@@ -64,12 +62,12 @@ class SocketIoServer extends EventEmitter implements IWebSocketServer {
     }
 
     public async close(): Promise<void> {
-        await new Promise<void>((resolve) => this.io.close(resolve));
+        await new Promise<void>((resolve) => this.io.close(() => resolve()));
     }
 }
 
 export class WebServerFactory implements IWebServerFactory {
-    constructor(private readonly io: SocketIO.Server) {
+    constructor(private readonly io: Server) {
     }
 
     public create(requestListener: RequestListener): IWebServer {

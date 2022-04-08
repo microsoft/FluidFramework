@@ -5,13 +5,14 @@
 
 export {
     DeserializeCallback,
+    IIntervalCollectionEvent,
     IIntervalHelpers,
     Interval,
-    ISerializableInterval,
-    ISerializedInterval,
     IntervalCollection,
     IntervalCollectionIterator,
-    IntervalCollectionView,
+    IntervalType,
+    ISerializableInterval,
+    ISerializedInterval,
     SequenceInterval,
 } from "./intervalCollection";
 export {

@@ -19,17 +19,27 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
-    LoaderCachingPolicy,
+    IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { pkgVersion } from "../packageVersion";
 
 // REVIEW: enable compat testing?
 describeNoCompat("SharedString", (getTestObjectProvider) => {
-    it("Failure to Load in Shared String", async () => {
+    itExpects(
+    "Failure to Load in Shared String",
+    [
+        { eventName: "fluid:telemetry:FluidDataStoreRuntime:RemoteChannelContext:ChannelStorageBlobError" },
+        // eslint-disable-next-line max-len
+        { eventName: "fluid:telemetry:FluidDataStoreRuntime:SharedSegmentSequence.MergeTreeClient:SnapshotLoader:CatchupOpsLoadFailure" },
+        { eventName: "fluid:telemetry:FluidDataStoreRuntime:SequenceLoadFailed" },
+        { eventName: "fluid:telemetry:FluidDataStoreRuntime:GetChannelFailedInRequest" },
+        { eventName: "TestException" },
+    ],
+    async () => {
         const stringId = "sharedStringKey";
         const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
         const fluidExport: SupportedExportInterfaces = {
@@ -37,8 +47,9 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
         };
         const text = "hello world";
         const documentId = createDocumentId();
+        let containerUrl: IResolvedUrl | undefined;
         const provider = getTestObjectProvider();
-        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}});
+        const logger = provider.logger;
 
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -60,6 +71,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
             sharedString.insertText(0, text);
 
             await container.attach(provider.driver.createCreateNewRequest(documentId));
+            containerUrl = container.resolvedUrl;
         }
         { // normal load client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -74,7 +86,9 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                 logger,
             });
 
-            const container = await loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
+            const container = await loader.resolve({
+                url: await provider.driver.createContainerUrl(documentId, containerUrl),
+            });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             const sharedString = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);
@@ -90,10 +104,6 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                     mockDs.connectToStorage = async () => {
                         const realStorage = await realDs.connectToStorage();
                         const mockstorage = Object.create(realStorage) as IDocumentStorageService;
-                        (mockstorage as any).policies = {
-                            ...realStorage.policies,
-                            caching: LoaderCachingPolicy.NoCaching,
-                        };
                         mockstorage.readBlob = async (id) => {
                             const blob = await realStorage.readBlob(id);
                             const blobObj = await readAndParse<any>(realStorage, id);
@@ -101,8 +111,8 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                             if (blobObj.headerMetadata !== undefined) {
                                 throw new NonRetryableError(
                                     "Not Found",
-                                    undefined,
-                                    { statusCode: 404 });
+                                    "someErrorType",
+                                    { statusCode: 404, driverVersion: pkgVersion });
                             }
                             return blob;
                         };
@@ -123,13 +133,12 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                 logger,
             });
 
-            const container = await loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
+            const container = await loader.resolve({
+                url: await provider.driver.createContainerUrl(documentId, containerUrl),
+            });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 
-            try {
-                await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
-                assert.fail("expected failure");
-            } catch { }
+            await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
         }
     });
 
@@ -141,8 +150,9 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
         };
         const text = "hello world";
         const documentId = createDocumentId();
+        let containerUrl: IResolvedUrl | undefined;
         const provider = getTestObjectProvider();
-        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}});
+        const logger = provider.logger;
 
         let initialText = "";
         { // creating client
@@ -179,6 +189,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
             initialText = sharedString.getText();
 
             await container.attach(provider.driver.createCreateNewRequest(documentId));
+            containerUrl = container.resolvedUrl;
         }
         { // normal load client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -193,7 +204,9 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                 logger,
             });
 
-            const container = await loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
+            const container = await loader.resolve({
+                url: await provider.driver.createContainerUrl(documentId, containerUrl),
+            });
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             const sharedString = await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
             assert(sharedString);

@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
-import { MessageType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestObjectProvider,
@@ -150,31 +149,22 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
             let user1ValueChangedCount: number = 0;
             let user2ValueChangedCount: number = 0;
             let user3ValueChangedCount: number = 0;
-            sharedDirectory1.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory1.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
-                        user1ValueChangedCount = user1ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
+                    user1ValueChangedCount = user1ValueChangedCount + 1;
                 }
             });
-            sharedDirectory2.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory2.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
-                        user2ValueChangedCount = user2ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
+                    user2ValueChangedCount = user2ValueChangedCount + 1;
                 }
             });
-            sharedDirectory3.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory3.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
-                        user3ValueChangedCount = user3ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
+                    user3ValueChangedCount = user3ValueChangedCount + 1;
                 }
             });
 
@@ -194,6 +184,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 sharedDirectory1.set("testKey1", "value1");
                 sharedDirectory2.set("testKey1", "value2");
                 sharedDirectory3.set("testKey1", "value0");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 sharedDirectory3.set("testKey1", "value3");
 
                 expectAllBeforeValues("testKey1", "/", "value1", "value2", "value3");
@@ -207,6 +201,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // set after delete
                 sharedDirectory1.set("testKey1", "value1.1");
                 sharedDirectory2.delete("testKey1");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 sharedDirectory3.set("testKey1", "value1.3");
 
                 expectAllBeforeValues("testKey1", "/", "value1.1", undefined, "value1.3");
@@ -238,6 +236,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // delete after set
                 sharedDirectory1.set("testKey3", "value3.1");
                 sharedDirectory2.set("testKey3", "value3.2");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 sharedDirectory3.delete("testKey3");
 
                 expectAllBeforeValues("testKey3", "/", "value3.1", "value3.2", undefined);
@@ -251,6 +253,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // clear after set
                 sharedDirectory1.set("testKey1", "value1.1");
                 sharedDirectory2.set("testKey1", "value1.2");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 sharedDirectory3.clear();
 
                 expectAllBeforeValues("testKey1", "/", "value1.1", "value1.2", undefined);
@@ -285,6 +291,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // set after clear
                 sharedDirectory1.set("testKey3", "value3.1");
                 sharedDirectory2.clear();
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 sharedDirectory3.set("testKey3", "value3.3");
                 expectAllBeforeValues("testKey3", "/", "value3.1", undefined, "value3.3");
 
@@ -388,34 +398,25 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
             let user1ValueChangedCount: number = 0;
             let user2ValueChangedCount: number = 0;
             let user3ValueChangedCount: number = 0;
-            sharedDirectory1.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory1.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for key in container 1");
-                        assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 1");
-                        user1ValueChangedCount = user1ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for key in container 1");
+                    assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 1");
+                    user1ValueChangedCount = user1ValueChangedCount + 1;
                 }
             });
-            sharedDirectory2.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory2.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for key in container 2");
-                        assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 2");
-                        user2ValueChangedCount = user2ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for key in container 2");
+                    assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 2");
+                    user2ValueChangedCount = user2ValueChangedCount + 1;
                 }
             });
-            sharedDirectory3.on("valueChanged", (changed, local, msg) => {
+            sharedDirectory3.on("valueChanged", (changed, local) => {
                 if (!local) {
-                    assert(msg);
-                    if (msg.type === MessageType.Operation) {
-                        assert.equal(changed.key, "testKey1", "Incorrect value for key in container 3");
-                        assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 3");
-                        user3ValueChangedCount = user3ValueChangedCount + 1;
-                    }
+                    assert.equal(changed.key, "testKey1", "Incorrect value for key in container 3");
+                    assert.equal(changed.path, "/testSubDir1", "Incorrect value for path in container 3");
+                    user3ValueChangedCount = user3ValueChangedCount + 1;
                 }
             });
 
@@ -448,6 +449,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 root1SubDir.set("testKey1", "value1");
                 root2SubDir.set("testKey1", "value2");
                 root3SubDir.set("testKey1", "value0");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 root3SubDir.set("testKey1", "value3");
 
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1", "value2", "value3");
@@ -461,6 +466,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // set after delete
                 root1SubDir.set("testKey1", "value1.1");
                 root2SubDir.delete("testKey1");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 root3SubDir.set("testKey1", "value1.3");
 
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1.1", undefined, "value1.3");
@@ -491,6 +500,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // delete after set
                 root1SubDir.set("testKey3", "value3.1");
                 root2SubDir.set("testKey3", "value3.2");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 root3SubDir.delete("testKey3");
 
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", "value3.2", undefined);
@@ -504,6 +517,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // clear after set
                 root1SubDir.set("testKey1", "value1.1");
                 root2SubDir.set("testKey1", "value1.2");
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 root3SubDir.clear();
                 expectAllBeforeValues("testKey1", "/testSubDir", "value1.1", "value1.2", undefined);
                 assert.equal(root3SubDir.size, 0, "Incorrect map size after clear");
@@ -536,6 +553,10 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
                 // set after clear
                 root1SubDir.set("testKey3", "value3.1");
                 root2SubDir.clear();
+
+                // drain the outgoing so that the next set will come after
+                await provider.opProcessingController.processOutgoing();
+
                 root3SubDir.set("testKey3", "value3.3");
                 expectAllBeforeValues("testKey3", "/testSubDir", "value3.1", undefined, "value3.3");
 

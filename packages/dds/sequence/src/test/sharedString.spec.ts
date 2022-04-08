@@ -23,6 +23,34 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
+import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+
+const assertIntervals = (
+    sharedString: SharedString,
+    intervalCollection: IntervalCollection<SequenceInterval>,
+    expected: readonly { start: number; end: number }[],
+) => {
+    const actual = intervalCollection.findOverlappingIntervals(0, sharedString.getLength() - 1);
+    assert.strictEqual(actual.length, expected.length,
+        `findOverlappingIntervals() must return the expected number of intervals`);
+
+    for (const actualInterval of actual) {
+        const start = sharedString.localRefToPos(actualInterval.start);
+        const end = sharedString.localRefToPos(actualInterval.end);
+        let found = false;
+
+        // console.log(`[${start},${end}): ${sharedString.getText().slice(start, end)}`);
+
+        for (const expectedInterval of expected) {
+            if (expectedInterval.start === start && expectedInterval.end === end) {
+                found = true;
+                break;
+            }
+        }
+
+        assert(found, `Unexpected interval [${start}..${end}) (expected ${JSON.stringify(expected)})`);
+    }
+};
 
 describe("SharedString", () => {
     let sharedString: SharedString;
@@ -56,7 +84,7 @@ describe("SharedString", () => {
         }
 
         function verifyAndReturnSummaryTree(): ISummaryTree {
-            const summarizeResult = sharedString.summarize();
+            const summarizeResult = sharedString.getAttachSummary();
             const summaryObjectKeys = Object.keys(summarizeResult.summary.tree);
             assert.strictEqual(summaryObjectKeys.length, 1, "summary should have one entries");
             assert.strictEqual(summaryObjectKeys[0], "content", "content not present in summary");
@@ -123,7 +151,6 @@ describe("SharedString", () => {
 
         it("can handle null annotations in text", async () => {
             const text = "hello world";
-            // eslint-disable-next-line no-null/no-null
             const startingProps = { style: "bold", color: null };
             sharedString.insertText(0, text, startingProps);
 
@@ -131,8 +158,6 @@ describe("SharedString", () => {
                 assert.strictEqual(
                     sharedString.getPropertiesAtPosition(i).color, undefined, "Null values allowed in properties");
             }
-
-            // eslint-disable-next-line no-null/no-null
             const updatedProps = { style: null };
             sharedString.annotateRange(6, text.length, updatedProps);
 
@@ -259,7 +284,7 @@ describe("SharedString", () => {
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
-                objectStorage: MockStorage.createFromSummary(sharedString.summarize().summary),
+                objectStorage: MockStorage.createFromSummary(sharedString.getAttachSummary().summary),
             };
 
             const sharedString2 =
@@ -319,6 +344,128 @@ describe("SharedString", () => {
             sharedString2 = new SharedString(dataStoreRuntime2, "shared-string-2", SharedStringFactory.Attributes);
             sharedString2.initializeLocal();
             sharedString2.connect(services2);
+        });
+
+        it("can maintain interval consistency", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "xyz");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+            assert.notStrictEqual(collection2, undefined, "undefined");
+            assert.strictEqual(sharedString.getText(), sharedString2.getText(), "not equal text");
+
+            sharedString.insertText(0, "abc");
+            const interval = collection1.add(1, 1, IntervalType.SlideOnRemove);
+            const intervalId = interval.getIntervalId();
+            sharedString2.insertText(0, "wha");
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "whaabcxyz", "different text 1");
+            assert.strictEqual(sharedString.getText(), "whaabcxyz", "different text 2");
+
+            assertIntervals(sharedString, collection1, [
+                { start: 4, end: 4 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 4, end: 4 },
+            ]);
+
+            collection2.change(intervalId, 1, 6);
+            sharedString.removeText(0, 2);
+            collection1.change(intervalId, 0, 5);
+
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString, collection1, [
+                { start: 0, end: 5 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 0, end: 5 },
+            ]);
+
+            collection1.change(intervalId, sharedString.getLength() - 1, sharedString.getLength() - 1);
+
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString, collection1, [
+                { start: sharedString.getLength() - 1, end: sharedString.getLength() - 1 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: sharedString2.getLength() - 1, end: sharedString2.getLength() - 1 },
+            ]);
+        });
+
+        it("can maintain consistency of LocalReference's when segments are packed", async () => {
+            // sharedString.insertMarker(0, ReferenceType.Tile, { nodeType: "Paragraph" });
+
+            const collection1 = sharedString.getIntervalCollection("test2");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test2");
+
+            sharedString.insertText(0, "a");
+            sharedString.insertText(1, "b");
+            sharedString.insertText(2, "c");
+            sharedString.insertText(3, "d");
+            sharedString.insertText(4, "e");
+            sharedString.insertText(5, "f");
+
+            containerRuntimeFactory.processAllMessages();
+
+            assert.strictEqual(sharedString.getText(), "abcdef", "incorrect text 1");
+            assert.strictEqual(sharedString2.getText(), "abcdef", "incorrect text 2");
+
+            collection1.add(2, 2, IntervalType.SlideOnRemove);
+
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString, collection1, [
+                { start: 2, end: 2 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 2, end: 2 },
+            ]);
+
+            sharedString.insertText(0, "a");
+            sharedString.insertText(1, "b");
+            sharedString.insertText(2, "c");
+            sharedString.insertText(3, "d");
+            sharedString.insertText(4, "e");
+            sharedString.insertText(5, "f");
+
+            containerRuntimeFactory.processAllMessages();
+
+            assert.strictEqual(sharedString.getText(), "abcdefabcdef", "incorrect text 2");
+            assert.strictEqual(sharedString2.getText(), "abcdefabcdef", "incorrect text 3");
+
+            collection1.add(5, 5, IntervalType.SlideOnRemove);
+            collection1.add(2, 2, IntervalType.SlideOnRemove);
+
+            containerRuntimeFactory.processAllMessages();
+
+            assertIntervals(sharedString, collection1, [
+                { start: 2, end: 2 },
+                { start: 5, end: 5 },
+                { start: 8, end: 8 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 2, end: 2 },
+                { start: 5, end: 5 },
+                { start: 8, end: 8 },
+            ]);
+
+            // Summarize to cause Zamboni to pack segments. Confirm consistency after packing.
+            await sharedString2.summarize();
+
+            assertIntervals(sharedString, collection1, [
+                { start: 2, end: 2 },
+                { start: 5, end: 5 },
+                { start: 8, end: 8 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 2, end: 2 },
+                { start: 5, end: 5 },
+                { start: 8, end: 8 },
+            ]);
         });
 
         it("can insert text", async () => {

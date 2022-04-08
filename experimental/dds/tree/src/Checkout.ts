@@ -81,7 +81,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 *
 	 * When this changes, emitChange must be called.
 	 */
-	protected abstract readonly latestCommittedView: RevisionView;
+	protected abstract get latestCommittedView(): RevisionView;
 
 	/**
 	 * The last view for which invalidation was sent.
@@ -129,9 +129,6 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 
 		// If there is an ongoing edit, emitChange will no-op, which is fine.
 		this.tree.on(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
-		this.on('error', (error: unknown) => {
-			this.tree.emit('error', error);
-		});
 	}
 
 	/**

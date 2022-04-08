@@ -1,0 +1,21 @@
+{
+    "extends": "@fluidframework/build-common/ts-common-config.json",
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "allowJs": true,
+        "jsx": "react",
+        "types": [
+            "jest"
+        ],
+        "rootDir": "./",
+        "outDir": "../../dist/test"
+    },
+    "include": [
+        "./**/*"
+    ],
+    "references": [
+        {
+            "path": "../.."
+        }
+    ]
+}

@@ -2,7 +2,8 @@
 // Make footer stick to the bottom of each page
 
 // Medium screen size footer height
-$footerheight: 135px;
+$footerheight: 90px; //135px;
+$ctaHeight: 124.7px; //200px;
 
 body {
   margin-bottom: $footerheight;
@@ -86,62 +87,73 @@ footer {
   }
 }
 
-@media (max-width: $screen-xs) {
+.ctas {
+  min-height: $ctaHeight;
+  width: 100%;
+  position: absolute;
+  bottom: $footerheight;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  flex-wrap: wrap;
+  flex-direction: row;
+
+  p a {
+    color: $banner-link-color;
+  }
+}
+
+.cta-icon-wrapper {
+  display: flex;
+  flex-flow: column;
+}
+
+// under 767px
+@media (max-width: $screen-xs-max) {
   //Larger footer for smaller screen sizes
   $footerheight: 170px;
+  $ctaHeight: 461.3px;
   footer {
     height: $footerheight;
   }
   body {
-    margin-bottom: $footerheight;
+    margin-bottom: $footerheight + $ctaHeight;
   }
-  footer .copyright {
-    display: block;
-    margin-left: 0;
+  .cta-icon-wrapper {
+    display: flex;
+    flex-flow: column;
+  }
+  .ctas {
+    min-height: $ctaHeight;
+    bottom: $footerheight;
   }
 }
 
+// under 380px
 @media (max-width: 380px) {
   //Even larger footer for very small screen sizes (e.g. iPhone 4)
-  $footerheight: 200px;
+  //   $footerheight: 200px;
+  $ctaHeight: 461.3px;
   footer {
     height: $footerheight;
   }
   body {
-    margin-bottom: $footerheight;
+    margin-bottom: $footerheight + $ctaHeight;
   }
-  footer .copyright {
-    display: block;
-    margin-left: 0;
-  }
-}
-
-@media (min-width: $screen-lg) {
-  //Smaller footer for very large screen sizes
-  $footerheight: 90px;
-  footer {
-    height: $footerheight;
-  }
-  body {
-    margin-bottom: $footerheight;
+  // footer .copyright {
+  //   display: block;
+  //   margin-left: 0;
+  // }
+  .ctas {
+    min-height: $ctaHeight;
+    // min-height: $ctaHeight;
+    bottom: $footerheight;
   }
 }
 
-@media (min-width: 400px) {
-  footer .twitter-follow-button {
-    height: 20px; /* DO NOT REMOVE: Weird prerendering issue, causes scrollbar to show if not set */
-  }
-}
-
-@media (min-width: 530px) {
-  footer .message {
-    display: inline-block;
-  }
-  .twitter-follow-button {
-    margin-left: 15px;
-  }
-}
-
+// over 992px
 @media (min-width: $screen-md) {
   footer {
     .github-star-button,

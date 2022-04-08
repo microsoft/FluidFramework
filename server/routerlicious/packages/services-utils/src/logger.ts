@@ -8,6 +8,8 @@ import * as winston from "winston";
 import nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import Transport = require("winston-transport");
+import { ILumberjackEngine, ILumberjackSchemaValidator, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 
 export interface IWinstonConfig {
     colorize: boolean;
@@ -59,9 +61,25 @@ export function configureLogging(configOrPath: nconf.Provider | string) {
         }
     }
 
-    // Forward all debug library logs through winston
-    (debug as any).log = (msg, ...args) => winston.info(msg, ...args);
-    // Override the default log format to not include the timestamp since winston will do this for us
+    const lumberjackConfig = config.get("lumberjack");
+    const engineList =
+        lumberjackConfig && lumberjackConfig.engineList ?
+        lumberjackConfig.engineList as ILumberjackEngine[] :
+        [new WinstonLumberjackEngine()];
+
+    const schemaValidatorList =
+        lumberjackConfig && lumberjackConfig.schemaValidator ?
+        lumberjackConfig.schemaValidator as ILumberjackSchemaValidator[] :
+        undefined;
+
+    Lumberjack.setup(engineList, schemaValidatorList);
+
+    // Forward all debug library logs through winston and Lumberjack
+    (debug as any).log = function(msg, ...args) {
+        winston.info(msg, ...args);
+        Lumberjack.info(msg, { args: JSON.stringify(args) });
+    };
+    // Override the default log format to not include the timestamp since winston and Lumberjack will do this for us
     (debug as any).formatArgs = function(args) {
         const name = this.namespace;
         args[0] = `${name} ${args[0]}`;

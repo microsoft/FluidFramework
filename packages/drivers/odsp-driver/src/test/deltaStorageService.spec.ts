@@ -22,8 +22,11 @@ describe("DeltaStorageService", () => {
     const deltaStorageBasePath = "https://fake.microsoft.com";
     const deltaStorageRelativePath = "/drives/testdrive/items/testitem/opStream";
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
-    let resolvedUrl: IOdspResolvedUrl | undefined;
-    const fileEntry = { docId: "docId", resolvedUrl: resolvedUrl! };
+    const siteUrl = "https://fake.microsoft.com";
+    const driveId = "testdrive";
+    const itemId = "testitem";
+    const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
+    const fileEntry = { docId: "docId", resolvedUrl };
 
     it("Should build the correct sharepoint delta url with auth", async () => {
         const logger = new TelemetryUTLogger();

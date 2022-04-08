@@ -27,8 +27,8 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     public readonly isEmpty: boolean;
     public readonly deltaOperation: TOperation;
     private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
-    private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
-    private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
+    private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
+    private readonly pLast: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
 
     constructor(
         public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
@@ -71,7 +71,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 
     /**
      * The in-order ranges affected by this delta.
-     * These may not be continous.
+     * These may not be continuos.
      */
     public get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[] {
         return this.sortedRanges.value.items;
@@ -84,11 +84,19 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
         return this.mergeTreeClient.longClientId;
     }
 
-    public get first(): Readonly<ISequenceDeltaRange<TOperation>> {
+    /**
+     * The first of the modified ranges. Undefined if delta is empty,
+     * like in the case where a delete comes in for a previously deleted range
+     */
+    public get first(): Readonly<ISequenceDeltaRange<TOperation>> | undefined {
         return this.pFirst.value;
     }
 
-    public get last(): Readonly<ISequenceDeltaRange<TOperation>> {
+    /**
+     * The last of the modified ranges. Undefined if delta is empty,
+     * like in the case where a delete comes in for a previously deleted range
+     */
+    public get last(): Readonly<ISequenceDeltaRange<TOperation>> | undefined {
         return this.pLast.value;
     }
 }
@@ -97,7 +105,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
  * The event object returned on sequenceDelta events.
  *
  * The properties of this object and its sub-objects represent a point in time state
- * at the time the operation was applied. They will not take into any future modifications
+ * at the time the operation was applied. They will not take into consideration any future modifications
  * performed to the underlying sequence and merge tree.
  *
  * For group ops, each op will get it's own event, and the group op property will be set on the op args.
@@ -105,6 +113,9 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
  * Ops may get multiple events. For instance, an insert-replace will get a remove then an insert event.
  */
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
+    /**
+     * Whether the event was caused by a locally-made change.
+     */
     public readonly isLocal: boolean;
 
     constructor(
@@ -134,9 +145,18 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
     }
 }
 
+/**
+ * A range that has changed corresponding to a segment modification.
+ */
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     operation: TOperation;
+    /**
+     * The index of the start of the range.
+     */
     position: number;
+    /**
+     * The segment that corresponds to the range.
+     */
     segment: ISegment;
     propertyDeltas: PropertySet;
 }

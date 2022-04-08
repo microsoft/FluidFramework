@@ -75,7 +75,7 @@ function generateSummaryTree(
         containerRuntimeFactory.processAllMessages();
     }
     assert.equal(sharedString2.getText(), sharedString.getText());
-    const summaryTree = sharedString2.summarize().summary;
+    const summaryTree = sharedString2.getAttachSummary().summary;
     assert(summaryTree);
     return [sharedString2, summaryTree];
 }

@@ -8,7 +8,7 @@ export * from "./dataStoreHelpers";
 export * from "./objectstoragepartition";
 export * from "./objectstorageutils";
 export * from "./requestParser";
-export * from "./serializer";
+export * from "./runtimeFactoryHelper";
 export * from "./summarizerNode";
 export * from "./summaryUtils";
 export * from "./utils";

@@ -18,7 +18,7 @@ module.exports = env => {
                 },
                 {
                     test: /\.tsx?$/,
-                    loader: "ts-loader"
+                    loader: require.resolve("ts-loader")
                 }
             ]
         },

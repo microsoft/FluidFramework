@@ -4,12 +4,19 @@
  */
 
 import * as core from "@fluidframework/server-services-core";
-import { Collection, MongoClient, MongoClientOptions } from "mongodb";
+import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 const MaxFetchSize = 2000;
 
 export class MongoCollection<T> implements core.ICollection<T> {
     constructor(private readonly collection: Collection<T>) {
+    }
+
+    public aggregate(group: any, options?: any): AggregationCursor<T> {
+        const pipeline: any = [];
+        pipeline.$group = group;
+        return this.collection.aggregate(pipeline, options);
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
@@ -37,8 +44,17 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
+    public async updateMany(filter: object, set: any, addToSet: any): Promise<void> {
+        return this.updateManyCore(filter, set, addToSet, false);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public async upsert(filter: object, set: any, addToSet: any): Promise<void> {
         return this.updateCore(filter, set, addToSet, true);
+    }
+
+    public async distinct(key: any, query: any): Promise<any> {
+        return this.collection.distinct(key, query);
     }
 
     public async deleteOne(filter: any): Promise<any> {
@@ -59,7 +75,12 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     public async createIndex(index: any, unique: boolean): Promise<void> {
-        await this.collection.createIndex(index, { unique });
+        try {
+            const indexName = await this.collection.createIndex(index, { unique });
+            Lumberjack.info(`Created index ${indexName}`);
+        } catch (error) {
+            Lumberjack.error(`Index creation failed`, error);
+        }
     }
 
     public async createTTLIndex(index: any, expireAfterSeconds?: number): Promise<void> {
@@ -98,6 +119,21 @@ export class MongoCollection<T> implements core.ICollection<T> {
 
         await this.collection.updateOne(filter, update, options);
     }
+
+    private async updateManyCore(filter: any, set: any, addToSet: any, upsert: boolean): Promise<void> {
+        const update: any = {};
+        if (set) {
+            update.$set = set;
+        }
+
+        if (addToSet) {
+            update.$addToSet = addToSet;
+        }
+
+        const options = { upsert };
+
+        await this.collection.updateMany(filter, update, options);
+    }
 }
 
 export class MongoDb implements core.IDb {
@@ -120,14 +156,19 @@ export class MongoDb implements core.IDb {
 }
 
 export class MongoDbFactory implements core.IDbFactory {
-    constructor(private readonly endpoint: string) {
+    constructor(private readonly endpoint: string, private readonly bufferMaxEntries?: number) {
     }
 
     public async connect(): Promise<core.IDb> {
         // Need to cast to any before MongoClientOptions due to missing properties in d.ts
         const options: MongoClientOptions = {
-            autoReconnect: false,
-            bufferMaxEntries: 0,
+            autoReconnect: true,
+            bufferMaxEntries: this.bufferMaxEntries ?? 50,
+            keepAlive: true,
+            keepAliveInitialDelay: 180000,
+            reconnectInterval: 1000,
+            reconnectTries: 100,
+            socketTimeoutMS: 120000,
             useNewUrlParser: true,
         };
 

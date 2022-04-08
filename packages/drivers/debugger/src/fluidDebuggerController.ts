@@ -153,12 +153,14 @@ export class DebugReplayController extends ReplayController implements IDebugger
         }
 
         const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
-        const messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
+        let messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
 
-        const sanitizer = new Sanitizer(messages, false /* fullScrub */, false /* noBail */);
-        const cleanMessages = sanitizer.sanitize();
+        if(anonymize) {
+            const sanitizer = new Sanitizer(messages, false /* fullScrub */, false /* noBail */);
+            messages = sanitizer.sanitize();
+        }
 
-        return JSON.stringify(cleanMessages, undefined, 2);
+        return JSON.stringify(messages, undefined, 2);
     }
 
     private async fetchOpsFromDeltaStorage(documentDeltaStorageService): Promise<ISequencedDocumentMessage[]> {
@@ -256,7 +258,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async getVersions(
-        versionId: string,
+        versionId: string | null,
         count: number): Promise<IVersion[]> {
         if (this.storage !== undefined) {
             return this.storage.getVersions(versionId, count);
@@ -342,7 +344,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 }
 
-async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService)  {
+async function* generateSequencedMessagesFromDeltaStorage(deltaStorage: IDocumentDeltaStorageService) {
     const stream = deltaStorage.fetchMessages(1, undefined);
     while (true) {
         const result = await stream.read();

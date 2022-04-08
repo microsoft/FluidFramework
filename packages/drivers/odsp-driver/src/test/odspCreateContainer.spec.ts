@@ -8,12 +8,13 @@ import { DriverErrorType, IDocumentService } from "@fluidframework/driver-defini
 import { IRequest } from "@fluidframework/core-interfaces";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { fetchIncorrectResponse } from "@fluidframework/odsp-doclib-utils";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { getOdspResolvedUrl } from "../odspUtils";
 import { getHashedDocumentId } from "../odspPublicUtils";
+import { LocalPersistentCache } from "../odspCache";
+import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
 import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch";
 
 describe("Odsp Create Container Test", () => {
@@ -32,11 +33,14 @@ describe("Odsp Create Container Test", () => {
         itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
         driveId,
         itemId,
+        id : "fakeSummaryHandle",
     };
 
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
         async (_options) => "token",
         async (_options) => "token",
+        new LocalPersistentCache(2000),
+        { snapshotOptions : { timeout : 2000 }},
     );
 
     const createSummary = (putAppTree: boolean, putProtocolTree: boolean) => {
@@ -74,16 +78,17 @@ describe("Odsp Create Container Test", () => {
 
     beforeEach(() => {
         resolver = new OdspDriverUrlResolver();
-        request = resolver.createCreateNewRequest(siteUrl, driveId, filePath, fileName);
+        request = createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     });
 
     it("Check Document Service Successfully", async () => {
         const resolved = await resolver.resolve(request);
-        const docID = getHashedDocumentId(driveId, itemId);
+        const docID = await getHashedDocumentId(driveId, itemId);
         const summary = createSummary(true, true);
         const docService = await mockFetchOk(
             async () => odspDocumentServiceFactory.createContainer(summary, resolved, new TelemetryUTLogger()),
             expectedResponse,
+            { "x-fluid-epoch": "epoch1" },
         );
         const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
         assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");
@@ -127,10 +132,10 @@ describe("Odsp Create Container Test", () => {
                 ],
             );
         } catch (error) {
-            assert.strictEqual(error.statusCode, fetchIncorrectResponse, "Wrong error code");
+            assert.strictEqual(error.statusCode, undefined, "Wrong error code");
             assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
                 "Error type should be correct");
-            assert.strictEqual(error.message, "Could not parse item from Vroom response", "Message should be correct");
+            assert.strictEqual(error.message, "ODSP CreateFile call returned no item ID", "Message should be correct");
         }
     });
 });

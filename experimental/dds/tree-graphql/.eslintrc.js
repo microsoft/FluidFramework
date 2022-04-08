@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: ['@fluidframework/eslint-config-fluid/eslint7'],
+	extends: ['@fluidframework/eslint-config-fluid'],
 	root: true,
 	rules: {
 		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
@@ -29,7 +29,6 @@ module.exports = {
 		// Rules which could be re-enabled (by dropping these overrides, as they are enabled in base config) with some minor fixes:
 		'@typescript-eslint/no-shadow': 'off',
 		'no-shadow': 'off',
-		'prefer-arrow/prefer-arrow-functions': 'off',
 
 		// It seems convenient to place schemas and generated files in subfolders
 		// TODO: Determine if we want to organize them this way

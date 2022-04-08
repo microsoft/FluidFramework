@@ -13,6 +13,7 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryUploadManager, IGitManager } from "./storage";
+import { IWholeSummaryPayloadType } from "./storageContracts";
 
 /**
  * Recursively writes summary tree as individual summary blobs.
@@ -29,6 +30,8 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
     public async writeSummaryTree(
         summaryTree: ISummaryTree,
         parentHandle: string,
+        summaryType: IWholeSummaryPayloadType,
+        sequenceNumber?: number,
     ): Promise<string> {
         const previousFullSnapshot = await this.getPreviousFullSnapshot(parentHandle);
         return this.writeSummaryTreeCore(summaryTree, previousFullSnapshot ?? undefined);

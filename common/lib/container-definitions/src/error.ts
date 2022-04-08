@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+
 /**
  * Different error types the Container may report out to the Host
  */
@@ -26,21 +28,46 @@ export enum ContainerErrorType {
      * Error encountered when processing an operation. May correlate with data corruption.
      */
     dataProcessingError = "dataProcessingError",
+
+    /**
+     * Error indicating an API is being used improperly resulting in an invalid operation.
+     */
+     usageError = "usageError",
+
+    /**
+     * Error indicating an client session has expired. Currently this only happens when GC is allowed on a document and
+     * aids in safely deleting unused objects.
+     */
+    clientSessionExpiredError = "clientSessionExpiredError",
 }
 
 /**
  * Base interface for all errors and warnings at container level
  */
-export interface IErrorBase {
+export interface IErrorBase extends Partial<Error> {
     /** errorType is a union of error types from
      * - container
      * - runtime
      * - drivers
      */
     readonly errorType: string;
+
+    /**
+     * See Error.message
+     * Privacy Note - This is a freeform string that we may not control in all cases (e.g. a dependency throws an error)
+     * If there are known cases where this contains privacy-sensitive data it will be tagged and included in the result
+     * of getTelemetryProperties. When logging, consider fetching it that way rather than straight from this field.
+     */
     readonly message: string;
-    /** Sequence number when error happened */
-    sequenceNumber?: number;
+    /** See Error.name */
+    readonly name?: string;
+    /** See Error.stack */
+    readonly stack?: string;
+    /**
+     * Returns all properties of this error object that are either safe to log
+     * or explicitly tagged as containing privacy-sensitive data.
+     */
+    getTelemetryProperties?(): ITelemetryProperties;
 }
 
 /**
@@ -65,6 +92,13 @@ export type ICriticalContainerError = IErrorBase;
 export interface IGenericError extends IErrorBase {
     readonly errorType: ContainerErrorType.genericError;
     error?: any;
+}
+
+/**
+ * Error indicating an API is being used improperly resulting in an invalid operation.
+ */
+ export interface IUsageError extends IErrorBase {
+    readonly errorType: ContainerErrorType.usageError;
 }
 
 /**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import {
     IContainerRuntimeOptions,
     FluidDataStoreRegistry,
@@ -15,25 +15,29 @@ import {
 import {
     RuntimeRequestHandler,
     buildRuntimeRequestHandler,
-    innerRequestHandler,
 } from "@fluidframework/request-handler";
 import {
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
+import {
+    DependencyContainer,
+    IFluidDependencySynthesizer,
+    IProvideFluidDependencySynthesizer,
+} from "@fluidframework/synthesize";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { FluidObject } from "@fluidframework/core-interfaces";
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with a given data store and service registry, as well as
  * given request handlers.  It can be subclassed to implement a first-time initialization procedure for the containers
  * it creates.
  */
-export class BaseContainerRuntimeFactory implements
-    IProvideFluidDataStoreRegistry,
-    IRuntimeFactory {
+export class BaseContainerRuntimeFactory
+    extends RuntimeFactoryHelper
+    implements IProvideFluidDataStoreRegistry {
     public get IFluidDataStoreRegistry() { return this.registry; }
-    public get IRuntimeFactory() { return this; }
     private readonly registry: IFluidDataStoreRegistry;
 
     /**
@@ -44,49 +48,44 @@ export class BaseContainerRuntimeFactory implements
      */
     constructor(
         private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
-        private readonly providerEntries: DependencyContainerRegistry = [],
+        private readonly dependencyContainer?: IFluidDependencySynthesizer,
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
         private readonly runtimeOptions?: IContainerRuntimeOptions,
     ) {
+        super();
         this.registry = new FluidDataStoreRegistry(registryEntries);
     }
 
-    /**
-     * {@inheritDoc @fluidframework/container-definitions#IRuntimeFactory.instantiateRuntime}
-     */
-    public async instantiateRuntime(
-        context: IContainerContext,
-    ): Promise<IRuntime> {
-        const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
-        const dc = new DependencyContainer(parentDependencyContainer);
-        for (const entry of Array.from(this.providerEntries)) {
-            dc.register(entry.type, entry.provider);
-        }
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+        await this.containerInitializingFirstTime(runtime);
+        await this.containerHasInitialized(runtime);
+    }
 
-        // Create a scope object that passes through everything except for IFluidDependencySynthesizer
-        // which we will replace with the new one we just created.
-        const scope: any = context.scope;
+    public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
+        await this.containerHasInitialized(runtime);
+    }
+
+    public async preInitialize(
+        context: IContainerContext,
+        existing: boolean,
+    ): Promise<ContainerRuntime> {
+        const scope = context.scope as FluidObject<IProvideFluidDependencySynthesizer>;
+        const dc = new DependencyContainer<FluidObject<IContainerRuntime>>(
+            this.dependencyContainer, scope.IFluidDependencySynthesizer);
         scope.IFluidDependencySynthesizer = dc;
 
-        const runtime = await ContainerRuntime.load(
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registryEntries,
             buildRuntimeRequestHandler(
-                ...this.requestHandlers,
-                innerRequestHandler),
+                ...this.requestHandlers),
             this.runtimeOptions,
-            scope);
+            scope,
+            existing,
+        );
 
         // we register the runtime so developers of providers can use it in the factory pattern.
         dc.register(IContainerRuntime, runtime);
-
-        if (!runtime.existing) {
-            // If it's the first time through.
-            await this.containerInitializingFirstTime(runtime);
-        }
-
-        // This always gets called at the end of initialize on first time or from existing.
-        await this.containerHasInitialized(runtime);
 
         return runtime;
     }

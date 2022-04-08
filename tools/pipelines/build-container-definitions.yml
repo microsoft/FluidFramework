@@ -27,6 +27,7 @@ trigger:
   branches:
     include:
     - main
+    - next
     - release/*
   paths:
     include:
@@ -37,6 +38,7 @@ trigger:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
 
@@ -44,6 +46,7 @@ pr:
   branches:
     include:
     - main
+    - next
     - release/*
   paths:
     include:
@@ -61,3 +64,4 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: common/lib/container-definitions
     tagName: container-definitions
+    taskTest: false

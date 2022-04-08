@@ -5,13 +5,21 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
-import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
+import {
+    DriverErrorType,
+    DriverHeader,
+    IContainerPackageInfo,
+    IResolvedUrl,
+    IUrlResolver,
+} from "@fluidframework/driver-definitions";
+import { IOdspResolvedUrl, ShareLinkTypes, ShareLinkInfoType } from "@fluidframework/odsp-driver-definitions";
+import { NonRetryableError } from "@fluidframework/driver-utils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { getOdspResolvedUrl } from "./odspUtils";
 import { getHashedDocumentId } from "./odspPublicUtils";
+import { ClpCompliantAppHeader } from "./contractsPublic";
+import { pkgVersion } from "./packageVersion";
 
 function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
     const siteOrigin = new URL(siteUrl).origin;
@@ -67,8 +75,20 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             const driveID = searchParams.get("driveId");
             const filePath = searchParams.get("path");
             const packageName = searchParams.get("containerPackageName");
+            const createLinkType = searchParams.get("createLinkType");
             if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
-                throw new Error("Proper new file params should be there!!");
+                throw new NonRetryableError(
+                    "Proper new file params should be there!!",
+                    DriverErrorType.genericError,
+                    { driverVersion: pkgVersion });
+            }
+            let shareLinkInfo: ShareLinkInfoType | undefined;
+            if(createLinkType && createLinkType in ShareLinkTypes) {
+                shareLinkInfo = {
+                    createLink: {
+                        type: ShareLinkTypes[createLinkType],
+                    },
+                };
             }
             return {
                 endpoints: {
@@ -92,10 +112,12 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                     containerPackageName: packageName ? packageName : undefined,
                 },
                 fileVersion: undefined,
+                shareLinkInfo,
+                isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
             };
         }
         const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
-        const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+        const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
         assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
 
         let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
@@ -133,40 +155,37 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 containerPackageName,
             },
             fileVersion,
+            isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
         };
     }
 
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
-        codeDetails?: IFluidCodeDetails,
+        packageInfoSource?: IContainerPackageInfo | IFluidCodeDetails,
     ): Promise<string> {
         let dataStorePath = relativeUrl;
         if (dataStorePath.startsWith("/")) {
             dataStorePath = dataStorePath.substr(1);
         }
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-        const containerPackageName =
-            isFluidPackage(codeDetails?.package) ? codeDetails?.package.name : codeDetails?.package ??
-            odspResolvedUrl.codeHint?.containerPackageName;
+
+        // back-compat: IFluidCodeDetails usage to be removed in 0.58.0
+        let containerPackageName;
+        if (packageInfoSource && "name" in packageInfoSource) {
+            containerPackageName = packageInfoSource.name;
+        } else if (isFluidPackage(packageInfoSource?.package)) {
+            containerPackageName = packageInfoSource?.package.name;
+        } else {
+            containerPackageName = packageInfoSource?.package;
+        }
+        containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
         return createOdspUrl({
             ... odspResolvedUrl,
             containerPackageName,
             dataStorePath,
         });
-    }
-
-    /**
-     * @deprecated - use createOdspCreateContainerRequest
-     */
-    public createCreateNewRequest(
-        siteUrl: string,
-        driveId: string,
-        filePath: string,
-        fileName: string,
-    ): IRequest {
-        return createOdspCreateContainerRequest(siteUrl, driveId, filePath, fileName);
     }
 }
 

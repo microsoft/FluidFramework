@@ -4,12 +4,12 @@
 
 ```ts
 
-import { BatchManager } from '@fluidframework/common-utils';
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
-import { DriverError } from '@fluidframework/driver-definitions';
+import { IAnyDriverError } from '@fluidframework/driver-utils';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnect } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -18,30 +18,37 @@ import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import type { Socket } from 'socket.io-client';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
-export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
-    protected constructor(socket: SocketIOClient.Socket, documentId: string, logger: ITelemetryLogger);
+export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
+    protected constructor(socket: Socket, documentId: string, logger: ITelemetryLogger, enableLongPollingDowngrades?: boolean);
     // (undocumented)
     protected addTrackedListener(event: string, listener: (...args: any[]) => void): void;
     checkpointSequenceNumber: number | undefined;
     get claims(): ITokenClaims;
     get clientId(): string;
-    close(): void;
-    // (undocumented)
-    protected closeCore(socketProtocolError: boolean, err: DriverError): void;
-    protected closed: boolean;
-    protected createErrorObject(handler: string, error?: any, canRetry?: boolean): DriverError;
+    protected createErrorObject(handler: string, error?: any, canRetry?: boolean): IAnyDriverError;
     // (undocumented)
     get details(): IConnected;
-    protected disconnect(socketProtocolError: boolean, reason: DriverError): void;
+    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError): void;
+    dispose(): void;
+    // (undocumented)
+    protected disposeCore(socketProtocolError: boolean, err: IAnyDriverError): void;
+    // (undocumented)
+    get disposed(): boolean;
+    protected _disposed: boolean;
     // (undocumented)
     documentId: string;
     // (undocumented)
     protected earlyOpHandler: (documentId: string, msgs: ISequencedDocumentMessage[]) => void;
     // (undocumented)
     protected earlySignalHandler: (msg: ISignalMessage) => void;
+    // (undocumented)
+    protected emitMessages(type: string, messages: IDocumentMessage[][]): void;
+    // (undocumented)
+    static readonly eventsAlwaysForwarded: string[];
     // (undocumented)
     static readonly eventsToForward: string[];
     get existing(): boolean;
@@ -52,8 +59,8 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     protected initialize(connectMessage: IConnect, timeout: number): Promise<void>;
     get initialMessages(): ISequencedDocumentMessage[];
     get initialSignals(): ISignalMessage[];
-    // (undocumented)
-    protected readonly logger: ITelemetryLogger;
+    // @deprecated (undocumented)
+    protected get logger(): ITelemetryLogger;
     get maxMessageSize(): number;
     get mode(): ConnectionMode;
     // (undocumented)
@@ -62,10 +69,10 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     protected readonly queuedSignals: ISignalMessage[];
     get serviceConfiguration(): IClientConfiguration;
     // (undocumented)
-    protected readonly socket: SocketIOClient.Socket;
+    protected readonly socket: Socket;
     submit(messages: IDocumentMessage[]): void;
     // (undocumented)
-    protected readonly submitManager: BatchManager<IDocumentMessage[]>;
+    protected submitCore(type: string, messages: IDocumentMessage[]): void;
     submitSignal(message: IDocumentMessage): void;
     get version(): string;
 }

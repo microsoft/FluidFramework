@@ -13,9 +13,11 @@ import {
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { RuntimeHeaders } from "@fluidframework/container-runtime";
 
 class TestSharedDataObject1 extends DataObject {
     public get _root() {
@@ -74,6 +76,21 @@ class TestSharedDataObject2 extends DataObject {
     }
 }
 
+/**
+ * Data object that handles requests that have headers. It returns the headers in the request. This is
+ * used to validate that headers are correctly propagated all the way in the stack.
+ */
+class TestDataObjectWithRequestHeaders extends DataObject {
+    public async request(request: IRequest): Promise<IResponse> {
+        // If the request has headers, return a specialized response with the headers in the request.
+        if (request.headers !== undefined) {
+            return { value: request.headers, status: 200, mimeType: "request/headers" };
+        } else {
+            return super.request(request);
+        }
+    }
+}
+
 const testSharedDataObjectFactory1 = new DataObjectFactory(
     "TestSharedDataObject1",
     TestSharedDataObject1,
@@ -86,6 +103,12 @@ const testSharedDataObjectFactory2 = new DataObjectFactory(
     [],
     []);
 
+const testFactoryWithRequestHeaders = new DataObjectFactory(
+    "TestDataObjectWithRequestHeaders",
+    TestDataObjectWithRequestHeaders,
+    [],
+    []);
+
 // REVIEW: enable compat testing?
 describeNoCompat("Loader.request", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -93,6 +116,10 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
     let dataStore1: TestSharedDataObject1;
     let dataStore2: TestSharedDataObject2;
     let loader: IHostLoader;
+    let container: IContainer;
+
+    const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+        runtime.IFluidHandleContext.resolveHandle(request);
 
     const runtimeFactory =
         new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -100,20 +127,28 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
             [
                 [testSharedDataObjectFactory1.type, Promise.resolve(testSharedDataObjectFactory1)],
                 [testSharedDataObjectFactory2.type, Promise.resolve(testSharedDataObjectFactory2)],
+                [testFactoryWithRequestHeaders.type, Promise.resolve(testFactoryWithRequestHeaders)],
             ],
+            undefined,
+            [innerRequestHandler],
         );
-    const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
-    let container: IContainer;
+
     beforeEach(async () => {
         provider = getTestObjectProvider();
-        container = await createContainer();
         loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+        container = await createAndAttachContainer(
+            provider.defaultCodeDetails,
+            loader,
+            provider.driver.createCreateNewRequest(provider.documentId),
+        );
         dataStore1 = await requestFluidObject(container, "default");
 
         dataStore2 = await testSharedDataObjectFactory2.createInstance(dataStore1._context.containerRuntime);
 
         // this binds dataStore2 to dataStore1
         dataStore1._root.set("key", dataStore2.handle);
+
+        await provider.ensureSynchronized();
     });
 
     it("can create the data objects with correct types", async () => {
@@ -145,8 +180,10 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         dataStore1._root.set("color", "purple");
         dataStore2._root.set("color", "pink");
 
+        await provider.ensureSynchronized();
+
         assert.equal(dataStore1._root.get("color"), "purple", "datastore1 value incorrect");
-        assert.equal(await testDataStore._root.wait("color"), dataStore2._root.get("color"),
+        assert.equal(testDataStore._root.get("color"), dataStore2._root.get("color"),
             "two instances of same dataStore have different values");
     });
 
@@ -227,5 +264,25 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         const searchParams = new URLSearchParams(response.value);
         assert.strictEqual(searchParams.get("query1"), "1", "request did not pass the right query to the data store");
         assert.strictEqual(searchParams.get("query2"), "2", "request did not pass the right query to the data store");
+    });
+
+    it("can handle requests with headers", async () => {
+        const dataStoreWithRequestHeaders =
+            await testFactoryWithRequestHeaders.createInstance(dataStore1._context.containerRuntime);
+        dataStore1._root.set("key", dataStoreWithRequestHeaders.handle);
+
+        // Flush all the ops
+        await provider.ensureSynchronized();
+
+        const url = await container.getAbsoluteUrl(dataStoreWithRequestHeaders.id);
+        assert(url, "Container should return absolute url");
+
+        const headers = { wait: false, [RuntimeHeaders.externalRequest]: true };
+        // Request to the newly created data store with headers.
+        const response = await loader.request({ url, headers });
+
+        assert.strictEqual(response.status, 200, "Did not return the correct status");
+        assert.strictEqual(response.mimeType, "request/headers", "Did not get the correct mimeType");
+        assert.deepStrictEqual(response.value, headers, "Did not get the correct headers in the response");
     });
 });

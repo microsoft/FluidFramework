@@ -70,6 +70,8 @@ describe("Odsp Driver Resolver", () => {
             fileVersion: undefined,
             summarizer: false,
             codeHint: { containerPackageName: undefined },
+            shareLinkInfo: undefined,
+            isClpCompliantApp: undefined,
         };
         assert.deepStrictEqual(resolvedUrl, expected);
         const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore");
@@ -91,10 +93,33 @@ describe("Odsp Driver Resolver", () => {
             resolvedUrl.codeHint?.containerPackageName, packageName , "containerPackageName should match");
     });
 
+    it("Should add shareLinkInfo with link type if request contains createLinkType", async () => {
+        const newRequest = request;
+        const createLinkType = "csl";
+        newRequest.url += `&createLinkType=${createLinkType}`;
+        const resolvedUrl = await resolver.resolve(request);
+        assert(resolvedUrl.shareLinkInfo !== undefined);
+        assert(resolvedUrl.shareLinkInfo.createLink !== undefined);
+        assert.strictEqual(resolvedUrl.shareLinkInfo.createLink.type, createLinkType);
+    });
+
     it("Should resolve url with a string in the codeDetails package", async () => {
         const resolvedUrl = await resolver.resolve(request);
         const codeDetails = { package: packageName };
         const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
+
+        const [url, queryString] = response?.split("?") ?? [];
+        const searchParams = new URLSearchParams(queryString);
+        assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
+        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
+        assert.strictEqual(searchParams.get("path"), "datastore", "Path should match");
+        assert.strictEqual(searchParams.get("containerPackageName"), packageName, "ContainerPackageName should match");
+        assert.strictEqual(url, `${siteUrl}`, "Url should match");
+    });
+
+    it("Should resolve url given container package info", async () => {
+        const resolvedUrl = await resolver.resolve(request);
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", {name: packageName});
 
         const [url, queryString] = response?.split("?") ?? [];
         const searchParams = new URLSearchParams(queryString);
@@ -141,7 +166,7 @@ describe("Odsp Driver Resolver", () => {
     it("Should resolve url with empty file path", async () => {
         // Arrange
         const testFilePath = "";
-        request = resolver.createCreateNewRequest(siteUrl, driveId, testFilePath, fileName);
+        request = createOdspCreateContainerRequest(siteUrl, driveId, testFilePath, fileName);
 
         // Act
         const resolvedUrl = await resolver.resolve(request);
@@ -205,7 +230,7 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
-        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+        assert.strictEqual(resolvedUrl.hashedDocumentId, await getHashedDocumentId(driveId, itemId),
             "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
@@ -231,7 +256,7 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
-        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+        assert.strictEqual(resolvedUrl.hashedDocumentId, await getHashedDocumentId(driveId, itemId),
             "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
@@ -257,7 +282,7 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
-        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+        assert.strictEqual(resolvedUrl.hashedDocumentId, await getHashedDocumentId(driveId, itemId),
             "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
@@ -295,7 +320,7 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
-        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+        assert.strictEqual(resolvedUrl.hashedDocumentId, await getHashedDocumentId(driveId, itemId),
             "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
         assert.strictEqual(resolvedUrl.fileVersion, fileVersion, "FileVersion should be equal");

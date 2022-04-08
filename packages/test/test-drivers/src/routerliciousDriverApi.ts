@@ -8,6 +8,7 @@ import { pkgVersion } from "./packageVersion";
 
 export const RouterliciousDriverApi = {
     version: pkgVersion,
+    modulePath: "",
     RouterliciousDocumentServiceFactory,
 };
 

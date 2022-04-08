@@ -4,20 +4,14 @@
  */
 
 import { assert, bufferToString } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 
 interface ISequencedOpInfo<TOp> {
     client: string;
@@ -79,36 +73,20 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
      */
     protected abstract transform(input: TOp, transform: TOp): TOp;
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // Summarizer must not have locally pending changes.
         assert(this.pendingOps.length === 0, 0);
 
-        const tree: ITree = {
-            entries: [{
-                mode: FileMode.File,
-                path: "header",
-                type: TreeEntry.Blob,
-                value: {
-                    contents: serializer.stringify(this.global, this.handle),
-                    encoding: "utf-8",
-                },
-            }],
-        };
-
-        return tree;
+        return createSingleBlobSummary("header", serializer.stringify(this.global, this.handle));
     }
 
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const blob = await storage.readBlob("header");
         const rawContent = bufferToString(blob, "utf8");
-        this.global = this.local = this.runtime.IFluidSerializer.parse(rawContent);
+        this.global = this.local = this.serializer.parse(rawContent);
     }
 
-    protected registerCore() {}
-
-    protected onDisconnect() {
-        debug(`OT ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() { }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         // Discard any sequenced ops that are now below the minimum sequence number.

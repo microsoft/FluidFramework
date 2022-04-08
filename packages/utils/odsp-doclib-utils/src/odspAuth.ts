@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { getAadTenant } from "./odspDocLibUtils";
+import { getAadTenant, getAadUrl, getSiteUrl } from "./odspDocLibUtils";
 import { throwOdspNetworkError } from "./odspErrorUtils";
 import { unauthPostAsync } from "./odspRequest";
 
@@ -43,11 +43,11 @@ type TokenRequestBody =
         scope: string,
     };
 
-export const getOdspScope = (server: string) => `offline_access https://${server}/AllSites.Write`;
+export const getOdspScope = (server: string) => `offline_access ${getSiteUrl(server)}/AllSites.Write`;
 export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 
 export function getFetchTokenUrl(server: string): string {
-    return `https://login.microsoftonline.com/${getAadTenant(server)}/oauth2/v2.0/token`;
+    return `${getAadUrl(server)}/${getAadTenant(server)}/oauth2/v2.0/token`;
 }
 
 export function getLoginPageUrl(
@@ -56,7 +56,7 @@ export function getLoginPageUrl(
     scope: string,
     odspAuthRedirectUri: string,
 ) {
-    return `https://login.microsoftonline.com/${getAadTenant(server)}/oauth2/v2.0/authorize?`
+    return `${getAadUrl(server)}/${getAadTenant(server)}/oauth2/v2.0/authorize?`
         + `client_id=${clientConfig.clientId}`
         + `&scope=${scope}`
         + `&response_type=code`
@@ -101,7 +101,11 @@ export async function fetchTokens(
     const refreshToken = tokens.refresh_token;
 
     if (accessToken === undefined || refreshToken === undefined) {
-        throwOdspNetworkError("Unable to get access token.", tokens.error === "invalid_grant" ? 401 : result.status);
+        throwOdspNetworkError(
+            // pre-0.58 error message: unableToGetAccessToken
+            "Unable to get access token",
+            tokens.error === "invalid_grant" ? 401 : result.status,
+            result);
     }
     return { accessToken, refreshToken };
 }

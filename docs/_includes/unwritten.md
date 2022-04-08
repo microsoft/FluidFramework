@@ -1,3 +1,0 @@
-👋 Hi!
-
-{{< ArticleStatus discussion="" >}}

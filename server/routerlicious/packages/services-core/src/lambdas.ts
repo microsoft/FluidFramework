@@ -12,10 +12,14 @@ import { IQueuedMessage } from "./queue";
  * Reasons why a lambda is closing
  */
 export enum LambdaCloseType {
-    Stop,
-    ActivityTimeout,
-    Rebalance,
-    Error,
+    Stop = "Stop",
+    ActivityTimeout = "ActivityTimeout",
+    Rebalance = "Rebalance",
+    Error = "Error",
+}
+
+export enum LambdaName {
+    Scribe = "Scribe",
 }
 
 export interface ILogger {
@@ -110,9 +114,7 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
     if (!parsedMessage) {
         return {
             contents: [],
-            // eslint-disable-next-line no-null/no-null
             documentId: null,
-            // eslint-disable-next-line no-null/no-null
             tenantId: null,
             type: BoxcarType,
         };

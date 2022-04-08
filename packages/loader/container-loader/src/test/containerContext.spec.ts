@@ -11,11 +11,10 @@ import {
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import {
+    FluidObject,
     IFluidCodeDetails,
-    IFluidObject,
 } from "@fluidframework/core-interfaces";
 import {
-    IDocumentAttributes,
     IQuorum,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -49,20 +48,24 @@ describe("ContainerContext Tests", () => {
         }
     })();
 
+    const defaultErrorHandler = (event, error) => {
+        throw error;
+    };
+
     const mockContainer = new (class extends EventEmitterWithErrorHandling<IContainerEvents> {
         subLogger = DebugLogger.create("fluid:test");
-    })();
+    })(defaultErrorHandler);
 
     const createTestContext = async (
         codeLoader: unknown, /* ICodeDetailsLoader */
+        existing: boolean = true,
     ) => {
         return ContainerContext.createOrLoad(
             (mockContainer as unknown) as Container,
-            (sandbox.stub() as unknown) as IFluidObject,
+            (sandbox.stub() as unknown) as FluidObject,
             codeLoader as ICodeDetailsLoader,
             quorumCodeDetails,
             undefined,
-            (sandbox.stub() as unknown) as IDocumentAttributes,
             sandbox.stub() as any,
             (sandbox.stub() as unknown) as IQuorum,
             (sandbox.stub() as unknown) as ILoader,
@@ -72,6 +75,7 @@ describe("ContainerContext Tests", () => {
             Sinon.fake(),
             Container.version,
             Sinon.fake(),
+            existing,
         );
     };
 

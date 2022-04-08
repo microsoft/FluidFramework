@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-require-imports */
+
 import { IZookeeperClient } from "@fluidframework/server-services-core";
-import ZooKeeper from "zookeeper";
+import type ZooKeeper from "zookeeper";
 
 export class ZookeeperClient implements IZookeeperClient {
     private client: ZooKeeper;
@@ -31,7 +34,12 @@ export class ZookeeperClient implements IZookeeperClient {
     }
 
     private connect() {
-        this.client = new ZooKeeper({
+        // Only import this module when it's going to be used
+        // Using zookeeper with services-ordering-rdkafka is optional,
+        // so the service should not fail if this cannot be imported
+        const zooKeeper = require("zookeeper");
+
+        this.client = new zooKeeper({
             connect: this.url,
             timeout: 30000,
         });

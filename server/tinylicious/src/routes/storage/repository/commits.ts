@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import fs from "fs";
 import { ICommitDetails } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
@@ -18,6 +19,7 @@ export async function getCommits(
     count: number,
 ): Promise<ICommitDetails[]> {
     const descriptions = await git.log({
+        fs,
         depth: count,
         dir: utils.getGitDir(store, tenantId),
         ref: sha,
@@ -30,22 +32,22 @@ export async function getCommits(
             commit: {
                 url: "",
                 author: {
-                    name: description.author.name,
-                    email: description.author.email,
-                    date: new Date(description.author.timestamp * 1000).toISOString(),
+                    name: description.commit.author.name,
+                    email: description.commit.author.email,
+                    date: new Date(description.commit.author.timestamp * 1000).toISOString(),
                 },
                 committer: {
-                    name: description.committer.name,
-                    email: description.committer.email,
-                    date: new Date(description.committer.timestamp * 1000).toISOString(),
+                    name: description.commit.committer.name,
+                    email: description.commit.committer.email,
+                    date: new Date(description.commit.committer.timestamp * 1000).toISOString(),
                 },
-                message: description.message,
+                message: description.commit.message,
                 tree: {
-                    sha: description.tree,
+                    sha: description.commit.tree,
                     url: "",
                 },
             },
-            parents: description.parent.map((parent) => ({ sha: parent, url: "" })),
+            parents: description.commit.parent.map((parent) => ({ sha: parent, url: "" })),
         };
     });
 }

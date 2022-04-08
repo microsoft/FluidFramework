@@ -145,6 +145,11 @@ function main() {
         arg_tag = process.env["VERSION_TAGNAME"];
     }
 
+    if (arg_test_build && arg_release) {
+        console.error("ERROR: Test build shouldn't be released");
+        process.exit(2);
+    }
+
     if (!file_version) {
         file_version = getFileVersion();
         if (!file_version) {
@@ -166,9 +171,16 @@ function main() {
     }
 
     // Generate and print the version to console
-    let version = arg_test_build ? `0.0.0-${arg_build_num}-test` : getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
+    const simpleVersion = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
+    const version = arg_test_build ? `0.0.0-${arg_build_num}-test` : simpleVersion;
     console.log(`version=${version}`);
     console.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
+    // Output the code version for test build
+    if (arg_test_build) {
+        const codeVersion = `${simpleVersion}-test`;
+        console.log(`codeVersion=${codeVersion}`);
+        console.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
+    }
     if (arg_release) {
         let isLatest = true;
         if (arg_tag) {

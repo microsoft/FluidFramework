@@ -79,11 +79,11 @@ function generate(
                 await collection1.add(item);
             }
             sharedMap1.set("collection", collection1.handle);
+            await provider.ensureSynchronized();
 
-            const [collection2Handle, collection3Handle] = await Promise.all([
-                sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
-                sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
-            ]);
+            const collection2Handle = sharedMap2.get<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            const collection3Handle = sharedMap3.get<IFluidHandle<IConsensusOrderedCollection>>("collection");
+
             assert(collection2Handle);
             assert(collection3Handle);
             const collection2 = await collection2Handle.get();
@@ -111,11 +111,10 @@ function generate(
         it("Simultaneous add and remove should be ordered and value return to only one client", async () => {
             const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
+            await provider.ensureSynchronized();
 
-            const [collection2Handle, collection3Handle] = await Promise.all([
-                sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
-                sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
-            ]);
+            const collection2Handle = sharedMap2.get<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            const collection3Handle = sharedMap3.get<IFluidHandle<IConsensusOrderedCollection>>("collection");
             assert(collection2Handle);
             assert(collection3Handle);
             const collection2 = await collection2Handle.get();
@@ -153,11 +152,10 @@ function generate(
         it("Wait resolves", async () => {
             const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
+            await provider.ensureSynchronized();
 
-            const [collection2Handle, collection3Handle] = await Promise.all([
-                sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
-                sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
-            ]);
+            const collection2Handle = sharedMap2.get<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            const collection3Handle = sharedMap3.get<IFluidHandle<IConsensusOrderedCollection>>("collection");
             assert(collection2Handle);
             assert(collection3Handle);
             const collection2 = await collection2Handle.get();
@@ -214,9 +212,10 @@ function generate(
             await collection1.add(sharedMap1.handle);
             await collection1.add(sharedMap1.handle);
 
+            await provider.ensureSynchronized();
+
             // Pull the collection off of the 2nd container
-            const collection2Handle =
-                await sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            const collection2Handle = sharedMap2.get<IFluidHandle<IConsensusOrderedCollection>>("collection");
             assert(collection2Handle);
             const collection2 = await collection2Handle.get();
 
@@ -234,8 +233,9 @@ function generate(
             const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
-            const collection2Handle =
-                await sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            await provider.ensureSynchronized();
+
+            const collection2Handle = sharedMap2.get<IFluidHandle<IConsensusOrderedCollection>>("collection");
             assert(collection2Handle);
             const collection2 = await collection2Handle.get();
 
@@ -244,6 +244,13 @@ function generate(
                 assert.strictEqual(value, "testValue");
                 return ConsensusResult.Release;
             });
+
+            // Needs to make sure the acquire get sent and sequenced before wait/acquire/complete in collection2
+            await provider.opProcessingController.processOutgoing();
+
+            // processOutgoing pauses all processing afterwards, just resume everything.
+            provider.opProcessingController.resumeProcessing();
+
             const waitAcquireCompleteP = waitAcquireAndComplete(collection2);
 
             assert.equal(await acquireReleaseP, true);
@@ -256,8 +263,9 @@ function generate(
             const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
 
-            const collection2Handle =
-                await sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            await provider.ensureSynchronized();
+
+            const collection2Handle = sharedMap2.get<IFluidHandle<IConsensusOrderedCollection>>("collection");
             assert(collection2Handle);
             const collection2 = await collection2Handle.get();
 
@@ -274,13 +282,18 @@ function generate(
             assert.equal(await acquireAndComplete(collection1), "testValue", "testValue should still be there");
         });
 
-        it("Events", async () => {
+        it("Events", async function() {
+            // GitHub issue: #9534
+            if(provider.driver.type === "odsp") {
+                this.skip();
+            }
+
             const collection1 = ctor.create(dataStore1.runtime);
             sharedMap1.set("collection", collection1.handle);
-            const [collection2Handle, collection3Handle] = await Promise.all([
-                sharedMap2.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
-                sharedMap3.wait<IFluidHandle<IConsensusOrderedCollection>>("collection"),
-            ]);
+            await provider.ensureSynchronized();
+
+            const collection2Handle = sharedMap2.get<IFluidHandle<IConsensusOrderedCollection>>("collection");
+            const collection3Handle = sharedMap3.get<IFluidHandle<IConsensusOrderedCollection>>("collection");
             assert(collection2Handle);
             assert(collection3Handle);
             const collection2 = await collection2Handle.get();

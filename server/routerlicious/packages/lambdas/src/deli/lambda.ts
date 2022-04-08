@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
-import { EventEmitter } from "events";
 import { isServiceMessageType } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentAugmentedMessage,
@@ -17,8 +14,9 @@ import {
     ITrace,
     MessageType,
     NackErrorType,
+    ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { canSummarize } from "@fluidframework/server-services-client";
+import { canSummarize, defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
     ControlMessageType,
     extractBoxcar,
@@ -26,6 +24,7 @@ import {
     IContext,
     IControlMessage,
     IDeliState,
+    IDisableNackMessagesControlMessageContents,
     IMessage,
     INackMessage,
     IPartitionLambda,
@@ -34,16 +33,33 @@ import {
     ISequencedOperationMessage,
     IServiceConfiguration,
     ITicketedMessage,
+    NackMessagesType,
     NackOperationType,
     RawOperationType,
     SequencedOperationType,
+    ILambdaStartControlMessageContents,
     IQueuedMessage,
     INackMessagesControlMessageContents,
     IUpdateDSNControlMessageContents,
+    LambdaCloseType,
+    LambdaName,
 } from "@fluidframework/server-services-core";
+import {
+    CommonProperties,
+    getLumberBaseProperties,
+    Lumber,
+    LumberEventName,
+    Lumberjack,
+    SessionState,
+} from "@fluidframework/server-services-telemetry";
+import { DocumentContext } from "@fluidframework/server-lambdas-driver";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/common-definitions";
+import { logCommonSessionEndMetrics, createSessionMetric } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
+import { DeliCheckpointReason } from ".";
 
 enum IncomingMessageOrder {
     Duplicate,
@@ -64,7 +80,7 @@ enum InstructionType {
 
 interface ITicketedMessageOutput {
 
-    message: ITicketedMessage;
+    message: ISequencedDocumentMessage | INackMessage;
 
     msn: number;
 
@@ -79,13 +95,50 @@ interface ITicketedMessageOutput {
     instruction: InstructionType;
 }
 
+/**
+ * Used for controlling op event logic
+ */
+interface IOpEvent {
+    idleTimer?: any;
+    maxTimer?: any;
+    sequencedMessagesSinceLastOpEvent: number;
+}
+
+/**
+ * Used for controlling checkpoint logic
+ */
+interface ICheckpoint {
+    currentDeliCheckpointMessage?: IQueuedMessage;
+    currentKafkaCheckpointMessage?: IQueuedMessage;
+
+    // used for ensuring the lambda remains open while clients are connected
+    nextKafkaCheckpointMessage?: IQueuedMessage;
+
+    // time fired due that should kick off a checkpoint when deli is idle
+    idleTimer?: any;
+
+    // raw messages since the last checkpoint
+    rawMessagesSinceCheckpoint: number;
+
+    // time in milliseconds since the last checkpoint
+    lastCheckpointTime: number;
+}
+
 export enum OpEventType {
     Idle,
     MaxOps,
     MaxTime,
+    UpdatedDurableSequenceNumber,
 }
 
-export class DeliLambda extends EventEmitter implements IPartitionLambda {
+export interface IDeliLambdaEvents extends IEvent {
+    (event: "opEvent",
+        listener: (type: OpEventType, sequenceNumber: number, sequencedMessagesSinceLastOpEvent: number) => void);
+    (event: "updatedDurableSequenceNumber", listener: (durableSequenceNumber: number) => void);
+    (event: "close", listener: (type: LambdaCloseType) => void);
+}
+
+export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements IPartitionLambda {
     private sequenceNumber: number;
     private durableSequenceNumber: number;
 
@@ -102,24 +155,38 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     private lastSendP = Promise.resolve();
     private lastNoClientP = Promise.resolve();
     private lastSentMSN = 0;
+    private lastHash: string;
     private lastInstruction = InstructionType.NoOp;
 
     private activityIdleTimer: any;
     private noopEvent: any;
 
-    // Op event properties
-    private opIdleTimer: any | undefined;
-    private opMaxTimeTimer: any | undefined;
-    private sequencedMessagesSinceLastOpEvent: number = 0;
+    /**
+     * Used for controlling op event logic
+     */
+    private readonly opEvent: IOpEvent = { sequencedMessagesSinceLastOpEvent: 0 };
+
+    /**
+     * Used for controlling checkpoint logic
+     */
+    private readonly checkpointInfo: ICheckpoint = {
+        lastCheckpointTime: Date.now(),
+        rawMessagesSinceCheckpoint: 0,
+    };
 
     private noActiveClients: boolean;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     private canClose = false;
-    private nextKafkaCheckpointMessage: IQueuedMessage | undefined;
 
-    // when set, messages will be nacked based on the provided info
-    private nackMessages: INackMessagesControlMessageContents | undefined;
+    // mapping of enabled nack message types. messages will be nacked based on the provided info
+    private readonly nackMessages: Map<NackMessagesType, INackMessagesControlMessageContents>;
+
+    // Session level properties
+    private serviceSummaryGenerated: boolean = false;
+    private readonly isNewDocument: boolean = false;
+    private readonly successfullyStartedLambdas: LambdaName[] = [];
+    private readonly expectedSuccessfullyStartedLambdas: LambdaName[] = [LambdaName.Scribe];
 
     constructor(
         private readonly context: IContext,
@@ -129,7 +196,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         checkpointManager: IDeliCheckpointManager,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
-        private readonly serviceConfiguration: IServiceConfiguration) {
+        private readonly serviceConfiguration: IServiceConfiguration,
+        private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
+        private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined) {
         super();
 
         // Instantiate existing clients
@@ -143,23 +212,48 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                         client.lastUpdate,
                         client.canEvict,
                         client.scopes,
-                        client.nack);
+                        client.nack,
+                        client.serverMetadata);
                 }
             }
         }
 
         // Initialize counting context
         this.sequenceNumber = lastCheckpoint.sequenceNumber;
+        this.lastHash = lastCheckpoint.expHash1 ?? defaultHash;
         this.term = lastCheckpoint.term;
         this.epoch = lastCheckpoint.epoch;
         this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
         this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
         this.logOffset = lastCheckpoint.logOffset;
-        this.nackMessages = lastCheckpoint.nackMessages;
+
+        if (lastCheckpoint.nackMessages) {
+            if (Array.isArray(lastCheckpoint.nackMessages)) {
+                this.nackMessages = new Map(lastCheckpoint.nackMessages);
+            } else {
+                // backwards compat. nackMessages is a INackMessagesControlMessageContents
+                this.nackMessages = new Map();
+
+                // extra check for very old nack messages
+                const identifier = lastCheckpoint.nackMessages.identifier;
+                if (identifier !== undefined) {
+                    this.nackMessages.set(identifier, lastCheckpoint.nackMessages);
+                }
+            }
+        } else {
+            this.nackMessages = new Map();
+        }
+
+        // Null coalescing for backward compatibility
+        this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas ?? [];
 
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.noActiveClients = msn === -1;
         this.minimumSequenceNumber = this.noActiveClients ? this.sequenceNumber : msn;
+
+        if (this.serviceConfiguration.deli.summaryNackMessages.checkOnStartup) {
+            this.checkNackMessagesState();
+        }
 
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, checkpointManager, context);
 
@@ -169,16 +263,24 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         if (this.serviceConfiguration.deli.opEvent.enable) {
             this.updateOpMaxTimeTimer();
         }
+
+        this.isNewDocument = this.sequenceNumber === 0;
+
+        if (serviceConfiguration.enableLumberjack) {
+            this.logSessionStartMetrics();
+        }
     }
 
     public handler(rawMessage: IQueuedMessage) {
-        let kafkaCheckpointMessage: IQueuedMessage | undefined;
-
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
-            kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
-            if (kafkaCheckpointMessage) {
-                this.context.checkpoint(kafkaCheckpointMessage);
+            Lumberjack.info(`rawMessage.offset: ${rawMessage.offset} <= this.logOffset: ${this.logOffset}`,
+                getLumberBaseProperties(this.documentId, this.tenantId));
+
+            this.updateCheckpointMessages(rawMessage);
+
+            if (this.checkpointInfo.currentKafkaCheckpointMessage) {
+                this.context.checkpoint(this.checkpointInfo.currentKafkaCheckpointMessage);
             }
 
             return undefined;
@@ -201,6 +303,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
             this.lastInstruction = ticketedMessage.instruction;
 
+            let outgoingMessage: ISequencedOperationMessage | INackMessage;
             if (!ticketedMessage.nacked) {
                 // Check for idle clients.
                 this.checkIdleClients(ticketedMessage);
@@ -208,7 +311,24 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 // Check for document inactivity.
                 if (!(ticketedMessage.type === MessageType.NoClient || ticketedMessage.type === MessageType.Control)
                     && this.noActiveClients) {
-                    this.lastNoClientP = this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
+                    this.lastNoClientP = this.sendToAlfred(this.createOpMessage(MessageType.NoClient))
+                        .catch((error) => {
+                            const errorMsg = "Could not send no client message";
+                            this.context.log?.error(
+                                `${errorMsg}: ${JSON.stringify(error)}`,
+                                {
+                                    messageMetaData: {
+                                        documentId: this.documentId,
+                                        tenantId: this.tenantId,
+                                    },
+                                });
+                            Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
+                            this.context.error(error, {
+                                restart: true,
+                                tenantId: this.tenantId,
+                                documentId: this.documentId,
+                            });
+                        });
                 }
 
                 // Return early if sending is not required.
@@ -222,42 +342,71 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                     this.setNoopConsolidationTimer();
                     continue;
                 }
+
+                // Check if Deli is over the max ops since last summary nack limit
+                if (this.serviceConfiguration.deli.summaryNackMessages.enable &&
+                    !this.nackMessages.has(NackMessagesType.SummaryMaxOps)) {
+                    const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
+                    if (opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
+                        // this op brings us over the limit
+                        // start nacking non-system ops and ops that are submitted by non-summarizers
+                        this.nackMessages.set(NackMessagesType.SummaryMaxOps, {
+                            identifier: NackMessagesType.SummaryMaxOps,
+                            content: this.serviceConfiguration.deli.summaryNackMessages.nackContent,
+                            allowSystemMessages: true,
+                            allowedScopes: [ScopeType.SummaryWrite],
+                        });
+                    }
+                }
+                const sequencedMessage = ticketedMessage.message as ISequencedDocumentMessage;
+                if (this.serviceConfiguration.deli.enableOpHashing) {
+                    this.lastHash = getNextHash(sequencedMessage, this.lastHash);
+                    sequencedMessage.expHash1 = this.lastHash;
+                }
+
+                outgoingMessage = {
+                    documentId: this.documentId,
+                    operation: sequencedMessage,
+                    tenantId: this.tenantId,
+                    type: SequencedOperationType,
+                };
+                sequencedMessageCount++;
+            } else {
+                outgoingMessage = ticketedMessage.message as INackMessage;
             }
 
-            // Update the msn last sent.
+            // Update the msn last sent
             this.lastSentMSN = ticketedMessage.msn;
-            this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
-
-            sequencedMessageCount++;
+            this.lastSendP = this.sendToScriptorium(outgoingMessage)
+                .catch((error) => {
+                    const errorMsg = "Could not send message to scriptorium";
+                    this.context.log?.error(
+                        `${errorMsg}: ${JSON.stringify(error)}`,
+                        {
+                            messageMetaData: {
+                                documentId: this.documentId,
+                                tenantId: this.tenantId,
+                            },
+                        });
+                    Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
+                    this.context.error(error, {
+                        restart: true,
+                        tenantId: this.tenantId,
+                        documentId: this.documentId,
+                    });
+                });
         }
 
-        kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
-        const checkpoint = this.generateCheckpoint(rawMessage, kafkaCheckpointMessage);
+        this.checkpointInfo.rawMessagesSinceCheckpoint++;
+        this.updateCheckpointMessages(rawMessage);
 
-        // TODO optimize this to avoid doing per message
-        // Checkpoint the current state
-        Promise.all([this.lastSendP, this.lastNoClientP]).then(
-            () => {
-                if (this.lastInstruction === InstructionType.ClearCache) {
-                    checkpoint.clear = true;
-                }
-                this.checkpointContext.checkpoint(checkpoint);
-            },
-            (error) => {
-                this.context.log?.error(
-                    `Could not send message to scriptorium: ${JSON.stringify(error)}`,
-                    {
-                        messageMetaData: {
-                            documentId: this.documentId,
-                            tenantId: this.tenantId,
-                        },
-                    });
-                this.context.error(error, {
-                    restart: true,
-                    tenantId: this.tenantId,
-                    documentId: this.documentId,
-                });
-            });
+        const checkpointReason = this.getCheckpointReason();
+        if (checkpointReason !== undefined) {
+            // checkpoint the current up to date state
+            this.checkpoint(checkpointReason);
+        } else {
+            this.updateCheckpointIdleTimer();
+        }
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
@@ -270,25 +419,89 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
             const maxOps = this.serviceConfiguration.deli.opEvent.maxOps;
             if (maxOps !== undefined) {
-                this.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
+                this.opEvent.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
 
-                if (this.sequencedMessagesSinceLastOpEvent > maxOps) {
+                if (this.opEvent.sequencedMessagesSinceLastOpEvent > maxOps) {
                     this.emitOpEvent(OpEventType.MaxOps);
                 }
             }
         }
     }
 
-    public close() {
+    public close(closeType: LambdaCloseType) {
         this.checkpointContext.close();
 
         this.clearActivityIdleTimer();
         this.clearNoopConsolidationTimer();
-
+        this.clearCheckpointIdleTimer();
         this.clearOpIdleTimer();
         this.clearOpMaxTimeTimer();
 
+        this.emit("close", closeType);
         this.removeAllListeners();
+
+        if (this.serviceConfiguration.enableLumberjack) {
+            this.logSessionEndMetrics(closeType);
+        }
+    }
+
+    private logSessionStartMetrics(failMetric: boolean = false) {
+        if (this.sessionStartMetric?.isCompleted()) {
+            this.sessionStartMetric = createSessionMetric(
+                this.tenantId,
+                this.documentId,
+                LumberEventName.StartSessionResult,
+                this.serviceConfiguration,
+            );
+        }
+
+        if (failMetric) {
+            this.sessionStartMetric?.setProperties({
+                [CommonProperties.sessionState]: SessionState.LambdaStartFailed,
+            });
+            this.sessionStartMetric?.error("Lambda start failed");
+            return;
+        }
+
+        if (this.verifyRequiredLambdaStarted()) {
+            if (this.isNewDocument) {
+                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.started });
+                this.sessionStartMetric?.success("Session started successfully");
+            } else {
+                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.resumed });
+                this.sessionStartMetric?.success("Session resumed successfully");
+            }
+        } else {
+            const lambdaStatusMsg = "Not all required lambdas started";
+            this.context.log?.info(lambdaStatusMsg);
+            Lumberjack.info(lambdaStatusMsg, getLumberBaseProperties(this.documentId, this.tenantId));
+        }
+    }
+
+    private verifyRequiredLambdaStarted() {
+        return this.expectedSuccessfullyStartedLambdas.every((val) => this.successfullyStartedLambdas.includes(val));
+    }
+
+    private logSessionEndMetrics(closeType: LambdaCloseType) {
+        if (this.sessionMetric?.isCompleted()) {
+            this.sessionMetric = createSessionMetric(
+                this.tenantId,
+                this.documentId,
+                LumberEventName.SessionResult,
+                this.serviceConfiguration,
+            );
+        }
+
+        this.sessionMetric?.setProperties({ [CommonProperties.serviceSummarySuccess]: this.serviceSummaryGenerated });
+
+        logCommonSessionEndMetrics(
+            this.context as DocumentContext,
+            closeType,
+            this.sessionMetric,
+            this.sequenceNumber,
+            this.durableSequenceNumber,
+            Array.from(this.nackMessages.keys()),
+        );
     }
 
     private ticket(rawMessage: IMessage, trace: ITrace): ITicketedMessageOutput | undefined {
@@ -302,36 +515,38 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         const dataContent = this.extractDataContent(message);
 
         // Check if we should nack this message
-        const nackMessages = this.nackMessages;
-        if (nackMessages && this.serviceConfiguration.deli.enableNackMessages) {
-            let shouldNack = true;
+        if (this.nackMessages.size > 0 && this.serviceConfiguration.deli.enableNackMessages) {
+            for (const nackMessageControlMessageContents of this.nackMessages.values()) {
+                let shouldNack = true;
 
-            if (nackMessages.allowSystemMessages && (isServiceMessageType(message.type) || !message.clientId)) {
-                // this is a system message. don't nack it
-                shouldNack = false;
-            } else if (nackMessages.allowedScopes) {
-                const clientId = message.clientId;
-                if (clientId) {
-                    const client = this.clientSeqManager.get(clientId);
-                    if (client) {
-                        for (const scope of nackMessages.allowedScopes) {
-                            if (client.scopes.includes(scope)) {
-                                // this client has an allowed scope. don't nack it
-                                shouldNack = false;
-                                break;
+                if (nackMessageControlMessageContents.allowSystemMessages &&
+                    (isServiceMessageType(message.operation.type) || !message.clientId)) {
+                    // this is a system message. don't nack it
+                    shouldNack = false;
+                } else if (nackMessageControlMessageContents.allowedScopes) {
+                    const clientId = message.clientId;
+                    if (clientId) {
+                        const client = this.clientSeqManager.get(clientId);
+                        if (client) {
+                            for (const scope of nackMessageControlMessageContents.allowedScopes) {
+                                if (client.scopes.includes(scope)) {
+                                    // this client has an allowed scope. don't nack it
+                                    shouldNack = false;
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            if (shouldNack) {
-                return this.createNackMessage(
-                    message,
-                    nackMessages.content.code,
-                    nackMessages.content.type,
-                    nackMessages.content.message,
-                    nackMessages.content.retryAfter);
+                if (shouldNack) {
+                    return this.createNackMessage(
+                        message,
+                        nackMessageControlMessageContents.content.code,
+                        nackMessageControlMessageContents.content.type,
+                        nackMessageControlMessageContents.content.message,
+                        nackMessageControlMessageContents.content.retryAfter);
+                }
             }
         }
 
@@ -370,7 +585,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                     this.minimumSequenceNumber,
                     message.timestamp,
                     true,
-                    clientJoinMessage.detail.scopes);
+                    clientJoinMessage.detail.scopes,
+                    false,
+                    message.operation.serverMetadata);
                 // Return if the client has already been added due to a prior join message.
                 if (!isNewClient) {
                     return;
@@ -499,34 +716,44 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             const controlMessage = dataContent as IControlMessage;
             switch (controlMessage.type) {
                 case ControlMessageType.UpdateDSN: {
-                    this.context.log?.info(`Update DSN: ${JSON.stringify(controlMessage)}`, {
+                    const dsnStatusMsg = `Update DSN: ${JSON.stringify(controlMessage)}`;
+                    this.context.log?.info(dsnStatusMsg, {
                         messageMetaData: {
                             documentId: this.documentId,
                             tenantId: this.tenantId,
                         },
                     });
+                    Lumberjack.info(dsnStatusMsg, getLumberBaseProperties(this.documentId, this.tenantId));
 
                     const controlContents = controlMessage.contents as IUpdateDSNControlMessageContents;
+                    this.serviceSummaryGenerated = !controlContents.isClientSummary;
                     const dsn = controlContents.durableSequenceNumber;
                     if (dsn >= this.durableSequenceNumber) {
                         // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred
                         if (controlContents.clearCache && this.noActiveClients) {
                             instruction = InstructionType.ClearCache;
                             this.canClose = true;
-                            this.context.log?.info(`Deli cache will be cleared`, {
+                            const deliCacheMsg = `Deli cache will be cleared`;
+                            this.context.log?.info(deliCacheMsg, {
                                 messageMetaData: {
                                     documentId: this.documentId,
                                     tenantId: this.tenantId,
                                 },
                             });
+                            Lumberjack.info(deliCacheMsg, getLumberBaseProperties(this.documentId, this.tenantId));
                         }
 
                         this.durableSequenceNumber = dsn;
 
+                        this.checkNackMessagesState();
+
+                        this.emit("updatedDurableSequenceNumber", dsn);
+
                         if (this.serviceConfiguration.deli.opEvent.enable) {
-                            // since the dsn updated, ops were reliably stored
-                            // we can safely restart the MaxTime timer
-                            this.updateOpMaxTimeTimer();
+                            // ops were reliably stored
+                            // ensure op event timers & last sequenced op counters are reset
+                            // that will make the MaxTime & MaxOps op events accurate
+                            this.emitOpEvent(OpEventType.UpdatedDurableSequenceNumber, true);
                         }
                     }
 
@@ -534,10 +761,29 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 }
 
                 case ControlMessageType.NackMessages: {
-                    this.nackMessages = controlMessage.contents;
+                    const controlContents: INackMessagesControlMessageContents |
+                        IDisableNackMessagesControlMessageContents = controlMessage.contents;
+
+                    if (controlContents.content !== undefined) {
+                        this.nackMessages.set(controlContents.identifier, controlContents);
+                    } else {
+                        this.nackMessages.delete(controlContents.identifier);
+                    }
+
                     break;
                 }
 
+                case ControlMessageType.LambdaStartResult: {
+                    const controlContents = controlMessage.contents as ILambdaStartControlMessageContents;
+
+                    if (controlContents.success) {
+                        this.successfullyStartedLambdas.push(controlContents.lambdaName);
+                    }
+
+                    this.logSessionStartMetrics(!controlContents.success);
+                }
+
+                // fallthrough
                 default:
                 // ignore unknown control messages
             }
@@ -552,16 +798,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         // And now craft the output message
         const outputMessage = this.createOutputMessage(message, undefined /* origin */, sequenceNumber, dataContent);
 
-        const sequencedMessage: ISequencedOperationMessage = {
-            documentId: message.documentId,
-            operation: outputMessage,
-            tenantId: message.tenantId,
-            type: SequencedOperationType,
-        };
-
         return {
             instruction,
-            message: sequencedMessage,
+            message: outputMessage,
             msn: this.minimumSequenceNumber,
             nacked: false,
             send: sendType,
@@ -614,8 +853,13 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         };
         if (message.operation.type === MessageType.Summarize || message.operation.type === MessageType.NoClient) {
             const augmentedOutputMessage = outputMessage as ISequencedDocumentAugmentedMessage;
-            const checkpointData = JSON.stringify(this.generateDeliCheckpoint());
-            augmentedOutputMessage.additionalContent = checkpointData;
+            if (message.operation.type === MessageType.Summarize ||
+                this.serviceConfiguration.scribe.generateServiceSummary) {
+                // only add additional content if scribe will use this op for generating a summary
+                // NoClient ops are ignored by scribe when generateServiceSummary is disabled
+                const checkpointData = JSON.stringify(this.generateDeliCheckpoint());
+                augmentedOutputMessage.additionalContent = checkpointData;
+            }
             return augmentedOutputMessage;
         } else if (systemContent !== undefined) { // TODO to consolidate the logic here
             const systemOutputMessage = outputMessage as ISequencedDocumentSystemMessage;
@@ -647,12 +891,14 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         if (clientSequenceNumber === expectedClientSequenceNumber) {
             return IncomingMessageOrder.ConsecutiveOrSystem;
         } else if (clientSequenceNumber > expectedClientSequenceNumber) {
-            this.context.log?.info(
-                `Gap ${clientId}:${expectedClientSequenceNumber} > ${clientSequenceNumber}`, { messageMetaData });
+            const gapDetectionMsg = `Gap ${clientId}:${expectedClientSequenceNumber} > ${clientSequenceNumber}`;
+            this.context.log?.info(gapDetectionMsg, { messageMetaData });
+            Lumberjack.info(gapDetectionMsg, getLumberBaseProperties(this.documentId, this.tenantId));
             return IncomingMessageOrder.Gap;
         } else {
-            this.context.log?.info(
-                `Duplicate ${clientId}:${expectedClientSequenceNumber} < ${clientSequenceNumber}`, { messageMetaData });
+            const dupDetectionMsg = `Duplicate ${clientId}:${expectedClientSequenceNumber} < ${clientSequenceNumber}`;
+            this.context.log?.info(dupDetectionMsg, { messageMetaData });
+            Lumberjack.info(dupDetectionMsg, getLumberBaseProperties(this.documentId, this.tenantId));
             return IncomingMessageOrder.Duplicate;
         }
     }
@@ -666,14 +912,16 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         try {
             await this.reverseProducer.send([message], message.tenantId, message.documentId);
         } catch (error) {
+            const errorMsg = `Could not send message to alfred`;
             this.context.log?.error(
-                `Could not send message to alfred: ${JSON.stringify(error)}`,
+                `${errorMsg}: ${JSON.stringify(error)}`,
                 {
                     messageMetaData: {
                         documentId: this.documentId,
                         tenantId: this.tenantId,
                     },
                 });
+            Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
             this.context.error(error, {
                 restart: true,
                 tenantId: this.tenantId,
@@ -689,7 +937,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         if (message.type !== MessageType.ClientLeave) {
             const idleClient = this.getIdleClient(message.timestamp);
             if (idleClient?.clientId) {
-                const leaveMessage = this.createLeaveMessage(idleClient.clientId);
+                const leaveMessage = this.createLeaveMessage(idleClient.clientId, idleClient.serverMetadata);
                 void this.sendToAlfred(leaveMessage);
             }
         }
@@ -698,7 +946,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     /**
      * Creates a leave message for inactive clients.
      */
-    private createLeaveMessage(clientId: string): IRawOperationMessage {
+    private createLeaveMessage(clientId: string, serverMetadata?: any): IRawOperationMessage {
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,
@@ -706,6 +954,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             referenceSequenceNumber: -1,
             traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientLeave,
+            serverMetadata,
         };
         const leaveMessage: IRawOperationMessage = {
             clientId: null,
@@ -792,24 +1041,39 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
      * This keeps the kafka checkpoint behind by 1 message until there are no active clients
      * It ensures that the idle timer and subsequent leave & NoClient messages are created
      * If noActiveClients is set, that means we sent a NoClient message. so checkpoint the current offset
-     * @returns The queued message for the kafka checkpoint
      */
-    private getKafkaCheckpointMessage(rawMessage: IQueuedMessage): IQueuedMessage | undefined {
-        const kafkaCheckpointMessage = this.noActiveClients ? rawMessage : this.nextKafkaCheckpointMessage;
-        this.nextKafkaCheckpointMessage = rawMessage;
-        return kafkaCheckpointMessage;
+    private updateCheckpointMessages(rawMessage: IQueuedMessage) {
+        this.checkpointInfo.currentDeliCheckpointMessage = rawMessage;
+
+        if (this.noActiveClients) {
+            // If noActiveClients is set, that means we sent a NoClient message
+            // so we should checkpoint the current message/offset
+
+            // we need to explicitly set nextKafkaCheckpointMessage to undefined!
+            // because once we checkpoint the current message, DocumentContext.hasPendingWork() will be false
+            // that means that the partition will keep checkpointing since this lambda is up to date
+            // if we don't clear nextKafkaCheckpointMessage,
+            // it will try to checkpoint that old message offset once the next message arrives
+            this.checkpointInfo.nextKafkaCheckpointMessage = undefined;
+
+            this.checkpointInfo.currentKafkaCheckpointMessage = rawMessage;
+        } else {
+            // Keep the kafka checkpoint behind by 1 message until there are no active clients
+            const kafkaCheckpointMessage = this.checkpointInfo.nextKafkaCheckpointMessage;
+            this.checkpointInfo.nextKafkaCheckpointMessage = rawMessage;
+            this.checkpointInfo.currentKafkaCheckpointMessage = kafkaCheckpointMessage;
+        }
     }
 
     /**
-     * Generates a checkpoint of the given state
+     * Generates a checkpoint for the current state
      */
-    private generateCheckpoint(
-        deliCheckpointMessage: IQueuedMessage,
-        kafkaCheckpointMessage: IQueuedMessage | undefined): ICheckpointParams {
+    private generateCheckpoint(reason: DeliCheckpointReason): ICheckpointParams {
         return {
+            reason,
             deliState: this.generateDeliCheckpoint(),
-            deliCheckpointMessage,
-            kafkaCheckpointMessage,
+            deliCheckpointMessage: this.checkpointInfo.currentDeliCheckpointMessage as IQueuedMessage,
+            kafkaCheckpointMessage: this.checkpointInfo.currentKafkaCheckpointMessage,
         };
     }
 
@@ -818,11 +1082,13 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             clients: this.clientSeqManager.cloneValues(),
             durableSequenceNumber: this.durableSequenceNumber,
             epoch: this.epoch,
+            expHash1: this.lastHash,
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
             term: this.term,
             lastSentMSN: this.lastSentMSN,
-            nackMessages: this.nackMessages ? { ...this.nackMessages } : undefined,
+            nackMessages: Array.from(this.nackMessages),
+            successfullyStartedLambdas: this.successfullyStartedLambdas,
         };
     }
 
@@ -894,21 +1160,21 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         this.clearOpIdleTimer();
 
-        this.opIdleTimer = setTimeout(() => {
+        this.opEvent.idleTimer = setTimeout(() => {
             this.emitOpEvent(OpEventType.Idle);
         }, idleTime);
     }
 
     private clearOpIdleTimer() {
-        if (this.opIdleTimer !== undefined) {
-            clearTimeout(this.opIdleTimer);
-            this.opIdleTimer = undefined;
+        if (this.opEvent.idleTimer !== undefined) {
+            clearTimeout(this.opEvent.idleTimer);
+            this.opEvent.idleTimer = undefined;
         }
     }
 
     /**
      * Resets the op event MaxTime timer
-     * Called after an opEvent is emitted or when the dsn is updated
+     * Called after an opEvent is emitted
      */
     private updateOpMaxTimeTimer() {
         const maxTime = this.serviceConfiguration.deli.opEvent.maxTime;
@@ -918,32 +1184,146 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         this.clearOpMaxTimeTimer();
 
-        this.opMaxTimeTimer = setTimeout(() => {
+        this.opEvent.maxTimer = setTimeout(() => {
             this.emitOpEvent(OpEventType.MaxTime);
         }, maxTime);
     }
 
     private clearOpMaxTimeTimer() {
-        if (this.opMaxTimeTimer !== undefined) {
-            clearTimeout(this.opMaxTimeTimer);
-            this.opMaxTimeTimer = undefined;
+        if (this.opEvent.maxTimer !== undefined) {
+            clearTimeout(this.opEvent.maxTimer);
+            this.opEvent.maxTimer = undefined;
         }
     }
 
     /**
-     * Emits an opEvent based for the provided type
+     * Emits an opEvent for the provided type
      * Also resets the MaxTime timer
      */
-    private emitOpEvent(type: OpEventType) {
-        if (this.sequencedMessagesSinceLastOpEvent === 0) {
+    private emitOpEvent(type: OpEventType, force?: boolean) {
+        if (!force && this.opEvent.sequencedMessagesSinceLastOpEvent === 0) {
             // no need to emit since no messages were handled since last time
             return;
         }
 
-        this.emit("opEvent", type, this.sequenceNumber, this.sequencedMessagesSinceLastOpEvent);
+        this.emit("opEvent", type, this.sequenceNumber, this.opEvent.sequencedMessagesSinceLastOpEvent);
 
-        this.sequencedMessagesSinceLastOpEvent = 0;
+        this.opEvent.sequencedMessagesSinceLastOpEvent = 0;
 
         this.updateOpMaxTimeTimer();
+    }
+
+    /**
+     * Checks if the nackMessages flag should be reset
+     */
+    private checkNackMessagesState() {
+        if (this.serviceConfiguration.deli.summaryNackMessages.enable &&
+            this.nackMessages.has(NackMessagesType.SummaryMaxOps)) {
+            // Deli is nacking messages due to summary max ops
+            // Check if this new dsn gets it out of that state
+            const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
+            if (opsSinceLastSummary <= this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
+                // stop nacking future messages
+                this.nackMessages.delete(NackMessagesType.SummaryMaxOps);
+            }
+        }
+    }
+
+    /**
+     * Determines a checkpoint reason based on some heuristics
+     * @returns a reason when it's time to checkpoint, or undefined if no checkpoint should be made
+     */
+    private getCheckpointReason(): DeliCheckpointReason | undefined {
+        const checkpointHeuristics = this.serviceConfiguration.deli.checkpointHeuristics;
+        if (!checkpointHeuristics.enable) {
+            // always checkpoint since heuristics are disabled
+            return DeliCheckpointReason.EveryMessage;
+        }
+
+        if (this.checkpointInfo.rawMessagesSinceCheckpoint >= checkpointHeuristics.maxMessages) {
+            // exceeded max messages since last checkpoint
+            return DeliCheckpointReason.MaxMessages;
+        }
+
+        if ((Date.now() - this.checkpointInfo.lastCheckpointTime) >= checkpointHeuristics.maxTime) {
+            // exceeded max time since last checkpoint
+            return DeliCheckpointReason.MaxTime;
+        }
+
+        if (this.lastInstruction === InstructionType.ClearCache) {
+            // last instruction is for clearing the cache
+            // checkpoint now to ensure that happens
+            return DeliCheckpointReason.ClearCache;
+        }
+
+        return undefined;
+    }
+
+    /**
+     * Checkpoints the current state once the pending kafka messages are produced
+     */
+    private checkpoint(reason: DeliCheckpointReason) {
+        this.clearCheckpointIdleTimer();
+
+        this.checkpointInfo.lastCheckpointTime = Date.now();
+        this.checkpointInfo.rawMessagesSinceCheckpoint = 0;
+
+        const checkpointParams = this.generateCheckpoint(reason);
+
+        Promise.all([this.lastSendP, this.lastNoClientP]).then(
+            () => {
+                if (reason === DeliCheckpointReason.ClearCache) {
+                    checkpointParams.clear = true;
+                }
+                void this.checkpointContext.checkpoint(checkpointParams);
+            },
+            (error) => {
+                const errorMsg = `Could not send message to scriptorium`;
+                this.context.log?.error(
+                    `${errorMsg}: ${JSON.stringify(error)}`,
+                    {
+                        messageMetaData: {
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        },
+                    });
+                Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
+                this.context.error(error, {
+                    restart: true,
+                    tenantId: this.tenantId,
+                    documentId: this.documentId,
+                });
+            });
+    }
+
+    /**
+     * Updates the time until the state is checkpointed when idle
+     * @param rawMessage The current raw message that is initiating the timer
+     */
+    private updateCheckpointIdleTimer() {
+        this.clearCheckpointIdleTimer();
+
+        const initialDeliCheckpointMessage = this.checkpointInfo.currentDeliCheckpointMessage;
+
+        this.checkpointInfo.idleTimer = setTimeout(() => {
+            this.checkpointInfo.idleTimer = undefined;
+
+            // verify that the current deli message matches the raw message that kicked off this timer
+            // if it matches, that means that delis state is for the raw message
+            // this means our checkpoint will result in the correct state
+            if (initialDeliCheckpointMessage === this.checkpointInfo.currentDeliCheckpointMessage) {
+                this.checkpoint(DeliCheckpointReason.IdleTime);
+            }
+        }, this.serviceConfiguration.deli.checkpointHeuristics.idleTime);
+    }
+
+    /**
+     * Clears the timer used for checkpointing when deli is idle
+     */
+    private clearCheckpointIdleTimer() {
+        if (this.checkpointInfo.idleTimer !== undefined) {
+            clearTimeout(this.checkpointInfo.idleTimer);
+            this.checkpointInfo.idleTimer = undefined;
+        }
     }
 }

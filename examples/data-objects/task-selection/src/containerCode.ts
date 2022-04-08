@@ -20,7 +20,7 @@ export const oldestClientDiceId = "oldestClientDice";
 
 class TaskSelectionContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
-        super(registryEntries, [], [rootDataStoreRequestHandler]);
+        super(registryEntries, undefined, [rootDataStoreRequestHandler]);
     }
 
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {

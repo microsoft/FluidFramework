@@ -4,15 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer, ISerializedHandle } from "@fluidframework/core-interfaces";
-
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -20,10 +12,10 @@ import {
     IChannelFactory,
     Serializable,
 } from "@fluidframework/datastore-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
-import { debug } from "./debug";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
 
 /**
@@ -41,10 +33,7 @@ interface IDeleteCellOperation {
 }
 
 interface ICellValue {
-    // The type of the value
-    type: string;
-
-    // The actual value
+    // The actual value contained in the cell which needs to be wrapped to handle undefined
     value: any;
 }
 
@@ -157,14 +146,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * {@inheritDoc ISharedCell.set}
      */
     public set(value: Serializable<T>) {
-        if (SharedObject.is(value)) {
-            throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
-        }
-
         // Serialize the value if required.
         const operationValue: ICellValue = {
-            type: ValueType[ValueType.Plain],
-            value: this.toSerializable(value, this.serializer),
+            value: this.serializer.encode(value, this.handle),
         };
 
         // Set the value locally.
@@ -208,33 +192,13 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     }
 
     /**
-     * Create a snapshot for the cell
+     * Create a summary for the cell
      *
-     * @returns the snapshot of the current state of the cell
+     * @returns the summary of the current state of the cell
      */
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
-        // Get a serializable form of data
-        const content: ICellValue = {
-            type: ValueType[ValueType.Plain],
-            value: this.toSerializable(this.data, serializer),
-        };
-
-        // And then construct the tree for it
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: JSON.stringify(content),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+        const content: ICellValue = { value: this.data };
+        return createSingleBlobSummary(snapshotFileName, serializer.stringify(content, this.handle));
     }
 
     /**
@@ -243,7 +207,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
-        this.data = this.fromSerializable(content);
+        this.data = this.decode(content);
     }
 
     /**
@@ -254,20 +218,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     }
 
     /**
-     * Process the cell value on register
-     */
-    protected registerCore() {
-        if (SharedObject.is(this.data)) {
-            this.data.bindToContext();
-        }
-    }
-
-    /**
      * Call back on disconnect
      */
-    protected onDisconnect() {
-        debug(`Cell ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     /**
      * Process a cell operation
@@ -296,7 +249,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
             switch (op.type) {
                 case "setCell":
-                    this.setCore(this.fromSerializable(op.value));
+                    this.setCore(this.decode(op.value));
                     break;
 
                 case "deleteCell":
@@ -319,34 +272,10 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         this.emit("delete");
     }
 
-    private toSerializable(value: T | undefined, serializer: IFluidSerializer) {
-        if (value === undefined) {
-            return value;
-        }
-
-        // Stringify to convert to the serialized handle values - and then parse in order to create
-        // a POJO for the op
-        const stringified = serializer.stringify(value, this.handle);
+    private decode(cellValue: ICellValue) {
+        const value = cellValue.value;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return JSON.parse(stringified);
-    }
-
-    private fromSerializable(operation: ICellValue) {
-        let value = operation.value;
-
-        // Convert any stored shared object to updated handle
-        if (operation.type === ValueType[ValueType.Shared]) {
-            const handle: ISerializedHandle = {
-                type: "__fluid_handle__",
-                url: operation.value as string,
-            };
-            value = handle;
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return value !== undefined
-            ? this.serializer.parse(JSON.stringify(value))
-            : value;
+        return this.serializer.decode(value);
     }
 
     protected applyStashedOp() {

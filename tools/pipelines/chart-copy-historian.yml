@@ -1,0 +1,17 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+pr: none
+trigger:
+  branches:
+    include:
+    - main
+    - next
+  paths:
+    include:
+    - server/charts/historian
+
+extends:
+  template: templates/include-copy-chart.yml
+  parameters:
+    chartPath: server/charts/historian

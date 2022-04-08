@@ -31,7 +31,7 @@ export class TscTask extends LeafTask {
     private _tsConfig: ts.ParsedCommandLine | undefined;
     private _tsConfigFullPath: string | undefined;
     private _projectReference: TscTask | undefined;
-    private _sourceStats: fs.Stats[] | undefined;
+    private _sourceStats: (fs.Stats | fs.BigIntStats)[] | undefined;
 
     public matchTask(command: string, options?: TscTaskMatchOptions): LeafTask | undefined {
         if (!options?.tsConfig) { return super.matchTask(command); }
@@ -42,6 +42,10 @@ export class TscTask extends LeafTask {
     }
 
     protected addDependentTasks(dependentTasks: LeafTask[]) {
+        if (this.addChildTask(dependentTasks, this.node, "npm run build:gen")) {
+            this.logVerboseDependency(this.node, "build:gen");
+        }
+
         if (this.addChildTask(dependentTasks, this.node, "npm run build:genver")) {
             this.logVerboseDependency(this.node, "build:genver");
         }
@@ -129,7 +133,7 @@ export class TscTask extends LeafTask {
     private remapSrcDeclFile(fullPath: string) {
         if (!this._sourceStats) {
             const config = this.readTsConfig();
-            this._sourceStats = config ? config.fileNames.map(fs.lstatSync) : [];
+            this._sourceStats = config ? config.fileNames.map(v => fs.lstatSync(v)) : [];
         }
 
         const parsed = path.parse(fullPath);

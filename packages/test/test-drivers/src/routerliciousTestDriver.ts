@@ -5,81 +5,116 @@
 
 import assert from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { v4 as uuid } from "uuid";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
-export interface IServiceEndpoint {
+interface IServiceEndpoint {
     hostUrl: string;
     ordererUrl: string;
     deltaStorageUrl: string;
 }
 
-export class RouterliciousTestDriver implements ITestDriver {
-    public static createFromEnv(api: RouterliciousDriverApiType = RouterliciousDriverApi) {
-        let bearerSecret = process.env.fluid__webpack__bearerSecret;
-        let tenantSecret = process.env.fluid__webpack__tenantSecret;
-        const tenantId = process.env.fluid__webpack__tenantId ?? "fluid";
+const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies) => ({
+    serviceEndpoint: {
+        hostUrl: "http://localhost:3000",
+        ordererUrl: "http://localhost:3003",
+        deltaStorageUrl: "http://localhost:3001",
+    },
+    tenantId: "fluid",
+    tenantSecret: "create-new-tenants-if-going-to-production",
+    driverPolicies,
+});
+
+function getConfig(
+    fluidHost?: string,
+    tenantId?: string,
+    tenantSecret?: string,
+    driverPolicies?: IRouterliciousDriverPolicies) {
+    assert(fluidHost, "Missing Fluid host");
+    assert(tenantId, "Missing tenantId");
+    assert(tenantSecret, "Missing tenant secret");
+    return {
+        serviceEndpoint: {
+            hostUrl: fluidHost,
+            ordererUrl: fluidHost.replace("www", "alfred"),
+            deltaStorageUrl: fluidHost.replace("www", "historian"),
+        },
+        tenantId,
+        tenantSecret,
+        driverPolicies,
+    };
+}
+
+function getLegacyConfigFromEnv() {
+    const fluidHost = process.env.fluid__webpack__fluidHost;
+    const tenantSecret = process.env.fluid__webpack__tenantSecret;
+    const tenantId = process.env.fluid__webpack__tenantId ?? "fluid";
+    return getConfig(fluidHost, tenantId, tenantSecret);
+}
+
+function getEndpointConfigFromEnv(r11sEndpointName: string) {
+    const configStr = process.env[`fluid__test__driver__${r11sEndpointName}`];
+    if (r11sEndpointName === "docker") {
+        const dockerDriverPolicies = configStr === undefined ? configStr : (JSON.parse(configStr)).driverPolicies;
+        return dockerConfig(dockerDriverPolicies);
+    }
+    if (r11sEndpointName === "r11s" && configStr === undefined) {
+        // Allow legacy setting from fluid__webpack__ for r11s for now
+        return getLegacyConfigFromEnv();
+    }
+    assert(configStr, `Missing config for ${r11sEndpointName}`);
+    const config = JSON.parse(configStr);
+    return getConfig(config.host, config.tenantId, config.tenantSecret, config.driverPolicies);
+}
+
+function getConfigFromEnv(r11sEndpointName?: string) {
+    if (r11sEndpointName === undefined) {
         const fluidHost = process.env.fluid__webpack__fluidHost;
-
-        assert(fluidHost, "Missing Fluid host");
-        assert(tenantId, "Missing tenantId");
-
-        let serviceEndpoint: IServiceEndpoint;
-
-        if (fluidHost.includes("localhost")) {
-            serviceEndpoint = {
-                hostUrl: "http://localhost:3000",
-                ordererUrl: "http://localhost:3003",
-                deltaStorageUrl: "http://localhost:3001",
-            };
-            bearerSecret = "create-new-tenants-if-going-to-production";
-            tenantSecret = "create-new-tenants-if-going-to-production";
+        if (fluidHost === undefined) {
+            // default to get it with the per service env for r11s
+            return getEndpointConfigFromEnv("r11s");
         }
-        else {
-            assert(bearerSecret, "Missing bearer secret");
-            assert(tenantSecret, "Missing tenant secret");
+        return fluidHost.includes("localhost") ? dockerConfig() : getLegacyConfigFromEnv();
+    }
+    return getEndpointConfigFromEnv(r11sEndpointName);
+}
 
-            serviceEndpoint = {
-                hostUrl: fluidHost,
-                ordererUrl: fluidHost.replace("www", "alfred"),
-                deltaStorageUrl: fluidHost.replace("www", "historian"),
-            };
-        }
-
+export class RouterliciousTestDriver implements ITestDriver {
+    public static createFromEnv(config?: { r11sEndpointName?: string },
+        api: RouterliciousDriverApiType = RouterliciousDriverApi,
+    ) {
+        const { serviceEndpoint, tenantId, tenantSecret, driverPolicies } = getConfigFromEnv(config?.r11sEndpointName);
         return new RouterliciousTestDriver(
-            bearerSecret,
             tenantId,
             tenantSecret,
             serviceEndpoint,
-            process.env.BUILD_BUILD_ID,
             api,
+            driverPolicies,
+            config?.r11sEndpointName,
         );
     }
 
     public readonly type = "routerlicious";
     public get version() { return this.api.version; }
-    private readonly testIdPrefix: string;
-    constructor(
-        private readonly bearerSecret: string,
+    private constructor(
         private readonly tenantId: string,
         private readonly tenantSecret: string,
         private readonly serviceEndpoints: IServiceEndpoint,
-        testIdPrefix: string | undefined,
         private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi,
+        private readonly driverPolicies: IRouterliciousDriverPolicies | undefined,
+        public readonly endpointName?: string,
     ) {
-        this.testIdPrefix = `${testIdPrefix ?? ""}-`;
     }
 
-    public createDocumentId(testId: string) {
-        return this.testIdPrefix + testId;
-    }
-
-    async createContainerUrl(testId: string): Promise<string> {
+    async createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string> {
+        const containerId = containerUrl && "id" in containerUrl ? containerUrl.id : testId;
         // eslint-disable-next-line max-len
-        return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.createDocumentId(testId))}`;
+        return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(containerId)}`;
     }
 
     createDocumentServiceFactory(): IDocumentServiceFactory {
@@ -92,20 +127,21 @@ export class RouterliciousTestDriver implements ITestDriver {
 
         return new this.api.RouterliciousDocumentServiceFactory(
             tokenProvider,
+            this.driverPolicies,
         );
     }
 
     createUrlResolver(): InsecureUrlResolver {
         return new InsecureUrlResolver(
-                this.serviceEndpoints.hostUrl,
-                this.serviceEndpoints.ordererUrl,
-                this.serviceEndpoints.deltaStorageUrl,
-                this.tenantId,
-                this.bearerSecret,
-                true);
+            this.serviceEndpoints.hostUrl,
+            this.serviceEndpoints.ordererUrl,
+            this.serviceEndpoints.deltaStorageUrl,
+            this.tenantId,
+            "", // Don't need the bearer secret for NodeTest
+            true);
     }
 
     createCreateNewRequest(testId: string): IRequest {
-        return this.createUrlResolver().createCreateNewRequest(this.createDocumentId(testId));
+        return this.createUrlResolver().createCreateNewRequest(testId);
     }
 }

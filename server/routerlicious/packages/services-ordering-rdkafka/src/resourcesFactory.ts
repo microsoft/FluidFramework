@@ -8,8 +8,9 @@ import {
     IPartitionLambdaFactory,
     IResources,
     IResourcesFactory,
+    ZookeeperClientConstructor,
 } from "@fluidframework/server-services-core";
-import * as moniker from "moniker";
+import sillyname from "sillyname";
 import { Provider } from "nconf";
 import { RdkafkaConsumer } from "./rdkafkaConsumer";
 
@@ -35,7 +36,10 @@ export class RdkafkaResources implements IRdkafkaResources {
 }
 
 export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResources> {
-    constructor(private readonly name: string, private readonly lambdaModule: string) {
+    constructor(
+        private readonly name: string,
+        private readonly lambdaModule: string,
+        private readonly zookeeperClientConstructor: ZookeeperClientConstructor) {
     }
 
     public async create(config: Provider): Promise<RdkafkaResources> {
@@ -52,6 +56,7 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
         const automaticConsume = config.get("kafka:lib:rdkafkaAutomaticConsume");
         const consumeTimeout = config.get("kafka:lib:rdkafkaConsumeTimeout");
         const maxConsumerCommitRetries = config.get("kafka:lib:rdkafkaMaxConsumerCommitRetries");
+        const sslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
 
         // Receive topic and group - for now we will assume an entry in config mapping
         // to the given name. Later though the lambda config will likely be split from the stream config
@@ -59,12 +64,12 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
         const groupId = streamConfig.group;
         const receiveTopic = streamConfig.topic;
 
-        const clientId = moniker.choose();
+        const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
 
         const endpoints = {
             kafka: kafkaEndpoint ? kafkaEndpoint.split(",") : [],
             zooKeeper: zookeeperEndpoint ? zookeeperEndpoint.split(",") : [],
-         };
+        };
 
         const consumer = new RdkafkaConsumer(
             endpoints,
@@ -78,6 +83,8 @@ export class RdkafkaResourcesFactory implements IResourcesFactory<RdkafkaResourc
                 automaticConsume,
                 consumeTimeout,
                 maxConsumerCommitRetries,
+                sslCACertFilePath,
+                zooKeeperClientConstructor: this.zookeeperClientConstructor,
             },
         );
 

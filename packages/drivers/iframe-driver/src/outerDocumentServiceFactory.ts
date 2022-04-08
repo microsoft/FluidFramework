@@ -26,7 +26,6 @@ import {
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
 const socketIOEvents = [
@@ -86,7 +85,11 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         const resolvedUrl = await resolvedUrlFn();
         const outerProxyLogger = ChildLogger.create(undefined, "OuterProxyIFrameDriver");
         const connectedDocumentService: IDocumentService =
-            await this.documentServiceFactory.createDocumentService(resolvedUrl, outerProxyLogger);
+            await this.documentServiceFactory.createDocumentService(
+                resolvedUrl,
+                outerProxyLogger,
+                false, // clientIsSummarizer
+            );
 
         return this.getDocumentServiceProxy(connectedDocumentService, resolvedUrl, outerProxyLogger);
     }
@@ -105,7 +108,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     public async connected(): Promise<void> {
-        debug("IFrame Connection Succeeded");
         return;
     }
 
@@ -225,10 +227,8 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             get initialClients() { return deltaStream.initialClients; },
             get initialMessages() { return deltaStream.initialMessages; },
             get initialSignals() { return deltaStream.initialSignals; },
-            maxMessageSize: deltaStream.maxMessageSize,
+            maxMessageSize: deltaStream.serviceConfiguration.maxMessageSize,
             mode: deltaStream.mode,
-            // Back-compat, removal tracked with issue #4346
-            parentBranch: null,
             serviceConfiguration: deltaStream.serviceConfiguration,
             version: deltaStream.version,
             supportedVersions: ["^0.3.0", "^0.2.0", "^0.1.0"],

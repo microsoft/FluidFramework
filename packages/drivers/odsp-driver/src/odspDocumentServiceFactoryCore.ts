@@ -21,7 +21,11 @@ import {
     TokenFetcher,
     IPersistedCache,
     HostStoragePolicy,
+    IFileEntry,
+    IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
+import type { io as SocketIOClientStatic } from "socket.io-client";
+import { v4 as uuid } from "uuid";
 import {
     LocalPersistentCache,
     NonPersistentCache,
@@ -45,15 +49,22 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-odsp:";
 
     private readonly nonPersistentCache = new NonPersistentCache();
+    private readonly socketReferenceKeyPrefix?: string;
 
     public async createContainer(
-        createNewSummary: ISummaryTree,
+        createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
 
         let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
+        const resolvedUrlData: IOdspUrlParts = {
+            siteUrl: odspResolvedUrl.siteUrl,
+            driveId: odspResolvedUrl.driveId,
+            itemId: odspResolvedUrl.itemId,
+        };
         const [, queryString] = odspResolvedUrl.url.split("?");
 
         const searchParams = new URLSearchParams(queryString);
@@ -61,19 +72,24 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         if (filePath === undefined || filePath === null) {
             throw new Error("File path should be provided!!");
         }
-        const newFileParams: INewFileInfo = {
+        const newFileInfo: INewFileInfo = {
             driveId: odspResolvedUrl.driveId,
             siteUrl: odspResolvedUrl.siteUrl,
             filePath,
             filename: odspResolvedUrl.fileName,
+            // set createLinkType to undefined if enableShareLinkWithCreate is set to false,
+            // so that share link creation with create file can be enabled
+            createLinkType: this.hostPolicy.enableShareLinkWithCreate ?
+            odspResolvedUrl.shareLinkInfo?.createLink?.type : undefined,
         };
 
         const odspLogger = createOdspLogger(logger);
 
+        const fileEntry: IFileEntry = { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId };
         const cacheAndTracker = createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,
-            { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
+            fileEntry,
             odspLogger);
 
         return PerformanceEvent.timedExecAsync(
@@ -86,16 +102,20 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 odspResolvedUrl = await createNewFluidFile(
                     toInstrumentedOdspTokenFetcher(
                         odspLogger,
-                        odspResolvedUrl,
+                        resolvedUrlData,
                         this.getStorageToken,
                         true /* throwOnNullToken */,
                     ),
-                    newFileParams,
+                    newFileInfo,
                     odspLogger,
                     createNewSummary,
                     cacheAndTracker.epochTracker,
+                    fileEntry,
+                    this.hostPolicy.cacheCreateNewSummary ?? true,
+                    !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                 );
-                const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger, cacheAndTracker);
+                const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
+                    cacheAndTracker, clientIsSummarizer);
                 event.end({
                     docId: odspResolvedUrl.hashedDocumentId,
                 });
@@ -116,25 +136,36 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     constructor(
         private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
         private readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
-        private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
+        private readonly getSocketIOClient: () => Promise<typeof SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
     ) {
+        if (this.hostPolicy.isolateSocketCache === true) {
+            // create the key to separate the socket reuse cache
+            this.socketReferenceKeyPrefix = uuid();
+        }
     }
 
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
-        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger));
+        return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger), undefined, clientIsSummarizer);
     }
 
     private async createDocumentServiceCore(
         resolvedUrl: IResolvedUrl,
         odspLogger: TelemetryLogger,
         cacheAndTrackerArg?: ICacheAndTracker,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+        const resolvedUrlData: IOdspUrlParts = {
+            siteUrl: odspResolvedUrl.siteUrl,
+            driveId: odspResolvedUrl.driveId,
+            itemId: odspResolvedUrl.itemId,
+        };
         const cacheAndTracker = cacheAndTrackerArg ?? createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,
@@ -143,7 +174,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
         const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
             odspLogger,
-            odspResolvedUrl,
+            resolvedUrlData,
             this.getStorageToken,
             true /* throwOnNullToken */,
         );
@@ -152,7 +183,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             ? undefined
             : async (options: TokenFetchOptions) => toInstrumentedOdspTokenFetcher(
                 odspLogger,
-                odspResolvedUrl,
+                resolvedUrlData,
                 this.getWebsocketToken!,
                 false /* throwOnNullToken */,
             )(options, "GetWebsocketToken");
@@ -166,6 +197,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             cacheAndTracker.cache,
             this.hostPolicy,
             cacheAndTracker.epochTracker,
+            this.socketReferenceKeyPrefix,
+            clientIsSummarizer,
         );
     }
 }

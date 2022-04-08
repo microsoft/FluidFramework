@@ -5,12 +5,15 @@
 
 import { strict as assert } from "assert";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage, ITree, MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISummaryTree, ITree, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import random from "random-js";
 import { Client } from "../client";
-import * as Collections from "../collections";
+import {
+    List,
+    ListMakeHead,
+} from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
 import { ISegment, Marker, MergeTree } from "../mergeTree";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
@@ -51,16 +54,28 @@ export class TestClient extends Client {
         const snapshot = new SnapshotLegacy(client1.mergeTree, DebugLogger.create("fluid:snapshot"));
         snapshot.extractSync();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const snapshotTree = snapshot.emit([], TestClient.serializer, undefined!);
-        return TestClient.createFromSnapshot(snapshotTree, newLongClientId, client1.specToSegment);
+        const summaryTree = snapshot.emit([], TestClient.serializer, undefined!).summary;
+        return TestClient.createFromSummary(summaryTree, newLongClientId, client1.specToSegment);
     }
 
     public static async createFromSnapshot(
         snapshotTree: ITree,
         newLongClientId: string,
         specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
-        const services = new MockStorage(snapshotTree);
+        return TestClient.createFromStorage(new MockStorage(snapshotTree), newLongClientId, specToSeg);
+    }
 
+    public static async createFromSummary(
+        summaryTree: ISummaryTree,
+        newLongClientId: string,
+        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
+        return TestClient.createFromStorage(MockStorage.createFromSummary(summaryTree), newLongClientId, specToSeg);
+    }
+
+    public static async createFromStorage(
+        storage: MockStorage,
+        newLongClientId: string,
+        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
         const client2 = new TestClient(undefined, specToSeg);
         const { catchupOpsP } = await client2.load(
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -68,17 +83,16 @@ export class TestClient extends Client {
                 logger: client2.logger,
                 clientId: newLongClientId,
             } as IFluidDataStoreRuntime,
-            services,
+            storage,
             TestClient.serializer);
         await catchupOpsP;
         return client2;
     }
 
-    public mergeTree: MergeTree;
+    declare public mergeTree: MergeTree;
 
-    public readonly checkQ: Collections.List<string> = Collections.ListMakeHead<string>();
-    // eslint-disable-next-line max-len
-    protected readonly q: Collections.List<ISequencedDocumentMessage> = Collections.ListMakeHead<ISequencedDocumentMessage>();
+    public readonly checkQ: List<string> = ListMakeHead<string>();
+    protected readonly q: List<ISequencedDocumentMessage> = ListMakeHead<ISequencedDocumentMessage>();
 
     private readonly textHelper: MergeTreeTextHelper;
     constructor(
@@ -245,7 +259,6 @@ export class TestClient extends Client {
         while (start < this.getLength()) {
             chunk = this.getText(start, start + TestClient.searchChunkSize);
 
-            // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
             const result = chunk.match(target);
             if (result !== null) {
                 return { text: result[0], pos: (result.index + start) };

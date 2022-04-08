@@ -1,11 +1,18 @@
 version: '3.4'
 services:
+    proxy:
+        image: nginx:latest
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf
+        ports:
+            - "3003:3003"
+            - "3001:3001"
     alfred:
         build:
             context: .
             target: runner
-        ports:
-            - "3003:3000"
+        expose:
+            - "3000"
         command: node packages/routerlicious/dist/alfred/www.js
         environment:
             - DEBUG=fluid:*
@@ -69,8 +76,8 @@ services:
         restart: always
     historian:
         image: mcr.microsoft.com/fluidframework/routerlicious/historian:latest
-        ports:
-            - "3001:3000"
+        expose:
+            - "3000"
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development

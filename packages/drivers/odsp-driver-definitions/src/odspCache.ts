@@ -66,7 +66,9 @@ export interface ICacheEntry extends IEntry {
 /**
  * Persistent cache. This interface can be implemented by the host to provide durable caching
  * across sessions. If not provided at driver factory construction, factory will use in-memory
- * cache implementation that does not survive across sessions.
+ * cache implementation that does not survive across sessions. Snapshot entires stored in the
+ * IPersistedCache will be considered stale and removed after 2 days. Read the README for more
+ * information.
  */
 export interface IPersistedCache {
     /**

@@ -113,7 +113,8 @@ export class BenchmarkReporter {
     public constructor(outputDirectory?: string) {
         // If changing this or the result file logic in general,
         // be sure to update the glob used to look for output files in the perf pipeline.
-        this.outputDirectory = outputDirectory ?? path.join(__dirname, ".output");
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        this.outputDirectory = outputDirectory ? path.resolve(outputDirectory) : path.join(__dirname, ".output");
 
         if (!fs.existsSync(this.outputDirectory)) {
             fs.mkdirSync(this.outputDirectory, { recursive: true });

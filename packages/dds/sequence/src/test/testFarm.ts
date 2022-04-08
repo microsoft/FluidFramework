@@ -124,7 +124,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
             lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
             client.addLocalReference(lref1);
             client.addLocalReference(lref2);
-            bookmarks.push(new SharedString.SequenceInterval(lref1, lref2, MergeTree.IntervalType.Simple));
+            bookmarks.push(new SharedString.SequenceInterval(lref1, lref2, SharedString.IntervalType.Simple));
         } else {
             i--;
         }
@@ -244,11 +244,7 @@ export function TestPack(verbose = true) {
         let annotateProps: PropertySet;
         const insertAsRefPos = false;
 
-        let options = {};
-        if (measureBookmarks) {
-            options = { blockUpdateMarkers: true };
-        }
-        const testServer = new TestServer(options);
+        const testServer = new TestServer({});
         testServer.measureOps = true;
         if (startFile) {
             loadTextFromFile(startFile, testServer.mergeTree, fileSegCount);
@@ -597,7 +593,7 @@ export function TestPack(verbose = true) {
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             const lrefPos1 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             const lrefPos2 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkPosRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
+                            checkPosRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, SharedString.IntervalType.Simple);
                         } else {
                             i--;
                         }
@@ -615,7 +611,7 @@ export function TestPack(verbose = true) {
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             const lrefPos1 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             const lrefPos2 = new MergeTree.LocalReference(testServer, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
-                            checkRangeRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
+                            checkRangeRanges[i] = new SharedString.SequenceInterval(lrefPos1, lrefPos2, SharedString.IntervalType.Simple);
                         } else {
                             i--;
                         }
@@ -955,22 +951,6 @@ export function TestPack(verbose = true) {
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
-        let fwdRanges = cli.mergeTree.findHistorialRange(0, 5, 1, 2, cli.getClientId());
-        if (verbose) {
-            console.log(`fwd range 0 5 on 1 => 2`);
-            for (const r of fwdRanges) {
-                console.log(`fwd range (${r.start}, ${r.end})`);
-            }
-        }
-        const fwdPos = cli.mergeTree.findHistorialPosition(2, 1, 2, cli.getClientId());
-        if (verbose) {
-            console.log(`fwd pos 2 on 1 => 2 is ${fwdPos}`);
-            for (let clientId = 0; clientId < 4; clientId++) {
-                for (let refSeq = 0; refSeq < 3; refSeq++) {
-                    console.log(cli.relText(clientId, refSeq));
-                }
-            }
-        }
         cli.insertTextRemote(9, " chaser", undefined, 3, 2, "3");
         cli.removeRangeLocal(12, 14);
         cli.mergeTree.ackPendingSegment({
@@ -1035,14 +1015,6 @@ export function TestPack(verbose = true) {
             }
         }
         const localRemoveOp = cli.removeRangeLocal(3, 5);
-        fwdRanges = cli.mergeTree.findHistorialRangeFromClient(3, 6, 9, 10, 2);
-        if (verbose) {
-            console.log(cli.mergeTree.toString());
-            console.log(`fwd range 3 6 on cli 2 refseq 9 => cli 0 local`);
-            for (const r of fwdRanges) {
-                console.log(`fwd range (${r.start}, ${r.end})`);
-            }
-        }
         cli.applyMsg(cli.makeOpMessage(
             MergeTree.createRemoveRangeOp(3, 6),
             10,
@@ -1487,7 +1459,7 @@ export class DocumentTree {
     }
 
     private generateClient() {
-        const client = new TestClient({ blockUpdateMarkers: true });
+        const client = new TestClient();
         client.startOrUpdateCollaboration("Fred");
         for (const child of this.children) {
             this.addToMergeTree(client, child);
@@ -1551,59 +1523,6 @@ export class DocumentTree {
     }
 }
 
-const docRanges = <MergeTree.IIntegerRange[]>[
-    { start: 0, end: 20 },
-    { start: 8, end: 12 },
-    { start: 8, end: 14 },
-    { start: 20, end: 24 },
-    { start: 11, end: 15 },
-    { start: 16, end: 33 },
-    { start: 19, end: 24 },
-    { start: 22, end: 80 },
-    { start: 25, end: 29 },
-    { start: 30, end: 32 },
-    { start: 41, end: 49 },
-    { start: 41, end: 49 },
-    { start: 41, end: 49 },
-    { start: 51, end: 69 },
-    { start: 55, end: 58 },
-    { start: 60, end: 71 },
-    { start: 81, end: 99 },
-    { start: 85, end: 105 },
-    { start: 9, end: 34 },
-];
-
-const testRanges = <MergeTree.IIntegerRange[]>[
-    { start: 9, end: 20 },
-    { start: 8, end: 10 },
-    { start: 82, end: 110 },
-    { start: 54, end: 56 },
-    { start: 57, end: 57 },
-    { start: 58, end: 58 },
-    { start: 22, end: 48 },
-    { start: 3, end: 11 },
-    { start: 43, end: 58 },
-    { start: 19, end: 31 },
-];
-
-function testRangeTree() {
-    const rangeTree = new MergeTree.IntegerRangeTree();
-    for (const docRange of docRanges) {
-        rangeTree.put(docRange);
-    }
-    console.log(rangeTree.toString());
-    function matchRange(r: MergeTree.IIntegerRange) {
-        console.log(`match range ${MergeTree.integerRangeToString(r)}`);
-        const results = rangeTree.match(r);
-        for (const result of results) {
-            console.log(MergeTree.integerRangeToString(result.key));
-        }
-    }
-    for (const testRange of testRanges) {
-        matchRange(testRange);
-    }
-}
-
 export function intervalTest() {
     const mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
@@ -1626,7 +1545,7 @@ export function intervalTest() {
             a = b;
             b = temp;
         }
-        arr.push(intervalIndex.addInterval(a, b, MergeTree.IntervalType.Simple, { id: i }));
+        arr.push(intervalIndex.addInterval(a, b, SharedString.IntervalType.Simple, { id: i }));
     }
     let dup = 0;
     for (let i = 0; i < intCount; i++) {
@@ -1679,7 +1598,6 @@ export function tstSimpleCmd() {
     }
 }
 
-const rangeTreeTest = false;
 const testPropCopy = false;
 const docTree = false;
 const chktst = false;
@@ -1699,10 +1617,6 @@ if (ivalTest) {
 
 if (tstTest) {
     tstSimpleCmd();
-}
-
-if (rangeTreeTest) {
-    testRangeTree();
 }
 
 if (chktst) {

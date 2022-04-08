@@ -26,7 +26,7 @@ let genServer = false;
 
 function parseOptions(argv: string[]) {
     let error = false;
-    for (let i = 2; i < process.argv.length; i++) {
+    for (let i = 2; i < argv.length; i++) {
         const argParsed = parseOption(argv, i);
         if (argParsed < 0) {
             error = true;
@@ -37,7 +37,7 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
-        const arg = process.argv[i];
+        const arg = argv[i];
 
         if (arg === "-?" || arg === "--help") {
             printUsage();

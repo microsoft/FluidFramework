@@ -7,7 +7,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
     IFluidHandle,
     IFluidLoadable,
-    IFluidObject,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
 import { SyncedDataObject } from "./syncedDataObject";
 
@@ -242,7 +242,7 @@ export interface IFluidObjectMapItem {
     /**
      * The actual Fluid object that the path this value is keyed against leads to
      */
-    fluidObject?: IFluidObject & IFluidLoadable;
+    fluidObject?: FluidObject & IFluidLoadable;
     /**
      * Boolean indicating if we are listening to changes on this Fluid object's synced state to trigger React
      * state updates. Only set if you want custom behavior for adding listeners to your Fluid state
@@ -446,7 +446,7 @@ export interface FluidObjectSelectorFunction<
         handle: IFluidHandle<any>,
         state?: ICombinedState<SV, SF, C>,
     ) => {
-        result: IFluidObject | undefined;
+        result: FluidObject | undefined;
         newFluidHandles?: IFluidHandle[];
     };
 }

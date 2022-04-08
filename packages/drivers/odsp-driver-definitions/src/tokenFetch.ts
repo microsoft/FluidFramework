@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 /**
  * Represents token response
  */
@@ -89,4 +87,9 @@ export const isTokenFromCache = (tokenResponse: string | TokenResponse | null): 
  *  Consumer represents user authenticated with Microsoft Account (MSA)
  *  Enterprise represents user authenticated with M365 tenant account
  */
- export type IdentityType = "Consumer" | "Enterprise";
+export type IdentityType = "Consumer" | "Enterprise";
+
+export type InstrumentedStorageTokenFetcher = (
+    options: TokenFetchOptions,
+    name: string,
+    alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;

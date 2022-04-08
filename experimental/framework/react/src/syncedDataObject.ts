@@ -2,14 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DataObject } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectTypes } from "@fluidframework/aqueduct";
 import {
-    IFluidObject,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 import {
@@ -31,24 +28,12 @@ import {
  * In addition to the root and task manager, the SyncedDataObject also provides a syncedStateConfig
  * and assures that the syncedState will be initialized according the config by the time the view
  * is rendered.
- *
- * As this is used for views, it also implements the IFluidHTMLView interface, and requires
- * the render function to be filled in.
  */
-export abstract class SyncedDataObject<
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    P extends IFluidObject = object,
-    S = undefined,
-    E extends IEvent = IEvent
-    > extends DataObject<P, S, E> implements IFluidHTMLView {
+export abstract class SyncedDataObject<I extends DataObjectTypes = DataObjectTypes> extends DataObject<I> {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
     private readonly fluidObjectMap: FluidObjectMap = new Map();
     private readonly syncedStateDirectoryId = "syncedState";
     private internalSyncedState: ISharedMap | undefined;
-
-    public get IFluidHTMLView() {
-        return this;
-    }
 
     /**
      * Runs the first time the SyncedDataObject is generated and sets up all necessary data structures for the view
@@ -111,7 +96,6 @@ export abstract class SyncedDataObject<
      * @param key - The syncedStateId that maps to the view that will be using these definitions
      * @param value - The config value containing the syncedStateId and the fluidToView and viewToFluid maps
      */
-    // eslint-disable-next-line @typescript-eslint/no-shadow
     public setConfig<S>(key: string, value: ISyncedStateConfig<S, S>) {
         this.syncedStateConfig.set(key, value);
     }
@@ -137,15 +121,6 @@ export abstract class SyncedDataObject<
      */
     public getConfig(key: string) {
         return this.syncedStateConfig.get(key);
-    }
-
-    /**
-     * Returns a view. This function need to be implemented for any consumer of SyncedDataObject
-     * to render values that have been initialized using the syncedStateConfig
-     * @param element - The document that the rendered value will be displayed in
-     */
-    public render(element: HTMLElement) {
-        throw Error("Render function was not implemented");
     }
 
     private async initializeStateFirstTime() {

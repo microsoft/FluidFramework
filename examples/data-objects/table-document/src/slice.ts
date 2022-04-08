@@ -4,9 +4,9 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
+import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
@@ -22,12 +22,10 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITable {
+export class TableSlice extends DataObject<{InitialState: ITableSliceConfig}> implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    private static readonly factory = new DataObjectFactory<TableSlice, object, ITableSliceConfig, IEvent>(
+    private static readonly factory = new DataObjectFactory(
         TableSliceType,
         TableSlice,
         [],
@@ -112,7 +110,8 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
 
         this.root.set(ConfigKey.docId, initialState.docId);
         this.root.set(ConfigKey.name, initialState.name);
-        this.maybeDoc = await this.requestFluidObject_UNSAFE(initialState.docId);
+        this.maybeDoc =
+            await handleFromLegacyUri<TableDocument>(`/${initialState.docId}`, this.context.containerRuntime).get();
         this.root.set(initialState.docId, this.maybeDoc.handle);
         await this.ensureDoc();
         this.createValuesRange(
@@ -131,7 +130,7 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
         this.maybeValues = await this.doc.getRange(this.root.get(ConfigKey.valuesKey));
 
         this.root.on("op", this.emitOp);
-        this.doc.on("op", this.emitOp);
+        this.doc.on("sequenceDelta", this.emitSequenceDelta);
     }
 
     private async ensureDoc() {
@@ -164,5 +163,9 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
 
     private readonly emitOp = (...args: any[]) => {
         this.emit("op", ...args);
+    };
+
+    private readonly emitSequenceDelta = (...args: any[]) => {
+        this.emit("sequenceDelta", ...args);
     };
 }

@@ -17,7 +17,7 @@ export type OptionsMatrix<T extends Record<string, any>> =
 export const booleanCases: readonly (boolean)[] = [true, false];
 export const numberCases: readonly (number | undefined)[] = [undefined];
 
-type PartialWithKeyCount<T extends Record<string, any>>= (Partial<T> & {__partialKeyCount?: number});
+type PartialWithKeyCount<T extends Record<string, any>> = (Partial<T> & {__partialKeyCount?: number});
 
 function applyPairToPartial<T extends Record<string, any>>(
     randEng: random.Engine,
@@ -70,7 +70,19 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
     const matrixKeys: (keyof T)[] =
         Object.keys(optionsMatrix)
         .filter((k)=>optionsMatrix[k].length > 1 || optionsMatrix[k][0] !== undefined)
-        .sort((a,b)=>optionsMatrix[b].length  - optionsMatrix[a].length);
+        .sort((a,b)=>optionsMatrix[b].length - optionsMatrix[a].length);
+
+    if(matrixKeys.length === 0) {
+        return [];
+    }
+
+    if(matrixKeys.length === 1) {
+        const values = optionsMatrix[matrixKeys[0]];
+        return values.map<T>((v) => {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            return {[matrixKeys[0]]: v} as T;
+        });
+    }
 
     // compute all pairs, and apply them
     const partials: PartialWithKeyCount<T>[] = [];
@@ -78,7 +90,7 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
         const iKey = matrixKeys[i];
         for(let j = i + 1; j < matrixKeys.length; j++) {
             const jKey = matrixKeys[j];
-            for(const iVal of  optionsMatrix[iKey]) {
+            for(const iVal of optionsMatrix[iKey]) {
                 for(const jVal of optionsMatrix[jKey]) {
                     applyPairToPartial(
                         randEng,

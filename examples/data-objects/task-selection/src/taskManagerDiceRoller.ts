@@ -5,7 +5,6 @@
 
 import { TaskManager } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -119,7 +118,7 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
 export const TaskManagerDiceRollerInstantiationFactory =
-    new DataObjectFactory<TaskManagerDiceRoller, undefined, undefined, IEvent>
+    new DataObjectFactory
 (
     "@fluid-example/task-manager-dice-roller",
     TaskManagerDiceRoller,

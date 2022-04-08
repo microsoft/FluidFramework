@@ -3,60 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
+import {
+    DataObject,
+    DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
-import ReactDOM from "react-dom";
 import { IFluidUserInformation } from "../interfaces";
-
 /**
  * Basic example that takes a container provider
  */
-export class ExampleUsingProviders
-    extends DataObject<IFluidUserInformation>
-    implements IFluidHTMLView {
-    public get IFluidHTMLView() { return this; }
-
-    private userInformation: IFluidUserInformation | undefined;
+export class ExampleUsingProviders extends DataObject<{OptionalProviders: IFluidUserInformation}> {
+    private _userInformation: IFluidUserInformation | undefined;
+    public get userInformation(): IFluidUserInformation {
+        if (this._userInformation === undefined) {
+            throw new Error("User information accessed before initialized");
+        }
+        return this._userInformation;
+    }
 
     public static readonly ComponentName = `@fluid-example/pond-example-using-provider`;
 
     protected async hasInitialized() {
-        this.userInformation = await this.providers.IFluidUserInformation;
+        this._userInformation = await this.providers.IFluidUserInformation;
     }
-
-    // start IFluidHTMLView
-
-    public render(div: HTMLElement) {
-        let element: JSX.Element = <span></span>;
-        if (this.userInformation !== undefined) {
-            element = <ExampleUsingProvidersView userInfo={this.userInformation} />;
-        } else {
-            console.log("No IFluidUserInformation Provided");
-        }
-
-        ReactDOM.render(
-            element,
-            div);
-    }
-
-    // end IFluidHTMLView
 
     // ----- COMPONENT SETUP STUFF -----
 
     public static getFactory() { return ExampleUsingProviders.factory; }
 
     private static readonly factory =
-        new DataObjectFactory<ExampleUsingProviders, IFluidUserInformation, undefined, IEvent>(
+        new DataObjectFactory(
             ExampleUsingProviders.ComponentName,
             ExampleUsingProviders,
             [SharedMap.getFactory()],
             { IFluidUserInformation });
 }
 
-interface ExampleUsingProvidersViewProps {
+export interface ExampleUsingProvidersViewProps {
     readonly userInfo: IFluidUserInformation;
 }
 
@@ -65,7 +49,7 @@ interface ExampleUsingProvidersViewState {
     readonly users: string[];
 }
 
-class ExampleUsingProvidersView
+export class ExampleUsingProvidersView
     extends React.Component<ExampleUsingProvidersViewProps, ExampleUsingProvidersViewState>
 {
     constructor(props: ExampleUsingProvidersViewProps) {

@@ -34,12 +34,6 @@ import { schema } from "./fluidSchema";
 import { FootnoteView } from "./footnoteView";
 import { openPrompt, TextField } from "./prompt";
 import { create as createSelection } from "./selection";
-
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<IProvideRichTextEditor>> { }
-}
-
 export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
 
 export interface IProvideRichTextEditor {
@@ -213,7 +207,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
         this.text.on(
             "pre-op",
-            (op, local) => {
+            (_, local) => {
                 if (local) {
                     return;
                 }
@@ -237,7 +231,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
         this.text.on(
             "op",
-            (op, local) => {
+            (_, local) => {
                 this.emit("valueChanged");
 
                 if (local) {

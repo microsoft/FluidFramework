@@ -20,7 +20,7 @@ Get up and running quickly using our Get Started guide at https://fluidframework
 
 ## Help and Questions
 
-Questions can be directed to [Stack Overflow](https://stackoverflow.com/questions/tagged/fluid-framework)
+Questions can be directed to [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions)
 
 ## Building and Running
 

@@ -5,7 +5,7 @@
 
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IQuorum } from "@fluidframework/protocol-definitions";
+import { IQuorumClients } from "@fluidframework/protocol-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export interface ITaskManagerEvents extends ISharedObjectEvents {
@@ -64,7 +64,7 @@ export interface IOldestClientObservableEvents extends IEvent {
  * It's information about the connection, so the real source of truth is lower (at the connection layer).
  */
 export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
     // Generic usage of attachState is a little unusual here.  We will treat ourselves as "the oldest client that
     // has information about this [container | data store]", which in the case of detached data store may disagree
     // with whether we're the oldest client on the connected container.  So in the data store case, it's only

@@ -15,6 +15,7 @@ import {
     IWebSocket,
     MongoManager,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { debug } from "./debug";
 import { IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage } from "./interfaces";
 import { IOrdererConnectionFactory, ProxyOrderer } from "./proxyOrderer";
@@ -175,7 +176,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
         const fullId = `${tenantId}/${documentId}`;
         assert(!this.orderers.has(fullId));
         debug(`Connecting to ${fullId}:${this.id}`);
-
+        Lumberjack.debug(`Connecting to ${fullId}:${this.id}`);
         const orderer = new ProxyOrderer(new ProxySocketThing(this, tenantId, documentId));
         this.orderers.set(fullId, orderer);
 

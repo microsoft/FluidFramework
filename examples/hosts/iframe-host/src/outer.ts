@@ -5,11 +5,9 @@
 
 import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
-import {
-    getTinyliciousContainer,
-    InsecureTinyliciousUrlResolver,
-} from "@fluid-experimental/get-container";
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { getTinyliciousContainer } from "@fluid-experimental/get-container";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
@@ -87,7 +85,7 @@ async function getFluidObjectAndRender(container: IContainer, div: HTMLDivElemen
     if (response.status !== 200 || response.mimeType !== "fluid/object") {
         return undefined;
     }
-    const fluidObject = response.value as IFluidObject;
+    const fluidObject: FluidObject = response.value;
 
     // Render the Fluid object with an HTMLViewAdapter to abstract the UI framework used by the Fluid object
     const view = new HTMLViewAdapter(fluidObject);
@@ -100,12 +98,6 @@ async function loadOuterLogDiv(
 ): Promise<void> {
     const logDiv = document.getElementById(logDivId) as HTMLDivElement;
 
-    const quorum = container.getQuorum();
-    if (!quorum.has("code")) {
-        // we'll never propose the code, so wait for them to do it
-        await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
-    }
-
     const log =
         (emitter: { on(event: string, listener: (...args: any[]) => void) }, name: string, ...events: string[]) => {
             events.forEach((event) =>
@@ -115,7 +107,8 @@ async function loadOuterLogDiv(
                 }));
         };
 
-    quorum.getMembers().forEach((client) => logDiv.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`);
+    const quorum = container.getQuorum();
+    quorum.getMembers().forEach((client) => { logDiv.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`; });
     log(quorum, "Quorum", "error", "addMember", "removeMember");
     log(container, "Container", "error", "connected", "disconnected");
 }
@@ -127,7 +120,7 @@ async function loadOuterLogDiv(
 async function loadOuterDataStoreDiv(
     dataStoreDivId: string,
 ): Promise<void> {
-    const container = await getTinyliciousContainer(
+    const [container] = await getTinyliciousContainer(
         getDocumentId(),
         TodoContainer,
         // The container is always expected to have been created here
@@ -135,10 +128,10 @@ async function loadOuterDataStoreDiv(
     );
 
     const dataStoreDiv = document.getElementById(dataStoreDivId) as HTMLDivElement;
-    getFluidObjectAndRender(container, dataStoreDiv).catch(() => {});
+    getFluidObjectAndRender(container, dataStoreDiv).catch(() => { });
     // Handle the code upgrade scenario (which fires contextChanged)
     container.on("contextChanged", (value) => {
-        getFluidObjectAndRender(container, dataStoreDiv).catch(() => {});
+        getFluidObjectAndRender(container, dataStoreDiv).catch(() => { });
     });
 }
 

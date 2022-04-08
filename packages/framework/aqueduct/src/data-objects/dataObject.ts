@@ -4,14 +4,13 @@
  */
 
 import {
-    IFluidObject,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
 import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
-import { IEvent } from "@fluidframework/common-definitions";
 import { PureDataObject } from "./pureDataObject";
+import { DataObjectTypes } from "./types";
 
 /**
  * DataObject is a base data store that is primed with a root directory. It
@@ -21,14 +20,9 @@ import { PureDataObject } from "./pureDataObject";
  * and registering channels with the runtime any new DDS that is set on the root
  * will automatically be registered.
  *
- * Generics:
- * O - represents a type that will define optional providers that will be injected
- * S - the initial state type that the produced data store may take during creation
- * E - represents events that will be available in the EventForwarder
+ * @typeParam I - The optional input types used to strongly type the data object
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export abstract class DataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
-    extends PureDataObject<O, S, E>
+export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I>
 {
     private internalRoot: ISharedDirectory | undefined;
     private readonly rootDirectoryId = "root";
@@ -63,8 +57,8 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
      * Initializes internal objects and calls initialization overrides.
      * Caller is responsible for ensuring this is only invoked once.
      */
-    public async initializeInternal(): Promise<void> {
-        if (!this.runtime.existing) {
+    public async initializeInternal(existing: boolean): Promise<void> {
+        if (!existing) {
             // Create a root directory and register it before calling initializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.bindToContext();
@@ -84,7 +78,7 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
             }
         }
 
-        await super.initializeInternal();
+        await super.initializeInternal(existing);
     }
 
     protected getUninitializedErrorString(item: string) {

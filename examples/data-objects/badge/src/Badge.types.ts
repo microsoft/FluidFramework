@@ -5,7 +5,6 @@
 import { IColor } from "office-ui-fabric-react";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
-import { SharedObjectSequence } from "@fluidframework/sequence";
 
 export interface IBadgeType {
     key: string;
@@ -18,15 +17,10 @@ export interface IBadgeIcon {
     iconName: string;
     style: { color: string };
 }
-export interface IBadgeHistory {
-    value: IBadgeType;
-    timestamp: string;  // String encoded UTC timestamp in ISO format
-}
 
 export interface IBadgeModel {
     currentCell: SharedCell<IBadgeType>;
     optionsMap: SharedMap;
-    historySequence: SharedObjectSequence<IBadgeHistory>;
 }
 
 export interface IBadgeClientProps {
@@ -35,7 +29,6 @@ export interface IBadgeClientProps {
 
 export interface IBadgeViewProps {
     options: IBadgeType[];
-    historyItems: IBadgeHistory[];
     selectedOption: string | number;
     addOption: (text: string, color: IColor) => void;
     changeSelectedOption: (item: IBadgeType) => void;

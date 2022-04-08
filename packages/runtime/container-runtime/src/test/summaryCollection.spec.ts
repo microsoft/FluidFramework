@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage, SummaryCollection } from "../summaryCollection";
 
 const summaryOp: ISummaryOpMessage = {
@@ -51,7 +52,7 @@ const summaryNack: ISummaryNackMessage = {
     timestamp: summaryOp.timestamp + 1,
     type: MessageType.SummaryNack,
     contents: {
-        errorMessage: "Nack",
+        message: "Nack",
         summaryProposal:{summarySequenceNumber: summaryOp.sequenceNumber},
     },
 };

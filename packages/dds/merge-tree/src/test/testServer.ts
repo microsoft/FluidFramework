@@ -4,8 +4,12 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IIntegerRange } from "../";
-import * as Collections from "../collections";
+import { IIntegerRange } from "../base";
+import {
+    Heap,
+    RedBlackTree,
+    Stack,
+} from "../collections";
 import {
     ClientSeq,
     clientSeqComparer,
@@ -13,9 +17,8 @@ import {
     IncrementalExecOp,
     IncrementalMapState,
     ISegment,
-    MergeTree,
 } from "../mergeTree";
-import * as Properties from "../properties";
+import { PropertySet } from "../properties";
 import { MergeTreeTextHelper, TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 
@@ -27,14 +30,14 @@ export class TestServer extends TestClient {
     seq = 1;
     clients: TestClient[];
     listeners: TestClient[]; // Listeners do not generate edits
-    clientSeqNumbers: Collections.Heap<ClientSeq>;
-    upstreamMap: Collections.RedBlackTree<number, number>;
-    constructor(options?: Properties.PropertySet) {
+    clientSeqNumbers: Heap<ClientSeq>;
+    upstreamMap: RedBlackTree<number, number>;
+    constructor(options?: PropertySet) {
         super(options);
     }
     addUpstreamClients(upstreamClients: TestClient[]) {
         // Assumes addClients already called
-        this.upstreamMap = new Collections.RedBlackTree<number, number>(compareNumbers);
+        this.upstreamMap = new RedBlackTree<number, number>(compareNumbers);
         for (const upstreamClient of upstreamClients) {
             this.clientSeqNumbers.add({
                 refSeq: upstreamClient.getCurrentSeq(),
@@ -43,7 +46,7 @@ export class TestServer extends TestClient {
         }
     }
     addClients(clients: TestClient[]) {
-        this.clientSeqNumbers = new Collections.Heap<ClientSeq>([], clientSeqComparer);
+        this.clientSeqNumbers = new Heap<ClientSeq>([], clientSeqComparer);
         this.clients = clients;
         for (const client of clients) {
             this.clientSeqNumbers.add({ refSeq: client.getCurrentSeq(), clientId: client.longClientId });
@@ -146,7 +149,7 @@ export class TestServer extends TestClient {
             range.end = this.getLength();
         }
         const context = new TextSegment("");
-        const stack = new Collections.Stack<IncrementalMapState<TextSegment>>();
+        const stack = new Stack<IncrementalMapState<TextSegment>>();
         const initialState = new IncrementalMapState(
             this.mergeTree.root,
             { leaf: incrementalGatherText },
@@ -168,11 +171,6 @@ export class TestServer extends TestClient {
 
 function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
     if (TextSegment.is(segment)) {
-        if (MergeTree.traceGatherText) {
-            console.log(
-                `@cli ${state.clientId ? state.clientId : -1} ` +
-                `gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
-        }
         if ((state.start <= 0) && (state.end >= segment.text.length)) {
             state.context.text += segment.text;
         } else {

@@ -1,5 +1,5 @@
 ---
-title: "Main Concepts"
+title: "Concepts"
 draft: false
 area: concepts
 cascade:

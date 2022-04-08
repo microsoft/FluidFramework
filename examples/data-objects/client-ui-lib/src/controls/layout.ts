@@ -3,15 +3,6 @@
  * Licensed under the MIT License.
  */
 
-declare module "@fluidframework/core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IFluidObject extends Readonly<Partial<
-        IProvideViewLayout
-        & IProvideViewCursor
-        & IProvideKeyHandlers>> {
-    }
-}
-
 export const IViewLayout: keyof IProvideViewLayout = "IViewLayout";
 
 export interface IProvideViewLayout {
@@ -29,7 +20,6 @@ export interface IViewLayout extends IProvideViewLayout {
     requestedWidthPercentage?: number;
     canInline?: boolean;
     preferInline?: boolean;
-    preferPersistentElement?: boolean;
 }
 
 /**
@@ -56,16 +46,4 @@ export interface IViewCursor extends IProvideViewCursor {
     // Returns true if cursor leaves the component
     fwd(): boolean;
     rev(): boolean;
-}
-
-export const IKeyHandlers: keyof IProvideKeyHandlers = "IKeyHandlers";
-
-export interface IProvideKeyHandlers {
-    readonly IKeyHandlers: IKeyHandlers;
-}
-
-// Used when another component will forward keyboard events to this component
-export interface IKeyHandlers extends IProvideKeyHandlers {
-    onKeypress(e: KeyboardEvent): void;
-    onKeydown(e: KeyboardEvent): void;
 }

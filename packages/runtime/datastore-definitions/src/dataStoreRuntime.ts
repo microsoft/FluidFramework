@@ -6,21 +6,18 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
-    IFluidSerializer,
     IFluidRouter,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
-    ILoader,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
@@ -48,8 +45,6 @@ export interface IFluidDataStoreRuntime extends
 
     readonly id: string;
 
-    readonly IFluidSerializer: IFluidSerializer;
-
     readonly IFluidHandleContext: IFluidHandleContext;
 
     readonly rootRoutingContext: IFluidHandleContext;
@@ -62,17 +57,7 @@ export interface IFluidDataStoreRuntime extends
 
     readonly clientId: string | undefined;
 
-    readonly documentId: string;
-
-    readonly existing: boolean;
-
     readonly connected: boolean;
-
-    /**
-     * @deprecated 0.37 Containers created using a loader will make automatically it
-     * available through scope instead
-     */
-    readonly loader: ILoader;
 
     readonly logger: ITelemetryLogger;
 
@@ -116,7 +101,7 @@ export interface IFluidDataStoreRuntime extends
     /**
      * Returns the current quorum.
      */
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 
     /**
      * Returns the current audience.
@@ -127,9 +112,4 @@ export interface IFluidDataStoreRuntime extends
      * Resolves when a local data store is attached.
      */
     waitAttached(): Promise<void>;
-
-    /**
-     * Errors raised by distributed data structures
-     */
-    raiseContainerWarning(warning: ContainerWarning): void;
 }

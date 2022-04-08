@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { Client } from "./client";
 import {
     ISegment,
@@ -77,19 +78,19 @@ export class LocalReference implements ReferencePosition {
         return !!this.getRangeLabels();
     }
 
-    public hasTileLabel(label: string) {
+    public hasTileLabel(label: string): boolean {
         return refHasTileLabel(this, label);
     }
 
-    public hasRangeLabel(label: string) {
+    public hasRangeLabel(label: string): boolean {
         return refHasRangeLabel(this, label);
     }
 
-    public getTileLabels() {
+    public getTileLabels(): string[] | undefined {
         return refGetTileLabels(this);
     }
 
-    public getRangeLabels() {
+    public getRangeLabels(): string[] | undefined {
         return refGetRangeLabels(this);
     }
 
@@ -101,12 +102,15 @@ export class LocalReference implements ReferencePosition {
         this.properties = addProperties(this.properties, newProps, op);
     }
 
+    public getClient() {
+        return this.client;
+    }
+
     public getSegment() {
         return this.segment;
     }
 
     public getOffset() {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if (this.segment?.removedSeq) {
             return 0;
         }
@@ -118,7 +122,7 @@ export class LocalReference implements ReferencePosition {
     }
 }
 
-interface IRefsAtOffest {
+interface IRefsAtOffset {
     before?: LocalReference[];
     at?: LocalReference[];
     after?: LocalReference[];
@@ -130,17 +134,23 @@ export class LocalReferenceCollection {
             if (!seg1.localRefs) {
                 seg1.localRefs = new LocalReferenceCollection(seg1);
             }
+            assert(seg1.localRefs.refsByOffset.length === seg1.cachedLength, "LocalReferences array contains a gap");
             seg1.localRefs.append(seg2.localRefs);
+        }
+        else if (seg1.localRefs) {
+            // Since creating the LocalReferenceCollection, we may have appended
+            // segments that had no local references. Account for them now by padding the array.
+            seg1.localRefs.refsByOffset.length += seg2.cachedLength;
         }
     }
 
     public hierRefCount: number = 0;
-    private readonly refsByOffset: (IRefsAtOffest | undefined)[];
+    private readonly refsByOffset: (IRefsAtOffset | undefined)[];
     private refCount: number = 0;
 
     constructor(
         private readonly segment: ISegment,
-        initialRefsByfOffset = new Array<IRefsAtOffest | undefined>(segment.cachedLength)) {
+        initialRefsByfOffset = new Array<IRefsAtOffset | undefined>(segment.cachedLength)) {
         // Since javascript arrays are sparse the above won't populate any of the
         // indicies, but it will ensure the length property of the array matches
         // the length of the segment.
@@ -216,9 +226,11 @@ export class LocalReferenceCollection {
             this.refsByOffset[lref.offset] = {
                 at: [lref],
             };
-        } else {
+        } else if (refsAtOffset.at === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            refsAtOffset.at!.push(lref);
+            this.refsByOffset[lref.offset]!.at = [lref];
+        } else {
+            refsAtOffset.at.push(lref);
         }
 
         if (lref.hasRangeLabels() || lref.hasTileLabels()) {

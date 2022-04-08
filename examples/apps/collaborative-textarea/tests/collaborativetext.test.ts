@@ -4,23 +4,26 @@
  */
 
 import { globals } from "../jest.config";
+import { retryWithEventualValue } from "@fluidframework/test-utils";
 
 describe("collaborativetext", () => {
-    const getValue = async (index: number) => {
-        return page.evaluate((i: number) => {
-            const divs = document.getElementsByClassName("text-area");
-            const textAreaElements = divs[i].getElementsByTagName("textarea");
-            const textarea = textAreaElements[0] as HTMLTextAreaElement;
-            if (textarea) {
-                return textarea.value;
-            }
+    const getValue = async (index: number, expectedValue: string) =>
+        retryWithEventualValue(
+            () => page.evaluate((i: number) => {
+                const divs = document.getElementsByClassName("text-area");
+                const textAreaElements = divs[i].getElementsByTagName("textarea");
+                const textarea = textAreaElements[0] as HTMLTextAreaElement;
+                if (textarea) {
+                    return textarea.value;
+                }
 
-            return "-----undefined-----";
-        }, index);
-    };
+                return "-----undefined-----";
+            }, index),
+            (actualValue) => actualValue === expectedValue,
+            "not propagated" /* defaultValue */);
 
     const setText = async (index: number, text: string) => {
-        return page.evaluate((i: number, t:string) => {
+        return page.evaluate((i: number, t: string) => {
             const divs = document.getElementsByClassName("text-area");
             const textAreaElements = divs[i].getElementsByTagName("textarea");
             const textarea = textAreaElements[0] as HTMLTextAreaElement;
@@ -51,33 +54,23 @@ describe("collaborativetext", () => {
     });
 
     it("Initial textarea is empty", async () => {
-        const ta1 = await getValue(0);
+        const ta1 = await getValue(0, "");
         expect(ta1).toEqual("");
 
-        const ta2 = await getValue(1);
+        const ta2 = await getValue(1, "");
         expect(ta2).toEqual("");
     });
 
     it("User1 types hello", async () => {
-        const ta1 = await getValue(0);
+        const ta1 = await getValue(0, "");
         expect(ta1).toEqual("");
 
         setText(0, "hello");
 
-        await page.waitForFunction( async () => {
-                const divs = document.getElementsByClassName("text-area");
-                const textAreaElements = divs[0].getElementsByTagName("textarea");
-                const textarea = textAreaElements[0] as HTMLTextAreaElement;
-                if (textarea) {
-                    return textarea.value.includes("hello");
-                }
-            }, { timeout: 1000 }
-        );
-
-        const ta12 = await getValue(0);
+        const ta12 = await getValue(0, "hello");
         expect(ta12).toEqual("hello");
 
-        const ta2 = await getValue(1);
+        const ta2 = await getValue(1, "hello");
         expect(ta2).toEqual("hello");
     });
 });

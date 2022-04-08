@@ -10,13 +10,18 @@ import {
     ISnapshotTree,
     ITree,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garbageCollection";
+import {
+    IGarbageCollectionData,
+    IGarbageCollectionDetailsBase,
+    IGarbageCollectionSummaryDetails,
+} from "./garbageCollection";
 
 export interface ISummaryStats {
     treeNodeCount: number;
     blobNodeCount: number;
     handleNodeCount: number;
     totalBlobSize: number;
+    unreferencedBlobSize: number;
 }
 
 export interface ISummaryTreeWithStats {
@@ -24,25 +29,31 @@ export interface ISummaryTreeWithStats {
     summary: ISummaryTree;
 }
 
-export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
-    /** The channel's garbage collection data */
-    gcData: IGarbageCollectionData;
-}
-
 export interface ISummarizeResult {
     stats: ISummaryStats;
     summary: SummaryTree;
 }
 
-export interface IContextSummarizeResult extends ISummarizeResult {
-    /** The context's garbage collection data */
-    gcData: IGarbageCollectionData;
-}
-
-export interface ISummarizeInternalResult extends IContextSummarizeResult {
+export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
     /** Additional path parts between this node's ID and its children's IDs. */
     pathPartsForChildren?: string[];
+}
+
+/** The garbage collection data of each node in the reference graph. */
+export interface IGarbageCollectionNodeData {
+    /** The set of routes to other nodes in the graph. */
+    outboundRoutes: string[];
+    /** If the node is unreferenced, the timestamp of when it was marked unreferenced. */
+    unreferencedTimestampMs?: number;
+}
+
+/**
+ * The garbage collection state of the reference graph. It contains a list of all the nodes in the graph and their
+ * GC data.
+ */
+export interface IGarbageCollectionState {
+    gcNodes: { [ id: string ]: IGarbageCollectionNodeData };
 }
 
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
@@ -165,10 +176,7 @@ export interface ISummarizerNode {
  * - updateUsedRoutes - Used to notify this node of routes that are currently in use in it.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
-    /** The routes in this node that are currently in use. */
-    readonly usedRoutes: string[];
-
-    summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
+    summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
     createChild(
         /** Summarize function */
         summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,
@@ -208,8 +216,21 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      * After GC has run, called to notify this node of routes that are used in it. These are used for the following:
      * 1. To identify if this node is being referenced in the document or not.
      * 2. To identify if this node or any of its children's used routes changed since last summary.
+     *
+     * @param usedRoutes - The routes that are used in this node.
+     * @param gcTimestamp - The time when GC was run that generated these used routes. If a node becomes unreferenced
+     * as part of this GC run, this timestamp is used to update the time when it happens.
      */
-    updateUsedRoutes(usedRoutes: string[]): void;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+
+    /**
+     * @deprecated - Renamed to getBaseGCDetails.
+     * Returns the GC details that may be added to this node's summary.
+     */
+    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
+
+    /** Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state. */
+    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
 }
 
 export const channelsTreeName = ".channels";

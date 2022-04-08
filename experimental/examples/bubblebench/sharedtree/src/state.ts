@@ -59,7 +59,7 @@ export class AppState implements IAppState {
     }
 
     private makeBubble() {
-        return makeBubble(this.width,  this.height);
+        return makeBubble(this.width, this.height);
     }
 
     public increaseBubbles() {

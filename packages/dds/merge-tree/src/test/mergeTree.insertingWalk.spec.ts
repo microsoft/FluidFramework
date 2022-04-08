@@ -4,7 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { IMergeBlock, MaxNodesInBlock, MergeTree, MergeTreeTextHelper, TextSegment } from "../";
+import {
+    IMergeBlock,
+    MaxNodesInBlock,
+    MergeTree,
+} from "../mergeTree";
+import {
+    MergeTreeTextHelper,
+    TextSegment,
+} from "../textSegment";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { insertText, nodeOrdinalsHaveIntegrity } from "./testUtils";
 

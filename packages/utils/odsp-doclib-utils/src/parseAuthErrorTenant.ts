@@ -24,14 +24,15 @@ export function parseAuthErrorTenant(responseHeader: Headers): string | undefine
         return undefined;
     }
 
-    // header value must start with Bearer scheme
-    if (authHeaderData.indexOf(oAuthBearerScheme) !== 0) {
+    // header value must contain 'Bearer' scheme
+    const indexOfBearerInfo = authHeaderData.indexOf(oAuthBearerScheme);
+    if (indexOfBearerInfo < 0) {
         return undefined;
     }
 
     let tenantId: string | undefined;
     authHeaderData
-        .substr(oAuthBearerScheme.length)
+        .substring(indexOfBearerInfo + oAuthBearerScheme.length)
         .split(",")
         .map((section) => {
             if (!tenantId) {

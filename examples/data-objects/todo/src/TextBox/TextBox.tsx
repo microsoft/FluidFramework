@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { DataObject } from "@fluidframework/aqueduct";
-import { CollaborativeTextArea } from "@fluid-experimental/react-inputs";
+import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
@@ -18,8 +18,7 @@ export const TextBoxName = `${pkg.name as string}-textbox`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class TextBox extends DataObject<{}, string> implements IFluidHTMLView {
+export class TextBox extends DataObject<{InitialState: string}> implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     private text: SharedString | undefined;
@@ -45,7 +44,7 @@ export class TextBox extends DataObject<{}, string> implements IFluidHTMLView {
 
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <CollaborativeTextArea sharedString={this.text} />,
+            <CollaborativeTextArea sharedStringHelper={new SharedStringHelper(this.text)} />,
             div,
         );
     }

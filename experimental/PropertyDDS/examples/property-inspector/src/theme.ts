@@ -4,7 +4,7 @@
  */
 import "@hig/fonts/build/ArtifaktElement.css";
 
-import { createMuiTheme } from "@material-ui/core/styles";
+import { createTheme } from "@material-ui/core/styles";
 import { ToggleButtonClassKey } from "@material-ui/lab/ToggleButton";
 
 declare module "@material-ui/core/styles/overrides" {
@@ -13,7 +13,7 @@ declare module "@material-ui/core/styles/overrides" {
   }
 }
 
-export const theme = createMuiTheme({
+export const theme = createTheme({
 
   overrides: {
     MuiButton: {
@@ -33,7 +33,7 @@ export const theme = createMuiTheme({
   palette: {
     primary: {
       contrastText: "#fff",
-      main:  "#0696d7",
+      main: "#0696d7",
     },
   },
 

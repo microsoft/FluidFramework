@@ -20,7 +20,6 @@ import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 // REVIEW: enable compat testing?
@@ -66,7 +65,6 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
             [mapId1, SharedMap.getFactory()],
             [mapId2, SharedMap.getFactory()],
         ]);
-        const driver = provider.driver;
         const urlResolver = provider.urlResolver;
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const documentServiceFactory = provider.documentServiceFactory;
@@ -74,7 +72,7 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            logger: ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: driver.type}}),
+            logger: provider.logger,
         });
         loaderContainerTracker.add(testLoader);
         return testLoader;
@@ -493,21 +491,15 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
     it("Attach events on container", async () => {
         const { container } =
             await createDetachedContainerAndGetRootDataStore();
-        let containerAttachState = AttachState.Detached;
-        container.on("attaching", () => {
-            assert.strictEqual(containerAttachState, AttachState.Detached, "Should be fire from Detached state");
-            assert.strictEqual(container.attachState, AttachState.Attaching,
-                "Container should be attaching at this stage");
-            containerAttachState = AttachState.Attaching;
-        });
+        let attachEvent = false;
         container.on("attached", () => {
-            assert.strictEqual(containerAttachState, AttachState.Attaching, "Should be fire from attaching state");
+            assert.strictEqual(attachEvent, false, "Should be only one attach event");
             assert.strictEqual(container.attachState, AttachState.Attached,
                 "Container should be attached at this stage");
-            containerAttachState = AttachState.Attached;
+            attachEvent = true;
         });
         await container.attach(request);
-        assert.strictEqual(containerAttachState, AttachState.Attached, "Container should end up in attached state");
+        assert.strictEqual(container.attachState, AttachState.Attached, "Container should end up in attached state");
     });
 
     it("Attach events on dataStores", async () => {

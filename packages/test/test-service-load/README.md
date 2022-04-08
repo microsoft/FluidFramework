@@ -77,3 +77,9 @@ The value passed here should be a filter string for the logger namespace.
 
 >To print all messages, provide `--log '*'` or `--log 'fluid:*'`. For example, to filter to only Container logs,
 provide something like: `-l 'fluid:telemetry:Container:*'`.
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

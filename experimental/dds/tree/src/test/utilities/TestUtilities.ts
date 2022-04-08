@@ -273,10 +273,14 @@ export async function setUpLocalServerTestSharedTree(
 			),
 		],
 	];
+	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+	runtime.IFluidHandleContext.resolveHandle(request);
+
 	const runtimeFactory = () =>
+	
 		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
 			summaryOptions: { initialSummarizerDelayMs: 0 },
-		});
+		}, [innerRequestHandler]);
 
 	const defaultCodeDetails: IFluidCodeDetails = {
 		package: 'defaultTestPackage',

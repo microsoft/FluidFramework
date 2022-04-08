@@ -22,11 +22,17 @@ parameters:
     - default
     - skip
     - force
+- name: nonScopedPackages
+  displayName: Non-scoped packages to publish
+  type: object
+  default:
+  - fluid-framework
 
 trigger:
   branches:
     include:
     - main
+    - next
     - release/*
   paths:
     include:
@@ -43,6 +49,7 @@ trigger:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
 
@@ -50,6 +57,7 @@ pr:
   branches:
     include:
     - main
+    - next
     - release/*
   paths:
     include:
@@ -71,18 +79,19 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildDirectory: .
     tagName: client
-    poolBuild: Main
+    poolBuild: Large
     cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: true
 
     preCG:
     - task: UseNode@1
-      displayName: Use Node 12.x
+      displayName: Use Node 14.x
       inputs:
-        version: 12.x
+        version: 14.x
     - task: Npm@1
       displayName: npm ci
       inputs:

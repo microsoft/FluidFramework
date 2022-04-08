@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/filename-case, max-len */
+/* eslint-disable max-len */
 
 import { strict as assert } from "assert";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";

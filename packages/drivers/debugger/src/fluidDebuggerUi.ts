@@ -328,7 +328,7 @@ export class DebuggerUI {
 
     private download(filename: string, data: string): void {
         const element = document.createElement("a");
-        element.setAttribute("href", `data:text/plain;charset=utf-8,${  encodeURIComponent(data)}`);
+        element.setAttribute("href", `data:text/plain;charset=utf-8,${ encodeURIComponent(data) }`);
         element.setAttribute("download", filename);
 
         element.style.display = "none";

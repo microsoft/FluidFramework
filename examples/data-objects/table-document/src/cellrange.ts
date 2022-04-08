@@ -10,7 +10,6 @@ import { SequenceInterval } from "@fluidframework/sequence";
 const rangeExpr = /([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)/;
 
 // Parses an Excel-like column name to the corresponding 0-based index (e.g., 'A' -> 0)
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function colNameToIndex(colName: string) {
     return [...colName]
         .map((letter) => letter.toUpperCase().charCodeAt(0) - 64)                   // 64 -> A=1, B=2, etc.

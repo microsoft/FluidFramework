@@ -96,7 +96,7 @@ The Aqueduct offers a factory for each of the data objects provided.
 
 ### DataObjectFactory example
 
-In the below example we build a `DataObjectFactory` for the [`Clicker`](#dataobject-example) example above. To build a
+In the below example we build a `DataObjectFactory` for the [Clicker](#dataobject-example) example above. To build a
 `DataObjectFactory`, we need to provide factories for the distributed data structures we are using inside of our
 `DataObject`. In the above example we store a handle to a `SharedCounter` in `this.root` to track our `"clicks"`. The
 `DataObject` comes with the `SharedDirectory` (`this.root`) already initialized, so we just need to add the factory for
@@ -161,9 +161,8 @@ A Container is a collection of data objects and functionality that produce an ex
 of data objects as well as defining the data objects that can be created within the Container. Because of this data
 objects cannot be consumed except for when they are within a Container.
 
-The Aqueduct library provides the
-[`ContainerRuntimeFactoryWithDefaultDataStore`](./src/containerRuntimeFactories/containerRuntimeFactoryWithDefaultDataStore.ts)
-that enables you as a container developer to:
+The Aqueduct library provides the [ContainerRuntimeFactoryWithDefaultDataStore][] that enables you as a container
+developer to:
 
 - Define the registry of data objects that can be created
 - Declare the default data object
@@ -172,8 +171,8 @@ that enables you as a container developer to:
 
 ## Container object example
 
-In the below example we will write a Container that exposes the above [`Clicker`](#dataobject-example) using the
-[`Clicker Factory`](#dataobjectfactory-example). You will notice below that the Container developer defines the
+In the below example we will write a Container that exposes the above [Clicker](#dataobject-example) using the
+[Clicker Factory](#dataobjectfactory-example). You will notice below that the Container developer defines the
 registry name (data object type) of the Fluid object. We also pass in the type of data object we want to be the default.
 The default data object is created the first time the Container is created.
 
@@ -248,6 +247,7 @@ type:"text/plain", value:"blue"}`.
 We use custom handlers to build the Container Services pattern.
 
 <!-- Links -->
+[ContainerRuntimeFactoryWithDefaultDataStore]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/containerRuntimeFactories/containerRuntimeFactoryWithDefaultDataStore.ts
 [DataObject]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-objects/dataObject.ts
 [DataObjectFactory]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/dataObjectFactory.ts
 [PureDataObject]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/pureDataObject.ts

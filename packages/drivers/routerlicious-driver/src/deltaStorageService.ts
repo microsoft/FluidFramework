@@ -14,9 +14,8 @@ import { readAndParse, requestOps, emptyMessageStream } from "@fluidframework/dr
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { ITokenProvider } from "./tokens";
+import { RestWrapper } from "@fluidframework/server-services-client";
 import { DocumentStorageService } from "./documentStorageService";
-import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 
 const MaxBatchDeltas = 2000; // Maximum number of ops we can fetch at a time
 
@@ -37,6 +36,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
+        fetchReason?: string,
     ): IStream<ISequencedDocumentMessage[]>
     {
         if (cachedOnly) {
@@ -52,6 +52,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
             MaxBatchDeltas,
             new TelemetryNullLogger(),
             abortSignal,
+            fetchReason,
         );
     }
 
@@ -79,7 +80,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 export class DeltaStorageService implements IDeltaStorageService {
     constructor(
         private readonly url: string,
-        private readonly tokenProvider: ITokenProvider,
+        private readonly restWrapper: RestWrapper,
         private readonly logger: ITelemetryLogger) {
     }
 
@@ -90,8 +91,6 @@ export class DeltaStorageService implements IDeltaStorageService {
         to: number, // exclusive
         ): Promise<IDeltasFetchResult>
     {
-        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-            tenantId, id, this.tokenProvider, this.logger);
         const ops = await PerformanceEvent.timedExecAsync(
             this.logger,
             {
@@ -100,7 +99,7 @@ export class DeltaStorageService implements IDeltaStorageService {
                 to,
             },
             async (event) => {
-                const response = await ordererRestWrapper.get<ISequencedDocumentMessage[]>(
+                const response = await this.restWrapper.get<ISequencedDocumentMessage[]>(
                     this.url,
                     { from: from - 1, to });
                 event.end({

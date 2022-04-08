@@ -5,11 +5,6 @@
 
 export interface IDocumentAttributes {
     /**
-     * Name of the branch that created the snapshot
-     */
-    branch: string;
-
-    /**
      * Sequence number at which the snapshot was taken
      */
     sequenceNumber: number;
@@ -40,8 +35,8 @@ export interface IBlob {
     // Contents of the blob
     contents: string;
 
-    // The encoding of the contents string (utf-8 or base64)
-    encoding: string;
+    // The encoding of the contents string
+    encoding: "utf-8" | "base64";
 }
 
 export interface IAttachment {
@@ -96,7 +91,7 @@ export interface ITree {
 }
 
 export interface ISnapshotTree {
-    id? : string;
+    id?: string;
     blobs: { [path: string]: string };
     // TODO: Commits should be removed from here to ISnapshotTreeEx once ODSP snapshots move away from commits
     commits: { [path: string]: string };

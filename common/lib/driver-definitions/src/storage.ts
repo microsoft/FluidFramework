@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IDisposable, IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -44,12 +44,20 @@ export interface IDeltasFetchResult {
 export interface IDeltaStorageService {
     /**
      * Retrieves all the delta operations within the inclusive sequence number range
+     * @param tenantId - Id of the tenant.
+     * @param id - document id.
+     * @param from - first op to retrieve (inclusive)
+     * @param to - first op not to retrieve (exclusive end)
+     * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
+     *  of Op on wire and known seq number. It should not contain any PII. It can be logged by
+     *  spo which could help in debugging sessions if any issue occurs.
      */
     get(
         tenantId: string,
         id: string,
         from: number, // inclusive
-        to: number // exclusive
+        to: number, // exclusive
+        fetchReason?: string,
     ): Promise<IDeltasFetchResult>;
 }
 
@@ -72,11 +80,15 @@ export interface IDocumentDeltaStorageService {
      * @param to - first op not to retrieve (exclusive end)
      * @param abortSignal - signal that aborts operation
      * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
+     * @param fetchReason - Reason for fetching the messages. Example, gap between seq number
+     *  of Op on wire and known seq number. It should not contain any PII. It can be logged by
+     *  spo which could help in debugging sessions if any issue occurs.
      */
      fetchMessages(from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
+        fetchReason?: string,
     ): IStream<ISequencedDocumentMessage[]>;
 }
 
@@ -86,12 +98,17 @@ export interface IDocumentStorageServicePolicies {
     // If this policy is provided, it tells runtime on ideal size for blobs
     // Blobs that are smaller than that size should be aggregated into bigger blobs
     readonly minBlobSize?: number;
+
+    /**
+     * This policy tells the runtime that the driver will not use cached snapshots older than this value.
+     */
+    readonly maximumCacheDurationMs?: number;
 }
 
 /**
  * Interface to provide access to snapshots saved for a shared object
  */
-export interface IDocumentStorageService {
+export interface IDocumentStorageService extends Partial<IDisposable> {
     repositoryUrl: string;
 
     /**
@@ -148,7 +165,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "error", listener: (error: any) => void);
 }
 
-export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaConnectionEvents> {
+export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents> {
     /**
      * ClientID for the connection
      */
@@ -168,11 +185,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
      * Whether the connection was made to a new or existing document
      */
     existing: boolean;
-
-    /**
-     * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
-     */
-    maxMessageSize: number;
 
     /**
      * Protocol version being used with the service
@@ -209,6 +221,14 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
     checkpointSequenceNumber?: number;
 
     /**
+     * Properties that server can send to client to tell info about node that client is connected to. For ex, for spo
+     * it could contain info like build version, environment, region etc. These properties can be logged by client
+     * to better understand server environment etc. and use it in case error occurs.
+     * Format: "prop1:val1;prop2:val2;prop3:val3"
+     */
+    relayServiceAgent?: string,
+
+    /**
      * Submit a new message to the server
      */
     submit(messages: IDocumentMessage[]): void;
@@ -217,11 +237,6 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
      * Submit a new signal to the server
      */
     submitSignal(message: any): void;
-
-    /**
-     * Disconnects the given delta connection
-     */
-    close(): void;
 }
 
 export enum LoaderCachingPolicy {
@@ -240,7 +255,7 @@ export interface IDocumentServicePolicies {
     /**
      * Do not connect to delta stream
      */
-    storageOnly?: boolean;
+    readonly storageOnly?: boolean;
 }
 
 export interface IDocumentService {
@@ -289,13 +304,22 @@ export interface IDocumentServiceFactory {
     /**
      * Returns an instance of IDocumentService
      */
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+     createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
+    ): Promise<IDocumentService>;
 
-    // Creates a new document on the host with the provided options. Returns the document service.
+    /**
+     * Creates a new document with the provided options. Returns the document service.
+     * @param createNewSummary - Summary used to create file. If undefined, an empty file will be created and a summary
+     * should be posted later, before connecting to ordering service.
+     */
     createContainer(
-        createNewSummary: ISummaryTree,
+        createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService>;
 }
 

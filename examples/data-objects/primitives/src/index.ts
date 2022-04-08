@@ -3,27 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/aqueduct";
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 
-import { PrimitivesName } from "./main";
-import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory";
+import React from "react";
 
-/**
- * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading in
- * the EmbeddedComponentLoader.
- *
- * There are two important things here:
- * 1. Default Component name
- * 2. Map of string to factory for all components
- *
- * In this example, we are only registering a single component, but more complex examples will register multiple
- * components.
- */
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    PrimitivesInstantiationFactory,
-    new Map([
-        [PrimitivesName, Promise.resolve(PrimitivesInstantiationFactory)],
-    ]),
-);
+import { DdsCollection, DdsCollectionFactory } from "./model";
+import { DdsCollectionView } from "./view";
+
+const ddsCollectionViewCallback =
+    (ddsCollection: DdsCollection) => React.createElement(DdsCollectionView, { ddsCollection });
+
+export const fluidExport =
+    new ContainerViewRuntimeFactory<DdsCollection>(DdsCollectionFactory, ddsCollectionViewCallback);

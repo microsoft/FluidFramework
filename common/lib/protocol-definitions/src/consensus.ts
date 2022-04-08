@@ -37,61 +37,55 @@ export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedP
 export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
 
 /**
- * A proposal that has been propposed, but not yet accepted or committed
+ * Events fired by a Quorum in response to client tracking.
  */
-export interface IPendingProposal extends ISequencedProposal {
-    /**
-     * Sends a rejection for the proposal
-     */
-    reject();
-
-    /**
-     * Disables the sending of rejections for this proposal
-     */
-    disableRejection();
-
-    /**
-     * Returns true if rejections has been disable, otherwise false
-     */
-    readonly rejectionDisabled: boolean;
-}
-
-export interface IQuorumEvents extends IErrorEvent {
+export interface IQuorumClientsEvents extends IErrorEvent {
     (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void);
     (event: "removeMember", listener: (clientId: string) => void);
-    (event: "addProposal", listener: (proposal: IPendingProposal) => void);
-    (
-        event: "approveProposal",
-        listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void);
-    (
-        event: "commitProposal",
-        listener: (
-            sequenceNumber: number,
-            key: string,
-            value: any,
-            approvalSequenceNumber: number,
-            commitSequenceNumber: number) => void);
-    (
-        event: "rejectProposal",
-        listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void);
 }
 
 /**
- * Class representing agreed upon values in a quorum
+ * Events fired by a Quorum in response to proposal tracking.
  */
-export interface IQuorum extends IEventProvider<IQuorumEvents>, IDisposable {
+export interface IQuorumProposalsEvents extends IErrorEvent {
+    (event: "addProposal", listener: (proposal: ISequencedProposal) => void);
+    (
+        event: "approveProposal",
+        listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void);
+}
+
+/**
+ * All events fired by an IQuorum, both client tracking and proposal tracking.
+ */
+export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
+
+/**
+ * Interface for tracking clients in the Quorum.
+ */
+export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, IDisposable {
+    getMembers(): Map<string, ISequencedClient>;
+
+    getMember(clientId: string): ISequencedClient | undefined;
+}
+
+/**
+ * Interface for tracking proposals in the Quorum.
+ */
+export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
     propose(key: string, value: any): Promise<void>;
 
     has(key: string): boolean;
 
     get(key: string): any;
-
-    getApprovalData(key: string): ICommittedProposal | undefined;
-
-    getMembers(): Map<string, ISequencedClient>;
-
-    getMember(clientId: string): ISequencedClient | undefined;
 }
+
+/**
+ * Interface combining tracking of clients as well as proposals in the Quorum.
+ */
+export interface IQuorum extends
+    Omit<IQuorumClients, "on" | "once" | "off">,
+    Omit<IQuorumProposals, "on" | "once" | "off">,
+    IEventProvider<IQuorumEvents> { }
 
 export interface IProtocolState {
     sequenceNumber: number;

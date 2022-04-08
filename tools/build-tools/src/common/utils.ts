@@ -59,7 +59,7 @@ export async function execAsync(command: string, options: child_process.ExecOpti
             resolve({ error, stdout, stderr });
         });
 
-        if (pipeStdIn) {
+        if (pipeStdIn && p.stdin) {
             p.stdin.write(pipeStdIn);
             p.stdin.end();
         }

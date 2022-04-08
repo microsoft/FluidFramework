@@ -5,12 +5,50 @@ theme: "thxvscode"
 title: "Fluid Framework"
 titleCaseStyle: "Chicago"
 
+# Hugo modules enable mapping content from outside the Hugo folder
+module:
+  noVendor: "github.com/**"
+  hugoVersion:
+    extended: true
+    min: "0.76.5"
+  mounts:
+  - source: content
+    target: content
+  - source: _replacements
+    target: content
+  - source: ../packages/dds/sequence/README.md
+    target: content/docs/sequence-readme.md
+
+  - source: static
+    target: static
+
+  # SVG icons from the @vscode/codicons package
+  - source: node_modules/@vscode/codicons/src/icons/beaker.svg
+    target: static/codicons/beaker.svg
+  - source: node_modules/@vscode/codicons/src/icons/book.svg
+    target: static/codicons/book.svg
+  - source: node_modules/@vscode/codicons/src/icons/bug.svg
+    target: static/codicons/bug.svg
+  - source: node_modules/@vscode/codicons/src/icons/comment-discussion.svg
+    target: static/codicons/comment-discussion.svg
+  - source: node_modules/@vscode/codicons/src/icons/edit.svg
+    target: static/codicons/edit.svg
+  - source: node_modules/@vscode/codicons/src/icons/github.svg
+    target: static/codicons/github.svg
+  - source: node_modules/@vscode/codicons/src/icons/play-circle.svg
+    target: static/codicons/play-circle.svg
+  - source: node_modules/@vscode/codicons/src/icons/rss.svg
+    target: static/codicons/rss.svg
+  - source: node_modules/@vscode/codicons/src/icons/twitter.svg
+    target: static/codicons/twitter.svg
+
 permalinks:
   page: "/:slug"
   post: "/:year/:month/:title"
 
 params:
   appInsightKey: ""  # This is provided by the build system as an env variable
+  cookies: false
   customCSS: ["css/fluid.css", "css/tango.css"]
   dateform: "Jan 2, 2006"
   dateformNum: "2006-01-02"
@@ -18,14 +56,21 @@ params:
   dateformShort: "Jan 2"
   githubRepo: "microsoft/FluidFramework"
   twitterHandle: "fluidframework"
+  banner:
+    showBanner: true # show or hide the banner completely
+    bannerClose: false # show or hide the close button on the banner
+    version: "0.50"
+    urlRef: "docs/updates/v0.50.md"
+    message: | # if set, this will override the release notes updates
+      [Azure Fluid Relay](/docs/deployment/azure-frs/) is available in _Public Preview_!
 
 menu:
   main:
   - name: "Getting started"
-    url: "/start/quick-start/"
+    url: "/docs/start/quick-start/"
     weight: -100
   - name: "Recipes"
-    url: "/start/recipes/react/"
+    url: "/docs/recipes/react/"
     weight: -90
   - name: "Docs"
     url: "/docs/"
@@ -33,11 +78,11 @@ menu:
   - name: "Community"
     url: "/community/"
     weight: -60
-  - name: "Playground"
-    url: "/playground/"
-    weight: -50
+#  - name: "Updates"
+#    url: "/posts/"
+#    weight: -50
 
-  start:
+  old_section:
   - identifier: "quick-start"
     name: "Quick Start"
     url: "/start/quick-start/"
@@ -50,44 +95,60 @@ menu:
     name: "Examples"
     url: "/start/examples/"
     weight: -600
-  - identifier: "recipes"
-    name: "Recipes"
-    weight: -200
-  - identifier: "faq"
-    name: "FAQ"
-    url: "/start/faq/"
-    weight: -100
-  - identifier: "glossary"
-    name: "Glossary"
-    url: "/start/glossary/"
-    weight: -90
 
   # this menu supplements one generated in the apiNav partial
   docs:
+  - identifier: "start"
+    name: "Getting started"
+    weight: -800
+  - identifier: "recipes"
+    name: "Recipes"
+    weight: -700
+  - identifier: "build"
+    name: "Build with Fluid"
+    weight: -600
+  - identifier: "testing"
+    name: "Testing"
+    weight: -500
+  - identifier: "deployment"
+    name: "Deployment"
+    weight: -400
+  - identifier: "DDS"
+    name: "Data structures"
+    weight: -300
   - identifier: "concepts"
     name: "Concepts"
-    weight: -400
-  - identifier: "advanced"
-    name: "Advanced"
-    weight: -300
-  - identifier: "DDS"
-    name: "Data Structures"
     weight: -200
+  - identifier: "faq"
+    name: "FAQ"
+    url: "/docs/faq/"
+    weight: -100
+  - identifier: "glossary"
+    name: "Glossary"
+    url: "/docs/glossary/"
+    weight: -90
+  - identifier: "updates"
+    name: "What's new"
+    weight: -80
 
 markup:
   goldmark:
+    parser:
+      attribute:
+        # enables adding CSS classes to block elements in markdown
+        block: true
     renderer:
       autoHeadingIDType: "github"
       # mark unsafe html as true since api-documenter uses html snippets in markdown
       unsafe: true
-      extensions:
-        definitionList: true
-        footnote: true
-        linkify: true
-        strikethrough: true
-        table: true
-        taskList: true
-        typographer: true
+    extensions:
+      definitionList: true
+      footnote: true
+      linkify: true
+      strikethrough: true
+      table: true
+      taskList: true
+      typographer: true
 
   highlight:
     codeFences: true

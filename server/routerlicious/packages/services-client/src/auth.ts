@@ -11,8 +11,8 @@ import { NetworkError } from "./error";
 
 /**
  * Validates a JWT token to authorize routerlicious.
- * @returns decoded claims.
- * @throws {NetworkError} if claims are invalid.
+ * Throws NetworkError if claims are invalid.
+ * @returns - decoded claims.
  */
 export function validateTokenClaims(
     token: string,
@@ -33,8 +33,8 @@ export function validateTokenClaims(
 
 /**
  * Validates token claims' iat and exp properties to ensure valid token expiration.
+ * Throws NetworkError if expiry is invalid.
  * @returns token lifetime in milliseconds.
- * @throws {NetworkError} if expiry is invalid.
  */
 export function validateTokenClaimsExpiration(claims: ITokenClaims, maxTokenLifetimeSec: number): number {
     if (!claims.exp || !claims.iat || claims.exp - claims.iat > maxTokenLifetimeSec) {
@@ -68,7 +68,7 @@ export function generateToken(
     // Current time in seconds
     const now = Math.round((new Date()).getTime() / 1000);
 
-    const claims: ITokenClaims = {
+    const claims: ITokenClaims & { jti: string } = {
         documentId,
         scopes,
         tenantId,
@@ -76,10 +76,10 @@ export function generateToken(
         iat: now,
         exp: now + lifetime,
         ver,
+        jti: uuid(),
     };
 
     const utf8Key = { utf8: key };
-    // eslint-disable-next-line no-null/no-null
     return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
 }
 

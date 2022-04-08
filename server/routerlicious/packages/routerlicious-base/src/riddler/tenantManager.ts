@@ -7,12 +7,15 @@ import * as crypto from "crypto";
 import {
     ITenantConfig,
     ITenantCustomData,
+    ITenantKeys,
     ITenantOrderer,
     ITenantStorage,
+    KeyName,
     MongoManager,
     ISecretManager,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -28,6 +31,9 @@ export interface ITenantDocument {
     // API key for the given tenant
     key: string;
 
+    // second key for the given tenant
+    secondaryKey: string;
+
     // Storage provider details
     storage: ITenantStorage;
 
@@ -39,6 +45,10 @@ export interface ITenantDocument {
 
     // Whether the tenant is disabled
     disabled: boolean;
+
+    // Timestamp of when this tenant will be hard deleted.
+    // Only applicable if the tenant is disabled.
+    scheduledDeletionTime?: string;
 }
 
 export class TenantManager {
@@ -55,19 +65,32 @@ export class TenantManager {
     /**
      * Validates a tenant's API token
      */
-    public async validateToken(tenantId: string, token: string): Promise<void> {
-        const tenantKey = await this.getTenantKey(tenantId);
+    public async validateToken(tenantId: string, token: string, includeDisabledTenant = false): Promise<void> {
+        const tenantKeys = await this.getTenantKeys(tenantId, includeDisabledTenant);
 
-        return new Promise<void>((resolve, reject) => {
-            jwt.verify(token, tenantKey, (error) => {
-                if (error) {
-                    // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
-                    reject(error instanceof jwt.TokenExpiredError
-                        ? new NetworkError(401, "Token expired.")
-                        : new NetworkError(403, "Invalid token."));
-                } else {
-                    resolve();
+        return jwt.verify(token, tenantKeys.key1, (error1) => {
+            if (!error1) {
+                return;
+            }
+
+            // if the tenant doesn't have key2, it will be empty string
+            // we should fail token generated with empty string as key
+            if (!tenantKeys.key2) {
+                throw error1 instanceof jwt.TokenExpiredError
+                    ? new NetworkError(401, "Token expired validated with key1.")
+                    : new NetworkError(403, "Invalid token validated with key1.");
+            }
+
+            jwt.verify(token, tenantKeys.key2, (error2) => {
+                if (!error2) {
+                    return;
                 }
+
+                // When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
+                throw (error1 instanceof jwt.TokenExpiredError
+                    || error2 instanceof jwt.TokenExpiredError)
+                    ? new NetworkError(401, "Token expired validated with both key1 and key2.")
+                    : new NetworkError(403, "Invalid token validated with both key1 and key2.");
             });
         });
     }
@@ -75,10 +98,14 @@ export class TenantManager {
     /**
      * Retrieves the details for the given tenant
      */
-    public async getTenant(tenantId: string): Promise<ITenantConfig> {
-        const tenant = await this.getTenantDocument(tenantId);
+    public async getTenant(tenantId: string, includeDisabledTenant = false): Promise<ITenantConfig> {
+        const tenant = await this.getTenantDocument(tenantId, includeDisabledTenant);
         if (!tenant) {
             winston.error("Tenant is disabled or does not exist.");
+            Lumberjack.error(
+                "Tenant is disabled or does not exist.",
+                { [BaseTelemetryProperties.tenantId]: tenantId },
+            );
             return Promise.reject(new Error("Tenant is disabled or does not exist."));
         }
 
@@ -92,20 +119,22 @@ export class TenantManager {
             orderer: tenant.orderer,
             storage: tenant.storage,
             customData: tenant.customData,
+            scheduledDeletionTime: tenant.scheduledDeletionTime,
         };
     }
 
     /**
      * Retrieves the details for all tenants
      */
-    public async getAllTenants(): Promise<ITenantConfig[]> {
-        const tenants = await this.getAllTenantDocuments();
+    public async getAllTenants(includeDisabledTenant = false): Promise<ITenantConfig[]> {
+        const tenants = await this.getAllTenantDocuments(includeDisabledTenant);
 
         return tenants.map((tenant) => ({
             id: tenant._id,
             orderer: tenant.orderer,
             storage: tenant.storage,
             customData: tenant.customData,
+            scheduledDeletionTime: tenant.scheduledDeletionTime,
         }));
     }
 
@@ -128,16 +157,26 @@ export class TenantManager {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
-        const tenantKey = this.generateTenantKey();
-        const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
-        if (encryptedTenantKey == null) {
-            winston.error("Tenant key encryption failed.");
-            return Promise.reject(new Error("Tenant key encryption failed."));
+        const tenantKey1 = this.generateTenantKey();
+        const encryptedTenantKey1 = this.secretManager.encryptSecret(tenantKey1);
+        if (encryptedTenantKey1 == null) {
+            winston.error("Tenant key1 encryption failed.");
+            Lumberjack.error("Tenant key1 encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return Promise.reject(new Error("Tenant key1 encryption failed."));
+        }
+
+        const tenantKey2 = this.generateTenantKey();
+        const encryptedTenantKey2 = this.secretManager.encryptSecret(tenantKey2);
+        if (encryptedTenantKey2 == null) {
+            winston.error("Tenant key2 encryption failed.");
+            Lumberjack.error("Tenant key2 encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return Promise.reject(new Error("Tenant key2 encryption failed."));
         }
 
         const id = await collection.insertOne({
             _id: tenantId,
-            key: encryptedTenantKey,
+            key: encryptedTenantKey1,
+            secondaryKey: encryptedTenantKey2,
             orderer,
             storage,
             customData,
@@ -145,7 +184,7 @@ export class TenantManager {
         });
 
         const tenant = await this.getTenant(id);
-        return _.extend(tenant, { key: tenantKey });
+        return _.extend(tenant, { key: tenantKey1, secondaryKey: tenantKey2 });
     }
 
     /**
@@ -190,34 +229,121 @@ export class TenantManager {
     /**
      * Retrieves the secret for the given tenant
      */
-    public async getTenantKey(tenantId: string): Promise<string> {
-        const encryptedTenantKey = (await this.getTenantDocument(tenantId)).key;
-        const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
-        if (tenantKey == null) {
-            winston.error("Tenant key decryption failed.");
-            return Promise.reject(new Error("Tenant key decryption failed."));
+    public async getTenantKeys(tenantId: string, includeDisabledTenant = false): Promise<ITenantKeys> {
+        const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
+
+        const encryptedTenantKey1 = tenantDocument.key;
+        const tenantKey1 = this.secretManager.decryptSecret(encryptedTenantKey1);
+        if (tenantKey1 == null) {
+            winston.error("Tenant key1 decryption failed.");
+            Lumberjack.error("Tenant key1 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return Promise.reject(new Error("Tenant key1 decryption failed."));
         }
 
-        return tenantKey;
+        const encryptedTenantKey2 = tenantDocument.secondaryKey;
+        if (!encryptedTenantKey2) {
+            winston.info("Tenant key2 doesn't exist.");
+            Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return {
+                key1: tenantKey1,
+                key2: "",
+            };
+        }
+
+        const tenantKey2 = this.secretManager.decryptSecret(encryptedTenantKey2);
+        if (tenantKey2 == null) {
+            winston.error("Tenant key2 decryption failed.");
+            Lumberjack.error("Tenant key2 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return Promise.reject(new Error("Tenant key2 decryption failed."));
+        }
+
+        return {
+            key1: tenantKey1,
+            key2: tenantKey2,
+        };
     }
 
     /**
      * Generates a new key for a tenant
      */
-    public async refreshTenantKey(tenantId: string): Promise<string> {
-        const db = await this.mongoManager.getDatabase();
-        const collection = db.collection<ITenantDocument>(this.collectionName);
+    public async refreshTenantKey(tenantId: string, keyName: string): Promise<ITenantKeys> {
+        if (keyName !== KeyName.key1 && keyName !== KeyName.key2) {
+            return Promise.reject(new Error("Key name must be either key1 or key2."));
+        }
 
-        const tenantKey = this.generateTenantKey();
-        const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
-        if (encryptedTenantKey == null) {
+        const tenantDocument = await this.getTenantDocument(tenantId, false);
+
+        const newTenantKey = this.generateTenantKey();
+        const encryptedNewTenantKey = this.secretManager.encryptSecret(newTenantKey);
+        if (encryptedNewTenantKey == null) {
             winston.error("Tenant key encryption failed.");
+            Lumberjack.error("Tenant key encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
             return Promise.reject(new Error("Tenant key encryption failed."));
         }
 
-        await collection.update({ _id: tenantId }, { key: encryptedTenantKey }, null);
+        const tenantKeys = await this.getUpdatedTenantKeys(
+            tenantDocument.key,
+            tenantDocument.secondaryKey,
+            keyName,
+            newTenantKey,
+            tenantId);
 
-        return tenantKey;
+        const updateKey = keyName === KeyName.key2
+                            ? { secondaryKey: encryptedNewTenantKey }
+                            : { key: encryptedNewTenantKey };
+        const db = await this.mongoManager.getDatabase();
+        const collection = db.collection<ITenantDocument>(this.collectionName);
+        await collection.update({ _id: tenantId }, updateKey, null);
+
+        return tenantKeys;
+    }
+
+    /**
+     * Gets updated 2 tenant keys after refresh.
+     */
+    private async getUpdatedTenantKeys(
+        key1: string,
+        key2: string,
+        keyName: string,
+        newTenantKey: string,
+        tenantId: string,
+    ): Promise<ITenantKeys> {
+        // if key2 is to be refreshed
+        if (keyName === KeyName.key2) {
+            const decryptedTenantKey1 = this.secretManager.decryptSecret(key1);
+            if (decryptedTenantKey1 == null) {
+                winston.error("Tenant key1 decryption failed.");
+                Lumberjack.error("Tenant key1 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+                return Promise.reject(new Error("Tenant key1 decryption failed."));
+            }
+            return {
+                key1: decryptedTenantKey1,
+                key2: newTenantKey,
+            };
+        }
+
+        // below is if key1 is to be refreshed
+        // if key2 doesn't exist, no need to decrypt
+        if (!key2) {
+            winston.info("Tenant key2 doesn't exist.");
+            Lumberjack.info("Tenant key2 doesn't exist.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return {
+                key1: newTenantKey,
+                key2: "",
+            };
+        }
+
+        // if key2 exists, refresh key1 and return
+        const decryptedTenantKey2 = this.secretManager.decryptSecret(key2);
+        if (decryptedTenantKey2 == null) {
+            winston.error("Tenant key2 decryption failed.");
+            Lumberjack.error("Tenant key2 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
+            return Promise.reject(new Error("Tenant key2 decryption failed."));
+        }
+        return {
+            key1: newTenantKey,
+            key2: decryptedTenantKey2,
+        };
     }
 
     /**
@@ -251,12 +377,12 @@ export class TenantManager {
     /**
      * Retrieves the raw database tenant document
      */
-    private async getTenantDocument(tenantId: string): Promise<ITenantDocument> {
+    private async getTenantDocument(tenantId: string, includeDisabledTenant = false): Promise<ITenantDocument> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         const found = await collection.findOne({ _id: tenantId });
-        if (found.disabled) {
+        if (found.disabled && !includeDisabledTenant) {
             return null;
         }
 
@@ -268,7 +394,7 @@ export class TenantManager {
     /**
      * Retrieves all the raw database tenant documents
      */
-    private async getAllTenantDocuments(): Promise<ITenantDocument[]> {
+    private async getAllTenantDocuments(includeDisabledTenant = false): Promise<ITenantDocument[]> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
@@ -278,17 +404,31 @@ export class TenantManager {
             this.attachDefaultsToTenantDocument(found);
         });
 
-        return allFound.filter((found) => !found.disabled);
+        return includeDisabledTenant ? allFound : allFound.filter((found) => !found.disabled);
     }
 
     /**
-     * Flags the given tenant as disabled
+     * Deletes a tenant
+     * @param tenantId: Id of the tenant to delete.
+     * @param scheduledDeletionTimeTime: If present, indicates when to hard-delete the tenant.
+     * If no scheduledDeletionTime is provided the tenant is only soft-deleted.
      */
-    public async disableTenant(tenantId: string): Promise<void> {
+    public async deleteTenant(tenantId: string, scheduledDeletionTime?: Date): Promise<void> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
-
-        await collection.update({ _id: tenantId }, { disabled: true }, null);
+        const softDelete = !scheduledDeletionTime || scheduledDeletionTime.getTime() > Date.now();
+        if (softDelete) {
+            const query = {
+                _id: tenantId,
+                disabled: false,
+            };
+            await collection.update(query, {
+                disabled: true,
+                scheduledDeletionTime: scheduledDeletionTime?.toJSON(),
+            }, null);
+        } else {
+            await collection.deleteOne({ _id: tenantId });
+        }
     }
 
     private encryptAccessInfo(accessInfo: any): string {
@@ -298,7 +438,6 @@ export class TenantManager {
 
     private decryptAccessInfo(encryptedAccessInfo: string): any {
         const accessInfo = JSON.parse(this.secretManager.decryptSecret(encryptedAccessInfo));
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return accessInfo;
     }
 }

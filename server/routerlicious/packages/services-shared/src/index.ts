@@ -4,6 +4,9 @@
  */
 
 export * from "./redisSocketIoAdapter";
+export * from "./restLessServer";
 export * from "./runner";
 export * from "./storage";
 export * from "./webServer";
+export * from "./wholeSummaryReadGitManager";
+export * from "./wholeSummaryWriteGitManager";

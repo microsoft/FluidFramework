@@ -19,6 +19,8 @@ import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "..";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 
+/* eslint-disable no-multi-spaces */
+
 function createConnectedMatrix(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
@@ -60,7 +62,7 @@ describe("Matrix", () => {
         // equivalent, and then returns the 2nd matrix.
         async function summarize<T>(matrix: SharedMatrix<T>) {
             // Create a summary
-            const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
+            const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
             // Create a local DataStoreRuntime since we only want to load the summary for a local client.
             const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -974,3 +976,5 @@ describe("Matrix", () => {
         runGCTests(GCSharedMatrixProvider);
     });
 });
+
+/* eslint-enable no-multi-spaces */

@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { QueueObject, queue } from "async";
 import * as _ from "lodash";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
 
@@ -146,14 +147,17 @@ export class Partition extends EventEmitter {
             // If not entries in the queue we can exit immediatley
             if (this.q.length() === 0) {
                 this.logger?.info(`No pending work for partition ${this.id}. Exiting early`);
+                Lumberjack.info(`No pending work for partition ${this.id}. Exiting early`);
                 return resolve();
             }
 
             // Wait until the queue is drained
             this.logger?.info(`Waiting for queue to drain for partition ${this.id}`);
+            Lumberjack.info(`Waiting for queue to drain for partition ${this.id}`);
 
             this.q.drain(() => {
                 this.logger?.info(`Drained partition ${this.id}`);
+                Lumberjack.info(`Drained partition ${this.id}`);
                 resolve();
             });
         });

@@ -38,17 +38,7 @@ function flattenCore(
                 url: "",
             };
             entries.push(entry);
-        } else if (treeEntry.type === TreeEntry.Commit) {
-            const entry: git.ITreeEntry = {
-                mode: FileMode[treeEntry.mode],
-                path: subPath,
-                sha: treeEntry.value,
-                size: -1,
-                type: "commit",
-                url: "",
-            };
-            entries.push(entry);
-        } else {
+        } else if (treeEntry.type === TreeEntry.Tree) {
             assert(treeEntry.type === TreeEntry.Tree, 0x101 /* "Unexpected tree entry type on flatten!" */);
             const t = treeEntry.value;
             const entry: git.ITreeEntry = {

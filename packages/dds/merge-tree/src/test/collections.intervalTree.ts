@@ -33,7 +33,7 @@ class TestInterval implements IInterval {
     }
 
     public overlaps(b: TestInterval) {
-        const result = (this.start < b.end) &&
+        const result = (this.start <= b.end) &&
             (this.end >= b.start);
         return result;
     }
@@ -41,6 +41,16 @@ class TestInterval implements IInterval {
     public union(b: TestInterval) {
         return new TestInterval(Math.min(this.start, b.start),
             Math.max(this.end, b.end));
+    }
+
+    public modify(label: string, start: number, end: number) {
+        const startPos = start ?? this.start;
+        const endPos = end ?? this.end;
+        if (this.start === startPos && this.end === endPos) {
+            // Return undefined to indicate that no change is necessary.
+            return;
+        }
+        return new TestInterval(startPos, endPos);
     }
 }
 

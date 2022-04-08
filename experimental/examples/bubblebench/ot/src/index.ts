@@ -3,27 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/aqueduct";
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
+import { AppView } from "@fluid-experimental/bubblebench-common";
+import React from "react";
 
 import { Bubblebench, BubblebenchInstantiationFactory } from "./main";
 export { Bubblebench, BubblebenchInstantiationFactory } from "./main";
 
+const bubblebenchViewCallback = (model: Bubblebench) => React.createElement(AppView, { app: model.appState });
+
 /**
- * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading by
- * providing the fluidExport constant.
- *
- * There are two important things here:
- * 1. Default Fluid object name
- * 2. Map of string to factory for all dependent Fluid objects
- *
- * In this example, we are only registering a single Fluid object, but more complex examples will register multiple
- * Fluid objects.
+ * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use
+ * as our model (using the factory we provide), and the view callback we provide will pair that model with an
+ * appropriate view.
  */
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    BubblebenchInstantiationFactory,
-    new Map([
-        [Bubblebench.Name, Promise.resolve(BubblebenchInstantiationFactory)],
-    ]),
-);
+export const fluidExport = new ContainerViewRuntimeFactory(BubblebenchInstantiationFactory, bubblebenchViewCallback);

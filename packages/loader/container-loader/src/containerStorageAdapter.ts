@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
@@ -16,16 +17,28 @@ import {
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
+import { IDetachedBlobStorage } from "./loader";
+import { ISnapshotTreeWithBlobContents } from "./utils";
 
 /**
  * This class wraps the actual storage and make sure no wrong apis are called according to
  * container attach state.
  */
 export class ContainerStorageAdapter implements IDocumentStorageService {
-    constructor(
-        private readonly storageGetter: () => IDocumentStorageService,
-        private readonly blobs: Map<string, ArrayBufferLike>,
-    ) {
+    private readonly blobContents: {[id: string]: ArrayBufferLike} = {};
+    constructor(private readonly storageGetter: () => IDocumentStorageService) {}
+
+    public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {
+        this.getBlobContents(snapshotTree);
+    }
+
+    private getBlobContents(snapshotTree: ISnapshotTreeWithBlobContents) {
+        for(const [id, value] of Object.entries(snapshotTree.blobsContents)) {
+            this.blobContents[id] = value;
+        }
+        for(const [_, tree] of Object.entries(snapshotTree.trees)) {
+            this.getBlobContents(tree);
+        }
     }
 
     public get policies(): IDocumentStorageServicePolicies | undefined {
@@ -46,14 +59,14 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
-        const blob = this.blobs.get(id);
+        const blob = this.blobContents[id];
         if (blob !== undefined) {
             return blob;
         }
         return this.storageGetter().readBlob(id);
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return this.storageGetter().getVersions(versionId, count);
     }
 
@@ -71,5 +84,50 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
 
     public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
         return this.storageGetter().createBlob(file);
+    }
+}
+
+/**
+ * Storage which only supports createBlob() and readBlob(). This is used with IDetachedBlobStorage to support
+ * blobs in detached containers.
+ */
+export class BlobOnlyStorage implements IDocumentStorageService {
+    constructor(
+        private readonly blobStorage: IDetachedBlobStorage,
+        private readonly logger: ITelemetryLogger,
+    ) { }
+
+    public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
+        return this.blobStorage.createBlob(content);
+    }
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        return this.blobStorage.readBlob(blobId);
+    }
+
+    public get policies(): IDocumentStorageServicePolicies | undefined {
+        return this.notCalled();
+    }
+
+    public get repositoryUrl(): string {
+        return this.notCalled();
+    }
+
+    /* eslint-disable @typescript-eslint/unbound-method */
+    public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled;
+    public getVersions: () => Promise<IVersion[]> = this.notCalled;
+    public write: () => Promise<IVersion> = this.notCalled;
+    public uploadSummaryWithContext: () => Promise<string> = this.notCalled;
+    public downloadSummary: () => Promise<ISummaryTree> = this.notCalled;
+    /* eslint-enable @typescript-eslint/unbound-method */
+
+    private notCalled(): never {
+        try {
+            // some browsers may not populate stack unless exception is thrown
+            throw new Error("BlobOnlyStorage not implemented method used");
+        } catch (err) {
+            this.logger.sendErrorEvent({ eventName: "BlobOnlyStorageWrongCall" }, err);
+            throw err;
+        }
     }
 }

@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Container } from "@fluidframework/container-loader";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { MessageType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ITestObjectProvider,
@@ -125,31 +124,22 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
         let user1ValueChangedCount: number = 0;
         let user2ValueChangedCount: number = 0;
         let user3ValueChangedCount: number = 0;
-        sharedMap1.on("valueChanged", (changed, local, msg) => {
+        sharedMap1.on("valueChanged", (changed, local) => {
             if (!local) {
-                assert(msg);
-                if (msg.type === MessageType.Operation) {
-                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
-                    user1ValueChangedCount = user1ValueChangedCount + 1;
-                }
+                assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
+                user1ValueChangedCount = user1ValueChangedCount + 1;
             }
         });
-        sharedMap2.on("valueChanged", (changed, local, msg) => {
+        sharedMap2.on("valueChanged", (changed, local) => {
             if (!local) {
-                assert(msg);
-                if (msg.type === MessageType.Operation) {
-                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
-                    user2ValueChangedCount = user2ValueChangedCount + 1;
-                }
+                assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
+                user2ValueChangedCount = user2ValueChangedCount + 1;
             }
         });
-        sharedMap3.on("valueChanged", (changed, local, msg) => {
+        sharedMap3.on("valueChanged", (changed, local) => {
             if (!local) {
-                assert(msg);
-                if (msg.type === MessageType.Operation) {
-                    assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
-                    user3ValueChangedCount = user3ValueChangedCount + 1;
-                }
+                assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
+                user3ValueChangedCount = user3ValueChangedCount + 1;
             }
         });
 
@@ -168,6 +158,10 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
         sharedMap1.set("testKey1", "value1");
         sharedMap2.set("testKey1", "value2");
         sharedMap3.set("testKey1", "value0");
+
+        // drain the outgoing so that the next set will come after
+        await provider.opProcessingController.processOutgoing();
+
         sharedMap3.set("testKey1", "value3");
 
         expectAllBeforeValues("testKey1", "value1", "value2", "value3");
@@ -181,6 +175,10 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
         // set after delete
         sharedMap1.set("testKey1", "value1.1");
         sharedMap2.delete("testKey1");
+
+        // drain the outgoing so that the next set will come after
+        await provider.opProcessingController.processOutgoing();
+
         sharedMap3.set("testKey1", "value1.3");
 
         expectAllBeforeValues("testKey1", "value1.1", undefined, "value1.3");
@@ -211,6 +209,10 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
         // delete after set
         sharedMap1.set("testKey3", "value3.1");
         sharedMap2.set("testKey3", "value3.2");
+
+        // drain the outgoing so that the next set will come after
+        await provider.opProcessingController.processOutgoing();
+
         sharedMap3.delete("testKey3");
 
         expectAllBeforeValues("testKey3", "value3.1", "value3.2", undefined);
@@ -224,6 +226,10 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
         // clear after set
         sharedMap1.set("testKey1", "value1.1");
         sharedMap2.set("testKey1", "value1.2");
+
+        // drain the outgoing so that the next set will come after
+        await provider.opProcessingController.processOutgoing();
+
         sharedMap3.clear();
         expectAllBeforeValues("testKey1", "value1.1", "value1.2", undefined);
         assert.equal(sharedMap3.size, 0, "Incorrect map size after clear");
@@ -256,6 +262,10 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
         // set after clear
         sharedMap1.set("testKey3", "value3.1");
         sharedMap2.clear();
+
+        // drain the outgoing so that the next set will come after
+        await provider.opProcessingController.processOutgoing();
+
         sharedMap3.set("testKey3", "value3.3");
         expectAllBeforeValues("testKey3", "value3.1", undefined, "value3.3");
 

@@ -4,8 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import * as MergeTree from "../";
 import { UniversalSequenceNumber } from "../constants";
+import {
+    Marker,
+    reservedMarkerIdKey,
+    reservedTileLabelsKey,
+} from "../mergeTree";
+import { ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 
@@ -31,10 +36,10 @@ describe("TestClient", () => {
 
             client.insertMarkerLocal(
                 0,
-                MergeTree.ReferenceType.Tile,
+                ReferenceType.Tile,
                 {
-                    [MergeTree.reservedTileLabelsKey]: [tileLabel],
-                    [MergeTree.reservedMarkerIdKey]: "some-id",
+                    [reservedTileLabelsKey]: [tileLabel],
+                    [reservedMarkerIdKey]: "some-id",
                 });
 
             client.insertTextLocal(0, "abc");
@@ -56,10 +61,10 @@ describe("TestClient", () => {
 
             client.insertMarkerLocal(
                 0,
-                MergeTree.ReferenceType.Tile,
+                ReferenceType.Tile,
                 {
-                    [MergeTree.reservedTileLabelsKey]: [tileLabel],
-                    [MergeTree.reservedMarkerIdKey]: "some-id",
+                    [reservedTileLabelsKey]: [tileLabel],
+                    [reservedMarkerIdKey]: "some-id",
                 });
             console.log(client.getText());
 
@@ -76,29 +81,29 @@ describe("TestClient", () => {
             const tileLabel = "EOP";
             client.insertMarkerLocal(
                 0,
-                MergeTree.ReferenceType.Tile,
+                ReferenceType.Tile,
                 {
-                    [MergeTree.reservedTileLabelsKey]: [tileLabel],
-                    [MergeTree.reservedMarkerIdKey]: "some-id",
+                    [reservedTileLabelsKey]: [tileLabel],
+                    [reservedMarkerIdKey]: "some-id",
                 });
 
             client.insertTextLocal(0, "abc d");
 
             client.insertMarkerLocal(
                 0,
-                MergeTree.ReferenceType.Tile,
+                ReferenceType.Tile,
                 {
-                    [MergeTree.reservedTileLabelsKey]: [tileLabel],
-                    [MergeTree.reservedMarkerIdKey]: "some-id",
+                    [reservedTileLabelsKey]: [tileLabel],
+                    [reservedMarkerIdKey]: "some-id",
                 });
 
             client.insertTextLocal(7, "ef");
             client.insertMarkerLocal(
                 8,
-                MergeTree.ReferenceType.Tile,
+                ReferenceType.Tile,
                 {
-                    [MergeTree.reservedTileLabelsKey]: [tileLabel],
-                    [MergeTree.reservedMarkerIdKey]: "some-id",
+                    [reservedTileLabelsKey]: [tileLabel],
+                    [reservedMarkerIdKey]: "some-id",
                 });
             console.log(client.getText());
 
@@ -115,29 +120,29 @@ describe("TestClient", () => {
             const tileLabel = "EOP";
             client.insertMarkerLocal(
                 0,
-                MergeTree.ReferenceType.Tile,
+                ReferenceType.Tile,
                 {
-                    [MergeTree.reservedTileLabelsKey]: [tileLabel],
-                    [MergeTree.reservedMarkerIdKey]: "some-id",
+                    [reservedTileLabelsKey]: [tileLabel],
+                    [reservedMarkerIdKey]: "some-id",
                 });
 
             client.insertTextLocal(0, "abc d");
 
             client.insertMarkerLocal(
                 0,
-                MergeTree.ReferenceType.Tile,
+                ReferenceType.Tile,
                 {
-                    [MergeTree.reservedTileLabelsKey]: [tileLabel],
-                    [MergeTree.reservedMarkerIdKey]: "some-id",
+                    [reservedTileLabelsKey]: [tileLabel],
+                    [reservedMarkerIdKey]: "some-id",
                 });
 
             client.insertTextLocal(7, "ef");
             client.insertMarkerLocal(
                 8,
-                MergeTree.ReferenceType.Tile,
+                ReferenceType.Tile,
                 {
-                    [MergeTree.reservedTileLabelsKey]: [tileLabel],
-                    [MergeTree.reservedMarkerIdKey]: "some-id",
+                    [reservedTileLabelsKey]: [tileLabel],
+                    [reservedMarkerIdKey]: "some-id",
                 });
             console.log(client.getText());
 
@@ -154,10 +159,10 @@ describe("TestClient", () => {
             const tileLabel = "EOP";
             client.insertMarkerLocal(
                 0,
-                MergeTree.ReferenceType.Tile,
+                ReferenceType.Tile,
                 {
-                    [MergeTree.reservedTileLabelsKey]: [tileLabel],
-                    [MergeTree.reservedMarkerIdKey]: "some-id",
+                    [reservedTileLabelsKey]: [tileLabel],
+                    [reservedMarkerIdKey]: "some-id",
                 });
 
             console.log(client.getText());
@@ -181,10 +186,10 @@ describe("TestClient", () => {
             const tileLabel = "EOP";
             client.insertMarkerLocal(
                 0,
-                MergeTree.ReferenceType.Tile,
+                ReferenceType.Tile,
                 {
-                    [MergeTree.reservedTileLabelsKey]: [tileLabel],
-                    [MergeTree.reservedMarkerIdKey]: "some-id",
+                    [reservedTileLabelsKey]: [tileLabel],
+                    [reservedMarkerIdKey]: "some-id",
                 });
 
             client.insertTextLocal(0, "abc");
@@ -234,12 +239,12 @@ describe("TestClient", () => {
 
     describe(".annotateMarker", () => {
         it("annotate valid marker", () => {
-            const insertOp = client.insertMarkerLocal(0, MergeTree.ReferenceType.Tile, {
-                [MergeTree.reservedMarkerIdKey]: "123",
+            const insertOp = client.insertMarkerLocal(0, ReferenceType.Tile, {
+                [reservedMarkerIdKey]: "123",
             });
             assert(insertOp);
             const markerInfo = client.getContainingSegment(0);
-            const marker = markerInfo.segment as MergeTree.Marker;
+            const marker = markerInfo.segment as Marker;
             const annotateOp = client.annotateMarker(marker, { foo: "bar" }, undefined);
             assert(annotateOp);
             assert(marker.properties);

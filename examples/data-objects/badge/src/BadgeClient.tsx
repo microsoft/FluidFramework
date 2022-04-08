@@ -18,13 +18,6 @@ export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClient
     const changeSelectedOption = (newItem: IBadgeType): void => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if (newItem.key !== model.currentCell.get()!.key) {
-            const len = model.historySequence.getItemCount();
-            model.historySequence.insert(len, [
-                {
-                    value: newItem,
-                    timestamp: new Date().toJSON(),
-                },
-            ]);
             model.currentCell.set(newItem);
         }
     };
@@ -51,12 +44,6 @@ export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClient
         return [...model.optionsMap.values()];
     };
 
-    const getHistoryItems = () => {
-        // return history items in reverse order so that newest is first
-        const history = model.historySequence.getItems(0);
-        return history.reverse();
-    };
-
     const getSelectedOptionKey = () => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return model.currentCell.get()!.key;
@@ -64,14 +51,12 @@ export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClient
 
     // Store Fluid data in React state
     const [options, setOptions] = React.useState(getOptions());
-    const [historyItems, setHistoryItems] = React.useState(getHistoryItems());
     const [selectedOption, setSelectedOption] = React.useState(getSelectedOptionKey());
 
     // Watch for Fluid data updates and update React state
     React.useEffect(() => {
         model.currentCell.on("valueChanged", () => {
             setSelectedOption(getSelectedOptionKey());
-            setHistoryItems(getHistoryItems());
         });
     }, [model.currentCell]);
 
@@ -85,7 +70,6 @@ export const BadgeClient: React.FC<IBadgeClientProps> = ({ model }: IBadgeClient
     return (
         <BadgeView
             options={options}
-            historyItems={historyItems}
             selectedOption={selectedOption}
             addOption={addOption}
             changeSelectedOption={changeSelectedOption}

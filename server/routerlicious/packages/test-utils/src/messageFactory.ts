@@ -96,7 +96,7 @@ export class MessageFactory {
         return this.createRawOperation(operation, timestamp, this.clientId);
     }
 
-    public createJoin(timestamp = Date.now()) {
+    public createJoin(timestamp = Date.now(), serverMetadata: any = undefined) {
         const joinMessage: IClientJoin = {
             clientId: this.clientId,
             detail: {
@@ -116,6 +116,7 @@ export class MessageFactory {
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.ClientJoin,
+            serverMetadata,
         };
 
         return this.createRawOperation(operation, timestamp, null);
@@ -147,40 +148,6 @@ export class MessageFactory {
         return objectMessage;
     }
 
-    public createSave(): ISequencedOperationMessage {
-        const operation: IDocumentMessage = {
-            clientSequenceNumber: this.clientSequenceNumber++,
-            contents: "Test Save",
-            referenceSequenceNumber: 0,
-            traces: [],
-            type: MessageType.Save,
-        };
-
-        const sequencedOperation: ISequencedDocumentMessage = {
-            clientId: this.clientId,
-            clientSequenceNumber: operation.clientSequenceNumber,
-            contents: operation.contents,
-            metadata: operation.metadata,
-            minimumSequenceNumber: 0,
-            origin: undefined,
-            referenceSequenceNumber: operation.referenceSequenceNumber,
-            sequenceNumber: this.sequenceNumber++,
-            term: 1,
-            timestamp: Date.now(),
-            traces: [],
-            type: operation.type,
-        };
-
-        const message: ISequencedOperationMessage = {
-            documentId: this.documentId,
-            operation: sequencedOperation,
-            tenantId: this.tenantId,
-            type: SequencedOperationType,
-        };
-
-        return message;
-    }
-
     public createSequencedOperation(referenceSequenceNumber = 0): ISequencedOperationMessage {
         const operation = this.createDocumentMessage(MessageType.Operation, referenceSequenceNumber);
         const sequencedOperation: ISequencedDocumentMessage = {
@@ -208,7 +175,7 @@ export class MessageFactory {
         return message;
     }
 
-    public createSummarize(referenceSequenceNumber: number,  handle: string): ISequencedOperationMessage {
+    public createSummarize(referenceSequenceNumber: number, handle: string): ISequencedOperationMessage {
         const operation = this.createDocumentMessage(MessageType.Summarize, referenceSequenceNumber);
         const sequencedOperation: ISequencedDocumentAugmentedMessage = {
             clientId: this.clientId,
@@ -269,7 +236,7 @@ export class MessageFactory {
         const sequencedOperation: ISequencedDocumentAugmentedMessage = {
             clientId: null,
             clientSequenceNumber: -1,
-            contents: { handle, summaryProposal : { summarySequenceNumber : 1 } },
+            contents: { handle, summaryProposal: { summarySequenceNumber: 1 } },
             metadata: operation.metadata,
             minimumSequenceNumber: 0,
             origin: undefined,

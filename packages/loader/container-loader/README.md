@@ -60,7 +60,7 @@ Please see specific sections for more details on these states and events - this 
 
 Container is returned as result of Loader.resolve() call. Loader can cache containers, so if same URI is requested from same loader instance, earlier created container might be returned. This is important, as some of the headers (like `pause`) might be ignored because of Container reuse.
 
-`ILoaderHeader` in [loader.ts](../container-definitions/src/loader.ts) describes properties controlling container loading.
+`ILoaderHeader` in [loader.ts](../../../common/lib/container-definitions/src/loader.ts) describes properties controlling container loading.
 
 ### Connectivity
 
@@ -117,7 +117,7 @@ There are two ways errors are exposed:
 
 Critical errors can show up in #1 & #2 workflows. For example, data store URI may point to a deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "error" handler.
 
-Errors are of [ICriticalContainerError](../container-definitions/src/error.ts) type, and warnings are of [ContainerWarning](../container-definitions/src/error.ts) type. Both have `errorType` property, describing type of an error (and appropriate interface of error object):
+Errors are of [ICriticalContainerError](../../../common/lib/container-definitions/src/error.ts) type, and warnings are of [ContainerWarning](../../../common/lib/container-definitions/src/error.ts) type. Both have `errorType` property, describing type of an error (and appropriate interface of error object):
 
 ```ts
      readonly errorType: string;
@@ -125,7 +125,7 @@ Errors are of [ICriticalContainerError](../container-definitions/src/error.ts) t
 
 There are 3 sources of errors:
 
-1. [ContainerErrorType](../container-definitions/src/error.ts) - errors & warnings raised at loader level
+1. [ContainerErrorType](../../../common/lib/container-definitions/src/error.ts) - errors & warnings raised at loader level
 2. [OdspErrorType](../../drivers/odsp-driver/src/odspError.ts) and [R11sErrorType](../../drivers/routerlicious-driver/src/documentDeltaConnection.ts) - errors raised by ODSP and R11S drivers.
 3. Runtime errors, like `"summarizingError"`, `"dataCorruptionError"`. This class of errors is not pre-determined and depends on type of container loaded.
 

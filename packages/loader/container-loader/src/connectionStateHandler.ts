@@ -3,38 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
-import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { ConnectionMode, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { EventEmitterWithErrorHandling, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
-    protocolHandler: () => ProtocolOpHandler | undefined,
+    quorumClients: () => IQuorumClients | undefined,
     logConnectionStateChangeTelemetry:
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
+    logConnectionIssue: (eventName: string) => void,
+    connectionStateChanged: () => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
 
-/**
- * Events emitted by the ConnectionStateHandler.
- */
-export interface IConnectionStateHandlerEvents extends IEvent {
-    (event: "connectionStateChanged", listener: () => void);
-}
+const JoinOpTimer = 45000;
 
-export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConnectionStateHandlerEvents> {
+export class ConnectionStateHandler {
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
     private readonly prevClientLeftTimer: Timer;
+    private readonly joinOpTimer: Timer;
+
     private waitEvent: PerformanceEvent | undefined;
 
     public get connectionState(): ConnectionState {
@@ -57,19 +55,66 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         private readonly handler: IConnectionStateHandler,
         private readonly logger: ITelemetryLogger,
     ) {
-        super();
         this.prevClientLeftTimer = new Timer(
-            // Default is 90 sec for which we are going to wait for its own "leave" message.
-            this.handler.maxClientLeaveWaitTime ?? 90000,
+            // Default is 5 min for which we are going to wait for its own "leave" message. This is same as
+            // the max time on server after which leave op is sent.
+            this.handler.maxClientLeaveWaitTime ?? 300000,
             () => {
+                assert(!this.connected,
+                    0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */);
                 this.applyForConnectedState("timeout");
             },
         );
+
+        // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
+        // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
+        // if retrying fixes the problem, we should not see these events.
+        this.joinOpTimer = new Timer(
+            JoinOpTimer,
+            () => {
+                // I've observed timer firing within couple ms from disconnect event, looks like
+                // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
+                if (this.connectionState === ConnectionState.Connecting) {
+                    this.handler.logConnectionIssue("NoJoinOp");
+                }
+            },
+        );
+    }
+
+    private startJoinOpTimer() {
+        assert(!this.joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
+        this.joinOpTimer.start();
+    }
+
+    private stopJoinOpTimer() {
+        assert(this.joinOpTimer.hasTimer, 0x235 /* "no joinOpTimer" */);
+        this.joinOpTimer.clear();
+    }
+
+    public dispose() {
+        assert(!this.joinOpTimer.hasTimer, 0x2a5 /* "join timer" */);
+        this.prevClientLeftTimer.clear();
+    }
+
+    public containerSaved() {
+        // If we were waiting for moving to Connected state, then only apply for state change. Since the container
+        // is now saved and we don't have any ops to roundtrip, we can clear the timer and apply for connected state.
+        if (this.prevClientLeftTimer.hasTimer) {
+            this.prevClientLeftTimer.clear();
+            this.applyForConnectedState("containerSaved");
+        }
     }
 
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
+            if (this.joinOpTimer.hasTimer) {
+                this.stopJoinOpTimer();
+            } else {
+                // timer has already fired, meaning it took too long to get join on.
+                // Record how long it actually took to recover.
+                this.handler.logConnectionIssue("ReceivedJoinOp");
+            }
             // Start the event in case we are waiting for leave or timeout.
             if (this.prevClientLeftTimer.hasTimer) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
@@ -82,14 +127,15 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         }
     }
 
-    private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout") {
-        const protocolHandler = this.handler.protocolHandler();
+    private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved") {
+        const quorumClients = this.handler.quorumClients();
+        assert(quorumClients !== undefined, 0x236 /* "In all cases it should be already installed" */);
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
         // or timeout has occured while doing so.
         if (this.pendingClientId !== this.clientId
             && this.pendingClientId !== undefined
-            && protocolHandler !== undefined && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
+            && quorumClients.getMember(this.pendingClientId) !== undefined
             && !this.prevClientLeftTimer.hasTimer
         ) {
             this.waitEvent?.end({ source });
@@ -98,12 +144,13 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             // Adding this event temporarily so that we can get help debugging if something goes wrong.
             this.logger.sendTelemetryEvent({
                 eventName: "connectedStateRejected",
+                category: source === "timeout" ? "error" : "generic",
                 source,
                 pendingClientId: this.pendingClientId,
                 clientId: this.clientId,
                 hasTimer: this.prevClientLeftTimer.hasTimer,
-                inQuorum: protocolHandler !== undefined && this.pendingClientId !== undefined
-                    && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined,
+                inQuorum: quorumClients !== undefined && this.pendingClientId !== undefined
+                    && quorumClients.getMember(this.pendingClientId) !== undefined,
             });
         }
     }
@@ -117,13 +164,15 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     }
 
     public receivedDisconnectEvent(reason: string) {
+        if (this.joinOpTimer.hasTimer) {
+            this.stopJoinOpTimer();
+        }
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
     public receivedConnectEvent(
         connectionMode: ConnectionMode,
         details: IConnectionDetails,
-        opsBehind?: number,
     ) {
         const oldState = this._connectionState;
         this._connectionState = ConnectionState.Connecting;
@@ -136,19 +185,22 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
 
-        // Report telemetry after we set client id!
+        // Report telemetry after we set client id, but before transitioning to Connected state below!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
-        const protocolHandler = this.handler.protocolHandler();
+        const quorumClients = this.handler.quorumClients();
         // Check if we already processed our own join op through delta storage!
         // we are fetching ops from storage in parallel to connecting to ordering service
         // Given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
         // Note that we might be still initializing quorum - connection is established proactively on load!
-        if ((protocolHandler !== undefined && protocolHandler.quorum.getMember(details.clientId) !== undefined)
+        if ((quorumClients !== undefined && quorumClients.getMember(details.clientId) !== undefined)
             || connectionMode === "read"
         ) {
+            assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "there should be no timer for 'read' connections" */);
             this.setConnectionState(ConnectionState.Connected);
+        } else if (connectionMode === "write") {
+            this.startJoinOpTimer();
         }
     }
 
@@ -163,10 +215,10 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
         const oldState = this._connectionState;
         this._connectionState = value;
-        const quorum = this.handler.protocolHandler()?.quorum;
+        const quorumClients = this.handler.quorumClients();
         let client: ILocalSequencedClient | undefined;
         if (this._clientId !== undefined) {
-            client = quorum?.getMember(this._clientId);
+            client = quorumClients?.getMember(this._clientId);
         }
         if (value === ConnectionState.Connected) {
             assert(oldState === ConnectionState.Connecting,
@@ -201,9 +253,10 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             }
         }
 
-        this.emit("connectionStateChanged");
-
-        // Report telemetry after we set client id!
+        // Report transition before we propagate event across layers
         this.handler.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);
+
+        // Propagate event across layers
+        this.handler.connectionStateChanged();
     }
 }

@@ -17,7 +17,7 @@ export class TestFluidSerializer implements IFluidSerializer {
 		throw new Error('Method not implemented.');
 	}
 
-	public decode(input: any) {
+	public decode(input: any): any {
 		throw new Error('Method not implemented.');
 	}
 

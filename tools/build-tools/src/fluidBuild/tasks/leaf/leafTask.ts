@@ -13,6 +13,9 @@ import { Task, TaskExec } from "../task";
 import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync, ExecAsyncResult } from "../../../common/utils";
 import chalk from "chalk";
 
+interface TaskExecResult extends ExecAsyncResult {
+    worker?: boolean
+}
 export abstract class LeafTask extends Task {
 
     private dependentTasks?: LeafTask[];
@@ -81,10 +84,10 @@ export abstract class LeafTask extends Task {
         }
 
         await this.markExecDone();
-        return this.execDone(startTime, BuildResult.Success);
+        return this.execDone(startTime, BuildResult.Success, ret.worker);
     }
 
-    private async execCore(): Promise<ExecAsyncResult> {
+    private async execCore(): Promise<TaskExecResult> {
         const workerPool = this.node.buildContext.workerPool;
         if (workerPool && this.useWorker) {
             const workerResult = await workerPool.runOnWorker(this.executable, this.command, this.node.pkg.directory);
@@ -93,6 +96,7 @@ export abstract class LeafTask extends Task {
                     error: workerResult.code === 0? null : { name: "Worker error", message: "Worker error", cmd: this.command, code: workerResult.code },
                     stdout: workerResult.stdout?? "",
                     stderr: workerResult.stderr?? "",
+                    worker: true,
                 }
             }
             // rerun on the main thread in case the work has an unknown exception
@@ -134,7 +138,7 @@ export abstract class LeafTask extends Task {
         return errorMessages;
     }
 
-    private execDone(startTime: number, status: BuildResult) {
+    private execDone(startTime: number, status: BuildResult, worker?: boolean) {
         if (!options.showExec) {
             let statusCharacter: string = " ";
             switch (status) {
@@ -153,7 +157,8 @@ export abstract class LeafTask extends Task {
             const taskNum = this.node.buildContext.taskStats.leafBuiltCount.toString().padStart(3, " ");
             const totalTask = this.node.buildContext.taskStats.leafTotalCount - this.node.buildContext.taskStats.leafUpToDateCount;
             const elapsedTime = (Date.now() - startTime) / 1000;
-            const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${this.node.pkg.nameColored}: ${this.command} - ${elapsedTime.toFixed(3)}s`;
+            const workerMsg = worker? "[worker] " : "";
+            const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${this.node.pkg.nameColored}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s`;
             logStatus(statusString);
             if (status === BuildResult.Failed) {
                 this.node.buildContext.failedTaskLines.push(statusString);

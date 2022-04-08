@@ -5,7 +5,7 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid/eslint7"
+        "@fluidframework/eslint-config-fluid"
     ],
     "rules": {
     }

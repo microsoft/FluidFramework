@@ -4,7 +4,7 @@
  */
 
 import { Runner, Suite, Test } from "mocha";
-import { benchmarkTypes, isChildProcess, performanceTestSuiteTag } from "./Configuration";
+import { benchmarkTypes, isChildProcess, performanceTestSuiteTag, ReporterOptions } from "./Configuration";
 import { BenchmarkData, BenchmarkReporter, failedData } from "./Reporter";
 import { red } from "./ReporterUtilities";
 
@@ -42,8 +42,8 @@ function getName(name: string): string {
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 module.exports = class {
-    public constructor(runner: Runner) {
-        const benchmarkReporter = new BenchmarkReporter();
+    public constructor(runner: Runner, options?: ReporterOptions) {
+        const benchmarkReporter = new BenchmarkReporter(options?.reportDir);
         const data: Map<Test, BenchmarkData> = new Map();
         runner
             .on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {

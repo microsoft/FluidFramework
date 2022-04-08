@@ -4,22 +4,15 @@
  */
 
 import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    MessageType,
-    TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { createSingleBlobSummary, IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
-import { debug } from "./debug";
 import { IConsensusRegisterCollection, ReadPolicy, IConsensusRegisterCollectionEvents } from "./interfaces";
 
 interface ILocalData<T> {
@@ -187,25 +180,11 @@ export class ConsensusRegisterCollection<T>
         return [...this.data.keys()];
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
         const dataObj: { [key: string]: ILocalData<T> } = {};
         this.data.forEach((v, k) => { dataObj[k] = v; });
 
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: this.stringify(dataObj, serializer),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+        return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));
     }
 
     /**
@@ -225,11 +204,7 @@ export class ConsensusRegisterCollection<T>
         }
     }
 
-    protected registerCore() { }
-
-    protected onDisconnect() {
-        debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {

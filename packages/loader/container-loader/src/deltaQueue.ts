@@ -7,7 +7,16 @@ import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-defini
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import Deque from "double-ended-queue";
 
-export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> implements IDeltaQueue<T> {
+export interface IDeltaQueueWriter<T>
+{
+    push(task: T): void;
+    clear(): void;
+}
+
+export class DeltaQueue<T>
+    extends TypedEventEmitter<IDeltaQueueEvents<T>>
+    implements IDeltaQueue<T>, IDeltaQueueWriter<T>
+{
     private isDisposed: boolean = false;
     private readonly q = new Deque<T>();
 
@@ -93,9 +102,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
     public resume(): void {
         assert(this.pauseCount > 0, 0x0f4 /* "Nonzero pause-count on resume()" */);
         this.pauseCount--;
-        if (!this.paused) {
-            this.ensureProcessing();
-        }
+        this.ensureProcessing();
     }
 
     /**
@@ -104,7 +111,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
      * not already started.
      */
     private ensureProcessing() {
-        if (this.processingDeferred === undefined) {
+        if (!this.paused && this.processingDeferred === undefined) {
             this.processingDeferred = new Deferred<void>();
             // Use a resolved promise to start the processing on a separate stack.
             // eslint-disable-next-line @typescript-eslint/no-floating-promises

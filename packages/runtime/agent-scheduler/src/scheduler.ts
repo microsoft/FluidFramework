@@ -8,9 +8,13 @@ import {
     IFluidHandle,
     IRequest,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
+import {
+    FluidDataStoreRuntime,
+    FluidObjectHandle,
+    ISharedObjectRegistry,
+} from "@fluidframework/datastore";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
@@ -18,26 +22,49 @@ import {
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import debug from "debug";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
-class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
+const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
+    const maybeValue = map.get<T>(key);
+    if (maybeValue !== undefined) {
+        return maybeValue;
+    }
+
+    return new Promise((resolve) => {
+        const handler = (changed: IValueChanged) => {
+            if (changed.key === key) {
+                map.off("valueChanged", handler);
+                const value = map.get<T>(changed.key);
+                if (value === undefined) {
+                    throw new Error("Unexpected valueChanged result");
+                }
+                resolve(value);
+            }
+        };
+        map.on("valueChanged", handler);
+    });
+};
+
+const schedulerId = "scheduler";
+
+export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
         let root: ISharedMap;
         let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
-        if (!runtime.existing) {
+        if (!existing) {
             root = SharedMap.create(runtime, "root");
             root.bindToContext();
             consensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
             consensusRegisterCollection.bindToContext();
-            root.set("scheduler", consensusRegisterCollection.handle);
+            root.set(schedulerId, consensusRegisterCollection.handle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
-            const handle = await root.wait<IFluidHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
+            const handle = await mapWait<IFluidHandle<ConsensusRegisterCollection<string | null>>>(root, schedulerId);
             assert(handle !== undefined, 0x116 /* "Missing handle on scheduler load" */);
             consensusRegisterCollection = await handle.get();
         }
@@ -73,11 +100,19 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
     // It's subset of this.locallyRunnableTasks
     private runningTasks = new Set<string>();
 
+    private readonly _handle: IFluidHandle<this>;
+
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly context: IFluidDataStoreContext,
-        private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>) {
+        private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>,
+    ) {
         super();
+        this._handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
+    }
+
+    public get handle() {
+        return this._handle;
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
@@ -114,7 +149,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
         if (this.isActive()) {
             const currentClient = this.getTaskClientId(taskId);
             if (currentClient === undefined || currentClient === null) {
-                debug(`Requesting ${taskId}`);
                 await this.writeCore(taskId, this.clientId);
             }
         }
@@ -144,7 +178,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
         if (taskUrls.length > 0) {
             const registersP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
-                debug(`Registering ${taskUrl}`);
                 registersP.push(this.writeCore(taskUrl, null));
             }
             await Promise.all(registersP);
@@ -155,12 +188,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
 
                 // Task should be either registered (null) or picked up.
                 assert(taskStatus !== undefined, 0x11a /* `Unsuccessful registration` */);
-
-                if (taskStatus === null) {
-                    debug(`Registered ${taskUrl}`);
-                } else {
-                    debug(`${taskStatus} is running ${taskUrl}`);
-                }
             }
         }
     }
@@ -169,7 +196,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
         if (taskUrls.length > 0) {
             const releasesP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
-                debug(`Releasing ${taskUrl}`);
                 // Remove from local map so that it can be picked later.
                 this.locallyRunnableTasks.delete(taskUrl);
                 releasesP.push(this.writeCore(taskUrl, null));
@@ -182,7 +208,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
         assert(this.isActive(), 0x11b /* "Trying to clear tasks on inactive agent" */);
         const clearP: Promise<void>[] = [];
         for (const taskUrl of taskUrls) {
-            debug(`Clearing ${taskUrl}`);
             clearP.push(this.writeCore(taskUrl, null));
         }
         await Promise.all(clearP);
@@ -211,7 +236,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
                 for (const taskUrl of this.consensusRegisterCollection.keys()) {
                     if (this.getTaskClientId(taskUrl) === clientId) {
                         if (this.locallyRunnableTasks.has(taskUrl)) {
-                            debug(`Requesting ${taskUrl}`);
                             tasks.push(this.writeCore(taskUrl, this.clientId));
                         } else {
                             leftTasks.push(taskUrl);
@@ -288,7 +312,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
             // If not, initializeCore() will do it when connected
             if (currentClient === null) {
                 if (this.locallyRunnableTasks.has(key)) {
-                    debug(`Requesting ${key}`);
                     await this.writeCore(key, this.clientId);
                 }
             }
@@ -324,7 +347,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
 
         for (const [taskUrl] of this.locallyRunnableTasks) {
             if (!this.getTaskClientId(taskUrl)) {
-                debug(`Requesting ${taskUrl}`);
                 tasks.push(this.writeCore(taskUrl, this.clientId));
             }
         }
@@ -365,9 +387,13 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
 
 class AgentSchedulerRuntime extends FluidDataStoreRuntime {
     private readonly agentSchedulerP: Promise<AgentScheduler>;
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry) {
-        super(dataStoreContext, sharedObjectRegistry);
-        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext);
+    constructor(
+        dataStoreContext: IFluidDataStoreContext,
+        sharedObjectRegistry: ISharedObjectRegistry,
+        existing: boolean,
+    ) {
+        super(dataStoreContext, sharedObjectRegistry, existing);
+        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext, existing);
     }
     public async request(request: IRequest) {
         const response = await super.request(request);
@@ -391,13 +417,19 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
         return [this.type, Promise.resolve(new AgentSchedulerFactory())];
     }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
+    public static async createChildInstance(parentContext: IFluidDataStoreContext): Promise<AgentScheduler> {
+        const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
+        const router = await parentContext.containerRuntime.createDataStore(packagePath);
+        return requestFluidObject<AgentScheduler>(router, "/");
+    }
+
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const mapFactory = SharedMap.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const dataTypes = new Map<string, IChannelFactory>();
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        return new AgentSchedulerRuntime(context, dataTypes);
+        return new AgentSchedulerRuntime(context, dataTypes, existing);
     }
 }

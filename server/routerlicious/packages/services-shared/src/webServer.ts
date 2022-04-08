@@ -46,13 +46,37 @@ export class WebServer implements core.IWebServer {
     }
 }
 
+export interface IHttpServerConfig {
+    /**
+     * The number of milliseconds of inactivity before a socket is presumed to have timed out.
+     * A value of 0 will disable the timeout behavior on incoming connections.
+     * Default: 0 (disabled)
+     */
+     connectionTimeoutMs?: number;
+}
+
+const defaultHttpServerConfig: IHttpServerConfig = {
+    connectionTimeoutMs: 0,
+};
+const createAndConfigureHttpServer = (
+    requestListener: RequestListener,
+    httpServerConfig: IHttpServerConfig | undefined,
+): http.Server => {
+    const server = http.createServer(requestListener);
+    server.timeout = httpServerConfig?.connectionTimeoutMs ?? defaultHttpServerConfig.connectionTimeoutMs;
+    return server;
+};
+
 export class SocketIoWebServerFactory implements core.IWebServerFactory {
-    constructor(private readonly redisConfig: any, private readonly socketIoAdapterConfig?: any) {
+    constructor(
+        private readonly redisConfig: any,
+        private readonly socketIoAdapterConfig?: any,
+        private readonly httpServerConfig?: IHttpServerConfig) {
     }
 
     public create(requestListener: RequestListener): core.IWebServer {
         // Create the base HTTP server and register the provided request listener
-        const server = http.createServer(requestListener);
+        const server = createAndConfigureHttpServer(requestListener, this.httpServerConfig);
         const httpServer = new HttpServer(server);
 
         const socketIoServer = socketIo.create(this.redisConfig, server, this.socketIoAdapterConfig);
@@ -62,9 +86,12 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 }
 
 export class BasicWebServerFactory implements core.IWebServerFactory {
+    constructor(private readonly httpServerConfig?: IHttpServerConfig) {
+    }
+
     public create(requestListener: RequestListener): core.IWebServer {
         // Create the base HTTP server and register the provided request listener
-        const server = http.createServer(requestListener);
+        const server = createAndConfigureHttpServer(requestListener, this.httpServerConfig);
         const httpServer = new HttpServer(server);
 
         return new WebServer(httpServer, null);

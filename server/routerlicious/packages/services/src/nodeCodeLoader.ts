@@ -9,6 +9,7 @@ import { exec } from "child_process";
 import * as fs from "fs";
 import { promisify } from "util";
 import * as winston from "winston";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 const asyncExec = promisify(exec);
 
@@ -85,10 +86,12 @@ export class NodeCodeLoader {
             fs.closeSync(fs.openSync(signalPath, "w"));
 
             winston.info(`Installed ${pkg} in ${packageDirectory} directory`);
+            Lumberjack.info(`Installed ${pkg} in ${packageDirectory} directory`);
             return codeEntrypoint;
         } else {
             await this.waitForPackageFiles(packageDirectory, signalFileName, this.waitTimeoutMSec);
             winston.info(`Package ${pkg} is already installed`);
+            Lumberjack.info(`Package ${pkg} is already installed`);
             return codeEntrypoint;
         }
     }

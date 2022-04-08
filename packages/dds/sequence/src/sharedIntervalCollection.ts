@@ -4,10 +4,6 @@
  */
 
 import { bufferToString } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry,
-} from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -15,10 +11,13 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
+    createSingleBlobSummary,
+    IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
 import {
     Interval,
     IntervalCollection,
@@ -146,31 +145,15 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return sharedCollection;
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: this.intervalMapKernel.serialize(serializer),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+        return createSingleBlobSummary(snapshotFileName, this.intervalMapKernel.serialize(serializer));
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
     }
 
-    protected onDisconnect() {
-        debug(`${this.id} is now disconnected`);
-    }
+    protected onDisconnect() { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
@@ -187,17 +170,9 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         }
     }
 
-    protected registerCore() {
-        for (const value of this.intervalMapKernel.values()) {
-            if (SharedObject.is(value)) {
-                value.bindToContext();
-            }
-        }
-    }
-
     /**
      * Creates the full path of the intervalCollection label
-     * @param label - the incoming lable
+     * @param label - the incoming label
      */
     protected getIntervalCollectionPath(label: string): string {
         return label;

@@ -4,7 +4,6 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
@@ -25,7 +24,7 @@ export class Vltava extends DataObject implements IFluidHTMLView {
     private dataModelInternal: IVltavaDataModel | undefined;
 
     private static readonly factory =
-        new DataObjectFactory<Vltava, undefined, undefined, IEvent>("vltava", Vltava, [], {});
+        new DataObjectFactory("vltava", Vltava, [], {});
 
     public static getFactory() {
         return Vltava.factory;

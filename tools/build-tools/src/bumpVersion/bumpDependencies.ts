@@ -5,7 +5,7 @@
 
 import { Context } from "./context";
 import { VersionBag } from "./versionBag";
-import { fatal } from "./utils";
+import { fatal, prereleaseSatisfies } from "./utils";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { FluidRepo } from "../common/fluidRepo";
@@ -102,11 +102,12 @@ export function getReleasedPrereleaseDependencies(context: Context) {
     const bumpPackageMap = new Map<string, { pkg: Package, rangeSpec: string }>();
     for (const pkg of context.repo.packages.packages) {
         for (const dep of pkg.combinedDependencies) {
-            if (dep.version.endsWith("-0")) {
+            // detect if the dependency include prerelease.  This doesn't work if it is range
+            if (dep.version.includes("-")) {
                 const depPackage = context.fullPackageMap.get(dep.name);
                 // The prerelease dependence doesn't match the live version, assume that it is released already
-                if (depPackage && dep.version !== `^${depPackage.version}-0`) {
-                    bumpPackageMap.set(dep.name, { pkg: depPackage, rangeSpec: dep.version.slice(0, -2) });
+                if (depPackage && !prereleaseSatisfies(depPackage.version, dep.version)) {
+                    bumpPackageMap.set(dep.name, { pkg: depPackage, rangeSpec: dep.version.substring(0, dep.version.lastIndexOf("-")) });
                 }
             }
         }
@@ -148,7 +149,7 @@ async function bumpPackageDependencies(
         if (dep && !MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo)) {
             const depVersion = dep.rangeSpec;
             const dependencies = dev ? pkg.packageJson.devDependencies : pkg.packageJson.dependencies;
-            if (release ? dependencies[name] === `${depVersion}-0` : dependencies[name] !== depVersion) {
+            if (release ? dependencies[name].startsWith(`${depVersion}-`) : dependencies[name] !== depVersion) {
                 if (changedVersion) {
                     changedVersion.add(dep.pkg, depVersion);
                 }

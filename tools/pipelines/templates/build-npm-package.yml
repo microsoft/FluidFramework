@@ -37,11 +37,11 @@ parameters:
 
 - name: poolCG
   type: object
-  default: Lite
+  default: Small
 
 - name: poolBuild
   type: object
-  default: Lite
+  default: Small
 
 - name: preCG
   type: stepList
@@ -68,6 +68,10 @@ parameters:
   type: string
   default:
 
+- name: nonScopedPackages
+  type: object
+  default: []
+
 - name: publishOverride
   type: string
 
@@ -90,6 +94,7 @@ variables:
       publishOverride: ${{ parameters.publishOverride }}
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
       buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+      nonScopedPackages: ${{ parameters.nonScopedPackages }}
 
 stages:
   # Install / Build / Test Stage
@@ -134,11 +139,15 @@ stages:
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 TestCoverage=$(testCoverage)
 
+              Publish Parameters:
+                nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
+
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
                 componentDetection=${{ variables.componentDetection }}
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
+                publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
 
                 release=$(release)"
 
@@ -150,9 +159,9 @@ stages:
                 fi
 
                 if [ -f "lerna.json" ]; then
-                  grep -e fluid.*-0 `find packages -name 'package.json'`
+                  grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
                 else
-                  grep -e fluid.*-0 `find . -name 'package.json'`
+                  grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
                 fi
 
                 if [[ $? == 0 ]]; then
@@ -177,9 +186,9 @@ stages:
 
         # Install
         - task: UseNode@1
-          displayName: Use Node 12.x
+          displayName: Use Node 14.x
           inputs:
-            version: 12.x
+            version: 14.x
         - task: Npm@1
           displayName: npm ci
           inputs:
@@ -235,11 +244,22 @@ stages:
                 command: 'custom'
                 workingDir: ${{ parameters.buildDirectory }}
                 customCommand: 'run ci:test:coverage'
+            # Some webpacked file using externals introduce file name with quotes in them
+            # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
+            # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
+            - task: Bash@3
+              displayName: Patch Coverage Results
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ parameters.buildDirectory }}/nyc/report
+                script: |
+                  sed -e 's/\(filename=\".*[\\/]external \)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+              condition: succeededOrFailed()
             - task: PublishCodeCoverageResults@1
               displayName: Publish Code Coverage
               inputs:
                 codeCoverageTool: Cobertura
-                summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage.xml
+                summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                 reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
               condition: succeededOrFailed()
 
@@ -262,19 +282,42 @@ stages:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 mkdir $(Build.ArtifactStagingDirectory)/pack/
+                mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
+                mkdir $(Build.ArtifactStagingDirectory)/test-files/
+                if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
+                  mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
+                fi
                 if [ -f "lerna.json" ]; then
                   npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
-                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
+                  npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
                 else
                   npm pack --unsafe-perm
-                  mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+                  mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 fi
+
+          - ${{ if eq(variables.publishNonScopedPackages, true) }}:
+            - ${{ each parameter in parameters.nonScopedPackages }}:
+              - task: Bash@3
+                displayName: Move Non-Scoped Package ${{parameter}}
+                inputs:
+                  targetType: 'inline'
+                  workingDirectory: ${{ parameters.buildDirectory }}
+                  script: |
+                    mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - pack
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
               ArtifactName: 'pack'
+              publishLocation: 'Container'
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifact - Test Files
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/test-files'
+              ArtifactName: 'test-files'
               publishLocation: 'Container'
 
         # Collect/publish/run bundle analysis
@@ -365,3 +408,4 @@ stages:
       parameters:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
+        publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}

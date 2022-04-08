@@ -20,7 +20,7 @@ import {
     generatePairwiseOptions,
     OptionsMatrix,
     numberCases,
- } from "@fluidframework/test-pairwise-generator";
+} from "@fluidframework/test-pairwise-generator";
 import { pkgVersion } from "./packageVersion";
 
 export const OdspDriverApi = {
@@ -49,16 +49,22 @@ const odspOpsCaching: OptionsMatrix<IOpsCachingPolicy> = {
 
 const odspSessionOptions: OptionsMatrix<ICollabSessionOptions> = {
     unauthenticatedUserDisplayName: [undefined],
+    forceAccessTokenViaAuthorizationHeader: [undefined],
 };
 
-export const generateOdspHostStoragePolicy = (seed: number)=> {
+export const generateOdspHostStoragePolicy = (seed: number) => {
     const odspHostPolicyMatrix: OptionsMatrix<HostStoragePolicy> = {
         concurrentSnapshotFetch: booleanCases,
         opsBatchSize: numberCases,
         concurrentOpsBatches: numberCases,
-        snapshotOptions:[undefined, ...generatePairwiseOptions(odspSnapshotOptions, seed)],
+        snapshotOptions: [undefined, ...generatePairwiseOptions(odspSnapshotOptions, seed)],
         opsCaching: [undefined, ...generatePairwiseOptions(odspOpsCaching, seed)],
         sessionOptions: [undefined, ...generatePairwiseOptions(odspSessionOptions, seed)],
+        enableRedeemFallback: booleanCases,
+        cacheCreateNewSummary: booleanCases,
+        fetchBinarySnapshotFormat: [undefined],
+        isolateSocketCache: [true],
+        enableShareLinkWithCreate: [false],
     };
     return generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix, seed);
 };

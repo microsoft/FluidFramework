@@ -9,12 +9,12 @@ import {
     ICodeLoader,
     IContainerContext,
     IRuntime,
-    IRuntimeFactory,
     IProxyLoaderFactory,
     ILoaderOptions,
+    IContainer,
 } from "@fluidframework/container-definitions";
-import { Loader, Container } from "@fluidframework/container-loader";
-import { IRequest, IResponse, IFluidObject } from "@fluidframework/core-interfaces";
+import { Loader } from "@fluidframework/container-loader";
+import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     MultiDocumentServiceFactory,
@@ -26,7 +26,9 @@ import {
     IUrlResolverProxyKey,
     OuterUrlResolver,
 } from "@fluidframework/iframe-driver";
-import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 export interface IFrameInnerApi {
     /**
@@ -59,7 +61,7 @@ export interface IFrameOuterHostConfig {
 
     // A Fluid object that gives host provided capabilities/configurations
     // to the Fluid object in the container(such as auth).
-    scope?: IFluidObject;
+    scope?: FluidObject;
 
     proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
 }
@@ -75,13 +77,7 @@ class ProxyRuntime implements IRuntime {
     async request(request: IRequest): Promise<IResponse> {
         throw new Error("Method not implemented.");
     }
-    async snapshot(tagMessage: string, fullTree?: boolean | undefined): Promise<ITree | null> {
-        throw new Error("Method not implemented.");
-    }
     async setConnectionState(connected: boolean, clientId?: string) {
-    }
-    async stop(): Promise<{snapshot?: never, state?: never}> {
-        throw new Error("Method not implemented.");
     }
     async process(message: ISequencedDocumentMessage, local: boolean, context: any) {
     }
@@ -98,13 +94,13 @@ class ProxyRuntime implements IRuntime {
     }
 }
 
-class ProxyChaincode implements IRuntimeFactory {
-    async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        return new ProxyRuntime();
-    }
-
-    get IRuntimeFactory() {
-        return this;
+class ProxyChaincode extends RuntimeFactoryHelper {
+    public async preInitialize(
+        _context: IContainerContext,
+        _existing: boolean,
+    ): Promise<IRuntime & IContainerRuntime> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return new ProxyRuntime() as unknown as (IRuntime & IContainerRuntime);
     }
 }
 
@@ -138,7 +134,7 @@ export class IFrameOuterHost {
         // them all in one (otherwise there are mysterious runtime errors)
         const combinedProxy = {};
 
-        const outerDocumentServiceProxy =  new DocumentServiceFactoryProxy(
+        const outerDocumentServiceProxy = new DocumentServiceFactoryProxy(
             MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
             this.hostConfig.options,
         );
@@ -161,7 +157,7 @@ export class IFrameOuterHost {
      * provides only limited functionality.
      * @param request - The request to resolve on the internal loader
      */
-    public async loadContainer(request: IRequest): Promise<Container> {
+    public async loadContainer(request: IRequest): Promise<IContainer> {
         return this.loader.resolve(request);
     }
 }
