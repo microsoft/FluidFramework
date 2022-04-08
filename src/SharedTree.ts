@@ -284,11 +284,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	/**
 	 * Get a factory for SharedTree to register with the data store.
 	 * @param summarizeHistory - Determines if the history is included in summaries and if edit chunks are uploaded when they are full.
-	 * On 0.1.1 documents, due to current code limitations, all clients MUST agree on the value of this boolean.
-	 * Note that this means staged rollout changing this value should not be attempted.
-	 * It is possible to update shared-tree to correctly handle such a staged rollout, but that hasn't been implemented.
+	 * On 0.1.1 documents, due to current code limitations, this parameter is only impactful for newly created documents.
+	 * `SharedTree`s which load existing documents will summarize history if and only if the loaded summary included history.
+	 *
+	 * The technical limitations here relate to clients with mixed versions collaborating.
+	 * In the future we may allow modification of whether or not a particular document saves history, but only via a consensus mechanism.
 	 * See the skipped test in SharedTreeFuzzTests.ts for more details on this issue.
-	 * See docs/Breaking-Change-Migration for more details on this scheme.
+	 * See docs/Breaking-Change-Migration for more details on the consensus scheme.
 	 * @param writeFormat - Determines the format version the SharedTree will write summaries in.
 	 * This format may be updated to a newer (supported) version at runtime if a collaborating shared-tree
 	 * that was initialized with a newer write version connects to the session. Care must be taken when changing this value,
@@ -339,7 +341,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	private readonly sequencedEditAppliedLogger: ITelemetryLogger;
 
 	private readonly encoder_0_0_2: SharedTreeEncoder_0_0_2;
-	private readonly encoder_0_1_1: SharedTreeEncoder_0_1_1;
+	private encoder_0_1_1: SharedTreeEncoder_0_1_1;
 
 	/** Indicates if the client is the oldest member of the quorum. */
 	private currentIsOldest: boolean;
@@ -368,8 +370,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 	public readonly transactionFactory = TransactionInternal.factory;
 
-	private readonly summarizeHistory: boolean;
-	private readonly uploadEditChunks: boolean;
+	private summarizeHistory: boolean;
+	private uploadEditChunks: boolean;
 
 	/**
 	 * Create a new SharedTreeFactory.
@@ -706,9 +708,19 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			case WriteFormat.v0_0_2:
 				convertedSummary = this.encoder_0_0_2.decodeSummary(summary as SharedTreeSummary_0_0_2);
 				break;
-			case WriteFormat.v0_1_1:
+			case WriteFormat.v0_1_1: {
+				const typedSummary = summary as SharedTreeSummary;
+				// See comment in factory constructor--ensure we write a consistent type of summary as how the document began.
+				const loadedSummaryIncludesHistory = typedSummary.currentTree !== undefined;
+				if (loadedSummaryIncludesHistory !== this.summarizeHistory) {
+					this.summarizeHistory = loadedSummaryIncludesHistory;
+					this.uploadEditChunks = loadedSummaryIncludesHistory;
+					this.encoder_0_1_1 = new SharedTreeEncoder_0_1_1(this.summarizeHistory);
+				}
+
 				convertedSummary = this.encoder_0_1_1.decodeSummary(summary as SharedTreeSummary);
 				break;
+			}
 			default:
 				fail('Unknown version');
 		}

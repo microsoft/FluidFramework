@@ -6,6 +6,7 @@
 import { assert, expect } from 'chai';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { IsoBuffer } from '@fluidframework/common-utils';
+import { LoaderHeader } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import {
 	MockContainerRuntime,
@@ -30,6 +31,7 @@ import {
 	ChangeTypeInternal,
 	CompressedChangeInternal,
 	EditChunkContents,
+	editsPerChunk,
 	EditStatus,
 	EditWithoutId,
 	FluidEditHandle,
@@ -39,7 +41,7 @@ import {
 	SharedTreeSummary_0_0_2,
 	WriteFormat,
 } from '../../persisted-types';
-import { SharedTreeEvent } from '../../EventTypes';
+import { SharedTreeDiagnosticEvent, SharedTreeEvent } from '../../EventTypes';
 import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes';
 import { convertTreeNodes, deepCompareNodes } from '../../EditUtilities';
 import { serialize, SummaryContents } from '../../Summary';
@@ -66,6 +68,7 @@ import {
 	setUpLocalServerTestSharedTree,
 	applyNoop,
 	getIdNormalizerFromSharedTree,
+	waitForSummary,
 } from './TestUtilities';
 
 function revertEditInTree(tree: SharedTree, edit: EditId): EditId | undefined {
@@ -1230,6 +1233,75 @@ export function runSharedTreeOperationsTests(
 				expect(eventArgs[2].reconciliationPath.length).equals(1);
 				expect(eventArgs[2].outcome.status).equals(EditStatus.Applied);
 			});
+		});
+
+		/**
+		 * This test is a slightly minified regression test for an issue discovered by fuzz testing.
+		 * It demonstrates issues with clients using writeFormat v0.1.1 and mixed `summarizeHistory` values.
+		 * The problem is illustrated by the following scenario:
+		 * 1. Client A and client B join a session. A does not summarize history, but B does.
+		 * 2. A is elected to be the summarizer.
+		 * 3. Client A and B make 50 edits (half a chunks' worth), then idle.
+		 * 4. Client A summarizes. Since it does not summarize history, the summary it produces has a single edit.
+		 * 5. Client C joins, configured to write history.
+		 * 6. The three clients collaborate further for another 50/51 edits.
+		 *
+		 * At this point in time, client B thinks the first edit chunk is full, but client C thinks it's only half-full.
+		 * The entire edit compression scheme is built upon assuming clients agree where the chunk boundaries are, so this
+		 * generally leads to correctness issues. The fuzz test reproed a similar scenario, and what ultimately caused
+		 * failure is a newly-loaded client being shocked at a chunk with `startRevision: 400` uploaded (when it thinks
+		 * there has only been one edit).
+		 *
+		 * To fix this, we need to incorporate a scheme where all clients agree on chunk boundaries (e.g., by including the
+		 * total number of edits even in no-history summaries).
+		 *
+		 * In the meantime, we are forbidding collaboration of no-history clients and history clients.
+		 */
+		it('can be initialized on multiple clients with different `summarizeHistory` values', async () => {
+			const { tree, testObjectProvider, container } = await setUpLocalServerTestSharedTree({
+				writeFormat,
+				summarizeHistory: false,
+			});
+			applyNoop(tree);
+			await testObjectProvider.ensureSynchronized();
+			const firstSummaryVersion = await waitForSummary(container);
+
+			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
+				writeFormat,
+				testObjectProvider,
+				summarizeHistory: true,
+				headers: { [LoaderHeader.version]: firstSummaryVersion },
+			});
+
+			// Apply enough edits for the upload of a few edit chunks, and some extra so future chunks are misaligned
+			for (let i = 0; i < (5 * editsPerChunk) / 2; i++) {
+				applyNoop(tree);
+			}
+
+			const secondSummaryVersion = await waitForSummary(container);
+
+			const { tree: tree3 } = await setUpLocalServerTestSharedTree({
+				writeFormat,
+				testObjectProvider,
+				summarizeHistory: true,
+				headers: { [LoaderHeader.version]: secondSummaryVersion },
+			});
+
+			// Verify we loaded a no-history summary.
+			expect(tree3.editsInternal.length).to.equal(1);
+
+			let unexpectedHistoryChunkCount = 0;
+			tree3.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => unexpectedHistoryChunkCount++);
+			await testObjectProvider.ensureSynchronized();
+			// Apply enough edits to guarantee another chunk upload occurs.
+			for (let i = 0; i < editsPerChunk; i++) {
+				applyNoop(tree2);
+			}
+
+			await testObjectProvider.ensureSynchronized();
+			// If tree 2 didn't change its write format, it would attempt to upload the above chunk with start revision 200, which is past
+			// how many sequenced edits tree 3 thinks there are.
+			expect(unexpectedHistoryChunkCount).to.equal(0);
 		});
 
 		// This functionality was only implemented in format 0.1.1.

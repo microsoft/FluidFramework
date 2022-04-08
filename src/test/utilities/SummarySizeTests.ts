@@ -155,7 +155,7 @@ export function runSummarySizeTests(
 
 			const summary = tree.saveSerializedSummary();
 			const summarySize = IsoBuffer.from(summary).byteLength;
-			console.log(summary);
+
 			// TODO: make lte when 0.1.1 is settled
 			expect(summarySize).to.equal(expectedSummarySize);
 		}

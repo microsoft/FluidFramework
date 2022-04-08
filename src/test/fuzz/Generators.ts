@@ -505,7 +505,7 @@ export function generatorFromArray<T, TAdditionalState>(contents: T[]): AsyncGen
 	return async () => {
 		if (index < contents.length) {
 			index++;
-			return contents[index];
+			return contents[index] ?? done;
 		}
 		return done;
 	};

@@ -57,6 +57,7 @@
 		"@fluidframework/build-common": "^0.22.0",
 		"@fluidframework/container-definitions": "^0.44.0",
 		"@fluidframework/container-loader": "^0.55.4",
+		"@fluidframework/container-runtime": "^0.55.4",
 		"@fluidframework/eslint-config-fluid": "^0.23.0",
 		"@fluidframework/runtime-utils": "^0.55.4",
 		"@fluidframework/test-driver-definitions": "^0.55.4",

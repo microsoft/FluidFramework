@@ -6,6 +6,7 @@
 import { resolve } from 'path';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
+import { SummaryCollection } from '@fluidframework/container-runtime';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
@@ -23,8 +24,9 @@ import {
 } from '@fluidframework/test-utils';
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import type { IHostLoader } from '@fluidframework/container-definitions';
-import type { IFluidCodeDetails, IFluidHandle } from '@fluidframework/core-interfaces';
+import { TelemetryNullLogger } from '@fluidframework/common-utils';
+import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
+import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { DetachedSequenceId, EditId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from '../../Identifiers';
 import { assert, fail, identity, ReplaceRecursive } from '../../Common';
@@ -200,6 +202,8 @@ export interface LocalServerSharedTreeTestingComponents {
 export interface LocalServerSharedTreeTestingOptions {
 	/** Contents of blobs that should be uploaded to the runtime upon creation. Handles to these blobs will be returned. */
 	blobs?: ArrayBufferLike[];
+	/** Headers to include on the container load request. */
+	headers?: IRequestHeader;
 	/**
 	 * Id for the SharedTree to be created.
 	 * If two SharedTrees have the same id and the same testObjectProvider,
@@ -245,8 +249,17 @@ afterEach(() => {
 export async function setUpLocalServerTestSharedTree(
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents> {
-	const { blobs, id, initialTree, testObjectProvider, setupEditId, summarizeHistory, writeFormat, uploadEditChunks } =
-		options;
+	const {
+		blobs,
+		headers,
+		id,
+		initialTree,
+		testObjectProvider,
+		setupEditId,
+		summarizeHistory,
+		writeFormat,
+		uploadEditChunks,
+	} = options;
 
 	const treeId = id ?? 'test';
 	const registry: ChannelFactoryRegistry = [
@@ -283,7 +296,7 @@ export async function setUpLocalServerTestSharedTree(
 		const driver = new LocalServerTestDriver();
 		const loader = makeTestLoader(provider);
 		// Once ILoaderOptions is specificable, this should use `provider.loadTestContainer` instead.
-		container = (await loader.resolve({ url: await driver.createContainerUrl(treeId) })) as Container;
+		container = (await loader.resolve({ url: await driver.createContainerUrl(treeId), headers })) as Container;
 		await waitContainerToCatchUp(container);
 	} else {
 		const driver = new LocalServerTestDriver();
@@ -575,4 +588,15 @@ export function spyOnSubmittedOps<Op extends SharedTreeOp | SharedTreeOp_0_0_2>(
 		originalPush(message);
 	};
 	return ops;
+}
+
+/**
+ * Waits for summarization to occur, and returns a version that can be passed into newly loaded containers
+ * to ensure they load this summary version. Use the `LoaderHeader.version` header.
+ */
+export async function waitForSummary(mainContainer: IContainer): Promise<string> {
+	const { deltaManager } = mainContainer;
+	const summaryCollection = new SummaryCollection(deltaManager, new TelemetryNullLogger());
+	const ackedSummary = await summaryCollection.waitSummaryAck(deltaManager.lastSequenceNumber);
+	return ackedSummary.summaryAck.contents.handle;
 }

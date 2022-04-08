@@ -25,10 +25,13 @@ import { deserialize, getSummaryStatistics, SummaryStatistics } from '../Summary
 import { getUploadedEditChunkContents, UploadedEditChunkContents } from '../SummaryTestUtilities';
 import { IdCompressor } from '../id-compressor';
 import { convertEditIds } from '../IdConversion';
+import { MutableStringInterner } from '../StringInterner';
+import { sequencedIdNormalizer } from '../NodeIdUtilities';
 import { expectDefined } from './utilities/TestCommon';
 import { TestFluidSerializer } from './utilities/TestSerializer';
 import {
 	getIdNormalizerFromSharedTree,
+	makeNodeIdContext,
 	setUpLocalServerTestSharedTree,
 	testDocumentsPathBase,
 } from './utilities/TestUtilities';
@@ -132,17 +135,24 @@ export async function createSummaryTestTree(writeFormat: WriteFormat, summarizeH
 	});
 
 	if (writeFormat === WriteFormat.v0_1_1) {
+		const idCompressor = new IdCompressor('968bee41-bcf7-46d2-8035-6eb163b76c4c' as SessionId, reservedIdCount);
+		const interner = new MutableStringInterner([initialTree.definition]);
+		const context = makeNodeIdContext(idCompressor);
+		const normalizer = sequencedIdNormalizer(context);
 		const sharedTreeSummaryWithConstantSessionId: SharedTreeSummary = {
 			version: WriteFormat.v0_1_1,
+			currentTree: summarizeHistory
+				? [
+						interner.getOrCreateInternedId(initialTree.definition),
+						normalizer.normalizeToOpSpace(context.convertToNodeId(initialTree.identifier)),
+				  ]
+				: undefined,
 			editHistory: {
 				editIds: [],
 				editChunks: [],
 			},
-			idCompressor: new IdCompressor(
-				'968bee41-bcf7-46d2-8035-6eb163b76c4c' as SessionId,
-				reservedIdCount
-			).serialize(true),
-			internedStrings: [initialTree.definition],
+			idCompressor: idCompressor.serialize(true),
+			internedStrings: interner.getSerializable(),
 		};
 
 		tree.loadSummary(sharedTreeSummaryWithConstantSessionId);

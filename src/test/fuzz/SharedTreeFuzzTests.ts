@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { promises as fs, existsSync, mkdirSync, readFileSync } from 'fs';
+import { promises as fs, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import Prando from 'prando';
 import { expect } from 'chai';
@@ -11,7 +11,7 @@ import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilit
 import { WriteFormat } from '../../persisted-types';
 import { fail } from '../../Common';
 import { FuzzTestState, done, EditGenerationConfig, AsyncGenerator, Operation } from './Types';
-import { chain, makeOpGenerator, take, generatorFromArray } from './Generators';
+import { chain, makeOpGenerator, take } from './Generators';
 
 const directory = join(testDocumentsPathBase, 'fuzz-tests');
 
@@ -256,37 +256,6 @@ export function runSharedTreeFuzzTests(title: string): void {
 
 		describe('with history summarization', () => {
 			runMixedVersionTests(true, testCount);
-		});
-
-		/**
-		 * TODO: This test demonstrates issues with clients using writeFormat v0.1.1 and mixed `summarizeHistory` values.
-		 * The problem is illustrated by the following scenario:
-		 * 1. Client A and client B join a session. A does not summarize history, but B does.
-		 * 2. A is elected to be the summarizer.
-		 * 3. Client A and B make 50 edits (half a chunks' worth), then idle.
-		 * 4. Client A summarizes. Since it does not summarize history, the summary it produces has a single edit.
-		 * 5. Client C joins, configured to write history.
-		 * 6. The three clients collaborate further for another 50/51 edits.
-		 *
-		 * At this point in time, client B thinks the first edit chunk is full, but client C thinks it's only half-full.
-		 * The entire edit compression scheme is built upon assuming clients agree where the chunk boundaries are, so this
-		 * generally leads to correctness issues. The fuzz test below repros a similar scenario, and what ultimately causes
-		 * failure is a newly-loaded client being shocked at a chunk with `startRevision: 400` uploaded (when it thinks
-		 * there has only been one edit).
-		 *
-		 * To fix this, we need to incorporate a scheme where all clients agree on chunk boundaries (e.g., by including the
-		 * total number of edits even in no-history summaries).
-		 *
-		 * In the meantime, we are forbidding collaboration of no-history clients and history clients.
-		 */
-		describe.skip('Regression test for mixed writeSummary values', () => {
-			// This file is saved as an explicit history to make sure changes to fuzz test infrastructure don't affect which
-			// test reproduces the issue.
-			const operations: Operation[] = JSON.parse(
-				readFileSync(join(directory, 'mixed-summarizeHistory.json')).toString()
-			);
-
-			runTest(() => generatorFromArray(operations), 0);
 		});
 	});
 }
