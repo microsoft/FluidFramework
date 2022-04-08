@@ -154,6 +154,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             },
             logger,
             clientIsSummarizer,
+            true,
         );
     }
 
@@ -167,6 +168,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
         clientIsSummarizer?: boolean,
+        isCreateContainer?: boolean,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
 
@@ -178,7 +180,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion }});
 
-        if (this.driverPolicies.enableDiscovery) {
+        if (isCreateContainer && this.driverPolicies.enableDiscovery) {
             const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
             const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
                 tenantId,
