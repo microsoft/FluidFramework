@@ -1,0 +1,14 @@
+# Coverage
+.nyc_output
+coverage
+
+# Build output
+dist
+lib
+
+# Dependencies
+node_modules
+
+# Used by API-Extractor
+*.api.md
+_api-extractor-temp/**
