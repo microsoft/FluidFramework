@@ -9,7 +9,6 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 
 import {
@@ -49,7 +48,6 @@ export class DeltaScheduler {
     } | undefined;
 
     // Keeps track of the batching numbers so we can have an idea on how many ops were processed.
-    private batchProcessBegin: boolean = false;
     private numberOfBatchesProcessed: number = 0;
     private lastSequenceNumber: number = 0;
     private firstSequenceNumber: number = 0;
@@ -60,81 +58,70 @@ export class DeltaScheduler {
     ) {
         this.deltaManager = deltaManager;
         this.deltaManager.inbound.on("idle", () => { this.inboundQueueIdle(); });
-        this.deltaManager.inbound.on("op", (op: ISequencedDocumentMessage) => {
-            if (op.type === MessageType.Operation) {
-                if (this.batchProcessBegin) {
-                    this.batchProcessBegin = false;
-                    this.firstSequenceNumber = this.lastSequenceNumber = op.sequenceNumber;
-                }
-                else { // Last Sequence Number will always have the latest op sequenceNumber.
-                    this.lastSequenceNumber = op.sequenceNumber;
-                }
-            }
-        });
     }
 
-    public batchBegin() {
+    public batchBegin(message: ISequencedDocumentMessage) {
         if (!this.processingStartTime) {
             this.processingStartTime = performance.now();
-            this.batchProcessBegin = true;
             this.numberOfBatchesProcessed = 0;
+            this.firstSequenceNumber = this.lastSequenceNumber = message.sequenceNumber;
         }
         this.numberOfBatchesProcessed++;
     }
 
-    public batchEnd() {
-            if (this.schedulingLog === undefined) {
-                if (this.schedulingCount % 2000 === 0) {
-                    // Every 2000th time we are scheduling the inbound queue, we log telemetry for the
-                    // number of ops processed, the time and number of turns it took to process the ops.
-                    this.schedulingLog = {
-                        opsRemainingToProcess: this.deltaManager.inbound.length,
-                        numberOfTurns: 1,
-                        totalProcessingTime: 0,
-                    };
-                }
+    public batchEnd(message: ISequencedDocumentMessage) {
+        this.lastSequenceNumber = message.sequenceNumber;
+        if (this.schedulingLog === undefined) {
+            if (this.schedulingCount % 2000 === 0) {
+                // Every 2000th time we are scheduling the inbound queue, we log telemetry for the
+                // number of ops processed, the time and number of turns it took to process the ops.
+                this.schedulingLog = {
+                    opsRemainingToProcess: this.deltaManager.inbound.length,
+                    numberOfTurns: 1,
+                    totalProcessingTime: 0,
+                };
             }
+        }
 
-            if (this.shouldRunScheduler()) {
-            {
-                const currentTime = performance.now();
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const elapsedTime = currentTime - this.processingStartTime!;
-                if (elapsedTime > this.totalProcessingTime) {
-                    // We have processed ops for more than the total processing time. So, pause the
-                    // queue, yield the thread and schedule a resume.
+        if (this.shouldRunScheduler()) {
+            const currentTime = performance.now();
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const elapsedTime = currentTime - this.processingStartTime!;
+            if (elapsedTime > this.totalProcessingTime) {
+                // We have processed ops for more than the total processing time. So, pause the
+                // queue, yield the thread and schedule a resume.
 
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.deltaManager.inbound.pause();
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this.deltaManager.inbound.pause();
 
-                    setTimeout(() => {
-                        if (this.schedulingLog) {
-                            this.logger.sendTelemetryEvent({
-                                eventName: "DeltaManagerPaused",
-                                duration: TelemetryLogger.formatTick(elapsedTime),
-                                opsProcessed: this.lastSequenceNumber - this.firstSequenceNumber,
-                                opsRemainingToProcess: this.deltaManager.inbound.length,
-                                processingTime: TelemetryLogger.formatTick(this.schedulingLog.totalProcessingTime),
-                                numberOfTurns:this.schedulingLog.numberOfTurns,
-                                batchesProcessed: this.numberOfBatchesProcessed,
-                                waitingToResume: TelemetryLogger.formatTick(performance.now() - currentTime),
-                            });
-                            this.deltaManager.inbound.resume();
-                        }
-                    });
+                 // Increase the total processing time. Keep doing this after each turn until all the ops have
+                // been processed. This way we keep the responsiveness at the beginning while also making sure
+                // that all the ops process fairly quickly.
+                this.totalProcessingTime += this.processingTimeIncrement;
 
-                    this.processingStartTime = undefined;
-                    // Increase the total processing time. Keep doing this after each turn until all the ops have
-                    // been processed. This way we keep the responsiveness at the beginning while also making sure
-                    // that all the ops process fairly quickly.
-                    this.totalProcessingTime += this.processingTimeIncrement;
-
-                    // If we are logging the telemetry this time, update the telemetry log object.
-                    if (this.schedulingLog) {
-                        this.schedulingLog.numberOfTurns++;
-                        this.schedulingLog.totalProcessingTime += elapsedTime;
-                    }
+                // If we are logging the telemetry this time, update the telemetry log object.
+                if (this.schedulingLog) {
+                    this.schedulingLog.numberOfTurns++;
+                    this.schedulingLog.totalProcessingTime += elapsedTime;
                 }
+
+                setTimeout(() => {
+                    if (this.schedulingLog) {
+                        this.logger.sendTelemetryEvent({
+                            eventName: "InboundOpsPartialProcessingTime ",
+                            duration: TelemetryLogger.formatTick(elapsedTime),
+                            opsProcessed: this.lastSequenceNumber - this.firstSequenceNumber,
+                            opsRemainingToProcess: this.deltaManager.inbound.length,
+                            processingTime: TelemetryLogger.formatTick(this.schedulingLog.totalProcessingTime),
+                            numberOfTurns: this.schedulingLog.numberOfTurns,
+                            batchesProcessed: this.numberOfBatchesProcessed,
+                            waitingToResume: TelemetryLogger.formatTick(performance.now() - currentTime),
+                        });
+                    }
+                    this.deltaManager.inbound.resume();
+                });
+
+                this.processingStartTime = undefined;
             }
         }
     }
