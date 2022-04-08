@@ -24,6 +24,19 @@ export const emptySet: ReadonlySet<never> = new Set();
 export const emptyMap: ReadonlyMap<any, never> = new Map<any, never>();
 
 /**
+ * LocalFieldKey to use for when there is a collection of items under a tree node
+ * that makes up the logical primary significant of that tree.
+ */
+export const itemsKey = "items" as LocalFieldKey;
+
+/**
+ * GlobalFieldKey to use for the root of documents.
+ * TODO: if we do want to standardize on a single value for this,
+ * it likely should be namespaced or a UUID to avoid risk of collisions.
+ */
+export const rootFieldKey = "rootFieldKey" as GlobalFieldKey;
+
+/**
  * Default field which only permits emptiness.
  */
 export const emptyField: FieldSchema = {

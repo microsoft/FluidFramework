@@ -14,7 +14,7 @@ import {
 } from "../schema/Schema";
 import { string } from "../schema/examples/SchemaExamples";
 import { StoredSchemaRepository } from "../schema/StoredSchemaRepository";
-import { treeSchema, fieldSchema, emptyField } from "../schema/Builders";
+import { treeSchema, fieldSchema, emptyField, rootFieldKey } from "../schema/Builders";
 import { Adapters, checkCompatibility, Compatibility } from "../schema/View";
 
 class ViewSchemaRepository extends StoredSchemaRepository {
@@ -35,7 +35,6 @@ class ViewSchemaRepository extends StoredSchemaRepository {
 
 describe("StoredSchemaRepository", () => {
 	// Define some schema and identifiers for them for use in these examples:
-	const rootKey = "root" as GlobalFieldKey;
 	const canvasIdentifier = "86432448-8454-4c86-a39c-699afbbdb753" as TreeSchemaIdentifier;
 	const textIdentifier = "3034e643-0ff3-44a9-8b7e-aea31fe635c8" as TreeSchemaIdentifier;
 	const positionedCanvasItemIdentifier = "d1810094-0990-410e-9704-b17a94b1ad85" as TreeSchemaIdentifier;
@@ -81,7 +80,7 @@ describe("StoredSchemaRepository", () => {
 		assert(view.tryUpdateTreeSchema(pointIdentifier, point));
 		assert(view.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem));
 		assert(view.tryUpdateTreeSchema(textIdentifier, string));
-		assert(view.tryUpdateFieldSchema(rootKey, root));
+		assert(view.tryUpdateFieldSchema(rootFieldKey, root));
 
 		// This is where legacy schema handling logic for schematize.
 		const adapters = new Adapters();
@@ -90,7 +89,7 @@ describe("StoredSchemaRepository", () => {
 		// StoredSchemaRepository defaults to a state that permits no document states at all.
 		// To permit an empty document, we have to define a root field, and permit it to be empty.
 		const stored = new StoredSchemaRepository();
-		assert(stored.tryUpdateFieldSchema(rootKey, emptyField));
+		assert(stored.tryUpdateFieldSchema(rootFieldKey, emptyField));
 
 		{
 			// When we open this document, we should check it's compatibility with our application:
@@ -118,7 +117,7 @@ describe("StoredSchemaRepository", () => {
 		// Lets simulate the developers of the app making this change by modifying the view schema
 		// (instead of reloading it all).
 		const tolerantRoot = fieldSchema(Multiplicity.Optional, [canvasIdentifier]);
-		view.overwriteFieldSchema(rootKey, tolerantRoot);
+		view.overwriteFieldSchema(rootFieldKey, tolerantRoot);
 
 		{
 			// When we open this document, we should check it's compatibility with our application:
@@ -156,7 +155,7 @@ describe("StoredSchemaRepository", () => {
 			assert(stored.tryUpdateTreeSchema(pointIdentifier, point));
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem));
 			assert(stored.tryUpdateTreeSchema(textIdentifier, string));
-			assert(stored.tryUpdateFieldSchema(rootKey, tolerantRoot));
+			assert(stored.tryUpdateFieldSchema(rootFieldKey, tolerantRoot));
 
 			// That will cause the document stored schema to change,
 			// which will notify and applications with the document open.
