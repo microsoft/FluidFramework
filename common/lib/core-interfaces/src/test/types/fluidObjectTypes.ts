@@ -148,3 +148,10 @@ declare function getIFluidObject(): IFluidObject;
     const builder: FluidObject<IFluidLoadable> = {};
     builder.IFluidLoadable = getLoadable();
 }
+
+// validate readonly prevents modification
+{
+    const builder: Readonly<FluidObject<IFluidLoadable>> = {};
+    // @ts-expect-error Cannot assign to 'IFluidLoadable' because it is a read-only property.
+    builder.IFluidLoadable = getLoadable();
+}
