@@ -97,8 +97,8 @@ If it is undesirable that one of the above operations could fail to apply while 
 ```typescript
 const checkout = new EagerCheckout(tree);
 checkout.openEdit();
-checkout.applyChanges(Insert.create([fooNode], StablePlace.atStartOf({ parent: initialTree, label: 'foo' })));
-checkout.applyChanges(Insert.create([barNode], StablePlace.atStartOf({ parent: initialTree, label: 'bar' })));
+checkout.applyChanges(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: initialTree, label: 'foo' })));
+checkout.applyChanges(Change.insertTree(barNode, StablePlace.atStartOf({ parent: initialTree, label: 'bar' })));
 checkout.closeEdit();
 ```
 

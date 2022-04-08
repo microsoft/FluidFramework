@@ -4,7 +4,7 @@
  */
 
 import { expect } from 'chai';
-import { Delete, StableRange } from '../ChangeTypes';
+import { Change, StableRange } from '../ChangeTypes';
 import { EagerCheckout } from '../EagerCheckout';
 import { checkoutTests } from './Checkout.tests';
 import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
@@ -19,7 +19,7 @@ checkoutTests(
 			const checkout = new EagerCheckout(tree);
 
 			expect(tree.currentView.equals(checkout.currentView)).to.be.true;
-			tree.applyEdit(Delete.create(StableRange.only(testTree.left)));
+			tree.applyEdit(Change.delete(StableRange.only(testTree.left)));
 			expect(tree.currentView.equals(checkout.currentView)).to.be.true;
 		});
 	}

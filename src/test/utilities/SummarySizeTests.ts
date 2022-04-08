@@ -7,7 +7,7 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { expect } from 'chai';
 import { Definition, EditId, SessionId, TraitLabel } from '../../Identifiers';
-import { Change, Delete, Insert, Move, StablePlace, StableRange } from '../../ChangeTypes';
+import { Change, StablePlace, StableRange } from '../../ChangeTypes';
 import { SharedTree } from '../../SharedTree';
 import { ChangeInternal, ChangeNode, Edit, TraitMap } from '../../persisted-types';
 import { revert } from '../../HistoryEditFactory';
@@ -38,7 +38,9 @@ interface SummarySizeTestEntry {
  */
 const summarySizeTests: SummarySizeTestEntry[] = [
 	{
-		edits: (testTree) => [Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))],
+		edits: (testTree) => [
+			Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)),
+		],
 		expectedSize: 1075,
 		description: 'when inserting a node',
 	},
@@ -46,7 +48,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		edits: (testTree) => {
 			const edits: Change[][] = [];
 			for (let i = 0; i < 50; i++) {
-				edits.push(Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation)));
+				edits.push(Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)));
 			}
 			return edits;
 		},
@@ -57,7 +59,7 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		edits: (testTree) => {
 			const node = testTree.buildLeaf(testTree.generateNodeId());
 			return [
-				Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation)),
+				Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)),
 				[Change.setPayload(node.identifier, 10)],
 			];
 		},
@@ -68,22 +70,24 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		edits: (testTree) => {
 			const node = testTree.buildLeaf(testTree.generateNodeId());
 			return [
-				Insert.create([node], StablePlace.atEndOf(testTree.right.traitLocation)),
-				[Delete.create(StableRange.only(node))],
+				Change.insertTree(node, StablePlace.atEndOf(testTree.right.traitLocation)),
+				[Change.delete(StableRange.only(node))],
 			];
 		},
 		expectedSize: 1223,
 		description: 'when inserting and deleting a node',
 	},
 	{
-		edits: (testTree) => [Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.right.traitLocation))],
+		edits: (testTree) => [
+			Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)),
+		],
 		expectedSize: 1223,
 		description: 'when inserting and reverting a node',
 		revertEdits: true,
 	},
 	{
 		edits: (testTree) => [
-			Insert.create([makeLargeTestTree(testTree)], StablePlace.atStartOf(testTree.right.traitLocation)),
+			Change.insertTree(makeLargeTestTree(testTree), StablePlace.atStartOf(testTree.right.traitLocation)),
 		],
 		expectedSize: 76979,
 		description: 'when inserting a large tree',
@@ -92,8 +96,8 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		edits: (testTree) => {
 			const largeTree = makeLargeTestTree(testTree);
 			return [
-				Insert.create([largeTree], StablePlace.atStartOf(testTree.right.traitLocation)),
-				Move.create(StableRange.only(largeTree), StablePlace.atEndOf(testTree.left.traitLocation)),
+				Change.insertTree(largeTree, StablePlace.atStartOf(testTree.right.traitLocation)),
+				Change.move(StableRange.only(largeTree), StablePlace.atEndOf(testTree.left.traitLocation)),
 			];
 		},
 		expectedSize: 77243,

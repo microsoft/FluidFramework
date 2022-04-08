@@ -7,7 +7,7 @@ import { join } from 'path';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { expect } from 'chai';
 import { v5 } from 'uuid';
-import { Change, Delete, Move, StablePlace, StableRange } from '../ChangeTypes';
+import { Change, StablePlace, StableRange } from '../ChangeTypes';
 import { assert, RecursiveMutable } from '../Common';
 import { areRevisionViewsSemanticallyEqual } from '../EditUtilities';
 import { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers';
@@ -117,8 +117,8 @@ export function applyTestEdits(sharedTree: SharedTree): void {
 	 * 102. Set the payload of A to _i_ for all _i_ in 0...100
 	 */
 
-	applyEdit([...Move.create(StableRange.only(cId), StablePlace.after(aId))]);
-	applyEdit([Delete.create(StableRange.only(dId))]);
+	applyEdit([...Change.move(StableRange.only(cId), StablePlace.after(aId))]);
+	applyEdit([Change.delete(StableRange.only(dId))]);
 	for (let i = 0; i < 100; i++) {
 		applyEdit([Change.setPayload(aId, i)]);
 	}

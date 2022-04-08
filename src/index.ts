@@ -69,7 +69,6 @@ export {
 	DetachInternal,
 	BuildInternal,
 	SetValueInternal,
-	DeleteInternal,
 	ConstraintInternal,
 	BuildNodeInternal,
 	StablePlaceInternal_0_0_2,

@@ -4,7 +4,7 @@
  */
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { Change, Insert, StablePlace } from '../ChangeTypes';
+import { Change, StablePlace } from '../ChangeTypes';
 import { EditLog } from '../EditLog';
 import { newEdit } from '../EditUtilities';
 import { Edit } from '../persisted-types';
@@ -18,7 +18,7 @@ describe('EditLog Perf', () => {
 
 		const testTree = setUpTestTree();
 		for (let i = 0; i < numberOfInserts; i++) {
-			edits.push(newEdit(Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.traitLocation))));
+			edits.push(newEdit(Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.traitLocation))));
 		}
 
 		benchmark({

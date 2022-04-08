@@ -239,42 +239,26 @@ export const Change = {
 		label,
 		type: ChangeType.Constraint,
 	}),
-};
 
-/**
- * Helper for creating a `Delete` edit.
- * @public
- */
-export const Delete = {
-	/**
-	 * @returns a Change that deletes the supplied part of the tree.
-	 */
-	create: (stableRange: StableRange): Change => Change.detach(stableRange),
-};
+	/** Helpers for making high-level composite operations */
 
-/**
- * Helper for creating an `Insert` edit.
- * @public
- */
-export const Insert = {
 	/**
-	 * @returns a Change that inserts 'nodes' into the specified location in the tree.
+	 * @returns a change that deletes the supplied part of the tree.
 	 */
-	create: (nodes: TreeNodeSequence<BuildNode>, destination: StablePlace): Change[] => {
+	delete: (stableRange: StableRange): Change => Change.detach(stableRange),
+
+	/**
+	 * @returns changes that insert 'nodes' into the specified location in the tree.
+	 */
+	insertTree: (nodes: BuildNode | TreeNodeSequence<BuildNode>, destination: StablePlace): Change[] => {
 		const build = Change.build(nodes, 0);
 		return [build, Change.insert(build.destination, destination)];
 	},
-};
 
-/**
- * Helper for creating a `Move` edit.
- * @public
- */
-export const Move = {
 	/**
-	 * @returns a Change that moves the specified content to a new location in the tree.
+	 * @returns changes that moves the specified content to a new location in the tree.
 	 */
-	create: (source: StableRange, destination: StablePlace): Change[] => {
+	move: (source: StableRange, destination: StablePlace): Change[] => {
 		const detach = Change.detach(source, 0);
 		return [detach, Change.insert(assertNotUndefined(detach.destination), destination)];
 	},

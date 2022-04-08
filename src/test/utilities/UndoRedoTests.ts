@@ -9,7 +9,7 @@ import { noop } from '../../Common';
 import { DetachedSequenceId, EditId, NodeId } from '../../Identifiers';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { SharedTree } from '../../SharedTree';
-import { Change, Delete, Insert, StablePlace, StableRange } from '../../ChangeTypes';
+import { Change, StablePlace, StableRange } from '../../ChangeTypes';
 import { deepCompareNodes } from '../../EditUtilities';
 import { NodeData } from '../../persisted-types';
 import { expectDefined } from './TestCommon';
@@ -117,7 +117,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 		it('works for Insert', () => {
 			const newNode = testTree.buildLeaf();
 
-			const { id } = sharedTree.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));
+			const { id } = sharedTree.applyEdit(...Change.insertTree(newNode, StablePlace.after(testTree.left)));
 			afterEdit();
 			expect(sharedTree.edits.length).to.equal(2);
 
@@ -164,9 +164,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 						];
 						const places = leftTraitPlaces(testTree, leftTraitNodes);
 
-						sharedTree.applyEdit(...Insert.create([leftTraitNodes[0]], StablePlace.before(testTree.left)));
+						sharedTree.applyEdit(
+							...Change.insertTree(leftTraitNodes[0], StablePlace.before(testTree.left))
+						);
 						afterEdit();
-						sharedTree.applyEdit(...Insert.create([leftTraitNodes[2]], StablePlace.after(testTree.left)));
+						sharedTree.applyEdit(...Change.insertTree(leftTraitNodes[2], StablePlace.after(testTree.left)));
 						afterEdit();
 						expect(sharedTree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(3);
 
@@ -175,7 +177,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 							end: places[endIndex].place,
 						};
 						const countDetached = places[endIndex].index - places[startIndex].index;
-						const { id } = sharedTree.applyEdit(Delete.create(range));
+						const { id } = sharedTree.applyEdit(Change.delete(range));
 						afterEdit();
 
 						expect(sharedTree.edits.length).to.equal(4);
@@ -216,7 +218,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 		it('works for SetValue', () => {
 			const newNode = testTree.buildLeaf(testTree.generateNodeId());
 
-			sharedTree.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));
+			sharedTree.applyEdit(...Change.insertTree(newNode, StablePlace.after(testTree.left)));
 			afterEdit();
 			const testPayload = 5;
 			const { id } = sharedTree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
@@ -259,7 +261,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 		it('works for conflicting edits', () => {
 			const newNodeId = sharedTree.generateNodeId();
 			const newNode = buildLeaf(newNodeId);
-			sharedTree.applyEdit(...Insert.create([newNode], StablePlace.atStartOf(testTree.left.traitLocation)));
+			sharedTree.applyEdit(...Change.insertTree(newNode, StablePlace.atStartOf(testTree.left.traitLocation)));
 			containerRuntimeFactory.processAllMessages();
 
 			// First tree deletes the new node under left trait
@@ -289,9 +291,9 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				const firstNode = testTree.buildLeaf();
 				const secondNode = testTree.buildLeaf(testTree.generateNodeId());
 
-				const { id } = sharedTree.applyEdit(...Insert.create([firstNode], StablePlace.after(testTree.left)));
+				const { id } = sharedTree.applyEdit(...Change.insertTree(firstNode, StablePlace.after(testTree.left)));
 				afterEdit();
-				sharedTree.applyEdit(...Insert.create([secondNode], StablePlace.after(testTree.left)));
+				sharedTree.applyEdit(...Change.insertTree(secondNode, StablePlace.after(testTree.left)));
 				afterEdit();
 				expect(sharedTree.edits.length).to.equal(3);
 
@@ -333,11 +335,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				const firstNode = testTree.buildLeaf(testTree.generateNodeId());
 				const secondNode = testTree.buildLeaf();
 
-				sharedTree.applyEdit(...Insert.create([firstNode], StablePlace.after(testTree.left)));
+				sharedTree.applyEdit(...Change.insertTree(firstNode, StablePlace.after(testTree.left)));
 				afterEdit();
-				const { id } = sharedTree.applyEdit(Delete.create(StableRange.only(firstNode)));
+				const { id } = sharedTree.applyEdit(Change.delete(StableRange.only(firstNode)));
 				afterEdit();
-				sharedTree.applyEdit(...Insert.create([secondNode], StablePlace.after(testTree.left)));
+				sharedTree.applyEdit(...Change.insertTree(secondNode, StablePlace.after(testTree.left)));
 				afterEdit();
 				expect(sharedTree.edits.length).to.equal(4);
 
@@ -377,12 +379,12 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			it('works for out-of-order SetValue', () => {
 				const newNode = testTree.buildLeaf(testTree.generateNodeId());
 
-				sharedTree.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));
+				sharedTree.applyEdit(...Change.insertTree(newNode, StablePlace.after(testTree.left)));
 				afterEdit();
 				const testPayload = 10;
 				const { id } = sharedTree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
 				afterEdit();
-				sharedTree.applyEdit(...Insert.create([newNode], StablePlace.after(testTree.left)));
+				sharedTree.applyEdit(...Change.insertTree(newNode, StablePlace.after(testTree.left)));
 				afterEdit();
 				expect(sharedTree.edits.length).to.equal(4);
 

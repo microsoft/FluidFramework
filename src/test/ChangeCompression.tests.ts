@@ -17,7 +17,6 @@ import {
 	ConstraintInternal,
 	DetachInternal,
 	Edit,
-	InsertInternal,
 	PlaceholderTree,
 	SetValueInternal,
 } from '../persisted-types';
@@ -123,7 +122,7 @@ describe('ChangeCompression', () => {
 
 	it('Compresses the BuildNodes of an edit with Build Changes', () => {
 		const tree = setUpTestTree();
-		const edit = newEdit(InsertInternal.create([tree.toChangeNode()], StablePlace.after(tree.left)));
+		const edit = newEdit(ChangeInternal.insertTree([tree.toChangeNode()], StablePlace.after(tree.left)));
 		const expectedCompressedEdit: Edit<TestCompressedChange> = {
 			id: edit.id,
 			changes: [

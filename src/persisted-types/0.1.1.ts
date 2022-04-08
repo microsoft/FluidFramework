@@ -317,36 +317,18 @@ export const ChangeInternal = {
 		label,
 		type: ChangeTypeInternal.Constraint,
 	}),
-};
 
-/**
- * {@inheritdoc Delete }
- * @public
- */
-export const DeleteInternal = {
-	/** {@inheritdoc Delete.create } */
-	create: (stableRange: StableRangeInternal): ChangeInternal => ChangeInternal.detach(stableRange),
-};
+	/** {@inheritdoc (Change:variable).delete } */
+	delete: (stableRange: StableRangeInternal): ChangeInternal => ChangeInternal.detach(stableRange),
 
-/**
- * {@inheritdoc (Insert:variable) }
- * @public
- */
-export const InsertInternal = {
-	/** {@inheritdoc (Insert:variable).create } */
-	create: (nodes: TreeNodeSequence<BuildNodeInternal>, destination: StablePlaceInternal): ChangeInternal[] => {
+	/** {@inheritdoc (Change:variable).insertTree } */
+	insertTree: (nodes: TreeNodeSequence<BuildNodeInternal>, destination: StablePlaceInternal): ChangeInternal[] => {
 		const build = ChangeInternal.build(nodes, 0 as DetachedSequenceId);
 		return [build, ChangeInternal.insert(build.destination, destination)];
 	},
-};
 
-/**
- * {@inheritdoc Move }
- * @public
- */
-export const MoveInternal = {
-	/** {@inheritdoc Move.create } */
-	create: (source: StableRangeInternal, destination: StablePlaceInternal): ChangeInternal[] => {
+	/** {@inheritdoc (Change:variable).move } */
+	move: (source: StableRangeInternal, destination: StablePlaceInternal): ChangeInternal[] => {
 		const detach = ChangeInternal.detach(source, 0 as DetachedSequenceId);
 		return [detach, ChangeInternal.insert(assertNotUndefined(detach.destination), destination)];
 	},

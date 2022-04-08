@@ -5,7 +5,7 @@
 
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { expect } from 'chai';
-import { Move, StableRange, StablePlace, Insert, BuildNode } from '../../ChangeTypes';
+import { StableRange, StablePlace, BuildNode, Change } from '../../ChangeTypes';
 import { Mutable } from '../../Common';
 import { EditLog } from '../../EditLog';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
@@ -77,7 +77,7 @@ export function runSharedTreeVersioningTests(
 			const summary = tree.saveSummary();
 			const ops = spyOnSubmittedOps(containerRuntimeFactory);
 			newerTree.loadSummary(summary);
-			tree.applyEdit(...Move.create(StableRange.only(testTree.left), StablePlace.after(testTree.right)));
+			tree.applyEdit(...Change.move(StableRange.only(testTree.left), StablePlace.after(testTree.right)));
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify even though one edit was applied, 2 edit ops were sent due to the version upgrade.
@@ -374,7 +374,7 @@ export function runSharedTreeVersioningTests(
 				builds.push(buildLeaf(ids[i][0], i));
 			}
 			tree1.applyEdit(
-				...Insert.create(
+				...Change.insertTree(
 					builds,
 					StablePlace.atEndOf({ parent: tree1.currentView.root, label: 'foo' as TraitLabel })
 				)

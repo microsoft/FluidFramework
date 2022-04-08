@@ -4,7 +4,7 @@
  */
 
 import { expect } from 'chai';
-import { Delete, StableRange } from '../ChangeTypes';
+import { Change, StableRange } from '../ChangeTypes';
 import { LazyCheckout } from '../LazyCheckout';
 import { checkoutTests } from './Checkout.tests';
 import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
@@ -18,7 +18,7 @@ checkoutTests(
 			const testTree = setUpTestTree(tree);
 			const checkout = new LazyCheckout(tree);
 			expect(tree.currentView.equals(checkout.currentView)).to.be.true;
-			tree.applyEdit(Delete.create(StableRange.only(testTree.left)));
+			tree.applyEdit(Change.delete(StableRange.only(testTree.left)));
 			expect(tree.currentView.equals(checkout.currentView)).to.be.false;
 			await checkout.waitForPendingUpdates();
 			expect(tree.currentView.equals(checkout.currentView)).to.be.true;

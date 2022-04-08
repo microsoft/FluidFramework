@@ -6,10 +6,7 @@
 import { expect } from 'chai';
 import {
 	setTrait,
-	Delete,
 	EditStatus,
-	Insert,
-	Move,
 	StableRange,
 	StablePlace,
 	EditValidationResult,
@@ -96,7 +93,7 @@ export function checkoutTests(
 
 		it('can only apply changes if an edit is open', async () => {
 			const { checkout, testTree } = await setUpTestTreeCheckout();
-			expect(() => checkout.applyChanges(Delete.create(StableRange.only(testTree.left)))).throws();
+			expect(() => checkout.applyChanges(Change.delete(StableRange.only(testTree.left)))).throws();
 		});
 
 		it('cannot abort an edit if no edit is open', async () => {
@@ -108,7 +105,7 @@ export function checkoutTests(
 			const { checkout, testTree } = await setUpTestTreeCheckout();
 			checkout.openEdit();
 			// Is still valid after a valid edit
-			checkout.applyChanges(Delete.create(StableRange.only(testTree.left.identifier)));
+			checkout.applyChanges(Change.delete(StableRange.only(testTree.left.identifier)));
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 			checkout.abortEdit();
 
@@ -124,7 +121,7 @@ export function checkoutTests(
 
 			// Is invalid after an invalid edit
 			expect(() =>
-				checkout.applyChanges(...Insert.create([testTree.left], StablePlace.after(testTree.left)))
+				checkout.applyChanges(...Change.insertTree(testTree.left, StablePlace.after(testTree.left)))
 			).throws('Locally constructed edits must be well-formed and valid.');
 			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
 			checkout.abortEdit();
@@ -142,7 +139,7 @@ export function checkoutTests(
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			// Is malformed after a malformed edit
-			const malformedMove = Move.create(
+			const malformedMove = Change.move(
 				{
 					start: { side: Side.Before },
 					end: { side: Side.After },
@@ -155,7 +152,7 @@ export function checkoutTests(
 			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
 
 			// Is still malformed after a subsequent valid edit
-			expect(() => checkout.applyChanges(Delete.create(StableRange.only(testTree.left)))).throws(
+			expect(() => checkout.applyChanges(Change.delete(StableRange.only(testTree.left)))).throws(
 				'Cannot apply change to an edit unless all previous changes have applied'
 			);
 			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
@@ -174,7 +171,7 @@ export function checkoutTests(
 
 			// tryApplyEdit aborts when applying an invalid edit and returns undefined
 			expect(
-				checkout.tryApplyEdit(...Insert.create([simpleTestTree.left], StablePlace.after(simpleTestTree.left)))
+				checkout.tryApplyEdit(...Change.insertTree(simpleTestTree.left, StablePlace.after(simpleTestTree.left)))
 			).to.be.undefined;
 
 			// Next edit is unaffected
@@ -212,7 +209,7 @@ export function checkoutTests(
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			// Is still valid after a valid edit
-			checkout.applyChanges(Delete.create(StableRange.only(testTree.left)));
+			checkout.applyChanges(Change.delete(StableRange.only(testTree.left)));
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			checkout.closeEdit();
@@ -226,12 +223,12 @@ export function checkoutTests(
 
 			// Is invalid after an invalid edit
 			expect(() =>
-				checkout.applyChanges(...Insert.create([testTree.left], StablePlace.after(testTree.left)))
+				checkout.applyChanges(...Change.insertTree(testTree.left, StablePlace.after(testTree.left)))
 			).throws('Locally constructed edits must be well-formed and valid.');
 			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
 
 			// Is still invalid after a subsequent valid edit
-			expect(() => checkout.applyChanges(Delete.create(StableRange.only(testTree.left)))).throws(
+			expect(() => checkout.applyChanges(Change.delete(StableRange.only(testTree.left)))).throws(
 				'Cannot apply change to an edit unless all previous changes have applied'
 			);
 			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
@@ -251,7 +248,7 @@ export function checkoutTests(
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 
 			// Is malformed after a malformed edit
-			const malformedMove = Move.create(
+			const malformedMove = Change.move(
 				{
 					start: { side: Side.Before },
 					end: { side: Side.After },
@@ -264,7 +261,7 @@ export function checkoutTests(
 			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
 
 			// Is still malformed after a subsequent valid edit
-			expect(() => checkout.applyChanges(Delete.create(StableRange.only(testTree.left)))).throws(
+			expect(() => checkout.applyChanges(Change.delete(StableRange.only(testTree.left)))).throws(
 				'Cannot apply change to an edit unless all previous changes have applied'
 			);
 			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
@@ -296,7 +293,7 @@ export function checkoutTests(
 
 		it('will emit invalidation messages in response to changes', async () => {
 			const invalidations = await countViewChange((checkout, simpleTestTree) => {
-				checkout.applyEdit(Delete.create(StableRange.only(simpleTestTree.left)));
+				checkout.applyEdit(Change.delete(StableRange.only(simpleTestTree.left)));
 			});
 			expect(invalidations).equals(1);
 		});
@@ -325,9 +322,9 @@ export function checkoutTests(
 
 				checkout.openEdit();
 				expect(data.changeCount).equals(0);
-				checkout.applyChanges(Delete.create(StableRange.only(simpleTestTree.left)));
+				checkout.applyChanges(Change.delete(StableRange.only(simpleTestTree.left)));
 				expect(data.changeCount).equals(1);
-				checkout.applyChanges(Delete.create(StableRange.only(simpleTestTree.right)));
+				checkout.applyChanges(Change.delete(StableRange.only(simpleTestTree.right)));
 				expect(data.changeCount).equals(2);
 				checkout.closeEdit();
 				await checkout.waitForPendingUpdates();
@@ -345,7 +342,7 @@ export function checkoutTests(
 				changeCount += 1;
 			});
 			expect(changeCount).equals(0);
-			checkout.tree.applyEdit(Delete.create(StableRange.only(testTree.left)));
+			checkout.tree.applyEdit(Change.delete(StableRange.only(testTree.left)));
 			// Wait for edit to be included in checkout.
 			await checkout.waitForPendingUpdates();
 			expect(changeCount).equals(1);
@@ -358,7 +355,7 @@ export function checkoutTests(
 			checkout.on(CheckoutEvent.ViewChange, () => {
 				changeCount += 1;
 			});
-			checkout.applyEdit(Delete.create(StableRange.only(testTree.left)));
+			checkout.applyEdit(Change.delete(StableRange.only(testTree.left)));
 			expect(changeCount).equals(1);
 			expect(viewBefore.equals(checkout.currentView)).to.be.false;
 		});
@@ -376,7 +373,7 @@ export function checkoutTests(
 				committedEditsCount += 1;
 			});
 			expect(committedEditsCount).equals(0);
-			checkout.tree.applyEdit(Delete.create(StableRange.only(testTree.left)));
+			checkout.tree.applyEdit(Change.delete(StableRange.only(testTree.left)));
 			await checkout.waitForEditsToSubmit();
 			expect(committedEditsCount).equals(1);
 		});
@@ -398,7 +395,7 @@ export function checkoutTests(
 				changeCount += 1;
 			});
 
-			secondTree.applyEdit(Delete.create(StableRange.only(simpleTestTree.left.translateId(secondTree))));
+			secondTree.applyEdit(Change.delete(StableRange.only(simpleTestTree.left.translateId(secondTree))));
 			expect(changeCount).equals(0);
 			containerRuntimeFactory.processAllMessages();
 			// Wait for edit to be included in checkout.
@@ -431,10 +428,10 @@ export function checkoutTests(
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
 			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			expect(tree.equals(secondTree)).to.be.true;
-			checkout.applyChanges(Delete.create(StableRange.only(simpleTestTree.left)));
+			checkout.applyChanges(Change.delete(StableRange.only(simpleTestTree.left)));
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.false;
 			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.false;
-			secondCheckout.applyChanges(Delete.create(StableRange.only(simpleTestTree.left)));
+			secondCheckout.applyChanges(Change.delete(StableRange.only(simpleTestTree.left)));
 			expect(checkout.currentView.equals(secondCheckout.currentView)).to.be.true;
 			expect(checkout.currentView.hasEqualForest(secondCheckout.currentView)).to.be.true;
 			expect(tree.equals(secondTree)).to.be.true;
@@ -473,7 +470,7 @@ export function checkoutTests(
 
 			// Concurrently, the second client deletes the right node. This will not conflict with the operation performed
 			// on the left trait on the first client.
-			secondCheckout.applyEdit(Delete.create(StableRange.only(simpleTestTree.right.translateId(secondTree))));
+			secondCheckout.applyEdit(Change.delete(StableRange.only(simpleTestTree.right.translateId(secondTree))));
 			await secondCheckout.waitForPendingUpdates();
 
 			// Deliver the remote change. Since there will not be any conflicts, the result should merge locally and both trait
@@ -529,11 +526,11 @@ export function checkoutTests(
 			checkout.openEdit();
 			// Move the left node to after the right node
 			checkout.applyChanges(
-				...Move.create(StableRange.only(simpleTestTree.left), StablePlace.after(simpleTestTree.right))
+				...Change.move(StableRange.only(simpleTestTree.left), StablePlace.after(simpleTestTree.right))
 			);
 
 			// Concurrently, the second client deletes the right node. This will conflict with the move operation by the first client.
-			secondCheckout.applyEdit(Delete.create(StableRange.only(simpleTestTree.right.translateId(secondTree))));
+			secondCheckout.applyEdit(Change.delete(StableRange.only(simpleTestTree.right.translateId(secondTree))));
 			await secondCheckout.waitForPendingUpdates();
 
 			containerRuntimeFactory.processAllMessages();

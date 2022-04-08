@@ -11,7 +11,7 @@ import { fail } from '../../Common';
 import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types';
 import type { EditLog } from '../../EditLog';
 import { SharedTree } from '../../SharedTree';
-import { Insert, StablePlace } from '../../ChangeTypes';
+import { Change, StablePlace } from '../../ChangeTypes';
 import {
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
@@ -68,7 +68,7 @@ export function runPendingLocalStateTests(
 						container,
 						() =>
 							tree.applyEdit(
-								...Insert.create([testTree.buildLeaf()], StablePlace.after(testTree.left))
+								...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left))
 							) as Edit<ChangeInternal>
 					);
 					await testObjectProvider.ensureSynchronized();
@@ -132,7 +132,7 @@ export function runPendingLocalStateTests(
 			// Generate enough edits to cause a chunk upload.
 			for (let i = 0; i < (tree.edits as EditLog).editsPerChunk; i++) {
 				tree.applyEdit(
-					...Insert.create([testTree.buildLeaf()], StablePlace.atEndOf(testTree.left.traitLocation))
+					...Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.left.traitLocation))
 				);
 			}
 			// Process all of those messages, sequencing them but without informing the container that they have been sequenced.

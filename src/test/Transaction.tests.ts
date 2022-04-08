@@ -5,7 +5,7 @@
 
 import { expect } from 'chai';
 import { EditStatus, WriteFormat } from '../persisted-types';
-import { Change, Delete, Move, StablePlace, StableRange } from '../ChangeTypes';
+import { Change, StablePlace, StableRange } from '../ChangeTypes';
 import { Transaction } from '../Transaction';
 import { SharedTree } from '../SharedTree';
 import { TestTree } from './utilities/TestNode';
@@ -19,11 +19,11 @@ describe('Transaction', () => {
 	}
 
 	function createValidChange(testTree: TestTree): Change {
-		return Delete.create(StableRange.only(testTree.left));
+		return Change.delete(StableRange.only(testTree.left));
 	}
 
 	function createInvalidChange(testTree: TestTree): Change {
-		return Delete.create(StableRange.only(testTree.generateNodeId()));
+		return Change.delete(StableRange.only(testTree.generateNodeId()));
 	}
 
 	function createMalformedChange(testTree: TestTree): Change {
@@ -62,7 +62,7 @@ describe('Transaction', () => {
 
 	it('can apply multiple changes at once', () => {
 		const { tree, testTree, transaction } = createTestTransaction();
-		transaction.apply(Move.create(StableRange.only(testTree.left), StablePlace.after(testTree.right)));
+		transaction.apply(Change.move(StableRange.only(testTree.left), StablePlace.after(testTree.right)));
 		transaction.closeAndCommit();
 		expect(tree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(0);
 		expect(tree.currentView.getTrait(testTree.right.traitLocation).length).to.equal(2);

@@ -15,11 +15,11 @@ import { refreshTestTree } from './utilities/TestUtilities';
 // 		const node = makeTestNode();
 // 		const editId = '75dd0d7d-ea87-40cf-8860-dc2b9d827597' as EditId;
 // 		const editA: Edit = {
-// 			changes: [Delete.create(StableRange.only(node))],
+// 			changes: [Change.delete(StableRange.only(node))],
 // 		};
 
 // 		const sequencedEditB: Edit = {
-// 			changes: [Delete.create(StableRange.only(node))],
+// 			changes: [Change.delete(StableRange.only(node))],
 // 		};
 
 // 		expect(compareEdits(editA, sequencedEditB)).to.be.true;
@@ -30,12 +30,12 @@ import { refreshTestTree } from './utilities/TestUtilities';
 // 		const nodeDestination = makeTestNode();
 
 // 		const sequencedEditA: Edit = {
-// 			changes: [Delete.create(StableRange.only(node))],
+// 			changes: [Change.delete(StableRange.only(node))],
 // 			id: '7366efae-f96a-4f5d-9c6c-eea62ac6dffb' as EditId,
 // 		};
 
 // 		const sequencedEditB: Edit = {
-// 			changes: [...Move.create(StableRange.only(node), StablePlace.before(nodeDestination))],
+// 			changes: [...Change.move(StableRange.only(node), StablePlace.before(nodeDestination))],
 // 			id: '57cb9fa9-9d1d-49eb-919a-5636ed55a65a' as EditId,
 // 		};
 

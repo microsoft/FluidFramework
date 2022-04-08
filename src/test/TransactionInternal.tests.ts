@@ -14,7 +14,6 @@ import {
 	ChangeTypeInternal,
 	ConstraintEffect,
 	EditStatus,
-	InsertInternal,
 	SetValueInternal,
 	Side,
 	StablePlaceInternal,
@@ -331,7 +330,7 @@ describe('Transaction', () => {
 				const newNodeId = testTree.generateNodeId();
 				const newNode = testTree.buildLeafInternal(newNodeId);
 				transaction.applyChanges(
-					InsertInternal.create(
+					ChangeInternal.insertTree(
 						[newNode],
 						side === Side.After
 							? StablePlace.atStartOf(testTree.left.traitLocation)
@@ -347,7 +346,7 @@ describe('Transaction', () => {
 				const newNode = testTree.buildLeafInternal();
 
 				transaction.applyChanges(
-					InsertInternal.create([newNode], { referenceSibling: testTree.left.identifier, side })
+					ChangeInternal.insertTree([newNode], { referenceSibling: testTree.left.identifier, side })
 				);
 				expect(transaction.view.getTrait(testTree.left.traitLocation)).deep.equals(
 					side === Side.Before
