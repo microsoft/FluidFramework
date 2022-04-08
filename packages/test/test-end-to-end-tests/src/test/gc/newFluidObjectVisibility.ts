@@ -10,81 +10,81 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IFluidHandle, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider, timeoutPromise } from "@fluidframework/test-utils";
 import {
     describeNoCompat,
     ITestDataObject,
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
 
+async function requestTestObjectWithoutWait(router: IFluidRouter, id: string): Promise<ITestDataObject> {
+    const request: IRequest = { url: id, headers: { wait: false } };
+    return requestFluidObject(router, request);
+}
+
+/**
+ * Creates a non-root data object and validates that it is not visible from the root of the container.
+ */
+async function createNonRootDataObject(
+    container: IContainer,
+    containerRuntime: IContainerRuntime,
+): Promise<ITestDataObject> {
+    const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
+    const dataObject = await requestTestObjectWithoutWait(dataStore, "");
+    // Non-root data stores are not visible (unreachable) from the root unless their handles are stored in a
+    // visible DDS.
+    await assert.rejects(requestTestObjectWithoutWait(container,dataObject._context.id),
+        "Non root data object must not be visible from root after creation",
+    );
+    return dataObject;
+}
+
+/**
+ * Creates a root data object and validates that it is visible from the root of the container.
+ */
+async function createRootDataObject(
+    container: IContainer,
+    containerRuntime: IContainerRuntime,
+    rootDataStoreId: string,
+): Promise<ITestDataObject> {
+    const dataStore = await containerRuntime.createRootDataStore(TestDataObjectType, rootDataStoreId);
+    const dataObject = await requestTestObjectWithoutWait(dataStore, "");
+    // Non-root data stores are visible (reachable) from the root as soon as they are created.
+    await assert.doesNotReject(requestTestObjectWithoutWait(container, dataObject._context.id),
+        "Root data object must be visible from root after creation",
+    );
+    return dataObject;
+}
+
+async function getAndValidateDataObject(
+    fromDataObject: ITestDataObject,
+    key: string,
+    container: IContainer,
+): Promise<ITestDataObject> {
+    const dataObjectHandle = fromDataObject._root.get<IFluidHandle<ITestDataObject>>(key);
+    assert(dataObjectHandle !== undefined, `Data object handle for key ${key} not found`);
+    const dataObject = await dataObjectHandle.get();
+    await assert.doesNotReject(requestTestObjectWithoutWait(container, dataObject._context.id),
+        `Data object for key ${key} must be visible`);
+    return dataObject;
+}
+
+async function ensureContainerConnected(container: Container): Promise<void> {
+    if (!container.connected) {
+        return timeoutPromise((resolve) => container.once("connected", () => resolve()));
+    }
+}
+
 /**
  * These tests validate that new Fluid objects such as data stores and DDSs become visible correctly. For example,
  * new non-root data stores should not become visible (or reachable from root) until their handles are added to a
  * visible DDS.
  */
-describeNoCompat.only("New Fluid objects visibility", (getTestObjectProvider) => {
+describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let container1: IContainer;
     let containerRuntime1: IContainerRuntime;
     let dataObject1: ITestDataObject;
-
-    async function requestTestObjectWithoutWait(router: IFluidRouter, id: string): Promise<ITestDataObject> {
-        const request: IRequest = { url: id, headers: { wait: false } };
-        return requestFluidObject(router, request);
-    }
-
-    /**
-     * Creates a non-root data object and validates that it is not visible from the root of the container.
-     */
-    async function createNonRootDataObject(
-        container: IContainer,
-        containerRuntime: IContainerRuntime,
-    ): Promise<ITestDataObject> {
-        const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
-        const dataObject = await requestTestObjectWithoutWait(dataStore, "");
-        // Non-root data stores are not visible (unreachable) from the root unless their handles are stored in a
-        // visible DDS.
-        await assert.rejects(requestTestObjectWithoutWait(container,dataObject._context.id),
-            "Non root data object must not be visible from root after creation",
-        );
-        return dataObject;
-    }
-
-    /**
-     * Creates a root data object and validates that it is visible from the root of the container.
-     */
-    async function createRootDataObject(
-        container: IContainer,
-        containerRuntime: IContainerRuntime,
-        rootDataStoreId: string,
-    ): Promise<ITestDataObject> {
-        const dataStore = await containerRuntime.createRootDataStore(TestDataObjectType, rootDataStoreId);
-        const dataObject = await requestTestObjectWithoutWait(dataStore, "");
-        // Non-root data stores are visible (reachable) from the root as soon as they are created.
-        await assert.doesNotReject(requestTestObjectWithoutWait(container, dataObject._context.id),
-            "Root data object must be visible from root after creation",
-        );
-        return dataObject;
-    }
-
-    async function getAndValidateDataObject(
-        fromDataObject: ITestDataObject,
-        key: string,
-        container: IContainer,
-    ): Promise<ITestDataObject> {
-        const dataObjectHandle = fromDataObject._root.get<IFluidHandle<ITestDataObject>>(key);
-        assert(dataObjectHandle !== undefined, `Data object handle for key ${key} not found`);
-        const dataObject = await dataObjectHandle.get();
-        await assert.doesNotReject(requestTestObjectWithoutWait(container, dataObject._context.id),
-            `Data object for key ${key} must be visible`);
-        return dataObject;
-    }
-
-    async function ensureContainerConnected(container: Container): Promise<void> {
-        if (!container.connected) {
-            return new Promise((resolve) => container.once("connected", () => resolve()));
-        }
-    }
 
     /**
      * If detachedMode is true, the test creates new data stores in detached container and validates their visibility.
