@@ -123,7 +123,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private readonly throttlingIdSet = new Set<string>();
     private timeTillThrottling: number = 0;
 
-    private readonly closeAbortController = new AbortController();
+    public readonly closeAbortController = new AbortController();
 
     private readonly deltaStorageDelayId = uuid();
     private readonly deltaStreamDelayId = uuid();

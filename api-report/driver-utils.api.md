@@ -214,7 +214,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 // @public
 export interface IProgress {
     cancel?: AbortSignal;
-    retry?(delayInMs: number, error: any): void;
+    onRetry?(delayInMs: number, error: any): void;
 }
 
 // @public (undocumented)

@@ -67,12 +67,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get closed(): boolean;
     // (undocumented)
+    get closeSignal(): AbortSignal;
+    // (undocumented)
+    connect(): void;
+    // (undocumented)
     get connected(): boolean;
     // (undocumented)
     get connectionState(): ConnectionState;
     static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // (undocumented)
+    disconnect(): void;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -98,13 +104,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     request(path: IRequest): Promise<IResponse>;
     // (undocumented)
     get resolvedUrl(): IResolvedUrl | undefined;
-    // (undocumented)
+    // @deprecated
     resume(): void;
     get scopes(): string[] | undefined;
     // (undocumented)
     serialize(): string;
     get serviceConfiguration(): IClientConfiguration | undefined;
-    // (undocumented)
+    // @deprecated
     setAutoReconnect(reconnect: boolean): void;
     // (undocumented)
     get storage(): IDocumentStorageService;
