@@ -1,13 +1,13 @@
 [
 	{
-		"absolutePath": "/_blobs/e5d6537ce9199d3e519b9b2ec5016b47267ff76e",
+		"absolutePath": "/_blobs/bfba28883f54cf13b23b0a9ebb780c5155da7a89",
 		"chunkContents": {
 			"version": "0.1.1",
 			"edits": [
 				{
 					"changes": [
-						{ "destination": 0, "source": [[0, 11, [1, [[2, 13, ["payload"]]]]]], "type": 5 },
-						{ "destination": 1, "source": [[3, 14, [4, [[5, 10]], 6, [[7, 15], 0, [8, 12]]]]], "type": 5 },
+						{ "destination": 0, "source": [[1, 11, [2, [[3, 13, ["payload"]]]]]], "type": 5 },
+						{ "destination": 1, "source": [[4, 14, [5, [[7, 10]], 6, [[8, 15], 0, [9, 12]]]]], "type": 5 },
 						{
 							"source": 1,
 							"destination": { "side": 1, "referenceTrait": { "label": "root", "parent": 0 } },
@@ -136,8 +136,7 @@
 				{ "changes": [{ "nodeToModify": 10, "payload": 94, "type": 3 }] },
 				{ "changes": [{ "nodeToModify": 10, "payload": 95, "type": 3 }] },
 				{ "changes": [{ "nodeToModify": 10, "payload": 96, "type": 3 }] }
-			],
-			"internedStrings": ["C", "leaf", "E", "Root", "left", "A", "right", "B", "D"]
+			]
 		}
 	}
 ]

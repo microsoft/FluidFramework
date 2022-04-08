@@ -5,7 +5,7 @@
 
 import { expect } from 'chai';
 import { DetachedSequenceId, OpSpaceNodeId } from '../Identifiers';
-import { StringInterner } from '../StringInterner';
+import { MutableStringInterner, StringInterner } from '../StringInterner';
 import {
 	BuildInternal,
 	ChangeInternal,
@@ -79,7 +79,7 @@ describe('ChangeCompression', () => {
 		idNormalizer: ContextualizedNodeIdNormalizer<OpSpaceNodeId>,
 		compressed?: Edit<TestCompressedChange>
 	): void {
-		const interner = new StringInterner();
+		const interner = new MutableStringInterner();
 		const compressedEdit = compressEdit(compressor, interner, idNormalizer, edit);
 		if (compressed !== undefined) {
 			expect(compressedEdit).to.deep.equal(compressed);
@@ -101,7 +101,7 @@ describe('ChangeCompression', () => {
 		expect(treeCompressor.decompressTreeCalls.length).to.equal(0);
 
 		const internedStrings = interner.getSerializable();
-		const newInterner = new StringInterner(internedStrings);
+		const newInterner = new MutableStringInterner(internedStrings);
 		const decompressedEdit = decompressEdit(compressor, newInterner, idNormalizer, compressedEdit);
 
 		const compressedBuildChanges = compressedEdit.changes.filter<CompressedBuildInternal<OpSpaceNodeId>>(
@@ -130,7 +130,11 @@ describe('ChangeCompression', () => {
 				{
 					destination: 0 as DetachedSequenceId,
 					source: [
-						new InterningTreeCompressor().compress(tree, new StringInterner(), scopeIdNormalizer(tree)),
+						new InterningTreeCompressor().compress(
+							tree,
+							new MutableStringInterner(),
+							scopeIdNormalizer(tree)
+						),
 					],
 					type: ChangeTypeInternal.CompressedBuild,
 				},

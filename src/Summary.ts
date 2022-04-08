@@ -9,6 +9,7 @@ import { fail } from './Common';
 import type { IdCompressor } from './id-compressor';
 import type { EditLogSummary, SharedTreeSummaryBase, ChangeNode, ChangeInternal } from './persisted-types';
 import type { EditHandle } from './EditLog';
+import type { MutableStringInterner } from './StringInterner';
 
 /**
  * The contents of a SharedTree summary, converted to a common internal format that can be
@@ -27,6 +28,11 @@ export interface SummaryContents {
 	 * Information about all IDs compressed in the summary
 	 */
 	readonly idCompressor: IdCompressor;
+
+	/**
+	 * Interner pre-loaded with all definitions and labels from the summary.
+	 */
+	readonly interner: MutableStringInterner;
 }
 
 /**

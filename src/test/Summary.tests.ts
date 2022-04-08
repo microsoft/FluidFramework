@@ -142,6 +142,7 @@ export async function createSummaryTestTree(writeFormat: WriteFormat, summarizeH
 				'968bee41-bcf7-46d2-8035-6eb163b76c4c' as SessionId,
 				reservedIdCount
 			).serialize(true),
+			internedStrings: [initialTree.definition],
 		};
 
 		tree.loadSummary(sharedTreeSummaryWithConstantSessionId);

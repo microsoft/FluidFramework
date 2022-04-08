@@ -10,16 +10,16 @@
 								"destination": 0,
 								"source": [
 									[
-										0,
+										4,
 										14,
 										[
-											1,
+											5,
 											[
-												[2, 10, [99]],
-												[3, [4, [[5, 13, ["payload"]]]]]
+												[7, 10, [99]],
+												[1, [2, [[3, 13, ["payload"]]]]]
 											],
 											6,
-											[[7, 15]]
+											[[8, 15]]
 										]
 									]
 								],
@@ -35,10 +35,22 @@
 				]
 			}
 		],
-		"editIds": ["a2aa28a1-6d31-4031-8a58-10ffc23cb266"]
+		"editIds": ["9c80454e-039e-4eb4-a277-ceaab85a9d44"]
 	},
 	"version": "0.1.1",
-	"internedStrings": ["Root", "left", "A", "C", "leaf", "E", "right", "B"],
+	"internedStrings": [
+		"51c58718-47b9-4fe4-ad46-56312f3b9e86",
+		"C",
+		"leaf",
+		"E",
+		"Root",
+		"left",
+		"right",
+		"A",
+		"B",
+		"D",
+		"root"
+	],
 	"idCompressor": {
 		"version": "0.0.1",
 		"reservedIdCount": 10,

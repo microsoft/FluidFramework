@@ -26,12 +26,14 @@ import { SharedTreeEncoder_0_1_1 } from '../SharedTreeEncoder';
 import { CachingLogViewer } from '../LogViewer';
 import { GenericTransaction, TransactionInternal } from '../TransactionInternal';
 import { RevisionView } from '../RevisionView';
+import { MutableStringInterner } from '../StringInterner';
 import {
 	applyNoop,
 	createStableEdits,
 	makeNodeIdContext,
 	setUpLocalServerTestSharedTree,
 } from './utilities/TestUtilities';
+import { SimpleTestTree } from './utilities/TestNode';
 
 describe('SharedTree history virtualization', () => {
 	let sharedTree: SharedTree;
@@ -59,12 +61,21 @@ describe('SharedTree history virtualization', () => {
 			undefined,
 			(view) => new GenericTransaction(view, new TransactionInternal.Policy())
 		);
+
+		const internedStrings = [
+			SimpleTestTree.definition,
+			SimpleTestTree.traitLabel,
+			SimpleTestTree.leftTraitLabel,
+			SimpleTestTree.rightTraitLabel,
+		];
+		const interner = new MutableStringInterner(internedStrings);
 		const encoder = new SharedTreeEncoder_0_1_1(true);
 		return encoder.encodeSummary(
 			editLog,
 			logViewer.getRevisionViewInSession(Number.POSITIVE_INFINITY),
 			context,
 			context,
+			interner,
 			idCompressor.serialize(false)
 		);
 	}

@@ -6,11 +6,13 @@
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { assert } from '../Common';
+import { walkTree } from '../EditUtilities';
 import { createSessionId, IdCompressor, isFinalId, isLocalId } from '../id-compressor';
-import type {
+import {
 	Definition,
 	DetachedSequenceId,
 	InternedStringId,
+	isDetachedSequenceId,
 	NodeId,
 	OpSpaceNodeId,
 	TraitLabel,
@@ -18,7 +20,7 @@ import type {
 import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities';
 import { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types';
 import { RevisionView } from '../RevisionView';
-import { StringInterner } from '../StringInterner';
+import { MutableStringInterner } from '../StringInterner';
 import { InterningTreeCompressor } from '../TreeCompressor';
 import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities';
 
@@ -33,16 +35,32 @@ function testCompression<TPlaceholder extends DetachedSequenceId | never>(
 	tree: PlaceholderTree<TPlaceholder>,
 	idNormalizer: ContextualizedNodeIdNormalizer<OpSpaceNodeId>,
 	compressed?: CompressedPlaceholderTree<OpSpaceNodeId, TPlaceholder>,
-	roundTripAsserter?: (tree: PlaceholderTree<TPlaceholder>, roundTrippedTree: PlaceholderTree<TPlaceholder>) => void
+	roundTripAsserter?: (tree: PlaceholderTree<TPlaceholder>, roundTrippedTree: PlaceholderTree<TPlaceholder>) => void,
+	internStrings: (interner: MutableStringInterner, tree: PlaceholderTree<TPlaceholder>) => void = (
+		interner,
+		tree
+	) => {
+		walkTree<Exclude<PlaceholderTree<DetachedSequenceId>, DetachedSequenceId>, DetachedSequenceId>(
+			tree,
+			(node) => {
+				interner.getOrCreateInternedId(node.definition);
+				for (const trait of Object.keys(node.traits).sort()) {
+					interner.getOrCreateInternedId(trait);
+				}
+			},
+			isDetachedSequenceId
+		);
+	}
 ): void {
-	const interner = new StringInterner();
+	const interner = new MutableStringInterner();
+	internStrings(interner, tree);
 	const treeCompressor = new InterningTreeCompressor<TPlaceholder>();
 	const compressedTree = treeCompressor.compress(tree, interner, idNormalizer);
 	if (compressed !== undefined) {
 		expect(compressedTree).to.deep.equal(compressed);
 	}
 	const internedStrings = interner.getSerializable();
-	const newInterner = new StringInterner(internedStrings);
+	const newInterner = new MutableStringInterner(internedStrings);
 	const decompressedTree = treeCompressor.decompress(compressedTree, newInterner, idNormalizer);
 	if (roundTripAsserter) {
 		roundTripAsserter(tree, decompressedTree);
@@ -105,6 +123,55 @@ describe('TreeCompression', () => {
 			payload: 5,
 		};
 		testCompression(tree, scopeIdNormalizer(context), [internedId(0), context.normalizeToOpSpace(id), [5]]);
+	});
+
+	it('handles non-interned `Definition`s', () => {
+		const context = makeNodeIdContext();
+		const id = context.generateNodeId();
+		const definition = 'node' as Definition;
+		const tree: PlaceholderTree = {
+			identifier: id,
+			definition,
+			traits: {},
+		};
+		testCompression(
+			tree,
+			scopeIdNormalizer(context),
+			[definition, context.normalizeToOpSpace(id)],
+			undefined,
+			() => {} /* intern nothing */
+		);
+	});
+
+	it('handles non-interned `TraitLabel`s', () => {
+		const context = makeNodeIdContext();
+		const parentId = context.generateNodeId();
+		const childId = context.generateNodeId();
+		const parentDefinition = 'def1' as Definition;
+		const childDefinition = 'def2' as Definition;
+		const tree: PlaceholderTree = {
+			identifier: parentId,
+			definition: parentDefinition,
+			traits: {
+				trait1: [
+					{
+						identifier: childId,
+						definition: childDefinition,
+						traits: {},
+					},
+				],
+			},
+		};
+		testCompression(
+			tree,
+			scopeIdNormalizer(context),
+			[internedId(0), context.normalizeToOpSpace(parentId), ['trait1', [[internedId(1)]]]],
+			undefined,
+			(interner) => {
+				interner.getOrCreateInternedId(parentDefinition);
+				interner.getOrCreateInternedId(childDefinition);
+			}
+		);
 	});
 
 	it('handles intermediate nodes without payloads', () => {
@@ -263,22 +330,22 @@ describe('TreeCompression', () => {
 			id(tree.identifier),
 			[
 				internedId(1), // aardvark
-				[[nodeDef, [internedId(2), [[nodeDef]]]]],
-				internedId(3), // maganio
+				[[nodeDef, [internedId(4), [[nodeDef]]]]],
+				internedId(2), // maganio
 				[
 					[nodeDef],
 					[
 						nodeDef,
 						id(finalIds[0]),
 						[
-							internedId(4), // hortonio
+							internedId(5), // hortonio
 							[[nodeDef]],
-							internedId(5), // pardesio
+							internedId(6), // pardesio
 							[[nodeDef], [nodeDef, id(localIds[4])], [nodeDef, id(finalIds[3])]],
 						],
 					],
 				],
-				internedId(6), // zebra
+				internedId(3), // zebra
 				[
 					[nodeDef, id(localIds[5])],
 					[nodeDef, id(localIds[5])],

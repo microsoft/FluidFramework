@@ -3,19 +3,19 @@
 		0,
 		0,
 		[
-			1,
+			10,
 			[
 				[
-					2,
+					4,
 					14,
 					[
-						3,
+						5,
 						[
-							[4, 10, [99]],
-							[5, [6, [[7, 13, ["payload"]]]]]
+							[7, 10, [99]],
+							[1, [2, [[3, 13, ["payload"]]]]]
 						],
-						8,
-						[[9, 15]]
+						6,
+						[[8, 15]]
 					]
 				]
 			]
@@ -25,7 +25,7 @@
 		"editChunks": [
 			{
 				"startRevision": 0,
-				"chunk": { "type": "__fluid_handle__", "url": "/_blobs/e5d6537ce9199d3e519b9b2ec5016b47267ff76e" }
+				"chunk": { "type": "__fluid_handle__", "url": "/_blobs/bfba28883f54cf13b23b0a9ebb780c5155da7a89" }
 			},
 			{
 				"startRevision": 100,
@@ -145,15 +145,16 @@
 	"version": "0.1.1",
 	"internedStrings": [
 		"51c58718-47b9-4fe4-ad46-56312f3b9e86",
-		"root",
-		"Root",
-		"left",
-		"A",
 		"C",
 		"leaf",
 		"E",
+		"Root",
+		"left",
 		"right",
-		"B"
+		"A",
+		"B",
+		"D",
+		"root"
 	],
 	"idCompressor": {
 		"version": "0.0.1",

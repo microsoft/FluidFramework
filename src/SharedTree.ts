@@ -27,7 +27,7 @@ import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fl
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { assert, assertNotUndefined, fail, copyPropertyIfDefined } from './Common';
 import { EditHandle, EditLog, getNumberOfHandlesFromEditLogSummary, OrderedEditSet } from './EditLog';
-import { EditId, NodeId, StableNodeId, DetachedSequenceId, OpSpaceNodeId } from './Identifiers';
+import { EditId, NodeId, StableNodeId, DetachedSequenceId, OpSpaceNodeId, isDetachedSequenceId } from './Identifiers';
 import { initialTree } from './InitialTree';
 import {
 	CachingLogViewer,
@@ -75,6 +75,7 @@ import {
 	deepCloneStableRange,
 	internalizeBuildNode,
 	newEditId,
+	walkTree,
 } from './EditUtilities';
 import { getNodeIdContext, NodeIdContext, NodeIdNormalizer, sequencedIdNormalizer } from './NodeIdUtilities';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
@@ -85,6 +86,7 @@ import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes';
 import { TransactionInternal } from './TransactionInternal';
 import { IdCompressor, createSessionId } from './id-compressor';
 import { convertEditIds } from './IdConversion';
+import { MutableStringInterner } from './StringInterner';
 
 /**
  * Factory for SharedTree.
@@ -310,6 +312,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		normalizeToOpSpace: (id) => this.idCompressor.normalizeToOpSpace(id) as OpSpaceNodeId,
 		normalizeToSessionSpace: (id, sessionId) => this.idCompressor.normalizeToSessionSpace(id, sessionId) as NodeId,
 	};
+
+	// The initial tree's definition isn't included in any op by default but it should still be interned. Including it here ensures that.
+	private interner: MutableStringInterner = new MutableStringInterner([initialTree.definition]);
 
 	/**
 	 * The log of completed edits for this SharedTree.
@@ -548,7 +553,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		const blobUploadSizeLimit = 4194304;
 
 		try {
-			const chunkContents = this.encoder_0_1_1.encodeEditChunk(edits, sequencedIdNormalizer(this.idNormalizer));
+			const chunkContents = this.encoder_0_1_1.encodeEditChunk(
+				edits,
+				sequencedIdNormalizer(this.idNormalizer),
+				this.interner
+			);
 			const serializedContents = serializeHandles(chunkContents, this.serializer, this.handle);
 			const buffer = IsoBuffer.from(serializedContents);
 			const bufferSize = buffer.byteLength;
@@ -625,6 +634,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			if (this.writeFormat === WriteFormat.v0_1_1) {
 				// Since we're the first client to attach, we can safely finalize ourselves since we're the only ones who have made IDs.
 				this.idCompressor.finalizeCreationRange(this.idCompressor.takeNextCreationRange());
+				for (const edit of this.editLog.getLocalEdits()) {
+					this.internStringsFromEdit(edit);
+				}
 			}
 			this.editLog.sequenceLocalEdits();
 		}
@@ -648,6 +660,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 						this.currentView,
 						this,
 						this.idNormalizer,
+						this.interner,
 						this.idCompressor.serialize(false)
 					);
 				default:
@@ -695,7 +708,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				fail('Unknown version');
 		}
 
-		const { editHistory, currentTree, idCompressor } = convertedSummary;
+		const { editHistory, currentTree, idCompressor, interner } = convertedSummary;
+		this.interner = interner;
+		this.interner.getOrCreateInternedId(initialTree.definition);
 		if (compareSummaryFormatVersions(loadedSummaryVersion, WriteFormat.v0_1_1) < 0) {
 			const { editIds, editChunks } = editHistory;
 			this.logger.sendTelemetryEvent({
@@ -896,7 +911,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 						const parsedContents: EditChunkContents = JSON.parse(IsoBuffer.from(contents).toString());
 						return this.encoder_0_1_1.decodeEditChunk(
 							parsedContents,
-							sequencedIdNormalizer(this.idNormalizer)
+							sequencedIdNormalizer(this.idNormalizer),
+							this.interner
 						);
 					},
 					baseHandle,
@@ -907,6 +923,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 					this.idCompressor.finalizeCreationRange(op.idRange);
 				}
 				const edit = this.parseSequencedEdit(op);
+				this.internStringsFromEdit(edit);
 				this.processSequencedEdit(edit, typedMessage);
 			}
 		} else if (type === SharedTreeOpType.Update) {
@@ -948,7 +965,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			case WriteFormat.v0_0_2:
 				return this.encoder_0_0_2.decodeEditOp(op, this.encodeSemiSerializedEdit.bind(this), this);
 			case WriteFormat.v0_1_1:
-				return this.encoder_0_1_1.decodeEditOp(op, this.encodeSemiSerializedEdit.bind(this), this.idNormalizer);
+				return this.encoder_0_1_1.decodeEditOp(
+					op,
+					this.encodeSemiSerializedEdit.bind(this),
+					this.idNormalizer,
+					this.interner
+				);
 			default:
 				fail('Unknown op version');
 		}
@@ -1042,6 +1064,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	private upgradeFrom_0_0_2_to_0_1_1(): void {
+		for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
+			this.internStringsFromEdit(this.editsInternal.getEditInSessionAtIndex(i));
+		}
 		const oldIdCompressor = this.idCompressor;
 		// Create the IdCompressor that will be used after the upgrade
 		const newIdCompressor = new IdCompressor(createSessionId(), reservedIdCount); // TODO: attribution info
@@ -1245,7 +1270,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 							edit,
 							this.serializeEdit.bind(this),
 							this.idCompressor.takeNextCreationRange(),
-							this.idNormalizer
+							this.idNormalizer,
+							this.interner
 						)
 					);
 					break;
@@ -1330,6 +1356,35 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	private changeWriteFormat(newFormat: WriteFormat): void {
 		this.writeFormat = newFormat;
 		this.emit(SharedTreeDiagnosticEvent.WriteVersionChanged, newFormat);
+	}
+
+	/**
+	 * Interns all Definitions and TraitLabel_s referenced by the provided edit.
+	 *
+	 * Clients must have consensus on the interned values to guarantee the interned ID is valid.
+	 */
+	private internStringsFromEdit(edit: Edit<ChangeInternal>): void {
+		for (const change of edit.changes) {
+			if (change.type === ChangeTypeInternal.Build) {
+				for (const root of change.source) {
+					walkTree<TreeNode<BuildNodeInternal, NodeId>, DetachedSequenceId>(
+						root,
+						(node) => {
+							this.interner.getOrCreateInternedId(node.definition);
+							for (const trait of Object.keys(node.traits)) {
+								this.interner.getOrCreateInternedId(trait);
+							}
+						},
+						isDetachedSequenceId
+					);
+				}
+			} else if (change.type === ChangeTypeInternal.Insert) {
+				const { referenceTrait } = change.destination;
+				if (referenceTrait !== undefined) {
+					this.interner.getOrCreateInternedId(referenceTrait.label);
+				}
+			}
+		}
 	}
 }
 

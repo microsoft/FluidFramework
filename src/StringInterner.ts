@@ -8,9 +8,18 @@ import type { InternedStringId } from './Identifiers';
 
 /**
  * Interns strings as integers.
+ */
+export interface StringInterner {
+	getInternedId(input: string): InternedStringId | undefined;
+	getString(internedId: number): string;
+	getSerializable(): readonly string[];
+}
+
+/**
+ * Interns strings as integers.
  * Given a string, this class will produce a unique integer associated with that string that can then be used to retrieve the string.
  */
-export class StringInterner {
+export class MutableStringInterner implements StringInterner {
 	private readonly stringToInternedIdMap = new Map<string, InternedStringId>();
 	private readonly internedStrings: string[] = [];
 
@@ -20,7 +29,7 @@ export class StringInterner {
 	 */
 	constructor(inputStrings: readonly string[] = []) {
 		for (const value of inputStrings) {
-			this.getInternId(value);
+			this.getOrCreateInternedId(value);
 		}
 	}
 
@@ -28,17 +37,12 @@ export class StringInterner {
 	 * @param input - The string to get the associated intern ID for
 	 * @returns an intern ID that is uniquely associated with the input string
 	 */
-	public getInternId(input: string): InternedStringId {
-		const possibleOutput = this.stringToInternedIdMap.get(input);
+	public getOrCreateInternedId(input: string): InternedStringId {
+		return this.getInternedId(input) ?? this.createNewId(input);
+	}
 
-		if (possibleOutput === undefined) {
-			const internId = this.stringToInternedIdMap.size;
-			this.stringToInternedIdMap.set(input, internId as InternedStringId);
-			this.internedStrings.push(input);
-			return internId as InternedStringId;
-		}
-
-		return possibleOutput;
+	public getInternedId(input: string): InternedStringId | undefined {
+		return this.stringToInternedIdMap.get(input);
 	}
 
 	/**
@@ -56,5 +60,13 @@ export class StringInterner {
 	 */
 	public getSerializable(): readonly string[] {
 		return this.internedStrings;
+	}
+
+	/** Create a new interned id. Assumes without validation that the input doesn't already have an interned id. */
+	private createNewId(input: string): InternedStringId {
+		const internedId = this.stringToInternedIdMap.size as InternedStringId;
+		this.stringToInternedIdMap.set(input, internedId);
+		this.internedStrings.push(input);
+		return internedId;
 	}
 }

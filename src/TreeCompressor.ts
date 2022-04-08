@@ -63,7 +63,7 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 			return node;
 		}
 
-		const internedDefinition = interner.getInternId(node.definition);
+		const internedDefinition = interner.getInternedId(node.definition) ?? node.definition;
 		const normalizedId = idNormalizer.normalizeToOpSpace(node.identifier);
 		const compressedId = canElideId(this.previousId, normalizedId) ? undefined : normalizedId;
 		this.previousId = normalizedId;
@@ -74,7 +74,7 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 		if (traits.length > 0 || node.payload !== undefined) {
 			for (const [label, trait] of traits) {
 				compressedTraits.push(
-					interner.getInternId(label),
+					interner.getInternedId(label) ?? (label as TraitLabel),
 					trait.map((child) => this.compressI(child, interner, idNormalizer))
 				);
 			}
@@ -124,7 +124,7 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 		let compressedId: TId | undefined;
 		let compressedTraits: CompressedTraits<TId, TPlaceholder> | undefined;
 		let payload: Payload | undefined;
-		const [internedDefinition, idOrPayloadTraits, payloadTraits] = node;
+		const [maybeInternedDefinition, idOrPayloadTraits, payloadTraits] = node;
 		if (idOrPayloadTraits !== undefined) {
 			if (typeof idOrPayloadTraits === 'number') {
 				compressedId = idOrPayloadTraits;
@@ -136,14 +136,17 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 			}
 		}
 
-		const definition = interner.getString(internedDefinition) as Definition;
+		const definition =
+			typeof maybeInternedDefinition === 'string'
+				? maybeInternedDefinition
+				: (interner.getString(maybeInternedDefinition) as Definition); // interner.getString(internedDefinition) as Definition;
 		const identifier = compressedId ?? (getNextElidedId(this.previousId ?? fail()) as TId);
 		this.previousId = identifier;
 
 		const traits = {};
 		if (compressedTraits !== undefined) {
 			for (let i = 0; i < Object.entries(compressedTraits).sort().length; i += 2) {
-				const compressedLabel = compressedTraits[i] as InternedStringId;
+				const maybeCompressedLabel = compressedTraits[i] as InternedStringId;
 				const compressedChildren = compressedTraits[i + 1] as (
 					| TPlaceholder
 					| CompressedPlaceholderTree<TId, TPlaceholder>
@@ -153,7 +156,10 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 					this.decompressI(child, interner, idNormalizer)
 				);
 
-				const label = interner.getString(compressedLabel) as TraitLabel;
+				const label =
+					typeof maybeCompressedLabel === 'string'
+						? maybeCompressedLabel
+						: (interner.getString(maybeCompressedLabel) as TraitLabel);
 				traits[label] = decompressedTraits;
 			}
 		}

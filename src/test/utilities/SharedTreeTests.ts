@@ -12,7 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 } from '@fluidframework/test-runtime-utils';
-import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../../Common';
+import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common';
 import { EditId, OpSpaceNodeId, TraitLabel } from '../../Identifiers';
 import { CachingLogViewer } from '../../LogViewer';
 import { EditLog, OrderedEditSet } from '../../EditLog';
@@ -20,19 +20,21 @@ import { initialTree } from '../../InitialTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { deserialize } from '../../SummaryBackCompatibility';
 import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
-import { StringInterner } from '../../StringInterner';
+import { MutableStringInterner } from '../../StringInterner';
 import { getChangeNodeFromView } from '../../SerializationUtilities';
 import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree';
 import {
 	ChangeInternal,
 	ChangeNode,
 	ChangeNode_0_0_2,
+	ChangeTypeInternal,
 	CompressedChangeInternal,
 	EditChunkContents,
 	EditStatus,
 	EditWithoutId,
 	FluidEditHandle,
 	InsertInternal,
+	SharedTreeEditOp,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
@@ -46,7 +48,7 @@ import { InterningTreeCompressor } from '../../TreeCompressor';
 import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder';
 import { sequencedIdNormalizer } from '../../NodeIdUtilities';
 import { convertNodeDataIds } from '../../IdConversion';
-import { buildLeaf, TestTree } from './TestNode';
+import { buildLeaf, SimpleTestTree, TestTree } from './TestNode';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
 import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
 import {
@@ -1222,6 +1224,18 @@ export function runSharedTreeOperationsTests(
 		// This functionality was only implemented in format 0.1.1.
 		if (writeFormat !== WriteFormat.v0_0_2) {
 			describe('String interning and tree compression', () => {
+				function getMutableStringInterner(tree: SharedTree): MutableStringInterner {
+					const summary = tree.saveSummary();
+					switch (summary.version) {
+						case WriteFormat.v0_0_2:
+							return new MutableStringInterner();
+						case WriteFormat.v0_1_1:
+							return new MutableStringInterner((summary as SharedTreeSummary).internedStrings);
+						default:
+							fail(`Invalid summary format: ${summary.version}`);
+					}
+				}
+
 				it('compress ops via interning and tree compression and decompress when processing edits', () => {
 					const {
 						sharedTree: tree,
@@ -1243,12 +1257,20 @@ export function runSharedTreeOperationsTests(
 					const factory = (remoteRuntime as unknown as WithFactory<MockContainerRuntime>).factory;
 					const messages = (factory as unknown as WithMessages<MockContainerRuntimeFactory>).messages;
 
-					for (const message of messages) {
-						expect(message.contents.internedStrings).to.not.be.undefined;
+					expect(messages.length).to.equal(3);
+					for (const message of messages.slice(1)) {
+						// After the initial setup edit, common definitions should be interned
+						for (const change of (message.contents as SharedTreeEditOp).edit.changes) {
+							if (change.type === ChangeTypeInternal.CompressedBuild) {
+								const stringifiedContents = JSON.stringify(message.contents);
+								expect(stringifiedContents).to.not.include(SimpleTestTree.leftTraitLabel);
+							}
+						}
 					}
 					expect(tree.equals(secondTree)).to.be.false;
 
 					containerRuntimeFactory.processAllMessages();
+					const { internedStrings } = tree.saveSummary() as SharedTreeSummary;
 
 					const insertEdit = normalizeEdit(tree, tree.editsInternal.getEditInSessionAtIndex(1));
 					const moveEdit = normalizeEdit(tree, tree.editsInternal.getEditInSessionAtIndex(2));
@@ -1257,6 +1279,8 @@ export function runSharedTreeOperationsTests(
 					expect(insertEdit).to.deep.equal(insertEdit2);
 					expect(moveEdit).to.deep.equal(moveEdit2);
 					expect(tree.equals(secondTree)).to.be.true;
+					expect(internedStrings).to.include(SimpleTestTree.leftTraitLabel);
+					expect(internedStrings).to.include(newNode.definition);
 				});
 
 				it('compress summaries via interning and tree compression on save and decompress on load', () => {
@@ -1273,15 +1297,17 @@ export function runSharedTreeOperationsTests(
 					containerRuntimeFactory.processAllMessages();
 
 					const summary = tree.saveSummary() as SharedTreeSummary;
-					const interner = new StringInterner();
+					expect(summary.internedStrings).to.not.be.undefined;
+					expect(summary.internedStrings.length).to.equal(5);
+
+					const interner = new MutableStringInterner(summary.internedStrings);
 					const treeCompressor = new InterningTreeCompressor();
 					const expectedCompressedTree = treeCompressor.compress(
 						getChangeNodeFromView(tree.currentView),
 						interner,
 						sequencedIdNormalizer(getIdNormalizerFromSharedTree(tree))
 					);
-					expect(summary.internedStrings).to.not.be.undefined;
-					expect(summary.internedStrings).deep.equal(interner.getSerializable());
+
 					expect(summary.currentTree).deep.equal(expectedCompressedTree);
 
 					const { tree: secondTree } = setUpTestSharedTree({ writeFormat });
@@ -1313,10 +1339,12 @@ export function runSharedTreeOperationsTests(
 
 					await testObjectProvider.ensureSynchronized();
 
+					const interner = getMutableStringInterner(tree);
 					const expectedCompressedEdits: readonly EditWithoutId<CompressedChangeInternal<OpSpaceNodeId>>[] =
 						new SharedTreeEncoder_0_1_1(true).encodeEditChunk(
 							uncompressedEdits,
-							sequencedIdNormalizer(testTree)
+							sequencedIdNormalizer(testTree),
+							interner
 						).edits;
 
 					// Apply one more edit so that an edit chunk gets uploaded
@@ -1338,7 +1366,6 @@ export function runSharedTreeOperationsTests(
 					expect(typeof handle.get).to.equal('function');
 					const chunkContents: EditChunkContents = JSON.parse(IsoBuffer.from(await handle.get()).toString());
 					expect(chunkContents.edits).to.deep.equal(expectedCompressedEdits);
-					expect(chunkContents.internedStrings).to.not.be.undefined;
 
 					const { tree: secondTree } = setUpTestSharedTree({ writeFormat });
 					expect(tree.equals(secondTree)).to.be.false;
