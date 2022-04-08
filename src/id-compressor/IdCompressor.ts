@@ -129,13 +129,13 @@ export const defaultClusterCapacity = 512;
  * The base UUID for the reserved id cluster.
  * This should not be changed without consideration to compatibility.
  */
-const reservedSessionId = ensureSessionUuid(assertIsStableId('24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce'));
+const reservedSessionId = ensureSessionUuid(assertIsStableId('decaf40b-3c1a-47f8-a7a1-e8461ddb69ce'));
 
 /**
  * The ID override for the initial tree of a SharedTree. An artifact of an unfortunate typo which included an extraneous '6' on the UUID
  * which must be forever preserved for backwards compatibility.
  */
-export const sharedTreeInitialTreeId = `${reservedSessionId}6`;
+export const legacySharedTreeInitialTreeId = `24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6`;
 
 /**
  * @returns true if the supplied ID is a final ID.
@@ -411,7 +411,7 @@ export class IdCompressor {
 				sessionId: reservedSessionId,
 				ids: {
 					last: -reservedIdCount as UnackedLocalId,
-					overrides: [[-1 as UnackedLocalId, sharedTreeInitialTreeId]], // Kludge: see `initialTreeId`
+					overrides: [[-1 as UnackedLocalId, legacySharedTreeInitialTreeId]], // Kludge: see `initialTreeId`
 				},
 			};
 			// Reserved final IDs are implicitly finalized and no one locally created them, so finalizing immediately is safe.

@@ -4,7 +4,7 @@
  */
 
 import type { Definition, StableNodeId } from './Identifiers';
-import { sharedTreeInitialTreeId } from './id-compressor';
+import { legacySharedTreeInitialTreeId } from './id-compressor';
 import { ChangeNode_0_0_2 } from './persisted-types';
 
 /**
@@ -14,5 +14,5 @@ import { ChangeNode_0_0_2 } from './persisted-types';
 export const initialTree: ChangeNode_0_0_2 = {
 	traits: {},
 	definition: '51c58718-47b9-4fe4-ad46-56312f3b9e86' as Definition,
-	identifier: sharedTreeInitialTreeId as StableNodeId,
+	identifier: legacySharedTreeInitialTreeId as StableNodeId,
 };

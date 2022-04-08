@@ -10,7 +10,7 @@ import {
 	isFinalId,
 	isLocalId,
 	hasOngoingSession,
-	sharedTreeInitialTreeId,
+	legacySharedTreeInitialTreeId,
 } from '../id-compressor/IdCompressor';
 import {
 	LocalCompressedId,
@@ -64,7 +64,7 @@ describe('IdCompressor', () => {
 		for (const reservedIdCount of [0, 1, 5]) {
 			const compressor = new IdCompressor(createSessionId(), reservedIdCount);
 			if (reservedIdCount > 0) {
-				expect(compressor.decompress(compressor.getReservedId(0))).to.equal(sharedTreeInitialTreeId);
+				expect(compressor.decompress(compressor.getReservedId(0))).to.equal(legacySharedTreeInitialTreeId);
 			}
 		}
 	});
@@ -131,7 +131,7 @@ describe('IdCompressor', () => {
 		it('unifies overrides with sequential local IDs that sort before the reserved session UUID', () => {
 			// This is a regression test for an issue where passing a sequential UUID that sorted before the reserved UUID
 			// as an override created duplicate overrides in the compressor.
-			const newSession = `0${sharedTreeInitialTreeId.slice(1)}` as SessionId;
+			const newSession = `0${legacySharedTreeInitialTreeId.slice(1)}` as SessionId;
 			const compressor = new IdCompressor(newSession, 1 /* just needs to be > 0 */);
 
 			// Client1 compresses a uuid
@@ -457,7 +457,7 @@ describe('IdCompressor', () => {
 		it('can decompress reserved IDs', () => {
 			// This is a glass box test in that it increments UUIDs
 			const compressor = createCompressor(Client.Client1);
-			expect(compressor.decompress(compressor.getReservedId(0))).to.equal(sharedTreeInitialTreeId);
+			expect(compressor.decompress(compressor.getReservedId(0))).to.equal(legacySharedTreeInitialTreeId);
 			const reservedSessionUuid = numericUuidFromStableId(
 				assertIsStableId(compressor.decompress(compressor.getReservedId(1)))
 			);
