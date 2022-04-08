@@ -8,7 +8,7 @@
 //
 // @public
 export type FluidObject<T = unknown> = {
-    readonly [P in FluidObjectProviderKeys<T>]?: T[P];
+    [P in FluidObjectProviderKeys<T>]?: T[P];
 };
 
 // @public
