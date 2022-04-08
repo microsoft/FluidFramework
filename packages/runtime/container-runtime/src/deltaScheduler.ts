@@ -25,7 +25,7 @@ import {
 export class DeltaScheduler {
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // The time for processing ops in a single turn.
-    public static readonly processingTime = 20;
+    public static readonly processingTime = 50;
 
     // The increase in time for processing ops after each turn.
     private readonly processingTimeIncrement = 10;
@@ -42,6 +42,9 @@ export class DeltaScheduler {
     // count, we log telemetry for the number of ops processed, the time and number of turns it took
     // to process the ops.
     private schedulingCount: number = 0;
+
+    // Keeps track of the Queue length before processing a batch.
+    private queueLengthBeforeBatchBegin: number = 0;
 
     private schedulingLog: {
         numberOfOps: number;
@@ -60,6 +63,7 @@ export class DeltaScheduler {
     public batchBegin() {
         if (!this.processingStartTime) {
             this.processingStartTime = performance.now();
+            this.queueLengthBeforeBatchBegin = this.deltaManager.inbound.length;
         }
     }
 
@@ -86,7 +90,18 @@ export class DeltaScheduler {
 
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.deltaManager.inbound.pause();
+
                 setTimeout(() => {
+                    if (this.schedulingLog) {
+                        this.logger.sendTelemetryEvent({
+                            eventName: "DeltaManagerPaused",
+                            duration: elapsedTime,
+                            numberOfOps: this.deltaManager.inbound.length,
+                            numberofOpsProcessed: this.queueLengthBeforeBatchBegin - this.deltaManager.inbound.length,
+                            processingTime: this.schedulingLog.totalProcessingTime,
+                            numberOfTurns:this.schedulingLog.numberOfTurns,
+                        });
+                    }
                     this.deltaManager.inbound.resume();
                 });
 
@@ -117,6 +132,8 @@ export class DeltaScheduler {
                 numberOfOps: this.schedulingLog.numberOfOps,
                 numberOfTurns: this.schedulingLog.numberOfTurns,
                 processingTime: this.schedulingLog.totalProcessingTime,
+                numberOfOpsBefore: this.queueLengthBeforeBatchBegin,
+                numberOfOpsRemaining:  this.deltaManager.inbound.length,
             });
 
             this.schedulingLog = undefined;
@@ -128,6 +145,8 @@ export class DeltaScheduler {
             this.isScheduling = false;
             this.schedulingCount++;
         }
+
+        this.queueLengthBeforeBatchBegin = 0;
 
         // Reset the processing times.
         this.processingStartTime = undefined;
