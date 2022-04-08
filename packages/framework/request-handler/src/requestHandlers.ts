@@ -20,7 +20,7 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 /**
  * A request handler for the container runtime. Each handler should handle a specific request, and return undefined
  * if it does not apply. These handlers are called in series, so there may be other handlers before or after.
- * A handler should only return error if the request is for a route the handler owns, and there is a problem with
+ * A handler should only return error if the requ  est is for a route the handler owns, and there is a problem with
  * the route, or fulling the specific request.
  */
 export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainerRuntime)
