@@ -122,7 +122,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             session = res.session;
         }
 
-        if (this.driverPolicies.enableDiscovery) {
+        if (session && this.driverPolicies.enableDiscovery) {
             replaceWithDiscoveryUrl(resolvedUrl, session, parsedUrl);
             parsedUrl = parseFluidUrl(resolvedUrl.url);
         }
