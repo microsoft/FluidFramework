@@ -13,6 +13,7 @@ declare function useProvider<T extends FluidObject>(params: FluidObject<T> | und
 declare function useProviderKey<T,TKey extends FluidObjectKeys<T> = FluidObjectKeys<T>>(key: TKey): void;
 
 declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): void;
+declare function getLoadable(): IFluidLoadable;
 
 declare function use(obj: any);
 // test implicit conversions between FluidObject and a FluidObject with a provides interface
@@ -140,4 +141,10 @@ declare function getIFluidObject(): IFluidObject;
     useProvider(c.IFooChild?.child());
     useProvider(c.IFooChild?.parent());
     useProvider(c.IFooChild?.IFooParent?.parent());
+}
+
+// validate usage as builder
+{
+    const builder: FluidObject<IFluidLoadable> = {};
+    builder.IFluidLoadable = getLoadable();
 }
