@@ -1908,6 +1908,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {
             fluidDataStore.bindToContext();
+            this.logger.sendTelemetryEvent({
+                eventName: "Root datastore with props",
+                hasProps: props !== undefined,
+            });
         }
         return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
     }
