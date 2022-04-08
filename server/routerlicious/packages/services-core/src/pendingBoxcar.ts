@@ -7,7 +7,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import { IPendingBoxcar } from "./queue";
 
 // 1MB batch size / (16KB max message size + overhead)
-export const MaxBatchSize = 32;
+export const MaxBatchSize = 1;
 
 export class PendingBoxcar implements IPendingBoxcar {
     public deferred = new Deferred<void>();
