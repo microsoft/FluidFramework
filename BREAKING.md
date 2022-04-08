@@ -30,6 +30,9 @@ ICodeLoader interface was deprecated a while ago and will be removed in the next
 - [Replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface)
 - [IFluidModule.fluidExport is no longer an IFluidObject](#IFluidModule.fluidExport-is-no-longer-an-IFluidObject)
 - [Scope is no longer an IFluidObject](#scope-is-no-longer-an-IFluidObject)
+- [IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject](#IFluidHandle-and-requestFluidObject-generics-default-no-longer-includes-IFluidObject)
+- [LazyLoadedDataObjectFactory.create no longer returns an IFluidObject](#LazyLoadedDataObjectFactory.create-no-longer-returns-an-IFluidObject)
+
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
@@ -102,16 +105,29 @@ IFluidObject is no longer part of the type of IFluidModule.fluidExport. IFluidMo
 IFluidObject is no longer part of the type of IContainerContext.scope or IContainerRuntime.scope.
 Scope is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
 
-### IFluidHandle generic's default no longer includes IFluidObject
-IFluidObject is no longer part of the type of IFluidHandle generic's default.
+### IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject
+IFluidObject is no longer part of the type of IFluidHandle and requestFluidObject generic's default.
 
 ``` diff
 - IFluidHandle<T = IFluidObject & FluidObject & IFluidLoadable>
 + IFluidHandle<T = FluidObject & IFluidLoadable>
+
+- export function requestFluidObject<T = IFluidObject & FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
++ export function requestFluidObject<T = FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
 ```
 
-This will affect the result of all `get()` calls on IFluidHandle's, and the default return will no longer be and IFluidObject by default. IFluidHandle generic's default is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+This will affect the result of all `get()` calls on IFluidHandle's, and the default return will no longer be and IFluidObject by default.
 
+Similarly `requestFluidObject` default generic which is also its return type no longer contains IFluidObject.
+
+In both cases the generic's default is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+
+As a short term fix in both these cases IFluidObject can be passed at the generic type. However, IFluidObject is deprecated and will be removed in an upcoming release so this can only be a temporary workaround before moving to [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### LazyLoadedDataObjectFactory.create no longer returns an IFluidObject
+LazyLoadedDataObjectFactory.create no longer returns an IFluidObject, it now only returns a [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+As a short term fix the return type of this method can be safely casted to an IFluidObject. However, IFluidObject is deprecated and will be removed in an upcoming release so this can only be a temporary workaround before moving to [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
 
 # 0.58
 
