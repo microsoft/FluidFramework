@@ -82,7 +82,7 @@ import { RevisionView } from './RevisionView';
 import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder';
 import { revert } from './HistoryEditFactory';
 import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes';
-import { Transaction } from './Transaction';
+import { TransactionInternal } from './TransactionInternal';
 import { IdCompressor, createSessionId } from './id-compressor';
 import { convertEditIds } from './IdConversion';
 
@@ -237,7 +237,7 @@ export type EditApplicationOutcome =
 			/**
 			 * The revision view resulting from the edit.
 			 */
-			readonly failure: Transaction.Failure;
+			readonly failure: TransactionInternal.Failure;
 			/**
 			 * The status code for the edit that produced the revision.
 			 */
@@ -361,7 +361,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		this.emit(SharedTreeEvent.SequencedEditApplied, eventArguments);
 	};
 
-	public readonly transactionFactory = Transaction.factory;
+	public readonly transactionFactory = TransactionInternal.factory;
 
 	private readonly summarizeHistory: boolean;
 	private readonly uploadEditChunks: boolean;

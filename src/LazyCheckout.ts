@@ -7,7 +7,7 @@ import { Checkout } from './Checkout';
 import { EditId } from './Identifiers';
 import { RevisionView } from './RevisionView';
 import { EditCommittedEventArguments, SharedTree } from './SharedTree';
-import { ValidEditingResult } from './Transaction';
+import { ValidEditingResult } from './TransactionInternal';
 
 /**
  * Checkout that only updates its view of the tree when explicitly requested.

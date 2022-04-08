@@ -11,7 +11,7 @@ import { Revision, RevisionValueCache } from './RevisionValueCache';
 import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { RevisionView } from './RevisionView';
-import { EditingResult, Transaction, TransactionFactory } from './Transaction';
+import { EditingResult, TransactionInternal, TransactionFactory } from './TransactionInternal';
 
 /**
  * Callback for when an edit is applied (meaning the result of applying it to a particular revision is computed).
@@ -109,7 +109,7 @@ export interface UnsuccessfulEditCacheEntry {
 	/**
 	 * Information about the failure encountered by the edit
 	 */
-	readonly failure: Transaction.Failure;
+	readonly failure: TransactionInternal.Failure;
 }
 
 /**

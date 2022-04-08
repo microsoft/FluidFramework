@@ -16,7 +16,7 @@ import {
 	Side,
 	StableRangeInternal,
 } from './persisted-types';
-import { Transaction } from './Transaction';
+import { TransactionInternal } from './TransactionInternal';
 import { RangeValidationResultKind, validateStableRange } from './EditUtilities';
 import { StablePlace } from './ChangeTypes';
 import { RevisionView } from './RevisionView';
@@ -42,7 +42,7 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 	const detachedNodes = new Map<DetachedSequenceId, NodeId[]>();
 
 	// Open edit on revision to update it as changes are walked through
-	const editor = Transaction.factory(before);
+	const editor = TransactionInternal.factory(before);
 	// Apply `edit`, generating an inverse as we go.
 	for (const change of changes) {
 		// Generate an inverse of each change

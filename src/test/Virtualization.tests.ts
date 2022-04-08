@@ -24,7 +24,7 @@ import { IdCompressor } from '../id-compressor';
 import { createSessionId } from '../id-compressor/NumericUuid';
 import { SharedTreeEncoder_0_1_1 } from '../SharedTreeEncoder';
 import { CachingLogViewer } from '../LogViewer';
-import { GenericTransaction, Transaction } from '../Transaction';
+import { GenericTransaction, TransactionInternal } from '../TransactionInternal';
 import { RevisionView } from '../RevisionView';
 import {
 	applyNoop,
@@ -57,7 +57,7 @@ describe('SharedTree history virtualization', () => {
 			true,
 			undefined,
 			undefined,
-			(view) => new GenericTransaction(view, new Transaction.Policy())
+			(view) => new GenericTransaction(view, new TransactionInternal.Policy())
 		);
 		const encoder = new SharedTreeEncoder_0_1_1(true);
 		return encoder.encodeSummary(

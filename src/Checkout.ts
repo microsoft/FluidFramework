@@ -11,7 +11,7 @@ import { CachingLogViewer } from './LogViewer';
 import { TreeView } from './TreeView';
 import { RevisionView } from './RevisionView';
 import { EditCommittedHandler, SharedTree } from './SharedTree';
-import { GenericTransaction, ValidEditingResult } from './Transaction';
+import { GenericTransaction, ValidEditingResult } from './TransactionInternal';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { SharedTreeEvent } from './EventTypes';
 import { newEditId } from './EditUtilities';

@@ -9,7 +9,7 @@ import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilitie
 import { SharedTreeEvent } from './EventTypes';
 import { EditStatus } from './persisted-types';
 import { SequencedEditAppliedEventArguments, SharedTree } from './SharedTree';
-import { Transaction } from './Transaction';
+import { TransactionInternal } from './TransactionInternal';
 
 /**
  * Logs generic telemetry for failed sequenced edits.
@@ -343,7 +343,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 			if (outcome.status !== EditStatus.Applied) {
 				tally.failedEditCount += 1;
 				switch (outcome.failure.kind) {
-					case Transaction.FailureKind.BadPlace: {
+					case TransactionInternal.FailureKind.BadPlace: {
 						tally.badPlaceCount += 1;
 						if (outcome.failure.placeFailure === PlaceValidationResult.MissingSibling) {
 							tally.deletedSiblingBadPlaceCount += 1;
@@ -352,7 +352,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 						}
 						break;
 					}
-					case Transaction.FailureKind.BadRange: {
+					case TransactionInternal.FailureKind.BadRange: {
 						tally.badRangeCount += 1;
 						switch (outcome.failure.rangeFailure) {
 							case RangeValidationResultKind.Inverted:
@@ -369,21 +369,21 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 						}
 						break;
 					}
-					case Transaction.FailureKind.ConstraintViolation: {
+					case TransactionInternal.FailureKind.ConstraintViolation: {
 						tally.constraintViolationCount += 1;
 						switch (outcome.failure.violation.kind) {
-							case Transaction.ConstraintViolationKind.BadRange: {
+							case TransactionInternal.ConstraintViolationKind.BadRange: {
 								tally.rangeConstraintViolationCount += 1;
 							}
-							case Transaction.ConstraintViolationKind.BadLength: {
+							case TransactionInternal.ConstraintViolationKind.BadLength: {
 								tally.lengthConstraintViolationCount += 1;
 								break;
 							}
-							case Transaction.ConstraintViolationKind.BadParent: {
+							case TransactionInternal.ConstraintViolationKind.BadParent: {
 								tally.parentConstraintViolationCount += 1;
 								break;
 							}
-							case Transaction.ConstraintViolationKind.BadLabel: {
+							case TransactionInternal.ConstraintViolationKind.BadLabel: {
 								tally.labelConstraintViolationCount += 1;
 								break;
 							}
@@ -394,18 +394,18 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 						}
 						break;
 					}
-					case Transaction.FailureKind.IdAlreadyInUse: {
+					case TransactionInternal.FailureKind.IdAlreadyInUse: {
 						tally.idAlreadyInUseCount += 1;
 						break;
 					}
-					case Transaction.FailureKind.UnknownId: {
+					case TransactionInternal.FailureKind.UnknownId: {
 						tally.unknownIdCount += 1;
 						break;
 					}
-					case Transaction.FailureKind.DetachedSequenceIdAlreadyInUse:
-					case Transaction.FailureKind.DetachedSequenceNotFound:
-					case Transaction.FailureKind.DuplicateIdInBuild:
-					case Transaction.FailureKind.UnusedDetachedSequence: {
+					case TransactionInternal.FailureKind.DetachedSequenceIdAlreadyInUse:
+					case TransactionInternal.FailureKind.DetachedSequenceNotFound:
+					case TransactionInternal.FailureKind.DuplicateIdInBuild:
+					case TransactionInternal.FailureKind.UnusedDetachedSequence: {
 						tally.malformedEditCount += 1;
 						break;
 					}

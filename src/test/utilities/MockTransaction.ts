@@ -6,7 +6,12 @@
 import { Result } from '../../Common';
 import { ChangeInternal, EditStatus } from '../../persisted-types';
 import { RevisionView } from '../../RevisionView';
-import { ChangeResult, GenericTransaction, GenericTransactionPolicy, Transaction } from '../../Transaction';
+import {
+	ChangeResult,
+	GenericTransaction,
+	GenericTransactionPolicy,
+	TransactionInternal,
+} from '../../TransactionInternal';
 
 /**
  * @internal
@@ -49,7 +54,7 @@ export namespace MockTransaction {
 				? Result.ok(state.view)
 				: Result.error({
 						status: this.options.statusOnClose,
-						failure: undefined as unknown as Transaction.Failure,
+						failure: undefined as unknown as TransactionInternal.Failure,
 				  });
 		}
 

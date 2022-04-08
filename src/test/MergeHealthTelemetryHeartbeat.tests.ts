@@ -11,7 +11,7 @@ import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree';
 import { RevisionView } from '../RevisionView';
 import { Change, ChangeType, Delete, Insert, Move, StablePlace, StableRange } from '../ChangeTypes';
 import { ConstraintEffect, EditStatus } from '../persisted-types';
-import { Transaction } from '../Transaction';
+import { TransactionInternal } from '../TransactionInternal';
 import { buildLeaf, TestTree } from './utilities/TestNode';
 import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
 
@@ -427,7 +427,7 @@ describe('SharedTreeMergeHealthTelemetryHeartbeat', () => {
 				{
 					outcome: {
 						status: EditStatus.Malformed,
-						failure: { kind: Transaction.FailureKind.UnusedDetachedSequence },
+						failure: { kind: TransactionInternal.FailureKind.UnusedDetachedSequence },
 					},
 				},
 			],

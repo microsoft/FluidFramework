@@ -28,7 +28,7 @@ import {
 import { areRevisionViewsSemanticallyEqual, newEdit } from '../EditUtilities';
 import { NodeIdContext } from '../NodeIdUtilities';
 import { RevisionView } from '../RevisionView';
-import { Transaction } from '../Transaction';
+import { TransactionInternal } from '../TransactionInternal';
 import { StableRange } from '../ChangeTypes';
 import { expectDefined } from './utilities/TestCommon';
 import { buildLeaf, TestTree } from './utilities/TestNode';
@@ -134,7 +134,7 @@ function getViewsForLog(log: EditLog<ChangeInternal>, baseView: RevisionView): R
 	const views: RevisionView[] = [baseView];
 	for (let i = 0; i < log.length; i++) {
 		const edit = log.getEditInSessionAtIndex(i);
-		const result = Transaction.factory(views[i]).applyChanges(edit.changes).close();
+		const result = TransactionInternal.factory(views[i]).applyChanges(edit.changes).close();
 		if (result.status === EditStatus.Applied) {
 			views.push(result.after);
 		} else {
@@ -286,7 +286,7 @@ describe('CachingLogViewer', () => {
 			/* expensiveValidation */ true,
 			editStatusCallback,
 			sequencedEditResultCallback,
-			Transaction.factory,
+			TransactionInternal.factory,
 			log.numberOfSequencedEdits
 		);
 	}
@@ -637,7 +637,7 @@ describe('CachingLogViewer', () => {
 				/* expensiveValidation */ true,
 				undefined,
 				(args: SequencedEditResult) => events.push(args),
-				Transaction.factory
+				TransactionInternal.factory
 			);
 			return { log, viewer, events };
 		}
