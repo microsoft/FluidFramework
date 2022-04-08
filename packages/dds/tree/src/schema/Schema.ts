@@ -7,7 +7,6 @@
  * Example internal schema representation types.
  */
 
-
 /**
  * Stable identifier, used when persisting data.
  *
