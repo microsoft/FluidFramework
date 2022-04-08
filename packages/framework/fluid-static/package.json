@@ -73,6 +73,11 @@
   },
   "typeValidation": {
     "version": "0.59.1000",
-    "broken": {}
+    "broken": {
+      "0.58.2002": {
+        "ClassDeclaration_FluidContainer": {"forwardCompat": false},
+        "InterfaceDeclaration_IFluidContainer": {"forwardCompat": false}
+      }
+    }
   }
 }
