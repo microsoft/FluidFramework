@@ -33,8 +33,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/common-definitions": "^0.21.1000-0",
+    "@fluidframework/common-utils": "^0.33.1000-0",
     "@fluidframework/core-interfaces": "^0.43.1000-0",
     "@fluidframework/driver-definitions": "^0.46.1000-0",
     "@fluidframework/driver-utils": "^0.59.1000",

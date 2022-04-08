@@ -70,7 +70,7 @@
   },
   "devDependencies": {
     "@fluid-experimental/property-dds": "^0.59.1000",
-    "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/common-utils": "^0.33.1000-0",
     "@fluidframework/local-driver": "^0.59.1000",
     "@fluidframework/mocha-test-setup": "^0.59.1000",
     "@fluidframework/runtime-utils": "^0.59.1000",
