@@ -80,7 +80,7 @@ describe("AzureClient", () => {
      * Expected behavior: an error should not be thrown nor should a rejected promise
      * be returned.
      */
-    it("can attach a container", async () => {
+    it("can attach and connect a container", async () => {
         const { container } = await client.createContainer(schema);
         const containerId = await container.attach();
         await new Promise<void>((resolve) => {
@@ -96,6 +96,12 @@ describe("AzureClient", () => {
         assert.strictEqual(
             container.attachState, AttachState.Attached,
             "Container is not attached after attach is called",
+        );
+
+        assert.strictEqual(
+            container.connectionState,
+            ConnectionState.Connected,
+            "Container is not connected after attach is called",
         );
     });
 
