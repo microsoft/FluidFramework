@@ -6,6 +6,7 @@ import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { AzureClient } from "../AzureClient";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
@@ -148,6 +149,23 @@ describe("AzureClient", () => {
             resources,
             () => true,
             "container cannot be retrieved from Azure Fluid Relay",
+        );
+    });
+
+    it("can connect existing Azure Fluid Relay container", async () => {
+        const container = (await client.createContainer(schema)).container;
+        const containerId = await container.attach();
+        await new Promise<void>((resolve) => {
+            container.on("connected", () => {
+                resolve();
+            });
+        });
+
+        const containerGet = (await client.getContainer(containerId, schema)).container;
+        assert.strictEqual(
+            containerGet.connectionState,
+            ConnectionState.Connected,
+            "cannot connect existing Azure Fluid Relay container",
         );
     });
 
