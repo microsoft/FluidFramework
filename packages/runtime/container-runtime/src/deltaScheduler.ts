@@ -45,12 +45,10 @@ export class DeltaScheduler {
         opsRemainingToProcess: number;
         totalProcessingTime: number;
         numberOfTurns: number;
+        numberOfBatchesProcessed: number;
+        lastSequenceNumber: number;
+        firstSequenceNumber: number;
     } | undefined;
-
-    // Keeps track of the batching numbers so we can have an idea on how many ops were processed.
-    private numberOfBatchesProcessed: number = 0;
-    private lastSequenceNumber: number = 0;
-    private firstSequenceNumber: number = 0;
 
     constructor(
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -63,23 +61,29 @@ export class DeltaScheduler {
     public batchBegin(message: ISequencedDocumentMessage) {
         if (!this.processingStartTime) {
             this.processingStartTime = performance.now();
-            this.numberOfBatchesProcessed = 0;
-            this.firstSequenceNumber = this.lastSequenceNumber = message.sequenceNumber;
-        }
-        this.numberOfBatchesProcessed++;
-    }
-
-    public batchEnd(message: ISequencedDocumentMessage) {
-        this.lastSequenceNumber = message.sequenceNumber;
-        if (this.schedulingLog === undefined) {
-            if (this.schedulingCount % 2000 === 0) {
+            if (this.schedulingLog === undefined && this.schedulingCount % 2000 === 0) {
                 // Every 2000th time we are scheduling the inbound queue, we log telemetry for the
                 // number of ops processed, the time and number of turns it took to process the ops.
                 this.schedulingLog = {
-                    opsRemainingToProcess: this.deltaManager.inbound.length,
+                    opsRemainingToProcess: 0,
                     numberOfTurns: 1,
                     totalProcessingTime: 0,
+                    numberOfBatchesProcessed: 0,
+                    firstSequenceNumber: message.sequenceNumber,
+                    lastSequenceNumber: message.sequenceNumber,
                 };
+            }
+        }
+        if (this.schedulingLog) {
+            this.schedulingLog.numberOfBatchesProcessed++;
+        }
+    }
+
+    public batchEnd(message: ISequencedDocumentMessage) {
+        if (this.schedulingLog) {
+            this.schedulingLog.lastSequenceNumber = message.sequenceNumber;
+            if (this.schedulingCount % 2000 === 0) {
+                this.schedulingLog.opsRemainingToProcess = this.deltaManager.inbound.length;
             }
         }
 
@@ -108,14 +112,15 @@ export class DeltaScheduler {
                 setTimeout(() => {
                     if (this.schedulingLog) {
                         this.logger.sendTelemetryEvent({
-                            eventName: "InboundOpsPartialProcessingTime ",
+                            eventName: "InboundOpsPartialProcessingTime",
                             duration: TelemetryLogger.formatTick(elapsedTime),
-                            opsProcessed: this.lastSequenceNumber - this.firstSequenceNumber,
+                            opsProcessed: this.schedulingLog.lastSequenceNumber -
+                                this.schedulingLog.firstSequenceNumber,
                             opsRemainingToProcess: this.deltaManager.inbound.length,
                             processingTime: TelemetryLogger.formatTick(this.schedulingLog.totalProcessingTime),
                             numberOfTurns: this.schedulingLog.numberOfTurns,
-                            batchesProcessed: this.numberOfBatchesProcessed,
-                            waitingToResume: TelemetryLogger.formatTick(performance.now() - currentTime),
+                            batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
+                            timeToResume: TelemetryLogger.formatTick(performance.now() - currentTime),
                         });
                     }
                     this.deltaManager.inbound.resume();
@@ -138,8 +143,8 @@ export class DeltaScheduler {
                 opsRemainingToProcess: this.schedulingLog.opsRemainingToProcess,
                 numberOfTurns: this.schedulingLog.numberOfTurns,
                 processingTime: TelemetryLogger.formatTick(this.schedulingLog.totalProcessingTime),
-                opsProcessed: this.lastSequenceNumber - this.firstSequenceNumber,
-                batchesProcessed: this.numberOfBatchesProcessed,
+                opsProcessed: this.schedulingLog.lastSequenceNumber - this.schedulingLog.firstSequenceNumber,
+                batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
 
             });
 
@@ -149,11 +154,6 @@ export class DeltaScheduler {
         // If we scheduled this batch of the inbound queue, increment the counter that tracks the
         // number of times we have done this.
         this.schedulingCount++;
-
-        // Batching data needs to be reset.
-        this.lastSequenceNumber = 0;
-        this.firstSequenceNumber = 0;
-        this.numberOfBatchesProcessed = 0;
 
         // Reset the processing times.
         this.processingStartTime = undefined;
