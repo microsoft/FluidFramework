@@ -61,18 +61,18 @@ export class DeltaScheduler {
     public batchBegin(message: ISequencedDocumentMessage) {
         if (!this.processingStartTime) {
             this.processingStartTime = performance.now();
-            if (this.schedulingLog === undefined && this.schedulingCount % 2000 === 0) {
-                // Every 2000th time we are scheduling the inbound queue, we log telemetry for the
-                // number of ops processed, the time and number of turns it took to process the ops.
-                this.schedulingLog = {
-                    opsRemainingToProcess: 0,
-                    numberOfTurns: 1,
-                    totalProcessingTime: 0,
-                    numberOfBatchesProcessed: 0,
-                    firstSequenceNumber: message.sequenceNumber,
-                    lastSequenceNumber: message.sequenceNumber,
-                };
-            }
+        }
+        if (this.schedulingLog === undefined && this.schedulingCount % 2000 === 0) {
+            // Every 2000th time we are scheduling the inbound queue, we log telemetry for the
+            // number of ops processed, the time and number of turns it took to process the ops.
+            this.schedulingLog = {
+                opsRemainingToProcess: 0,
+                numberOfTurns: 1,
+                totalProcessingTime: 0,
+                numberOfBatchesProcessed: 0,
+                firstSequenceNumber: message.sequenceNumber,
+                lastSequenceNumber: message.sequenceNumber,
+            };
         }
         if (this.schedulingLog) {
             this.schedulingLog.numberOfBatchesProcessed++;
