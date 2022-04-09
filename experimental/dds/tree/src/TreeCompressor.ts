@@ -132,14 +132,20 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 					({ compressedTraits, payload } = this.parseTraitsAndPayload(payloadTraits));
 				}
 			} else {
-				({ compressedTraits, payload } = this.parseTraitsAndPayload(idOrPayloadTraits));
+				// TODO: This cast can be removed on typescript 4.6
+				({ compressedTraits, payload } = this.parseTraitsAndPayload(
+					idOrPayloadTraits as
+						| [Payload, ...CompressedTraits<TId, TPlaceholder>]
+						| CompressedTraits<TId, TPlaceholder>
+				));
 			}
 		}
 
 		const definition =
 			typeof maybeInternedDefinition === 'string'
 				? maybeInternedDefinition
-				: (interner.getString(maybeInternedDefinition) as Definition); // interner.getString(internedDefinition) as Definition;
+				: // TODO: This cast can be removed on typescript 4.6
+				  (interner.getString(maybeInternedDefinition as number) as Definition);
 		const identifier = compressedId ?? (getNextElidedId(this.previousId ?? fail()) as TId);
 		this.previousId = identifier;
 

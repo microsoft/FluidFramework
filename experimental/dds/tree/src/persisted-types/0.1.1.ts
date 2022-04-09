@@ -294,7 +294,6 @@ export const ChangeInternal = {
 	clearPayload: (nodeToModify: NodeData<NodeId> | NodeId): SetValueInternal => ({
 		nodeToModify: getNodeId(nodeToModify),
 		// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface above.)
-		// eslint-disable-next-line no-null/no-null
 		payload: null,
 		type: ChangeTypeInternal.SetValue,
 	}),

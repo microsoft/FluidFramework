@@ -28,6 +28,8 @@ import { TelemetryNullLogger } from '@fluidframework/common-utils';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
+import { IRequest } from '@fluidframework/core-interfaces';
 import { DetachedSequenceId, EditId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from '../../Identifiers';
 import { assert, fail, identity, ReplaceRecursive } from '../../Common';
 import { IdCompressor } from '../../id-compressor';
@@ -274,13 +276,17 @@ export async function setUpLocalServerTestSharedTree(
 		],
 	];
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-	runtime.IFluidHandleContext.resolveHandle(request);
+		runtime.IFluidHandleContext.resolveHandle(request);
 
 	const runtimeFactory = () =>
-	
-		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
-			summaryOptions: { initialSummarizerDelayMs: 0 },
-		}, [innerRequestHandler]);
+		new TestContainerRuntimeFactory(
+			TestDataStoreType,
+			new TestFluidObjectFactory(registry),
+			{
+				summaryOptions: { initialSummarizerDelayMs: 0 },
+			},
+			[innerRequestHandler]
+		);
 
 	const defaultCodeDetails: IFluidCodeDetails = {
 		package: 'defaultTestPackage',
@@ -289,7 +295,9 @@ export async function setUpLocalServerTestSharedTree(
 
 	function makeTestLoader(provider: TestObjectProvider): IHostLoader {
 		const fluidEntryPoint = runtimeFactory();
-		return provider.createLoader([[defaultCodeDetails, fluidEntryPoint]], { maxClientLeaveWaitTime: 1000 });
+		return provider.createLoader([[defaultCodeDetails, fluidEntryPoint]], {
+			options: { maxClientLeaveWaitTime: 1000 },
+		});
 	}
 
 	let provider: TestObjectProvider;

@@ -163,7 +163,6 @@ export class IdCompressorTestNetwork {
 		const handler = {
 			get(_, property) {
 				const compressor = compressors.get(client);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return compressor[property];
 			},
 			set(_, property, value): boolean {
@@ -420,7 +419,8 @@ export class IdCompressorTestNetwork {
 				if (isLocalId(opSpaceIdA)) {
 					expect.fail('IDs should have been finalized.');
 				}
-				finalIds.add(opSpaceIdA);
+				// TODO: This cast can be removed on typescript 4.6
+				finalIds.add(opSpaceIdA as FinalCompressedId);
 				const uuidAOpSpace = compressorA.decompress(opSpaceIdA);
 
 				expect(uuidASessionSpace).to.equal(uuidAOpSpace);

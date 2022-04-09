@@ -258,7 +258,6 @@ function createInvertedSetValue(setValue: SetValueInternal, viewBeforeChange: Tr
 	}
 
 	// Rationale: 'undefined' is reserved for future use (see 'SetValue' interface)
-	// eslint-disable-next-line no-null/no-null
 	if (node.payload !== null) {
 		return [ChangeInternal.setPayload(nodeToModify, node.payload)];
 	}

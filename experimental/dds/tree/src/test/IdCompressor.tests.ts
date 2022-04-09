@@ -1315,8 +1315,12 @@ function createNetworkTestFunction(validateAfter: boolean): NetworkTestFunction 
 		it(title, () => {
 			const hasCapacity = typeof testOrCapacity === 'number';
 			const capacity = hasCapacity ? testOrCapacity : undefined;
-			const network = new IdCompressorTestNetwork(capacity);
-			(hasCapacity ? assertNotUndefined(test) : testOrCapacity)(network);
+			// TODO: This cast can be removed on typescript 4.6
+			const network = new IdCompressorTestNetwork(capacity as number);
+			// TODO: This cast can be removed on typescript 4.6
+			((hasCapacity ? assertNotUndefined(test) : testOrCapacity) as (network: IdCompressorTestNetwork) => void)(
+				network
+			);
 			if (validateAfter) {
 				network.deliverOperations(DestinationClient.All);
 				network.assertNetworkState();

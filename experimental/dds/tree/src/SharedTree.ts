@@ -592,7 +592,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
 	 */
-	public summarizeCore(serializer: IFluidSerializer, fullTree: boolean): ISummaryTreeWithStats {
+	public summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		return createSingleBlobSummary(snapshotFileName, this.saveSerializedSummary({ serializer }));
 	}
 
@@ -920,7 +920,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		// Update ops should only be processed if they're not the same version.
 		if (sameVersion) {
 			if (type === SharedTreeOpType.Handle) {
-				const { editHandle, startRevision } = op;
+				const { editHandle, startRevision } = op as SharedTreeHandleOp;
 				const baseHandle = this.deserializeHandle(editHandle);
 				const decodedHandle: EditHandle<ChangeInternal> = {
 					get: async () => {
@@ -937,9 +937,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				this.editLog.processEditChunkHandle(decodedHandle, startRevision);
 			} else if (type === SharedTreeOpType.Edit) {
 				if (op.version === WriteFormat.v0_1_1) {
-					this.idCompressor.finalizeCreationRange(op.idRange);
+					// TODO: This cast can be removed on typescript 4.6
+					this.idCompressor.finalizeCreationRange((op as SharedTreeEditOp).idRange);
 				}
-				const edit = this.parseSequencedEdit(op);
+				// TODO: This cast can be removed on typescript 4.6
+				const edit = this.parseSequencedEdit(op as SharedTreeEditOp | SharedTreeEditOp_0_0_2);
 				this.internStringsFromEdit(edit);
 				this.processSequencedEdit(edit, typedMessage);
 			}
@@ -1228,7 +1230,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	private applyEditLocally(edit: Edit<ChangeInternal>, message: ISequencedDocumentMessage | undefined): void {
 		const isSequenced = message !== undefined;
 		if (isSequenced) {
-			this.editLog.addSequencedEdit(edit, message);
+			// TODO: This cast can be removed on typescript 4.6
+			this.editLog.addSequencedEdit(edit, message as ISequencedDocumentMessage);
 		} else {
 			this.editLog.addLocalEdit(edit);
 		}

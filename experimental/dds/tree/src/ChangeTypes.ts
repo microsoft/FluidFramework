@@ -118,6 +118,7 @@ export interface SetValue {
 	 * SetValue may use `undefined` in future API versions to mean "don't change the payload" (which is useful if e.g. other
 	 * fields are added to SetValue that can be changed without altering the payload)
 	 */
+	// eslint-disable-next-line @rushstack/no-new-null
 	readonly payload: Payload | null;
 	readonly type: typeof ChangeType.SetValue;
 }

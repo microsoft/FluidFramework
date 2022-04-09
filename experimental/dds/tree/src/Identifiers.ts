@@ -148,7 +148,6 @@ export type TraitLabel = UuidString & { readonly TraitLabel: '613826ed-49cc-4df3
  * @internal
  */
 // Nodes can be an `object` type which is a banned type.
-// eslint-disable-next-line @typescript-eslint/ban-types
 export function isDetachedSequenceId(node: DetachedSequenceId | object): node is DetachedSequenceId {
 	return typeof node !== 'object';
 }

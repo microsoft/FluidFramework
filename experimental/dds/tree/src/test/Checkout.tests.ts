@@ -28,7 +28,7 @@ export function checkoutTests(
 	checkoutName: string,
 	checkoutFactory: (tree: SharedTree) => Promise<Checkout>,
 	additionalTests?: () => void
-): Mocha.Suite {
+): void {
 	async function setUpTestCheckout(
 		options: SharedTreeTestingOptions = { localMode: true, noFailOnError: true }
 	): Promise<{ checkout: Checkout; tree: SharedTree }> {
@@ -79,7 +79,7 @@ export function checkoutTests(
 		return { checkout, sharedTree: tree, testTree };
 	}
 
-	return describe(checkoutName, () => {
+	describe(checkoutName, () => {
 		it('can only have one edit open at a time', async () => {
 			const { checkout } = await setUpTestCheckout();
 			checkout.openEdit();

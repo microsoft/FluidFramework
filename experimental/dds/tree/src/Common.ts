@@ -85,7 +85,6 @@ export function assert(condition: unknown, message?: string, containsPII = false
  */
 export function fail(message: string = defaultFailMessage, containsPII = false): never {
 	if (process.env.NODE_ENV !== 'production') {
-		// eslint-disable-next-line no-debugger
 		debugger;
 		console.error(message);
 	}
@@ -521,6 +520,7 @@ export interface ClosedMap<K, V> extends Omit<Map<K, V>, 'delete' | 'clear'> {
  */
 export type ChangePropType<T, Prop extends keyof T, TPropNew> = Omit<T, Prop> & { [_ in Prop]: TPropNew };
 
+// eslint-disable-next-line @rushstack/no-new-null
 type Primitive = string | number | bigint | boolean | null | symbol | undefined;
 
 /**
