@@ -82,9 +82,7 @@ export class DeltaScheduler {
     public batchEnd(message: ISequencedDocumentMessage) {
         if (this.schedulingLog) {
             this.schedulingLog.lastSequenceNumber = message.sequenceNumber;
-            if (this.schedulingCount % 2000 === 0) {
-                this.schedulingLog.opsRemainingToProcess = this.deltaManager.inbound.length;
-            }
+            this.schedulingLog.opsRemainingToProcess = this.deltaManager.inbound.length;
         }
 
         if (this.shouldRunScheduler()) {
