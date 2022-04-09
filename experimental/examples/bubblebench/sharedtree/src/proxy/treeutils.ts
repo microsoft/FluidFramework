@@ -30,7 +30,7 @@ export function fromJson<T>(idContext: NodeIdContext, value: Serializable<T>): C
             return {
                 identifier: idContext.generateNodeId(),
                 definition: NodeKind.array as Definition,
-                traits: { items: value.map(fromJson) },
+                traits: { items: value.map((property: Serializable<T>): ChangeNode => fromJson(idContext, property)) },
             };
         } else if (value === null) {
             return makeScalar(idContext, null);
