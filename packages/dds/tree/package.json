@@ -88,7 +88,6 @@
     "eslint-plugin-unicorn": "~40.0.0",
     "mocha": "^8.4.0",
     "nyc": "^15.0.0",
-    "prando": "^6.0.1",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.16",

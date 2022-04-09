@@ -3,18 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { IRevertible, UndoRedoStackManager } from '@fluidframework/undo-redo';
 import { assertNotUndefined } from './Common';
 import { SharedTreeEvent } from './EventTypes';
 import { EditId } from './Identifiers';
 import { EditCommittedEventArguments, SharedTree } from './SharedTree';
+
+// TODO: We temporarily duplicate these contracts from 'framework/undo-redo' to unblock development
+// while we decide on the correct layering for undo.
+
+export interface IRevertible {
+	revert();
+	discard();
+}
+
+export interface IUndoConsumer {
+	pushToCurrentOperation(revertible: IRevertible);
+}
 
 /**
  * A shared tree undo redo handler that will add revertible local tree changes to the provided
  * undo redo stack manager
  */
 export class SharedTreeUndoRedoHandler {
-	constructor(private readonly stackManager: UndoRedoStackManager) {}
+	constructor(private readonly stackManager: IUndoConsumer) {}
 
 	public attachTree(tree: SharedTree) {
 		tree.on(SharedTreeEvent.EditCommitted, this.treeDeltaHandler);

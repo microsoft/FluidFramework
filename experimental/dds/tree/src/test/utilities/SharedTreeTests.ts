@@ -1258,7 +1258,7 @@ export function runSharedTreeOperationsTests(
 		 * In the meantime, we are forbidding collaboration of no-history clients and history clients.
 		 */
 		it('can be initialized on multiple clients with different `summarizeHistory` values', async () => {
-				const { tree, testObjectProvider, container } = await setUpLocalServerTestSharedTree({
+			const { tree, testObjectProvider, container } = await setUpLocalServerTestSharedTree({
 				writeFormat,
 				summarizeHistory: false,
 			});

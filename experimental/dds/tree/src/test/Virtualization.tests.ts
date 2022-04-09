@@ -101,7 +101,7 @@ describe('SharedTree history virtualization', () => {
 	const useSharedTreeSummaryv0_0_2 = async () => {
 		const testingComponents = await setUpLocalServerTestSharedTree({
 			summarizeHistory: true,
-			writeFormat: WriteFormat.v0_0_2
+			writeFormat: WriteFormat.v0_0_2,
 		});
 		sharedTree = testingComponents.tree;
 		testObjectProvider = testingComponents.testObjectProvider;
@@ -331,7 +331,7 @@ describe('SharedTree history virtualization', () => {
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
 			summarizeHistory: true,
-			writeFormat: WriteFormat.v0_0_2
+			writeFormat: WriteFormat.v0_0_2,
 		});
 
 		let unexpectedHistoryChunk = false;
@@ -348,7 +348,9 @@ describe('SharedTree history virtualization', () => {
 	});
 
 	it('does not upload blobs larger than 4MB', async () => {
-		testObjectProvider.logger.registerExpectedEvent({ eventName: "fluid:telemetry:FluidDataStoreRuntime:SharedTree:EditChunkUploadFailure" })
+		testObjectProvider.logger.registerExpectedEvent({
+			eventName: 'fluid:telemetry:FluidDataStoreRuntime:SharedTree:EditChunkUploadFailure',
+		});
 		const numberOfEdits = editsPerChunk;
 		const fourMegas = 2 ** 22;
 		// Without the 1.1, we would generate 100 edits of size roughly 40kb here, but not all of them end up in the first edit chunk
