@@ -48,6 +48,7 @@ export class DeltaScheduler {
         numberOfBatchesProcessed: number;
         lastSequenceNumber: number;
         firstSequenceNumber: number;
+        startTime: number;
     } | undefined;
 
     constructor(
@@ -72,6 +73,7 @@ export class DeltaScheduler {
                 numberOfBatchesProcessed: 0,
                 firstSequenceNumber: message.sequenceNumber,
                 lastSequenceNumber: message.sequenceNumber,
+                startTime: performance.now(),
             };
         }
         if (this.schedulingLog) {
@@ -133,8 +135,9 @@ export class DeltaScheduler {
         if (this.schedulingLog) {
             // Add the time taken for processing the final ops to the total processing time in the
             // telemetry log object.
+            const currentTime = performance.now();
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.schedulingLog.totalProcessingTime += performance.now() - this.processingStartTime!;
+            this.schedulingLog.totalProcessingTime += currentTime - this.processingStartTime!;
 
             this.logger.sendTelemetryEvent({
                 eventName: "InboundOpsProcessingTime",
@@ -143,6 +146,7 @@ export class DeltaScheduler {
                 processingTime: TelemetryLogger.formatTick(this.schedulingLog.totalProcessingTime),
                 opsProcessed: this.schedulingLog.lastSequenceNumber - this.schedulingLog.firstSequenceNumber,
                 batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
+                totalTime: TelemetryLogger.formatTick(currentTime - this.schedulingLog.startTime),
 
             });
 
