@@ -14,7 +14,6 @@ import {
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDetachedBlobStorage } from "./loader";
@@ -68,10 +67,6 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
 
     public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return this.storageGetter().getVersions(versionId, count);
-    }
-
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return this.storageGetter().write(tree, parents, message, ref);
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
