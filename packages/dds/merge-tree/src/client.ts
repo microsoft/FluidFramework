@@ -15,7 +15,12 @@ import { assert, Trace } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
+import {
+    LocalClientId,
+    TreeMaintenanceSequenceNumber,
+    UnassignedSequenceNumber,
+    UniversalSequenceNumber,
+} from "./constants";
 import { LocalReference } from "./localReference";
 import {
     CollaborationWindow,
@@ -350,6 +355,26 @@ export class Client {
             const segmentSegmentGroup = segment.segmentGroups.dequeue();
             assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
         }
+    }
+
+    /**
+     * Hacky implementation that just assumes this range matches the last op
+     */
+    public rollbackRange(start: number, end: number) {
+        // fix up prior insertion pending segment group in client/mergeTree and segment
+        this.removePendingSegmentGroup();
+
+        // this.removeRangeLocal(start, end);
+
+        const removeOp = createRemoveRangeOp(start, end);
+        this.mergeTree.markRangeRemoved(
+            start,
+            end,
+            UniversalSequenceNumber,
+            LocalClientId,
+            TreeMaintenanceSequenceNumber,
+            false,
+            { op: removeOp });
     }
 
     /**

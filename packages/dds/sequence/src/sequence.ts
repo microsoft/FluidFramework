@@ -230,9 +230,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
      */
-    public removeRange(start: number, end: number, sendOp: boolean = true) {
+    public removeRange(start: number, end: number) {
         const removeOp = this.client.removeRangeLocal(start, end);
-        if (removeOp && sendOp) {
+        if (removeOp) {
             this.submitSequenceMessage(removeOp);
         }
         return removeOp;

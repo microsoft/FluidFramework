@@ -575,7 +575,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     removeLocalReference(lref: LocalReference): void;
     // (undocumented)
-    removeRange(start: number, end: number, sendOp?: boolean): IMergeTreeRemoveMsg;
+    removeRange(start: number, end: number): IMergeTreeRemoveMsg;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number;
     // (undocumented)

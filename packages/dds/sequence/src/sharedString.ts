@@ -284,14 +284,13 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     protected rollback(content: any, localOpMetadata: unknown): void {
         if (this.previousInsertsCount > 0 && content === this.previousInserts[this.previousInsertsCount - 1]) {
             // fix up insertion pending segment group in client/mergeTree and segment
-            this.client.removePendingSegmentGroup();
-
+            // this.client.removePendingSegmentGroup();
             const msg = content as IMergeTreeInsertMsg;
-            this.removeRange(msg.pos1, msg.pos1 + (msg.seg as string).length, false);
+            this.client.rollbackRange(msg.pos1, msg.pos1 + (msg.seg as string).length);
+            // this.removeRange(msg.pos1, msg.pos1 + (msg.seg as string).length);
             this.previousInsertsCount--;
-
             // fix up removal pending segment group in client/mergeTree and segment
-            this.client.removePendingSegmentGroup();
+            // this.client.removePendingSegmentGroup();
         } else {
             throw new Error("No previous insert");
         }
