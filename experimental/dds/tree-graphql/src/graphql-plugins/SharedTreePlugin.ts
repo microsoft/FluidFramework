@@ -4,7 +4,7 @@
  */
 
 import { Types, PluginFunction } from '@graphql-codegen/plugin-helpers';
-import { NodeId, RevisionView, SharedTree, TraitLabel, TreeViewNode } from '@fluid-experimental/tree';
+import { NodeId, RevisionView, SharedTree, StableNodeId, TraitLabel, TreeViewNode } from '@fluid-experimental/tree';
 import {
 	FieldDefinitionNode,
 	GraphQLSchema,
@@ -218,10 +218,10 @@ export function getID(source: NodeId, args: unknown, context: SharedTree, info: 
 	return node?.payload as string | null;
 }
 
-/** A special hack for retrieving NodeId_s */
-export function getNodeID(source: NodeId, args: unknown, context: SharedTree): NodeId {
+/** A special hack for retrieving StableNodeId_s */
+export function getNodeID(source: NodeId, args: unknown, context: SharedTree): StableNodeId {
 	const node = context.currentView.getViewNode(source);
-	return node.identifier;
+	return context.convertToStableNodeId(node.identifier);
 }
 
 /** Retrieves a leaf node */

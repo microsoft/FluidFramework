@@ -145,7 +145,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
         this.update(
             ...Change.insertTree(
                 item.map((child: Serializable<T>): ChangeNode => fromJson(this.tree, child)), StablePlace.atEndOf({
-                    parent: this.nodeId,
+                parent: this.nodeId,
                     label: "items" as TraitLabel })));
 
         return this.items.length;
