@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { expect } from 'chai';
 import { revert } from '../HistoryEditFactory';
 import { DetachedSequenceId } from '../Identifiers';

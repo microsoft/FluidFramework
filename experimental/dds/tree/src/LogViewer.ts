@@ -365,7 +365,7 @@ export class CachingLogViewer implements LogViewer {
 	 * @param minSequenceNumber - the minimum known sequence number of all connected clients.
 	 */
 	public setMinimumSequenceNumber(minimumSequenceNumber: number): void {
-		// Sequence numbers in fluid are 1-indexed, meaning they correspond to revisions, and can be used as revisions.
+		// Sequence numbers in Fluid are 1-indexed, meaning they correspond to revisions, and can be used as revisions.
 		// This ensures that all revisions >= minimumSequenceNumber are kept in the cache, meaning that even if all clients are caught up
 		// the most recent sequenced revision will be cached.
 		this.sequencedRevisionCache.updateRetentionWindow(minimumSequenceNumber);

@@ -704,7 +704,7 @@ export function runSharedTreeOperationsTests(
 			});
 
 			if (writeFormat !== WriteFormat.v0_0_2) {
-				// This is a regression test for an issue where edits containing fluid handles weren't properly
+				// This is a regression test for an issue where edits containing Fluid handles weren't properly
 				// serialized by chunk uploading code: rather than use an IFluidSerializer, we previously just
 				// JSON.stringify'd.
 				it('can round-trip edits containing handles through chunking', async () => {

@@ -70,7 +70,7 @@ export class SharedTreeEncoder_0_1_1 {
 	/**
 	 * Encodes an edit op to be sent.
 	 * @param edit - edit to encode.
-	 * @param fluidSerialize - Callback which serializes fluid handles contained in a JSON-serializable object, returning the result.
+	 * @param fluidSerialize - Callback which serializes Fluid handles contained in a JSON-serializable object, returning the result.
 	 * Should be invoked on the edit contents at some point before op encoding is complete.
 	 * This is because edit contents may have Payloads needing to be serialized.
 	 */
@@ -101,9 +101,9 @@ export class SharedTreeEncoder_0_1_1 {
 	/**
 	 * Decodes an edit op encoded with `encodeEditOp`.
 	 * @param op - op to decode.
-	 * @param fluidDeserialize - Callback which deserializes fluid handles contained in a JSON-serializable object.
+	 * @param fluidDeserialize - Callback which deserializes Fluid handles contained in a JSON-serializable object.
 	 * Should be invoked on the semi-serialized edit contents at some point before decoding is complete.
-	 * This will rehydrate any serialized fluid handles into usable IFluidHandle objects.
+	 * This will rehydrate any serialized Fluid handles into usable IFluidHandle objects.
 	 */
 	public decodeEditOp(
 		op: SharedTreeEditOp,
@@ -315,7 +315,7 @@ export class SharedTreeEncoder_0_0_2 {
 	/**
 	 * Encodes an edit op to be sent.
 	 * @param edit - edit to encode.
-	 * @param fluidSerialize - Callback which serializes fluid handles contained in a JSON-serializable object, returning the result.
+	 * @param fluidSerialize - Callback which serializes Fluid handles contained in a JSON-serializable object, returning the result.
 	 * Should be invoked on the edit contents at some point before op encoding is complete.
 	 * This is because edit contents may have Payloads needing to be serialized.
 	 */
@@ -339,9 +339,9 @@ export class SharedTreeEncoder_0_0_2 {
 	/**
 	 * Decodes an edit op encoded with `encodeEditOp`.
 	 * @param op - op to decode.
-	 * @param fluidDeserialize - Callback which deserializes fluid handles contained in a JSON-serializable object.
+	 * @param fluidDeserialize - Callback which deserializes Fluid handles contained in a JSON-serializable object.
 	 * Should be invoked on the semi-serialized edit contents at some point before decoding is complete.
-	 * This will rehydrate any serialized fluid handles into usable IFluidHandle objects.
+	 * This will rehydrate any serialized Fluid handles into usable IFluidHandle objects.
 	 */
 	public decodeEditOp(
 		op: SharedTreeEditOp_0_0_2,

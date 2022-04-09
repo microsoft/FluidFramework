@@ -15,7 +15,7 @@ import { chain, makeOpGenerator, take } from './Generators';
 
 const directory = join(testDocumentsPathBase, 'fuzz-tests');
 
-// TODO: Kludge: Use this to change the seed such that the tests avoid hitting bugs in the fluid framework.
+// TODO: Kludge: Use this to change the seed such that the tests avoid hitting bugs in the Fluid Framework.
 // Should be removed once fuzz tests pass reliably with any seed.
 const adjustSeed = 2;
 

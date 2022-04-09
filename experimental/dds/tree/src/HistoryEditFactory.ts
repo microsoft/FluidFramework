@@ -32,7 +32,7 @@ import { getChangeNodeFromViewNode } from './SerializationUtilities';
  * not be a true semantic inverse. If the changes could not be reverted given the state of `before`, returns undefined.
  *
  * TODO: what should this do if `changes` fails to apply to `before`?
- * TODO:#68574: Pass a view that corresponds to the appropriate fluid reference sequence number rather than the view just before
+ * TODO:#68574: Pass a view that corresponds to the appropriate Fluid reference sequence number rather than the view just before
  * @internal
  */
 export function revert(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined {
