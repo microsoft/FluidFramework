@@ -5,9 +5,7 @@
 
 import {
     Change,
-    Delete,
     ChangeNode,
-    Insert,
     NodeId,
     SharedTree,
     StablePlace,
@@ -20,7 +18,7 @@ import { fromJson, NodeKind } from "./treeutils";
 
 function getChild(tree: SharedTree, nodeId: NodeId, update: (...change: Change[]) => void): unknown {
     const view = tree.currentView;
-    const node = view.getSnapshotNode(nodeId);
+    const node = view.getViewNode(nodeId);
     switch (node.definition) {
         case NodeKind.scalar:
             return node.payload;
@@ -48,13 +46,13 @@ export const TreeObjectProxy = <T extends Object>(
             const childrenIds = view.getTrait({ parent: nodeId, label: key as TraitLabel });
             if (childrenIds.length === 0) {
                 update(
-                    ...Insert.create(
-                        [fromJson(value)],
+                    ...Change.insertTree(
+                        [fromJson(tree, value)],
                         StablePlace.atEndOf({ parent: nodeId, label: key as TraitLabel })));
                 return true;
             } else {
                 const childId = childrenIds[0];
-                const child = view.getSnapshotNode(childId);
+                const child = view.getViewNode(childId);
 
                 if (child.definition === NodeKind.scalar) {
                     update(Change.setPayload(childId, value));
@@ -100,10 +98,10 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
                     const view = tree.currentView;
                     const childrenIds = view.getTrait({ parent: nodeId, label: "items" as TraitLabel });
                     update(
-                        ...Insert.create(
-                            [fromJson(value)],
-                            StablePlace.after(view.getChangeNode(childrenIds[index]))),
-                        Delete.create(StableRange.only(view.getChangeNode(childrenIds[index]))));
+                        ...Change.insertTree(
+                            [fromJson(tree, value)],
+                            StablePlace.after(view.getViewNode(childrenIds[index]))),
+                        Change.delete(StableRange.only(view.getViewNode(childrenIds[index]))));
                     return true;
                 }
 
@@ -139,14 +137,14 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
 
         const removedId = itemIds[itemIds.length - 1];
         const removed = getChild(this.tree, removedId, this.update);
-        this.update(Delete.create(StableRange.only(this.tree.currentView.getChangeNode(removedId))));
+        this.update(Change.delete(StableRange.only(this.tree.currentView.getViewNode(removedId))));
         return removed as Serializable<T>;
     }
 
     push(...item: Serializable<T>[]): number {
         this.update(
-            ...Insert.create(
-                item.map(fromJson), StablePlace.atEndOf({
+            ...Change.insertTree(
+                item.map((child) => fromJson(this.tree, child)), StablePlace.atEndOf({
                     parent: this.nodeId,
                     label: "items" as TraitLabel })));
 
@@ -155,7 +153,7 @@ export class TreeArrayProxy<T> implements IArrayish<T> {
 
     pushNode(...node: ChangeNode[]) {
         this.update(
-            ...Insert.create(
+            ...Change.insertTree(
                 node, StablePlace.atEndOf({
                     parent: this.nodeId,
                     label: "items" as TraitLabel })));

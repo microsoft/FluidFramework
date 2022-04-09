@@ -147,7 +147,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 					mkdirSync(directory);
 				}
 				await performFuzzActions(generatorFactory(), seed + adjustSeed, true, saveInfo);
-			});
+			}).timeout(5000);
 		}
 
 		function runMixedVersionTests(summarizeHistory: boolean, testsPerSuite: number): void {

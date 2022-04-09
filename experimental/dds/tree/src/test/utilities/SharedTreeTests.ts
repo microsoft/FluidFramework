@@ -1258,10 +1258,16 @@ export function runSharedTreeOperationsTests(
 		 * In the meantime, we are forbidding collaboration of no-history clients and history clients.
 		 */
 		it('can be initialized on multiple clients with different `summarizeHistory` values', async () => {
-			const { tree, testObjectProvider, container } = await setUpLocalServerTestSharedTree({
+				const { tree, testObjectProvider, container } = await setUpLocalServerTestSharedTree({
 				writeFormat,
 				summarizeHistory: false,
 			});
+			testObjectProvider.logger.registerExpectedEvent(
+				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
+				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' },
+				{ eventName: 'fluid:telemetry:Batching:LengthTooBig' }
+			);
+
 			applyNoop(tree);
 			await testObjectProvider.ensureSynchronized();
 			const firstSummaryVersion = await waitForSummary(container);
@@ -1302,7 +1308,7 @@ export function runSharedTreeOperationsTests(
 			// If tree 2 didn't change its write format, it would attempt to upload the above chunk with start revision 200, which is past
 			// how many sequenced edits tree 3 thinks there are.
 			expect(unexpectedHistoryChunkCount).to.equal(0);
-		});
+		}).timeout(/* double summarization can take some time */ 20000);
 
 		// This functionality was only implemented in format 0.1.1.
 		if (writeFormat !== WriteFormat.v0_0_2) {

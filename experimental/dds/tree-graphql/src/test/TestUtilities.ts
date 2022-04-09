@@ -14,24 +14,35 @@ import {
 	TreeNode,
 	NodeId,
 	Payload,
+	Change,
+	WriteFormat,
 } from '@fluid-experimental/tree';
 
 /** From the given `ChangeNode`, create a `SharedTree` which is suitable for use in a graphql query */
 export function createTestQueryTree(node: ChangeNode): SharedTree {
 	const componentRuntime = new MockFluidDataStoreRuntime();
 	componentRuntime.local = true;
-	const tree = new SharedTree(componentRuntime, 'testSharedTree', true);
+	const tree = new SharedTree(componentRuntime, 'testSharedTree', WriteFormat.v0_1_1);
 	assert(typeof node !== 'number', 'root node may not be detached');
-	const treeNode = node as TreeNode<ChangeNode>;
+	const treeNode = node as TreeNode<ChangeNode, NodeId>;
 	// Follow the graphql convention that the root type of a schema must of type 'Query'
 	// Traits are copied off of the Query node and applied to the root node
 	// This is simply to save space/complexity in the tree, rather than adding the query root node _under_ the `initialTree` root node
 	assert(treeNode.definition === 'Query', 'root node must be a Query node');
 	for (const [label, trait] of Object.entries(treeNode.traits)) {
-		tree.editor.insert([...trait], {
-			referenceTrait: { label: label as TraitLabel, parent: initialTree.identifier },
-			side: Side.After,
-		});
+		tree.applyEdit(
+			...Change.insertTree(
+				[...trait],
+
+				{
+					referenceTrait: {
+						label: label as TraitLabel,
+						parent: tree.convertToNodeId(initialTree.identifier),
+					},
+					side: Side.After,
+				}
+			)
+		);
 	}
 
 	return tree;
@@ -42,6 +53,6 @@ export class NodeIdGenerator {
 	private nextId = 0;
 
 	public new(): NodeId {
-		return String(this.nextId++) as NodeId;
+		return this.nextId++ as NodeId;
 	}
 }

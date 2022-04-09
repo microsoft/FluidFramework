@@ -79,7 +79,7 @@ describe('SharedTreeQuerier', () => {
 				{
 					// Cheese Pizza
 					definition: 'Pizza' as Definition,
-					identifier: 'Cheese Pizza' as NodeId,
+					identifier: id.new(),
 					traits: {
 						name: [stringNode('Cheese')],
 						price: [floatNode(8.99)],
@@ -91,7 +91,7 @@ describe('SharedTreeQuerier', () => {
 				{
 					// Pepperoni Pizza
 					definition: 'Pizza' as Definition,
-					identifier: 'Pepperoni Pizza' as NodeId,
+					identifier: id.new(),
 					traits: {
 						name: [stringNode('Pepperoni')],
 						price: [floatNode(9.99)],
@@ -113,7 +113,7 @@ describe('SharedTreeQuerier', () => {
 				{
 					// Hawaiian Pizza
 					definition: 'Pizza' as Definition,
-					identifier: 'Hawaiian Pizza' as NodeId,
+					identifier: id.new(),
 					traits: {
 						name: [stringNode('Hawaiian')],
 						price: [floatNode(11.5)],
@@ -143,7 +143,7 @@ describe('SharedTreeQuerier', () => {
 				{
 					// Green Pizza
 					definition: 'Pizza' as Definition,
-					identifier: 'Green Pizza' as NodeId,
+					identifier: id.new(),
 					traits: {
 						name: [stringNode('Green')],
 						price: [floatNode(9.99)],
