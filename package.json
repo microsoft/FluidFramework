@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "monorepo",
   "version": "0.14.0",
   "private": true,
   "homepage": "https://fluidframework.com",
@@ -13,12 +13,11 @@
   "workspaces": [
     "packages/*/*",
     "examples/**",
-    "experimental/**",
-    "tools/**",
+    "experimental/*/*",
     "server/routerlicious/packages/gitresources",
     "server/routerlicious/packages/protocol*",
-    "common/lib/*",
-    "common/build/*"
+    "common/**",
+    "tools/**"
   ],
   "scripts": {
     "build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
@@ -41,7 +40,6 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
-    "postinstall": "npm run postinstall:lerna",
     "layer-check": "fluid-layer-check --info tools/build-tools/data/layerInfo.json",
     "lint": "lerna run lint --no-sort --stream -- -- -- --color",
     "lint:fix": "lerna run lint:fix --no-sort --stream -- -- -- --color",
@@ -167,5 +165,6 @@
       }
     },
     "generatorName": "generator-fluid"
-  }
+  },
+  "packageManager": "yarn@1.22.18"
 }
