@@ -15,8 +15,8 @@
   "scripts": {
     "build": "concurrently yarn:build:compile yarn:lint",
     "build:compile": "yarn run tsc",
-    "build:full": "concurrently yarn:build yarn:webpack",
-    "build:full:compile": "concurrently yarn:build:compile yarn:webpack",
+    "build:full": "yarn run build",
+    "build:full:compile": "yarn run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
