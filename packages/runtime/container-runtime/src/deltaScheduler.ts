@@ -146,7 +146,7 @@ export class DeltaScheduler {
                 processingTime: TelemetryLogger.formatTick(this.schedulingLog.totalProcessingTime),
                 opsProcessed: this.schedulingLog.lastSequenceNumber - this.schedulingLog.firstSequenceNumber,
                 batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
-                totalTime: TelemetryLogger.formatTick(currentTime - this.schedulingLog.startTime),
+                duration: TelemetryLogger.formatTick(currentTime - this.schedulingLog.startTime),
 
             });
 
