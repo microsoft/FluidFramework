@@ -10,6 +10,9 @@
                     "build:compile",
                     "build:esnext",
                     "build:test",
+                    "build:test:jest",
+                    "build:test:mocha",
+                    "build:test:types",
                     "build:full",
                     "build",
                     "eslint",
@@ -26,7 +29,11 @@
     "targetDependencies": {
         "build": [
             {
-                "target": "build:commonjs",
+                "target": "build:test",
+                "projects": "dependencies"
+            },
+            {
+                "target": "tsc",
                 "projects": "dependencies"
             },
             {
@@ -34,13 +41,17 @@
                 "projects": "dependencies"
             },
             {
-                "target": "lint",
+                "target": "eslint",
                 "projects": "dependencies"
             }
         ],
         "build:full": [
             {
-                "target": "build:commonjs",
+                "target": "build:test",
+                "projects": "dependencies"
+            },
+            {
+                "target": "tsc",
                 "projects": "dependencies"
             },
             {
@@ -48,7 +59,7 @@
                 "projects": "dependencies"
             },
             {
-                "target": "lint",
+                "target": "eslint",
                 "projects": "dependencies"
             }
         ],
@@ -64,7 +75,11 @@
         ],
         "build:compile": [
             {
-                "target": "build:commonjs",
+                "target": "build:test",
+                "projects": "dependencies"
+            },
+            {
+                "target": "tsc",
                 "projects": "dependencies"
             },
             {
@@ -79,6 +94,24 @@
             }
         ],
         "build:test": [
+            {
+                "target": "tsc",
+                "projects": "dependencies"
+            }
+        ],
+        "build:test:jest": [
+            {
+                "target": "tsc",
+                "projects": "dependencies"
+            }
+        ],
+        "build:test:mocha": [
+            {
+                "target": "tsc",
+                "projects": "dependencies"
+            }
+        ],
+        "build:test:types": [
             {
                 "target": "tsc",
                 "projects": "dependencies"
