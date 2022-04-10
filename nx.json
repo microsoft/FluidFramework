@@ -8,6 +8,7 @@
                 "cacheableOperations": [
                     "build:commonjs",
                     "build:compile",
+                    "build:docs",
                     "build:esnext",
                     "build:test",
                     "build:test:jest",
@@ -16,6 +17,8 @@
                     "build:full",
                     "build",
                     "eslint",
+                    "build:gen",
+                    "build:genver",
                     "lint",
                     "package",
                     "prepare",
@@ -30,6 +33,10 @@
         "build": [
             {
                 "target": "build:test",
+                "projects": "dependencies"
+            },
+            {
+                "target": "build:gen",
                 "projects": "dependencies"
             },
             {
@@ -48,6 +55,10 @@
         "build:full": [
             {
                 "target": "build:test",
+                "projects": "dependencies"
+            },
+            {
+                "target": "build:gen",
                 "projects": "dependencies"
             },
             {
@@ -90,6 +101,12 @@
         "build:esnext": [
             {
                 "target": "build:esnext",
+                "projects": "dependencies"
+            }
+        ],
+        "build:docs": [
+            {
+                "target": "tsc",
                 "projects": "dependencies"
             }
         ],
