@@ -14,7 +14,7 @@
   "typings": "dist/index.d.ts",
   "bin": "dist/index.js",
   "scripts": {
-    "build": "concurrently yarn:build:compile yarn:lint && yarn run build:docs",
+    "build": "concurrently yarn:build:compile yarn:lint",
     "build:compile": "yarn run tsc && yarn run build:test",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
     "build:full": "yarn run build",

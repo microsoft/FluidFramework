@@ -19,7 +19,7 @@
   },
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "yarn run build:genver && concurrently yarn:build:compile yarn:lint && yarn run build:docs",
+    "build": "yarn run build:genver && concurrently yarn:build:compile yarn:lint",
     "build:commonjs": "yarn run tsc && yarn run build:test",
     "build:compile": "concurrently yarn:build:commonjs yarn:build:esnext",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",

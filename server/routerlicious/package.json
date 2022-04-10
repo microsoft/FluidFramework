@@ -11,11 +11,11 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "scripts": {
-    "build": "yarn run policy-check && yarn run build:genver && yarn run build:compile && yarn run lint && yarn run build:docs",
+    "build": "yarn run policy-check && yarn run build:genver && yarn run build:compile && yarn run lint",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "lerna run build:docs --stream --parallel",
     "build:fast": "fluid-build --root ../.. --server",
-    "build:full": "yarn run build:genver && yarn run build:full:compile && yarn run lint && yarn run build:docs",
+    "build:full": "yarn run build:genver && yarn run build:full:compile && yarn run lint",
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:gendocs": "api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
     "build:genver": "lerna run build:genver --stream --parallel",

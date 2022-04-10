@@ -20,12 +20,12 @@
     "tools/**"
   ],
   "scripts": {
-    "build": "yarn run policy-check && yarn run layer-check && yarn run build:genver && yarn run build:compile && yarn run lint && yarn run build:docs",
+    "build": "yarn run policy-check && yarn run layer-check && yarn run build:genver && yarn run build:compile && yarn run lint",
     "build:ci": "yarn run build:genver && lerna run build:compile --stream",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "lerna run build:docs --stream --parallel",
     "build:fast": "fluid-build --root .",
-    "build:full": "yarn run build:genver && yarn run build:full:compile && yarn run lint && yarn run build:docs",
+    "build:full": "yarn run build:genver && yarn run build:full:compile && yarn run lint",
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && cd docs && yarn run build",
     "build:genver": "lerna run build:genver --stream --parallel",

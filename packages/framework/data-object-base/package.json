@@ -20,7 +20,7 @@
     "es5/**/*"
   ],
   "scripts": {
-    "build": "concurrently yarn:build:compile yarn:lint && yarn run build:docs",
+    "build": "concurrently yarn:build:compile yarn:lint",
     "build:compile": "concurrently yarn:tsc yarn:build:es5 yarn:build:esnext",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:es5": "tsc --project ./tsconfig.es5.json",
