@@ -28,9 +28,9 @@
     "mocha:db": "mocha --opts test/db/mocha.opts",
     "mocha:endtoend": "mocha --opts test/endtoend/mocha.opts",
     "start": "node server.js",
-    "test": "npm run test:mocha",
+    "test": "yarn run test:mocha",
     "test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
+    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 yarn run test:mocha"
   },
   "nyc": {
     "reporter": [

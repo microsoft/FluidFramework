@@ -13,12 +13,12 @@
   "main": "src/index.js",
   "types": "src/index.d.ts",
   "scripts": {
-    "coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc npm run test:common",
-    "test": "npm run test:mocha",
+    "coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc yarn run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc yarn run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc yarn run test:common",
+    "test": "yarn run test:mocha",
     "test:changeset": "cd ../property-changeset && mocha",
     "test:common": "cd ../property-common && mocha",
     "test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
+    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 yarn run test:mocha"
   },
   "dependencies": {
     "@fluid-experimental/property-changeset": "^0.58.3000",
