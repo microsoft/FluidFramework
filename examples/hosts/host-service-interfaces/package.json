@@ -17,11 +17,11 @@
   "scripts": {
     "build": "concurrently yarn:build:compile yarn:lint",
     "build:compile": "concurrently yarn:tsc yarn:build:esnext",
-    "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",
-    "ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
+    "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
