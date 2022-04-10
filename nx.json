@@ -1,0 +1,120 @@
+{
+    "extends": "@nrwl/workspace/presets/npm.json",
+    "npmScope": "monorepo",
+    "tasksRunnerOptions": {
+        "default": {
+            "runner": "@nrwl/nx-cloud",
+            "options": {
+                "cacheableOperations": [
+                    "build:commonjs",
+                    "build:compile",
+                    "build:esnext",
+                    "build:test",
+                    "build:full",
+                    "build",
+                    "eslint",
+                    "lint",
+                    "package",
+                    "prepare",
+                    "test",
+                    "tsc"
+                ],
+                "accessToken": "ZGRiNDM3YmMtMWZmZC00Yzc3LWExZTEtNjc5NGMyZTYxOTI0fHJlYWQtd3JpdGU="
+            }
+        }
+    },
+    "targetDependencies": {
+        "build": [
+            {
+                "target": "build:commonjs",
+                "projects": "dependencies"
+            },
+            {
+                "target": "build:esnext",
+                "projects": "dependencies"
+            },
+            {
+                "target": "lint",
+                "projects": "dependencies"
+            }
+        ],
+        "build:full": [
+            {
+                "target": "build:commonjs",
+                "projects": "dependencies"
+            },
+            {
+                "target": "build:esnext",
+                "projects": "dependencies"
+            },
+            {
+                "target": "lint",
+                "projects": "dependencies"
+            }
+        ],
+        "build:commonjs": [
+            {
+                "target": "build:test",
+                "projects": "dependencies"
+            },
+            {
+                "target": "tsc",
+                "projects": "dependencies"
+            }
+        ],
+        "build:compile": [
+            {
+                "target": "build:commonjs",
+                "projects": "dependencies"
+            },
+            {
+                "target": "build:esnext",
+                "projects": "dependencies"
+            }
+        ],
+        "build:esnext": [
+            {
+                "target": "build:esnext",
+                "projects": "dependencies"
+            }
+        ],
+        "build:test": [
+            {
+                "target": "tsc",
+                "projects": "dependencies"
+            }
+        ],
+        "tsc": [
+            {
+                "target": "tsc",
+                "projects": "dependencies"
+            }
+        ],
+        "lint": [
+            {
+                "target": "eslint",
+                "projects": "dependencies"
+            }
+        ],
+        "prepare": [
+            {
+                "target": "prepare",
+                "projects": "dependencies"
+            }
+        ],
+        "package": [
+            {
+                "target": "package",
+                "projects": "dependencies"
+            }
+        ]
+    },
+    "affected": {
+        "defaultBase": "main"
+    },
+    "pluginsConfig": {
+        "@nrwl/js": {
+            "analyzeSourceFiles": false
+        }
+    }
+}
