@@ -400,7 +400,7 @@ function isUnassigned(seq: number | undefined): boolean {
 /**
  * This function takes a number of sequence numbers and normalizes them.
  * Normalization makes the sequence numbers globally comparable to things
- * other seqs, ref seqs, and the min seq.
+ * like other seqs, ref seqs, and the min seq.
  *
  * Specifically this function assigns unassigned sequence numbers a temporary sequence number near
  * Number.MAX_SAFE_INTEGER. This works as we know all unassigned sequence numbers will eventually
