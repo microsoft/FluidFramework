@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
 import { Provider } from "nconf";
 import * as services from "@fluidframework/server-services-shared";
 import * as core from "@fluidframework/server-services-core";
@@ -11,10 +10,12 @@ import { normalizePort } from "@fluidframework/server-services-utils";
 import { ExternalStorageManager } from "./externalStorageManager";
 import { GitrestRunner } from "./runner";
 import {
-    IFileSystemManager,
+    IFileSystemManagerFactory,
     IRepositoryManagerFactory,
     IsomorphicGitManagerFactory,
     NodegitRepositoryManagerFactory,
+    NodeFsManagerFactory,
+    IStorageDirectoryConfig,
 } from "./utils";
 
 export class GitrestResources implements core.IResources {
@@ -23,7 +24,7 @@ export class GitrestResources implements core.IResources {
     constructor(
         public readonly config: Provider,
         public readonly port: string | number,
-        public readonly fileSystemManager: IFileSystemManager,
+        public readonly fileSystemManagerFactory: IFileSystemManagerFactory,
         public readonly repositoryManagerFactory: IRepositoryManagerFactory) {
         this.webServerFactory = new services.BasicWebServerFactory();
     }
@@ -36,28 +37,28 @@ export class GitrestResources implements core.IResources {
 export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestResources> {
     public async create(config: Provider): Promise<GitrestResources> {
         const port = normalizePort(process.env.PORT || "3000");
-        const fileSystemManager = fs;
+        const fileSystemManagerFactory = new NodeFsManagerFactory();
         const externalStorageManager = new ExternalStorageManager(config);
-        const storageDirectory = config.get("storageDir");
+        const storageDirectoryConfig: IStorageDirectoryConfig = config.get("storageDir") as IStorageDirectoryConfig;
         const gitLibrary: string | undefined = config.get("git:lib:name");
         const getRepositoryManagerFactory = () => {
             if (!gitLibrary || gitLibrary === "nodegit") {
                 return new NodegitRepositoryManagerFactory(
-                    storageDirectory,
-                    fileSystemManager,
+                    storageDirectoryConfig,
+                    fileSystemManagerFactory,
                     externalStorageManager,
                 );
             } else if (gitLibrary === "isomorphic-git") {
                 return new IsomorphicGitManagerFactory(
-                    storageDirectory,
-                    fileSystemManager,
+                    storageDirectoryConfig,
+                    fileSystemManagerFactory,
                 );
             }
             throw new Error("Invalid git library name.");
         };
         const repositoryManagerFactory = getRepositoryManagerFactory();
 
-        return new GitrestResources(config, port, fileSystemManager, repositoryManagerFactory);
+        return new GitrestResources(config, port, fileSystemManagerFactory, repositoryManagerFactory);
     }
 }
 
@@ -67,7 +68,7 @@ export class GitrestRunnerFactory implements core.IRunnerFactory<GitrestResource
             resources.webServerFactory,
             resources.config,
             resources.port,
-            resources.fileSystemManager,
+            resources.fileSystemManagerFactory,
             resources.repositoryManagerFactory);
     }
 }

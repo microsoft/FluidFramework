@@ -147,9 +147,12 @@ export class BlobManager {
     }
 
     public processBlobAttachOp(blobId: string, local: boolean) {
-        assert(!local || this.pendingBlobIds.has(blobId), 0x1f8 /* "local BlobAttach op with no pending blob" */);
-        this.pendingBlobIds.get(blobId)?.resolve();
-        this.pendingBlobIds.delete(blobId);
+        if (local) {
+            const pendingBlobP = this.pendingBlobIds.get(blobId);
+            assert(pendingBlobP !== undefined, 0x1f8 /* "local BlobAttach op with no pending blob" */);
+            pendingBlobP.resolve();
+            this.pendingBlobIds.delete(blobId);
+        }
         this.blobIds.add(blobId);
     }
 

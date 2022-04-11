@@ -6,7 +6,6 @@
 import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     FluidObject,
-    IFluidObject,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -150,7 +149,7 @@ export interface IContainerContext extends IDisposable {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
 
     /**
      * Get an absolute url for a provided container-relative request.
