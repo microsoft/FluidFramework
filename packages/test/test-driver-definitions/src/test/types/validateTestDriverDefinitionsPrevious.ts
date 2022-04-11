@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ITelemetryBufferedLogger": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryBufferedLogger():
@@ -28,7 +28,7 @@ use_current_InterfaceDeclaration_ITelemetryBufferedLogger(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ITelemetryBufferedLogger": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITelemetryBufferedLogger():
@@ -40,7 +40,7 @@ use_old_InterfaceDeclaration_ITelemetryBufferedLogger(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ITestDriver": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITestDriver():
@@ -52,7 +52,7 @@ use_current_InterfaceDeclaration_ITestDriver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ITestDriver": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITestDriver():
@@ -64,7 +64,7 @@ use_old_InterfaceDeclaration_ITestDriver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_TestDriverTypes": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_TestDriverTypes():
@@ -76,7 +76,7 @@ use_current_TypeAliasDeclaration_TestDriverTypes(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_TestDriverTypes": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_TestDriverTypes():

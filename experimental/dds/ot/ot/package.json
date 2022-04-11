@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/ot",
-  "version": "0.58.3000",
+  "version": "0.59.1000",
   "description": "Distributed data structure for hosting ottypes",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -60,18 +60,18 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/datastore-definitions": "^0.58.3000",
-    "@fluidframework/protocol-definitions": "^0.1027.1000",
-    "@fluidframework/runtime-definitions": "^0.58.3000",
-    "@fluidframework/shared-object-base": "^0.58.3000"
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/datastore-definitions": "^0.59.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/runtime-definitions": "^0.59.1000",
+    "@fluidframework/shared-object-base": "^0.59.1000"
   },
   "devDependencies": {
-    "@fluid-internal/test-dds-utils": "^0.58.3000",
+    "@fluid-internal/test-dds-utils": "^0.59.1000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
-    "@fluidframework/mocha-test-setup": "^0.58.3000",
-    "@fluidframework/test-runtime-utils": "^0.58.3000",
+    "@fluidframework/mocha-test-setup": "^0.59.1000",
+    "@fluidframework/test-runtime-utils": "^0.59.1000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",

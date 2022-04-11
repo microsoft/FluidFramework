@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IOldestClientObservable": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IOldestClientObservable():
@@ -28,7 +28,7 @@ use_current_InterfaceDeclaration_IOldestClientObservable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IOldestClientObservable": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IOldestClientObservable():
@@ -40,7 +40,7 @@ use_old_InterfaceDeclaration_IOldestClientObservable(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IOldestClientObservableEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IOldestClientObservableEvents():
@@ -52,7 +52,7 @@ use_current_InterfaceDeclaration_IOldestClientObservableEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IOldestClientObservableEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IOldestClientObservableEvents():
@@ -64,7 +64,7 @@ use_old_InterfaceDeclaration_IOldestClientObservableEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IOldestClientObserver": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IOldestClientObserver():
@@ -76,7 +76,7 @@ use_current_InterfaceDeclaration_IOldestClientObserver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IOldestClientObserver": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IOldestClientObserver():
@@ -88,7 +88,7 @@ use_old_InterfaceDeclaration_IOldestClientObserver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IOldestClientObserverEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IOldestClientObserverEvents():
@@ -100,7 +100,7 @@ use_current_InterfaceDeclaration_IOldestClientObserverEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IOldestClientObserverEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IOldestClientObserverEvents():
@@ -112,7 +112,7 @@ use_old_InterfaceDeclaration_IOldestClientObserverEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ITaskManager": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITaskManager():
@@ -124,7 +124,7 @@ use_current_InterfaceDeclaration_ITaskManager(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ITaskManager": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITaskManager():
@@ -136,7 +136,7 @@ use_old_InterfaceDeclaration_ITaskManager(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ITaskManagerEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITaskManagerEvents():
@@ -148,7 +148,7 @@ use_current_InterfaceDeclaration_ITaskManagerEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ITaskManagerEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITaskManagerEvents():
@@ -160,7 +160,7 @@ use_old_InterfaceDeclaration_ITaskManagerEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_OldestClientObserver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OldestClientObserver():
@@ -172,7 +172,7 @@ use_current_ClassDeclaration_OldestClientObserver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_OldestClientObserver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_OldestClientObserver():
@@ -184,7 +184,7 @@ use_old_ClassDeclaration_OldestClientObserver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_TaskManager": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TaskManager():
@@ -196,7 +196,7 @@ use_current_ClassDeclaration_TaskManager(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_TaskManager": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_TaskManager():

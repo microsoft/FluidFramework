@@ -25,6 +25,7 @@ const defaultTinyliciousPort = 7070;
 
 export class TinyliciousResourcesFactory implements IResourcesFactory<TinyliciousResources> {
     public async create(config: Provider): Promise<TinyliciousResources> {
+        const globalDbEnabled = false;
         // Pull in the default port off the config
         const port = utils.normalizePort(process.env.PORT ?? defaultTinyliciousPort);
         const collectionNames = config.get("mongo:collectionNames");
@@ -34,7 +35,9 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
         const taskMessageSender = new TaskMessageSender();
         const mongoManager = new MongoManager(dbFactory);
         const databaseManager = new MongoDatabaseManager(
+            globalDbEnabled,
             mongoManager,
+            null,
             collectionNames.nodes,
             collectionNames.documents,
             collectionNames.deltas,

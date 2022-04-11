@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_HTMLViewAdapter": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_HTMLViewAdapter():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_HTMLViewAdapter(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_HTMLViewAdapter": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_HTMLViewAdapter():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_HTMLViewAdapter(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IReactViewAdapterProps": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IReactViewAdapterProps():
@@ -52,7 +52,7 @@ use_current_InterfaceDeclaration_IReactViewAdapterProps(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IReactViewAdapterProps": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IReactViewAdapterProps():
@@ -64,7 +64,7 @@ use_old_InterfaceDeclaration_IReactViewAdapterProps(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MountableView": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_MountableView():
@@ -76,7 +76,7 @@ use_current_ClassDeclaration_MountableView(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_MountableView": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_MountableView():
@@ -88,7 +88,7 @@ use_old_ClassDeclaration_MountableView(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_ReactViewAdapter": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ReactViewAdapter():
@@ -100,7 +100,7 @@ use_current_ClassDeclaration_ReactViewAdapter(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_ReactViewAdapter": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ReactViewAdapter():
