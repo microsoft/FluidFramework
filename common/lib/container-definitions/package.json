@@ -79,12 +79,6 @@
         },
         "InterfaceDeclaration_IRuntime": {
           "forwardCompat": false
-        },
-        "InterfaceDeclaration_IProvideRuntimeFactory": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IRuntimeFactory": {
-          "forwardCompat": false
         }
       }
     }
