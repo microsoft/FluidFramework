@@ -34,7 +34,7 @@ export class DeltaScheduler {
     private readonly processingTimeIncrement = 10;
 
     private processingStartTime: number | undefined;
-    private totalProcessingTime: number = DeltaScheduler.processingTime;
+    private currentAllowedProcessingTimeForTurn: number = DeltaScheduler.processingTime;
 
     // This keeps track of the number of times inbound queue has been scheduled. After a particular
     // count, we log telemetry for the number of ops processed, the time and number of turns it took
@@ -63,7 +63,7 @@ export class DeltaScheduler {
         if (!this.processingStartTime) {
             this.processingStartTime = performance.now();
         }
-        if (this.schedulingLog === undefined && this.schedulingCount % 2000 === 0) {
+        if (this.schedulingLog === undefined && this.schedulingCount % 500 === 0) {
             // Every 2000th time we are scheduling the inbound queue, we log telemetry for the
             // number of ops processed, the time and number of turns it took to process the ops.
             this.schedulingLog = {
@@ -76,13 +76,11 @@ export class DeltaScheduler {
                 startTime: performance.now(),
             };
         }
-        if (this.schedulingLog) {
-            this.schedulingLog.numberOfBatchesProcessed++;
-        }
     }
 
     public batchEnd(message: ISequencedDocumentMessage) {
         if (this.schedulingLog) {
+            this.schedulingLog.numberOfBatchesProcessed++;
             this.schedulingLog.lastSequenceNumber = message.sequenceNumber;
             this.schedulingLog.opsRemainingToProcess = this.deltaManager.inbound.length;
         }
@@ -91,7 +89,7 @@ export class DeltaScheduler {
             const currentTime = performance.now();
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const elapsedTime = currentTime - this.processingStartTime!;
-            if (elapsedTime > this.totalProcessingTime) {
+            if (elapsedTime > this.currentAllowedProcessingTimeForTurn) {
                 // We have processed ops for more than the total processing time. So, pause the
                 // queue, yield the thread and schedule a resume.
 
@@ -101,7 +99,7 @@ export class DeltaScheduler {
                  // Increase the total processing time. Keep doing this after each turn until all the ops have
                 // been processed. This way we keep the responsiveness at the beginning while also making sure
                 // that all the ops process fairly quickly.
-                this.totalProcessingTime += this.processingTimeIncrement;
+                this.currentAllowedProcessingTimeForTurn += this.processingTimeIncrement;
 
                 // If we are logging the telemetry this time, update the telemetry log object.
                 if (this.schedulingLog) {
@@ -115,7 +113,7 @@ export class DeltaScheduler {
                             eventName: "InboundOpsPartialProcessingTime",
                             duration: TelemetryLogger.formatTick(elapsedTime),
                             opsProcessed: this.schedulingLog.lastSequenceNumber -
-                                this.schedulingLog.firstSequenceNumber,
+                                this.schedulingLog.firstSequenceNumber + 1,
                             opsRemainingToProcess: this.deltaManager.inbound.length,
                             processingTime: TelemetryLogger.formatTick(this.schedulingLog.totalProcessingTime),
                             numberOfTurns: this.schedulingLog.numberOfTurns,
@@ -144,10 +142,10 @@ export class DeltaScheduler {
                 opsRemainingToProcess: this.schedulingLog.opsRemainingToProcess,
                 numberOfTurns: this.schedulingLog.numberOfTurns,
                 processingTime: TelemetryLogger.formatTick(this.schedulingLog.totalProcessingTime),
-                opsProcessed: this.schedulingLog.lastSequenceNumber - this.schedulingLog.firstSequenceNumber,
+                opsProcessed: this.schedulingLog.lastSequenceNumber - this.schedulingLog.firstSequenceNumber + 1,
                 batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
                 duration: TelemetryLogger.formatTick(currentTime - this.schedulingLog.startTime),
-
+                schedulingCount: this.schedulingCount,
             });
 
             this.schedulingLog = undefined;
@@ -159,7 +157,7 @@ export class DeltaScheduler {
 
         // Reset the processing times.
         this.processingStartTime = undefined;
-        this.totalProcessingTime = DeltaScheduler.processingTime;
+        this.currentAllowedProcessingTimeForTurn = DeltaScheduler.processingTime;
     }
 
     /**
