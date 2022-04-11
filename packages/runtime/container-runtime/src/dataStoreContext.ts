@@ -326,7 +326,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
                 const errorWrapped = DataProcessingError.wrapIfUnrecognized(error, "realizeFluidDataStoreContext");
-                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData"} });
+                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: TelemetryDataTag.PackageData } });
                 this.channelDeferred?.reject(errorWrapped);
                 this.logger.sendErrorEvent({ eventName: "RealizeError"}, errorWrapped);
             });
@@ -671,7 +671,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData"} },
+                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: TelemetryDataTag.PackageData } },
                 error);
         }
     }
