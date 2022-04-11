@@ -15,12 +15,21 @@ export type PackageDetails ={
     readonly broken: BrokenCompatTypes;
 }
 
+export type ThreePartVersion = `${number}.${number}.${number}`;
+
 export interface BrokenCompatSettings{
     backCompat?: false;
     forwardCompat?: false;
 }
 
-export type BrokenCompatTypes = Partial<Record<string,Record<string, BrokenCompatSettings>>>;
+// back compat when for when we nested type under version
+// this can be removed after 0.59
+export interface BackCompatBrokenCompatSettings extends BrokenCompatSettings{
+
+    [type: `${string}_${string}`]:BrokenCompatSettings
+}
+
+export type BrokenCompatTypes = Partial<Record<string, BackCompatBrokenCompatSettings>>;
 
 
 interface PackageJson{
