@@ -16,7 +16,6 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import {
-    LocalClientId,
     TreeMaintenanceSequenceNumber,
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
@@ -364,14 +363,13 @@ export class Client {
         // fix up prior insertion pending segment group in client/mergeTree and segment
         this.removePendingSegmentGroup();
 
-        // this.removeRangeLocal(start, end);
-
+        const segWindow = this.getCollabWindow();
         const removeOp = createRemoveRangeOp(start, end);
         this.mergeTree.markRangeRemoved(
             start,
             end,
             UniversalSequenceNumber,
-            LocalClientId,
+            segWindow.clientId,
             TreeMaintenanceSequenceNumber,
             false,
             { op: removeOp });
