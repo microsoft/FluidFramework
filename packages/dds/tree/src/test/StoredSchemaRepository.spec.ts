@@ -12,12 +12,18 @@ import {
 	FieldSchema,
 	GlobalFieldKey, Multiplicity, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "../schema/Schema";
-import { string } from "../schema/examples/SchemaExamples";
+import { codePoint, string } from "../schema/examples/SchemaExamples";
 import { StoredSchemaRepository } from "../schema/StoredSchemaRepository";
 import { treeSchema, fieldSchema, emptyField, rootFieldKey } from "../schema/Builders";
-import { Adapters, checkCompatibility, Compatibility } from "../schema/View";
+import {
+	Adapters, adaptRepo, checkCompatibility, Compatibility, MissingFieldAdapter, TreeAdapter,
+} from "../schema/View";
 
 class ViewSchemaRepository extends StoredSchemaRepository {
+	public clone(): ViewSchemaRepository {
+		return new ViewSchemaRepository(new Map(this.fields), new Map(this.trees));
+	}
+
 	public overwriteFieldSchema(
 		identifier: GlobalFieldKey,
 		schema: FieldSchema,
@@ -64,8 +70,10 @@ describe("StoredSchemaRepository", () => {
 	/**
 	 * This shows basic usage of stored and view schema, including a schema change handled using the
 	 * "Design-pattern apps can use to handle schema migrations" proposed in `Stored and View Schema.md`.
-	 * Note that this focuses on simpler compatible cases (where old data meets the new schema),
-	 * and does only briefly mentions the case where adapters are needed (since they are not implemented yet).
+	 * Note that this focuses on simpler compatible cases
+	 * (where old data meets the new schema and the schema is updated keeping the same identifier),
+	 * and does only briefly mentions the case where a new identifier is needed
+	 * (since adapters are not implemented yet, and they are the nice way to handle that).
 	 */
 	it("basic usage", () => {
 		// Build a schema repository.
@@ -83,7 +91,7 @@ describe("StoredSchemaRepository", () => {
 		assert(view.tryUpdateFieldSchema(rootFieldKey, root));
 
 		// This is where legacy schema handling logic for schematize.
-		const adapters = new Adapters();
+		const adapters: Adapters = {};
 
 		// Now lets imagine using this application on a new empty document.
 		// StoredSchemaRepository defaults to a state that permits no document states at all.
@@ -100,7 +108,7 @@ describe("StoredSchemaRepository", () => {
 			// This means our application is unable to view this document.
 			assert(compat.read === Compatibility.Incompatible);
 
-			// And since the document schema currently excludes empty roots, its also incompatible for writing:
+			// And since the view schema currently excludes empty roots, its also incompatible for writing:
 			assert(compat.write === Compatibility.Incompatible);
 
 			// Additionally even updating the document schema can't save this app,
@@ -109,11 +117,15 @@ describe("StoredSchemaRepository", () => {
 
 			// This is where the app would inform the user that the document
 			// is not compatible with their version of the application.
+			// This situation (view schema expecting a value where stored schema does not have one),
+			// applies just the same in non-root cases, and thus the resolutions apply would also apply to other cases.
 		}
 
-		// Since we currently don't have the APIs needed to add an adapter to handle empty documents
-		// (ex: by providing a default empty canvas)
-		// lets fix this by adjusting our view schema.
+		// There are two ways the app could add support for handling empty documents.
+		// 1. By adjusting it's view schema for the root field to tolerate empty (by making it optional).
+		// 2. By providing a MissingFieldAdapter adapter for the root field (ex: by providing a default empty canvas).
+
+		// This example picks the first approach.
 		// Lets simulate the developers of the app making this change by modifying the view schema
 		// (instead of reloading it all).
 		const tolerantRoot = fieldSchema(Multiplicity.Optional, [canvasIdentifier]);
@@ -197,6 +209,140 @@ describe("StoredSchemaRepository", () => {
 			const compat3 = checkCompatibility(stored, view, adapters);
 			assert(compat3.read === Compatibility.Compatible);
 			assert(compat3.write === Compatibility.Compatible);
+		}
+	});
+
+	/**
+	 * This shows basic usage of stored and view schema including adapters.
+	 */
+	it("adapters", () => {
+		// Build a schema repository.
+		// This will represent our view schema for a simple canvas application,
+		// same as the above example, but after some schema changes.
+		const view = new ViewSchemaRepository();
+
+		// Add schema to view repository, asserting adding is successful.
+		// Since everything implicitly starts at a never schema, the order does not matter
+		// (unless adding two versions with the same identifier).
+		assert(view.tryUpdateTreeSchema(canvasIdentifier, canvas));
+		assert(view.tryUpdateTreeSchema(numberIdentifier, number));
+		assert(view.tryUpdateTreeSchema(pointIdentifier, point));
+		assert(view.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem));
+		assert(view.tryUpdateTreeSchema(textIdentifier, string));
+		assert(view.tryUpdateFieldSchema(rootFieldKey, root));
+
+		// Register an adapter that handles a missing root.
+		// Currently we are just declaring that such a handler exits:
+		// the API for saying what to do in this case are not done.
+		const adapters: Adapters = { missingField: new Map([[rootFieldKey, { field: rootFieldKey }]]) };
+
+		// Like the "basic" example, start with an empty document:
+		const stored = new StoredSchemaRepository();
+		assert(stored.tryUpdateFieldSchema(rootFieldKey, emptyField));
+
+		// Open document, and check it's compatibility with our application:
+		const compat = checkCompatibility(stored, view, adapters);
+
+		// As long as we are willing to use adapters, the application should be able to read this document.
+		assert(compat.read === Compatibility.RequiresAdapters);
+
+		// And since the document schema currently excludes empty roots, its also incompatible for writing:
+		assert(compat.write === Compatibility.Incompatible);
+
+		// Additionally even updating the document schema can't save this app,
+		// since the new schema would be incompatible with the existing document content.
+		assert(compat.writeAllowingStoredSchemaUpdates === Compatibility.RequiresAdapters);
+
+		// Like with the basic example,
+		// the app makes a choice here about its policy for if and when to update stored schema.
+		// Lets assume eventually it updates the schema, either eagerly or lazily.
+		// It will be updated to:
+		const adaptedSchema = adaptRepo(view, adapters);
+		for (const [key, schema] of adaptedSchema.globalFieldSchema) {
+			assert(stored.tryUpdateFieldSchema(key, schema));
+		}
+		for (const [key, schema] of adaptedSchema.treeSchema) {
+			assert(stored.tryUpdateTreeSchema(key, schema));
+		}
+
+		// That will cause the document stored schema to change,
+		// which will notify and applications with the document open.
+		// They can recheck their compatibility:
+		const compatNew = checkCompatibility(stored, view, adapters);
+		assert(compatNew.read === Compatibility.RequiresAdapters);
+		// It is now possible to write our date into the document.
+		assert(compatNew.write === Compatibility.Compatible);
+	});
+
+	it("schema updating using adapters", () => {
+		const view = new ViewSchemaRepository();
+
+		// In this version of the app,
+		// we decided that text should be organized into a hierarchy of formatting ranges.
+		// We are doing this schema change in an incompatible way, and thus introducing a new identifier:
+		const formattedTextIdentifier = "2cbc277e-8820-41ef-a3f4-0a00de8ef934" as TreeSchemaIdentifier;
+		const formattedText = treeSchema({
+			localFields: {
+				content: fieldSchema(Multiplicity.Sequence, [formattedTextIdentifier, codePoint.name]),
+				size: fieldSchema(Multiplicity.Value, [numberIdentifier]),
+				font: fieldSchema(Multiplicity.Value, [textIdentifier]),
+			},
+		});
+
+		// We are also updating positionedCanvasItem to accept the new type.
+		// It would also be possible to make this accept both types, and do this example without adapters,
+		// but for this example we assume the application does not want to deal with the old text format,
+		// so we will support it using adapters.
+		// Were we not batching all these examples in one scope, this would reuse the `positionedCanvasItem` name
+		// as no version of the app need both view schema at the same time
+		// (except for some approaches for staging roll-outs which are not covered here).
+		const positionedCanvasItemNew = treeSchema({
+			localFields: {
+				position: fieldSchema(Multiplicity.Value, [pointIdentifier]),
+				// Note that we are specifically excluding the old text here
+				content: fieldSchema(Multiplicity.Value, [formattedTextIdentifier]),
+			},
+		});
+
+		assert(view.tryUpdateTreeSchema(canvasIdentifier, canvas));
+		assert(view.tryUpdateTreeSchema(numberIdentifier, number));
+		assert(view.tryUpdateTreeSchema(pointIdentifier, point));
+		assert(view.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItemNew));
+		assert(view.tryUpdateTreeSchema(formattedTextIdentifier, formattedText));
+		assert(view.tryUpdateFieldSchema(rootFieldKey, root));
+
+		// To support old documents with the old text schema, we can add a compatibility library that adds:
+		assert(view.tryUpdateTreeSchema(textIdentifier, string));
+		const textAdapter: TreeAdapter = { input: textIdentifier, output: formattedTextIdentifier };
+
+		// Include adapters for all compatibility cases: empty root and old text.
+		const rootAdapter: MissingFieldAdapter = { field: rootFieldKey };
+		const adapters: Adapters = { missingField: new Map([[rootFieldKey, rootAdapter]]), tree: [textAdapter] };
+
+		// Check this works for empty documents:
+		{
+			const stored = new StoredSchemaRepository();
+			assert(stored.tryUpdateFieldSchema(rootFieldKey, emptyField));
+			const compat = checkCompatibility(stored, view, adapters);
+			assert(compat.read === Compatibility.RequiresAdapters);
+			assert(compat.writeAllowingStoredSchemaUpdates === Compatibility.RequiresAdapters);
+		}
+
+		// Check this works for documents with old text
+		{
+			const stored = new StoredSchemaRepository();
+			// This is the root type produced by the adapter for the root.
+			const tolerantRoot = fieldSchema(Multiplicity.Optional, [canvasIdentifier]);
+			assert(stored.tryUpdateTreeSchema(canvasIdentifier, canvas));
+			assert(stored.tryUpdateTreeSchema(numberIdentifier, number));
+			assert(stored.tryUpdateTreeSchema(pointIdentifier, point));
+			assert(stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem));
+			assert(stored.tryUpdateTreeSchema(textIdentifier, string));
+			assert(stored.tryUpdateFieldSchema(rootFieldKey, tolerantRoot));
+
+			const compat = checkCompatibility(stored, view, adapters);
+			assert(compat.read === Compatibility.RequiresAdapters);
+			assert(compat.writeAllowingStoredSchemaUpdates === Compatibility.RequiresAdapters);
 		}
 	});
 });

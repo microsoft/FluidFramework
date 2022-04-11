@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "../utils";
 import { allowsRepoSuperset } from "./Comparison";
-import { SchemaRepository } from "./Schema";
+import {
+    FieldSchema, GlobalFieldKey, LocalFieldKey, Multiplicity, SchemaRepository, TreeSchema, TreeSchemaIdentifier,
+} from "./Schema";
+import { StoredSchemaRepository } from "./StoredSchemaRepository";
 
 /**
  * APIs for applying `view schema` to documents.
@@ -19,9 +23,29 @@ export enum Compatibility {
     Incompatible,
 }
 
-// TODO: do something with adapters.
-export class Adapters {
-    protected makeNominal: undefined;
+export interface TreeAdapter {
+    readonly output: TreeSchemaIdentifier;
+    readonly input: TreeSchemaIdentifier;
+
+    // TODO: include actual adapter functionality, not just what types it converts
+}
+
+export interface MissingFieldAdapter {
+    readonly field: GlobalFieldKey;
+
+    // TODO: include actual adapter functionality, not just what types it converts
+}
+
+/**
+ * Minimal selection of adapters (nothing for general out of schema, field level adjustments etc.).
+ * Would be used with schematize and have actual conversion/update functionality.
+ *
+ * TODO: Support more kinds of adapters
+ * TODO: support efficient lookup of adapters
+ */
+export interface Adapters {
+    readonly tree?: readonly TreeAdapter[];
+    readonly missingField?: ReadonlyMap<GlobalFieldKey, MissingFieldAdapter>;
 }
 
 /**
@@ -29,6 +53,7 @@ export class Adapters {
  * (based on its stored schema) with a viewer (based on its view schema).
  *
  * Adapters can be provided to handle differences between the two schema.
+ * Adapters should only use to types in the `view` SchemaRepository.
  *
  * TODO: this API violates the parse don't validate design philosophy.
  * It should be wrapped with (or replaced by) a parse style API.
@@ -36,16 +61,19 @@ export class Adapters {
 export function checkCompatibility(
     stored: SchemaRepository,
     view: SchemaRepository,
-    adapters?: Adapters,
+    adapters: Adapters,
 ): {
     read: Compatibility;
     write: Compatibility;
     writeAllowingStoredSchemaUpdates: Compatibility;
 } {
+    const adapted = adaptRepo(view, adapters);
+
     // TODO: use adapters
     const read = allowsRepoSuperset(stored, view)
         ? Compatibility.Compatible
-        : Compatibility.Incompatible;
+        : allowsRepoSuperset(stored, adapted) ? Compatibility.RequiresAdapters : Compatibility.Incompatible;
+    // TODO: Extract subset of adapters that are valid to use on stored
     const write = allowsRepoSuperset(view, stored)
         ? Compatibility.Compatible
         : Compatibility.Incompatible;
@@ -58,4 +86,54 @@ export function checkCompatibility(
     const writeAllowingStoredSchemaUpdates = Math.min(read, write);
 
     return { read, write, writeAllowingStoredSchemaUpdates };
+}
+
+export function adaptRepo(original: SchemaRepository, adapters: Adapters): SchemaRepository {
+    const adapted = new StoredSchemaRepository();
+    for (const [key, schema] of original.globalFieldSchema) {
+        const field = adaptField(schema, adapters, adapters.missingField?.has(key) ?? false);
+        if (!adapted.tryUpdateFieldSchema(key, field)) {
+            fail("error adapting field schema");
+        }
+    }
+    for (const [key, schema] of original.treeSchema) {
+        if (!adapted.tryUpdateTreeSchema(key, adaptTree(schema, adapters))) {
+            fail("error adapting tree schema");
+        }
+    }
+    return adapted;
+}
+
+/**
+ * Adapt original such that it allows member types which can be adapted to its specified types.
+ */
+export function adaptField(original: FieldSchema, adapters: Adapters, allowMissing: boolean): FieldSchema {
+    const multiplicity = adaptMultiplicity(original.multiplicity, allowMissing);
+    if (original.types) {
+        const types: Set<TreeSchemaIdentifier> = new Set(original.types);
+        for (const adapter of adapters?.tree ?? []) {
+            if (original.types.has(adapter.output)) {
+                types.add(adapter.input);
+            }
+        }
+
+        return { ...original, types, multiplicity };
+    }
+    return { ...original, multiplicity };
+}
+
+export function adaptTree(original: TreeSchema, adapters: Adapters): TreeSchema {
+    const localFields: Map<LocalFieldKey, FieldSchema> = new Map();
+    for (const [key, schema] of original.localFields) {
+        // TODO: support missing field adapters for local fields.
+        localFields.set(key, adaptField(schema, adapters, false));
+    }
+    return { ...original, localFields };
+}
+
+export function adaptMultiplicity(original: Multiplicity, allowMissing: boolean): Multiplicity {
+    if (allowMissing) {
+        return original === Multiplicity.Value ? Multiplicity.Optional : original;
+    }
+    return original;
 }

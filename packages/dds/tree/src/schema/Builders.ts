@@ -21,7 +21,7 @@ export const emptySet: ReadonlySet<never> = new Set();
 /**
  * Empty readonly map.
  */
-export const emptyMap: ReadonlyMap<any, never> = new Map<any, never>();
+export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 /**
  * LocalFieldKey to use for when there is a collection of items under a tree node
