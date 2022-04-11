@@ -4591,7 +4591,7 @@
     node-gyp "^7.1.0"
     read-package-json-fast "^2.0.1"
 
-"@nrwl/cli@13.10.1", "@nrwl/cli@latest":
+"@nrwl/cli@13.10.1":
   version "13.10.1"
   resolved "https://registry.yarnpkg.com/@nrwl/cli/-/cli-13.10.1.tgz#0ca38d8972e4b090738f2cffc7f6538e0534d4e5"
   integrity sha512-qpjnx7bobwurUOCZG7DIZGfRNfyaxovSIFWacWRv0Pe60ZRGZw76PRmhTyRj5/U5qnvdKhlPIWy4hxeusJTHLw==
@@ -4638,7 +4638,7 @@
     tmp "~0.2.1"
     tslib "^2.3.0"
 
-"@nrwl/nx-cloud@^13.2.2":
+"@nrwl/nx-cloud@latest":
   version "13.2.2"
   resolved "https://registry.yarnpkg.com/@nrwl/nx-cloud/-/nx-cloud-13.2.2.tgz#9eee1e9ea0b0c3a3a805208405fb6341a02123b4"
   integrity sha512-ryGE3JBkSGie0Oy+hFHfiYVNt1BQlNGa3Q7RjeZjILFyNFXkSFzufWYCt1gIRiGlQ7+Q48t1m6gLi2afElNGmg==
@@ -4656,7 +4656,7 @@
   dependencies:
     nx "13.10.1"
 
-"@nrwl/workspace@latest":
+"@nrwl/workspace@13.10.1":
   version "13.10.1"
   resolved "https://registry.yarnpkg.com/@nrwl/workspace/-/workspace-13.10.1.tgz#79715a29c618eef0850c389bd4e4a00f77e58299"
   integrity sha512-I3ODcyTlZLt0f0wTrw2mgxoKEYMnCd2PQM9zkMpSLIjgN0QBQ6uVmuvVXxqlWkjgtGXd/IUKubFQ5wfcV9AdQA==
@@ -9660,7 +9660,7 @@ delegates@^1.0.0:
   resolved "https://registry.yarnpkg.com/delegates/-/delegates-1.0.0.tgz#84c6e159b81904fdca59a0ef44cd870d31250f9a"
   integrity sha1-hMbhWbgZBP3KWaDvRM2HDTElD5o=
 
-denque@^1.1.0, denque@^1.5.0:
+denque@^1.1.0, denque@^1.5.1:
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/denque/-/denque-1.5.1.tgz#07f670e29c9a78f8faecb2566a1e2c11929c5cbf"
   integrity sha512-XwE+iZ4D6ZUB7mfYRMb5wByE8L74HCn30FBN7sWnXksWc1LO1bPDl67pBR9o/kC4z/xSNAwkMYcGgqDV3BE3Hw==
@@ -17209,7 +17209,7 @@ nwsapi@^2.0.9, nwsapi@^2.2.0:
   resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.2.0.tgz#204879a9e3d068ff2a55139c2c772780681a38b7"
   integrity sha512-h2AatdwYH+JHiZpv7pt/gSX1XoRGb7L/qSIeuqA6GwYoF9w1vP1cw42TO0aI2pNyshRK5893hNSl+1//vHK7hQ==
 
-nx@13.10.1, nx@^13.9.3:
+nx@13.10.1:
   version "13.10.1"
   resolved "https://registry.yarnpkg.com/nx/-/nx-13.10.1.tgz#ddadf6ca15eacd6543dc79e33563fdfc75e5c0e5"
   integrity sha512-XA1sN8biNhUJcKqjUMsvbC8QzIF631CJvDxZ1n48R1QsB8LJG/pvHY2pIqz6GWRJFbR9mhwAqYyoHq43qCSyYw==
@@ -18279,6 +18279,11 @@ postcss@^6.0.1, postcss@^6.0.23:
     chalk "^2.4.1"
     source-map "^0.6.1"
     supports-color "^5.4.0"
+
+prando@^6.0.1:
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/prando/-/prando-6.0.1.tgz#ffa8de84c2adc4975dd9df37ae4ada0458face53"
+  integrity sha512-ghUWxQ1T9IJmPu6eshc3VU0OwveUtXQ33ZLXYUcz1Oc5ppKLDXKp0TBDj6b0epwhEctzcQSNGR2iHyvQSn4W5A==
 
 prelude-ls@^1.2.1:
   version "1.2.1"
@@ -20448,7 +20453,7 @@ sort-package-json@1.54.0:
     is-plain-obj "2.1.0"
     sort-object-keys "^1.1.3"
 
-sorted-btree@^1.5.0:
+sorted-btree@^1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/sorted-btree/-/sorted-btree-1.8.0.tgz#3fe8ceeb3882b6cdbe27f66fa9640aac91459dd6"
   integrity sha512-AbLHqsE2CStFKk3e6T7jf0ZRg1GXb9km6urm8jFO2XDbC1KXV6pM8s91vz2VzFA241Pmz6p3OG5LP1p9hmpJ/A==

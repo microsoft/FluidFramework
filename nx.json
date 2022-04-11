@@ -5,6 +5,8 @@
         "default": {
             "runner": "@nrwl/nx-cloud",
             "options": {
+                "useDaemonProcess": true,
+                "parallel": 7,
                 "cacheableOperations": [
                     "build:commonjs",
                     "build:compile",
@@ -32,69 +34,25 @@
     "targetDependencies": {
         "build": [
             {
-                "target": "build:test",
-                "projects": "dependencies"
-            },
-            {
-                "target": "build:gen",
-                "projects": "dependencies"
-            },
-            {
-                "target": "tsc",
-                "projects": "dependencies"
-            },
-            {
-                "target": "build:esnext",
-                "projects": "dependencies"
-            },
-            {
-                "target": "eslint",
+                "target": "build",
                 "projects": "dependencies"
             }
         ],
         "build:full": [
             {
-                "target": "build:test",
-                "projects": "dependencies"
-            },
-            {
-                "target": "build:gen",
-                "projects": "dependencies"
-            },
-            {
-                "target": "tsc",
-                "projects": "dependencies"
-            },
-            {
-                "target": "build:esnext",
-                "projects": "dependencies"
-            },
-            {
-                "target": "eslint",
+                "target": "build:full",
                 "projects": "dependencies"
             }
         ],
         "build:commonjs": [
             {
-                "target": "build:test",
-                "projects": "dependencies"
-            },
-            {
-                "target": "tsc",
+                "target": "build:commonjs",
                 "projects": "dependencies"
             }
         ],
         "build:compile": [
             {
-                "target": "build:test",
-                "projects": "dependencies"
-            },
-            {
-                "target": "tsc",
-                "projects": "dependencies"
-            },
-            {
-                "target": "build:esnext",
+                "target": "build:compile",
                 "projects": "dependencies"
             }
         ],
@@ -108,30 +66,50 @@
             {
                 "target": "tsc",
                 "projects": "dependencies"
+            },
+            {
+                "target": "tsc",
+                "projects": "self"
             }
         ],
         "build:test": [
             {
                 "target": "tsc",
                 "projects": "dependencies"
+            },
+            {
+                "target": "tsc",
+                "projects": "self"
             }
         ],
         "build:test:jest": [
             {
                 "target": "tsc",
                 "projects": "dependencies"
+            },
+            {
+                "target": "tsc",
+                "projects": "self"
             }
         ],
         "build:test:mocha": [
             {
                 "target": "tsc",
                 "projects": "dependencies"
+            },
+            {
+                "target": "tsc",
+                "projects": "self"
             }
         ],
         "build:test:types": [
             {
                 "target": "tsc",
                 "projects": "dependencies"
+            },
+            {
+                "target": "tsc",
+                "projects": "self"
             }
         ],
         "tsc": [
@@ -141,8 +119,10 @@
             }
         ],
         "lint": [
+        ],
+        "test": [
             {
-                "target": "eslint",
+                "target": "build:test",
                 "projects": "dependencies"
             }
         ],
@@ -160,7 +140,7 @@
         ]
     },
     "affected": {
-        "defaultBase": "main"
+        "defaultBase": "yarn1/reset"
     },
     "pluginsConfig": {
         "@nrwl/js": {
