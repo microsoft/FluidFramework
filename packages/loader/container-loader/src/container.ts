@@ -1190,9 +1190,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const qValues = initQuorumCodeProposal(source);
         this._protocolHandler = await this.initializeProtocolState(
             attributes,
-            [], // Members
-            [], // Proposals
-            qValues, // Values
+            [], // members
+            [], // proposals
+            qValues,
         );
 
         // The load context - given we seeded the quorum - will be great

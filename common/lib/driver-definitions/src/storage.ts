@@ -295,7 +295,6 @@ export interface IDocumentService {
     dispose(error?: any): void;
 }
 
-
 export interface IDocumentServiceCapabilities{
     /**
      * Document service can create docs with non-zero seq. start #

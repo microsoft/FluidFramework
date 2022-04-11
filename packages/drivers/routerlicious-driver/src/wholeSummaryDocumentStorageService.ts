@@ -311,9 +311,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         const builder = new SummaryTreeAssembler();
         for (const [path, id] of Object.entries(snapshot.blobs)) {
             const blob = blobs.get(id);
-            if (blob !== undefined) {
-                builder.addBlob(path, IsoBuffer.from(blob).toString("utf-8"));
-            }
+            assert(blob !== undefined, "Cannot find blob in the local cache");
+            builder.addBlob(path, IsoBuffer.from(blob).toString("utf-8"));
         }
         for (const [key, tree] of Object.entries(snapshot.trees)) {
             const subtree = this.convertSnapshotAndBlobsToSummaryTree(tree, blobs);

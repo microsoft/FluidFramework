@@ -199,9 +199,8 @@ describe("Ordered Client Collection", () => {
                 assertOrderedEligibleClientIds();
             });
 
-            it("Should log error with empty quorum and initially elected client", () => {
-                const clientId = "x";
-                createOrderedClientElection(undefined, { electedClientId: clientId, electionSequenceNumber: 101 });
+            it("Should not log error with empty quorum and initially elected client", () => {
+                createOrderedClientElection(undefined, { electedClientId: "x", electionSequenceNumber: 101 });
                 assertElectionState(0, 0, undefined, 101);
                 assertOrderedEligibleClientIds();
             });
