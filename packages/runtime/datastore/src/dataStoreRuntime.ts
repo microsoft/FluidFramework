@@ -265,7 +265,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this._attachState = dataStoreContext.attachState;
 
         /**
-         * back-compat 0.58.2000 - visibility state was added in this version. For older versions, get the visibility
+         * back-compat 0.58.3000 - visibility state was added in this version. For older versions, get the visibility
          * state similar to the data store context:
          * If existing flag is false, this is a new data store and is not visible.  The existing flag can be true in two
          * conditions:
@@ -722,7 +722,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public getAttachSummary(): ISummaryTreeWithStats {
         /**
-         * back-compat 0.58.2000 - getAttachSummary() is called when making a data store globally visible (previously
+         * back-compat 0.58.3000 - getAttachSummary() is called when making a data store globally visible (previously
          * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
          * before visibility state was added, this may not have been the case and getAttachSummary() could be called:
          * 1) Before attaching the data store - When a detached container is attached.
@@ -732,9 +732,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
          */
         this.attachGraph();
 
-        // assert(this.visibilityState === VisibilityState.LocallyVisible,
-        //     "The data store should be locally visible when generating attach summary",
-        // );
+        /**
+         * This assert cannot be added now due to back-compat. To be uncommented when the following issue is fixed -
+         * https://github.com/microsoft/FluidFramework/issues/9688.
+         *
+         * assert(this.visibilityState === VisibilityState.LocallyVisible,
+         *   "The data store should be locally visible when generating attach summary",
+         * );
+         */
 
         const summaryBuilder = new SummaryTreeBuilder();
 
@@ -890,7 +895,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.dataStoreContext.once("attaching", () => {
             /**
-             * back-compat 0.58.2000 - Ideally, attachGraph() should have already been called making the data store
+             * back-compat 0.58.3000 - Ideally, attachGraph() should have already been called making the data store
              * locally visible. However, before visibility state was added, this may not have been the case and data
              * store can move to "attaching" state in 2 scenarios:
              * 1) Before attachGraph() is called - When a data store is created and bound in an attached container.

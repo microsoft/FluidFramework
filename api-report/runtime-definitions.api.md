@@ -386,11 +386,14 @@ export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRe
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>;
 
 // @public
-enum VisibilityState_2 {
-    GloballyVisible = "GloballyVisible",
-    LocallyVisible = "LocallyVisible",
-    NotVisible = "NotVisible"
-}
+const VisibilityState_2: {
+    NotVisible: string;
+    LocallyVisible: string;
+    GloballyVisible: string;
+};
+
+// @public (undocumented)
+type VisibilityState_2 = typeof VisibilityState_2[keyof typeof VisibilityState_2];
 
 export { VisibilityState_2 as VisibilityState }
 

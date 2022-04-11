@@ -1050,7 +1050,7 @@ export class LocalDetachedFluidDataStoreContext
         super.bindRuntime(dataStoreChannel);
 
         if (await this.isRoot()) {
-            // back-compat 0.58.2000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
+            // back-compat 0.58.3000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
             // For older versions, we still have to call bindToContext.
             if (dataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
                 dataStoreChannel.makeVisibleAndAttachGraph();

@@ -61,16 +61,16 @@ export enum FlushMode {
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
  */
-export enum VisibilityState {
+export const VisibilityState = {
     /** Indicates that the object is not visible. This is the state when an object is first created. */
-    NotVisible = "NotVisible",
+    NotVisible: "NotVisible",
 
     /**
      * Indicates that the object is visible locally within the container. This is the state when an object is attached
      * to the container's graph but the container itself isn't globally visible. The object's state goes from not
      * visible to locally visible.
      */
-    LocallyVisible = "LocallyVisible",
+    LocallyVisible: "LocallyVisible",
 
     /**
      * Indicates that the object is visible globally to all clients. This is the state of an object in 2 scenarios:
@@ -79,8 +79,9 @@ export enum VisibilityState {
      * 2. When a container becomes globally visible, all locally visible objects go from locally visible to globally
      *    visible.
      */
-    GloballyVisible = "GloballyVisible",
-}
+    GloballyVisible: "GloballyVisible",
+};
+export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
 
 export interface IContainerRuntimeBaseEvents extends IEvent{
     (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
