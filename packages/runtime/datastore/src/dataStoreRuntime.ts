@@ -732,9 +732,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
          */
         this.attachGraph();
 
-        assert(this.visibilityState === VisibilityState.LocallyVisible,
-            "The data store should be locally visible when generating attach summary",
-        );
+        // assert(this.visibilityState === VisibilityState.LocallyVisible,
+        //     "The data store should be locally visible when generating attach summary",
+        // );
 
         const summaryBuilder = new SummaryTreeBuilder();
 
