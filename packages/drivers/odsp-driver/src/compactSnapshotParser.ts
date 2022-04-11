@@ -132,7 +132,7 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
         0x20f /* "Driver min read version should >= to server minReadVersion" */);
     assert(records.cv.toString() >= snapshotMinReadVersion,
         0x210 /* "Snapshot should be created with minReadVersion or above" */);
-    assert(currentReadVersion === records.cv.toString(), "Create Version should be equal to currentReadVersion");
+    assert(currentReadVersion === records.cv.toString(), 0x2c2 /* "Create Version should be equal to currentReadVersion" */);
     return {
         ...readSnapshotSection(records.snapshot),
         blobs: readBlobSection(records.blobs),

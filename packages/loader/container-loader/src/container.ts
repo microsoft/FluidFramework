@@ -824,7 +824,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 ensureFluidResolvedUrl(createNewResolvedUrl);
                 if (this.service === undefined) {
                     assert(this.client.details.type !== summarizerClientType,
-                        "client should not be summarizer before container is created");
+                        0x2c4 /* "client should not be summarizer before container is created" */);
                     this.service = await runWithRetry(
                         async () => this.serviceFactory.createContainer(
                             summary,
@@ -969,8 +969,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private connectInternal(args: IConnectionArgs) {
-        assert(!this.closed, "Attempting to connect() a closed Container");
-        assert(this._attachState === AttachState.Attached, "Attempting to connect() a container that is not attached");
+        assert(!this.closed, 0x2c5 /* "Attempting to connect() a closed Container" */);
+        assert(this._attachState === AttachState.Attached, 0x2c6 /* "Attempting to connect() a container that is not attached" */);
 
         // Resume processing ops and connect to delta stream
         this.resumeInternal(args);
@@ -990,7 +990,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private disconnectInternal() {
-        assert(!this.closed, "Attempting to disconnect() a closed Container");
+        assert(!this.closed, 0x2c7 /* "Attempting to disconnect() a closed Container" */);
 
         // Set Auto Reconnect Mode
         const mode = ReconnectMode.Disabled;
