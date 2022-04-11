@@ -450,33 +450,13 @@ describe("client.applyMsg", () => {
 
         let seq = 0;
         const ops: ISequencedDocumentMessage[] = [];
-        ops.push(clients.C.makeOpMessage(clients.C.insertTextLocal(2, "B"), ++seq));
-        ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(1, 3), ++seq));
-        ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(1, "yz"), ++seq));
-
-        for(const op of ops) {
-            clients.all.forEach(
-                (c)=>{
-                    if(c.getCollabWindow().currentSeq < op.sequenceNumber) {
-                        c.applyMsg(op);
-                    }
-                });
-        }
-        logger.validate();
-    });
-
-    it("Inconsistent shared string after pausing connection #9703", () => {
-        const clients = createClientsAtInitialState("abcd", "A", "B", "C");
-
-        const logger = new TestClientLogger(clients.all);
-
-        let seq = 0;
-        const ops: ISequencedDocumentMessage[] = [];
         ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(1, 3), ++seq));
         clients.B.applyMsg(ops[0]);
         ops.push(clients.B.makeOpMessage(clients.B.insertTextLocal(1, "yz"), ++seq));
         clients.B.applyMsg(ops[1]);
 
+        // its like this connection is paused, as it doesn't see the other clients ops
+        // which it's own ops will be sequenced after
         ops.push(clients.C.makeOpMessage(clients.C.insertTextLocal(2, "X"), ++seq));
 
         for(const op of ops) {
