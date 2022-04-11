@@ -1005,7 +1005,7 @@ export class MergeTree {
     insertSegments(pos: number, segments: ISegment[], refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs | undefined): void;
     get length(): number;
     // (undocumented)
-    localNetLength(segment: ISegment): number;
+    localNetLength(segment: ISegment): number | undefined;
     // (undocumented)
     map<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number, accum: TClientData): void;
     // (undocumented)
