@@ -51,7 +51,6 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { BlobManager } from "./blobManager";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -619,23 +618,13 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Called by GC to retrieve the package path of the node with the given path. This is used log when an inactive or
-     * deleted node is used. The node should belong to a data store or be a blob.
+     * Called during GC to retrieve the package path of a data store node with the given path.
      */
-    public getNodePackagePath(nodePath: string): readonly string[] | undefined {
-        const pathParts = nodePath.split("/");
-        // If the node is a blob, return "_blobs" as the package path.
-        if (pathParts[1] === BlobManager.basePath) {
-            return ["_blobs"];
-        }
-
-        // If the node belongs to a data store, return its package path if the data store is loaded.
-        const context = this.contexts.get(pathParts[1]);
-        if (context !== undefined) {
-            return context.isLoaded ? context.packagePath : undefined;
-        }
-
-        assert(false, "Package path requested for unknown node type.");
+    public getDataStorePackagePath(nodePath: string): readonly string[] | undefined {
+        // If the node belongs to a data store, return its package path if the data store is loaded. For DDSs, we return
+        // the package path of the data store that contains it.
+        const context = this.contexts.get(nodePath.split("/")[1]);
+        return context?.isLoaded ? context.packagePath : undefined;
     }
 
     /**
