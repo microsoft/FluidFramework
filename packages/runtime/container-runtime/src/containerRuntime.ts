@@ -636,7 +636,7 @@ export class ScheduleManager {
 
             // This could be the beginning of a new batch or an individual message.
             this.emitter.emit("batchBegin", message);
-            this.deltaScheduler.batchBegin();
+            this.deltaScheduler.batchBegin(message);
 
             const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
             if (batch) {
@@ -657,7 +657,7 @@ export class ScheduleManager {
             this.hitError = true;
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
-            this.deltaScheduler.batchEnd();
+            this.deltaScheduler.batchEnd(message);
             return;
         }
 
@@ -667,7 +667,7 @@ export class ScheduleManager {
         if (this.batchClientId === undefined || batch === false) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", undefined, message);
-            this.deltaScheduler.batchEnd();
+            this.deltaScheduler.batchEnd(message);
             return;
         }
     }

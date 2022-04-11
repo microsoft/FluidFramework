@@ -197,11 +197,11 @@ export interface ContainerRuntimeMessage {
 export class DeltaScheduler {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLogger);
     // (undocumented)
-    batchBegin(): void;
+    batchBegin(message: ISequencedDocumentMessage): void;
     // (undocumented)
-    batchEnd(): void;
+    batchEnd(message: ISequencedDocumentMessage): void;
     // (undocumented)
-    static readonly processingTime = 20;
+    static readonly processingTime = 50;
     }
 
 // @public (undocumented)
