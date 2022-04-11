@@ -104,15 +104,21 @@ export interface IHierBlock extends IMergeBlock {
 }
 
 export interface IRemovalInfo {
-    removedSeq?: number;
-    removedClientId?: number;
-    removedClientOverlap?: number[];
+    removedSeq: number;
+    removedClientIds: number[];
+}
+export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
+    if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
+        return maybe as IRemovalInfo;
+    }
+    assert(maybe?.removedClientIds === undefined && maybe?.removedSeq === undefined,
+        "both removedClientIds and removedSeq should be set or not set");
 }
 
 /**
  * A segment representing a portion of the merge tree.
  */
-export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
+export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
@@ -482,8 +488,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public clientId: number = LocalClientId;
     public seq: number = UniversalSequenceNumber;
     public removedSeq?: number;
-    public removedClientId?: number;
-    public removedClientOverlap?: number[];
+    public removedClientIds?: number[];
     public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
     public propertyManager?: PropertiesManager;
@@ -521,7 +526,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         b.clientId = this.clientId;
         // TODO: deep clone properties
         b.properties = clone(this.properties);
-        b.removedClientId = this.removedClientId;
+        b.removedClientIds = this.removedClientIds?.slice();
         // TODO: copy removed client overlap and branch removal info
         b.removedSeq = this.removedSeq;
         b.seq = this.seq;
@@ -555,10 +560,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 return true;
 
             case MergeTreeDeltaType.REMOVE:
-                // eslint-disable-next-line @typescript-eslint/no-this-alias
-                const removalInfo: IRemovalInfo = this;
-                assert(!!removalInfo, 0x046 /* "On remove ack, missing removal info!" */);
-                assert(!!removalInfo.removedSeq, 0x047 /* "On remove ack, missing removed sequence number!" */);
+
+                const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
+                assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
                 this.localRemovedSeq = undefined;
                 if (removalInfo.removedSeq === UnassignedSequenceNumber) {
                     removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
@@ -584,15 +588,12 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 // but this ordinal meets all the necessary invariants for now.
                 leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 
-                leafSegment.removedClientId = this.removedClientId;
+                leafSegment.removedClientIds = this.removedClientIds?.slice();
                 leafSegment.removedSeq = this.removedSeq;
                 leafSegment.localRemovedSeq = this.localRemovedSeq;
                 leafSegment.seq = this.seq;
                 leafSegment.localSeq = this.localSeq;
                 leafSegment.clientId = this.clientId;
-                if (this.removedClientOverlap) {
-                    leafSegment.removedClientOverlap = [...this.removedClientOverlap];
-                }
                 this.segmentGroups.copyTo(leafSegment);
                 this.trackingCollection.copyTo(leafSegment);
                 if (this.localRefs) {
@@ -1091,8 +1092,8 @@ export class MergeTree {
     }
 
     public localNetLength(segment: ISegment) {
-        const removalInfo: IRemovalInfo = segment;
-        if (removalInfo.removedSeq !== undefined) {
+        const removalInfo = toRemovalInfo(segment);
+        if (removalInfo !== undefined) {
             return 0;
         } else {
             return segment.cachedLength;
@@ -1458,9 +1459,9 @@ export class MergeTree {
                 return node.partialLengths!.getPartialLength(refSeq, clientId);
             } else {
                 const segment = node;
-                const removalInfo: IRemovalInfo = segment;
+                const removalInfo = toRemovalInfo(segment);
 
-                if(removalInfo.removedSeq !== undefined
+                if(removalInfo !== undefined
                     && removalInfo.removedSeq !== UnassignedSequenceNumber
                     && removalInfo.removedSeq <= refSeq) {
                     // this segment is a tombstone eligible for zamboni
@@ -1471,12 +1472,8 @@ export class MergeTree {
                 if (((segment.clientId === clientId) ||
                     ((segment.seq !== UnassignedSequenceNumber) && (segment.seq! <= refSeq)))) {
                     // Segment happened by reference sequence number or segment from requesting client
-                    if (removalInfo.removedSeq !== undefined) {
-                        if (
-                            removalInfo.removedClientId === clientId
-                            || (removalInfo.removedClientOverlap
-                                && removalInfo.removedClientOverlap.includes(clientId))
-                        ) {
+                    if (removalInfo !== undefined) {
+                        if (removalInfo.removedClientIds.includes(clientId)) {
                             return 0;
                         } else {
                             return segment.cachedLength;
@@ -1488,7 +1485,7 @@ export class MergeTree {
                     // the segment was inserted and removed before the
                     // this context, so it will never exist for this
                     // context
-                    if(removalInfo.removedSeq !== undefined
+                    if(removalInfo !== undefined
                         && removalInfo.removedSeq !== UnassignedSequenceNumber) {
                         return undefined;
                     }
@@ -2296,13 +2293,6 @@ export class MergeTree {
         }
     }
 
-    private addOverlappingClient(removalInfo: IRemovalInfo, clientId: number) {
-        if (!removalInfo.removedClientOverlap) {
-            removalInfo.removedClientOverlap = <number[]>[];
-        }
-        removalInfo.removedClientOverlap.push(clientId);
-    }
-
     /**
      * Annotate a range with properties
      * @param start - The inclusive start position of the range to annotate
@@ -2373,21 +2363,24 @@ export class MergeTree {
         const savedLocalRefs: LocalReferenceCollection[] = [];
         const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
         const markRemoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
-            const removalInfo: IRemovalInfo = segment;
-            if (removalInfo.removedSeq !== undefined) {
+            const existingRemovalInfo = toRemovalInfo(segment);
+            if (existingRemovalInfo !== undefined) {
                 _overwrite = true;
-                if (removalInfo.removedSeq === UnassignedSequenceNumber) {
-                    // replace because comes later
-                    removalInfo.removedClientId = clientId;
-                    removalInfo.removedSeq = seq;
+                if (existingRemovalInfo.removedSeq === UnassignedSequenceNumber) {
+                    // we removed this locally, but someone else removed it first
+                    // so put them at the head of the list
+                    // the list isn't ordered, but we
+                    // keep first removal at the head.
+                    existingRemovalInfo.removedClientIds.unshift(clientId);
+                    existingRemovalInfo.removedSeq = seq;
                     segment.localRemovedSeq = undefined;
                 } else {
                     // Do not replace earlier sequence number for remove
-                    this.addOverlappingClient(removalInfo, clientId);
+                    existingRemovalInfo.removedClientIds.push(clientId);
                 }
             } else {
-                removalInfo.removedClientId = clientId;
-                removalInfo.removedSeq = seq;
+                segment.removedClientIds = [clientId];
+                segment.removedSeq = seq;
                 segment.localRemovedSeq = localSeq;
 
                 removedSegments.push({ segment });
@@ -2399,9 +2392,7 @@ export class MergeTree {
 
             // Save segment so can assign removed sequence number when acked by server
             if (this.collabWindow.collaborating) {
-                // Use removal information
-                const _removalInfo: IRemovalInfo = segment;
-                if (_removalInfo.removedSeq === UnassignedSequenceNumber && clientId === this.collabWindow.clientId) {
+                if (segment.removedSeq === UnassignedSequenceNumber && clientId === this.collabWindow.clientId) {
                     segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq);
                 } else {
                     if (MergeTree.options.zamboniSegments) {

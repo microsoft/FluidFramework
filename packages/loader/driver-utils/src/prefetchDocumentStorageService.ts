@@ -85,12 +85,6 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
             }
         }
 
-        for (const commit of Object.keys(tree.commits)) {
-            // We don't care if the prefetch succeeds
-            void this.getVersions(tree.commits[commit], 1)
-                .then(async (moduleCommit) => this.getSnapshotTree(moduleCommit[0]));
-        }
-
         for (const subTree of Object.keys(tree.trees)) {
             this.prefetchTreeCore(tree.trees[subTree], secondary);
         }

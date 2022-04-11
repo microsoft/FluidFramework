@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/core-interfaces",
-  "version": "0.43.0",
+  "version": "0.43.1000",
   "description": "Fluid object interfaces",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -63,7 +63,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.43.0",
+    "version": "0.43.1000",
     "broken": {
       "0.42.0": {
         "RemovedVariableDeclaration_IFluidConfiguration": {

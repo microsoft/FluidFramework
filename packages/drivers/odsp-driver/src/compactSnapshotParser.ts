@@ -67,7 +67,6 @@ function readOpsSection(node: NodeTypes) {
 function readTreeSection(node: NodeCore) {
     const snapshotTree: ISnapshotTree = {
         blobs: {},
-        commits: {},
         trees: {},
     };
     for (let count = 0; count < node.length; count++) {

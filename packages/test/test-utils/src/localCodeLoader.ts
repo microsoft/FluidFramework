@@ -6,11 +6,14 @@
 import assert from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import {
-    ICodeLoader,
     IProvideRuntimeFactory,
     IFluidModule,
+    IProvideFluidCodeDetailsComparer,
+    IFluidCodeDetails,
+    ICodeDetailsLoader,
+    IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails, IProvideFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase, IProvideFluidDataStoreFactory,
     IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
@@ -29,8 +32,8 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
  * A simple code loader that caches a mapping of package name to a Fluid entry point.
  * On load, it retrieves the entry point matching the package name in the given code details.
  */
-export class LocalCodeLoader implements ICodeLoader {
-    private readonly fluidPackageCache = new Map<string, IFluidModule>();
+export class LocalCodeLoader implements ICodeDetailsLoader {
+    private readonly fluidPackageCache = new Map<string, IFluidModuleWithDetails>();
 
     constructor(
         packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
@@ -75,7 +78,12 @@ export class LocalCodeLoader implements ICodeLoader {
                 }
             }
 
-            this.fluidPackageCache.set(pkgId, fluidModule);
+            const runtimeFactory = {
+                module: fluidModule,
+                details: source,
+            };
+
+            this.fluidPackageCache.set(pkgId, runtimeFactory);
         }
     }
 
@@ -86,7 +94,7 @@ export class LocalCodeLoader implements ICodeLoader {
      */
     public async load(
         source: IFluidCodeDetails,
-    ): Promise<IFluidModule> {
+    ): Promise<IFluidModuleWithDetails> {
         // Get the entry point for from the fluidPackageCache for the given code details.
         // For code details containing a package name, use the package name as the id.
         // For code details containing a Fluid package, create a unique id from the package name and version.

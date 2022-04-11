@@ -374,7 +374,6 @@ describe("Data Store Context Tests", () => {
                     const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
                     const snapshotTree: ISnapshotTree = {
                         blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
-                        commits: {},
                         trees: {},
                     };
                     if (hasIsolatedChannels) {
@@ -383,7 +382,6 @@ describe("Data Store Context Tests", () => {
                         // real loading use cases.
                         snapshotTree.trees[channelsTreeName] = {
                             blobs: {},
-                            commits: {},
                             trees: {},
                         };
                     }
@@ -484,7 +482,6 @@ describe("Data Store Context Tests", () => {
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                     },
-                    commits: {},
                     trees: {},
                 };
 
@@ -517,7 +514,6 @@ describe("Data Store Context Tests", () => {
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                     },
-                    commits: {},
                     trees: {},
                 };
                 const gcDetails: IGarbageCollectionDetailsBase = {
@@ -554,7 +550,6 @@ describe("Data Store Context Tests", () => {
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                     },
-                    commits: {},
                     trees: {},
                 };
                 const gcDetails: IGarbageCollectionDetailsBase = {
@@ -597,7 +592,6 @@ describe("Data Store Context Tests", () => {
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                     },
-                    commits: {},
                     trees: {},
                 };
                 const gcDetails: IGarbageCollectionDetailsBase = {
@@ -645,7 +639,6 @@ describe("Data Store Context Tests", () => {
                 const snapshotTree: ISnapshotTree = {
                     id: "dummy",
                     blobs: { [".component"]: "fluidDataStoreAttributes" },
-                    commits: {},
                     trees: {},
                 };
 

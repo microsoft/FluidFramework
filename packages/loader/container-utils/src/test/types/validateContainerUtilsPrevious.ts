@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_ClientSessionExpiredError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ClientSessionExpiredError():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_ClientSessionExpiredError(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_ClientSessionExpiredError": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ClientSessionExpiredError():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_ClientSessionExpiredError(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_DataCorruptionError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DataCorruptionError():
@@ -52,7 +52,7 @@ use_current_ClassDeclaration_DataCorruptionError(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_DataCorruptionError": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DataCorruptionError():
@@ -64,7 +64,7 @@ use_old_ClassDeclaration_DataCorruptionError(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_DataProcessingError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DataProcessingError():
@@ -76,7 +76,7 @@ use_current_ClassDeclaration_DataProcessingError(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_DataProcessingError": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DataProcessingError():
@@ -88,7 +88,7 @@ use_old_ClassDeclaration_DataProcessingError(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_extractSafePropertiesFromMessage": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_extractSafePropertiesFromMessage():
@@ -100,7 +100,7 @@ use_current_VariableDeclaration_extractSafePropertiesFromMessage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_extractSafePropertiesFromMessage": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_extractSafePropertiesFromMessage():
@@ -112,7 +112,7 @@ use_old_VariableDeclaration_extractSafePropertiesFromMessage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_GenericError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_GenericError():
@@ -124,7 +124,7 @@ use_current_ClassDeclaration_GenericError(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_GenericError": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_GenericError():
@@ -136,7 +136,7 @@ use_old_ClassDeclaration_GenericError(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_ThrottlingWarning": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ThrottlingWarning():
@@ -148,7 +148,7 @@ use_current_ClassDeclaration_ThrottlingWarning(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_ThrottlingWarning": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ThrottlingWarning():
@@ -160,7 +160,7 @@ use_old_ClassDeclaration_ThrottlingWarning(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_UsageError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_UsageError():
@@ -172,7 +172,7 @@ use_current_ClassDeclaration_UsageError(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_UsageError": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_UsageError():

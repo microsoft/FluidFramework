@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/clicker-function",
-  "version": "0.58.3000",
+  "version": "0.59.1000",
   "description": "Minimal Fluid object sample to implement a collaborative counter using Fluid React hooks",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -40,14 +40,14 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/example-utils": "^0.58.3000",
-    "@fluid-experimental/react": "^0.58.3000",
-    "@fluidframework/aqueduct": "^0.58.3000",
+    "@fluid-example/example-utils": "^0.59.1000",
+    "@fluid-experimental/react": "^0.59.1000",
+    "@fluidframework/aqueduct": "^0.59.1000",
     "@fluidframework/common-definitions": "^0.20.1",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.58.3000",
+    "@fluid-tools/webpack-fluid-loader": "^0.59.1000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
     "@fluidframework/test-tools": "^0.2.3074",
