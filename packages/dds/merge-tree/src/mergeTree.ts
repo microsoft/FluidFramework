@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable max-lines */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
@@ -388,6 +388,33 @@ export function ordinalToArray(ord: string) {
     return a;
 }
 
+/**
+ * Checks if the sequence number is unassigned. Unassigned changes
+ * are always local changes that have not been round tripped to the
+ * server and assigned a real sequence number yet.
+ */
+function isUnassigned(seq: number | undefined): boolean {
+    return seq === UnassignedSequenceNumber;
+}
+
+/**
+ * This function takes a number of sequence numbers and normalizes them.
+ * Normalization makes the sequence numbers globally comparable to things
+ * other seqs, ref seqs, and the min seq.
+ *
+ * Specifically this function assigns unassigned sequence numbers a temporary sequence number near
+ * Number.MAX_SAFE_INTEGER. This works as we know all unassigned sequence numbers will eventually
+ * be assigned a sequence number that is greater than any we can currently see. The temporary
+ * sequence numbers are assigned based on order, the highest seq will be given the first, and so on.
+ * For instance in the case of a removed segment, it will have two sequences the insert sequence, and
+ * the removed sequence. A segment must be inserted before it can be removed, so the removed sequence
+ * should be the first element, and the insert the next, so the temporary removed sequence is always
+ * greater than the temporary insert sequence.
+ */
+function normalizeSequenceNumberIfUnassigned(...seqs: (number | undefined)[]): number[] {
+    return seqs.map((v,i)=>isUnassigned(v) ? Number.MAX_SAFE_INTEGER - i : v ?? 0);
+}
+
 // Note that the actual branching factor of the MergeTree is `MaxNodesInBlock - 1`.  This is because
 // the MergeTree always inserts first, then checks for overflow and splits if the child count equals
 // `MaxNodesInBlock`.  (i.e., `MaxNodesInBlock` contains 1 extra slot for temporary storage to
@@ -554,7 +581,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 return true;
 
             case MergeTreeDeltaType.INSERT:
-                assert(this.seq === UnassignedSequenceNumber, 0x045 /* "On insert, seq number already assigned!" */);
+                assert(isUnassigned(this.seq), 0x045 /* "On insert, seq number already assigned!" */);
                 this.seq = opArgs.sequencedMessage!.sequenceNumber;
                 this.localSeq = undefined;
                 return true;
@@ -564,7 +591,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
                 assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
                 this.localRemovedSeq = undefined;
-                if (removalInfo.removedSeq === UnassignedSequenceNumber) {
+                if (isUnassigned(removalInfo.removedSeq)) {
                     removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
                     return true;
                 }
@@ -993,7 +1020,7 @@ function tileShift(
     offset: number | undefined, end: number | undefined, searchInfo: IReferenceSearchInfo) {
     if (node.isLeaf()) {
         const seg = node;
-        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && Marker.is(seg)) {
+        if ((searchInfo.mergeTree.localNetLength(seg) ?? 0) > 0 && Marker.is(seg)) {
             if (seg.hasTileLabel(searchInfo.tileLabel)) {
                 searchInfo.tile = seg;
             }
@@ -1094,7 +1121,11 @@ export class MergeTree {
     public localNetLength(segment: ISegment) {
         const removalInfo = toRemovalInfo(segment);
         if (removalInfo !== undefined) {
-            return 0;
+            const [removedSeq] = normalizeSequenceNumberIfUnassigned(removalInfo.removedSeq);
+            if(removedSeq > this.collabWindow.minSeq) {
+                return 0;
+            }
+            return undefined;
         } else {
             return segment.cachedLength;
         }
@@ -1218,7 +1249,7 @@ export class MergeTree {
                                 && prevSegment.canAppend(segment)
                                 && matchProperties(prevSegment.properties, segment.properties)
                                 && prevSegment.trackingCollection.matches(segment.trackingCollection)
-                                && this.localNetLength(segment) > 0;
+                                && (this.localNetLength(segment) ?? 0) > 0;
 
                             if (canAppend) {
                                 prevSegment!.append(segment);
@@ -1233,7 +1264,7 @@ export class MergeTree {
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
                             } else {
                                 holdNodes.push(segment);
-                                if (this.localNetLength(segment) > 0) {
+                                if ((this.localNetLength(segment) ?? 0) > 0) {
                                     prevSegment = segment;
                                 } else {
                                     prevSegment = undefined;
@@ -1460,35 +1491,22 @@ export class MergeTree {
             } else {
                 const segment = node;
                 const removalInfo = toRemovalInfo(segment);
+                const [removedSeq, seq] = normalizeSequenceNumberIfUnassigned(
+                    removalInfo?.removedSeq,
+                    segment.seq);
 
-                if(removalInfo !== undefined
-                    && removalInfo.removedSeq !== UnassignedSequenceNumber
-                    && removalInfo.removedSeq <= refSeq) {
-                    // this segment is a tombstone eligible for zamboni
-                    // so should never be considered, as it may not exist
-                    // on other clients
-                    return undefined;
-                }
-                if (((segment.clientId === clientId) ||
-                    ((segment.seq !== UnassignedSequenceNumber) && (segment.seq! <= refSeq)))) {
-                    // Segment happened by reference sequence number or segment from requesting client
-                    if (removalInfo !== undefined) {
-                        if (removalInfo.removedClientIds.includes(clientId)) {
-                            return 0;
-                        } else {
-                            return segment.cachedLength;
-                        }
-                    } else {
-                        return segment.cachedLength;
-                    }
-                } else {
-                    // the segment was inserted and removed before the
-                    // this context, so it will never exist for this
-                    // context
-                    if(removalInfo !== undefined
-                        && removalInfo.removedSeq !== UnassignedSequenceNumber) {
+                if(removalInfo !== undefined) {
+                    if(removedSeq <= this.collabWindow.minSeq) {
                         return undefined;
                     }
+                    if(removedSeq <= refSeq || removalInfo.removedClientIds.includes(clientId)) {
+                        return 0;
+                    }
+                }
+
+                if (seq <= refSeq || segment.clientId === clientId) {
+                    return segment.cachedLength;
+                } else {
                     // Segment invisible to client at reference sequence number/branch id/client id of op
                     return 0;
                 }
@@ -1788,7 +1806,7 @@ export class MergeTree {
     ) {
         this.ensureIntervalBoundary(pos, refSeq, clientId);
 
-        const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
+        const localSeq = isUnassigned(seq) ? ++this.collabWindow.localSeq : undefined;
 
         this.blockInsert(pos, refSeq, clientId, seq, localSeq, segments);
 
@@ -1984,7 +2002,7 @@ export class MergeTree {
     ) {
         let segIsLocal = false;
         const checkSegmentIsLocal = (segment: ISegment, _pos: number, _refSeq: number, _clientId: number) => {
-            if (segment.seq === UnassignedSequenceNumber) {
+            if (isUnassigned(segment.seq)) {
                 segIsLocal = true;
             }
             // Only need to look at first segment that follows finished node
@@ -2001,7 +2019,7 @@ export class MergeTree {
         const saveIfLocal = (locSegment: ISegment) => {
             // Save segment so can assign sequence number when acked by server
             if (this.collabWindow.collaborating) {
-                if ((locSegment.seq === UnassignedSequenceNumber) &&
+                if (isUnassigned(locSegment.seq) &&
                     (clientId === this.collabWindow.clientId)) {
                     segmentGroup = this.addToPendingList(locSegment, segmentGroup, localSeq);
                 }
@@ -2091,8 +2109,7 @@ export class MergeTree {
                 // seq for comparison, as it will get a seq higher than any other seq once sequences
                 // if the current seg is local (UnassignedSequenceNumber) give it the second highest
                 // possible seq, as the highest is reserved for the previous.
-                const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
-                const segSeq = node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : node.seq ?? 0;
+                const [newSeq, segSeq] = normalizeSequenceNumberIfUnassigned(seq, node.seq);
                 return newSeq > segSeq;
             }
             return false;
@@ -2310,14 +2327,14 @@ export class MergeTree {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
         const deltaSegments: IMergeTreeSegmentDelta[] = [];
-        const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
+        const localSeq = isUnassigned(seq) ? ++this.collabWindow.localSeq : undefined;
         let segmentGroup: SegmentGroup | undefined;
 
         const annotateSegment = (segment: ISegment) => {
             const propertyDeltas = segment.addProperties(props, combiningOp, seq, this.collabWindow);
             deltaSegments.push({ segment, propertyDeltas });
             if (this.collabWindow.collaborating) {
-                if (seq === UnassignedSequenceNumber) {
+                if (isUnassigned(seq)) {
                     segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq);
                 } else {
                     if (MergeTree.options.zamboniSegments) {
@@ -2361,12 +2378,12 @@ export class MergeTree {
         let segmentGroup: SegmentGroup;
         const removedSegments: IMergeTreeSegmentDelta[] = [];
         const savedLocalRefs: LocalReferenceCollection[] = [];
-        const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
+        const localSeq = isUnassigned(seq) ? ++this.collabWindow.localSeq : undefined;
         const markRemoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
             const existingRemovalInfo = toRemovalInfo(segment);
             if (existingRemovalInfo !== undefined) {
                 _overwrite = true;
-                if (existingRemovalInfo.removedSeq === UnassignedSequenceNumber) {
+                if (isUnassigned(existingRemovalInfo.removedSeq)) {
                     // we removed this locally, but someone else removed it first
                     // so put them at the head of the list
                     // the list isn't ordered, but we
@@ -2392,7 +2409,7 @@ export class MergeTree {
 
             // Save segment so can assign removed sequence number when acked by server
             if (this.collabWindow.collaborating) {
-                if (segment.removedSeq === UnassignedSequenceNumber && clientId === this.collabWindow.clientId) {
+                if (isUnassigned(segment.removedSeq) && clientId === this.collabWindow.clientId) {
                     segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq);
                 } else {
                     if (MergeTree.options.zamboniSegments) {
