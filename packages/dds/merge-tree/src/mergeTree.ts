@@ -400,12 +400,12 @@ function isUnassigned(seq: number | undefined): boolean {
 /**
  * This function takes a number of sequence numbers and normalizes them.
  * Normalization makes the sequence numbers globally comparable to things
- * other seqs, ref seqs, and the min seq.
+ * like other seqs, ref seqs, and the min seq.
  *
  * Specifically this function assigns unassigned sequence numbers a temporary sequence number near
  * Number.MAX_SAFE_INTEGER. This works as we know all unassigned sequence numbers will eventually
  * be assigned a sequence number that is greater than any we can currently see. The temporary
- * sequence numbers are assigned based on order, the highest seq will be given the first, and so on.
+ * sequence numbers are assigned based on order, the highest seq will be given to the first, and so on.
  * For instance in the case of a removed segment, it will have two sequences the insert sequence, and
  * the removed sequence. A segment must be inserted before it can be removed, so the removed sequence
  * should be the first element, and the insert the next, so the temporary removed sequence is always
