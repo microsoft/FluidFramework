@@ -4,7 +4,7 @@
  */
 
 import { expect } from 'chai';
-import { Definition } from '../Identifiers';
+import { Definition, TraitLabel } from '../Identifiers';
 import { RevisionView } from '../RevisionView';
 import { ChangeNode } from '../persisted-types';
 import { refreshTestTree } from './utilities/TestUtilities';
@@ -161,5 +161,35 @@ describe('TreeView', () => {
 				expect(parentage.parent).to.equal(parentNode.identifier);
 			}
 		}
+	});
+
+	// Regression test for the issue fixed in #9824
+	it('can be iterated in a consistent order', () => {
+		const [id1, id2, id3] = Array.from({ length: 3 }).map(() => testTree.generateNodeId());
+		const label1 = 'traitLabelA' as TraitLabel;
+		const label2 = 'traitLabelB' as TraitLabel;
+		const { definition } = testTree;
+		const tree1: ChangeNode = {
+			identifier: id1,
+			definition,
+			traits: {
+				[label1]: [{ identifier: id2, definition, traits: {} }],
+				[label2]: [{ identifier: id3, definition, traits: {} }],
+			},
+		};
+		// Like tree1, but defined with the labels in the opposite order and with different node ids under each trait.
+		const tree2: ChangeNode = {
+			identifier: id1,
+			definition,
+			traits: {
+				[label2]: [{ identifier: id2, definition, traits: {} }],
+				[label1]: [{ identifier: id3, definition, traits: {} }],
+			},
+		};
+		const view1 = RevisionView.fromTree(tree1);
+		const view2 = RevisionView.fromTree(tree2);
+		expect(Array.from(view1).map((node) => node.identifier)).to.deep.equal([id1, id2, id3]);
+		// Child iteration should be sorted on trait labels.
+		expect(Array.from(view2).map((node) => node.identifier)).to.deep.equal([id1, id3, id2]);
 	});
 });
