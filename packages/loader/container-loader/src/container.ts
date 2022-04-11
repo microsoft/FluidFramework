@@ -1216,7 +1216,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._storage.loadSnapshotForRehydratingContainer(snapshotTree);
         const attributes = await this.getDocumentAttributes(this._storage, snapshotTree);
 
-        // Todo: Needs driver definitions ticket.
+        // Needs driver definitions. To be resolved via #9833.
         const canCreateNonZeroSeqDoc: boolean =
             (this.serviceFactory as any).capabilities
                 ?.canCreateNonZeroSeqDoc === true;

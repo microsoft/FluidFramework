@@ -24,7 +24,7 @@ import { defaultHash } from "@fluidframework/server-services-client";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
 import { createLocalDocumentService } from "./localDocumentService";
 
-/* Todo: Will be exposed through driver defs */
+// Needs to be moved to driver definitions. To be resolved via #9833.
 export interface IDocumentServiceCapabilities{
     canCreateNonZeroSeqDoc?: boolean,
 }
