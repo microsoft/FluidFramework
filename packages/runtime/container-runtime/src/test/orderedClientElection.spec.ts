@@ -203,7 +203,6 @@ describe("Ordered Client Collection", () => {
                 const clientId = "x";
                 createOrderedClientElection(undefined, { electedClientId: clientId, electionSequenceNumber: 101 });
                 assertElectionState(0, 0, undefined, 101);
-                mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId }]);
                 assertOrderedEligibleClientIds();
             });
 
@@ -259,7 +258,6 @@ describe("Ordered Client Collection", () => {
                     ["c", 9, true],
                 ], { electedClientId: "x", electionSequenceNumber: 4321 });
                 assertElectionState(4, 3, undefined, 4321);
-                mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId: "x" }]);
                 assertOrderedEligibleClientIds("a", "b", "c");
             });
         });

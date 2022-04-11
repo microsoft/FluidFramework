@@ -295,11 +295,24 @@ export interface IDocumentService {
     dispose(error?: any): void;
 }
 
+
+export interface IDocumentServiceCapabilities{
+    /**
+     * Document service can create docs with non-zero seq. start #
+     */
+    canCreateWithNonZeroSeqNum?: boolean,
+}
+
 export interface IDocumentServiceFactory {
     /**
      * Name of the protocol used by factory
      */
     protocolName: string;
+
+    /**
+     * Surface document service capabilities
+     */
+    capabilities?: IDocumentServiceCapabilities;
 
     /**
      * Returns an instance of IDocumentService

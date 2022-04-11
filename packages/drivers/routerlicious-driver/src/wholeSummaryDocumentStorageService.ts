@@ -30,6 +30,9 @@ import {
     convertWholeFlatSummaryToSnapshotTreeAndBlobs,
     GitManager,
     ISummaryUploadManager,
+    IWholeFlatSummary,
+    IWholeFlatSummaryTree,
+    INormalizedWholeSummary,
     WholeSummaryUploadManager,
 } from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -161,7 +164,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             },
         );
 
-        const {blobs, snapshotTree} = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
+        const {blobs, snapshotTree} = this.convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary, false);
         return this.convertSnapshotAndBlobsToSummaryTree(snapshotTree, blobs);
     }
 
@@ -245,6 +248,60 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             blobCachePutPs.push(this.blobCache.put(id, value));
         });
         await Promise.all(blobCachePutPs);
+    }
+
+    // Todo: surface through @fluidframework/server-services-client
+    private convertWholeFlatSummaryToSnapshotTreeAndBlobs(
+        flatSummary: IWholeFlatSummary,
+        stripEntryPath: boolean = true,
+    ): INormalizedWholeSummary {
+        const blobs = new Map<string, ArrayBuffer>();
+        if (flatSummary.blobs) {
+            flatSummary.blobs.forEach((blob) => {
+                blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
+            });
+        }
+        const flatSummaryTree = flatSummary.trees && flatSummary.trees[0];
+        const sequenceNumber = flatSummaryTree?.sequenceNumber;
+        const snapshotTree = this.buildHeirarchy(flatSummaryTree, stripEntryPath);
+
+        return {
+            blobs,
+            snapshotTree,
+            sequenceNumber,
+        };
+    }
+
+    // Todo: surface through @fluidframework/server-services-client
+    private buildHeirarchy(flatTree: IWholeFlatSummaryTree, stripEntryPath: boolean = true): ISnapshotTree {
+        const lookup: { [path: string]: ISnapshotTree } = {};
+        // Root tree id will be used to determine which version was downloaded.
+        const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {}, commits: {}};
+        lookup[""] = root;
+
+        for (const entry of flatTree.entries) {
+            // Strip the .app/ path from app tree entries such that they are stored under root.
+            const entryPath = stripEntryPath ? entry.path.replace(/^\.app\//, "") : entry.path;
+            const lastIndex = entryPath.lastIndexOf("/");
+            const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
+            const entryPathBase = entryPath.slice(lastIndex + 1);
+
+            // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
+            const node = lookup[entryPathDir];
+
+            // Add in either the blob or tree
+            if (entry.type === "tree") {
+                const newTree: ISnapshotTree = { blobs: {}, commits: {}, trees: {}, unreferenced: entry.unreferenced };
+                node.trees[decodeURIComponent(entryPathBase)] = newTree;
+                lookup[entryPath] = newTree;
+            } else if (entry.type === "blob") {
+                node.blobs[decodeURIComponent(entryPathBase)] = entry.id;
+            } else {
+                throw new Error(`Unknown entry type!!`);
+            }
+        }
+
+        return root;
     }
 
     private convertSnapshotAndBlobsToSummaryTree(

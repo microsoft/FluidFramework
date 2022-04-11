@@ -30,7 +30,7 @@ export class SummaryTreeAssembler {
     * Add blob to summary
     */
     public addBlob(key: string, content: string | Uint8Array): void {
-        this.summaryTree.tree[key] = {
+        this.summaryTree[key] = {
             type: SummaryType.Blob,
             content,
         };

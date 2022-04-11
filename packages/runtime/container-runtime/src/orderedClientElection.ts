@@ -276,17 +276,7 @@ export class OrderedClientElection
         if (typeof initialState === "number") {
             this._electionSequenceNumber = initialState;
         } else {
-            // Override the initially elected client with the initial state.
-            if (initialClient?.clientId !== initialState.electedClientId) {
-                // Cannot find initially elected client, so elect undefined.
-                logger.sendErrorEvent({
-                    eventName: "InitialElectedClientNotFound",
-                    electionSequenceNumber: initialState.electionSequenceNumber,
-                    expectedClientId: initialState.electedClientId,
-                    electedClientId: initialClient?.clientId,
-                    clientCount: orderedClientCollection.count,
-                });
-            } else if (initialClient !== undefined && !isEligibleFn(initialClient)) {
+            if (initialClient !== undefined && !isEligibleFn(initialClient)) {
                 // Initially elected client is ineligible, so elect next eligible client.
                 initialClient = this.findFirstEligibleClient(initialClient);
                 logger.sendErrorEvent({

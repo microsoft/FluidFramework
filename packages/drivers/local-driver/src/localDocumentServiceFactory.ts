@@ -24,6 +24,11 @@ import { defaultHash } from "@fluidframework/server-services-client";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
 import { createLocalDocumentService } from "./localDocumentService";
 
+/* Todo: Will be exposed through driver defs */
+export interface IDocumentServiceCapabilities{
+    canCreateNonZeroSeqDoc?: boolean,
+}
+
 /**
  * Implementation of document service factory for local use.
  */
@@ -39,7 +44,8 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(
         private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
         private readonly policies?: IDocumentServicePolicies,
-        private readonly innerDocumentService?: IDocumentService) { }
+        private readonly innerDocumentService?: IDocumentService,
+        public readonly capabilities?: IDocumentServiceCapabilities) { }
 
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,

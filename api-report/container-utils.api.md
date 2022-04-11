@@ -8,7 +8,6 @@ import { IErrorBase } from '@fluidframework/container-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
@@ -60,9 +59,6 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
     // (undocumented)
     readonly errorType = ContainerErrorType.genericError;
 }
-
-// @public
-export function getSanitizedCopy(liveSummary: ISummaryTree): ISummaryTree;
 
 // @public
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {

@@ -101,8 +101,8 @@ import { ConnectionStateHandler, ILocalSequencedClient } from "./connectionState
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
-import { getSnapshotTreeFromSerializedContainer } from "./utils";
-import { QuorumProxy } from "./quorum";
+import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
+import { initQuorumCodeProposal, getCodeProposalFromQuorumValues, QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 
@@ -1117,7 +1117,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // ...load in the existing quorum
         // Initialize the protocol handler
         this._protocolHandler =
-            await this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
+            await this.initializeProtocolStateFromSnapshot(attributes, this.storageService, snapshot);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
@@ -1184,27 +1184,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             minimumSequenceNumber: 0,
         };
 
-        // Seed the base quorum to be an empty list with a code quorum set
-        const committedCodeProposal: ICommittedProposal = {
-            key: "code",
-            value: source,
-            approvalSequenceNumber: 0,
-            commitSequenceNumber: 0,
-            sequenceNumber: 0,
-        };
-
-        const members: [string, ISequencedClient][] = [];
-        const proposals: [number, ISequencedProposal, string[]][] = [];
-        const values: [string, ICommittedProposal][] = [["code", committedCodeProposal]];
-
         await this.attachDeltaManagerOpHandler(attributes);
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
+        const qValues = initQuorumCodeProposal(source);
         this._protocolHandler = await this.initializeProtocolState(
             attributes,
-            members,
-            proposals,
-            values);
+            [], // Members
+            [], // Proposals
+            qValues, // Values
+        );
 
         // The load context - given we seeded the quorum - will be great
         await this.instantiateContextDetached(
@@ -1226,13 +1215,30 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         this._storage.loadSnapshotForRehydratingContainer(snapshotTree);
         const attributes = await this.getDocumentAttributes(this._storage, snapshotTree);
-        assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
+
+        // Todo: Needs driver definitions ticket.
+        const canCreateNonZeroSeqDoc: boolean =
+            (this.serviceFactory as any).capabilities
+                ?.canCreateNonZeroSeqDoc === true;
+        assert(
+            canCreateNonZeroSeqDoc || attributes.sequenceNumber === 0,
+            0x0db /* "Seq number in detached container should be 0!!" */,
+        );
+
         await this.attachDeltaManagerOpHandler(attributes);
 
-        // ...load in the existing quorum
         // Initialize the protocol handler
+        const baseTree = getProtocolSnapshotTree(snapshotTree);
+        const qValues = await readAndParse<[string, ICommittedProposal][]>(
+            this._storage,
+            baseTree.blobs.quorumValues,
+        );
+        const codeDetails = getCodeProposalFromQuorumValues(qValues);
         this._protocolHandler =
-            await this.loadAndInitializeProtocolState(attributes, this._storage, snapshotTree);
+            await this.initializeProtocolStateFromCodeDetails(
+                attributes,
+                codeDetails,
+            );
 
         await this.instantiateContextDetached(
             true, // existing
@@ -1293,7 +1299,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return attributes;
     }
 
-    private async loadAndInitializeProtocolState(
+    private async initializeProtocolStateFromCodeDetails(
+        attributes: IDocumentAttributes,
+        codeProposal?: IFluidCodeDetails,
+    ): Promise<ProtocolOpHandler> {
+        const members: [string, ISequencedClient][] = [];
+        const proposals: [number, ISequencedProposal, string[]][] = [];
+        let values: [string, any][] = [];
+
+        if(codeProposal !== undefined) {
+            values = initQuorumCodeProposal(codeProposal);
+        }
+
+        const protocolHandler = await this.initializeProtocolState(
+            attributes,
+            members,
+            proposals,
+            values);
+
+        return protocolHandler;
+    }
+
+    private async initializeProtocolStateFromSnapshot(
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot: ISnapshotTree | undefined,
@@ -1303,7 +1330,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         let values: [string, any][] = [];
 
         if (snapshot !== undefined) {
-            const baseTree = ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
+            const baseTree = getProtocolSnapshotTree(snapshot);
             [members, proposals, values] = await Promise.all([
                 readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
                 readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals),
