@@ -942,7 +942,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				}
 				// TODO: This cast can be removed on typescript 4.6
 				const edit = this.parseSequencedEdit(op as SharedTreeEditOp | SharedTreeEditOp_0_0_2);
-				this.internStringsFromEdit(edit);
+				if (op.version === WriteFormat.v0_1_1) {
+					this.internStringsFromEdit(edit);
+				}
 				this.processSequencedEdit(edit, typedMessage);
 			}
 		} else if (type === SharedTreeOpType.Update) {
@@ -1083,9 +1085,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	private upgradeFrom_0_0_2_to_0_1_1(): void {
-		for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-			this.internStringsFromEdit(this.editsInternal.getEditInSessionAtIndex(i));
-		}
+		// Reset the string interner, re-populate only with information that there is consensus on
+		this.interner = new MutableStringInterner([initialTree.definition]);
 		const oldIdCompressor = this.idCompressor;
 		// Create the IdCompressor that will be used after the upgrade
 		const newIdCompressor = new IdCompressor(createSessionId(), reservedIdCount); // TODO: attribution info
@@ -1109,11 +1110,20 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			// All clients have the full history, and can therefore all "generate" the same final IDs for every ID in the history
 			// via the ghost compressor.
 			unifyHistoricalIds(ghostContext);
+			// The same logic applies to string interning, so intern all the strings in the history (superset of those in the current view)
+			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
+				this.internStringsFromEdit(this.editsInternal.getEditInSessionAtIndex(i));
+			}
 		} else {
 			// Clients do not have the full history, but all share the same current view (sequenced). They can all finalize the same final
 			// IDs for every ID in the view via the ghost compressor.
+			// The same logic applies for the string interner.
 			for (const node of this.logViewer.getRevisionViewInSession(this.editLog.numberOfSequencedEdits)) {
 				ghostContext.generateNodeId(this.convertToStableNodeId(node.identifier));
+				this.interner.getOrCreateInternedId(node.definition);
+				for (const label of [...node.traits.keys()].sort()) {
+					this.interner.getOrCreateInternedId(label);
+				}
 			}
 			// Every node in this client's history can simply be generated in the new compressor as well, preserving the UUID
 			unifyHistoricalIds(newContext);

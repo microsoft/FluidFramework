@@ -4,10 +4,12 @@
  */
 
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { LoaderHeader } from '@fluidframework/container-definitions';
 import { expect } from 'chai';
 import { StableRange, StablePlace, BuildNode, Change } from '../../ChangeTypes';
 import { Mutable } from '../../Common';
 import { EditLog } from '../../EditLog';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
 import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
 import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types';
@@ -22,6 +24,8 @@ import {
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
 	spyOnSubmittedOps,
+	testTrait,
+	waitForSummary,
 } from './TestUtilities';
 
 function spyOnVersionChanges(tree: SharedTree): WriteFormat[] {
@@ -403,6 +407,51 @@ export function runSharedTreeVersioningTests(
 			}
 			expect(tree1.equals(tree2)).to.be.true;
 		});
+
+		it('interns strings correctly after upgrading from 0.0.2', async () => {
+			const {
+				testObjectProvider,
+				tree: tree1,
+				container,
+			} = await setUpLocalServerTestSharedTree({
+				writeFormat: WriteFormat.v0_0_2,
+				summarizeHistory: false,
+			});
+
+			const internedDefinition = 'internedDefinition';
+
+			const id = tree1.generateNodeId();
+			tree1.applyEdit(
+				...Change.insertTree(
+					{ definition: internedDefinition, identifier: id },
+					StablePlace.atStartOf(testTrait(tree1.currentView))
+				)
+			);
+			tree1.applyEdit(Change.delete(StableRange.only(id)));
+
+			await testObjectProvider.ensureSynchronized();
+			const summaryVersion = await waitForSummary(container);
+
+			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
+				writeFormat: WriteFormat.v0_1_1,
+				testObjectProvider,
+				headers: { [LoaderHeader.version]: summaryVersion },
+			});
+
+			await testObjectProvider.ensureSynchronized();
+			expect(tree1.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
+			expect(tree2.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
+
+			tree1.applyEdit(
+				...Change.insertTree(
+					{ definition: internedDefinition, identifier: tree1.generateNodeId() },
+					StablePlace.atStartOf(testTrait(tree1.currentView))
+				)
+			);
+
+			await testObjectProvider.ensureSynchronized();
+			expect(areRevisionViewsSemanticallyEqual(tree1.currentView, tree1, tree2.currentView, tree2)).to.be.true;
+		}).timeout(10000);
 
 		describe('telemetry', () => {
 			const events: ITelemetryBaseEvent[] = [];
