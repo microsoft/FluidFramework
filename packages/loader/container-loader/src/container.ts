@@ -970,7 +970,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private connectInternal(args: IConnectionArgs) {
         assert(!this.closed, 0x2c5 /* "Attempting to connect() a closed Container" */);
-        assert(this._attachState === AttachState.Attached, 0x2c6 /* "Attempting to connect() a container that is not attached" */);
+        assert(this._attachState === AttachState.Attached,
+            0x2c6 /* "Attempting to connect() a container that is not attached" */);
 
         // Resume processing ops and connect to delta stream
         this.resumeInternal(args);
