@@ -64,7 +64,7 @@ export class DeltaScheduler {
             this.processingStartTime = performance.now();
         }
         if (this.schedulingLog === undefined && this.schedulingCount % 500 === 0) {
-            // Every 2000th time we are scheduling the inbound queue, we log telemetry for the
+            // Every 500th time we are scheduling the inbound queue, we log telemetry for the
             // number of ops processed, the time and number of turns it took to process the ops.
             this.schedulingLog = {
                 opsRemainingToProcess: 0,
