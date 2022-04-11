@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IArrayish, IClient } from "@fluid-experimental/bubblebench-common";
-import { SharedTree } from "@fluid-experimental/tree";
+import { SharedTree, WriteFormat } from "@fluid-experimental/tree";
 import { TreeObjectProxy } from "./proxy";
 import { AppState } from "./state";
 
@@ -75,6 +75,6 @@ export class Bubblebench extends DataObject {
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
     Bubblebench.Name,
     Bubblebench,
-    [SharedTree.getFactory()],
+    [SharedTree.getFactory(WriteFormat.v0_1_1)],
     {},
 );
