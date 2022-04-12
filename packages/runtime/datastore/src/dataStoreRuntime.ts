@@ -718,7 +718,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public getAttachSummary(): ISummaryTreeWithStats {
         /**
-         * back-compat 0.58.3000 - getAttachSummary() is called when making a data store globally visible (previously
+         * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
          * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
          * before visibility state was added, this may not have been the case and getAttachSummary() could be called:
          * 1) Before attaching the data store - When a detached container is attached.
@@ -891,7 +891,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.setMaxListeners(Number.MAX_SAFE_INTEGER);
         this.dataStoreContext.once("attaching", () => {
             /**
-             * back-compat 0.58.3000 - Ideally, attachGraph() should have already been called making the data store
+             * back-compat 0.59.1000 - Ideally, attachGraph() should have already been called making the data store
              * locally visible. However, before visibility state was added, this may not have been the case and data
              * store can move to "attaching" state in 2 scenarios:
              * 1) Before attachGraph() is called - When a data store is created and bound in an attached container.
