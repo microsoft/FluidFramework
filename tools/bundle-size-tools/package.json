@@ -14,8 +14,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -b",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -b"
   },
   "dependencies": {
     "azure-devops-node-api": "^10.1.0",

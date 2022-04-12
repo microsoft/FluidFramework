@@ -15,8 +15,7 @@
     "assign-test-ports": "bin/assign-test-ports"
   },
   "scripts": {
-    "build": "tsc -b",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -b"
   },
   "dependencies": {},
   "devDependencies": {

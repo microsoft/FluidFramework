@@ -30,7 +30,6 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "yarn run eslint",
     "lint:fix": "yarn run eslint:fix",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
