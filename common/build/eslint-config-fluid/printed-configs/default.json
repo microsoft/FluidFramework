@@ -62,16 +62,7 @@
         ],
         "@typescript-eslint/comma-dangle": [
             "error",
-            {
-                "arrays": "always-multiline",
-                "enums": "always-multiline",
-                "exports": "always-multiline",
-                "functions": "always-multiline",
-                "generics": "always-multiline",
-                "imports": "always-multiline",
-                "objects": "always-multiline",
-                "tuples": "always-multiline"
-            }
+            "always-multiline"
         ],
         "@typescript-eslint/comma-spacing": [
             "error"
@@ -102,7 +93,7 @@
         "@typescript-eslint/explicit-function-return-type": [
             "warn",
             {
-                "allowConciseArrowFunctionExpressionsStartingWithVoid": false,
+                "allowConciseArrowFunctionExpressionsStartingWithVoid": true,
                 "allowDirectConstAssertionInArrowFunctions": true,
                 "allowExpressions": true,
                 "allowHigherOrderFunctions": true,
@@ -118,14 +109,20 @@
         "@typescript-eslint/explicit-module-boundary-types": [
             "error"
         ],
+        "@typescript-eslint/func-call-spacing": [
+            "error"
+        ],
         "@typescript-eslint/indent": [
             "off"
+        ],
+        "@typescript-eslint/keyword-spacing": [
+            "error"
         ],
         "@typescript-eslint/linebreak-style": [
             "off"
         ],
         "@typescript-eslint/member-delimiter-style": [
-            "warn"
+            "error"
         ],
         "@typescript-eslint/naming-convention": [
             "error",
@@ -150,7 +147,7 @@
             "error"
         ],
         "@typescript-eslint/no-empty-function": [
-            "error"
+            "warn"
         ],
         "@typescript-eslint/no-empty-interface": [
             "error"
@@ -213,7 +210,7 @@
             "error"
         ],
         "@typescript-eslint/no-parameter-properties": [
-            "warn"
+            "off"
         ],
         "@typescript-eslint/no-require-imports": [
             "error"
@@ -250,25 +247,33 @@
             "error"
         ],
         "@typescript-eslint/no-unsafe-assignment": [
-            "error"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-call": [
-            "error"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-member-access": [
-            "error"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-return": [
             "error"
         ],
         "@typescript-eslint/no-unused-expressions": [
-            "error"
+            "warn"
         ],
         "@typescript-eslint/no-unused-vars": [
             "warn"
         ],
         "@typescript-eslint/no-var-requires": [
             "error"
+        ],
+        "@typescript-eslint/object-curly-spacing": [
+            "error",
+            "always",
+            {
+                "arraysInObjects": false,
+                "objectsInObjects": false
+            }
         ],
         "@typescript-eslint/prefer-as-const": [
             "error"
@@ -315,13 +320,13 @@
             }
         ],
         "@typescript-eslint/require-await": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/restrict-plus-operands": [
             "error"
         ],
         "@typescript-eslint/restrict-template-expressions": [
-            "error"
+            "warn"
         ],
         "@typescript-eslint/semi": [
             "error",
@@ -345,6 +350,9 @@
             "error"
         ],
         "@typescript-eslint/triple-slash-reference": [
+            "error"
+        ],
+        "@typescript-eslint/type-annotation-spacing": [
             "error"
         ],
         "@typescript-eslint/unbound-method": [
@@ -485,7 +493,7 @@
             "error",
             {
                 "caseSensitive": true,
-                "caseSensitiveStrict": false
+                "caseSensitiveStrict": true
             }
         ],
         "import/no-unused-modules": [
@@ -500,6 +508,9 @@
         "indent": [
             "off"
         ],
+        "keyword-spacing": [
+            "off"
+        ],
         "linebreak-style": [
             "off"
         ],
@@ -510,6 +521,9 @@
                 "ignoreRegExpLiterals": false,
                 "ignoreStrings": false
             }
+        ],
+        "new-parens": [
+            "error"
         ],
         "no-array-constructor": [
             "off"
@@ -765,6 +779,9 @@
         "no-with": [
             "error"
         ],
+        "object-curly-spacing": [
+            "off"
+        ],
         "object-shorthand": [
             "error"
         ],
@@ -822,8 +839,14 @@
         "semi": [
             "off"
         ],
+        "semi-spacing": [
+            "error"
+        ],
         "space-before-blocks": [
             "error"
+        ],
+        "space-before-function-paren": [
+            "off"
         ],
         "space-in-parens": [
             "error",
@@ -857,7 +880,7 @@
             "error"
         ],
         "unicorn/consistent-function-scoping": [
-            "error"
+            "warn"
         ],
         "unicorn/custom-error-definition": [
             "off"
@@ -872,7 +895,7 @@
             "error"
         ],
         "unicorn/expiring-todo-comments": [
-            "error"
+            "warn"
         ],
         "unicorn/explicit-length-check": [
             "error"
@@ -1118,7 +1141,7 @@
             "error"
         ],
         "unicorn/prefer-top-level-await": [
-            "off"
+            "warn"
         ],
         "unicorn/prefer-type-error": [
             "error"
@@ -1151,7 +1174,7 @@
             "error"
         ],
         "valid-typeof": [
-            "off"
+            "error"
         ]
     },
     "settings": {

@@ -78,16 +78,7 @@ module.exports = {
         // Use dangling commas where possible.
         "@typescript-eslint/comma-dangle": [
             "error",
-            {
-                "arrays": "always-multiline",
-                "enums": "always-multiline",
-                "exports": "always-multiline",
-                "functions": "always-multiline",
-                "generics": "always-multiline",
-                "imports": "always-multiline",
-                "objects": "always-multiline",
-                "tuples": "always-multiline",
-            }
+            "always-multiline",
         ],
 
         // Enforces consistent spacing before and after commas.
@@ -116,6 +107,20 @@ module.exports = {
         // Enforce dot notation whenever possible.
         "@typescript-eslint/dot-notation": "error",
 
+        // In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
+        // API documentation. For example, type inference might decide a function returns a concrete type
+        // instead of an interface. This has no runtime impact, but would cause compilation problems.
+        "@typescript-eslint/explicit-function-return-type": [
+            "warn",
+            {
+                "allowExpressions": true,
+                "allowTypedFunctionExpressions": true,
+                "allowHigherOrderFunctions": true,
+                "allowDirectConstAssertionInArrowFunctions": true,
+                "allowConciseArrowFunctionExpressionsStartingWithVoid": true,
+            }
+        ],
+
         // Require all members have explicit private/public/etc.
         "@typescript-eslint/explicit-member-accessibility": [
             "error",
@@ -128,8 +133,14 @@ module.exports = {
         // arguments makes it clear to any calling code what is the module boundary's input and output.
         "@typescript-eslint/explicit-module-boundary-types": "error",
 
+        // Enforces no space between functions and their invocation.
+        "@typescript-eslint/func-call-spacing": "error",
+
+        // Superseded by @typescript-eslint/keyword-spacing.
+        "@typescript-eslint/keyword-spacing": "error",
+
         // Standardize using semicolons to delimit members for interfaces and type literals.
-        "@typescript-eslint/member-delimiter-style": "warn",
+        "@typescript-eslint/member-delimiter-style": "error",
 
         // Our guideline is to only use leading underscores on private members when required to avoid a conflict between
         // private fields and a public property.
@@ -151,26 +162,12 @@ module.exports = {
         "@typescript-eslint/no-dynamic-delete": "error",
 
         // Disallow empty functions.
-        "@typescript-eslint/no-empty-function": "error",
+        "@typescript-eslint/no-empty-function": "warn",
 
         // Disallow the declaration of empty interfaces. An empty interface is equivalent to its supertype. If the
         // interface does not implement a supertype, then the interface is equivalent to an empty object ({}). In both
         // cases it can be omitted.
         "@typescript-eslint/no-empty-interface": "error",
-
-        // In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
-        // API documentation. For example, type inference might decide a function returns a concrete type
-        // instead of an interface. This has no runtime impact, but would cause compilation problems.
-        "@typescript-eslint/explicit-function-return-type": [
-            "warn",
-            {
-                "allowExpressions": true,
-                "allowTypedFunctionExpressions": true,
-                "allowHigherOrderFunctions": true,
-                "allowDirectConstAssertionInArrowFunctions": true,
-                "allowConciseArrowFunctionExpressionsStartingWithVoid": false,
-            }
-        ],
 
         // Forbids the use of classes as namespaces.
         "@typescript-eslint/no-extraneous-class": "error",
@@ -198,7 +195,9 @@ module.exports = {
 
         // Parameter properties can be confusing to those new to TypeScript as they are less explicit than other
         // ways of declaring and initializing class members.
-        "@typescript-eslint/no-parameter-properties": "warn",
+        //
+        // However, we really like the feature, so we're leaving this off.
+        "@typescript-eslint/no-parameter-properties": "off",
 
         // Prefer ES6-style imports over require().
         "@typescript-eslint/no-require-imports": "error",
@@ -229,18 +228,28 @@ module.exports = {
         // Disallows assigning any to a variable, and assigning any[] to an array destructuring. Assigning an
         // any typed value to a variable can be hard to pick up on, particularly if it leaks in from an external
         // library.
-        "@typescript-eslint/no-unsafe-assignment": "error",
+        "@typescript-eslint/no-unsafe-assignment": "warn",
 
         // Disallows calling any variable that is typed as any. The arguments to, and return value of calling an
         // any typed variable are not checked at all by TypeScript.
-        "@typescript-eslint/no-unsafe-call": "error",
+        "@typescript-eslint/no-unsafe-call": "warn",
 
         // Disallows member access on any variable that is typed as any. The arguments to, and return value of
         // calling an any typed variable are not checked at all by TypeScript.
-        "@typescript-eslint/no-unsafe-member-access": "error",
+        "@typescript-eslint/no-unsafe-member-access": "warn",
 
         // Disallow unused expressions.
-        "@typescript-eslint/no-unused-expressions": "error",
+        "@typescript-eslint/no-unused-expressions": "warn",
+
+        // Enforces spacing in curly brackets.
+        "@typescript-eslint/object-curly-spacing": [
+            "error",
+            "always",
+            {
+                "arraysInObjects": false,
+                "objectsInObjects": false,
+            }
+        ],
 
         // Prefer a `for-of` loop over a standard `for` loop if the index is only used to access the array being
         // iterated.
@@ -290,14 +299,16 @@ module.exports = {
             }
         ],
 
-        // Disallow `async` functions which have no await expression.
-        "@typescript-eslint/require-await": "error",
+        // Disallow `async` functions which have no await expression. Disabled because this occurs fairly often in our
+        // code. For example, consider an interface method that returns a promise, but not all implementers need an
+        // async implementation.
+        "@typescript-eslint/require-await": "off",
 
         // When adding two variables, operands must both be of type number or of type string.
         "@typescript-eslint/restrict-plus-operands": "error",
 
         // Enforce template literal expressions to be of string type.
-        "@typescript-eslint/restrict-template-expressions": "error",
+        "@typescript-eslint/restrict-template-expressions": "warn",
 
         "@typescript-eslint/semi": [
             "error",
@@ -323,6 +334,9 @@ module.exports = {
         // Exhaustiveness checking in switch with union type.
         "@typescript-eslint/switch-exhaustiveness-check": "error",
 
+        // Require consistent spacing around type annotations.
+        "@typescript-eslint/type-annotation-spacing": "error",
+
         // Enforces unbound methods are called with their expected scope. Warns when a method is used outside of a
         // method call. Class functions don't preserve the class scope when passed as standalone variables.
         "@typescript-eslint/unbound-method": [
@@ -335,6 +349,7 @@ module.exports = {
         // Warns for any two overloads that could be unified into one by using a union or an optional/rest parameter.
         "@typescript-eslint/unified-signatures": "error",
 
+        // Require parens around arrow function arguments
         "arrow-parens": [
             "error",
             "always"
@@ -373,7 +388,8 @@ module.exports = {
         // Requires that eslint disable comments have a start and an end, rather than being open-ended. Encourages
         // minimal disabling of eslint rules, while still permitting whole-file exclusions.
         "eslint-comments/disable-enable-pair": [
-            "error", {
+            "error",
+            {
                 "allowWholeFile": true
             }
         ],
@@ -423,7 +439,8 @@ module.exports = {
         "import/no-unresolved": [
             "error",
             {
-                "caseSensitive": true
+                "caseSensitive": true,
+                "caseSensitiveStrict": true,
             }
         ],
 
@@ -438,6 +455,9 @@ module.exports = {
         // Enforce a convention in the order of require() / import statements.
         "import/order": "error",
 
+        // Superseded by @typescript-eslint/keyword-spacing.
+        "keyword-spacing": "off",
+
         // Enforces a maximum line length.
         "max-len": [
             "error",
@@ -447,6 +467,9 @@ module.exports = {
                 "code": 120
             }
         ],
+
+        // Requires parentheses when invoking a constructor with no arguments.
+        "new-parens": "error",
 
         // Disallows bitwise operators. The use of bitwise operators in JavaScript is very rare and often & or | is
         // simply a mistyped && or ||, which will lead to unexpected behavior.
@@ -541,6 +564,9 @@ module.exports = {
         // Disallows use of the void operator.
         "no-void": "error",
 
+        // Superseded by @typescript-eslint/object-curly-spacing.
+        "object-curly-spacing": "off",
+
         // Enforces the use of the shorthand syntax.
         "object-shorthand": "error",
 
@@ -594,8 +620,14 @@ module.exports = {
         // Superseded by @typescript-eslint/semi.
         "semi": "off",
 
+        // Enforce spaces after, but not before, semicolons.
+        "semi-spacing": "error",
+
         // Enforce consistent spacing before blocks.
         "space-before-blocks": "error",
+
+        // Superseded by @typescript-eslint/space-before-function-paren.
+        "space-before-function-paren": "off",
 
         // Superseded by @typescript-eslint/space-infix-ops.
         "space-infix-ops": "error",
@@ -619,10 +651,15 @@ module.exports = {
         ],
 
         // Move function definitions to the highest possible scope.
-        "unicorn/consistent-function-scoping": "error",
+        "unicorn/consistent-function-scoping": "warn",
 
         // Disabled because it's too nit-picky.
         "unicorn/empty-brace-spaces": "off",
+
+        // This rule makes it possible to pass arguments to TODO and FIXME comments to trigger ESLint to report. Rule
+        // documentation is at
+        // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v40.0.0/docs/rules/expiring-todo-comments.md
+        "unicorn/expiring-todo-comments": "warn",
 
         // Enforces all linted files to have their names in a certain case style and lowercase file extension.
         "unicorn/filename-case": [
@@ -648,8 +685,15 @@ module.exports = {
         // Disabled because the node protocol causes problems, especially for isomorphic packages.
         "unicorn/prefer-node-protocol": "off",
 
+        // Top-level await is more readable and can prevent unhandled rejections.
+        "unicorn/prefer-top-level-await": "warn",
+
         // Disabled because we don't care about using abbreviations.
         "unicorn/prevent-abbreviations": "off",
+
+        // Enforces comparing typeof expressions against valid strings.
+        "valid-typeof": "error",
+
     },
     "overrides": [
         {
