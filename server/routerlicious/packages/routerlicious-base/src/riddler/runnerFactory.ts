@@ -77,7 +77,11 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
             // or don't want to automatically create (i.e. GitHub)
             if (!tenant.storage.credentials) {
                 try {
-                    await getOrCreateRepository(tenant.storage.url, tenant.storage.owner, tenant.storage.repository);
+                    let storageUrl = config.get("gitrest:internalUrl") as string | undefined;
+                    if (!storageUrl || storageUrl === "") {
+                        storageUrl = tenant.storage.url;
+                    }
+                    await getOrCreateRepository(storageUrl, tenant.storage.owner, tenant.storage.repository);
                 } catch (err) {
                     // This is okay to fail since the repos are alreay created in production.
                     winston.error(`Error creating repos`);
