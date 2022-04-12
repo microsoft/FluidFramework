@@ -127,11 +127,6 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
 
     /**
-     * Writes to the object with the given ID
-     */
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
-
-    /**
      * Creates a blob out of the given buffer
      */
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
