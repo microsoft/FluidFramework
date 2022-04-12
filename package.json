@@ -158,7 +158,6 @@
       },
       "tools": [
         "tools/benchmark",
-        "tools/generator-fluid",
         "server/tinylicious",
         "server/azure-local-service"
       ],
@@ -170,8 +169,6 @@
           "azure-local-service"
         ]
       }
-    },
-    "generatorName": "generator-fluid"
-  },
-  "packageManager": "yarn@1.22.18"
+    }
+  }
 }
