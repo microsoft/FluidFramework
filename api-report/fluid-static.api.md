@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
+import { ConnectionState } from '@fluidframework/container-definitions';
 import { DataObject } from '@fluidframework/aqueduct';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -42,6 +43,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     attach(): Promise<string>;
     get attachState(): AttachState;
     get connected(): boolean;
+    get connectionState(): ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     dispose(): void;
     get disposed(): boolean;
@@ -59,7 +61,9 @@ export interface IConnection {
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
     readonly attachState: AttachState;
+    // @deprecated
     readonly connected: boolean;
+    readonly connectionState: ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     dispose(): void;
     readonly disposed: boolean;

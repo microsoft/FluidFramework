@@ -169,6 +169,11 @@ describe("Ordered Client Collection", () => {
         });
 
         describe("Initialize", () => {
+            const emptySerializedElection = {
+                electedClientId: undefined,
+                electedParentId: undefined,
+                electionSequenceNumber: 101 };
+
             it("Should initialize with empty quorum", () => {
                 createOrderedClientElection();
                 assertElectionState(0, 0, undefined, 0);
@@ -194,13 +199,13 @@ describe("Ordered Client Collection", () => {
             });
 
             it("Should initialize with empty quorum and initial state", () => {
-                createOrderedClientElection(undefined, { electedClientId: undefined, electionSequenceNumber: 101 });
+                createOrderedClientElection(undefined, emptySerializedElection);
                 assertElectionState(0, 0, undefined, 101);
                 assertOrderedEligibleClientIds();
             });
 
             it("Should not log error with empty quorum and initially elected client", () => {
-                createOrderedClientElection(undefined, { electedClientId: "x", electionSequenceNumber: 101 });
+                createOrderedClientElection(undefined, emptySerializedElection);
                 assertElectionState(0, 0, undefined, 101);
                 assertOrderedEligibleClientIds();
             });
@@ -211,7 +216,7 @@ describe("Ordered Client Collection", () => {
                     ["b", 2, true],
                     ["s", 5, false],
                     ["c", 9, true],
-                ], { electedClientId: "b", electionSequenceNumber: 4321 });
+                ], { electedClientId: "b", electedParentId: "b", electionSequenceNumber: 4321 });
                 assertElectionState(4, 3, "b", 4321);
                 assertOrderedEligibleClientIds("a", "b", "c");
             });
@@ -223,7 +228,7 @@ describe("Ordered Client Collection", () => {
                     ["s", 5, false],
                     ["s2", 7, false],
                     ["c", 9, true],
-                ], { electedClientId: "s", electionSequenceNumber: 4321 });
+                ], { electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 });
                 assertElectionState(5, 3, "c", 4321);
                 mockLogger.matchEvents([{
                     eventName: "InitialElectedClientIneligible",
@@ -239,7 +244,7 @@ describe("Ordered Client Collection", () => {
                     ["b", 2, true],
                     ["s", 5, false],
                     ["s2", 7, false],
-                ], { electedClientId: "s", electionSequenceNumber: 4321 });
+                ], { electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 });
                 assertElectionState(4, 2, undefined, 4321);
                 mockLogger.matchEvents([{
                     eventName: "InitialElectedClientIneligible",
@@ -255,7 +260,7 @@ describe("Ordered Client Collection", () => {
                     ["b", 2, true],
                     ["s", 5, false],
                     ["c", 9, true],
-                ], { electedClientId: "x", electionSequenceNumber: 4321 });
+                ], { electedClientId: "x", electedParentId: "x", electionSequenceNumber: 4321 });
                 assertElectionState(4, 3, undefined, 4321);
                 assertOrderedEligibleClientIds("a", "b", "c");
             });
@@ -397,7 +402,7 @@ describe("Ordered Client Collection", () => {
                 assertElectionState(4, 3, "c", 19);
                 assertEvents(2);
                 removeClient("c", 5);
-                assertElectionState(3, 2, undefined, 24);
+                assertElectionState(3, 2, "a", 24);
                 assertEvents(3);
                 assertOrderedEligibleClientIds("a", "b");
             });
@@ -466,11 +471,11 @@ describe("Ordered Client Collection", () => {
                     ["b", 2, true],
                     ["s", 5, false],
                     ["c", 9, true],
-                ], { electedClientId: "s", electionSequenceNumber: 4321 });
+                ], { electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 });
                 removeClient("s", 1111);
                 assertElectionState(3, 3, "c", 4321);
                 removeClient("c", 1111);
-                assertElectionState(2, 2, undefined, 6543);
+                assertElectionState(2, 2, "a", 6543);
                 assertEvents(1);
             });
         });
@@ -508,35 +513,6 @@ describe("Ordered Client Collection", () => {
                 assertEvents(2);
             });
 
-            it("Should go to undefined from last", () => {
-                createOrderedClientElection([
-                    ["a", 1, true],
-                    ["b", 2, true],
-                    ["s", 5, false],
-                    ["c", 9, true],
-                ]);
-                incrementElectedClient(12);
-                incrementElectedClient(16);
-                incrementElectedClient(21);
-                assertElectionState(4, 3, undefined, 21);
-                assertEvents(3);
-            });
-
-            it("Should stay unchanged from end", () => {
-                createOrderedClientElection([
-                    ["a", 1, true],
-                    ["b", 2, true],
-                    ["s", 5, false],
-                    ["c", 9, true],
-                ]);
-                incrementElectedClient(12);
-                incrementElectedClient(16);
-                incrementElectedClient(21);
-                incrementElectedClient(27); // no-op, still updates election seq #
-                assertElectionState(4, 3, undefined, 27);
-                assertEvents(3);
-            });
-
             it("Should increment to new nodes", () => {
                 createOrderedClientElection([
                     ["a", 1, true],
@@ -544,11 +520,10 @@ describe("Ordered Client Collection", () => {
                     ["s", 5, false],
                     ["c", 9, true],
                 ]);
-                incrementElectedClient(12);
                 incrementElectedClient(16);
-                incrementElectedClient(21);
                 incrementElectedClient(27); // no-op
                 addClient("d", 100);
+                incrementElectedClient(100);
                 addClient("e", 101);
                 assertElectionState(6, 5, "d", 100);
                 incrementElectedClient(111);
@@ -557,9 +532,9 @@ describe("Ordered Client Collection", () => {
                 incrementElectedClient(205);
                 assertElectionState(7, 6, "f", 205);
                 incrementElectedClient(221);
-                assertElectionState(7, 6, undefined, 221);
+                assertElectionState(7, 6, "a", 221);
                 addClient("g", 229);
-                assertElectionState(8, 7, "g", 229);
+                assertElectionState(8, 7, "a", 221);
             });
 
             it("Should increment when ineligible client is elected", () => {
@@ -568,7 +543,7 @@ describe("Ordered Client Collection", () => {
                     ["s", 2, false],
                     ["b", 5, true],
                     ["c", 9, true],
-                ], { electedClientId: "s", electionSequenceNumber: 4321 });
+                ], { electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 });
                 assertElectionState(4, 3, "b", 4321);
                 incrementElectedClient(7777);
                 assertElectionState(4, 3, "c", 7777);
@@ -577,25 +552,6 @@ describe("Ordered Client Collection", () => {
         });
 
         describe("Reset elected client", () => {
-            it("Should only change election sequence number in empty quorum", () => {
-                createOrderedClientElection();
-                resetElectedClient(11);
-                assertElectionState(0, 0, undefined, 11);
-                assertEvents(0);
-            });
-
-            it("Should not reelect, only change election sequence number when already first", () => {
-                createOrderedClientElection([
-                    ["a", 1, true],
-                    ["b", 2, true],
-                    ["s", 5, false],
-                    ["c", 9, true],
-                ]);
-                resetElectedClient(11);
-                assertElectionState(4, 3, "a", 11);
-                assertEvents(0);
-            });
-
             it("Should reset to first when not first", () => {
                 createOrderedClientElection([
                     ["a", 1, true],
@@ -620,9 +576,9 @@ describe("Ordered Client Collection", () => {
                 incrementElectedClient(12);
                 incrementElectedClient(15);
                 incrementElectedClient(19);
-                resetElectedClient(31);
-                assertElectionState(4, 3, "a", 31);
-                assertEvents(4);
+                resetElectedClient(31); // no-op
+                assertElectionState(4, 3, "a", 19);
+                assertEvents(3);
             });
 
             it("Should reset to first when ineligible client is elected", () => {
@@ -631,7 +587,7 @@ describe("Ordered Client Collection", () => {
                     ["s", 2, false],
                     ["b", 5, true],
                     ["c", 9, true],
-                ], { electedClientId: "s", electionSequenceNumber: 4321 });
+                ], { electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 });
                 assertElectionState(4, 3, "b", 4321);
                 resetElectedClient(7777);
                 assertElectionState(4, 3, "a", 7777);

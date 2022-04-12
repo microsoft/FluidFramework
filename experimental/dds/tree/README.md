@@ -7,7 +7,7 @@ A [Fluid](https://fluidframework.com/) SharedObject Tree with:
 -   High quality automatic merge resolution
 -   Full History Inspection, Manipulation and Metadata
 
-Revisions of the tree (see [EditLog](.\src\EditLog.ts) and [Snapshot](.\src\Snapshot.ts)) are created from sequences of Edits.
+Revisions of the tree (see [EditLog](./src/EditLog.ts) and [TreeView](./src/TreeView.ts)) are created from sequences of Edits.
 
 Semantically, the current state of the tree is defined as:
 
@@ -22,7 +22,7 @@ The order of the edits is:
 
 ## Tree Abstraction
 
-The tree abstraction used for `SharedTree` is summarized by the [TreeNode](./src/generic/PersistedTypes.ts) class. Nodes have _traits_, a _definition_, an _identity_, and optionally a payload to contain extra arbitrary data.
+The tree abstraction used for `SharedTree` is summarized by the [TreeNode](./src/persisted-types/0.0.2.ts) class. Nodes have _traits_, a _definition_, an _identity_, and optionally a payload to contain extra arbitrary data.
 
 ### Definition
 
@@ -95,10 +95,10 @@ Each operation would be performed in its own `Edit`, which is `SharedTree`'s tra
 If it is undesirable that one of the above operations could fail to apply while the other could succeed, you should instead leverage `Checkout`. A `Checkout`--whose name is inspired from source control--can be thought of as a local view of the `SharedTree` which provides [snapshot isolation](https://en.wikipedia.org/wiki/Snapshot_isolation#:~:text=In%20databases%2C%20and%20transaction%20processing,the%20transaction%20itself%20will%20successfully). Editing the `SharedTree` using a `Checkout` can be done by opening an edit, applying a number of changes, and closing the edit.
 
 ```typescript
-const checkout = new BasicCheckout(tree);
+const checkout = new EagerCheckout(tree);
 checkout.openEdit();
-checkout.applyChanges(Insert.create([fooNode], StablePlace.atStartOf({ parent: initialTree, label: 'foo' })));
-checkout.applyChanges(Insert.create([barNode], StablePlace.atStartOf({ parent: initialTree, label: 'bar' })));
+checkout.applyChanges(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: initialTree, label: 'foo' })));
+checkout.applyChanges(Change.insertTree(barNode, StablePlace.atStartOf({ parent: initialTree, label: 'bar' })));
 checkout.closeEdit();
 ```
 
@@ -125,7 +125,7 @@ SharedTree is in active, but still relatively early development. As such, it is 
 
 Implementation-wise:
 
--   Document format may change only in major releases, and SharedTree is committed to backwards compatibility (support for older documents). For more information on this commitment, see the notes in [PersistedTypes.ts](./src/generic/PersistedTypes.ts).
+-   Document format may change only in major releases, and SharedTree is committed to backwards compatibility (support for older documents). For more information on this commitment, see the notes in [persisted-types](./src/persisted-types/README.md).
 -   APIs are not yet stable, and those beyond what's needed for the MVP (ex: history editing and inspection) are not provided yet. Core APIs are not likely to significantly change.
 -   Performance is generally reasonable. However, this assessment was made using integration-style performance tests of consuming applications. Though it's on the road-map, there are currently no rigorous performance tests which are isolated to SharedTree.
 
@@ -137,7 +137,7 @@ Design wise:
 
 # Edits
 
-An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [PersistedTypes.ts](.\src\generic\PersistedTypes.ts)). Each edit, when applied to a version of the document (a Snapshot), produces a new version of the document.
+An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [persisted-types](./src/persisted-types/0.0.2.ts)). Each edit, when applied to a version of the document (a TreeView), produces a new version of the document.
 
 Once an edit is acknowledged by the Fluid service (and thus it has a sequence number, and will be included in summaries), the version of the document it applies to is fixed: it will not be applied to any revision other than the one produced by its preceding edit.
 There may be operations that will create new edits based on existing ones and apply them in a different context, but these are logically considered new edits.
@@ -164,7 +164,7 @@ For example, two edits could be made concurrently: one that sorts a list alphabe
 Depending on how the sorting structures its changes and exactly where the insert occurred, the sort may or may not conflict if the insert gets acknowledged first.
 In some domains, it would be desired that this conflicts.
 In such domains, a Constraint could be added that would require the list to contain the same set of items as when the sort edit was created for it to apply correctly.
-The Constraint can specify what should happen if violated: see `ConstraintEffect` in [PersistedTypes.ts](.\src\default-edits\PersistedTypes.ts) for details.
+The Constraint can specify what should happen if violated: see `ConstraintEffect` in [persisted-types](./src/persisted-types/0.0.2.ts) for details.
 
 Note that these constraints apply to more than just the case of edits that were made concurrently:
 edits to history also use conflicts (and thus constraints) to prevent historical edits from being re-contextualized in ways that break their semantics.
@@ -183,7 +183,7 @@ Edits are transactional so any invalid change in an edit will cause the entire e
 However, no combination of changes will cause the client to crash.
 Changes go through validation before they are applied and invalid changes are currently dropped.
 
-#### Example
+#### Change Rejection Example
 
 Assuming a tree with a single node, A, a client creates an edit, 1, that inserts a node after node A.
 At the same time another client creates an edit, 2, that deletes node A.

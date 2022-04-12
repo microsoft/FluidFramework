@@ -10,7 +10,6 @@ import {
     FluidObject,
     IFluidHandle,
     IFluidHandleContext,
-    IFluidObject,
     IFluidRouter,
     IRequest,
     IResponse,
@@ -91,7 +90,6 @@ import {
 import {
     addBlobToSummary,
     addTreeToSummary,
-    convertToSummaryTree,
     createRootSummarizerNodeWithGC,
     IRootSummarizerNodeWithGC,
     RequestParser,
@@ -153,6 +151,7 @@ import {
     isDataStoreAliasMessage,
 } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
+import { OpTracker } from "./opTelemetry";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -278,8 +277,8 @@ export interface ISummaryRuntimeOptions {
  * Options for container runtime.
  */
 export interface IContainerRuntimeOptions {
-    summaryOptions?: ISummaryRuntimeOptions;
-    gcOptions?: IGCRuntimeOptions;
+    readonly summaryOptions?: ISummaryRuntimeOptions;
+    readonly gcOptions?: IGCRuntimeOptions;
     /**
      * Affects the behavior while loading the runtime when the data verification check which
      * compares the DeltaManager sequence number (obtained from protocol in summary) to the
@@ -288,13 +287,20 @@ export interface IContainerRuntimeOptions {
      * 2. "log" will log an error event to telemetry, but still continue to load.
      * 3. "bypass" will skip the check entirely. This is not recommended.
      */
-    loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     /**
      * Should the runtime use data store aliasing for creating root datastores.
      * In case of aliasing conflicts, the runtime will raise an exception which does
      * not effect the status of the container.
      */
-    useDataStoreAliasing?: boolean;
+    readonly useDataStoreAliasing?: boolean;
+    /**
+     * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
+     * send all operations to the driver layer, while in TurnBased the operations will be buffered
+     * and then sent them as a single batch at the end of the turn.
+     * By default, flush mode is TurnBased.
+     */
+    readonly flushMode?: FlushMode;
 }
 
 type IRuntimeMessageMetadata = undefined | {
@@ -348,6 +354,13 @@ const maxOpSizeInBytesKey = "Fluid.ContainerRuntime.MaxOpSizeInBytes";
 // to not reach the 1MB limits in socket.io and Kafka.
 const defaultMaxOpSizeInBytes = 768000;
 
+// By default, the size of the contents for the incoming ops is tracked.
+// However, in certain situations, this may incur a performance hit.
+// The feature-gate below can be used to disable this feature.
+const disableOpTrackingKey = "Fluid.ContainerRuntime.DisableOpTracking";
+
+const defaultFlushMode = FlushMode.TurnBased;
+
 export enum RuntimeMessage {
     FluidDataStoreOp = "component",
     Attach = "attach",
@@ -395,6 +408,7 @@ class ScheduleManagerCore {
     private currentBatchClientId: string | undefined;
     private localPaused = false;
     private timePaused = 0;
+    private batchCount = 0;
 
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -483,14 +497,30 @@ class ScheduleManagerCore {
         this.deltaManager.inbound.pause();
     }
 
-    private resumeQueue(startBatch: number, endBatch: number) {
+    private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage) {
+        const endBatch = messageEndBatch.sequenceNumber;
+        const duration = performance.now() - this.timePaused;
+
+        this.batchCount++;
+        if (this.batchCount % 1000 === 1) {
+            this.logger.sendTelemetryEvent({
+                eventName: "BatchStats",
+                sequenceNumber: endBatch,
+                length: endBatch - startBatch + 1,
+                msnDistance: endBatch - messageEndBatch.minimumSequenceNumber,
+                duration,
+                batchCount: this.batchCount,
+                interrupted: this.localPaused,
+            });
+        }
+
         // Return early if no change in value
         if (!this.localPaused) {
             return;
         }
 
         this.localPaused = false;
-        const duration = performance.now() - this.timePaused;
+
         // Random round number - we want to know when batch waiting paused op processing.
         if (duration > latencyThreshold) {
             this.logger.sendErrorEvent({
@@ -565,7 +595,7 @@ class ScheduleManagerCore {
         } else if (batchMetadata === false) {
             assert(this.pauseSequenceNumber !== undefined, 0x2a0 /* "batch presence was validated above" */);
             // Batch is complete, we can process it!
-            this.resumeQueue(this.pauseSequenceNumber, message.sequenceNumber);
+            this.resumeQueue(this.pauseSequenceNumber, message);
             this.pauseSequenceNumber = undefined;
             this.currentBatchClientId = undefined;
         } else {
@@ -606,7 +636,7 @@ export class ScheduleManager {
 
             // This could be the beginning of a new batch or an individual message.
             this.emitter.emit("batchBegin", message);
-            this.deltaScheduler.batchBegin();
+            this.deltaScheduler.batchBegin(message);
 
             const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
             if (batch) {
@@ -627,7 +657,7 @@ export class ScheduleManager {
             this.hitError = true;
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
-            this.deltaScheduler.batchEnd();
+            this.deltaScheduler.batchEnd(message);
             return;
         }
 
@@ -637,7 +667,7 @@ export class ScheduleManager {
         if (this.batchClientId === undefined || batch === false) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", undefined, message);
-            this.deltaScheduler.batchEnd();
+            this.deltaScheduler.batchEnd(message);
             return;
         }
     }
@@ -711,6 +741,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             gcOptions = {},
             loadSequenceNumberVerification = "close",
             useDataStoreAliasing = false,
+            flushMode = defaultFlushMode,
         } = runtimeOptions;
 
         // We pack at data store level only. If isolated channels are disabled,
@@ -806,6 +837,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcOptions,
                 loadSequenceNumberVerification,
                 useDataStoreAliasing,
+                flushMode,
             },
             containerScope,
             logger,
@@ -874,7 +906,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._flushMode;
     }
 
-    public get scope(): IFluidObject & FluidObject {
+    public get scope(): FluidObject {
         return this.containerScope;
     }
 
@@ -910,7 +942,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly defaultMaxConsecutiveReconnects = 15;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode: FlushMode = FlushMode.TurnBased;
+    private _flushMode: FlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -984,6 +1016,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
     private summaryCount: number | undefined;
+    private readonly opTracker: OpTracker;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -1038,6 +1071,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.maxConsecutiveReconnects =
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
 
+        this._flushMode = runtimeOptions.flushMode;
         this.garbageCollector = GarbageCollector.create(
             this,
             this.runtimeOptions.gcOptions,
@@ -1278,6 +1312,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
         BindBatchTracker(this, this.logger);
+        this.opTracker = new OpTracker(this.deltaManager, this.mc.config.getBoolean(disableOpTrackingKey) === true);
     }
 
     public dispose(error?: Error): void {
@@ -1447,13 +1482,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const electedSummarizerContent = JSON.stringify(this.summarizerClientElection?.serialize());
             addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
         }
-        const snapshot = this.blobManager.snapshot();
 
+        const summary = this.blobManager.summarize();
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
         // and the blob manager can handle the tree not existing when loading
-        if (snapshot.entries.length !== 0) {
-            const blobsTree = convertToSummaryTree(snapshot, false);
-            addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
+        if (Object.keys(summary.summary.tree).length > 0) {
+            addTreeToSummary(summaryTree, blobsTreeName, summary);
         }
 
         if (this.garbageCollector.writeDataAtRoot) {
@@ -1701,6 +1735,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
+        this.mc.logger.sendTelemetryEvent({
+            eventName: "FlushMode Updated",
+            old: this._flushMode,
+            new: mode,
+        });
+
         // Flush any pending batches if switching to immediate
         if (mode === FlushMode.Immediate) {
             this.flush();
@@ -1865,6 +1905,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {
             fluidDataStore.bindToContext();
+            this.logger.sendTelemetryEvent({
+                eventName: "Root datastore with props",
+                hasProps: props !== undefined,
+            });
         }
         return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
     }
@@ -2042,11 +2086,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             gcStats = await this.collectGarbage({ logger: summaryLogger, runSweep, fullGC });
         }
 
-        const summarizeResult = await this.summarizerNode.summarize(fullTree, trackState);
-        assert(summarizeResult.summary.type === SummaryType.Tree,
+        const { stats, summary } = await this.summarizerNode.summarize(fullTree, trackState);
+
+        assert(summary.type === SummaryType.Tree,
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
-        return { ...summarizeResult, gcStats } as IRootSummaryTreeWithStats;
+        return { stats, summary, gcStats };
     }
 
     /**
@@ -2145,6 +2190,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             await this.deltaManager.inbound.pause();
 
             const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
+            const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
             const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 
             // We should be here is we haven't processed be here. If we are of if the last message's sequence number
@@ -2189,7 +2235,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error: continueResult.error };
+                return {
+                    stage: "base",
+                    referenceSequenceNumber: summaryRefSeqNum,
+                    minimumSequenceNumber,
+                    error: continueResult.error,
+                };
             }
 
             // increment summary count
@@ -2212,7 +2263,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     runGC: this.garbageCollector.shouldRunGC,
                 });
             } catch (error) {
-                return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
+                return {
+                    stage: "base",
+                    referenceSequenceNumber: summaryRefSeqNum,
+                    minimumSequenceNumber,
+                    error,
+                };
             }
             const { summary: summaryTree, stats: partialStats } = summarizeResult;
 
@@ -2237,10 +2293,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcStateUpdatedDataStoreCount: summarizeResult.gcStats?.updatedDataStoreCount,
                 gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
                 gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
+                opsSizesSinceLastSummary: this.opTracker.opsSizeAccumulator,
+                nonSystemOpsSinceLastSummary: this.opTracker.nonSystemOpCount,
                 ...partialStats,
             };
             const generateSummaryData = {
                 referenceSequenceNumber: summaryRefSeqNum,
+                minimumSequenceNumber,
                 summaryTree,
                 summaryStats,
                 generateDuration: trace.trace().duration,
@@ -2307,7 +2366,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             } as const;
 
             this.summarizerNode.completeSummary(handle);
-
+            this.opTracker.reset();
             return submitData;
         } finally {
             // Cleanup wip summary in case of failure
