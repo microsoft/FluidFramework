@@ -23,7 +23,7 @@ import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
-import { parseFluidUrl, replaceDocumentIdInPath, replaceWithDiscoveredUrl } from "./urlUtils";
+import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { InMemoryCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
@@ -113,7 +113,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         let documentId: string;
         let token: string | undefined;
         let session: ISession | undefined;
-
+        let fluidResolvedUrl: IResolvedUrl;
         if (typeof res === "string") {
             documentId = res;
         } else {
@@ -121,11 +121,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             token = res.token;
             session = res.session;
         }
-
         if (session && this.driverPolicies.enableDiscovery) {
-            replaceWithDiscoveredUrl(resolvedUrl, session, parsedUrl);
-            parsedUrl = parseFluidUrl(resolvedUrl.url);
+            fluidResolvedUrl = getDiscoveredFluidResolvedUrl(resolvedUrl, session);
+        } else {
+            fluidResolvedUrl = resolvedUrl;
         }
+        parsedUrl = parseFluidUrl(fluidResolvedUrl.url);
 
         // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
         // is sufficient to determine if the token will be undefined or not.
@@ -134,7 +135,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
-        const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
+        const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
         if (!deltaStorageUrl) {
             throw new Error(
                 `All endpoints urls must be provided. [deltaStorageUrl:${deltaStorageUrl}]`);
@@ -144,11 +145,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         return this.createDocumentService(
             {
-                ...resolvedUrl,
+                ...fluidResolvedUrl,
                 url: parsedUrl.toString(),
                 id: documentId,
                 endpoints: {
-                    ...resolvedUrl.endpoints,
+                    ...fluidResolvedUrl.endpoints,
                     deltaStorageUrl: parsedDeltaStorageUrl.toString(),
                 },
             },
@@ -180,6 +181,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion }});
 
+        let fluidResolvedUrl: IResolvedUrl;
         if (!isCreateContainer && this.driverPolicies.enableDiscovery) {
             const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
             const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
@@ -196,10 +198,11 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             const session: ISession = await ordererRestWrapper.get<ISession>(
                 `/documents/${tenantId}/session/${documentId}`,
             );
-            replaceWithDiscoveredUrl(resolvedUrl, session, parsedUrl);
+            fluidResolvedUrl = getDiscoveredFluidResolvedUrl(resolvedUrl, session);
+        } else {
+            fluidResolvedUrl = resolvedUrl;
         }
 
-        const fluidResolvedUrl = resolvedUrl;
         const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;

@@ -184,7 +184,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
                 treeId: versionId,
             },
             async (event) => {
-                const response = disableCache !== undefined && disableCache && this.noCacheGitManager !== undefined ?
+                const response = disableCache && this.noCacheGitManager !== undefined ?
                 await this.noCacheGitManager.getSummary(versionId) :
                 await this.manager.getSummary(versionId);
                 event.end({

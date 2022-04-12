@@ -20,24 +20,31 @@ export const parseFluidUrl = (fluidUrl: string): URLParse => {
 export const replaceDocumentIdInPath = (urlPath: string, documentId: string): string =>
     urlPath.split("/").slice(0, -1).concat([documentId]).join("/");
 
-export const createFluidUrl = (domain: string, pathname: string): string =>
-    "fluid://".concat(domain, pathname);
+export const getDiscoveredFluidResolvedUrl = (resolvedUrl: IFluidResolvedUrl, session: ISession): IFluidResolvedUrl => {
+    if (session) {
+        const discoveredOrdererUrl = new URLParse(session.ordererUrl);
+        const deltaStorageUrl = new URLParse(resolvedUrl.endpoints.deltaStorageUrl);
+        deltaStorageUrl.set("host", discoveredOrdererUrl.host);
 
-export const replaceWithDiscoveredUrl = (resolvedUrl: IFluidResolvedUrl,
-    session: ISession,
-    parsedUrl: URLParse): void => {
-    if (session && session.ordererUrl.includes("https")) {
-        resolvedUrl.url = createFluidUrl(session.ordererUrl.replace(/^https?:\/\//, ""), parsedUrl.pathname);
-        resolvedUrl.endpoints.ordererUrl = session.ordererUrl;
+        const discoveredStorageUrl = new URLParse(session.historianUrl);
+        const storageUrl = new URLParse(resolvedUrl.endpoints.storageUrl);
+        storageUrl.set("host", discoveredStorageUrl.host);
 
-        const discoveredOrdererUrl = new URL(session.ordererUrl);
-        const deltaStorageUrl = new URL(resolvedUrl.endpoints.deltaStorageUrl);
-        deltaStorageUrl.host = discoveredOrdererUrl.host;
-        resolvedUrl.endpoints.deltaStorageUrl = deltaStorageUrl.toString();
+        const parsedUrl = parseFluidUrl(resolvedUrl.url);
+        const discoveredResolvedUrl: IFluidResolvedUrl = {
+            endpoints: {
+                deltaStorageUrl: deltaStorageUrl.toString(),
+                ordererUrl: session.ordererUrl,
+                storageUrl: storageUrl.toString(),
+            },
+            id: resolvedUrl.id,
+            tokens: resolvedUrl.tokens,
+            type: resolvedUrl.type,
+            url: new URLParse(`fluid://${discoveredOrdererUrl.host}${parsedUrl.pathname}`).toString(),
+        };
 
-        const discoveredHistorianUrl = new URL(session.historianUrl);
-        const storageUrl = new URL(resolvedUrl.endpoints.storageUrl);
-        storageUrl.host = discoveredHistorianUrl.host;
-        resolvedUrl.endpoints.storageUrl = storageUrl.toString();
+        return discoveredResolvedUrl;
+    } else {
+        return resolvedUrl;
     }
 };

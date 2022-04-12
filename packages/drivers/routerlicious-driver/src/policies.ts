@@ -33,7 +33,7 @@ export interface IRouterliciousDriverPolicies {
      */
     enableWholeSummaryUpload: boolean;
     /**
-     * Enable discovery for the routerlicious service
+     * Enable service endpoint discovery when creating or joining a session.
      * Default: false
      */
     enableDiscovery?: boolean;
