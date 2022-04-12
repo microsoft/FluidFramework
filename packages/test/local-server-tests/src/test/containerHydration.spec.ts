@@ -177,7 +177,7 @@ describe("Container Hydration", () => {
 
     it("does load snapshot starts with seq that is not #0 if doc service allows it", async () => {
         const loader = buildTestLoader({
-            canCreateNonZeroSeqDoc: true,
+            acceptsNonZeroSeqStartNum: true,
         });
         const attr = {
             ...baseAttributes,

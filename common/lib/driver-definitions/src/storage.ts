@@ -299,7 +299,7 @@ export interface IDocumentServiceCapabilities{
     /**
      * Document service can create docs with non-zero seq. start #
      */
-    canCreateWithNonZeroSeqNum?: boolean,
+    acceptsNonZeroSeqStartNum?: boolean,
 }
 
 export interface IDocumentServiceFactory {

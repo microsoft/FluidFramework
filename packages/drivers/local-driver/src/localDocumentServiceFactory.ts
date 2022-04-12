@@ -26,7 +26,7 @@ import { createLocalDocumentService } from "./localDocumentService";
 
 // Needs to be moved to driver definitions. To be resolved via #9833.
 export interface IDocumentServiceCapabilities{
-    canCreateNonZeroSeqDoc?: boolean,
+    acceptsNonZeroSeqStartNum?: boolean,
 }
 
 /**

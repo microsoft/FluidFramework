@@ -1266,11 +1266,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const attributes = await this.getDocumentAttributes(this._storage, snapshotTree);
 
         // Needs driver definitions. To be resolved via #9833.
-        const canCreateNonZeroSeqDoc: boolean =
+        const acceptsNonZeroSeqStartNum: boolean =
             (this.serviceFactory as any).capabilities
-                ?.canCreateNonZeroSeqDoc === true;
+                ?.acceptsNonZeroSeqStartNum === true;
         assert(
-            canCreateNonZeroSeqDoc || attributes.sequenceNumber === 0,
+            acceptsNonZeroSeqStartNum || attributes.sequenceNumber === 0,
             0x0db /* "Seq number in detached container should be 0!!" */,
         );
 
