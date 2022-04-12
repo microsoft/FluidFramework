@@ -29,9 +29,10 @@ export function generateToken(
 
     // Current time in seconds
     const now = Math.round(Date.now() / 1000);
+    const docId = documentId ?? "";
 
     const claims: ITokenClaims & { jti: string } = {
-        documentId,
+        documentId: docId,
         scopes,
         tenantId,
         user: userClaim,
@@ -42,7 +43,7 @@ export function generateToken(
     };
 
     const utf8Key = { utf8: key };
-    return jsrsasign.jws.JWS.sign(undefined, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
+    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 }
 
 export function generateUser(): IUser {
