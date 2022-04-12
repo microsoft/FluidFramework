@@ -797,7 +797,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
         assert(this.visibilityState === VisibilityState.GloballyVisible,
-            "Data store should be globally visible to attach channels.");
+            0x2d0 /* "Data store should be globally visible to attach channels." */);
 
         const summarizeResult = summarizeChannel(channel, true /* fullTree */, false /* trackState */);
         // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
@@ -904,7 +904,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this._attachState = AttachState.Attaching;
 
             assert(this.visibilityState === VisibilityState.LocallyVisible,
-                "Data store should be locally visible before it can become globally visible.");
+                0x2d1 /* "Data store should be locally visible before it can become globally visible." */);
 
             // Mark the data store globally visible and make its child channels visible as well.
             this.visibilityState = VisibilityState.GloballyVisible;
@@ -919,7 +919,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         });
         this.dataStoreContext.once("attached", () => {
             assert(this.visibilityState === VisibilityState.GloballyVisible,
-                "Data store should be globally visible when its attached.");
+                0x2d2 /* "Data store should be globally visible when its attached." */);
             this._attachState = AttachState.Attached;
             this.emit("attached");
         });

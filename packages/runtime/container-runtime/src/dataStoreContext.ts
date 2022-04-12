@@ -632,7 +632,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * globally visible now.
      */
     public makeLocallyVisible() {
-        assert(this.channel !== undefined, "undefined channel on datastore context");
+        assert(this.channel !== undefined, 0x2cf /* "undefined channel on datastore context" */);
         this.makeLocallyVisibleFn();
     }
 
