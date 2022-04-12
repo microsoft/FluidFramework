@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/data-object-base",
-  "version": "0.58.3000",
+  "version": "0.59.1000",
   "description": "Data object base for synchronously and lazily loaded object scenarios",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -21,12 +21,13 @@
   ],
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "concurrently npm:tsc npm:build:es5 npm:build:esnext",
+    "build:compile": "concurrently npm:tsc npm:build:es5 npm:build:esnext && npm run build:test",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:es5": "tsc --project ./tsconfig.es5.json",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
     "clean": "rimraf dist lib es5 *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
@@ -60,21 +61,21 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.47.1000",
-    "@fluidframework/container-runtime": "^0.58.3000",
-    "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/datastore": "^0.58.3000",
-    "@fluidframework/datastore-definitions": "^0.58.3000",
-    "@fluidframework/request-handler": "^0.58.3000",
-    "@fluidframework/runtime-definitions": "^0.58.3000",
-    "@fluidframework/runtime-utils": "^0.58.3000",
-    "@fluidframework/shared-object-base": "^0.58.3000"
+    "@fluidframework/container-definitions": "^0.48.1000-0",
+    "@fluidframework/container-runtime": "^0.59.1000",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/datastore": "^0.59.1000",
+    "@fluidframework/datastore-definitions": "^0.59.1000",
+    "@fluidframework/request-handler": "^0.59.1000",
+    "@fluidframework/runtime-definitions": "^0.59.1000",
+    "@fluidframework/runtime-utils": "^0.59.1000",
+    "@fluidframework/shared-object-base": "^0.59.1000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@0.58.2000",
+    "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@^0.58.0",
     "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
-    "@fluidframework/mocha-test-setup": "^0.58.3000",
+    "@fluidframework/mocha-test-setup": "^0.59.1000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
@@ -98,7 +99,7 @@
   },
   "module:es5": "es5/index.js",
   "typeValidation": {
-    "version": "0.58.3000",
+    "version": "0.59.1000",
     "broken": {}
   }
 }

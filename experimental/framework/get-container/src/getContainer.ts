@@ -5,6 +5,7 @@
 
 import {
     IContainer,
+    IFluidModuleWithDetails,
     IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -24,9 +25,14 @@ export interface IGetContainerParams {
 export async function createContainer(
     params: IGetContainerParams,
 ): Promise<IContainer> {
-    const module = { fluidExport: params.containerRuntimeFactory };
-    const codeLoader = { load: async () => module };
+    const load = async (): Promise<IFluidModuleWithDetails> => {
+        return {
+            module: { fluidExport: params.containerRuntimeFactory },
+            details: { package: "no-dynamic-package", config: {} },
+        };
+    };
 
+    const codeLoader = { load };
     const loader = new Loader({
         urlResolver: params.urlResolver,
         documentServiceFactory: params.documentServiceFactory,
@@ -45,9 +51,14 @@ export async function createContainer(
 export async function getContainer(
     params: IGetContainerParams,
 ): Promise<IContainer> {
-    const module = { fluidExport: params.containerRuntimeFactory };
-    const codeLoader = { load: async () => module };
+    const load = async (): Promise<IFluidModuleWithDetails> => {
+        return {
+            module: { fluidExport: params.containerRuntimeFactory },
+            details: { package: "no-dynamic-package", config: {} },
+        };
+    };
 
+    const codeLoader = { load };
     const loader = new Loader({
         urlResolver: params.urlResolver,
         documentServiceFactory: params.documentServiceFactory,
