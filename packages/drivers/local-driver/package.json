@@ -64,10 +64,10 @@
     "@fluidframework/driver-utils": "^0.59.1000",
     "@fluidframework/protocol-definitions": "^0.1028.1000-0",
     "@fluidframework/routerlicious-driver": "^0.59.1000",
-    "@fluidframework/server-local-server": "^0.1035.1000",
+    "@fluidframework/server-local-server": "^0.1036.1000-0",
     "@fluidframework/server-services-client": "^0.1036.1000-0",
-    "@fluidframework/server-services-core": "^0.1035.1000",
-    "@fluidframework/server-test-utils": "^0.1035.1000",
+    "@fluidframework/server-services-core": "^0.1036.1000-0",
+    "@fluidframework/server-test-utils": "^0.1036.1000-0",
     "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
   },
