@@ -11,11 +11,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-<<<<<<< HEAD
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-=======
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
->>>>>>> 684f50e3ac (Added GC mark phase of blobs uploaded externally via BlobManager.)
+import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 /**
  * This class represents blob (long string)
