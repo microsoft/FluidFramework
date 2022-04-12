@@ -35,10 +35,12 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const kafkaClientId = config.get("scribe:kafkaClientId");
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
     const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+    const defaultHistorianUrl = config.get("worker:blobStorageUrl");
+    const defaultInternalHistorianUrl = config.get("worker:internalBlobStorageUrl") || defaultHistorianUrl;
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
-    const tenantManager = new TenantManager(authEndpoint);
+    const tenantManager = new TenantManager(authEndpoint, defaultInternalHistorianUrl);
 
     // Access Mongo storage for pending summaries
     const operationsDbMongoFactory = new MongoDbFactory(operationsDbMongoUrl, bufferMaxEntries);

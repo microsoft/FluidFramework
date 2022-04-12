@@ -209,7 +209,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             operationsDbMongoManager,
             config.get("mongo:collectionNames:reservations"));
 
-        const tenantManager = new services.TenantManager(authEndpoint);
+        const defaultHistorianUrl = config.get("worker:blobStorageUrl");
+        const defaultInternalHistorianUrl = config.get("worker:internalBlobStorageUrl") || defaultHistorianUrl;
+        const tenantManager = new services.TenantManager(authEndpoint, defaultInternalHistorianUrl);
 
         // Redis connection for throttling.
         const redisConfigForThrottling = config.get("redisForThrottling");

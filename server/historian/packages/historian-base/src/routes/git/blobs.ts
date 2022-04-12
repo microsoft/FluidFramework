@@ -30,7 +30,13 @@ export function create(
         tenantId: string,
         authorization: string,
         body: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.createBlob(body);
     }
 
@@ -39,7 +45,13 @@ export function create(
         authorization: string,
         sha: string,
         useCache: boolean): Promise<git.IBlob> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.getBlob(sha, useCache);
     }
 
@@ -62,7 +74,7 @@ export function create(
                 response,
                 false,
                 201);
-    });
+        });
 
     /**
      * Retrieves the given blob from the repository
@@ -76,7 +88,7 @@ export function create(
                 blobP,
                 response,
                 useCache);
-    });
+        });
 
     /**
      * Retrieves the given blob as an image
@@ -94,10 +106,10 @@ export function create(
                 }
                 response.status(200).write(Buffer.from(blob.content, "base64"), () => response.end());
             },
-            (error) => {
-                response.status(error?.code ?? 400).json(error?.message ?? error);
-            });
-    });
+                (error) => {
+                    response.status(error?.code ?? 400).json(error?.message ?? error);
+                });
+        });
 
     return router;
 }

@@ -34,7 +34,9 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
-    const tenantManager = new services.TenantManager(authEndpoint);
+    const defaultHistorianUrl = config.get("worker:blobStorageUrl");
+    const defaultInternalHistorianUrl = config.get("worker:internalBlobStorageUrl") || defaultHistorianUrl;
+    const tenantManager = new services.TenantManager(authEndpoint, defaultInternalHistorianUrl);
 
     // Database connection for global db if enabled
     let globalDbMongoManager;

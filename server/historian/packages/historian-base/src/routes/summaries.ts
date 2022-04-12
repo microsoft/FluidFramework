@@ -4,7 +4,7 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse} from "@fluidframework/server-services-client";
+import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "@fluidframework/server-services-client";
 import { IThrottler } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle, getParam } from "@fluidframework/server-services-utils";
 import { Router } from "express";
@@ -32,7 +32,13 @@ export function create(
         authorization: string,
         sha: string,
         useCache: boolean): Promise<IWholeFlatSummary> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.getSummary(sha, useCache);
     }
 
@@ -40,7 +46,13 @@ export function create(
         tenantId: string,
         authorization: string,
         params: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            config,
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage);
         return service.createSummary(params);
     }
 
@@ -49,6 +61,7 @@ export function create(
         authorization: string,
         softDelete: boolean): Promise<boolean[]> {
         const service = await utils.createGitService(
+            config,
             tenantId,
             authorization,
             tenantService,
@@ -74,7 +87,7 @@ export function create(
                 response,
                 // Browser caching for summary data should be disabled for now.
                 false);
-    });
+        });
 
     router.post("/repos/:ignored?/:tenantId/git/summaries",
         throttle(throttler, winston, commonThrottleOptions),
@@ -86,7 +99,7 @@ export function create(
                 response,
                 false,
                 201);
-    });
+        });
 
     router.delete("/repos/:ignored?/:tenantId/git/summaries",
         throttle(throttler, winston, commonThrottleOptions),
@@ -101,7 +114,7 @@ export function create(
                 summaryP,
                 response,
                 false);
-    });
+        });
 
     return router;
 }

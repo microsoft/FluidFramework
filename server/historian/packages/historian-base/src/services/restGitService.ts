@@ -21,6 +21,7 @@ import {
 import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import * as winston from "winston";
+import * as nconf from "nconf";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { getRequestErrorTranslator } from "../utils";
@@ -52,6 +53,7 @@ export class RestGitService {
     private readonly lumberProperties: Record<BaseTelemetryProperties, any>;
 
     constructor(
+        private readonly config: nconf.Provider,
         private readonly storage: ITenantStorage,
         private readonly writeToExternalStorage: boolean,
         private readonly tenantId: string,
@@ -81,9 +83,14 @@ export class RestGitService {
             [BaseTelemetryProperties.documentId]: this.documentId,
         };
 
+        let storageUrl = this.config.get("storageUrl") as string | undefined;
+        if (!storageUrl || storageUrl === "") {
+            storageUrl = storage.url;
+        }
+
         winston.info(
             `Created RestGitService: ${JSON.stringify({
-                "BaseUrl": storage.url,
+                "BaseUrl": storageUrl,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
                 "Storage-Name": this.storageName,
             })}`,
@@ -91,7 +98,7 @@ export class RestGitService {
 
         Lumberjack.info(
             `Created RestGitService: ${JSON.stringify({
-                "BaseUrl": storage.url,
+                "BaseUrl": storageUrl,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
                 "Storage-Name": this.storageName,
             })}`,
@@ -99,7 +106,7 @@ export class RestGitService {
         );
 
         this.restWrapper = new BasicRestWrapper(
-            storage.url,
+            storageUrl,
             undefined,
             undefined,
             undefined,
