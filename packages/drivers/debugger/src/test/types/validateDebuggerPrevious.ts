@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_DebuggerUI": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DebuggerUI():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_DebuggerUI(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_DebuggerUI": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DebuggerUI():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_DebuggerUI(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_debuggerUIFactory": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_debuggerUIFactory():
@@ -52,7 +52,7 @@ use_current_TypeAliasDeclaration_debuggerUIFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_debuggerUIFactory": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_debuggerUIFactory():
@@ -64,7 +64,7 @@ use_old_TypeAliasDeclaration_debuggerUIFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_DebugReplayController": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DebugReplayController():
@@ -76,7 +76,7 @@ use_current_ClassDeclaration_DebugReplayController(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_DebugReplayController": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DebugReplayController():
@@ -88,7 +88,7 @@ use_old_ClassDeclaration_DebugReplayController(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_FluidDebugger.createFromService": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_FluidDebugger_createFromService():
@@ -100,7 +100,7 @@ use_current_FunctionDeclaration_FluidDebugger_createFromService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_FluidDebugger.createFromService": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_FluidDebugger_createFromService():
@@ -112,7 +112,7 @@ use_old_FunctionDeclaration_FluidDebugger_createFromService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_FluidDebugger.createFromServiceFactory": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_FluidDebugger_createFromServiceFactory():
@@ -124,7 +124,7 @@ use_current_FunctionDeclaration_FluidDebugger_createFromServiceFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_FluidDebugger.createFromServiceFactory": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_FluidDebugger_createFromServiceFactory():
@@ -136,7 +136,7 @@ use_old_FunctionDeclaration_FluidDebugger_createFromServiceFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IDebuggerController": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDebuggerController():
@@ -148,7 +148,7 @@ use_current_InterfaceDeclaration_IDebuggerController(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IDebuggerController": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDebuggerController():
@@ -160,7 +160,7 @@ use_old_InterfaceDeclaration_IDebuggerController(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IDebuggerUI": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDebuggerUI():
@@ -172,7 +172,7 @@ use_current_InterfaceDeclaration_IDebuggerUI(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IDebuggerUI": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDebuggerUI():

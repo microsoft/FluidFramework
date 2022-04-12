@@ -6,7 +6,7 @@ import * as semver from "semver";
 import {
     IFluidCodeDetails,
     IFluidCodeDetailsComparer,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/container-definitions";
 import {
     ICodeDetailsLoader,
     IFluidModuleWithDetails,

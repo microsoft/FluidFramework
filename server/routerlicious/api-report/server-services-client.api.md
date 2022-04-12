@@ -334,6 +334,16 @@ export interface IPatchRefParamsExternal extends resources.IPatchRefParams {
 }
 
 // @public (undocumented)
+export interface ISession {
+    // (undocumented)
+    historianUrl: string;
+    // (undocumented)
+    isSessionAlive: boolean;
+    // (undocumented)
+    ordererUrl: string;
+}
+
+// @public (undocumented)
 export interface ISummaryTree extends ISummaryTree_2 {
     // (undocumented)
     tree: {

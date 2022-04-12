@@ -33,7 +33,7 @@ class TestInterval implements IInterval {
     }
 
     public overlaps(b: TestInterval) {
-        const result = (this.start < b.end) &&
+        const result = (this.start <= b.end) &&
             (this.end >= b.start);
         return result;
     }

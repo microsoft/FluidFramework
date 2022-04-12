@@ -6,7 +6,7 @@
 import {
     Definition,
     ChangeNode,
-    NodeId,
+    NodeIdContext,
 } from "@fluid-experimental/tree";
 import { Serializable } from "@fluidframework/datastore-definitions";
 
@@ -16,35 +16,33 @@ export const enum NodeKind {
     array = "a",
 }
 
-export const nodeId = () => Math.random().toString(36).slice(2) as NodeId;
-
 // Helper for creating Scalar nodes in SharedTree
-export const makeScalar = <T>(value: Serializable<T>): ChangeNode => ({
-    identifier: nodeId(),
+export const makeScalar = <T>(idContext: NodeIdContext, value: Serializable<T>): ChangeNode => ({
+    identifier: idContext.generateNodeId(),
     definition: NodeKind.scalar as Definition,
     traits: {},
     payload: value,
 });
 
-export function fromJson<T>(value: Serializable<T>): ChangeNode {
+export function fromJson<T>(idContext: NodeIdContext, value: Serializable<T>): ChangeNode {
     if (typeof value === "object") {
         if (Array.isArray(value)) {
             return {
-                identifier: nodeId(),
+                identifier: idContext.generateNodeId(),
                 definition: NodeKind.array as Definition,
-                traits: { items: value.map(fromJson) },
+                traits: { items: value.map((property: Serializable<T>): ChangeNode => fromJson(idContext, property)) },
             };
         } else if (value === null) {
-            return makeScalar(null);
+            return makeScalar(idContext, null);
         } else {
             const traits: PropertyDescriptorMap = {};
 
             for (const [label, json] of Object.entries(value)) {
-                traits[label] = { value: [fromJson(json)], enumerable: true };
+                traits[label] = { value: [fromJson(idContext, json)], enumerable: true };
             }
 
             const node: ChangeNode = {
-                identifier: nodeId(),
+                identifier: idContext.generateNodeId(),
                 definition: NodeKind.object as Definition,
                 traits: Object.defineProperties({}, traits),
             };
@@ -52,6 +50,6 @@ export function fromJson<T>(value: Serializable<T>): ChangeNode {
             return node;
         }
     } else {
-        return makeScalar(value);
+        return makeScalar(idContext, value);
     }
 }

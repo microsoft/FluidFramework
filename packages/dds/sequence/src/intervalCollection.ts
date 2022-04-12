@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import {
     addProperties,
@@ -148,7 +148,7 @@ export class Interval implements ISerializableInterval {
     }
 
     public overlaps(b: Interval) {
-        const result = (this.start < b.end) &&
+        const result = (this.start <= b.end) &&
             (this.end >= b.start);
         return result;
     }
@@ -255,7 +255,7 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     public overlaps(b: SequenceInterval) {
-        const result = (this.start.compare(b.end) < 0) &&
+        const result = (this.start.compare(b.end) <= 0) &&
             (this.end.compare(b.start) >= 0);
         return result;
     }
@@ -600,18 +600,20 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                 // Create a new ID.
                 interval.properties[reservedIntervalIdKey] = uuid();
             }
-            // Make the ID immutable.
-            Object.defineProperty(interval.properties, reservedIntervalIdKey, {
-                configurable: false,
-                enumerable: true,
-                writable: false,
-            });
             this.add(interval);
         }
         return interval;
     }
 
     public add(interval: TInterval) {
+        assert(Object.prototype.hasOwnProperty.call(interval.properties, reservedIntervalIdKey),
+            0x2c0 /* "ID must be created before adding interval to collection" */);
+        // Make the ID immutable.
+        Object.defineProperty(interval.properties, reservedIntervalIdKey, {
+            configurable: false,
+            enumerable: true,
+            writable: false,
+        });
         this.intervalTree.put(interval, this.conflictResolver);
         this.endIntervalTree.put(interval, interval, this.endConflictResolver);
     }
@@ -1092,7 +1094,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         else {
             // If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
             // should be the winning change.
-            const id: string = serializedInterval.properties[reservedIntervalIdKey];
+            // Note that the ID is in the property bag only to allow us to find the interval.
+            // This API cannot change the ID, and writing to the ID property will result in an exception. So we
+            // strip it out of the properties here.
+            const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties;
             interval = this.getIntervalById(id);
             if (interval) {
                 let start: number | undefined;
@@ -1109,7 +1114,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                     // the one we originally found in the tree.
                     interval = this.localCollection.changeInterval(interval, start, end, op) ?? interval;
                 }
-                const deltaProps = interval.addProperties(serializedInterval.properties, true, op.sequenceNumber);
+                const deltaProps = interval.addProperties(newProps, true, op.sequenceNumber);
                 if (this.onDeserialize) {
                     this.onDeserialize(interval);
                 }

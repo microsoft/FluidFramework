@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_createTinyliciousCreateNewRequest": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_createTinyliciousCreateNewRequest():
@@ -28,7 +28,7 @@ use_current_VariableDeclaration_createTinyliciousCreateNewRequest(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_createTinyliciousCreateNewRequest": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_createTinyliciousCreateNewRequest():
@@ -40,7 +40,7 @@ use_old_VariableDeclaration_createTinyliciousCreateNewRequest(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_defaultTinyliciousEndpoint": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_defaultTinyliciousEndpoint():
@@ -52,7 +52,7 @@ use_current_VariableDeclaration_defaultTinyliciousEndpoint(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_defaultTinyliciousEndpoint": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_defaultTinyliciousEndpoint():
@@ -64,7 +64,7 @@ use_old_VariableDeclaration_defaultTinyliciousEndpoint(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_defaultTinyliciousPort": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_defaultTinyliciousPort():
@@ -76,7 +76,7 @@ use_current_VariableDeclaration_defaultTinyliciousPort(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_defaultTinyliciousPort": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_defaultTinyliciousPort():
@@ -88,7 +88,7 @@ use_old_VariableDeclaration_defaultTinyliciousPort(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_InsecureTinyliciousTokenProvider": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_InsecureTinyliciousTokenProvider():
@@ -100,7 +100,7 @@ use_current_ClassDeclaration_InsecureTinyliciousTokenProvider(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_InsecureTinyliciousTokenProvider": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_InsecureTinyliciousTokenProvider():
@@ -112,7 +112,7 @@ use_old_ClassDeclaration_InsecureTinyliciousTokenProvider(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_InsecureTinyliciousUrlResolver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_InsecureTinyliciousUrlResolver():
@@ -124,7 +124,7 @@ use_current_ClassDeclaration_InsecureTinyliciousUrlResolver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_InsecureTinyliciousUrlResolver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_InsecureTinyliciousUrlResolver():
