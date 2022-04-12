@@ -63,7 +63,6 @@ import {
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
-    GenericFluidError,
     TelemetryDataTag,
     ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
