@@ -318,17 +318,15 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new GenericFluidError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
-    }
-
     public async realize(): Promise<IFluidDataStoreChannel> {
         assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
                 const errorWrapped = DataProcessingError.wrapIfUnrecognized(error, "realizeFluidDataStoreContext");
-                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData" } });
+                errorWrapped.addTelemetryProperties(
+                    { fluidDataStoreId: { value: this.id, tag: TelemetryDataTag.PackageData } });
+
                 this.channelDeferred?.reject(errorWrapped);
                 this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
             });
@@ -338,8 +336,18 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     protected async factoryFromPackagePath(packages?: readonly string[]) {
         assert(this.pkg === packages, 0x13e /* "Unexpected package path" */);
+
+        // Classify failures here as DataProcessingErrors
+        // The Container was likely misconfigured such that the necessary packages are not available
+        const failure = (reason: string, packageName?: string) =>
+            DataProcessingError.create(
+                reason,
+                "factoryFromPackagePath",
+                undefined /* sequencedMessage */,
+                { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
+
         if (packages === undefined) {
-            this.rejectDeferredRealize("packages is undefined");
+            throw failure("packages is undefined");
         }
 
         let entry: FluidDataStoreRegistryEntry | undefined;
@@ -347,18 +355,18 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         let lastPkg: string | undefined;
         for (const pkg of packages) {
             if (!registry) {
-                this.rejectDeferredRealize("No registry for package", lastPkg);
+                throw failure("No registry for package", lastPkg);
             }
             lastPkg = pkg;
             entry = await registry.get(pkg);
             if (!entry) {
-                this.rejectDeferredRealize("Registry does not contain entry for the package", pkg);
+                throw failure("Registry does not contain entry for the package", pkg);
             }
             registry = entry.IFluidDataStoreRegistry;
         }
         const factory = entry?.IFluidDataStoreFactory;
         if (factory === undefined) {
-            this.rejectDeferredRealize("Can't find factory for package", lastPkg);
+            throw failure("Can't find factory for package", lastPkg);
         }
 
         return { factory, registry };
