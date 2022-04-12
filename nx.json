@@ -80,6 +80,10 @@
             {
                 "target": "tsc",
                 "projects": "self"
+            },
+            {
+                "target": "build:test",
+                "projects": "dependencies"
             }
         ],
         "build:test:jest": [
