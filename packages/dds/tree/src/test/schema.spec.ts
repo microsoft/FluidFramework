@@ -12,9 +12,16 @@ import {
 	allowsFieldSuperset, allowsTreeSuperset, allowsValueSuperset, isNeverField, isNeverTree,
 } from "../schema/Comparison";
 import {
-	FieldSchema, GlobalFieldKey, LocalFieldKey, Multiplicity, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+	FieldSchema,
+	GlobalFieldKey,
+	LocalFieldKey,
+	Multiplicity,
+	NamedTreeSchema,
+	TreeSchema,
+	TreeSchemaIdentifier,
+	ValueSchema,
 } from "../schema/Schema";
-import { emptyField, emptyMap, emptySet } from "../schema/Builders";
+import { emptyField, emptyMap, emptySet, fieldSchema } from "../schema/Builders";
 import { anyField, anyTree, neverField, neverTree } from "../schema/SpecialSchema";
 import { StoredSchemaRepository } from "../schema/StoredSchemaRepository";
 
@@ -26,8 +33,37 @@ describe("Schema", () => {
 		extraGlobalFields: true,
 		value: ValueSchema.Serializable,
 	};
-	const emptyTree: TreeSchema = {
+
+	const emptyTree: NamedTreeSchema = {
+		name: "empty" as TreeSchemaIdentifier,
 		localFields: emptyMap,
+		globalFields: emptySet,
+		extraLocalFields: emptyField,
+		extraGlobalFields: false,
+		value: ValueSchema.Nothing,
+	};
+
+	const emptyLocalFieldTree: NamedTreeSchema = {
+		name: "emptyLocalFieldTree" as TreeSchemaIdentifier,
+		localFields: new Map([["x" as LocalFieldKey, emptyField]]),
+		globalFields: emptySet,
+		extraLocalFields: emptyField,
+		extraGlobalFields: false,
+		value: ValueSchema.Nothing,
+	};
+
+	const optionalLocalFieldTree: NamedTreeSchema = {
+		name: "optionalLocalFieldTree" as TreeSchemaIdentifier,
+		localFields: new Map([["x" as LocalFieldKey, fieldSchema(Multiplicity.Optional, [emptyTree.name])]]),
+		globalFields: emptySet,
+		extraLocalFields: emptyField,
+		extraGlobalFields: false,
+		value: ValueSchema.Nothing,
+	};
+
+	const valueLocalFieldTree: NamedTreeSchema = {
+		name: "valueLocalFieldTree" as TreeSchemaIdentifier,
+		localFields: new Map([["x" as LocalFieldKey, fieldSchema(Multiplicity.Value, [emptyTree.name])]]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
 		extraGlobalFields: false,
@@ -79,6 +115,12 @@ describe("Schema", () => {
 			value: ValueSchema.Nothing,
 		}), false);
 		assert.equal(isNeverTree(repo, anyTree), false);
+
+		assert(repo.tryUpdateTreeSchema(emptyTree.name, emptyTree));
+
+		assert.equal(isNeverTree(repo, emptyLocalFieldTree), false);
+		assert.equal(isNeverTree(repo, valueLocalFieldTree), false);
+		assert.equal(isNeverTree(repo, optionalLocalFieldTree), false);
 	});
 
 	it("allowsValueSuperset", () => {
@@ -86,7 +128,7 @@ describe("Schema", () => {
 		testOrder(allowsValueSuperset, [ValueSchema.Number, ValueSchema.Serializable]);
 		testOrder(allowsValueSuperset, [ValueSchema.String, ValueSchema.Serializable]);
 		testOrder(allowsValueSuperset, [ValueSchema.Nothing, ValueSchema.Serializable]);
-		testPartialOrder(
+		testPartialOrder<ValueSchema>(
 			allowsValueSuperset,
 			[ValueSchema.Boolean, ValueSchema.Number, ValueSchema.String,
 				ValueSchema.Nothing, ValueSchema.Serializable],
@@ -107,9 +149,15 @@ describe("Schema", () => {
 
 	it("allowsTreeSuperset", () => {
 		const repo = new StoredSchemaRepository();
+		assert(repo.tryUpdateTreeSchema(emptyTree.name, emptyTree));
 		const compare = (a: TreeSchema, b: TreeSchema): boolean => allowsTreeSuperset(repo, a, b);
-		testOrder(compare, [neverTree, emptyTree, anyTree]);
-		testPartialOrder(compare, [neverTree, neverTree2, anyTree, emptyTree], [[neverTree, neverTree2]]);
+		testOrder(compare, [neverTree, emptyTree, optionalLocalFieldTree, anyTree]);
+		testPartialOrder(
+			compare,
+			[neverTree, neverTree2, anyTree, emptyTree,
+				emptyLocalFieldTree, optionalLocalFieldTree, valueLocalFieldTree],
+			[[neverTree, neverTree2], [emptyTree, emptyLocalFieldTree]],
+		);
 	});
 });
 
@@ -147,7 +195,8 @@ function testOrder<T>(compare: (a: T, b: T) => boolean, inOrder: T[]): void {
  * Tests a comparison function, ensuring it produces a non-strict partial order over the provided values.
  * https://en.wikipedia.org/wiki/Partially_ordered_set#Non-strict_partial_order
  */
-function testPartialOrder<T>(compare: (a: T, b: T) => boolean, values: T[], expectedEqual: T[][] = []): void {
+function testPartialOrder<T>(
+	compare: (a: T, b: T) => boolean, values: T[], expectedEqual: T[][] = []): void {
 	// To be a strict partial order, the function must be:
 	// Reflexivity: a ≤ a
 	// Antisymmetry: if a ≤ b and b ≤ a then a = b
@@ -156,7 +205,7 @@ function testPartialOrder<T>(compare: (a: T, b: T) => boolean, values: T[], expe
 	// This can is brute forced in O(n^3) time below:
 	// Violations:
 	const reflexivity: T[] = [];
-	const antisymmetry: T[][] = [];
+	const antisymmetry: [boolean, T, T][] = [];
 	const transitivity: T[][] = [];
 
 	const expectedEqualMap: Map<T, Set<T>> = new Map();
@@ -173,8 +222,9 @@ function testPartialOrder<T>(compare: (a: T, b: T) => boolean, values: T[], expe
 		}
 
 		for (const b of values) {
-			if (compare(a, b) && compare(b, a) && !(a === b || expectedEqualMap.get(a)?.has(b))) {
-				antisymmetry.push([a, b]);
+			const expectEqual = (a === b) || (expectedEqualMap.get(a)?.has(b) ?? false);
+			if ((compare(a, b) && compare(b, a)) !== expectEqual) {
+				antisymmetry.push([expectEqual, a, b] as [boolean, T, T]);
 			}
 
 			for (const c of values) {
@@ -186,7 +236,35 @@ function testPartialOrder<T>(compare: (a: T, b: T) => boolean, values: T[], expe
 			}
 		}
 	}
-	assert.deepEqual(reflexivity, []);
-	assert.deepEqual(antisymmetry, []);
-	assert.deepEqual(transitivity, []);
+	assert.deepEqual(intoSimpleObject(reflexivity), [], "reflexivity");
+	assert.deepEqual(intoSimpleObject(antisymmetry), [], "antisymmetry");
+	assert.deepEqual(intoSimpleObject(transitivity), [], "transitivity");
+}
+
+/**
+ * Flatten maps and arrays into simple objects for better printing.
+ */
+function intoSimpleObject(obj: unknown): unknown {
+	if (typeof obj !== "object") {
+		return obj;
+	}
+	if (obj instanceof Array) {
+		return Array.from(obj, intoSimpleObject);
+	}
+	if (obj instanceof Map) {
+		return Array.from(
+			obj,
+			([key, value]): [unknown, unknown] => [key, intoSimpleObject(value)]);
+	}
+	if (obj instanceof Set) {
+		return Array.from(obj as ReadonlySet<string>);
+	}
+	const out = {};
+	// eslint-disable-next-line no-restricted-syntax
+	for (const key in obj) {
+		if (Object.prototype.hasOwnProperty.call(obj, key)) {
+			out[key] = intoSimpleObject(obj[key]);
+		}
+	}
+	return out;
 }

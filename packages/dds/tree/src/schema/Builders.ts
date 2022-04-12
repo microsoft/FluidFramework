@@ -41,7 +41,6 @@ export const rootFieldKey = "rootFieldKey" as GlobalFieldKey;
  */
 export const emptyField: FieldSchema = {
     multiplicity: Multiplicity.Forbidden,
-    types: emptySet,
 };
 
 export function fieldSchema(multiplicity: Multiplicity, types: readonly TreeSchemaIdentifier[]): FieldSchema {

@@ -18,6 +18,7 @@ import { treeSchema, fieldSchema, emptyField, rootFieldKey } from "../schema/Bui
 import {
 	Adapters, adaptRepo, checkCompatibility, Compatibility, MissingFieldAdapter, TreeAdapter,
 } from "../schema/View";
+import { isNeverField, isNeverTree } from "../schema/Comparison";
 
 class ViewSchemaRepository extends StoredSchemaRepository {
 	public clone(): ViewSchemaRepository {
@@ -89,6 +90,10 @@ describe("StoredSchemaRepository", () => {
 		assert(view.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem));
 		assert(view.tryUpdateTreeSchema(textIdentifier, string));
 		assert(view.tryUpdateFieldSchema(rootFieldKey, root));
+
+		// Check schema is actually valid. If we forgot to add some required types this would fail.
+		assert(!isNeverField(view, root));
+		assert(!isNeverTree(view, canvas));
 
 		// This is where legacy schema handling logic for schematize.
 		const adapters: Adapters = {};
@@ -274,6 +279,14 @@ describe("StoredSchemaRepository", () => {
 		assert(compatNew.write === Compatibility.Compatible);
 	});
 
+	/**
+	 * Shows a schema update involving both cases:
+	 * 1. a type that gets a new identifier since its new format is not compatible with the old one.
+	 * 2. a type which is updated in place (same identifier)
+	 *
+	 * An adapter is used to allow the view schema (and thus application logic)
+	 * to not refer to the old types, and instead factor legacy schema handling into a library of adapters.
+	 */
 	it("schema updating using adapters", () => {
 		const view = new ViewSchemaRepository();
 
@@ -285,7 +298,6 @@ describe("StoredSchemaRepository", () => {
 			localFields: {
 				content: fieldSchema(Multiplicity.Sequence, [formattedTextIdentifier, codePoint.name]),
 				size: fieldSchema(Multiplicity.Value, [numberIdentifier]),
-				font: fieldSchema(Multiplicity.Value, [textIdentifier]),
 			},
 		});
 
@@ -343,6 +355,22 @@ describe("StoredSchemaRepository", () => {
 			const compat = checkCompatibility(stored, view, adapters);
 			assert(compat.read === Compatibility.RequiresAdapters);
 			assert(compat.writeAllowingStoredSchemaUpdates === Compatibility.RequiresAdapters);
+
+			// Note that if/when we update the stored schema for these changes,
+			// the adapters are still required, since that will just permit the new types,
+			// and not exclude the old ones,
+			// since it would be updating to the adapted schema (not the view schema):
+			const adaptedSchema = adaptRepo(view, adapters);
+			for (const [key, schema] of adaptedSchema.globalFieldSchema) {
+				assert(stored.tryUpdateFieldSchema(key, schema));
+			}
+			for (const [key, schema] of adaptedSchema.treeSchema) {
+				assert(stored.tryUpdateTreeSchema(key, schema));
+			}
+
+			const compatNew = checkCompatibility(stored, view, adapters);
+			assert(compatNew.read === Compatibility.RequiresAdapters);
+			assert(compatNew.write === Compatibility.Compatible);
 		}
 	});
 });

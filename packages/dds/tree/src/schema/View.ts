@@ -4,7 +4,7 @@
  */
 
 import { fail } from "../utils";
-import { allowsRepoSuperset } from "./Comparison";
+import { allowsRepoSuperset, isNeverTree } from "./Comparison";
 import {
     FieldSchema, GlobalFieldKey, LocalFieldKey, Multiplicity, SchemaRepository, TreeSchema, TreeSchemaIdentifier,
 } from "./Schema";
@@ -89,6 +89,20 @@ export function checkCompatibility(
 }
 
 export function adaptRepo(original: SchemaRepository, adapters: Adapters): SchemaRepository {
+    // Sanity check on adapters:
+    // it's probably a bug it they use the never types,
+    // since there never is a reason to have a never type as an adapter input,
+    // and its impossible for an adapter to be correctly implemented if its output type is never
+    // (unless its input is also never).
+    for (const adapter of adapters?.tree ?? []) {
+        if (isNeverTree(original, original.lookupTreeSchema(adapter.input))) {
+            fail("tree adapter for input that is never");
+        }
+        if (isNeverTree(original, original.lookupTreeSchema(adapter.output))) {
+            fail("tree adapter with output that is never");
+        }
+    }
+
     const adapted = new StoredSchemaRepository();
     for (const [key, schema] of original.globalFieldSchema) {
         const field = adaptField(schema, adapters, adapters.missingField?.has(key) ?? false);

@@ -81,6 +81,11 @@ export function allowsTreeSuperset(
                     original.extraLocalFields,
                     superset.localFields.get(supersetField) ?? fail("missing expected field"),
                 ),
+            (sameField) => allowsFieldSuperset(
+                repo,
+                original.localFields.get(sameField) ?? fail("missing expected field"),
+                superset.localFields.get(sameField) ?? fail("missing expected field"),
+            ),
         )
     ) {
         return false;
@@ -205,10 +210,15 @@ export function compareSets<T>(
     b: ReadonlySet<T> | ReadonlyMap<T, unknown>,
     aExtra: (t: T) => boolean,
     bExtra: (t: T) => boolean,
+    same: (t: T) => boolean = () => true,
 ): boolean {
     for (const item of a.keys()) {
         if (!b.has(item)) {
             if (!aExtra(item)) {
+                return false;
+            }
+        } else {
+            if (!same(item)) {
                 return false;
             }
         }
@@ -248,6 +258,9 @@ export function isNeverTree(repo: SchemaRepository, tree: TreeSchema): boolean {
         return true;
     }
     for (const field of tree.localFields.values()) {
+        // TODO: this can can recurse infinitely for schema that include themselves in a value field.
+        // Such schema should either be rejected (as an error here) or considered never (and thus detected by this).
+        // THis can be done by passing a set/stack of current types recursively here.
         if (isNeverField(repo, field)) {
             return true;
         }
