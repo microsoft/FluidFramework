@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/unbound-method */
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 require("jsdom-global")("", { url: "http://localhost" });
-window.performance.mark = window.performance.mark || (() => { });
-window.performance.measure = window.performance.measure || (() => { });
+window.performance.mark ??= (() => ({} as unknown as PerformanceMark));
+window.performance.measure ??= (() => ({} as unknown as PerformanceMeasure));
 
 import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";

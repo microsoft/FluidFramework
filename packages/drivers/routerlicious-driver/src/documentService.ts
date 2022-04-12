@@ -142,7 +142,7 @@ export class DocumentService implements api.IDocumentService {
         try {
             const connection = await connect();
             return connection;
-        } catch (error) {
+        } catch (error: any) {
             if (error?.statusCode === 401) {
                 // Fetch new token and retry once,
                 // otherwise 401 will be bubbled up as non-retriable AuthorizationError.

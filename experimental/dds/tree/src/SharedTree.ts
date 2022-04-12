@@ -920,7 +920,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		// Update ops should only be processed if they're not the same version.
 		if (sameVersion) {
 			if (type === SharedTreeOpType.Handle) {
-				const { editHandle, startRevision } = op as SharedTreeHandleOp;
+				const { editHandle, startRevision } = op;
 				const baseHandle = this.deserializeHandle(editHandle);
 				const decodedHandle: EditHandle<ChangeInternal> = {
 					get: async () => {
@@ -938,10 +938,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			} else if (type === SharedTreeOpType.Edit) {
 				if (op.version === WriteFormat.v0_1_1) {
 					// TODO: This cast can be removed on typescript 4.6
-					this.idCompressor.finalizeCreationRange((op as SharedTreeEditOp).idRange);
+					this.idCompressor.finalizeCreationRange(op.idRange);
 				}
 				// TODO: This cast can be removed on typescript 4.6
-				const edit = this.parseSequencedEdit(op as SharedTreeEditOp | SharedTreeEditOp_0_0_2);
+				const edit = this.parseSequencedEdit(op);
 				if (op.version === WriteFormat.v0_1_1) {
 					this.internStringsFromEdit(edit);
 				}
@@ -1240,8 +1240,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	private applyEditLocally(edit: Edit<ChangeInternal>, message: ISequencedDocumentMessage | undefined): void {
 		const isSequenced = message !== undefined;
 		if (isSequenced) {
-			// TODO: This cast can be removed on typescript 4.6
-			this.editLog.addSequencedEdit(edit, message as ISequencedDocumentMessage);
+			this.editLog.addSequencedEdit(edit, message);
 		} else {
 			this.editLog.addLocalEdit(edit);
 		}

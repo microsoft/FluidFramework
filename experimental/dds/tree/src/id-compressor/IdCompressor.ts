@@ -1282,10 +1282,7 @@ export class IdCompressor {
 	}
 
 	private getLocalIdForStableId(stableId: StableId | NumericUuid): LocalCompressedId | undefined {
-		// TODO: This cast can be removed on typescript 4.6
-		const numericUuid = (
-			typeof stableId === 'string' ? numericUuidFromStableId(stableId) : stableId
-		) as NumericUuid;
+		const numericUuid = typeof stableId === 'string' ? numericUuidFromStableId(stableId) : stableId;
 		const offset = getPositiveDelta(numericUuid, this.localSession.sessionUuid, this.localIdCount - 1);
 		if (offset === undefined) {
 			return undefined;
@@ -1624,11 +1621,8 @@ export class IdCompressor {
 		let serializedLocalState: SerializedLocalState | undefined;
 		if (hasSession) {
 			assert(newSessionIdMaybe === undefined && attributionInfoMaybe === undefined);
-			// TODO: This cast can be removed on typescript 4.6
-			[localSessionId, attributionInfo] =
-				serialized.sessions[(serialized as SerializedIdCompressorWithOngoingSession).localSessionIndex];
-			// TODO: This cast can be removed on typescript 4.6
-			serializedLocalState = (serialized as SerializedIdCompressorWithOngoingSession).localState;
+			[localSessionId, attributionInfo] = serialized.sessions[serialized.localSessionIndex];
+			serializedLocalState = serialized.localState;
 		} else {
 			assert(newSessionIdMaybe !== undefined);
 			localSessionId = newSessionIdMaybe;
@@ -1825,10 +1819,8 @@ function deserializeCluster(serializedCluster: SerializedCluster): {
 	return {
 		sessionIndex,
 		capacity,
-		// TODO: This cast can be removed on typescript 4.6
-		count: (hasCount ? countOrOverrides : capacity) as number,
-		// TODO: This cast can be removed on typescript 4.6
-		overrides: (hasCount ? overrides : countOrOverrides) as SerializedClusterOverrides,
+		count: hasCount ? countOrOverrides : capacity,
+		overrides: hasCount ? overrides : countOrOverrides,
 	};
 }
 

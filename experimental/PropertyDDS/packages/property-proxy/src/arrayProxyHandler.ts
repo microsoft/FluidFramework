@@ -68,7 +68,7 @@ const setTrapSpecialCases = getTrapSpecialCases.concat(["fill", "sort"]);
  * must be used in conjunction with this class.
  * @hidden
  */
-export const arrayProxyHandler = {
+export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
     /**
      * The get trap that handles access to properties and functions.
      * @param target The {@link ComponentArray} the Proxy handles.
@@ -155,9 +155,9 @@ export const arrayProxyHandler = {
      * @param key The name of the property/function that is to be accessed.
      * @return if the key is part of the {@link external:ArrayProperty ArrayProperty}, otherwise false.
      */
-    has: (target: ComponentArray, key: string | number | typeof proxySymbol) =>
+    has: (target: ComponentArray, key: PropertyKey) =>
         key === "swap" || key in [] || key === proxySymbol ||
-        (key >= 0 && key < target.getProperty().getLength()),
+        (key as number >= 0 && key as number < target.getProperty().getLength()),
 
     /**
      * Trap for the Object.keys().
@@ -177,7 +177,7 @@ export const arrayProxyHandler = {
      * @param value The value to be set.
      * @return Returns a boolean.
      */
-    set(target: ComponentArray, key: string | number, value: any) {
+    set(target: ComponentArray, key: PropertyKey, value: any) {
         // process key for cases like "*1" 1 "string_key", "*string_key"
         let processed_key = key;
         const asteriskFound = Utilities.containsAsterisk(processed_key);
@@ -192,7 +192,7 @@ export const arrayProxyHandler = {
             if (processed_key === "length") {
                 return setLength(target, Number(value));
             }
-        } else {
+        } else if (typeof processed_key === "number") {
             if (!isNaN(processed_key) && processed_key >= 0) {
                 const property = target.getProperty();
                 const isReferenceArray = PropertyFactory.instanceOf(property, "Reference", "array");
