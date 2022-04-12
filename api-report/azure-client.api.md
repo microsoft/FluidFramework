@@ -27,6 +27,10 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 // @public
 export class AzureClient {
     constructor(props: AzureClientProps);
+    copyContainer(id: string, containerSchema: ContainerSchema, version?: AzureContainerVersion): Promise<{
+        container: IFluidContainer;
+        services: AzureContainerServices;
+    }>;
     createContainer(containerSchema: ContainerSchema): Promise<{
         container: IFluidContainer;
         services: AzureContainerServices;
@@ -35,11 +39,7 @@ export class AzureClient {
         container: IFluidContainer;
         services: AzureContainerServices;
     }>;
-    getContainerVersions(id: string, maxCount: number): Promise<AzureContainerVersion[]>;
-    reCreateContainer(id: string, version: string, containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
-        services: AzureContainerServices;
-    }>;
+    getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
     }
 
 // @public
@@ -61,11 +61,9 @@ export interface AzureContainerServices {
     audience: IAzureAudience;
 }
 
-// @public (undocumented)
+// @public
 export interface AzureContainerVersion {
-    // (undocumented)
     date?: string;
-    // (undocumented)
     id: string;
 }
 
@@ -77,6 +75,11 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
     }
+
+// @public
+export interface AzureGetVersionsOptions {
+    maxCount: number;
+}
 
 // @public
 export interface AzureMember<T = any> extends IMember {

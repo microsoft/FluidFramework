@@ -28,6 +28,7 @@ import {
     AzureConnectionConfig,
     AzureContainerServices,
     AzureContainerVersion,
+    AzureGetVersionsOptions,
 } from "./interfaces";
 import { AzureAudience } from "./AzureAudience";
 import {
@@ -39,6 +40,8 @@ import {
  * Strongly typed id for connecting to a local Azure Fluid Relay.
  */
 export const LOCAL_MODE_TENANT_ID = "local";
+
+const MAX_VERSION_COUNT = 5;
 
 /**
  * AzureClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
@@ -91,16 +94,17 @@ export class AzureClient {
     }
 
     /**
-     * Recreates new container out of specific version of another container
+     * Creates new detached container out of specific version of another container.
      * @param id - Unique ID of the source container in Azure Fluid Relay.
-     * @param version - Unique version of the source container in Azure Fluid Relay.
      * @param containerSchema - Container schema used to access data objects in the container.
-     * @returns New container instance along with associated services.
+     * @param version - Unique version of the source container in Azure Fluid Relay.
+     * It defaults to latest version if parameter not provided.
+     * @returns New detached container instance along with associated services.
      */
-    public async reCreateContainer(
+    public async copyContainer(
         id: string,
-        version: string,
         containerSchema: ContainerSchema,
+        version?: AzureContainerVersion,
     ): Promise<{
         container: IFluidContainer;
         services: AzureContainerServices;
@@ -123,12 +127,10 @@ export class AzureClient {
         const handle = {
             type: SummaryType.Handle,
             handleType: SummaryType.Tree,
-            handle: version,
+            handle: version?.id ?? "latest",
         };
         const tree = await storage.downloadSummary(handle);
 
-        // getSanitizedSummary is coming through PR: #9650. We will use then sanitized tree for rehydration,
-        // const sanitizedTree = getSanitizedSummary(tree);
         const container = await loader.rehydrateDetachedContainerFromSnapshot(
             JSON.stringify(tree),
         );
@@ -170,14 +172,15 @@ export class AzureClient {
     }
 
     /**
-     * Get the list of versions for specific container
+     * Get the list of versions for specific container.
      * @param id - Unique ID of the source container in Azure Fluid Relay.
-     * @param maxCount - Max number of versions to retreive,
-     * @returns Array of available versions
+     * @param options - "Get" options. If options are not provided, API
+     * will assume maxCount of versions to retreive to be 5.
+     * @returns Array of available container versions.
      */
      public async getContainerVersions(
         id: string,
-        maxCount: number,
+        options?: AzureGetVersionsOptions,
     ): Promise<AzureContainerVersion[]> {
         const url = new URL(this.props.connection.orderer);
         url.searchParams.append(
@@ -199,7 +202,7 @@ export class AzureClient {
                 resolvedUrl,
             );
         const storage = await documentService.connectToStorage();
-        const versions = await storage.getVersions(null, maxCount);
+        const versions = await storage.getVersions(null, options?.maxCount ?? MAX_VERSION_COUNT);
 
         return versions.map((item) => {
             return { id: item.id, date: item.date };

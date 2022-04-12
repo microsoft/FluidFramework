@@ -260,20 +260,22 @@ describe("AzureClient", () => {
      * Expected behavior: an error should not be thrown nor should a rejected promise
      * be returned.
      */
-    it("can recreate new container from old document successfully", async () => {
+    /* PR #9650 Needs to be merged for full flow to work
+    it("can copy old document successfully", async () => {
         const newContainer = (await client.createContainer(schema)).container;
-        const containerId = await newContainer.attach();
+        // const containerId = await newContainer.attach();
         await new Promise<void>((resolve) => {
             newContainer.on("connected", () => {
                 resolve();
             });
         });
 
-        const resources = client.reCreateContainer(containerId, "latest", schema);
+        const resources = client.copyContainer(containerId, schema);
         await assert.doesNotReject(
             resources,
             () => true,
             "container cannot be retrieved from Azure Fluid Relay",
         );
     });
+    */
 });
