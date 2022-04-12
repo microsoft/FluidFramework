@@ -10,15 +10,22 @@
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
-  "workspaces": [
-    "packages/*/*",
-    "examples/**",
-    "experimental/*/*",
-    "server/routerlicious/packages/gitresources",
-    "server/routerlicious/packages/protocol*",
-    "common/**",
-    "tools/**"
-  ],
+  "workspaces": {
+    "packages": [
+      "packages/*/*",
+      "examples/**",
+      "experimental/*/*",
+      "server/routerlicious/packages/gitresources",
+      "server/routerlicious/packages/protocol*",
+      "common/**",
+      "tools/**"
+    ],
+    "nohoist": [
+      "**/@fluidframework/mocha-test-setup",
+      "**/@types/expect-puppeteer",
+      "**/@types/jwt-decode"
+    ]
+  },
   "scripts": {
     "build": "yarn run policy-check && yarn run layer-check && yarn run build:genver && yarn run build:compile && yarn run lint",
     "build:ci": "yarn run build:genver && lerna run build:compile --stream",
