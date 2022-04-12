@@ -12,7 +12,7 @@ import split from "split";
 import winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import * as routes from "./routes";
-import { IFileSystemManager, IRepositoryManagerFactory } from "./utils";
+import { IFileSystemManagerFactory, IRepositoryManagerFactory } from "./utils";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -23,7 +23,7 @@ const stream = split().on("data", (message) => {
 
 export function create(
     store: nconf.Provider,
-    fileSystemManager: IFileSystemManager,
+    fileSystemManagerFactory: IFileSystemManagerFactory,
     repositoryManagerFactory: IRepositoryManagerFactory,
 ) {
     // Express app configuration
@@ -56,7 +56,7 @@ export function create(
 
     app.use(cors());
 
-    const apiRoutes = routes.create(store, fileSystemManager, repositoryManagerFactory);
+    const apiRoutes = routes.create(store, fileSystemManagerFactory, repositoryManagerFactory);
     app.use(apiRoutes.git.blobs);
     app.use(apiRoutes.git.refs);
     app.use(apiRoutes.git.repos);

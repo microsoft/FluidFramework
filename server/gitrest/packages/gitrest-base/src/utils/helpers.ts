@@ -5,8 +5,9 @@
 
 import { PathLike, Stats } from "fs";
 import * as path from "path";
+import { Request } from "express";
 import { IGetRefParamsExternal, IWholeFlatSummary, NetworkError } from "@fluidframework/server-services-client";
-import { IExternalWriterConfig, IFileSystemManager } from "./definitions";
+import { Constants, IExternalWriterConfig, IFileSystemManager, IRepoManagerParams } from "./definitions";
 
 /**
  * Validates that the input encoding is valid
@@ -31,6 +32,17 @@ export function getExternalWriterParams(params: string | undefined): IExternalWr
         return getRefParams.config;
     }
     return undefined;
+}
+
+export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerParams {
+    const storageName: string | undefined = request.get(Constants.StorageNameHeader);
+    return {
+        repoOwner: request.params.owner,
+        repoName: request.params.repo,
+        fileSystemManagerParams: {
+            storageName,
+        },
+    };
 }
 
 export async function exists(
@@ -92,15 +104,20 @@ export async function retrieveLatestFullSummaryFromStorage(
 /**
  * Retrieves the full repository path. Or throws an error if not valid.
  */
-export function getRepoPath(owner: string, name: string) {
-    // Verify that both inputs are valid folder names
-    const parsedOwner = path.parse(owner);
-    const parsedName = path.parse(name);
-    const repoPath = `${owner}/${name}`;
-
-    if (parsedName.dir !== "" || parsedOwner.dir !== "") {
-        throw new NetworkError(400, `Invalid repo name ${repoPath}`);
+export function getRepoPath(name: string, owner?: string): string {
+    // `name` needs to be always present and valid.
+    if (!name || path.parse(name).dir !== "") {
+        throw new NetworkError(400, `Invalid repo name provided.`);
     }
 
-    return repoPath;
+    // When `owner` is present, it needs to be valid.
+    if (owner && path.parse(owner).dir !== "") {
+        throw new NetworkError(400, `Invalid repo owner provided.`);
+    }
+
+    return owner ? `${owner}/${name}` : name;
+}
+
+export function getGitDirectory(repoPath: string, baseDir?: string): string {
+    return baseDir ? `${baseDir}/${repoPath}` : repoPath;
 }

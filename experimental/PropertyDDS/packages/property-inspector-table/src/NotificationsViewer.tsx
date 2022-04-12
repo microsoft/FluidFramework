@@ -3,32 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import IconButton from '@material-ui/core/IconButton';
-import Snackbar, { SnackbarProps } from '@material-ui/core/Snackbar';
-import { createStyles, withStyles, WithStyles } from '@material-ui/core/styles';
-import * as React from 'react';
-import { Omit } from './constants';
-import { SvgIcon } from './SVGIcon';
+import IconButton from "@material-ui/core/IconButton";
+import Snackbar, { SnackbarProps } from "@material-ui/core/Snackbar";
+import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
+import * as React from "react";
+import { Omit } from "./constants";
+import { SvgIcon } from "./SVGIcon";
 
 const styles = (theme) => createStyles({
   close: {
-    '&:hover': {
-      backgroundColor: 'transparent',
+    "&:hover": {
+      backgroundColor: "transparent",
     },
-    'padding': theme.spacing(0.5),
+    "padding": theme.spacing(0.5),
   },
   message: {
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
   root: {
-    backgroundColor: 'rgb(255, 255, 255)',
-    borderLeftColor: 'rgb(6, 150, 215)',
-    borderLeftStyle: 'solid',
-    borderLeftWidth: '3px',
-    color: 'rgb(60, 60, 60)',
-    [theme.breakpoints.up('sm')]: {
-      maxWidth: '568px',
+    backgroundColor: "rgb(255, 255, 255)",
+    borderLeftColor: "rgb(6, 150, 215)",
+    borderLeftStyle: "solid",
+    borderLeftWidth: "3px",
+    color: "rgb(60, 60, 60)",
+    [theme.breakpoints.up("sm")]: {
+      maxWidth: "568px",
     },
   },
 });
@@ -63,11 +63,11 @@ export interface INotificationContext {
    * A method that pushes the passed notification object to the notificationList
    * @param  notificationObject The notification to be pushed
    */
-  pushNotification: (notificationObject: Pick<INotification, 'message'>) => void;
+  pushNotification: (notificationObject: Pick<INotification, "message">) => void;
 }
 const notificationList: INotification[] = [];
 let idCounter = 0;
-const generateNotificationId = () => ('' + idCounter++);
+const generateNotificationId = () => (`${ idCounter++ }`);
 export const notificationContext: INotificationContext = {
   notificationList,
   pushNotification: (notification) => { notificationList.push({id: generateNotificationId(), ...notification}); },
@@ -82,12 +82,12 @@ notificationContext.pushNotification.bind(notificationContext);
 notificationContext.removeNotification.bind(notificationContext);
 
 class NotificationViewer extends React.Component<WithStyles<typeof styles> &
-  Omit<SnackbarProps, 'classes' | 'open'>,
-  {open: boolean, messageInfo: string } & Pick<INotificationContext, 'notificationList'>> {
+  Omit<SnackbarProps, "classes" | "open">,
+  {open: boolean, messageInfo: string } & Pick<INotificationContext, "notificationList">> {
   public static defaultProps = {
     autoHideDuration: 6000,
   };
-  public state = {notificationList: notificationContext.notificationList, open: false, messageInfo: ''};
+  public state = {notificationList: notificationContext.notificationList, open: false, messageInfo: ""};
 
   public componentDidMount() {
     notificationContext.pushNotification = this.pushNotification;
@@ -101,15 +101,15 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
     return (
       <Snackbar
         anchorOrigin={{
-          horizontal: 'right',
-          vertical: 'bottom',
+          horizontal: "right",
+          vertical: "bottom",
         }}
         open={open}
         onClose={this.handleClose}
         onExited={this.handleExited}
         ContentProps={{
-          'aria-describedby': 'message-id',
-          'classes': {root: classes.root, message: classes.message},
+          "aria-describedby": "message-id",
+          "classes": {root: classes.root, message: classes.message},
         }}
         message={<span id='message-id'>{messageInfo}</span>}
         action={[
@@ -120,7 +120,7 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
             className={classes.close}
             onClick={this.handleClose}
           >
-            <SvgIcon svgId={'clear-24'} hoverable/>
+            <SvgIcon svgId={"clear-24"} hoverable/>
           </IconButton>,
         ]}
         {...restProps}
@@ -128,7 +128,7 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
     );
   }
 
-  private pushNotification: INotificationContext['pushNotification'] = (notificationObjToBePushed) => {
+  private readonly pushNotification: INotificationContext["pushNotification"] = (notificationObjToBePushed) => {
     let newArr;
     this.setState((prevState) => {
       let newState = {};
@@ -140,29 +140,30 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
       }
       return newState;
     });
-  }
+  };
 
-  private removeNotification: INotificationContext['removeNotification'] = (id) => {
+  private readonly removeNotification: INotificationContext["removeNotification"] = (id) => {
     this.setState((prevState) => {
       const index = prevState.notificationList.findIndex((notification: INotification) => (notification.id === id));
       prevState.notificationList.splice(index, 1);
       const newArr = prevState.notificationList.slice();
       return { notificationList: newArr, open: newArr.length > 0 };
     });
-  }
+  };
 
-  private removeNotificationByIndex: INotificationContext['removeNotificationByIndex'] = (notificationIndex) => {
+  // eslint-disable-next-line max-len
+  private readonly removeNotificationByIndex: INotificationContext["removeNotificationByIndex"] = (notificationIndex) => {
     this.removeNotification(this.state.notificationList[notificationIndex].id);
-  }
+  };
 
-  private handleClose = (event, reason?) => {
-    if (reason === 'clickaway') {
+  private readonly handleClose = (event, reason?) => {
+    if (reason === "clickaway") {
       return;
     }
     this.setState({open: false});
-  }
+  };
 
-  private processQueue = () => {
+  private readonly processQueue = () => {
     if (this.state.notificationList.length > 0) {
       this.setState((prevState) => {
         const notification = prevState.notificationList.shift()!;
@@ -174,12 +175,12 @@ class NotificationViewer extends React.Component<WithStyles<typeof styles> &
         };
       });
     }
-  }
+  };
 
-  private handleExited = () => {
+  private readonly handleExited = () => {
     this.processQueue();
-  }
+  };
 }
 
-const StyledNotificationViewer = withStyles(styles, {name: 'NotificationViewer'})(NotificationViewer);
+const StyledNotificationViewer = withStyles(styles, {name: "NotificationViewer"})(NotificationViewer);
 export { StyledNotificationViewer as NotificationViewer };

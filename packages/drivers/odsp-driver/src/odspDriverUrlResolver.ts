@@ -5,17 +5,20 @@
 import { assert } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
+    DriverErrorType,
     DriverHeader,
     IContainerPackageInfo,
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, ShareLinkTypes, ShareLinkInfoType } from "@fluidframework/odsp-driver-definitions";
+import { NonRetryableError } from "@fluidframework/driver-utils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { getOdspResolvedUrl } from "./odspUtils";
 import { getHashedDocumentId } from "./odspPublicUtils";
 import { ClpCompliantAppHeader } from "./contractsPublic";
+import { pkgVersion } from "./packageVersion";
 
 function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
     const siteOrigin = new URL(siteUrl).origin;
@@ -73,7 +76,10 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             const packageName = searchParams.get("containerPackageName");
             const createLinkType = searchParams.get("createLinkType");
             if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
-                throw new Error("Proper new file params should be there!!");
+                throw new NonRetryableError(
+                    "Proper new file params should be there!!",
+                    DriverErrorType.genericError,
+                    { driverVersion: pkgVersion });
             }
             let shareLinkInfo: ShareLinkInfoType | undefined;
             if(createLinkType && createLinkType in ShareLinkTypes) {

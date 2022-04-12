@@ -69,7 +69,7 @@ export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) =
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
 // @public (undocumented)
-export function getOrCreateRepository(endpoint: string, owner: string, repository: string): Promise<void>;
+export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: AxiosRequestHeaders): Promise<void>;
 
 // @public (undocumented)
 export function getRandomName(connector?: string, capitalize?: boolean): string;
@@ -331,6 +331,16 @@ export interface INormalizedWholeSummary {
 export interface IPatchRefParamsExternal extends resources.IPatchRefParams {
     // (undocumented)
     config?: IExternalWriterConfig;
+}
+
+// @public (undocumented)
+export interface ISession {
+    // (undocumented)
+    historianUrl: string;
+    // (undocumented)
+    isSessionAlive: boolean;
+    // (undocumented)
+    ordererUrl: string;
 }
 
 // @public (undocumented)

@@ -5,13 +5,13 @@
 
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { AttachmentTreeEntry, BlobTreeEntry } from "@fluidframework/protocol-base";
-import { ISnapshotTree, ITree, ITreeEntry } from "@fluidframework/protocol-definitions";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 /**
  * This class represents blob (long string)
@@ -147,9 +147,12 @@ export class BlobManager {
     }
 
     public processBlobAttachOp(blobId: string, local: boolean) {
-        assert(!local || this.pendingBlobIds.has(blobId), 0x1f8 /* "local BlobAttach op with no pending blob" */);
-        this.pendingBlobIds.get(blobId)?.resolve();
-        this.pendingBlobIds.delete(blobId);
+        if (local) {
+            const pendingBlobP = this.pendingBlobIds.get(blobId);
+            assert(pendingBlobP !== undefined, 0x1f8 /* "local BlobAttach op with no pending blob" */);
+            pendingBlobP.resolve();
+            this.pendingBlobIds.delete(blobId);
+        }
         this.blobIds.add(blobId);
     }
 
@@ -202,19 +205,24 @@ export class BlobManager {
         });
     }
 
-    public snapshot(): ITree {
+    public summarize(): ISummaryTreeWithStats {
         // If we have a redirect table it means the container is about to transition to "Attaching" state, so we need
         // to return an actual snapshot containing all the real storage IDs we know about.
         const attachingOrAttached = !!this.redirectTable || this.runtime.attachState !== AttachState.Detached;
         const blobIds = attachingOrAttached ? this.blobIds : this.detachedBlobIds;
-        const entries: ITreeEntry[] = [...blobIds].map((id) => new AttachmentTreeEntry(id, id));
+        const builder = new SummaryTreeBuilder();
+        blobIds.forEach((blobId) => {
+            builder.addAttachment(blobId);
+        });
+
         if (this.redirectTable && this.redirectTable.size > 0) {
-            entries.push(new BlobTreeEntry(
+            builder.addBlob(
                 BlobManager.redirectTableBlobName,
-                JSON.stringify(Array.from(this.redirectTable.entries()))),
+                JSON.stringify(Array.from(this.redirectTable.entries())),
             );
         }
-        return { entries };
+
+        return builder.getSummaryTree();
     }
 
     public setRedirectTable(table: Map<string, string>) {

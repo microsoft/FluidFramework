@@ -16,10 +16,11 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run tsc",
+    "build:compile": "npm run tsc && npm run build:test",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log node_modules/.legacy",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -57,7 +58,7 @@
     "@fluidframework/container-definitions": "^0.48.1000-0",
     "@fluidframework/container-loader": "^0.59.1000",
     "@fluidframework/container-runtime": "^0.59.1000",
-    "@fluidframework/core-interfaces": "^0.42.0",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
     "@fluidframework/counter": "^0.59.1000",
     "@fluidframework/datastore-definitions": "^0.59.1000",
     "@fluidframework/driver-definitions": "^0.46.1000-0",
@@ -80,7 +81,8 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
+    "@fluidframework/test-version-utils-previous": "npm:@fluidframework/test-version-utils@^0.58.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/nock": "^9.3.0",
@@ -107,5 +109,15 @@
     "uuid": "^8.3.1",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11"
+  },
+  "typeValidation": {
+    "version": "0.59.1000",
+    "broken": {
+      "0.58.2002": {
+        "InterfaceDeclaration_ITestDataObject": {"backCompat": false},
+        "RemovedVariableDeclaration_pkgName": {"backCompat": false, "forwardCompat": false},
+        "RemovedVariableDeclaration_pkgVersion": {"backCompat": false, "forwardCompat": false}
+      }
+    }
   }
 }

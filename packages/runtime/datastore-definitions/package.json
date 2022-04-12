@@ -14,15 +14,11 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:gen && concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:compile": "npm run tsc && npm run build:test",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:gen": "npm run build:gen:typetests",
-    "build:gen:bump": "npm run build:gen:typetests:prepare",
-    "build:gen:typetests": "fluid-type-validator -d .",
-    "build:gen:typetests:prepare": "fluid-type-validator -d . -p",
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
@@ -38,23 +34,15 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.48.1000-0",
-    "@fluidframework/core-interfaces": "^0.42.0",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
     "@fluidframework/protocol-definitions": "^0.1028.1000-0",
     "@fluidframework/runtime-definitions": "^0.59.1000",
     "@types/node": "^14.18.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.58041",
-    "@fluidframework/datastore-definitions-0.51.1": "npm:@fluidframework/datastore-definitions@0.51.1",
-    "@fluidframework/datastore-definitions-0.52.0": "npm:@fluidframework/datastore-definitions@0.52.0",
-    "@fluidframework/datastore-definitions-0.53.0": "npm:@fluidframework/datastore-definitions@0.53.0",
-    "@fluidframework/datastore-definitions-0.54.0": "npm:@fluidframework/datastore-definitions@0.54.0",
-    "@fluidframework/datastore-definitions-0.55.0": "npm:@fluidframework/datastore-definitions@0.55.0",
-    "@fluidframework/datastore-definitions-0.56.0": "npm:@fluidframework/datastore-definitions@0.56.0",
-    "@fluidframework/datastore-definitions-0.57.0": "npm:@fluidframework/datastore-definitions@0.57.0",
-    "@fluidframework/datastore-definitions-0.58.1000": "npm:@fluidframework/datastore-definitions@0.58.1000",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@^0.58.0",
+    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
@@ -74,103 +62,6 @@
   },
   "typeValidation": {
     "version": "0.59.1000",
-    "broken": {
-      "0.51.1": {
-        "InterfaceDeclaration_IChannel": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IChannelFactory": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IFluidDataStoreRuntime": {
-          "backCompat": false,
-          "forwardCompat": false
-        }
-      },
-      "0.52.0": {
-        "InterfaceDeclaration_IChannel": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IChannelFactory": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IFluidDataStoreRuntime": {
-          "backCompat": false,
-          "forwardCompat": false
-        }
-      },
-      "0.53.0": {
-        "InterfaceDeclaration_IChannel": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IChannelFactory": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IFluidDataStoreRuntime": {
-          "backCompat": false,
-          "forwardCompat": false
-        }
-      },
-      "0.54.0": {
-        "InterfaceDeclaration_IChannel": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IChannelFactory": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IChannelServices": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IDeltaConnection": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IFluidDataStoreRuntime": {
-          "backCompat": false,
-          "forwardCompat": false
-        }
-      },
-      "0.55.0": {
-        "InterfaceDeclaration_IChannel": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IChannelFactory": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IChannelServices": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IDeltaConnection": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IFluidDataStoreRuntime": {
-          "backCompat": false,
-          "forwardCompat": false
-        }
-      },
-      "0.56.0": {
-        "InterfaceDeclaration_IChannelFactory": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IFluidDataStoreRuntime": {
-          "backCompat": false,
-          "forwardCompat": false
-        }
-      }
-    }
+    "broken": {}
   }
 }

@@ -81,6 +81,7 @@ export class TestServer extends TestClient {
         msg.sequenceNumber = -1;
     }
     copyMsg(msg: ISequencedDocumentMessage) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         return {
             clientId: msg.clientId,
             clientSequenceNumber: msg.clientSequenceNumber,
