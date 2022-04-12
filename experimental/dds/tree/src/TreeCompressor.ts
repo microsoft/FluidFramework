@@ -7,7 +7,7 @@ import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, T
 import type { StringInterner } from './StringInterner';
 import type { CompressedTraits, CompressedPlaceholderTree, PlaceholderTree, Payload } from './persisted-types';
 import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities';
-import { assert, fail } from './Common';
+import { assert, fail, Mutable } from './Common';
 
 /**
  * Compresses a given {@link PlaceholderTree} into a more compact serializable format.
@@ -122,22 +122,21 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 		}
 
 		let compressedId: TId | undefined;
-		let compressedTraits: CompressedTraits<TId, TPlaceholder> | undefined;
+		let compressedTraits:
+			| [Payload, ...CompressedTraits<TId, TPlaceholder>]
+			| CompressedTraits<TId, TPlaceholder>
+			| undefined;
 		let payload: Payload | undefined;
 		const [maybeInternedDefinition, idOrPayloadTraits, payloadTraits] = node;
 		if (idOrPayloadTraits !== undefined) {
 			if (typeof idOrPayloadTraits === 'number') {
 				compressedId = idOrPayloadTraits;
 				if (payloadTraits !== undefined) {
-					({ compressedTraits, payload } = this.parseTraitsAndPayload(payloadTraits));
+					compressedTraits = payloadTraits;
 				}
 			} else {
 				// TODO: This cast can be removed on typescript 4.6
-				({ compressedTraits, payload } = this.parseTraitsAndPayload(
-					idOrPayloadTraits as
-						| [Payload, ...CompressedTraits<TId, TPlaceholder>]
-						| CompressedTraits<TId, TPlaceholder>
-				));
+				compressedTraits = idOrPayloadTraits as typeof compressedTraits;
 			}
 		}
 
@@ -146,14 +145,30 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 				? maybeInternedDefinition
 				: // TODO: This cast can be removed on typescript 4.6
 				  (interner.getString(maybeInternedDefinition as number) as Definition);
-		const identifier = compressedId ?? (getNextElidedId(this.previousId ?? fail()) as TId);
+
+		let identifier: TId;
+		if (compressedId !== undefined) {
+			identifier = compressedId;
+		} else {
+			const prevId = this.previousId ?? fail();
+			identifier = prevId < 0 ? ((prevId - 1) as TId) : (((prevId as number) + 1) as TId);
+		}
 		this.previousId = identifier;
 
 		const traits = {};
 		if (compressedTraits !== undefined) {
-			for (let i = 0; i < Object.entries(compressedTraits).sort().length; i += 2) {
-				const maybeCompressedLabel = compressedTraits[i] as InternedStringId;
-				const compressedChildren = compressedTraits[i + 1] as (
+			let offset: number;
+			if (compressedTraits.length % 2 === 1) {
+				offset = 1;
+				payload = compressedTraits[0];
+			} else {
+				offset = 0;
+			}
+			const traitsLength = compressedTraits.length - offset;
+			for (let i = 0; i < traitsLength; i += 2) {
+				const offsetIndex = i + offset;
+				const maybeCompressedLabel = compressedTraits[offsetIndex] as InternedStringId;
+				const compressedChildren = compressedTraits[offsetIndex + 1] as (
 					| TPlaceholder
 					| CompressedPlaceholderTree<TId, TPlaceholder>
 				)[];
@@ -170,42 +185,18 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 			}
 		}
 
-		const decompressedNode = {
+		const decompressedNode: Mutable<PlaceholderTree<TPlaceholder>> = {
 			identifier: idNormalizer.normalizeToSessionSpace(identifier),
 			definition,
 			traits,
-			...(payload !== undefined ? { payload } : {}),
 		};
+
+		if (payload !== undefined) {
+			decompressedNode.payload = payload;
+		}
 
 		return decompressedNode;
 	}
-
-	private parseTraitsAndPayload<TId extends OpSpaceNodeId>(
-		traitsAndPayload: [Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>
-	): {
-		compressedTraits: CompressedTraits<TId, TPlaceholder>;
-		payload?: Payload;
-	} {
-		if (traitsAndPayload.length % 2 === 1) {
-			return {
-				compressedTraits: traitsAndPayload.slice(1),
-				payload: traitsAndPayload[0],
-			};
-		}
-
-		return {
-			compressedTraits: traitsAndPayload,
-		};
-	}
-}
-
-function getNextElidedId<TId extends OpSpaceNodeId>(id: TId): TId {
-	const numericId: number = id;
-	if (numericId < 0) {
-		return (numericId - 1) as TId;
-	}
-
-	return (numericId + 1) as TId;
 }
 
 function canElideId<TId extends OpSpaceNodeId>(previousId: TId | undefined, id: TId): boolean {

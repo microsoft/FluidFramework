@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/common-utils",
-  "version": "0.33.0",
+  "version": "0.33.1000",
   "description": "Collection of utility functions for Fluid",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -129,7 +129,7 @@
     "outputName": "jest-junit-report.xml"
   },
   "typeValidation": {
-    "version": "0.33.0",
+    "version": "0.33.1000",
     "broken": {
       "0.32.1": {
         "RemovedFunctionDeclaration_extractLogSafeErrorProperties": {

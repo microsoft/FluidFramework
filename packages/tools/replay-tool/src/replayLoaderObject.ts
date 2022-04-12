@@ -3,8 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IFluidModule, IProvideRuntimeFactory } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails, IFluidCodeDetailsComparer, IRequest } from "@fluidframework/core-interfaces";
+import {
+    ICodeDetailsLoader,
+    IFluidModule,
+    IProvideRuntimeFactory,
+    IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
+    IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 
 /**
@@ -30,7 +37,7 @@ import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 }
 
 /** Simple code loader that loads the runtime factory provided during creation. */
-export class ReplayCodeLoader implements ICodeLoader, IFluidCodeDetailsComparer {
+export class ReplayCodeLoader implements ICodeDetailsLoader, IFluidCodeDetailsComparer {
     private readonly fluidModule: IFluidModule;
 
     constructor(runtimeFactory: IProvideRuntimeFactory) {
@@ -41,8 +48,11 @@ export class ReplayCodeLoader implements ICodeLoader, IFluidCodeDetailsComparer 
         return this;
     }
 
-    public async load(source: IFluidCodeDetails): Promise<IFluidModule> {
-        return Promise.resolve(this.fluidModule);
+    public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
+        return {
+            module: this.fluidModule,
+            details: source,
+        };
     }
 
     public async satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean> {

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/protocol-definitions",
-  "version": "0.1027.2000",
+  "version": "0.1028.1000",
   "description": "Fluid protocol definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -64,7 +64,28 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.1027.2000",
-    "broken": {}
+    "version": "0.1028.1000",
+    "broken": {
+      "0.1027.1000": {
+        "EnumDeclaration_FileMode": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTree": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTreeEx": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ITree": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_ITreeEntry": {
+          "forwardCompat": false
+        },
+        "EnumDeclaration_TreeEntry": {
+          "forwardCompat": false
+        }
+      }
+    }
   }
 }

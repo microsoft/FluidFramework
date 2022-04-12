@@ -8,13 +8,13 @@ import path from "path";
 import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
+import { IFluidPackage } from "@fluidframework/container-definitions";
 import {
     getMicrosoftConfiguration,
     OdspTokenManager,
     odspTokensCache,
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
-import { IFluidPackage } from "@fluidframework/core-interfaces";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils";
 import Axios from "axios";
 import { RouteOptions } from "./loader";

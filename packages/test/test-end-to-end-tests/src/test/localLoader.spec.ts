@@ -9,8 +9,8 @@ import {
     DataObject,
     DataObjectFactory,
     IDataObjectProps } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidHandle, IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";

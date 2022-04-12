@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/container-definitions",
-  "version": "0.47.2000",
+  "version": "0.48.1000",
   "description": "Fluid container definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -42,9 +42,9 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.45.2000-0",
-    "@fluidframework/protocol-definitions": "^0.1027.1000"
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/driver-definitions": "^0.46.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -71,7 +71,13 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.47.2000",
-    "broken": {}
+    "version": "0.48.1000",
+    "broken": {
+      "0.47.1000": {
+        "InterfaceDeclaration_IContainerContext": {
+          "backCompat": false
+        }
+      }
+    }
   }
 }

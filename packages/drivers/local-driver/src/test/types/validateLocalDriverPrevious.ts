@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_createLocalDocumentService": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createLocalDocumentService():
@@ -28,7 +28,7 @@ use_current_FunctionDeclaration_createLocalDocumentService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_createLocalDocumentService": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createLocalDocumentService():
@@ -40,7 +40,7 @@ use_old_FunctionDeclaration_createLocalDocumentService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_createLocalResolverCreateNewRequest": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createLocalResolverCreateNewRequest():
@@ -52,7 +52,7 @@ use_current_FunctionDeclaration_createLocalResolverCreateNewRequest(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_createLocalResolverCreateNewRequest": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createLocalResolverCreateNewRequest():
@@ -64,7 +64,7 @@ use_old_FunctionDeclaration_createLocalResolverCreateNewRequest(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalDeltaStorageService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LocalDeltaStorageService():
@@ -76,7 +76,7 @@ use_current_ClassDeclaration_LocalDeltaStorageService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalDeltaStorageService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LocalDeltaStorageService():
@@ -88,7 +88,7 @@ use_old_ClassDeclaration_LocalDeltaStorageService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalDocumentDeltaConnection": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LocalDocumentDeltaConnection():
@@ -100,7 +100,7 @@ use_current_ClassDeclaration_LocalDocumentDeltaConnection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalDocumentDeltaConnection": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LocalDocumentDeltaConnection():
@@ -112,7 +112,7 @@ use_old_ClassDeclaration_LocalDocumentDeltaConnection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalDocumentService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LocalDocumentService():
@@ -124,7 +124,7 @@ use_current_ClassDeclaration_LocalDocumentService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalDocumentService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LocalDocumentService():
@@ -136,7 +136,7 @@ use_old_ClassDeclaration_LocalDocumentService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalDocumentServiceFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LocalDocumentServiceFactory():
@@ -148,7 +148,7 @@ use_current_ClassDeclaration_LocalDocumentServiceFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalDocumentServiceFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LocalDocumentServiceFactory():
@@ -160,7 +160,7 @@ use_old_ClassDeclaration_LocalDocumentServiceFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalResolver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LocalResolver():
@@ -172,7 +172,7 @@ use_current_ClassDeclaration_LocalResolver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalResolver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LocalResolver():
@@ -184,7 +184,7 @@ use_old_ClassDeclaration_LocalResolver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalSessionStorageDbFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LocalSessionStorageDbFactory():
@@ -196,7 +196,7 @@ use_current_ClassDeclaration_LocalSessionStorageDbFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_LocalSessionStorageDbFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LocalSessionStorageDbFactory():

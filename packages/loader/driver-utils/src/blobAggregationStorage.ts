@@ -99,7 +99,7 @@ export abstract class SnapshotExtractor {
                     let subTree = snapshot;
                     for (const subPath of pathSplit.slice(0, pathSplit.length - 1)) {
                         if (subTree.trees[subPath] === undefined) {
-                            subTree.trees[subPath] = { blobs: {}, commits: {}, trees: {}};
+                            subTree.trees[subPath] = { blobs: {}, trees: {}};
                         }
                         subTree = subTree.trees[subPath];
                     }
