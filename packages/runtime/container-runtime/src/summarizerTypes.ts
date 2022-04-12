@@ -147,6 +147,10 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcTotalBlobsSize?: number;
     /** The number of gc blobs in this summary. */
     readonly gcBlobNodeCount?: number;
+    /** Sum of the sizes of all op contents since the last summary */
+    readonly opsSizesSinceLastSummary: number;
+    /** Number of non-system ops since the last summary @see isSystemMessage */
+    readonly nonSystemOpsSinceLastSummary: number;
 }
 
 /** Base results for all submitSummary attempts. */

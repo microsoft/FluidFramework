@@ -140,7 +140,7 @@ module.exports = {
         },
         {
             // Rules only for test files
-            "files": ["src/test/**"],
+            "files": ["*.spec.ts", "src/test/**"],
             "rules": {
                 "@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
             }

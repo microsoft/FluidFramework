@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/common-definitions",
-  "version": "0.21.0",
+  "version": "0.21.1000",
   "description": "Fluid common definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -43,7 +43,7 @@
   "dependencies": {},
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.59529",
+    "@fluidframework/build-tools": "^0.2.60108",
     "@fluidframework/common-definitions-previous": "npm:@fluidframework/common-definitions@^0.20.0",
     "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
     "@microsoft/api-extractor": "^7.16.1",
@@ -64,7 +64,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.21.0",
+    "version": "0.21.1000",
     "broken": {
       "0.20.0": {
         "InterfaceDeclaration_ITelemetryBaseEvent": {

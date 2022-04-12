@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/protocol-definitions",
-  "version": "0.1027.2000",
+  "version": "0.1028.1000",
   "description": "Fluid protocol definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.59529",
+    "@fluidframework/build-tools": "^0.2.60108",
     "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
     "@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@0.1027.1000",
     "@microsoft/api-extractor": "^7.16.1",
@@ -64,7 +64,28 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.1027.2000",
-    "broken": {}
+    "version": "0.1028.1000",
+    "broken": {
+      "0.1027.1000": {
+        "EnumDeclaration_FileMode": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTree": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ISnapshotTreeEx": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ITree": {
+          "forwardCompat": false
+        },
+        "TypeAliasDeclaration_ITreeEntry": {
+          "forwardCompat": false
+        },
+        "EnumDeclaration_TreeEntry": {
+          "forwardCompat": false
+        }
+      }
+    }
   }
 }
