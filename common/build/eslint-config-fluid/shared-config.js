@@ -315,8 +315,8 @@ module.exports = {
             "always"
         ],
 
-        // Enforces that members of a type union/intersection are sorted alphabetically.
-        "@typescript-eslint/sort-type-union-intersection-members": "warn",
+        // Enforces that members of a type union/intersection are sorted alphabetically. Disabled.
+        "@typescript-eslint/sort-type-union-intersection-members": "off",
 
         // Enforces consistent spacing before function parentheses.
         "@typescript-eslint/space-before-function-paren": [
