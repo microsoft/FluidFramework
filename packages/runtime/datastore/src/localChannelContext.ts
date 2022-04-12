@@ -69,7 +69,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        assert(this.globallyVisible, "Local channel must be globally visible when processing op");
+        assert(this.globallyVisible, 0x2d3 /* "Local channel must be globally visible when processing op" */);
 
         // A local channel may not be loaded in case where we rehydrate the container from a snapshot because of
         // delay loading. So after the container is attached and some other client joins which start generating
@@ -85,7 +85,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
     public reSubmit(content: any, localOpMetadata: unknown) {
         assert(this.isLoaded, 0x18a /* "Channel should be loaded to resubmit ops" */);
-        assert(this.globallyVisible, "Local channel must be globally visible when resubmitting op");
+        assert(this.globallyVisible, 0x2d4 /* "Local channel must be globally visible when resubmitting op" */);
         this.servicesGetter().value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
