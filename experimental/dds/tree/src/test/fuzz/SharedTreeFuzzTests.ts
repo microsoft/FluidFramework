@@ -104,6 +104,23 @@ export async function performFuzzActions(
 						fail('Attempted to synchronize with undefined testObjectProvider');
 					}
 					await testObjectProvider.ensureSynchronized();
+					const trees = [...state.activeCollaborators, ...state.passiveCollaborators];
+					if (trees.length > 1) {
+						const first = trees[0].tree;
+						for (let i = 1; i < trees.length; i++) {
+							const tree = trees[i].tree;
+							const editLogA = first.editsInternal as EditLog<ChangeInternal>;
+							const editLogB = tree.editsInternal as EditLog<ChangeInternal>;
+							const minEdits = Math.min(editLogA.length, editLogB.length);
+							for (let j = 0; j < minEdits - 1; j++) {
+								const editA = await editLogA.getEditAtIndex(editLogA.length - j - 1);
+								const editB = await editLogB.getEditAtIndex(editLogB.length - j - 1);
+								expect(editA.id).to.equal(editB.id);
+							}
+							expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first))
+								.to.be.true;
+						}
+					}
 					break;
 				}
 				default:
@@ -148,7 +165,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 					mkdirSync(directory);
 				}
 				await performFuzzActions(generatorFactory(), seed + adjustSeed, true, saveInfo);
-			}).timeout(5000);
+			}).timeout(10000);
 		}
 
 		function runMixedVersionTests(summarizeHistory: boolean, testsPerSuite: number): void {
