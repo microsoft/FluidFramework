@@ -624,6 +624,60 @@ describe("SharedString", () => {
             const simpleMarker2 = sharedString.getMarkerFromId("markerId") as Marker;
             assert.equal(simpleMarker2.properties.color, "blue", "Could not annotate marker in remote string");
         });
+
+        it("test IntervalCollection creation events", () => {
+            let createCalls1 = 0;
+            const createInfo1 = [];
+            const createCallback1 = (label: string, local: boolean, target: SharedString) => {
+                assert.strictEqual(target, sharedString, "Expected event to target sharedString");
+                createInfo1[createCalls1++] = { local, label };
+            };
+            sharedString.on("createIntervalCollection", createCallback1);
+
+            let createCalls2 = 0;
+            const createInfo2 = [];
+            const createCallback2 = (label: string, local: boolean, target: SharedString) => {
+                assert.strictEqual(target, sharedString2, "Expected event to target sharedString2");
+                createInfo2[createCalls2++] = { local, label };
+            };
+            sharedString2.on("createIntervalCollection", createCallback2);
+
+            const collection1: IntervalCollection<SequenceInterval> = sharedString.getIntervalCollection("test1");
+            const interval1 = collection1.add(0, 1, IntervalType.SlideOnRemove);
+            collection1.change(interval1.getIntervalId(), 1, 4);
+
+            const collection2: IntervalCollection<SequenceInterval> = sharedString2.getIntervalCollection("test2");
+            const interval2 = collection2.add(0, 2, IntervalType.SlideOnRemove);
+            collection2.removeIntervalById(interval2.getIntervalId());
+
+            const collection3: IntervalCollection<SequenceInterval> = sharedString2.getIntervalCollection("test3");
+            collection3.add(0, 3, IntervalType.SlideOnRemove);
+
+            containerRuntimeFactory.processAllMessages();
+
+            const verifyCreateEvents = (s: SharedString, createInfo, infoArray) => {
+                let i = 0;
+                const labels = s.getIntervalCollectionLabels();
+                for (const label of labels) {
+                    assert.equal(label, infoArray[i].label, `Bad label ${i}: ${label}`);
+                    assert.equal(label, createInfo[i].label, `Bad label ${i}: ${createInfo[i].label}`);
+                    assert.equal(
+                        createInfo[i].local, infoArray[i].local, `Bad local value ${i}: ${createInfo[i].local}`);
+                    i++;
+                }
+                assert.equal(infoArray.length, createInfo.length, `Wrong number of create calls: ${i}`);
+            };
+            verifyCreateEvents(sharedString, createInfo1, [
+                { label: "intervalCollections/test1", local: true },
+                { label: "intervalCollections/test2", local: false},
+                { label: "intervalCollections/test3", local: false},
+            ]);
+            verifyCreateEvents(sharedString2, createInfo2, [
+                { label: "intervalCollections/test2", local: true },
+                { label: "intervalCollections/test3", local: true },
+                { label: "intervalCollections/test1", local: false},
+            ]);
+        });
     });
 
     describe("reconnect", () => {

@@ -109,16 +109,16 @@ class OpPerfTelemetry {
                 if (msg.type === MessageType.Operation &&
                     this.clientSequenceNumberForLatencyStatistics === msg.clientSequenceNumber) {
                     assert(this.opProcessingTimes.opStartTimeSittingInboundQueue === undefined,
-                        "opStartTimeSittingInboundQueue should be undefined");
+                        0x2c8 /* "opStartTimeSittingInboundQueue should be undefined" */);
                     assert(this.opPerfData.durationInboundQueue === undefined,
-                        "durationInboundQueue should be undefined");
+                        0x2c9 /* "durationInboundQueue should be undefined" */);
                     this.opProcessingTimes.opStartTimeSittingInboundQueue = Date.now();
 
                     assert(this.opPerfData.durationOutboundQueue === undefined,
-                        "durationOutboundQueue should be undefined");
+                        0x2ca /* "durationOutboundQueue should be undefined" */);
 
                     assert(this.opProcessingTimes.opStartTimeForLatencyStatistics !== undefined,
-                        "opStartTimeForLatencyStatistics should be undefined");
+                        0x2cb /* "opStartTimeForLatencyStatistics should be undefined" */);
 
                     this.opPerfData.durationOutboundQueue = this.opProcessingTimes.opStartTimeSittingInboundQueue
                         - this.opProcessingTimes.opStartTimeForLatencyStatistics;
@@ -188,9 +188,9 @@ class OpPerfTelemetry {
         if (this.clientSequenceNumberForLatencyStatistics === undefined &&
             message.clientSequenceNumber % 500 === 1) {
             assert(this.opProcessingTimes.opStartTimeSittingInboundQueue === undefined,
-                "OpTimeSittingInboundQueue should be undefined");
+                0x2cc /* "OpTimeSittingInboundQueue should be undefined" */);
             assert(this.opPerfData.durationInboundQueue === undefined,
-                "durationInboundQueue should be undefined");
+                0x2cd /* "durationInboundQueue should be undefined" */);
             this.opProcessingTimes.opStartTimeForLatencyStatistics = Date.now();
             this.clientSequenceNumberForLatencyStatistics = message.clientSequenceNumber;
         }
@@ -211,7 +211,7 @@ class OpPerfTelemetry {
         if (this.sequenceNumberForMsnTracking !== undefined &&
                 message.minimumSequenceNumber >= this.sequenceNumberForMsnTracking) {
             assert(this.msnTrackingTimestamp !== undefined,
-                "msnTrackingTimestamp should not be undefined");
+                0x2ce /* "msnTrackingTimestamp should not be undefined" */);
             this.logger.sendPerformanceEvent({
                 eventName: "MsnStatistics",
                 sequenceNumber,

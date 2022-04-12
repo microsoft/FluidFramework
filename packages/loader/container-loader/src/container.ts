@@ -14,8 +14,6 @@ import {
     IRequest,
     IResponse,
     IFluidRouter,
-    IFluidCodeDetails,
-    isFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
@@ -30,6 +28,8 @@ import {
     IPendingLocalState,
     ReadOnlyInfo,
     IContainerLoadMode,
+    IFluidCodeDetails,
+    isFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
@@ -92,7 +92,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { ReconnectMode, IConnectionManagerFactoryArgs } from "./contracts";
+import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
@@ -397,7 +397,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private resumedOpProcessingAfterLoad = false;
     private firstConnection = true;
-    private manualReconnectInProgress = false;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
@@ -825,7 +824,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 ensureFluidResolvedUrl(createNewResolvedUrl);
                 if (this.service === undefined) {
                     assert(this.client.details.type !== summarizerClientType,
-                        "client should not be summarizer before container is created");
+                        0x2c4 /* "client should not be summarizer before container is created" */);
                     this.service = await runWithRetry(
                         async () => this.serviceFactory.createContainer(
                             summary,
@@ -909,11 +908,31 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
     }
 
+    /**
+     * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream
+     * after receiving a disconnect event
+     * @param reconnect - Boolean indicating if reconnect should automatically occur
+     * @deprecated - 0.58, This API will be removed in 1.0
+     * Use `connect()` and `disconnect()` instead of `setAutoReconnect(true)` and `setAutoReconnect(false)` respectively
+     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
+     */
     public setAutoReconnect(reconnect: boolean) {
         if (this.closed) {
             throw new Error("Attempting to setAutoReconnect() a closed Container");
         }
+
         const mode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
+        this.setAutoReconnectInternal(mode);
+
+        // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
+        // manual reconnection flag to true as we haven't made the initial connection yet.
+        if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
+            // Ensure connection to web socket
+            this.connectToDeltaStream({ reason: "autoReconnect" });
+        }
+    }
+
+    private setAutoReconnectInternal(mode: ReconnectMode) {
         const currentMode = this._deltaManager.connectionManager.reconnectMode;
 
         if (currentMode === mode) {
@@ -925,27 +944,66 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.setAutoReconnectTime = now;
 
         this.mc.logger.sendTelemetryEvent({
-            eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
+            eventName: mode === ReconnectMode.Enabled ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
             connectionMode: this.connectionMode,
             connectionState: ConnectionState[this.connectionState],
             duration,
         });
 
         this._deltaManager.connectionManager.setAutoReconnect(mode);
+    }
 
-        // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
-        // manual reconnection flag to true as we haven't made the initial connection yet.
-        if (reconnect && this._attachState === AttachState.Attached && this.resumedOpProcessingAfterLoad) {
-            if (this.connectionState === ConnectionState.Disconnected) {
-                // Only track this as a manual reconnection if we are truly the ones kicking it off.
-                this.manualReconnectInProgress = true;
-            }
-
-            // Ensure connection to web socket
-            this.connectToDeltaStream({ reason: "autoReconnect" });
+    public connect() {
+        if (this.closed) {
+            throw new UsageError(`The Container is closed and cannot be connected`);
+        }
+        else if (this._attachState !== AttachState.Attached) {
+            throw new UsageError(`The Container is not attached and cannot be connected`);
+        }
+        else if (!this.connected) {
+            // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
+            // If there is gap, we will learn about it once connected, but the gap should be small (if any),
+            // assuming that connect() is called quickly after initial container boot.
+            this.connectInternal({ reason: "DocumentConnect", fetchOpsFromStorage: false });
         }
     }
 
+    private connectInternal(args: IConnectionArgs) {
+        assert(!this.closed, 0x2c5 /* "Attempting to connect() a closed Container" */);
+        assert(this._attachState === AttachState.Attached,
+            0x2c6 /* "Attempting to connect() a container that is not attached" */);
+
+        // Resume processing ops and connect to delta stream
+        this.resumeInternal(args);
+
+        // Set Auto Reconnect Mode
+        const mode = ReconnectMode.Enabled;
+        this.setAutoReconnectInternal(mode);
+    }
+
+    public disconnect() {
+        if (this.closed) {
+            throw new UsageError(`The Container is closed and cannot be disconnected`);
+        }
+        else {
+            this.disconnectInternal();
+        }
+    }
+
+    private disconnectInternal() {
+        assert(!this.closed, 0x2c7 /* "Attempting to disconnect() a closed Container" */);
+
+        // Set Auto Reconnect Mode
+        const mode = ReconnectMode.Disabled;
+        this.setAutoReconnectInternal(mode);
+    }
+
+    /**
+     * Have the container attempt to resume processing ops
+     * @deprecated - 0.58, This API will be removed in 1.0
+     * Use `connect()` instead
+     * See https://github.com/microsoft/FluidFramework/issues/9167 for context
+     */
     public resume() {
         if (!this.closed) {
             // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
@@ -969,21 +1027,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.connectToDeltaStream(args);
     }
 
-    /**
-     * @deprecated 0.56, will be removed in next release from IContainerContext
-     * Raise non-critical error to host. Calling this API will not close container.
-     * For critical errors, please call Container.close(error).
-     * @param error - an error to raise
-     */
-    public raiseContainerWarning(warning: ContainerWarning) {
-        // Some "warning" events come from outside the container and are logged
-        // elsewhere (e.g. summarizing container). We shouldn't log these here.
-        if (warning.logged !== true) {
-            this.logContainerError(warning);
-        }
-        this.emit("warning", warning);
-    }
-
     public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
         if (this.resolvedUrl === undefined) {
             return undefined;
@@ -992,7 +1035,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.urlResolver.getAbsoluteUrl(
             this.resolvedUrl,
             relativeUrl,
-            this._context?.codeDetails);
+            getPackageName(this._context?.codeDetails));
     }
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
@@ -1491,13 +1534,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("disconnect", (reason: string) => {
-            this.manualReconnectInProgress = false;
             this.collabWindowTracker.stopSequenceNumberUpdate();
             this.connectionStateHandler.receivedDisconnectEvent(reason);
         });
 
         deltaManager.on("throttled", (warning: IThrottlingWarning) => {
-            this.raiseContainerWarning(warning);
+            const warn = warning as ContainerWarning;
+            // Some "warning" events come from outside the container and are logged
+            // elsewhere (e.g. summarizing container). We shouldn't log these here.
+            if (warn.logged !== true) {
+                this.logContainerError(warn);
+            }
+            this.emit("warning", warn);
         });
 
         deltaManager.on("readonly", (readonly) => {
@@ -1558,8 +1606,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
             if (this.firstConnection) {
                 connectionInitiationReason = "InitialConnect";
-            } else if (this.manualReconnectInProgress) {
-                connectionInitiationReason = "ManualReconnect";
             } else {
                 connectionInitiationReason = "AutoReconnect";
             }
@@ -1584,7 +1630,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (value === ConnectionState.Connected) {
             this.firstConnection = false;
-            this.manualReconnectInProgress = false;
         }
     }
 
@@ -1770,7 +1815,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler.quorum),
             loader,
-            (warning: ContainerWarning) => this.raiseContainerWarning(warning),
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),

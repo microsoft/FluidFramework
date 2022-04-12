@@ -482,7 +482,7 @@ export async function downloadSnapshot(
         const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(content);
         finalSnapshotContents = { ...response, content: snapshotContents };
     } else {
-        assert(contentType === "application/ms-fluid", "Content type should be application/ms-fluid");
+        assert(contentType === "application/ms-fluid", 0x2c3 /* "Content type should be application/ms-fluid" */);
         const content = await response.content.arrayBuffer();
         response.propsToLog.bodySize = content.byteLength;
         const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(

@@ -67,7 +67,7 @@ export function buildHierarchy(
     blobsShaToPathCache: Map<string, string> = new Map<string, string>(),
     removeAppTreePrefix = false): ISnapshotTreeEx {
     const lookup: { [path: string]: ISnapshotTreeEx } = {};
-    const root: ISnapshotTreeEx = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
+    const root: ISnapshotTreeEx = { id: flatTree.sha, blobs: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.tree) {

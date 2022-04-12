@@ -15,7 +15,6 @@ import { ISnapshotContents } from "../odspUtils";
 const snapshotTree: ISnapshotTree = {
     id: "SnapshotId",
     blobs: {},
-    commits: {},
     trees: {
         ".protocol": {
             blobs: {
@@ -23,29 +22,24 @@ const snapshotTree: ISnapshotTree = {
                 quorumMembers: "bARBkx1nses1pHL1vKnmFUfIC",
                 quorumProposals: "bARBkx1nses1pHL1vKnmFUfIC",
             },
-            commits: {},
             trees: {},
         },
         ".app": {
                 blobs: { ".metadata": "bARD4RKvW4LL1KmaUKp6hUMSp" },
-                commits: {},
                 trees: {
                     ".channels": {
                         blobs: {},
-                        commits: {},
                         trees: {
                             default: {
                                     blobs: {
                                         ".component": "bARC6dCXlcrPxQHw3PeROtmKc",
                                         "gc": "bARDNMoBed+nKrsf04id52iUA",
                                     },
-                                    commits: {},
                                     trees: {
                                         ".channels": {
                                             blobs: {},
-                                            commits: {},
                                             trees: {
-                                                root: { blobs: {}, commits: {}, trees: {} },
+                                                root: { blobs: {}, trees: {} },
                                             },
                                         },
                                     },
@@ -53,7 +47,7 @@ const snapshotTree: ISnapshotTree = {
                         },
                         unreferenced: true,
                     },
-                    ".blobs": { blobs: {}, commits: {}, trees: {} },
+                    ".blobs": { blobs: {}, trees: {} },
                 },
                 unreferenced: true,
         },

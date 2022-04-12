@@ -4,7 +4,6 @@
  */
 
 import {
-    assert,
     bufferToString,
     fromBase64ToUtf8,
     IsoBuffer,
@@ -259,9 +258,6 @@ export function convertToSummaryTree(
 export function convertSnapshotTreeToSummaryTree(
     snapshot: ISnapshotTree,
 ): ISummaryTreeWithStats {
-    assert(Object.keys(snapshot.commits).length === 0,
-        0x19e /* "There should not be commit tree entries in snapshot" */);
-
     const builder = new SummaryTreeBuilder();
     for (const [path, id] of Object.entries(snapshot.blobs)) {
         let decoded: string | undefined;

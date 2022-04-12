@@ -5,7 +5,7 @@
 
 import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IFluidModuleWithDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
@@ -51,8 +51,14 @@ async function loadContainer(
     const documentServiceFactory = await InnerDocumentServiceFactory.create(innerPort);
     const urlResolver = await InnerUrlResolver.create(innerPort);
 
-    const module = { fluidExport: TodoContainer };
-    const codeLoader = { load: async () => module };
+    const load = async (): Promise<IFluidModuleWithDetails> => {
+        return {
+            module: { fluidExport: TodoContainer },
+            details: { package: "no-dynamic-package", config: {} },
+        };
+    };
+
+    const codeLoader = { load };
 
     const loader = new Loader({
         urlResolver,

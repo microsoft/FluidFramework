@@ -8,7 +8,7 @@
 //
 // @public
 export type FluidObject<T = unknown> = {
-    readonly [P in FluidObjectProviderKeys<T>]?: T[P];
+    [P in FluidObjectProviderKeys<T>]?: T[P];
 };
 
 // @public
@@ -44,7 +44,7 @@ export interface IFluidCodeDetailsConfig {
 export const IFluidHandle: keyof IProvideFluidHandle;
 
 // @public
-export interface IFluidHandle<T = IFluidObject & FluidObject & IFluidLoadable> extends IProvideFluidHandle {
+export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly absolutePath: string;
     attachGraph(): void;
