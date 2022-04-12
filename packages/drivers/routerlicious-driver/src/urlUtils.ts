@@ -23,21 +23,21 @@ export const replaceDocumentIdInPath = (urlPath: string, documentId: string): st
 export const createFluidUrl = (domain: string, pathname: string): string =>
     "fluid://".concat(domain, pathname);
 
-export const replaceWithDiscoveryUrl = (resolvedUrl: IFluidResolvedUrl,
+export const replaceWithDiscoveredUrl = (resolvedUrl: IFluidResolvedUrl,
     session: ISession,
     parsedUrl: URLParse): void => {
     if (session && session.ordererUrl.includes("https")) {
-        const replaceOrderUrl = new URL(session.ordererUrl);
-        const deltaStorageUrl = new URL(resolvedUrl.endpoints.deltaStorageUrl);
-        deltaStorageUrl.host = replaceOrderUrl.host;
-        resolvedUrl.endpoints.deltaStorageUrl = deltaStorageUrl.toString();
-
-        const replaceHistorianUrl = new URL(session.historianUrl);
-        const storageUrl = new URL(resolvedUrl.endpoints.storageUrl);
-        storageUrl.host = replaceHistorianUrl.host;
-        resolvedUrl.endpoints.storageUrl = storageUrl.toString();
-
         resolvedUrl.url = createFluidUrl(session.ordererUrl.replace(/^https?:\/\//, ""), parsedUrl.pathname);
         resolvedUrl.endpoints.ordererUrl = session.ordererUrl;
+
+        const discoveredOrdererUrl = new URL(session.ordererUrl);
+        const deltaStorageUrl = new URL(resolvedUrl.endpoints.deltaStorageUrl);
+        deltaStorageUrl.host = discoveredOrdererUrl.host;
+        resolvedUrl.endpoints.deltaStorageUrl = deltaStorageUrl.toString();
+
+        const discoveredHistorianUrl = new URL(session.historianUrl);
+        const storageUrl = new URL(resolvedUrl.endpoints.storageUrl);
+        storageUrl.host = discoveredHistorianUrl.host;
+        resolvedUrl.endpoints.storageUrl = storageUrl.toString();
     }
 };

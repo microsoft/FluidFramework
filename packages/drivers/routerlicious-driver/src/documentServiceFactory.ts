@@ -23,7 +23,7 @@ import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
-import { parseFluidUrl, replaceDocumentIdInPath, replaceWithDiscoveryUrl } from "./urlUtils";
+import { parseFluidUrl, replaceDocumentIdInPath, replaceWithDiscoveredUrl } from "./urlUtils";
 import { InMemoryCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
@@ -123,7 +123,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
 
         if (session && this.driverPolicies.enableDiscovery) {
-            replaceWithDiscoveryUrl(resolvedUrl, session, parsedUrl);
+            replaceWithDiscoveredUrl(resolvedUrl, session, parsedUrl);
             parsedUrl = parseFluidUrl(resolvedUrl.url);
         }
 
@@ -196,7 +196,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             const session: ISession = await ordererRestWrapper.get<ISession>(
                 `/documents/${tenantId}/session/${documentId}`,
             );
-            replaceWithDiscoveryUrl(resolvedUrl, session, parsedUrl);
+            replaceWithDiscoveredUrl(resolvedUrl, session, parsedUrl);
         }
 
         const fluidResolvedUrl = resolvedUrl;
