@@ -58,7 +58,6 @@ import {
     ISummarizeResult,
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
-    VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -244,7 +243,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly pendingOpsCountThreshold = 1000;
-    public visibilityState: VisibilityState;
 
     // The used state of this node as per the last GC run. This is used to update the used state of the channel
     // if it realizes after GC is run.
@@ -281,21 +279,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && this.existing ?
             this.containerRuntime.attachState : AttachState.Detached;
-
-        /**
-         * If existing flag is false, this is a new data store and is not visible. The existing flag can be true in two
-         * conditions:
-         * 1. It's a local data store that is created when a detached container is rehydrated. In this case, the data
-         *    store is locally visible because the snapshot it is loaded from contains locally visible data stores only.
-         * 2. It's a remote data store that is created when an attached container is loaded is loaded from snapshot or
-         *    when an attach op comes in. In both these cases, the data store is already globally visible.
-         */
-        if (existing) {
-            this.visibilityState = this.containerRuntime.attachState === AttachState.Detached
-                ? VisibilityState.LocallyVisible : VisibilityState.GloballyVisible;
-        } else {
-            this.visibilityState = VisibilityState.NotVisible;
-        }
 
         this.bindToContext = () => {
             assert(this.bindState === BindState.NotBound, 0x13b /* "datastore context is already in bound state" */);
@@ -649,9 +632,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * globally visible now.
      */
     public makeLocallyVisible() {
-        assert(this.visibilityState === VisibilityState.NotVisible, "datastore context is already visible");
         assert(this.channel !== undefined, "undefined channel on datastore context");
-        this.visibilityState = VisibilityState.LocallyVisible;
         this.makeLocallyVisibleFn();
     }
 
@@ -907,16 +888,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         this.once("attaching", () => {
             assert(this.attachState === AttachState.Detached, 0x14d /* "Should move from detached to attaching" */);
             this._attachState = AttachState.Attaching;
-
-            assert(
-                this.visibilityState !== VisibilityState.GloballyVisible,
-                "Data store should not already be globally visible",
-            );
-            /**
-             * Once the data store moves to attaching state, its existence has been notified to the server which will
-             * notify all clients. The data store is now globally visible.
-             */
-            this.visibilityState = VisibilityState.GloballyVisible;
         });
         this.once("attached", () => {
             assert(this.attachState === AttachState.Attaching, 0x14e /* "Should move from attaching to attached" */);

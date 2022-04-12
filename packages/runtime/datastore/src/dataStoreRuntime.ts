@@ -157,7 +157,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
     private readonly notBoundedChannelContextSet = new Set<string>();
     private _attachState: AttachState;
-    private visibilityState: VisibilityState;
+    public visibilityState: VisibilityState;
     // A list of handles that are bound when the data store is not visible. We have to make them visible when the data
     // store becomes visible.
     private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
@@ -265,18 +265,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this._attachState = dataStoreContext.attachState;
 
         /**
-         * back-compat 0.58.3000 - visibility state was added in this version. For older versions, get the visibility
-         * state similar to the data store context:
-         * If existing flag is false, this is a new data store and is not visible.  The existing flag can be true in two
+         * If existing flag is false, this is a new data store and is not visible. The existing flag can be true in two
          * conditions:
          * 1. It's a local data store that is created when a detached container is rehydrated. In this case, the data
          *    store is locally visible because the snapshot it is loaded from contains locally visible data stores only.
          * 2. It's a remote data store that is created when an attached container is loaded is loaded from snapshot or
          *    when an attach op comes in. In both these cases, the data store is already globally visible.
          */
-        if (dataStoreContext.visibilityState !== undefined) {
-            this.visibilityState = dataStoreContext.visibilityState;
-        } else if (existing) {
+        if (existing) {
             this.visibilityState = dataStoreContext.attachState === AttachState.Detached
                 ? VisibilityState.LocallyVisible : VisibilityState.GloballyVisible;
         } else {

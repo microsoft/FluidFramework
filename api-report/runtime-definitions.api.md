@@ -141,6 +141,8 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    // (undocumented)
+    readonly visibilityState?: VisibilityState_2;
 }
 
 // @public
@@ -190,8 +192,6 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     submitSignal(type: string, content: any): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
-    // (undocumented)
-    readonly visibilityState?: VisibilityState_2;
 }
 
 // @public (undocumented)

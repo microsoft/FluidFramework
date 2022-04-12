@@ -206,6 +206,8 @@ export interface IFluidDataStoreChannel extends
      */
     readonly attachState: AttachState;
 
+    readonly visibilityState?: VisibilityState;
+
     /**
      * @deprecated - This is an internal method that should not be exposed.
      * Called to bind the runtime to the container.
@@ -327,8 +329,6 @@ export interface IFluidDataStoreContext extends
      * Indicates the attachment state of the data store to a host service.
      */
     readonly attachState: AttachState;
-
-    readonly visibilityState?: VisibilityState;
 
     readonly containerRuntime: IContainerRuntimeBase;
 
