@@ -22,6 +22,10 @@ export function concatGarbageCollectionStates(gcState1: IGarbageCollectionState,
 export class GCDataBuilder implements IGarbageCollectionData {
     // (undocumented)
     addNode(id: string, outboundRoutes: string[]): void;
+    // (undocumented)
+    addNodes(gcNodes: {
+        [id: string]: string[];
+    }): void;
     addRouteToAllNodes(outboundRoute: string): void;
     // (undocumented)
     readonly gcNodes: {
