@@ -99,7 +99,7 @@ describeNoCompat("SharedString orderSequentially", (getTestObjectProvider) => {
         assert.equal(containerRuntime.disposed, false);
     });
 
-    it("Segment removed when callback fails", () => {
+    it("Removes segment when callback fails", () => {
         const text = "insertion";
         const errorMessage = "callback failure";
         let error: Error | undefined;
@@ -118,7 +118,7 @@ describeNoCompat("SharedString orderSequentially", (getTestObjectProvider) => {
         assert.equal(containerRuntime.disposed, false);
     });
 
-    it("Segment removed when callback fails with multiple segments", () => {
+    it("Removes segment when callback fails with multiple segments", () => {
         const text1 = "insertion";
         const text2 = " here";
         const text3 = "The ";
@@ -141,7 +141,7 @@ describeNoCompat("SharedString orderSequentially", (getTestObjectProvider) => {
         assert.equal(containerRuntime.disposed, false);
     });
 
-    it("Split segments removed when callback fails", () => {
+    it("Removes split segments when callback fails", () => {
         const text1 = "09";
         const text2 = "1278";
         const text3 = "3456";
@@ -161,6 +161,29 @@ describeNoCompat("SharedString orderSequentially", (getTestObjectProvider) => {
         assert.notEqual(error, undefined, "No error");
         assert.equal((error as Error).message, errorMessage, "Unexpected error message");
         assert.equal(sharedString.getText(), text1, "The retrieved text should match before orderSequentially.");
+        assert.equal(containerRuntime.disposed, false);
+    });
+
+    it("Edits correctly after rollback", () => {
+        const text1 = "original text";
+        const text2 = "rollback fail";
+        const text3 = " and final";
+        sharedString.insertText(0, text1);
+        const errorMessage = "callback failure";
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedString.insertText(1, text2);
+                throw new Error(errorMessage);
+            }, OrderSequentiallyFailureMode.Rollback);
+        } catch(err) {
+            error = err as Error;
+        }
+        sharedString.insertText(8, text3);
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal((error as Error).message, errorMessage, "Unexpected error message");
+        assert.equal(sharedString.getText(), "original and final text", "Wrong text.");
         assert.equal(containerRuntime.disposed, false);
     });
 });
