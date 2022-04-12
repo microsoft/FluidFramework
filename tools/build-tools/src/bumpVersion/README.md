@@ -2,7 +2,7 @@
 
 A tool to help automate release version bumps, and dependencies version bumps.
 
-Currently, it only support doing a minor or a patch release on the client repo.  The other dependent monorepo/packages will be release if there are dependencies to the latest repo version. Only packages in common, packages, server/routerlicious, tools/generator-fluid will be updated and released.
+Currently, it only support doing a minor or a patch release on the client repo.  The other dependent monorepo/packages will be release if there are dependencies to the latest repo version. Only packages in common, packages, server/routerlicious will be updated and released.
 
 ## Usage
 

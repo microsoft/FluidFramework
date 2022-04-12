@@ -137,6 +137,18 @@
         },
         "InterfaceDeclaration_IGeneratedSummaryStats": {
           "forwardCompat": false
+        },
+        "ClassDeclaration_ContainerRuntime": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IGarbageCollectionRuntime": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IGCStats": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IRootSummaryTreeWithStats": {
+          "forwardCompat": false
         }
       }
     }
