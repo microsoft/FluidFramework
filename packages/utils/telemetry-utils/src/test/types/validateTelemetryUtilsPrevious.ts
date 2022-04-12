@@ -599,7 +599,7 @@ declare function get_old_ClassDeclaration_LoggingError():
 declare function use_current_ClassDeclaration_LoggingError(
     use: TypeOnly<current.LoggingError>);
 use_current_ClassDeclaration_LoggingError(
-    // @ts-expect-error - Not sure why this isn't getting generated
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LoggingError());
 
 /*
