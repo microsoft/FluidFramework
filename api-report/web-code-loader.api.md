@@ -5,12 +5,12 @@
 ```ts
 
 import { ICodeAllowList } from '@fluidframework/container-definitions';
-import { ICodeLoader } from '@fluidframework/container-definitions';
-import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
+import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidCodeResolver } from '@fluidframework/container-definitions';
-import { IFluidModule } from '@fluidframework/container-definitions';
-import { IFluidPackage } from '@fluidframework/core-interfaces';
-import { IFluidPackageEnvironment } from '@fluidframework/core-interfaces';
+import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
+import { IFluidPackage } from '@fluidframework/container-definitions';
+import { IFluidPackageEnvironment } from '@fluidframework/container-definitions';
 import { IResolvedFluidCodeDetails } from '@fluidframework/container-definitions';
 
 // @public
@@ -47,14 +47,14 @@ export class SemVerCdnCodeResolver implements IFluidCodeResolver {
 }
 
 // @public (undocumented)
-export class WebCodeLoader implements ICodeLoader {
+export class WebCodeLoader implements ICodeDetailsLoader {
     constructor(codeResolver: IFluidCodeResolver, allowList?: ICodeAllowList | undefined);
     // (undocumented)
-    load(source: IFluidCodeDetails): Promise<IFluidModule>;
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
     // (undocumented)
     preCache(source: IFluidCodeDetails): Promise<void>;
     // (undocumented)
-    seedModule(source: IFluidCodeDetails, maybeFluidModule?: Promise<IFluidModule> | IFluidModule): Promise<void>;
+    seedModule(source: IFluidCodeDetails, maybeFluidModule?: Promise<IFluidModuleWithDetails> | IFluidModuleWithDetails): Promise<void>;
 }
 
 

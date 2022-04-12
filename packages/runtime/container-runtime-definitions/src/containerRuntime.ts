@@ -12,7 +12,6 @@ import {
 import {
     IRequest,
     IResponse,
-    IFluidObject,
     IFluidRouter,
     FluidObject,
 } from "@fluidframework/core-interfaces";
@@ -80,7 +79,7 @@ export interface IContainerRuntime extends
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
     readonly flushMode: FlushMode;
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
     /**
      * Indicates the attachment state of the container to a host service.
      */

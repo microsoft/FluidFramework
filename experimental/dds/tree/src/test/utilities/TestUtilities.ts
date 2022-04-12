@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuidv4, v5 as uuidv5 } from 'uuid';
+import { resolve } from 'path';
+import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
-import { IContainer } from '@fluidframework/container-definitions';
-import { Loader } from '@fluidframework/container-loader';
+import { SummaryCollection } from '@fluidframework/container-runtime';
+import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
@@ -15,27 +16,47 @@ import {
 } from '@fluidframework/test-runtime-utils';
 import {
 	ChannelFactoryRegistry,
-	ITestContainerConfig,
 	ITestFluidObject,
 	TestObjectProvider,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
+	createAndAttachContainer,
 } from '@fluidframework/test-utils';
-import { createFluidTestDriver } from '@fluidframework/test-drivers';
+import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { TelemetryNullLogger } from '@fluidframework/common-utils';
+import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
+import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { compareArrays, comparePayloads, fail } from '../../Common';
+import { DetachedSequenceId, EditId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from '../../Identifiers';
+import { assert, fail, identity, ReplaceRecursive } from '../../Common';
+import { IdCompressor } from '../../id-compressor';
+import { createSessionId } from '../../id-compressor/NumericUuid';
+import { getChangeNodeFromViewNode } from '../../SerializationUtilities';
 import { initialTree } from '../../InitialTree';
-import { Snapshot } from '../../Snapshot';
-import { SharedTree, Change, setTrait, SharedTreeFactory, StablePlace } from '../../default-edits';
-import { ChangeNode, Edit, GenericSharedTree, newEdit, NodeData, TraitLocation } from '../../generic';
-import { SharedTreeWithAnchors, SharedTreeWithAnchorsFactory } from '../../anchored-edits';
-import { SharedTreeDiagnosticEvent } from '../../generic/GenericSharedTree';
+import {
+	ChangeInternal,
+	Edit,
+	NodeData,
+	Payload,
+	reservedIdCount,
+	SharedTreeOp,
+	SharedTreeOp_0_0_2,
+	WriteFormat,
+} from '../../persisted-types';
+import { TraitLocation, TreeView } from '../../TreeView';
+import { SharedTreeDiagnosticEvent } from '../../EventTypes';
+import { getNodeId, getNodeIdContext, NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities';
+import { newEdit, setTrait } from '../../EditUtilities';
+import { SharedTree } from '../../SharedTree';
+import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
+import { convertEditIds } from '../../IdConversion';
+import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
-export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
+export interface SharedTreeTestingComponents {
 	/** The MockFluidDataStoreRuntime used to created the SharedTree. */
 	componentRuntime: MockFluidDataStoreRuntime;
 	/**
@@ -44,7 +65,7 @@ export interface SharedTreeTestingComponents<TSharedTree = SharedTree> {
 	 * */
 	containerRuntimeFactory: MockContainerRuntimeFactory;
 	/** The SharedTree created and set up. */
-	tree: TSharedTree;
+	tree: SharedTree;
 }
 
 /** Options used to customize setUpTestSharedTree */
@@ -56,7 +77,7 @@ export interface SharedTreeTestingOptions {
 	 */
 	id?: string;
 	/** Node to initialize the SharedTree with. */
-	initialTree?: ChangeNode;
+	initialTree?: BuildNode;
 	/** If false, a MockContainerRuntimeFactory connected to the SharedTree will be returned. */
 	localMode?: boolean;
 	/**
@@ -75,6 +96,10 @@ export interface SharedTreeTestingOptions {
 	 */
 	summarizeHistory?: boolean;
 	/**
+	 * If not set, summaries will be written in format 0.1.1.
+	 */
+	writeFormat?: WriteFormat;
+	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
 	setupEditId?: EditId;
@@ -85,79 +110,19 @@ export interface SharedTreeTestingOptions {
 	logger?: ITelemetryBaseLogger;
 }
 
-/** Left node of 'simpleTestTree' */
-export const left: ChangeNode = makeEmptyNode('a083857d-a8e1-447a-ba7c-92fd0be9db2b' as NodeId);
-
-/** Right node of 'simpleTestTree' */
-export const right: ChangeNode = makeEmptyNode('78849e85-cb7f-4b93-9fdc-18439c60fe30' as NodeId);
-
-/** Label for the 'left' trait in 'simpleTestTree' */
-export const leftTraitLabel = 'left' as TraitLabel;
-
-/** Label for the 'right' trait in 'simpleTestTree' */
-export const rightTraitLabel = 'right' as TraitLabel;
-
-/** A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait. */
-export const simpleTestTree: ChangeNode = {
-	...makeEmptyNode('25de3875-9537-47ec-8699-8a85e772a509' as NodeId),
-	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
-};
-
-/** Convenient pre-made TraitLocation for the left trait of 'simpleTestTree'. */
-export const leftTraitLocation = {
-	parent: simpleTestTree.identifier,
-	label: leftTraitLabel,
-};
-
-/** Convenient pre-made TraitLocation for the right trait of 'simpleTestTree'. */
-export const rightTraitLocation = {
-	parent: simpleTestTree.identifier,
-	label: rightTraitLabel,
-};
-
-/** Convenient pre-made Snapshot for 'simpleTestTree'. */
-export const simpleTreeSnapshot = Snapshot.fromTree(simpleTestTree);
-
-/** Convenient pre-made Snapshot for 'initialTree'. */
-export const initialSnapshot = Snapshot.fromTree(initialTree);
-
-/**
- * Convenient pre-made Snapshot for 'simpleTestTree'.
- * Expensive validation is turned on for this snapshot, and it should not be used for performance testing.
- */
-export const simpleTreeSnapshotWithValidation = Snapshot.fromTree(simpleTestTree, true);
-
-/**
- * Convenient pre-made Snapshot for 'initialTree'.
- * Expensive validation is turned on for this snapshot, and it should not be used for performance testing.
- */
-export const initialSnapshotWithValidation = Snapshot.fromTree(initialTree, true);
-
-export const testTrait: TraitLocation = {
-	parent: initialSnapshot.root,
-	label: 'e276f382-fa99-49a1-ae81-42001791c733' as TraitLabel,
-};
+export const testTraitLabel = SimpleTestTree.traitLabel;
+export function testTrait(view: TreeView): TraitLocation {
+	return {
+		label: testTraitLabel,
+		parent: view.root,
+	};
+}
 
 /** Sets up and returns an object of components useful for testing SharedTree. */
-export function setUpTestSharedTree(options?: SharedTreeTestingOptions): SharedTreeTestingComponents {
-	return setUpTestSharedTreeGeneric(SharedTree.getFactory, options);
-}
-
-/** Sets up and returns an object of components useful for testing SharedTreeWithAnchors. */
-export function setUpTestSharedTreeWithAnchors(
-	options?: SharedTreeTestingOptions
-): SharedTreeTestingComponents<SharedTreeWithAnchors> {
-	return setUpTestSharedTreeGeneric(SharedTreeWithAnchors.getFactory, options);
-}
-
-function setUpTestSharedTreeGeneric<
-	TSharedTree extends SharedTree | SharedTreeWithAnchors,
-	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
->(
-	factoryGetter: (summarizeHistory?: boolean) => TSharedTreeFactory,
+export function setUpTestSharedTree(
 	options: SharedTreeTestingOptions = { localMode: true }
-): SharedTreeTestingComponents<TSharedTree> {
-	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId } = options;
+): SharedTreeTestingComponents {
+	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId, summarizeHistory, writeFormat } = options;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
 		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
@@ -174,8 +139,11 @@ function setUpTestSharedTreeGeneric<
 	}
 
 	// Enable expensiveValidation
-	const factory = factoryGetter(options.summarizeHistory);
-	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true) as TSharedTree;
+	const factory = SharedTree.getFactory(
+		writeFormat ?? WriteFormat.v0_1_1,
+		summarizeHistory === undefined || summarizeHistory === true ? { uploadEditChunks: true } : false
+	);
+	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true);
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
 		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
@@ -221,15 +189,23 @@ function setUpTestSharedTreeGeneric<
 const TestDataStoreType = '@fluid-example/test-dataStore';
 
 /** Objects returned by setUpLocalServerTestSharedTree */
-export interface LocalServerSharedTreeTestingComponents<TSharedTree = SharedTree> {
+export interface LocalServerSharedTreeTestingComponents {
 	/** The testObjectProvider created if one was not set in the options. */
 	testObjectProvider: TestObjectProvider;
 	/** The SharedTree created and set up. */
-	tree: TSharedTree;
+	tree: SharedTree;
+	/** The container created and set up. */
+	container: Container;
+	/** Handles to any blobs uploaded via `blobs` */
+	uploadedBlobs: IFluidHandle<ArrayBufferLike>[];
 }
 
 /** Options used to customize setUpLocalServerTestSharedTree */
 export interface LocalServerSharedTreeTestingOptions {
+	/** Contents of blobs that should be uploaded to the runtime upon creation. Handles to these blobs will be returned. */
+	blobs?: ArrayBufferLike[];
+	/** Headers to include on the container load request. */
+	headers?: IRequestHeader;
 	/**
 	 * Id for the SharedTree to be created.
 	 * If two SharedTrees have the same id and the same testObjectProvider,
@@ -237,7 +213,7 @@ export interface LocalServerSharedTreeTestingOptions {
 	 */
 	id?: string;
 	/** Node to initialize the SharedTree with. */
-	initialTree?: ChangeNode;
+	initialTree?: BuildNode;
 	/** If set, uses the provider to create the container and create the SharedTree. */
 	testObjectProvider?: TestObjectProvider;
 	/**
@@ -245,48 +221,63 @@ export interface LocalServerSharedTreeTestingOptions {
 	 */
 	summarizeHistory?: boolean;
 	/**
+	 * If not set, summaries will be written in format 0.0.2.
+	 */
+	writeFormat?: WriteFormat;
+	/**
+	 * If not set, will upload edit chunks when they are full.
+	 */
+	uploadEditChunks?: boolean;
+	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
 	setupEditId?: EditId;
 }
 
+const testObjectProviders: TestObjectProvider[] = [];
+afterEach(() => {
+	for (const provider of testObjectProviders) {
+		provider.reset();
+	}
+	testObjectProviders.length = 0;
+});
+
 /**
  * Sets up and returns an object of components useful for testing SharedTree with a local server.
  * Required for tests that involve the uploadBlob API.
  *
- * If using this method, be sure to clean up server state by calling `reset` on the TestObjectProvider.
+ * Any TestObjectProvider created by this function will be reset after the test completes (via afterEach) hook.
  */
 export async function setUpLocalServerTestSharedTree(
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents> {
-	return setUpLocalServerTestSharedTreeGeneric(SharedTree.getFactory, options);
-}
-
-/**
- * Sets up and returns an object of components useful for testing SharedTreeWithAnchors with a local server.
- * Required for tests that involve the uploadBlob API.
- *
- * If using this method, be sure to clean up server state by calling `reset` on the TestObjectProvider.
- */
-export async function setUpLocalServerTestSharedTreeWithAnchors(
-	options: LocalServerSharedTreeTestingOptions
-): Promise<LocalServerSharedTreeTestingComponents<SharedTreeWithAnchors>> {
-	return setUpLocalServerTestSharedTreeGeneric(SharedTreeWithAnchors.getFactory, options);
-}
-
-async function setUpLocalServerTestSharedTreeGeneric<
-	TSharedTree extends SharedTree | SharedTreeWithAnchors,
-	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
->(
-	factoryGetter: (summarizeHistory?: boolean) => TSharedTreeFactory,
-	options: LocalServerSharedTreeTestingOptions
-): Promise<LocalServerSharedTreeTestingComponents<TSharedTree>> {
-	const { id, initialTree, testObjectProvider, setupEditId, summarizeHistory } = options;
+	const {
+		blobs,
+		headers,
+		id,
+		initialTree,
+		testObjectProvider,
+		setupEditId,
+		summarizeHistory,
+		writeFormat,
+		uploadEditChunks,
+	} = options;
 
 	const treeId = id ?? 'test';
-	const registry: ChannelFactoryRegistry = [[treeId, factoryGetter(summarizeHistory)]];
+	const registry: ChannelFactoryRegistry = [
+		[
+			treeId,
+			SharedTree.getFactory(
+				writeFormat ?? WriteFormat.v0_1_1,
+				summarizeHistory === undefined || summarizeHistory === true
+					? { uploadEditChunks: uploadEditChunks ?? true }
+					: false
+			),
+		],
+	];
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
+
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(
 			TestDataStoreType,
@@ -297,80 +288,94 @@ async function setUpLocalServerTestSharedTreeGeneric<
 			[innerRequestHandler]
 		);
 
+	const defaultCodeDetails: IFluidCodeDetails = {
+		package: 'defaultTestPackage',
+		config: {},
+	};
+
+	function makeTestLoader(provider: TestObjectProvider): IHostLoader {
+		const fluidEntryPoint = runtimeFactory();
+		return provider.createLoader([[defaultCodeDetails, fluidEntryPoint]], {
+			options: { maxClientLeaveWaitTime: 1000 },
+		});
+	}
+
 	let provider: TestObjectProvider;
-	let container: IContainer;
+	let container: Container;
 
 	if (testObjectProvider !== undefined) {
 		provider = testObjectProvider;
-		container = await provider.loadTestContainer();
+		const driver = new LocalServerTestDriver();
+		const loader = makeTestLoader(provider);
+		// Once ILoaderOptions is specificable, this should use `provider.loadTestContainer` instead.
+		container = (await loader.resolve({ url: await driver.createContainerUrl(treeId), headers })) as Container;
+		await waitContainerToCatchUp(container);
 	} else {
-		provider = new TestObjectProvider(Loader, await createFluidTestDriver(), runtimeFactory);
-		container = await provider.makeTestContainer();
+		const driver = new LocalServerTestDriver();
+		provider = new TestObjectProvider(Loader, driver, runtimeFactory);
+		testObjectProviders.push(provider);
+		// Once ILoaderOptions is specificable, this should use `provider.makeTestContainer` instead.
+		const loader = makeTestLoader(provider);
+		container = (await createAndAttachContainer(
+			defaultCodeDetails,
+			loader,
+			driver.createCreateNewRequest(treeId)
+		)) as Container;
 	}
 
-	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');
-	const tree = await dataObject.getSharedObject<TSharedTree>(treeId);
+	const dataObject = await requestFluidObject<ITestFluidObject>(container, '/');
+
+	const uploadedBlobs =
+		blobs === undefined ? [] : await Promise.all(blobs.map(async (blob) => dataObject.context.uploadBlob(blob)));
+	const tree = await dataObject.getSharedObject<SharedTree>(treeId);
 
 	if (initialTree !== undefined && testObjectProvider === undefined) {
 		setTestTree(tree, initialTree, setupEditId);
 	}
 
-	return { tree, testObjectProvider: provider };
+	return { container, tree, testObjectProvider: provider, uploadedBlobs };
 }
 
 /** Sets testTrait to contain `node`. */
-export function setTestTree<TExtraChangeTypes = never>(
-	tree: GenericSharedTree<TExtraChangeTypes | Change>,
-	node: ChangeNode,
-	overrideId?: EditId
-): EditId {
-	const edit = newEdit(setTrait(testTrait, [node]));
-	tree.processLocalEdit({ ...edit, id: overrideId || edit.id });
-	return overrideId || edit.id;
-}
-
-/** Creates an empty node for testing purposes. */
-export function makeEmptyNode(identifier: NodeId = uuidv4() as NodeId): ChangeNode {
-	const definition = 'node' as Definition;
-	return { definition, identifier, traits: {} };
-}
-
-/** Creates a node with two children, one under a 'left' trait and one under a 'right' trait */
-export function makeTestNode(identifier: NodeId = uuidv4() as NodeId): ChangeNode {
-	const definition = 'node' as Definition;
-	const left: ChangeNode = makeEmptyNode('c4acaed2-afac-417e-a3d7-07ea73c0330a' as NodeId);
-	const right: ChangeNode = makeEmptyNode('452c618a-ba0c-4d9b-89f3-2248d27f8c7f' as NodeId);
-	const leftTraitLabel = 'left' as TraitLabel;
-	const rightTraitLabel = 'right' as TraitLabel;
-	return {
-		definition,
-		identifier,
-		traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
-	};
+function setTestTree(tree: SharedTree, node: BuildNode, overrideId?: EditId): EditId {
+	const trait = testTrait(tree.currentView);
+	if (overrideId === undefined) {
+		return tree.applyEdit(...setTrait(trait, node)).id;
+	} else {
+		const changes = setTrait(trait, node).map((c) => tree.internalizeChange(c));
+		return tree.applyEditInternal({ changes, id: overrideId }).id;
+	}
 }
 
 /**
  * Creates a list of edits with stable IDs that can be processed by a SharedTree.
- * @param numberOfEdits - the number of edits to create
  * @returns the list of created edits
  */
-export function createStableEdits(numberOfEdits: number): Edit<Change>[] {
-	const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
+export function createStableEdits(
+	numberOfEdits: number,
+	idContext: NodeIdContext = makeNodeIdContext(),
+	payload: (i: number) => Payload = identity
+): Edit<ChangeInternal>[] {
+	if (numberOfEdits === 0) {
+		return [];
+	}
 
-	// First edit is an insert
-	const nodeId = 'ae6b24eb-6fa8-42cc-abd2-48f250b7798f' as NodeId;
-	const node = makeEmptyNode(nodeId);
-	const firstEdit = newEdit([
-		Change.build([node], 0 as DetachedSequenceId),
-		Change.insert(0 as DetachedSequenceId, StablePlace.before(left)),
+	const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
+	const nodeId = idContext.generateNodeId('ae6b24eb-6fa8-42cc-abd2-48f250b7798f');
+	const node = buildLeaf(nodeId);
+	const insertEmptyNode = newEdit([
+		ChangeInternal.build([node], 0 as DetachedSequenceId),
+		ChangeInternal.insert(
+			0 as DetachedSequenceId,
+			StablePlace.atEndOf({ label: testTraitLabel, parent: idContext.convertToNodeId(initialTree.identifier) })
+		),
 	]);
 
-	const edits: Edit<Change>[] = [];
-	edits.push({ ...firstEdit, id: uuidv5('test', uuidNamespace) as EditId });
+	const edits: Edit<ChangeInternal>[] = [{ ...insertEmptyNode, id: uuidv5('test', uuidNamespace) as EditId }];
 
 	// Every subsequent edit is a set payload
-	for (let i = 1; i < numberOfEdits - 1; i++) {
-		const edit = newEdit([Change.setPayload(nodeId, i)]);
+	for (let i = 1; i < numberOfEdits; i++) {
+		const edit = newEdit([ChangeInternal.setPayload(nodeId, payload(i))]);
 		edits.push({ ...edit, id: uuidv5(i.toString(), uuidNamespace) as EditId });
 	}
 
@@ -378,11 +383,11 @@ export function createStableEdits(numberOfEdits: number): Edit<Change>[] {
 }
 
 /** Asserts that changes to SharedTree in editor() function do not cause any observable state change */
-export function assertNoDelta<TChange>(tree: GenericSharedTree<TChange>, editor: () => void) {
-	const snapshotA = tree.currentView;
+export function assertNoDelta(tree: SharedTree, editor: () => void) {
+	const viewA = tree.currentView;
 	editor();
-	const snapshotB = tree.currentView;
-	const delta = snapshotA.delta(snapshotB);
+	const viewB = tree.currentView;
+	const delta = viewA.delta(viewB);
 	expect(delta).deep.equals({
 		changed: [],
 		added: [],
@@ -397,12 +402,12 @@ export async function asyncFunctionThrowsCorrectly(
 	asyncFunction: () => Promise<unknown>,
 	expectedError: string
 ): Promise<boolean> {
-	let errorMessage;
+	let errorMessage: string | undefined;
 
 	try {
 		await asyncFunction();
 	} catch (error) {
-		errorMessage = error.message;
+		errorMessage = (error as Error).message;
 	}
 
 	return errorMessage === expectedError;
@@ -413,7 +418,7 @@ export async function asyncFunctionThrowsCorrectly(
  * Does not compare children or payloads.
  * @param nodes - two or more nodes to compare
  */
-export function areNodesEquivalent(...nodes: NodeData[]): boolean {
+export function areNodesEquivalent(...nodes: NodeData<unknown>[]): boolean {
 	if (nodes.length < 2) {
 		fail('Too few nodes to compare');
 	}
@@ -431,51 +436,179 @@ export function areNodesEquivalent(...nodes: NodeData[]): boolean {
 	return true;
 }
 
+// This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
+// resource path logic to a single place.
+export const testDocumentsPathBase = resolve(__dirname, '../../../src/test/documents/');
+
+export const versionComparator = (versionA: string, versionB: string): number => {
+	const versionASplit = versionA.split('.');
+	const versionBSplit = versionB.split('.');
+
+	assert(
+		versionASplit.length === versionBSplit.length && versionASplit.length === 3,
+		'Version numbers should follow semantic versioning.'
+	);
+
+	for (let i = 0; i < 3; ++i) {
+		const numberA = parseInt(versionASplit[i], 10);
+		const numberB = parseInt(versionBSplit[i], 10);
+
+		if (numberA > numberB) {
+			return 1;
+		}
+
+		if (numberA < numberB) {
+			return -1;
+		}
+	}
+
+	return 0;
+};
+
 /**
- * Check if two trees are equivalent, meaning they have the same descendants with the same properties.
- *
- * See {@link comparePayloads} for payload comparison semantics.
+ * Create a {@link SimpleTestTree} from the given {@link SharedTree} or {@link IdCompressor}
  */
-export function deepCompareNodes(a: ChangeNode, b: ChangeNode): boolean {
-	if (a.identifier !== b.identifier) {
-		return false;
+export function setUpTestTree(idSource?: IdCompressor | SharedTree, expensiveValidation = false): TestTree {
+	const source = idSource ?? new IdCompressor(createSessionId(), reservedIdCount);
+	if (source instanceof SharedTree) {
+		assert(source.edits.length === 0, 'tree must be a new SharedTree');
+		const getNormalizer = () => getIdNormalizerFromSharedTree(source);
+		const contextWrapper = {
+			normalizeToOpSpace: (id: NodeId) => getNormalizer().normalizeToOpSpace(id),
+			normalizeToSessionSpace: (id: OpSpaceNodeId, sessionId: SessionId) =>
+				getNormalizer().normalizeToSessionSpace(id, sessionId),
+			get localSessionId() {
+				return getNormalizer().localSessionId;
+			},
+		};
+		const simpleTestTree = new SimpleTestTree(source, contextWrapper, expensiveValidation);
+		setTestTree(source, simpleTestTree);
+		return simpleTestTree;
 	}
 
-	if (a.definition !== b.definition) {
+	const context = makeNodeIdContext(source);
+	return new SimpleTestTree(context, context, expensiveValidation);
+}
+
+/**
+ * Gets an id normalizer from the provided shared-tree. This is
+ */
+export function getIdNormalizerFromSharedTree(sharedTree: SharedTree): NodeIdNormalizer<OpSpaceNodeId> {
+	return (
+		((sharedTree as any).idNormalizer as NodeIdNormalizer<OpSpaceNodeId>) ??
+		fail('Failed to find SharedTree normalizer')
+	);
+}
+
+/**
+ * Create a {@link SimpleTestTree} before each test
+ */
+export function refreshTestTree(
+	idSourceFactory?: (() => IdCompressor) | (() => SharedTree),
+	fn?: (testTree: TestTree) => void,
+	expensiveValidation = false
+): TestTree {
+	const factory = idSourceFactory ?? (() => new IdCompressor(createSessionId(), reservedIdCount));
+	return new RefreshingTestTree(() => {
+		return setUpTestTree(factory(), expensiveValidation);
+	}, fn);
+}
+
+export function makeNodeIdContext(idCompressor?: IdCompressor): NodeIdContext & NodeIdNormalizer<OpSpaceNodeId> {
+	const compressor = idCompressor ?? new IdCompressor(createSessionId(), reservedIdCount);
+	return getNodeIdContext(compressor);
+}
+
+/**
+ * Applies an arbitrary edit to the given SharedTree which leaves the tree in the same state that it was before the edit.
+ * This is useful for test scenarios that want to apply edits but don't care what they do.
+ */
+export function applyNoop(tree: SharedTree): Edit<unknown> {
+	return tree.applyEdit(...noopEdit(tree.currentView));
+}
+
+/**
+ * Creates an arbitrary edit which leaves a tree in the same state that it was before the edit.
+ * This is useful for test scenarios that want to create edits but don't care what they do.
+ */
+export function noopEdit(view: TreeView): Change[] {
+	const traitLocation = testTrait(view);
+	const trait = view.getTrait(traitLocation);
+	// Set the test trait to the same thing that it already was
+	return setTrait(
+		traitLocation,
+		trait.map((id) => getChangeNodeFromViewNode(view, id))
+	);
+}
+
+/** Translate an ID in one context to an ID in another */
+export function translateId(id: NodeId | NodeData<NodeId>, from: NodeIdConverter, to: NodeIdConverter): NodeId {
+	return to.convertToNodeId(from.convertToStableNodeId(getNodeId(id)));
+}
+
+export function normalizeId(tree: SharedTree, id: NodeId): OpSpaceNodeId {
+	const normalizer = getIdNormalizerFromSharedTree(tree);
+	return normalizer.normalizeToOpSpace(id);
+}
+
+export function normalizeIds(tree: SharedTree, ...ids: NodeId[]): OpSpaceNodeId[] {
+	const normalizer = getIdNormalizerFromSharedTree(tree);
+	return ids.map((id) => normalizer.normalizeToOpSpace(id));
+}
+
+export function idsAreEqual(treeA: SharedTree, idsA: NodeId[], treeB: SharedTree, idsB: NodeId[]): boolean {
+	if (idsA.length !== idsB.length) {
 		return false;
 	}
-
-	if (!comparePayloads(a.payload, b.payload)) {
-		return false;
-	}
-
-	const traitsA = Object.entries(a.traits);
-	const traitsB = Object.entries(b.traits);
-
-	if (traitsA.length !== traitsB.length) {
-		return false;
-	}
-
-	for (const [traitLabel, childrenA] of traitsA) {
-		const childrenB = b.traits[traitLabel];
-
-		if (childrenA.length !== childrenB.length) {
+	const contextA = getIdNormalizerFromSharedTree(treeA);
+	const contextB = getIdNormalizerFromSharedTree(treeB);
+	for (let i = 0; i < idsA.length; i++) {
+		if (contextA.normalizeToOpSpace(idsA[i]) !== contextB.normalizeToOpSpace(idsB[i])) {
 			return false;
 		}
-
-		const traitsEqual = compareArrays(childrenA, childrenB, (childA, childB) => {
-			if (typeof childA === 'number' || typeof childB === 'number') {
-				// Check if children are DetachedSequenceIds
-				return childA === childB;
-			}
-
-			return deepCompareNodes(childA, childB);
-		});
-
-		if (!traitsEqual) {
-			return false;
-		}
 	}
-
 	return true;
+}
+
+export function normalizeEdit(
+	tree: SharedTree,
+	edit: Edit<ChangeInternal>
+): Edit<ReplaceRecursive<ChangeInternal, NodeId, OpSpaceNodeId>> {
+	const context = getIdNormalizerFromSharedTree(tree);
+	return convertEditIds(edit, (id) => context.normalizeToOpSpace(id));
+}
+
+export function stabilizeEdit(
+	tree: SharedTree,
+	edit: Edit<ChangeInternal>
+): Edit<ReplaceRecursive<ChangeInternal, NodeId, StableNodeId>> {
+	return convertEditIds(edit, (id) => tree.convertToStableNodeId(id));
+}
+
+/**
+ * Spies on all future ops submitted to `containerRuntimeFactory`. When ops are submitted, they will be `push`ed into the
+ * returned array.
+ */
+export function spyOnSubmittedOps<Op extends SharedTreeOp | SharedTreeOp_0_0_2>(
+	containerRuntimeFactory: MockContainerRuntimeFactory
+): Op[] {
+	const ops: Op[] = [];
+	const originalPush = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
+	containerRuntimeFactory.pushMessage = (message: Partial<ISequencedDocumentMessage>) => {
+		const { contents } = message;
+		ops.push(contents as Op);
+		originalPush(message);
+	};
+	return ops;
+}
+
+/**
+ * Waits for summarization to occur, and returns a version that can be passed into newly loaded containers
+ * to ensure they load this summary version. Use the `LoaderHeader.version` header.
+ */
+export async function waitForSummary(mainContainer: IContainer): Promise<string> {
+	const { deltaManager } = mainContainer;
+	const summaryCollection = new SummaryCollection(deltaManager, new TelemetryNullLogger());
+	const ackedSummary = await summaryCollection.waitSummaryAck(deltaManager.lastSequenceNumber);
+	return ackedSummary.summaryAck.contents.handle;
 }

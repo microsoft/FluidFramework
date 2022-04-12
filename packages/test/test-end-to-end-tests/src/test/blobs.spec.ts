@@ -97,51 +97,6 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), testString);
     });
 
-    it("loads from snapshot", async function() {
-        // GitHub Issue: #9534
-        if(provider.driver.type === "odsp") {
-            this.skip();
-        }
-        const container1 = await provider.makeTestContainer(testContainerConfig);
-        const dataStore = await requestFluidObject<ITestDataObject>(container1, "default");
-
-        const attachOpP = new Promise<void>((resolve, reject) => container1.on("op", (op) => {
-            if (op.contents?.type === ContainerMessageType.BlobAttach) {
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
-            }
-        }));
-
-        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
-
-        // this will send the blob attach op on < 0.41 runtime (otherwise it's sent at time of upload)
-        dataStore._root.set("my blob", blob);
-        await attachOpP;
-
-        const snapshot1 = (container1 as any).context.runtime.blobManager.snapshot();
-
-        // wait for summarize, then summary ack so the next container will load from snapshot
-        await new Promise<void>((resolve, reject) => {
-            let summarized = false;
-            container1.on("op", (op) => {
-                if (op.type === "summaryAck") {
-                    if (summarized) {
-                        resolve();
-                    }
-                } else if (op.type === "summaryNack") {
-                    reject(new Error("summaryNack"));
-                } else if (op.type === "summarize") {
-                    summarized = true;
-                }
-            });
-        });
-
-        const container2 = await provider.loadTestContainer(testContainerConfig);
-        const snapshot2 = (container2 as any).context.runtime.blobManager.snapshot();
-        assert.strictEqual(snapshot2.entries.length, 1);
-        assert.strictEqual(snapshot1.entries[0].id, snapshot2.entries[0].id);
-    });
-
     it("round trip blob handle on shared string property", async function() {
         const container1 = await provider.makeTestContainer(testContainerConfig);
         const container2 = await provider.loadTestContainer(testContainerConfig);
@@ -232,6 +187,52 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
             this.skip();
         }
+    });
+
+    // this test relies on an internal function that has been renamed (snapshot -> summarize)
+    it("loads from snapshot", async function() {
+        // GitHub Issue: #9534
+        if(provider.driver.type === "odsp") {
+            this.skip();
+        }
+        const container1 = await provider.makeTestContainer(testContainerConfig);
+        const dataStore = await requestFluidObject<ITestDataObject>(container1, "default");
+
+        const attachOpP = new Promise<void>((resolve, reject) => container1.on("op", (op) => {
+            if (op.contents?.type === ContainerMessageType.BlobAttach) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));
+            }
+        }));
+
+        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
+
+        // this will send the blob attach op on < 0.41 runtime (otherwise it's sent at time of upload)
+        dataStore._root.set("my blob", blob);
+        await attachOpP;
+
+        const snapshot1 = (container1 as any).context.runtime.blobManager.summarize();
+
+        // wait for summarize, then summary ack so the next container will load from snapshot
+        await new Promise<void>((resolve, reject) => {
+            let summarized = false;
+            container1.on("op", (op) => {
+                if (op.type === "summaryAck") {
+                    if (summarized) {
+                        resolve();
+                    }
+                } else if (op.type === "summaryNack") {
+                    reject(new Error("summaryNack"));
+                } else if (op.type === "summarize") {
+                    summarized = true;
+                }
+            });
+        });
+
+        const container2 = await provider.loadTestContainer(testContainerConfig);
+        const snapshot2 = (container2 as any).context.runtime.blobManager.summarize();
+        assert.strictEqual(snapshot2.stats.treeNodeCount, 1);
+        assert.strictEqual(snapshot1.summary.tree[0].id, snapshot2.summary.tree[0].id);
     });
 
     itExpects("works in detached container", [

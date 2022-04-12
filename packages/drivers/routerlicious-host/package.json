@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/routerlicious-host",
-  "version": "0.58.3000",
+  "version": "0.59.1000",
   "description": "Routerlicious host interfaces",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,15 +34,15 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/driver-definitions": "^0.45.2000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/driver-definitions": "^0.46.1000-0",
     "axios": "^0.26.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
-    "@fluidframework/protocol-definitions": "^0.1027.1000",
-    "@fluidframework/routerlicious-host-previous": "npm:@fluidframework/routerlicious-host@0.58.2000",
+    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/routerlicious-host-previous": "npm:@fluidframework/routerlicious-host@^0.58.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",
@@ -62,7 +62,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.58.3000",
+    "version": "0.59.1000",
     "broken": {}
   }
 }

@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_booleanCases": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_booleanCases():
@@ -28,7 +28,7 @@ use_current_VariableDeclaration_booleanCases(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_booleanCases": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_booleanCases():
@@ -40,7 +40,7 @@ use_old_VariableDeclaration_booleanCases(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_generatePairwiseOptions": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_generatePairwiseOptions():
@@ -52,7 +52,7 @@ use_current_FunctionDeclaration_generatePairwiseOptions(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_generatePairwiseOptions": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_generatePairwiseOptions():
@@ -64,7 +64,7 @@ use_old_FunctionDeclaration_generatePairwiseOptions(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_numberCases": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_numberCases():
@@ -76,7 +76,7 @@ use_current_VariableDeclaration_numberCases(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_numberCases": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_numberCases():
@@ -88,7 +88,7 @@ use_old_VariableDeclaration_numberCases(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_OptionsMatrix": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_OptionsMatrix():
@@ -100,7 +100,7 @@ use_current_TypeAliasDeclaration_OptionsMatrix(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_OptionsMatrix": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_OptionsMatrix():

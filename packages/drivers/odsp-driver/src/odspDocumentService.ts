@@ -418,16 +418,16 @@ export class OdspDocumentService implements IDocumentService {
                     .catch((error) => {
                         this.mc.logger.sendErrorEvent({
                                 eventName: "JoinSessionRefreshError",
-                                ...props,
+                                details: JSON.stringify(props),
                             },
                             error,
                         );
                     });
             } else {
                 // Logging just for informational purposes to help with debugging as this is a new feature.
-                this.mc.logger.sendErrorEvent({
+                this.mc.logger.sendTelemetryEvent({
                     eventName: "JoinSessionRefreshNotScheduled",
-                    ...props,
+                    details: JSON.stringify(props),
                 });
             }
         }

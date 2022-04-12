@@ -17,11 +17,13 @@ interface DrilldownKey {
 	index: number;
 }
 
+type PlaceAnchor = SiblingBasedPlaceAnchor | ParentBasedPlaceAnchor;
+
 interface SiblingBasedPlaceAnchor {
 	side: Side;
 	sibling: NodeId;
 	tiebreak: Tiebreak;
-	moveRules: MovementRules;
+	commutativity: Commutativity;
 }
 
 interface ParentBasedPlaceAnchor {
@@ -31,9 +33,11 @@ interface ParentBasedPlaceAnchor {
 	tiebreak: Tiebreak;
 }
 
+type RangeAnchor = SetLikeRangeAnchor | SliceLikeRangeAnchor;
+
 interface SetLikeRangeAnchor {
 	first: NodeId;
-	last: NodeId;
+	last?: NodeId;
 }
 
 interface SliceLikeRangeAnchor {
@@ -55,19 +59,7 @@ type RangeBoundary = {
 enum Extremity { Start, End }
 enum Side { Before, After }
 enum Tiebreak { LastToFirst, FirstToLast }
-type MovementRules = SimpleMovementRules | CustomMovementRules
-enum SimpleMovementRules { NeverMove, CommutativeMove, AlwaysMove }
-interface CustomMovementRules {
-	traitLabel: TraitLabels;
-	traitParent: TraitParents;
-	siblingStatus: NodeStatuses;
-	granularity: MoveGranularity;
-	commutative: boolean;
-}
-enum TraitLabels { Initial, Any }
-enum TraitParents { Initial, Any }
-enum NodeStatuses { Alive, Deleted, Any }
-enum MoveGranularity { IntraEdit, InterEdit, Any }
+enum Commutativity { Full, MoveOnly, DeleteOnly, None }
 
 type NodeId = number;
-type TraitLabel = number;
+type TraitLabel = number | string;

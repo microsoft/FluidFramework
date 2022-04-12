@@ -10,7 +10,6 @@ import {
     FluidObject,
     IFluidHandle,
     IFluidHandleContext,
-    IFluidObject,
     IFluidRouter,
     IRequest,
     IResponse,
@@ -91,7 +90,6 @@ import {
 import {
     addBlobToSummary,
     addTreeToSummary,
-    convertToSummaryTree,
     createRootSummarizerNodeWithGC,
     IRootSummarizerNodeWithGC,
     RequestParser,
@@ -153,6 +151,7 @@ import {
     isDataStoreAliasMessage,
 } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
+import { OpTracker } from "./opTelemetry";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -354,6 +353,11 @@ const maxOpSizeInBytesKey = "Fluid.ContainerRuntime.MaxOpSizeInBytes";
 // in order to account for some extra overhead from serialization
 // to not reach the 1MB limits in socket.io and Kafka.
 const defaultMaxOpSizeInBytes = 768000;
+
+// By default, the size of the contents for the incoming ops is tracked.
+// However, in certain situations, this may incur a performance hit.
+// The feature-gate below can be used to disable this feature.
+const disableOpTrackingKey = "Fluid.ContainerRuntime.DisableOpTracking";
 
 const defaultFlushMode = FlushMode.TurnBased;
 
@@ -632,7 +636,7 @@ export class ScheduleManager {
 
             // This could be the beginning of a new batch or an individual message.
             this.emitter.emit("batchBegin", message);
-            this.deltaScheduler.batchBegin();
+            this.deltaScheduler.batchBegin(message);
 
             const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
             if (batch) {
@@ -653,7 +657,7 @@ export class ScheduleManager {
             this.hitError = true;
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
-            this.deltaScheduler.batchEnd();
+            this.deltaScheduler.batchEnd(message);
             return;
         }
 
@@ -663,7 +667,7 @@ export class ScheduleManager {
         if (this.batchClientId === undefined || batch === false) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", undefined, message);
-            this.deltaScheduler.batchEnd();
+            this.deltaScheduler.batchEnd(message);
             return;
         }
     }
@@ -902,7 +906,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._flushMode;
     }
 
-    public get scope(): IFluidObject & FluidObject {
+    public get scope(): FluidObject {
         return this.containerScope;
     }
 
@@ -1012,6 +1016,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
     private summaryCount: number | undefined;
+    private readonly opTracker: OpTracker;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -1307,6 +1312,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
         BindBatchTracker(this, this.logger);
+        this.opTracker = new OpTracker(this.deltaManager, this.mc.config.getBoolean(disableOpTrackingKey) === true);
     }
 
     public dispose(error?: Error): void {
@@ -1476,13 +1482,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const electedSummarizerContent = JSON.stringify(this.summarizerClientElection?.serialize());
             addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
         }
-        const snapshot = this.blobManager.snapshot();
 
+        const summary = this.blobManager.summarize();
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
         // and the blob manager can handle the tree not existing when loading
-        if (snapshot.entries.length !== 0) {
-            const blobsTree = convertToSummaryTree(snapshot, false);
-            addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
+        if (Object.keys(summary.summary.tree).length > 0) {
+            addTreeToSummary(summaryTree, blobsTreeName, summary);
         }
 
         if (this.garbageCollector.writeDataAtRoot) {
@@ -1827,7 +1832,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async createRootDataStoreLegacy(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        fluidDataStore.bindToContext();
+        // back-compat 0.58.3000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel. For
+        // older versions, we still have to call bindToContext.
+        if (fluidDataStore.makeVisibleAndAttachGraph !== undefined) {
+            fluidDataStore.makeVisibleAndAttachGraph();
+        } else {
+            fluidDataStore.bindToContext();
+        }
         return fluidDataStore;
     }
 
@@ -1899,7 +1910,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {
-            fluidDataStore.bindToContext();
+            // back-compat 0.58.3000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
+            // For older versions, we still have to call bindToContext.
+            if (fluidDataStore.makeVisibleAndAttachGraph !== undefined) {
+                fluidDataStore.makeVisibleAndAttachGraph();
+            } else {
+                fluidDataStore.bindToContext();
+            }
+            this.logger.sendTelemetryEvent({
+                eventName: "Root datastore with props",
+                hasProps: props !== undefined,
+            });
         }
         return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
     }
@@ -2284,6 +2305,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcStateUpdatedDataStoreCount: summarizeResult.gcStats?.updatedDataStoreCount,
                 gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
                 gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
+                opsSizesSinceLastSummary: this.opTracker.opsSizeAccumulator,
+                nonSystemOpsSinceLastSummary: this.opTracker.nonSystemOpCount,
                 ...partialStats,
             };
             const generateSummaryData = {
@@ -2355,7 +2378,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             } as const;
 
             this.summarizerNode.completeSummary(handle);
-
+            this.opTracker.reset();
             return submitData;
         } finally {
             // Cleanup wip summary in case of failure
