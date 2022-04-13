@@ -35,7 +35,6 @@ There are a few steps you can take to write a good change note and avoid needing
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
 
-
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
 - [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
