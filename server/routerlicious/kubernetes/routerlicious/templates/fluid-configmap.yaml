@@ -59,7 +59,7 @@ data:
         },
         "storage": {
             "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }},
-            "storageUrl": "{{ .Values.gitrest.internalUrl }}",
+            "storageUrl": "{{ .Values.storage.storageUrl }}",
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",

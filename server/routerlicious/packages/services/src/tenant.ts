@@ -68,7 +68,7 @@ export class TenantManager implements core.ITenantManager {
             });
         };
         const defaultHeaders = getDefaultHeaders();
-        // If defaultInternalHistorianUrl is undefined or empty in the server, the tenant's internalHistorianUrl
+        // If internalHistorianUrlOverride is undefined or empty in the server, the tenant's internalHistorianUrl
         // will be used.
         const internalHistorianUrl = this.internalHistorianUrlOverride || details.data.storage.internalHistorianUrl;
         const baseUrl = `${internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
