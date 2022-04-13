@@ -2204,7 +2204,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return ["_blobs"];
         }
         const dataStorePkgPath = this.dataStores.getDataStorePackagePath(nodePath);
-        assert(dataStorePkgPath !== undefined, "Package path requested for unknown node type.");
+        assert(dataStorePkgPath !== undefined, 0x2d6 /* "Package path requested for unknown node type." */);
         return dataStorePkgPath;
     }
 
