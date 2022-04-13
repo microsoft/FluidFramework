@@ -74,15 +74,7 @@ module.exports = env => {
                 tls: 'empty',
                 child_process: 'empty',
             },
-            devServer: {
-                publicPath: '/dist',
-                stats: "minimal",
-                before: (app, server) => fluidRoute.before(app, server, env),
-                after: (app, server) => fluidRoute.after(app, server, __dirname, env),
-                watchOptions: {
-                    ignored: "**/node_modules/**",
-                }
-            },
+            devServer: { devMiddleware: { stats: "minimal" }},
             output: {
                 filename: '[name].bundle.js',
                 chunkFilename: '[name].async.js',
@@ -100,5 +92,6 @@ module.exports = env => {
                 // new BundleAnalyzerPlugin()
             ]
         },
-        isProduction ? require("./webpack.prod") : require("./webpack.dev"));
+        isProduction ? require("./webpack.prod") : require("./webpack.dev"),
+        fluidRoute.devServerConfig(__dirname, env));
 };
