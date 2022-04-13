@@ -230,7 +230,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
             summaryLogger: new TelemetryNullLogger(),
         });
 
-        summarizer.stop("summarizerClientDisconnected");
+        summarizer.stop("summarizerClientDisconnected", false /* forceClose */);
         await flushPromises();
 
         try {
