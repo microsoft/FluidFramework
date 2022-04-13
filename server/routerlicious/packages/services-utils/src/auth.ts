@@ -49,12 +49,12 @@ export function validateTokenClaims(
  * But it can be used by other services to validate the document creator identity upon creating a document.
  */
 export function getCreationToken(token: string, key: string, documentId: string, lifetime = 5 * 60) {
- // Current time in seconds
- const tokenClaims = jwt.decode(token) as ITokenClaims;
+    // Current time in seconds
+    const tokenClaims = jwt.decode(token) as ITokenClaims;
 
- const { tenantId, user } = tokenClaims;
+    const { tenantId, user } = tokenClaims;
 
- return generateToken(tenantId, documentId, key, [], user, lifetime);
+    return generateToken(tenantId, documentId, key, [], user, lifetime);
 }
 
 /**

@@ -66,7 +66,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
         // Note: we suspect the incoming error object is either:
         // - a socketError: add it to the R11sError object for driver to be able to parse it and reason over it.
         // - anything else: let base class handle it
-        if (canRetry && Number.isInteger(error?.code) && typeof error?.message === "string") {
+        if (canRetry && Number.isInteger(error?.code) && ["string", "object"].includes(typeof error?.message)) {
             return errorObjectFromSocketError(error as IR11sSocketError, handler);
         } else {
             return super.createErrorObject(handler, error, canRetry);
