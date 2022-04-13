@@ -121,7 +121,9 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
-    (event: `"subDirectoryCreated" | "subDirectoryDeleted"`, listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // (undocumented)
+    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public
