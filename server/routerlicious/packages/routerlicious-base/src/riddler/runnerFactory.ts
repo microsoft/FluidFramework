@@ -77,10 +77,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
             // or don't want to automatically create (i.e. GitHub)
             if (!tenant.storage.credentials) {
                 try {
-                    let storageUrl = config.get("worker:gitrestUrl") as string | undefined;
-                    if (!storageUrl) {
-                        storageUrl = tenant.storage.url;
-                    }
+                    const storageUrl = (config.get("worker:gitrestUrl") as string | undefined) || tenant.storage.url;
                     await getOrCreateRepository(storageUrl, tenant.storage.owner, tenant.storage.repository);
                 } catch (err) {
                     // This is okay to fail since the repos are alreay created in production.

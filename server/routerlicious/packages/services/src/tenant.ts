@@ -68,10 +68,7 @@ export class TenantManager implements core.ITenantManager {
             });
         };
         const defaultHeaders = getDefaultHeaders();
-        let internalHistorianUrl = this.internalHistorianUrlOverride;
-        if (!internalHistorianUrl || internalHistorianUrl === "") {
-            internalHistorianUrl = details.data.storage.internalHistorianUrl;
-        }
+        const internalHistorianUrl = this.internalHistorianUrlOverride || details.data.storage.internalHistorianUrl;
         const baseUrl = `${internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
         const restWrapper = new BasicRestWrapper(
             baseUrl,
