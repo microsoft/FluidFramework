@@ -1282,23 +1282,6 @@
     "@fluidframework/telemetry-utils" "^0.58.2002"
     idb "^6.1.2"
 
-"@fluidframework/eslint-config-fluid@^0.27.2000-59622":
-  version "0.27.2000-59622"
-  resolved "https://registry.yarnpkg.com/@fluidframework/eslint-config-fluid/-/eslint-config-fluid-0.27.2000-59622.tgz#d878580889ad9e2529303309d0688c0421bbef5d"
-  integrity sha512-FRe3Y1ihHrTaQQVAWQ1hJIXDwDphulIhUlCtPLTptfzPR56HxDeh1jvmE1vu1DWSbKLnw8u5W70nibQTdDcIUw==
-  dependencies:
-    "@rushstack/eslint-patch" "^1.1.0"
-    "@rushstack/eslint-plugin" "^0.8.5"
-    "@rushstack/eslint-plugin-security" "^0.2.5"
-    "@typescript-eslint/eslint-plugin" "~5.9.0"
-    "@typescript-eslint/parser" "~5.9.0"
-    eslint-plugin-editorconfig "~3.2.0"
-    eslint-plugin-eslint-comments "~3.2.0"
-    eslint-plugin-import "~2.25.4"
-    eslint-plugin-promise "^6.0.0"
-    eslint-plugin-react "~7.28.0"
-    eslint-plugin-unicorn "~40.0.0"
-
 "@fluidframework/file-driver-previous@npm:@fluidframework/file-driver@^0.58.0":
   version "0.58.2002"
   resolved "https://registry.yarnpkg.com/@fluidframework/file-driver/-/file-driver-0.58.2002.tgz#ce93144b9f8cc51334733ad1dd57efac90902d6f"
@@ -1744,6 +1727,18 @@
     "@fluidframework/telemetry-utils" "^0.58.2002"
     uuid "^8.3.1"
 
+"@fluidframework/server-lambdas-driver@0.1036.1000-58953":
+  version "0.1036.1000-58953"
+  resolved "https://registry.yarnpkg.com/@fluidframework/server-lambdas-driver/-/server-lambdas-driver-0.1036.1000-58953.tgz#8fb27ad97727492a0c8d887d5b52dc97028d9c19"
+  integrity sha512-p2MfDgWA+VuBI4GdnrjaaqFNtPKOmjkXb5QXHn0DF7t+eEHZh8GY5F4px3OkekE+iXonb7AwGzeP1DED+rkv3g==
+  dependencies:
+    "@fluidframework/common-utils" "^0.32.1"
+    "@fluidframework/server-services-client" "0.1036.1000-58953"
+    "@fluidframework/server-services-core" "0.1036.1000-58953"
+    "@fluidframework/server-services-telemetry" "0.1036.1000-58953"
+    async "^3.2.0"
+    lodash "^4.17.21"
+
 "@fluidframework/server-lambdas-driver@^0.1035.1000":
   version "0.1035.1000"
   resolved "https://registry.yarnpkg.com/@fluidframework/server-lambdas-driver/-/server-lambdas-driver-0.1035.1000.tgz#3ecfb10f128cb6925068f4c7dc47e82b1a07497b"
@@ -1755,6 +1750,31 @@
     "@fluidframework/server-services-telemetry" "^0.1035.1000"
     async "^3.2.0"
     lodash "^4.17.21"
+
+"@fluidframework/server-lambdas@0.1036.1000-58953":
+  version "0.1036.1000-58953"
+  resolved "https://registry.yarnpkg.com/@fluidframework/server-lambdas/-/server-lambdas-0.1036.1000-58953.tgz#02e1b29d785c96a11c847141d9eb278a98c99c50"
+  integrity sha512-PuYPsSPJB7823IO3C18PyrbdXCjv4qXhyEjfu9/DOG7u3lkge9xevtHDe5WM33rQVbWlilzasFJ6ejFPfMSFXw==
+  dependencies:
+    "@fluidframework/common-definitions" "^0.20.1"
+    "@fluidframework/common-utils" "^0.32.1"
+    "@fluidframework/gitresources" "0.1036.1000-58953"
+    "@fluidframework/protocol-base" "0.1036.1000-58953"
+    "@fluidframework/protocol-definitions" "^0.1028.1000-0"
+    "@fluidframework/server-lambdas-driver" "0.1036.1000-58953"
+    "@fluidframework/server-services-client" "0.1036.1000-58953"
+    "@fluidframework/server-services-core" "0.1036.1000-58953"
+    "@fluidframework/server-services-telemetry" "0.1036.1000-58953"
+    "@types/semver" "^6.0.1"
+    async "^3.2.0"
+    axios "^0.26.0"
+    double-ended-queue "^2.1.0-0"
+    json-stringify-safe "^5.0.1"
+    lodash "^4.17.21"
+    nconf "^0.11.0"
+    semver "^6.3.0"
+    sha.js "^2.4.11"
+    uuid "^8.3.1"
 
 "@fluidframework/server-lambdas@^0.1035.1000":
   version "0.1035.1000"
@@ -1798,6 +1818,47 @@
     jsrsasign "^10.2.0"
     uuid "^8.3.1"
 
+"@fluidframework/server-local-server@^0.1036.1000-0":
+  version "0.1036.1000-58953"
+  resolved "https://registry.yarnpkg.com/@fluidframework/server-local-server/-/server-local-server-0.1036.1000-58953.tgz#2883d8641ecf9671487b582a3519b5ac180df0c3"
+  integrity sha512-YigI9+VEIrKJLBeyOmA3Duq/iiczr8LATSBBdQ63OS6D/UQ/aR2w4VwYjwlGiHOtb37muDpMUg7HpTVNJ7ZH4A==
+  dependencies:
+    "@fluidframework/common-utils" "^0.32.1"
+    "@fluidframework/protocol-definitions" "^0.1028.1000-0"
+    "@fluidframework/server-lambdas" "0.1036.1000-58953"
+    "@fluidframework/server-memory-orderer" "0.1036.1000-58953"
+    "@fluidframework/server-services-client" "0.1036.1000-58953"
+    "@fluidframework/server-services-core" "0.1036.1000-58953"
+    "@fluidframework/server-services-telemetry" "0.1036.1000-58953"
+    "@fluidframework/server-test-utils" "0.1036.1000-58953"
+    debug "^4.1.1"
+    jsrsasign "^10.2.0"
+    uuid "^8.3.1"
+
+"@fluidframework/server-memory-orderer@0.1036.1000-58953":
+  version "0.1036.1000-58953"
+  resolved "https://registry.yarnpkg.com/@fluidframework/server-memory-orderer/-/server-memory-orderer-0.1036.1000-58953.tgz#89fccf220e36531920aeba0a5f112a7607a48d89"
+  integrity sha512-FEbPiiso1O4eN++vLbleEkJZ3xwhclA88kY+kfBgRQrFekBhLRD/EFwj4W0n+Zo2+CcOgDsTIbU/DLWL9eMahg==
+  dependencies:
+    "@fluidframework/common-utils" "^0.32.1"
+    "@fluidframework/protocol-base" "0.1036.1000-58953"
+    "@fluidframework/protocol-definitions" "^0.1028.1000-0"
+    "@fluidframework/server-lambdas" "0.1036.1000-58953"
+    "@fluidframework/server-services-client" "0.1036.1000-58953"
+    "@fluidframework/server-services-core" "0.1036.1000-58953"
+    "@fluidframework/server-services-telemetry" "0.1036.1000-58953"
+    "@types/debug" "^4.1.5"
+    "@types/double-ended-queue" "^2.1.0"
+    "@types/lodash" "^4.14.118"
+    "@types/node" "^14.18.0"
+    "@types/ws" "^6.0.1"
+    debug "^4.1.1"
+    double-ended-queue "^2.1.0-0"
+    lodash "^4.17.21"
+    sillyname "^0.1.0"
+    uuid "^8.3.1"
+    ws "^7.4.6"
+
 "@fluidframework/server-memory-orderer@^0.1035.1000":
   version "0.1035.1000"
   resolved "https://registry.yarnpkg.com/@fluidframework/server-memory-orderer/-/server-memory-orderer-0.1035.1000.tgz#739f2b5a77b7afdfc16d2c38489bf234da49616e"
@@ -1822,6 +1883,24 @@
     uuid "^8.3.1"
     ws "^7.4.6"
 
+"@fluidframework/server-services-client@0.1036.1000-58953", "@fluidframework/server-services-client@^0.1036.1000-0":
+  version "0.1036.1000-58953"
+  resolved "https://registry.yarnpkg.com/@fluidframework/server-services-client/-/server-services-client-0.1036.1000-58953.tgz#1909440c2cf255e7aba21c22ffa91f40bef8a090"
+  integrity sha512-5GLsdAmna+3P32hl8rRaXE9w4v3SujqfqvrEZrSMwCNDwFH5L1pgkor5PHF6gLy/hrrYcwQpFa5bBRyfTcsGfA==
+  dependencies:
+    "@fluidframework/common-utils" "^0.32.1"
+    "@fluidframework/gitresources" "0.1036.1000-58953"
+    "@fluidframework/protocol-base" "0.1036.1000-58953"
+    "@fluidframework/protocol-definitions" "^0.1028.1000-0"
+    axios "^0.26.0"
+    crc-32 "1.2.0"
+    debug "^4.1.1"
+    json-stringify-safe "^5.0.1"
+    jsrsasign "^10.2.0"
+    jwt-decode "^3.0.0"
+    sillyname "^0.1.0"
+    uuid "^8.3.1"
+
 "@fluidframework/server-services-client@^0.1035.1000":
   version "0.1035.1000"
   resolved "https://registry.yarnpkg.com/@fluidframework/server-services-client/-/server-services-client-0.1035.1000.tgz#40fcd7f9bb4b779c1e6474e9c6ed495ebfd91b9a"
@@ -1840,23 +1919,20 @@
     sillyname "^0.1.0"
     uuid "^8.3.1"
 
-"@fluidframework/server-services-client@^0.1036.1000-0":
+"@fluidframework/server-services-core@0.1036.1000-58953", "@fluidframework/server-services-core@^0.1036.1000-0":
   version "0.1036.1000-58953"
-  resolved "https://registry.yarnpkg.com/@fluidframework/server-services-client/-/server-services-client-0.1036.1000-58953.tgz#1909440c2cf255e7aba21c22ffa91f40bef8a090"
-  integrity sha512-5GLsdAmna+3P32hl8rRaXE9w4v3SujqfqvrEZrSMwCNDwFH5L1pgkor5PHF6gLy/hrrYcwQpFa5bBRyfTcsGfA==
+  resolved "https://registry.yarnpkg.com/@fluidframework/server-services-core/-/server-services-core-0.1036.1000-58953.tgz#022f2550f5ea7d0c33168f9e0e7580f76d148c5a"
+  integrity sha512-JzAMuwdBcnbgAlE7dVqK/Au3TgsMLXCNhynsUjkhfSJL9+zBZ4OU6vh04dosWUHxbaGoGYS2spHi4OHXvI0ltw==
   dependencies:
     "@fluidframework/common-utils" "^0.32.1"
     "@fluidframework/gitresources" "0.1036.1000-58953"
-    "@fluidframework/protocol-base" "0.1036.1000-58953"
     "@fluidframework/protocol-definitions" "^0.1028.1000-0"
-    axios "^0.26.0"
-    crc-32 "1.2.0"
+    "@fluidframework/server-services-client" "0.1036.1000-58953"
+    "@fluidframework/server-services-telemetry" "0.1036.1000-58953"
+    "@types/nconf" "^0.10.0"
+    "@types/node" "^14.18.0"
     debug "^4.1.1"
-    json-stringify-safe "^5.0.1"
-    jsrsasign "^10.2.0"
-    jwt-decode "^3.0.0"
-    sillyname "^0.1.0"
-    uuid "^8.3.1"
+    nconf "^0.11.0"
 
 "@fluidframework/server-services-core@^0.1035.1000":
   version "0.1035.1000"
@@ -1898,6 +1974,17 @@
     uuid "^8.3.1"
     winston "^3.3.3"
 
+"@fluidframework/server-services-telemetry@0.1036.1000-58953":
+  version "0.1036.1000-58953"
+  resolved "https://registry.yarnpkg.com/@fluidframework/server-services-telemetry/-/server-services-telemetry-0.1036.1000-58953.tgz#9b52b25089507321e09ad856288232f4af254952"
+  integrity sha512-iIFNLROqFbYVht7NKyDhLz1q/DeAyzbenfx8AxaiaPIsDX5z4cG8WtI5ZoJkag3C95j7tBYNt63DG48Hsds3vQ==
+  dependencies:
+    "@fluidframework/common-utils" "^0.32.1"
+    json-stringify-safe "^5.0.1"
+    path-browserify "^1.0.1"
+    serialize-error "^8.1.0"
+    uuid "^8.3.1"
+
 "@fluidframework/server-services-telemetry@^0.1035.1000":
   version "0.1035.1000"
   resolved "https://registry.yarnpkg.com/@fluidframework/server-services-telemetry/-/server-services-telemetry-0.1035.1000.tgz#671d8ed637e8aac9d39e2334d7aa675e6f632180"
@@ -1928,6 +2015,23 @@
     sillyname "^0.1.0"
     uuid "^8.3.1"
     winston "^3.3.3"
+
+"@fluidframework/server-test-utils@0.1036.1000-58953", "@fluidframework/server-test-utils@^0.1036.1000-0":
+  version "0.1036.1000-58953"
+  resolved "https://registry.yarnpkg.com/@fluidframework/server-test-utils/-/server-test-utils-0.1036.1000-58953.tgz#9f1a3cff1e7af1975faaefe64ca16285783431ee"
+  integrity sha512-y5rBZ2PGGXtNtJfjbhHMdQVUpoEBHb32jB3PfTDfcTWD2aELsXNZqULpPNrRNfaKBOomXJo45LybaNrC6q437Q==
+  dependencies:
+    "@fluidframework/common-utils" "^0.32.1"
+    "@fluidframework/gitresources" "0.1036.1000-58953"
+    "@fluidframework/protocol-base" "0.1036.1000-58953"
+    "@fluidframework/protocol-definitions" "^0.1028.1000-0"
+    "@fluidframework/server-services-client" "0.1036.1000-58953"
+    "@fluidframework/server-services-core" "0.1036.1000-58953"
+    "@fluidframework/server-services-telemetry" "0.1036.1000-58953"
+    debug "^4.1.1"
+    lodash "^4.17.21"
+    string-hash "^1.1.3"
+    uuid "^8.3.1"
 
 "@fluidframework/server-test-utils@^0.1035.1000":
   version "0.1035.1000"
@@ -4386,7 +4490,7 @@
     eslint-plugin-react "~7.27.1"
     eslint-plugin-tsdoc "~0.2.14"
 
-"@rushstack/eslint-patch@1.1.2", "@rushstack/eslint-patch@^1.1.0", "@rushstack/eslint-patch@~1.1.0":
+"@rushstack/eslint-patch@1.1.2", "@rushstack/eslint-patch@~1.1.0":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@rushstack/eslint-patch/-/eslint-patch-1.1.2.tgz#7a26e63b1bdaf654bcce2176a38b83f7f576327e"
   integrity sha512-oe5WJEDaVsW8fBlGT7udrSCgOwWfoYHQOmSpnh8X+0GXpqqcRCP8k4y+Dxb0taWJDPpB+rdDUtumIiBwkY9qGA==
@@ -4399,7 +4503,7 @@
     "@rushstack/tree-pattern" "0.2.3"
     "@typescript-eslint/experimental-utils" "~5.6.0"
 
-"@rushstack/eslint-plugin-security@0.2.6", "@rushstack/eslint-plugin-security@^0.2.5", "@rushstack/eslint-plugin-security@~0.2.5":
+"@rushstack/eslint-plugin-security@0.2.6", "@rushstack/eslint-plugin-security@~0.2.5":
   version "0.2.6"
   resolved "https://registry.yarnpkg.com/@rushstack/eslint-plugin-security/-/eslint-plugin-security-0.2.6.tgz#731ab1d16739a703399449ec4047578cbb48c283"
   integrity sha512-gicwYhbc3Q5U43U2qmhePLedfF6+mSEjcQ/D+Bq4zQLP7zo9MGTKAeYPnLTq0M7hqoCEeQUFQZvNav+kjue6Nw==
@@ -4407,7 +4511,7 @@
     "@rushstack/tree-pattern" "0.2.3"
     "@typescript-eslint/experimental-utils" "~5.6.0"
 
-"@rushstack/eslint-plugin@0.8.6", "@rushstack/eslint-plugin@^0.8.5", "@rushstack/eslint-plugin@~0.8.5":
+"@rushstack/eslint-plugin@0.8.6", "@rushstack/eslint-plugin@~0.8.5":
   version "0.8.6"
   resolved "https://registry.yarnpkg.com/@rushstack/eslint-plugin/-/eslint-plugin-0.8.6.tgz#d79d27a5ca3643e429d67d105f6edc26054ac88d"
   integrity sha512-R0gbPI3nz1vRUZddOiwpGtBSQ6FXrnsUpKvKoVkADWhkYmtdi6cU/gpQ6amOa5LhLPhSdQNtkhCB+yhUINKgEg==
@@ -5326,6 +5430,11 @@
   integrity sha512-/xFrPIo+4zOeNGtVMbf9rUm0N+i4pDf1ynExomqtokIJmVzR3962lJ1UE+MmexMkA0cmN9oTzg5Xcbwge0Ij2Q==
   dependencies:
     source-map "^0.6.1"
+
+"@types/ungap__structured-clone@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@types/ungap__structured-clone/-/ungap__structured-clone-0.3.0.tgz#39ef89de1f04bb1920ed99e549b885331295c47d"
+  integrity sha512-eBWREUhVUGPze+bUW22AgUr05k8u+vETzuYdLYSvWqGTUe0KOf+zVnOB1qER5wMcw8V6D9Ar4DfJmVvD1yu0kQ==
 
 "@types/url-parse@1.4.4":
   version "1.4.4"
@@ -9772,7 +9881,7 @@ eslint-plugin-prefer-arrow@~1.2.2:
   resolved "https://registry.yarnpkg.com/eslint-plugin-prefer-arrow/-/eslint-plugin-prefer-arrow-1.2.3.tgz#e7fbb3fa4cd84ff1015b9c51ad86550e55041041"
   integrity sha512-J9I5PKCOJretVuiZRGvPQxCbllxGAV/viI20JO3LYblAodofBxyMnZAJ+WGeClHgANnSJberTNoFWWjrWKBuXQ==
 
-eslint-plugin-promise@^6.0.0, eslint-plugin-promise@~6.0.0:
+eslint-plugin-promise@~6.0.0:
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-promise/-/eslint-plugin-promise-6.0.0.tgz#017652c07c9816413a41e11c30adc42c3d55ff18"
   integrity sha512-7GPezalm5Bfi/E22PnQxDWH2iW9GTvAlUNTztemeHb6c1BniSyoeTrM87JkC0wYdi6aQrZX9p2qEiAno8aTcbw==
