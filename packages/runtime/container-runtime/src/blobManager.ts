@@ -250,7 +250,7 @@ export class BlobManager {
             const pathParts = route.split("/");
             assert(
                 pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-                "Invalid blob node id in unused routes.",
+                0x2d5 /* "Invalid blob node id in unused routes." */,
             );
             const blobId = pathParts[2];
 

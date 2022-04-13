@@ -1828,7 +1828,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async createRootDataStoreLegacy(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        // back-compat 0.58.3000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel. For
+        // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel. For
         // older versions, we still have to call bindToContext.
         if (fluidDataStore.makeVisibleAndAttachGraph !== undefined) {
             fluidDataStore.makeVisibleAndAttachGraph();
@@ -1906,7 +1906,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {
-            // back-compat 0.58.3000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
+            // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
             // For older versions, we still have to call bindToContext.
             if (fluidDataStore.makeVisibleAndAttachGraph !== undefined) {
                 fluidDataStore.makeVisibleAndAttachGraph();
@@ -2204,7 +2204,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return ["_blobs"];
         }
         const dataStorePkgPath = this.dataStores.getDataStorePackagePath(nodePath);
-        assert(dataStorePkgPath !== undefined, "Package path requested for unknown node type.");
+        assert(dataStorePkgPath !== undefined, 0x2d6 /* "Package path requested for unknown node type." */);
         return dataStorePkgPath;
     }
 
