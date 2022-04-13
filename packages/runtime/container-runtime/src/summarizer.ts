@@ -37,6 +37,7 @@ import {
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
 import { SummarizeResultBuilder } from "./summaryGenerator";
 import { IConnectableRuntime } from ".";
+import { assert } from "console";
 
 const summarizingError = "summarizingError";
 
@@ -77,6 +78,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private starting: boolean = false;
 
     private readonly innerHandle: IFluidHandle<this>;
+    private running = false;
 
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
     private readonly stopDeferred = new Deferred<SummarizerStopReason>();
@@ -140,12 +142,14 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         onBehalfOf: string,
         options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason> {
         try {
+            assert(!this.running, "reentrancy");
+            this.running = true;
             return await this.runCore(onBehalfOf, options);
         } catch (error) {
             this.stop("summarizerException");
             throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
         } finally {
-            this.dispose();
+            this.running = false;
             this.runtime.closeFn();
         }
     }
@@ -155,8 +159,14 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * the run promise, and also close the container.
      * @param reason - reason code for stopping
      */
-    public stop(reason: SummarizerStopReason) {
+    public stop(reason: SummarizerStopReason, forceClose = false) {
         this.stopDeferred.resolve(reason);
+
+        // Should be used only by SummaryManager, when it knows we are not in run() method!
+        assert(this.running === forceClose, "forceClose");
+        if (forceClose) {
+            this.runtime.closeFn();
+        }
     }
 
     private async runCore(
@@ -344,7 +354,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     const stopReason = await Promise.race([this.stopDeferred.promise, runCoordinator.waitCancelled]);
                     await runningSummarizer.waitStop(false);
                     runCoordinator.stop(stopReason);
-                    this.dispose();
                     this.runtime.closeFn();
                 }).catch((reason) => {
                     builder.fail("Failed to start summarizer", reason);

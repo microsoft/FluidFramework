@@ -296,7 +296,7 @@ export interface ISummarizerEvents extends IEvent {
 
 export interface ISummarizer extends
     IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer>{
-    stop(reason: SummarizerStopReason): void;
+    stop(reason: SummarizerStopReason, forceClose: boolean): void;
 
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
 
