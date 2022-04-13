@@ -36,8 +36,4 @@ export interface IFluidObject {
      * @deprecated - use `FluidObject<IFluidHandle>` instead
      */
     readonly IFluidHandle?: IFluidHandle;
-    /**
-     * @deprecated - use `FluidObject<IFluidSerializer>` instead
-     */
-    readonly IFluidSerializer?: IFluidSerializer;
 }

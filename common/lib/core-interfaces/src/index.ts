@@ -19,6 +19,5 @@ export {
     IFluidRouter,
 } from "./fluidRouter";
 export * from "./handles";
-export * from "./serializer";
 export * from "./fluidPackage";
 export * from "./provider";
