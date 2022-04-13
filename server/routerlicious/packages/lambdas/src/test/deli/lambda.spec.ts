@@ -123,7 +123,13 @@ describe("Routerlicious", () => {
                     testForwardProducer,
                     testSignalProducer,
                     testReverseProducer,
-                    DefaultServiceConfiguration);
+                    {
+                        ...DefaultServiceConfiguration,
+                        deli: {
+                            ...DefaultServiceConfiguration.deli,
+                            enableWriteClientSignals: true,
+                        },
+                    });
                 lambdaWithSignals = await factoryWithSignals.create({ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 }, testContext);
             });
 
