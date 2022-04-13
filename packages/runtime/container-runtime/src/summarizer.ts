@@ -162,7 +162,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.stopDeferred.resolve(reason);
 
         // Should be used only by SummaryManager, when it knows we are not in run() method!
-        assert(this.running === forceClose, "forceClose");
+        assert(this.running === !forceClose, "forceClose");
         if (forceClose) {
             this.runtime.closeFn();
         }

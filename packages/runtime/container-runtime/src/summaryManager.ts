@@ -217,7 +217,7 @@ export class SummaryManager implements IDisposable {
             if (shouldSummarizeState.shouldSummarize === false) {
                 this.state = SummaryManagerState.Starting;
                 summarizer.stop(shouldSummarizeState.stopReason, true /* forceClose */);
-                return "early exit 2";
+                return "early exit after starting summarizer";
             }
 
             this.summarizer = summarizer;

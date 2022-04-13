@@ -473,7 +473,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLo
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     // (undocumented)
-    stop(reason: SummarizerStopReason): void;
+    stop(reason: SummarizerStopReason, forceClose: boolean): void;
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
 }
 
@@ -653,7 +653,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     get ISummarizer(): this;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
-    stop(reason: SummarizerStopReason): void;
+    stop(reason: SummarizerStopReason, forceClose?: boolean): void;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     // (undocumented)
