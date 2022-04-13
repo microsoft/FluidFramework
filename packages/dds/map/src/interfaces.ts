@@ -243,7 +243,7 @@ export interface IDirectoryEvents extends IEvent {
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
-    (event: `"containedDirectoryCreated" | "containedDirectoryDeleted"`, listener: (
+    (event: `"subDirectoryCreated" | "subDirectoryDeleted"`, listener: (
         path: string,
         local: boolean,
         target: IEventThisPlaceHolder,

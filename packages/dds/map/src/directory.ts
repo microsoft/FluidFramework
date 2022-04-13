@@ -1515,18 +1515,22 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      */
     private createSubDirectoryCore(subdirName: string, local: boolean) {
         if (!this._subdirectories.has(subdirName)) {
-            const pathFromRoot = posix.join(this.absolutePath, subdirName);
-            this._subdirectories.set(
-                subdirName,
-                new SubDirectory(
-                    this.directory,
-                    this.runtime,
-                    this.serializer,
-                    pathFromRoot),
-            );
-            this.directory.emit("subDirectoryCreated", pathFromRoot, local, this.directory);
-            this.emit("containedDirectoryCreated", subdirName, local, this);
+            const absolutePath = posix.join(this.absolutePath, subdirName);
+            const subDir = new SubDirectory(this.directory, this.runtime, this.serializer, absolutePath);
+            this.registerEventsOnSubDirectory(subDir, subdirName);
+            this._subdirectories.set(subdirName, subDir);
+            this.directory.emit("subDirectoryCreated", absolutePath, local, this.directory);
+            this.emit("subDirectoryCreated", subdirName, local, this);
         }
+    }
+
+    private registerEventsOnSubDirectory(subDirectory: SubDirectory, subDirName: string) {
+        subDirectory.on("subDirectoryCreated", (path: string, local: boolean) => {
+            this.emit("subDirectoryCreated", posix.join(subDirName, path), local, this);
+        });
+        subDirectory.on("subDirectoryDeleted", (path: string, local: boolean) => {
+            this.emit("subDirectoryDeleted", posix.join(subDirName, path), local, this);
+        });
     }
 
     /**
@@ -1542,9 +1546,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         const successfullyRemoved = this._subdirectories.delete(subdirName);
         if (previousValue !== undefined) {
             this.disposeSubDirectoryTree(previousValue);
-            const pathFromRoot = posix.join(this.absolutePath, subdirName);
-            this.directory.emit("subDirectoryDeleted", pathFromRoot, local, this.directory);
-            this.emit("containedDirectoryDeleted", subdirName, local, this);
+            const absolutePath = posix.join(this.absolutePath, subdirName);
+            this.directory.emit("subDirectoryDeleted", absolutePath, local, this.directory);
+            this.emit("subDirectoryDeleted", subdirName, local, this);
         }
         return successfullyRemoved;
     }
