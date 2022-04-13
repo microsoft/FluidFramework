@@ -42,7 +42,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/debugger-previous": "npm:@fluidframework/debugger@^0.58.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@microsoft/api-extractor": "^7.21.3",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
