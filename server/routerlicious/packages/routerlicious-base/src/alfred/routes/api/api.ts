@@ -14,13 +14,13 @@ import {
     IThrottleMiddlewareOptions,
     getParam,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams } from "@fluidframework/server-services";
+import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
 import requestAPI from "request";
 import winston from "winston";
-import { Constants, handleResponse } from "../../../utils";
+import { Constants } from "../../../utils";
 import {
     craftClientJoinMessage,
     craftClientLeaveMessage,
@@ -73,6 +73,7 @@ export function create(
             handleResponse(
                 validP.then(() => undefined),
                 response,
+                undefined,
                 undefined,
                 200,
                 () => handlePatchRootSuccess(request, mapSetBuilder));

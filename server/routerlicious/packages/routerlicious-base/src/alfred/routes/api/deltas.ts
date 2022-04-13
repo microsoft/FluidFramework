@@ -18,12 +18,12 @@ import {
     IThrottleMiddlewareOptions,
     getParam,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams } from "@fluidframework/server-services";
+import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { Constants, handleResponse } from "../../../utils";
+import { Constants } from "../../../utils";
 
 async function getDeltas(
     mongoManager: MongoManager,
@@ -216,7 +216,7 @@ export function create(
                 from,
                 to);
 
-            handleResponse(deltasP, response, 500);
+            handleResponse(deltasP, response, undefined, 500);
         },
     );
 
@@ -238,7 +238,7 @@ export function create(
                 tenantId,
                 getParam(request.params, "id"));
 
-            handleResponse(deltasP, response, 500);
+            handleResponse(deltasP, response, undefined, 500);
         },
     );
 
@@ -264,7 +264,7 @@ export function create(
                 from,
                 to);
 
-            handleResponse(deltasP, response, 500);
+            handleResponse(deltasP, response, undefined, 500);
         },
     );
 
