@@ -203,6 +203,7 @@ data:
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "internalBlobStorageUrl": "{{ .Values.historian.internalUrl }}",
+            "gitrestUrl": "{{ .Values.gitrest.internalUrl }}",
             "permission": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"]
         },
         "tenantConfig": [

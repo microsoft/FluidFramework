@@ -40,7 +40,7 @@ export class Tenant implements core.ITenant {
  * Manages a collection of tenants
  */
 export class TenantManager implements core.ITenantManager {
-    constructor(private readonly endpoint: string, private readonly defaultInternalHistorianUrl: string) {
+    constructor(private readonly endpoint: string, private readonly internalHistorianUrlOverride: string) {
     }
 
     public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
@@ -68,7 +68,7 @@ export class TenantManager implements core.ITenantManager {
             });
         };
         const defaultHeaders = getDefaultHeaders();
-        let internalHistorianUrl = this.defaultInternalHistorianUrl;
+        let internalHistorianUrl = this.internalHistorianUrlOverride;
         if (!internalHistorianUrl || internalHistorianUrl === "") {
             internalHistorianUrl = details.data.storage.internalHistorianUrl;
         }

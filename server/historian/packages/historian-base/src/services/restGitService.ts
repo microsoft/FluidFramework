@@ -53,14 +53,14 @@ export class RestGitService {
     private readonly lumberProperties: Record<BaseTelemetryProperties, any>;
 
     constructor(
-        private readonly config: nconf.Provider,
         private readonly storage: ITenantStorage,
         private readonly writeToExternalStorage: boolean,
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly cache?: ICache,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
-        private readonly storageName?: string) {
+        private readonly storageName?: string,
+        private readonly storageUrl?: string) {
         let defaultHeaders: AxiosRequestHeaders;
         if (storageName !== undefined) {
             defaultHeaders = {
@@ -83,14 +83,14 @@ export class RestGitService {
             [BaseTelemetryProperties.documentId]: this.documentId,
         };
 
-        let storageUrl = this.config.get("storageUrl") as string | undefined;
+        let baseUrl = storageUrl;
         if (!storageUrl || storageUrl === "") {
-            storageUrl = storage.url;
+            baseUrl = storage.url;
         }
 
         winston.info(
             `Created RestGitService: ${JSON.stringify({
-                "BaseUrl": storageUrl,
+                "BaseUrl": baseUrl,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
                 "Storage-Name": this.storageName,
             })}`,
@@ -98,7 +98,7 @@ export class RestGitService {
 
         Lumberjack.info(
             `Created RestGitService: ${JSON.stringify({
-                "BaseUrl": storageUrl,
+                "BaseUrl": baseUrl,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
                 "Storage-Name": this.storageName,
             })}`,
@@ -106,7 +106,7 @@ export class RestGitService {
         );
 
         this.restWrapper = new BasicRestWrapper(
-            storageUrl,
+            baseUrl,
             undefined,
             undefined,
             undefined,
