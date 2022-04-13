@@ -69,7 +69,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@fluidframework/garbage-collector-previous": "npm:@fluidframework/garbage-collector@^0.58.0",
     "@fluidframework/mocha-test-setup": "^0.59.1000",
     "@microsoft/api-extractor": "^7.16.1",
@@ -95,6 +95,12 @@
   },
   "typeValidation": {
     "version": "0.59.1000",
-    "broken": {}
+    "broken": {
+      "0.58.2002": {
+        "ClassDeclaration_GCDataBuilder": {
+          "forwardCompat": false
+        }
+      }
+    }
   }
 }
