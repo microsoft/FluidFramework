@@ -25,7 +25,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
-    "start": "webpack-dev-server",
+    "start": "webpack serve",
     "test": "npm run test:jest",
     "test:jest": "jest",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",

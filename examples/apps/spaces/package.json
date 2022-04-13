@@ -26,7 +26,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
-    "start": "webpack-dev-server",
+    "start": "webpack serve",
     "start:server": "tinylicious",
     "start:test": "webpack serve --config webpack.test.js",
     "test": "npm run test:jest",
