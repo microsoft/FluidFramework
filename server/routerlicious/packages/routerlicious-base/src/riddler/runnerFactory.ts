@@ -78,7 +78,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
             if (!tenant.storage.credentials) {
                 try {
                     let storageUrl = config.get("worker:gitrestUrl") as string | undefined;
-                    if (!storageUrl || storageUrl === "") {
+                    if (!storageUrl) {
                         storageUrl = tenant.storage.url;
                     }
                     await getOrCreateRepository(storageUrl, tenant.storage.owner, tenant.storage.repository);
