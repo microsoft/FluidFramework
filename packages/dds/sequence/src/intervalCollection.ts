@@ -607,7 +607,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 
     public add(interval: TInterval) {
         assert(Object.prototype.hasOwnProperty.call(interval.properties, reservedIntervalIdKey),
-            "ID must be created before adding interval to collection");
+            0x2c0 /* "ID must be created before adding interval to collection" */);
         // Make the ID immutable.
         Object.defineProperty(interval.properties, reservedIntervalIdKey, {
             configurable: false,

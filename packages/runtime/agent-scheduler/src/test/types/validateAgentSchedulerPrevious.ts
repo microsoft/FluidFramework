@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_AgentSchedulerFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_AgentSchedulerFactory():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_AgentSchedulerFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_AgentSchedulerFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_AgentSchedulerFactory():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_AgentSchedulerFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_IAgentScheduler": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IAgentScheduler():
@@ -52,7 +52,7 @@ use_current_VariableDeclaration_IAgentScheduler(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_IAgentScheduler": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IAgentScheduler():
@@ -64,7 +64,7 @@ use_old_VariableDeclaration_IAgentScheduler(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IAgentScheduler": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAgentScheduler():
@@ -76,7 +76,7 @@ use_current_InterfaceDeclaration_IAgentScheduler(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IAgentScheduler": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IAgentScheduler():
@@ -88,7 +88,7 @@ use_old_InterfaceDeclaration_IAgentScheduler(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IAgentSchedulerEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAgentSchedulerEvents():
@@ -100,7 +100,7 @@ use_current_InterfaceDeclaration_IAgentSchedulerEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IAgentSchedulerEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IAgentSchedulerEvents():
@@ -112,7 +112,7 @@ use_old_InterfaceDeclaration_IAgentSchedulerEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IProvideAgentScheduler": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideAgentScheduler():
@@ -124,7 +124,7 @@ use_current_InterfaceDeclaration_IProvideAgentScheduler(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IProvideAgentScheduler": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideAgentScheduler():
@@ -136,7 +136,7 @@ use_old_InterfaceDeclaration_IProvideAgentScheduler(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ITaskSubscriptionEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITaskSubscriptionEvents():
@@ -148,7 +148,7 @@ use_current_InterfaceDeclaration_ITaskSubscriptionEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ITaskSubscriptionEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITaskSubscriptionEvents():
@@ -160,7 +160,7 @@ use_old_InterfaceDeclaration_ITaskSubscriptionEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_TaskSubscription": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TaskSubscription():
@@ -172,7 +172,7 @@ use_current_ClassDeclaration_TaskSubscription(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_TaskSubscription": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_TaskSubscription():

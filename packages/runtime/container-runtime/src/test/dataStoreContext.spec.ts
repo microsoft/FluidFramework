@@ -14,7 +14,6 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-    IFluidDataStoreChannel,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
@@ -48,7 +47,7 @@ describe("Data Store Context Tests", () => {
         let localDataStoreContext: LocalFluidDataStoreContext;
         let storage: IDocumentStorageService;
         let scope: FluidObject;
-        const attachCb = (mR: IFluidDataStoreChannel) => { };
+        const makeLocallyVisibleFn = () => {};
         let containerRuntime: ContainerRuntime;
         let summarizerNode: IRootSummarizerNodeWithGC;
 
@@ -100,7 +99,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
                     writeGCDataAtRoot: true,
@@ -142,7 +141,7 @@ describe("Data Store Context Tests", () => {
                         storage,
                         scope,
                         createSummarizerNodeFn,
-                        bindChannelFn: attachCb,
+                        makeLocallyVisibleFn,
                         snapshotTree: undefined,
                         isRootDataStore: false,
                         writeGCDataAtRoot: true,
@@ -177,7 +176,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
                     writeGCDataAtRoot: true,
@@ -217,7 +216,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
                     writeGCDataAtRoot: true,
@@ -236,7 +235,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
                     writeGCDataAtRoot: true,
@@ -257,7 +256,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
                     writeGCDataAtRoot: true,
@@ -276,7 +275,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
                     writeGCDataAtRoot: true,
@@ -374,7 +373,6 @@ describe("Data Store Context Tests", () => {
                     const blobCache = new Map<string, ArrayBufferLike>([["fluidDataStoreAttributes", buffer]]);
                     const snapshotTree: ISnapshotTree = {
                         blobs: { [dataStoreAttributesBlobName]: "fluidDataStoreAttributes" },
-                        commits: {},
                         trees: {},
                     };
                     if (hasIsolatedChannels) {
@@ -383,7 +381,6 @@ describe("Data Store Context Tests", () => {
                         // real loading use cases.
                         snapshotTree.trees[channelsTreeName] = {
                             blobs: {},
-                            commits: {},
                             trees: {},
                         };
                     }
@@ -484,7 +481,6 @@ describe("Data Store Context Tests", () => {
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                     },
-                    commits: {},
                     trees: {},
                 };
 
@@ -517,7 +513,6 @@ describe("Data Store Context Tests", () => {
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                     },
-                    commits: {},
                     trees: {},
                 };
                 const gcDetails: IGarbageCollectionDetailsBase = {
@@ -554,7 +549,6 @@ describe("Data Store Context Tests", () => {
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                     },
-                    commits: {},
                     trees: {},
                 };
                 const gcDetails: IGarbageCollectionDetailsBase = {
@@ -597,7 +591,6 @@ describe("Data Store Context Tests", () => {
                     blobs: {
                         [dataStoreAttributesBlobName]: "fluidDataStoreAttributes",
                     },
-                    commits: {},
                     trees: {},
                 };
                 const gcDetails: IGarbageCollectionDetailsBase = {
@@ -645,7 +638,6 @@ describe("Data Store Context Tests", () => {
                 const snapshotTree: ISnapshotTree = {
                     id: "dummy",
                     blobs: { [".component"]: "fluidDataStoreAttributes" },
-                    commits: {},
                     trees: {},
                 };
 

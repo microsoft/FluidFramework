@@ -4,7 +4,6 @@
  */
 
 import { IRequest, IResponse } from "./fluidRouter";
-import { IFluidObject } from "./fluidObject";
 import { IFluidLoadable } from "./fluidLoadable";
 import { FluidObject } from "./provider";
 
@@ -53,7 +52,7 @@ export interface IProvideFluidHandle {
  */
 export interface IFluidHandle<
     // REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
-    T = IFluidObject & FluidObject & IFluidLoadable
+    T = FluidObject & IFluidLoadable
     > extends IProvideFluidHandle {
 
     /**
