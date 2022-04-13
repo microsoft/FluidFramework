@@ -44,13 +44,13 @@
     "@fluid-example/multiview-coordinate-model": "^0.59.1000",
     "@fluidframework/aqueduct": "^0.59.1000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^0.42.0",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
     "@fluidframework/map": "^0.59.1000"
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.59.1000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/expect-puppeteer": "2.2.1",

@@ -28,6 +28,10 @@ ICodeLoader interface was deprecated a while ago and will be removed in the next
 - [Remove `@fluidframework/core-interface#fluidPackage.ts`](#Remove-fluidframeworkcore-interfacefluidPackagets)
 - [getAbsoluteUrl() argument type changed](#getAbsoluteUrl-argument-type-changed)
 - [Replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface)
+- [IFluidModule.fluidExport is no longer an IFluidObject](#IFluidModule.fluidExport-is-no-longer-an-IFluidObject)
+- [Scope is no longer an IFluidObject](#scope-is-no-longer-an-IFluidObject)
+- [IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject](#IFluidHandle-and-requestFluidObject-generics-default-no-longer-includes-IFluidObject)
+- [LazyLoadedDataObjectFactory.create no longer returns an IFluidObject](#LazyLoadedDataObjectFactory.create-no-longer-returns-an-IFluidObject)
 - [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
@@ -94,6 +98,37 @@ All codeloaders are now expected to return the object including both the runtime
 
 You can start by returning default code details that were passed into the code loader which used to be our implementation on your behalf if code details were not passed in. Later on, this gives an opportunity to implement more sophisticated code loading where the code loader now can inform about the actual loaded module via the returned details.
 
+### IFluidModule.fluidExport is no longer an IFluidObject
+IFluidObject is no longer part of the type of IFluidModule.fluidExport. IFluidModule.fluidExport is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+
+### Scope is no longer an IFluidObject
+IFluidObject is no longer part of the type of IContainerContext.scope or IContainerRuntime.scope.
+Scope is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+
+### IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject
+IFluidObject is no longer part of the type of IFluidHandle and requestFluidObject generic's default.
+
+``` diff
+- IFluidHandle<T = IFluidObject & FluidObject & IFluidLoadable>
++ IFluidHandle<T = FluidObject & IFluidLoadable>
+
+- export function requestFluidObject<T = IFluidObject & FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
++ export function requestFluidObject<T = FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
+```
+
+This will affect the result of all `get()` calls on IFluidHandle's, and the default return will no longer be and IFluidObject by default.
+
+Similarly `requestFluidObject` default generic which is also its return type no longer contains IFluidObject.
+
+In both cases the generic's default is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+
+As a short term fix in both these cases IFluidObject can be passed at the generic type. However, IFluidObject is deprecated and will be removed in an upcoming release so this can only be a temporary workaround before moving to [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### LazyLoadedDataObjectFactory.create no longer returns an IFluidObject
+LazyLoadedDataObjectFactory.create no longer returns an IFluidObject, it now only returns a [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+As a short term fix the return type of this method can be safely casted to an IFluidObject. However, IFluidObject is deprecated and will be removed in an upcoming release so this can only be a temporary workaround before moving to [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
 ### Remove Write Method from IDocumentStorageService
 `IDocumentStorageService.write(...)` is no longer used and causes another reference to `ITree` which we want to eliminate.
 
@@ -101,9 +136,37 @@ You can start by returning default code details that were passed into the code l
 
 ## 0.58 Upcoming changes
 - [Doing operations not allowed on deleted sub directory](#Doing-operations-not-allowed-on-deleted-sub-directory)
+- [IDirectory extends IDisposable](#IDirectory-extends-IDisposable)
+- [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
+- [`IContainerRuntimeBase.setFlushMode` is deprecated](#icontainerruntimebasesetflushmode-is-deprecated)
+- [connected deprecated from IContainer, IFluidContainer, and FluidContainer](#connected-deprecated-from-IContainer-IFluidContainer-and-FluidContainer)
+- [setAutoReconnect and resume deprecated from IContainer and Container](#setAutoReconnect-and-resume-deprecated-from-IContainer-and-Container)
+- [IContainer.connect() and IContainer.disconnect() will be made mandatory in future major release](#icontainer-connect-and-icontainer-disconnect-will-be-made-mandatory-in-future-major-release)
 
 ### Doing operations not allowed on deleted sub directory
 Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory will throw `UsageError` exception now.
+
+### IDirectory extends IDisposable
+IDirectory has started extending IDisposable. This means that users implementing the IDirectory interface needs to implement IDisposable too now.
+
+### raiseContainerWarning removed from IContainerContext
+`raiseContainerWarning` property will be removed from `IContainerContext` interface and `ContainerContext` class. Please refer to [raiseContainerWarning property](#Remove-raisecontainerwarning-property) for more details.
+
+### `IContainerRuntimeBase.setFlushMode` is deprecated
+`IContainerRuntimeBase.setFlushMode` is deprecated and will be removed in a future release. FlushMode will become an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977)
+
+### connected deprecated from IContainer, IFluidContainer, and FluidContainer
+`connected` has been deprecated from `IContainer`, `IFluidContainer`, and `FluidContainer`. It will be removed in a future major release. Use `connectionState` property on the respective interfaces/classes instead. Please switch to the new APIs as soon as possible, and provide any feedback to the FluidFramework team if necessary.
+``` diff
+- if (fluidContainer.connected)
++ if (fluidContainer.connectionState === ConnectionState.Connected)
+```
+
+### setAutoReconnect and resume deprecated from IContainer and Container
+`setAutoReconnect()` and `resume()` have been deprecated from `IContainer` and `Container`. They will be removed in a future major release. Use `connect()` instead of `setAutoReconnect(true)` and `resume()`, and use `disconnect()` instead of `setAutoReconnect(false)`. Note, when using these new functions you will need to ensure that the container is both attached and not closed to prevent an error being thrown. Please switch to the new APIs as soon as possible, and provide any feedback to the FluidFramework team if necessary.
+
+### IContainer.connect() and IContainer.disconnect() will be made mandatory in future major release
+In major release 1.0, the optional functions `IContainer.connect()` `IContainer.disconnect()` will be made mandatory functions.
 
 ## 0.58 Breaking changes
 - [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from-merge-tree-to-sequence-package)

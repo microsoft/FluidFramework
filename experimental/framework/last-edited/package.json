@@ -58,14 +58,14 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-runtime": "^0.59.1000",
     "@fluidframework/container-runtime-definitions": "^0.59.1000",
-    "@fluidframework/core-interfaces": "^0.42.0",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
     "@fluidframework/protocol-definitions": "^0.1028.1000-0",
     "@fluidframework/runtime-utils": "^0.59.1000",
     "@fluidframework/shared-summary-block": "^0.59.1000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@fluidframework/mocha-test-setup": "^0.59.1000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",

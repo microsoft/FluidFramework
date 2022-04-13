@@ -131,7 +131,11 @@ describe("Tests for snapshot fetch", () => {
 
         const version = await mockFetchSingle(
             async () => service.getVersions(null,1),
-            async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
+            async () => createResponse(
+                { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+                odspSnapshot,
+                200,
+            ),
         );
 
         assert.deepStrictEqual(version, expectedVersion, "incorrect version");
@@ -200,7 +204,11 @@ describe("Tests for snapshot fetch", () => {
 
         const version = await mockFetchSingle(
             async () => service.getVersions(null,1),
-            async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
+            async () => createResponse(
+                { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+                odspSnapshot,
+                200,
+            ),
         );
         assert.deepStrictEqual(version, expectedVersion, "incorrect version");
     });

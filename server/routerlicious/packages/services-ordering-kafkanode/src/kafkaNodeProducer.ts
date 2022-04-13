@@ -27,14 +27,17 @@ export class KafkaNodeProducer implements IProducer {
     private readonly events = new EventEmitter();
     private connecting = false;
     private connected = false;
+    private readonly maxBatchSize: number;
 
     constructor(
         private readonly clientOptions: kafka.KafkaClientOptions,
         clientId: string,
         private readonly topic: string,
         private readonly topicPartitions?: number,
-        private readonly topicReplicationFactor?: number) {
+        private readonly topicReplicationFactor?: number,
+        maxBatchSize?: number) {
         clientOptions.clientId = clientId;
+        this.maxBatchSize = maxBatchSize ?? MaxBatchSize;
         this.connect();
     }
 
@@ -56,7 +59,7 @@ export class KafkaNodeProducer implements IProducer {
         const boxcars = this.messages.get(key);
 
         // Create a new boxcar if necessary (will only happen when not connected)
-        if (boxcars[boxcars.length - 1].messages.length + messages.length >= MaxBatchSize) {
+        if (boxcars[boxcars.length - 1].messages.length + messages.length >= this.maxBatchSize) {
             boxcars.push(new PendingBoxcar(tenantId, documentId));
         }
 
@@ -66,7 +69,7 @@ export class KafkaNodeProducer implements IProducer {
 
         // If adding a new message to the boxcar filled it up, and we are connected, then send immediately. Otherwise
         // request a send
-        if (this.connected && boxcar.messages.length >= MaxBatchSize) {
+        if (this.connected && boxcar.messages.length >= this.maxBatchSize) {
             // Send all the boxcars
             this.sendBoxcars(boxcars);
             this.messages.delete(key);

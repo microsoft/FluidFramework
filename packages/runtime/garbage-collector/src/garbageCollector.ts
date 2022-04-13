@@ -11,7 +11,7 @@ import { IGCResult } from "./interfaces";
  * @param referenceGraph - The reference graph to run GC on. It's a list of nodes where each node has an id and set of
  * routes to other nodes in the graph.
  * @param rootIds - The ids of root nodes that are considered referenced.
- * @param logger - Used to log telelmetry.
+ * @param logger - Used to log telemetry.
  * @returns the ids of referenced nodes and the ids of deleted nodes in the referenced graph.
  */
 export function runGarbageCollection(

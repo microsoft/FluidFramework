@@ -54,7 +54,7 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.48.1000-0",
-    "@fluidframework/core-interfaces": "^0.42.0",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
     "@fluidframework/datastore": "^0.59.1000",
     "@fluidframework/datastore-definitions": "^0.59.1000",
     "@fluidframework/map": "^0.59.1000",
@@ -66,7 +66,7 @@
   "devDependencies": {
     "@fluidframework/agent-scheduler-previous": "npm:@fluidframework/agent-scheduler@^0.58.0",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",

@@ -45,7 +45,7 @@
     "@fluidframework/aqueduct": "^0.59.1000",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-definitions": "^0.48.1000-0",
-    "@fluidframework/core-interfaces": "^0.42.0",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
     "@fluidframework/matrix": "^0.59.1000",
     "@fluidframework/runtime-utils": "^0.59.1000",
     "@fluidframework/sequence": "^0.59.1000",
@@ -57,7 +57,7 @@
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.59.1000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",
     "@typescript-eslint/eslint-plugin": "~5.9.0",

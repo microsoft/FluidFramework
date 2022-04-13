@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/expect-puppeteer": "2.2.1",
     "@types/node": "^14.18.0",

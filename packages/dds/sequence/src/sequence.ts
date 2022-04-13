@@ -699,7 +699,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             if (!intervalCollection.attached) {
                 intervalCollection.attachGraph(this.client, ev.key);
             }
-            assert(ev.previousValue === undefined, "Creating an interval that already exists?");
+            assert(ev.previousValue === undefined, 0x2c1 /* "Creating an interval that already exists?" */);
             this.emit("createIntervalCollection", ev.key, local, this);
         });
 
