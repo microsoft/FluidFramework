@@ -35,12 +35,6 @@ import { ReconciliationChange, ReconciliationPath } from './ReconciliationPath';
 import { TreeViewNode } from './TreeView';
 
 /**
- * A function which can produce a Transaction from a RevisionView
- * @public
- */
-export type TransactionFactory = (view: RevisionView) => GenericTransaction;
-
-/**
  * Result of applying a transaction.
  * @public
  */

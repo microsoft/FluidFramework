@@ -63,14 +63,12 @@ export class Transaction {
 	 * @param changes - the changes to apply
 	 * @returns either the `EditStatus` of the given changes or the `EditStatus` of the last change before the transaction was closed
 	 */
-	public apply(change: Change, ...changes: Change[]): EditStatus;
+	public apply(...changes: Change[]): EditStatus;
 	public apply(changes: Change[]): EditStatus;
-	public apply(changeOrChanges: Change | Change[], ...changes: Change[]): EditStatus {
+	public apply(headOrChanges: Change | Change[], ...tail: Change[]): EditStatus {
 		if (this.isOpen) {
-			const changeArray = Array.isArray(changeOrChanges)
-				? [...changeOrChanges, ...changes]
-				: [changeOrChanges, ...changes];
-			this.transaction.applyChanges(changeArray.map((c) => this.tree.internalizeChange(c)));
+			const changes = Array.isArray(headOrChanges) ? headOrChanges : [headOrChanges, ...tail];
+			this.transaction.applyChanges(changes.map((c) => this.tree.internalizeChange(c)));
 		}
 		return this.status;
 	}
