@@ -1539,11 +1539,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     }
 
     private registerEventsOnSubDirectory(subDirectory: SubDirectory, subDirName: string) {
-        subDirectory.on("subDirectoryCreated", (path: string, local: boolean) => {
-            this.emit("subDirectoryCreated", posix.join(subDirName, path), local, this);
+        subDirectory.on("subDirectoryCreated", (relativePath: string, local: boolean) => {
+            this.emit("subDirectoryCreated", posix.join(subDirName, relativePath), local, this);
         });
-        subDirectory.on("subDirectoryDeleted", (path: string, local: boolean) => {
-            this.emit("subDirectoryDeleted", posix.join(subDirName, path), local, this);
+        subDirectory.on("subDirectoryDeleted", (relativePath: string, local: boolean) => {
+            this.emit("subDirectoryDeleted", posix.join(subDirName, relativePath), local, this);
         });
     }
 
