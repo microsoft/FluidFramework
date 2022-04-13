@@ -321,6 +321,7 @@ export interface INetworkErrorDetails {
     isFatal?: boolean;
     message?: string;
     retryAfter?: number;
+    retryAfterMs?: number;
 }
 
 // @public
@@ -490,6 +491,7 @@ export class NetworkError extends Error {
     readonly code: number;
     get details(): INetworkErrorDetails | string;
     readonly isFatal?: boolean;
+    readonly retryAfter: number;
     readonly retryAfterMs?: number;
 }
 
