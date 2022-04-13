@@ -89,6 +89,7 @@ export class SummarizerClientElection
                 }
 
                 if (this.electionEnabled) {
+                    const previousParentId = this.electedParentId;
                     this.clientElection.incrementElectedClient(sequenceNumber);
 
                     // Verify that state incremented as expected. This should be reliable,
@@ -102,6 +103,13 @@ export class SummarizerClientElection
                                 lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
                                 // Expected to be same as op sequenceNumber
                                 electionSequenceNumber,
+                                sequenceNumber,
+                                previousClientId: electedClientId,
+                                previousParentId,
+                                electedParentId: this.electedParentId,
+                                electedClientId: this.electedClientId,
+                                opsSinceLastReport,
+                                maxOpsSinceLastSummary,
                             });
                         }
                     }
