@@ -47,6 +47,7 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && yarn run clean",
+    "dedup": "yarn-deduplicate",
     "layer-check": "fluid-layer-check --info tools/build-tools/data/layerInfo.json",
     "lint": "lerna run lint --no-sort --stream -- -- -- --color",
     "lint:fix": "lerna run lint:fix --no-sort --stream -- -- -- --color",
@@ -140,7 +141,8 @@
     "nx": "13.10.1",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.6",
-    "typescript": "~4.1.3"
+    "typescript": "~4.1.3",
+    "yarn-deduplicate": "^4.0.0"
   },
   "fluidBuild": {
     "repoPackages": {
