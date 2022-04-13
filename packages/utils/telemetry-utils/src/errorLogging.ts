@@ -379,6 +379,7 @@ export abstract class LoggingError extends Error implements ILoggingError, IFlui
     }
 }
 
+/** A simple concrete implementation of LoggingError with errorType = genericError */
 export class GenericFluidError extends LoggingError {
     errorType: "genericError" = "genericError"; // Used ubiquitously to mean an unspecified fatal error
 
@@ -387,7 +388,7 @@ export class GenericFluidError extends LoggingError {
     }
 }
 
-/** Simple implementation of IFluidErrorBase, extending LoggingError */
+/** The Error class used when normalizing an external error */
 class NormalizedExternalError extends LoggingError {
     // errorType "genericError" is used as a default value throughout the code.
     // Note that this matches ContainerErrorType/DriverErrorType's genericError
