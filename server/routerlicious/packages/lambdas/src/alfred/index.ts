@@ -18,6 +18,7 @@ import {
 import {
     canSummarize,
     canWrite,
+    NetworkError,
     validateTokenClaims,
     validateTokenClaimsExpiration,
 } from "@fluidframework/server-services-client";
@@ -241,8 +242,8 @@ export function configureWebSocketServices(
                 // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject({
                     // if we don't understand the error, be lenient and allow retry
-                    code: err?.response?.status ?? 401,
-                    message: err?.response?.data ?? "Invalid token",
+                    code: (err as NetworkError | undefined)?.code ?? 401,
+                    message: (err as NetworkError | undefined)?.message ?? "Invalid token",
                 });
             }
 
