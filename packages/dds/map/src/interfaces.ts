@@ -175,11 +175,17 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
-    (event: `"subDirectoryCreated" | "subDirectoryDeleted"`, listener: (
+    (event: "subDirectoryCreated", listener: (
         path: string,
         local: boolean,
         target: IEventThisPlaceHolder,
-    ) => void)
+    ) => void);
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
+    (event: "subDirectoryDeleted", listener: (
+        path: string,
+        local: boolean,
+        target: IEventThisPlaceHolder,
+    ) => void);
 }
 
 /**
@@ -254,6 +260,7 @@ export interface IDirectoryEvents extends IEvent {
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "subDirectoryDeleted", listener: (
         path: string,
         local: boolean,

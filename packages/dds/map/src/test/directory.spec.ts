@@ -173,7 +173,7 @@ describe("Directory", () => {
             });
 
             it("should fire create/delete sub directory events", async () => {
-                const subDirectory = directory.createSubDirectory("rock");                
+                const subDirectory = directory.createSubDirectory("rock");
                 const subDirectory1 = subDirectory.createSubDirectory("rockChild");
                 // Check Creation events
                 let directoryCreationExpected1 = false;
