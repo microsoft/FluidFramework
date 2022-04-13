@@ -1538,7 +1538,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         }
     }
 
-    
     private registerEventsOnSubDirectory(subDirectory: SubDirectory, subDirName: string) {
         subDirectory.on("subDirectoryCreated", (path: string, local: boolean) => {
             this.emit("subDirectoryCreated", posix.join(subDirName, path), local, this);
