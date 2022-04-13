@@ -136,8 +136,14 @@ export interface IDocumentService {
     resolvedUrl: IResolvedUrl;
 }
 
+// @public
+export interface IDocumentServiceCapabilities {
+    acceptsNonZeroSeqStartNum: boolean;
+}
+
 // @public (undocumented)
 export interface IDocumentServiceFactory {
+    capabilities?: IDocumentServiceCapabilities;
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     protocolName: string;

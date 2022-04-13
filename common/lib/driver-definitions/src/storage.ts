@@ -295,11 +295,14 @@ export interface IDocumentService {
     dispose(error?: any): void;
 }
 
+/**
+ * Interface document service describing capabilities
+ */
 export interface IDocumentServiceCapabilities{
     /**
      * Document service can create docs with non-zero seq. start #
      */
-    acceptsNonZeroSeqStartNum?: boolean,
+    acceptsNonZeroSeqStartNum: boolean,
 }
 
 export interface IDocumentServiceFactory {
