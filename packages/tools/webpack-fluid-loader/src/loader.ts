@@ -9,12 +9,15 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { assert, BaseTelemetryNullLogger, Deferred } from "@fluidframework/common-utils";
 import {
     AttachState,
-    IFluidModule,
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidBrowserPackage,
     IProvideRuntimeFactory,
     IContainer,
+    IFluidPackage,
+    IFluidCodeDetails,
+    IFluidModuleWithDetails,
+    IFluidModule,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
@@ -27,12 +30,13 @@ import {
     resolveFluidPackageEnvironment,
     WebCodeLoader,
 } from "@fluidframework/web-code-loader";
-import { IFluidPackage, IFluidCodeDetails, FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { Port } from "webpack-dev-server";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
@@ -42,7 +46,7 @@ export interface IDevServerUser extends IUser {
 }
 
 export interface IBaseRouteOptions {
-    port: number;
+    port: Port;
     npm?: string;
 }
 
@@ -90,7 +94,8 @@ export type RouteOptions =
     | ITinyliciousRouteOptions
     | IOdspRouteOptions;
 
-function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
+function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule):
+    IFluidModuleWithDetails {
     const fluidModuleExport: FluidObject<IProvideRuntimeFactory & IFluidDataStoreFactory> =
         fluidModule.fluidExport;
     if (fluidModuleExport.IRuntimeFactory === undefined) {
@@ -105,12 +110,19 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
             ]),
         );
         return {
-            fluidExport: {
-                IRuntimeFactory: runtimeFactory,
+            module: {
+                fluidExport: {
+                    IRuntimeFactory: runtimeFactory,
+                },
             },
+            details: { package: packageJson.name, config: { } },
         };
     }
-    return fluidModule;
+
+    return {
+        module: fluidModule,
+        details: { package: packageJson.name, config: { } },
+    };
 }
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
@@ -178,7 +190,11 @@ async function createWebLoader(
     // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
     if (testOrderer) {
         const resolvedUrl = await urlResolver.resolve(await urlResolver.createRequestForCreateNew(documentId));
-        const innerDocumentService = await documentServiceFactory.createDocumentService(resolvedUrl);
+        const innerDocumentService = await documentServiceFactory.createDocumentService(
+            resolvedUrl,
+            undefined, // logger
+            false, // clientIsSummarizer
+        );
         documentServiceFactory = new LocalDocumentServiceFactory(
             deltaConns.get(documentId),
             undefined,

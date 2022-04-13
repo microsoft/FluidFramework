@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, extractLogSafeErrorProperties, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -28,6 +28,7 @@ import {
     loggerToMonitoringContext,
     MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion";
 
@@ -107,7 +108,7 @@ export class DocumentDeltaConnection
      * @param enableLongPollingDowngrades - allow connection to be downgraded to long-polling on websocket failure
      */
     protected constructor(
-        protected readonly socket: SocketIOClient.Socket,
+        protected readonly socket: Socket,
         public documentId: string,
         logger: ITelemetryLogger,
         private readonly enableLongPollingDowngrades: boolean = false,
@@ -543,9 +544,7 @@ export class DocumentDeltaConnection
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - an Error object thrown by socket.io engine. Be careful with not recording PII!
         let message: string;
-        if (typeof error !== "object") {
-            message = `${error}`;
-        } else if (error?.type === "TransportError") {
+        if (error?.type === "TransportError") {
             // JSON.stringify drops Error.message
             const messagePrefix = (error?.message !== undefined)
                 ? `${error.message}: `
@@ -556,8 +555,9 @@ export class DocumentDeltaConnection
             // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
             message = `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
         } else {
-            message = "[object omitted]";
+            message = extractLogSafeErrorProperties(error).message;
         }
+
         const errorObj = createGenericNetworkError(
             `socket.io (${handler}): ${message}`,
             { canRetry },

@@ -64,8 +64,8 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
         const response: Response = await this.rateLimiter.schedule(async () => fetch(...fetchRequestConfig)
             .catch(async (error) => {
-                // Fetch throws a TypeError on network error
-                const isNetworkError = error instanceof TypeError;
+                // Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
+                const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
                 throwR11sNetworkError(
                     isNetworkError ? `NetworkError: ${error.message}` : safeStringify(error));
             }));

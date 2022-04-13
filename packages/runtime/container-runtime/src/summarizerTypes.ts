@@ -7,6 +7,7 @@ import {
     IEvent,
     IEventProvider,
     ITelemetryLogger,
+    ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import {
     IFluidLoadable,
@@ -142,6 +143,14 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly summarizedDataStoreCount: number;
     /** The number of data stores whose GC reference state was updated in this summary. */
     readonly gcStateUpdatedDataStoreCount?: number;
+    /** The size of the gc blobs in this summary. */
+    readonly gcTotalBlobsSize?: number;
+    /** The number of gc blobs in this summary. */
+    readonly gcBlobNodeCount?: number;
+    /** Sum of the sizes of all op contents since the last summary */
+    readonly opsSizesSinceLastSummary: number;
+    /** Number of non-system ops since the last summary @see isSystemMessage */
+    readonly nonSystemOpsSinceLastSummary: number;
 }
 
 /** Base results for all submitSummary attempts. */
@@ -151,6 +160,7 @@ export interface IBaseSummarizeResult {
     readonly error: any;
     /** Reference sequence number as of the generate summary attempt. */
     readonly referenceSequenceNumber: number;
+    readonly minimumSequenceNumber: number;
 }
 
 /** Results of submitSummary after generating the summary tree. */
@@ -367,3 +377,20 @@ export interface ISummarizeHeuristicRunner {
     /** Disposes of resources */
     dispose(): void;
 }
+
+type ISummarizeTelemetryRequiredProperties =
+    /** Reason code for attempting to summarize */
+    "summarizeReason";
+
+type ISummarizeTelemetryOptionalProperties =
+    /** Number of attempts within the last time window, used for calculating the throttle delay. */
+    "summaryAttempts" |
+    /** Number of attempts within the current phase (currently capped at 2 ) */
+    "summaryAttemptsPerPhase" |
+    /** One-based count of phases we've attempted (used to index into an array of ISummarizeOptions */
+    "summaryAttemptPhase" |
+    keyof ISummarizeOptions;
+
+export type ISummarizeTelemetryProperties =
+    Pick<ITelemetryProperties, ISummarizeTelemetryRequiredProperties> &
+    Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;

@@ -1665,7 +1665,7 @@ export class DocumentTree {
     }
 
     private generateClient() {
-        const client = new TestClient({ blockUpdateMarkers: true });
+        const client = new TestClient();
         client.startOrUpdateCollaboration("Fred");
         for (const child of this.children) {
             this.addToMergeTree(client, child);
@@ -1730,7 +1730,7 @@ export class DocumentTree {
 }
 
 function findReplacePerf(filename: string) {
-    const client = new TestClient({ blockUpdateMarkers: true });
+    const client = new TestClient();
     loadTextFromFile(filename, client.mergeTree);
 
     const clockStart = clock();

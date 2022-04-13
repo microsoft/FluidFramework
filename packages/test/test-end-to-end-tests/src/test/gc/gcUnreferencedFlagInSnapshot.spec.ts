@@ -19,8 +19,8 @@ import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { loadSummarizer, TestDataObject, submitAndAckSummary } from "../mockSummarizerClient";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
 /**
  * Validates that the 'unreferenced' property in the summary tree of unreferenced data stores is present
@@ -154,7 +154,11 @@ describeFullCompat("GC unreferenced flag in downloaded snapshot", (getTestObject
         }
     });
 
-    beforeEach(async () => {
+    beforeEach(async function() {
+        // GitHub issue: #9534
+        if(provider.driver.type === "odsp") {
+            this.skip();
+        }
         // Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
         // time the summarizer client uploads a summary.
         (provider as any)._documentServiceFactory = wrapDocumentServiceFactory(

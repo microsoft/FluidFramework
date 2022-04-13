@@ -19,6 +19,7 @@ import {
     IProducer,
     IServiceConfiguration,
     ITenantManager,
+    LambdaCloseType,
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
@@ -55,8 +56,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly tenantManager: ITenantManager,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
-        private readonly serviceConfiguration: IServiceConfiguration,
-        globalDbMongoManager?: MongoManager) {
+        private readonly serviceConfiguration: IServiceConfiguration) {
         super();
     }
 
@@ -124,7 +124,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
                     context.log?.info(`Deli checkpoint from summary:
-                        ${ JSON.stringify(lastCheckpoint)}`, { messageMetaData });
+                        ${JSON.stringify(lastCheckpoint)}`, { messageMetaData });
                 }
             } else {
                 lastCheckpoint = JSON.parse(dbObject.deli);
@@ -152,7 +152,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         const checkpointManager = createDeliCheckpointManagerFromCollection(tenantId, documentId, this.collection);
 
         // Should the lambda reaize that term has flipped to send a no-op message at the beginning?
-        return new DeliLambda(
+        const deliLambda = new DeliLambda(
             context,
             tenantId,
             documentId,
@@ -164,14 +164,32 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             this.serviceConfiguration,
             sessionMetric,
             sessionStartMetric);
+
+        deliLambda.on("close", (closeType) => {
+            const handler = async () => {
+                if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)) {
+                    const query = { documentId, tenantId, session: { $exists: true } };
+                    const data = { "session.isSessionAlive": false };
+                    await this.collection.update(query, data, null);
+                    context.log?.info(`Marked isSessionAlive as false for closeType: ${JSON.stringify(closeType)}`,
+                        { messageMetaData });
+                }
+            };
+            handler().catch((e) => {
+                context.log?.error(`Failed to handle isSessionAlive with exception ${e}`
+                    , { messageMetaData });
+            });
+        });
+
+        return deliLambda;
     }
 
     private logSessionFailureMetrics(
         sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
         sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
         errMsg: string) {
-            sessionMetric?.error(errMsg);
-            sessionStartMetric?.error(errMsg);
+        sessionMetric?.error(errMsg);
+        sessionStartMetric?.error(errMsg);
     }
 
     public async dispose(): Promise<void> {

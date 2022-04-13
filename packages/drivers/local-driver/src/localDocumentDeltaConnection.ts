@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import * as core from "@fluidframework/server-services-core";
+import type { Socket } from "socket.io-client";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -42,7 +43,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 
         // Cast LocalWebSocket to SocketIOClient.Socket which is the socket that the base class needs. This is hacky
         // but should be fine because this delta connection is for local use only.
-        const socketWithListener = socket as unknown as SocketIOClient.Socket;
+        const socketWithListener = socket as unknown as Socket;
 
         const deltaConnection = new LocalDocumentDeltaConnection(socketWithListener, id);
 
@@ -58,7 +59,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
         return deltaConnection;
     }
 
-    constructor(socket: SocketIOClient.Socket, documentId: string) {
+    constructor(socket: Socket, documentId: string) {
           super(socket, documentId, new TelemetryNullLogger());
     }
 

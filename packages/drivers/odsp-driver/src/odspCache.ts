@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { PromiseCache } from "@fluidframework/common-utils";
 import {
     IOdspResolvedUrl,
@@ -22,51 +21,15 @@ export interface IPersistedFileCache {
 }
 
 /**
- * Handles garbage collection of expiring cache entries.
- * Not exported.
- * (Based off of the same class in promiseCache.ts, could be consolidated)
- */
-class GarbageCollector<TKey> {
-    private readonly gcTimeouts = new Map<TKey, ReturnType<typeof setTimeout>>();
-
-    constructor(
-        private readonly cleanup: (key: TKey) => void,
-    ) { }
-
-    /**
-     * Schedule GC for the given key, as applicable
-     */
-    public schedule(key: TKey, durationMs: number) {
-        this.gcTimeouts.set(
-            key,
-            setTimeout(
-                () => { this.cleanup(key); this.cancel(key); },
-                durationMs,
-            ),
-        );
-    }
-
-    /**
-     * Cancel any pending GC for the given key
-     */
-    public cancel(key: TKey) {
-        const timeout = this.gcTimeouts.get(key);
-        if (timeout !== undefined) {
-            clearTimeout(timeout);
-            this.gcTimeouts.delete(key);
-        }
-    }
-}
-
-/**
  * Default local-only implementation of IPersistedCache,
  * used if no persisted cache is provided by the host
  */
 export class LocalPersistentCache implements IPersistedCache {
     private readonly cache = new Map<string, any>();
-    private readonly gc = new GarbageCollector<string>((key) => this.cache.delete(key));
+    // For every document id there will be a single expiration entry inspite of the number of cache entries.
+    private readonly docIdExpirationMap = new Map<string, ReturnType<typeof setTimeout>>();
 
-    public constructor(private readonly snapshotExpiryPolicy = 30 * 1000) {}
+    public constructor(private readonly snapshotExpiryPolicy = 3600 * 1000) { }
 
     async get(entry: ICacheEntry): Promise<any> {
         const key = this.keyFromEntry(entry);
@@ -77,30 +40,52 @@ export class LocalPersistentCache implements IPersistedCache {
     async put(entry: ICacheEntry, value: any) {
         const key = this.keyFromEntry(entry);
         this.cache.set(key, value);
-
-        // Do not keep items too long in memory
-        this.gc.cancel(key);
-        this.gc.schedule(key, this.snapshotExpiryPolicy);
+        this.updateExpirationEntry(entry.file.docId);
     }
 
     async removeEntries(file: IFileEntry): Promise<void> {
-        Array.from(this.cache)
-        .filter(([cachekey]) => {
-            const docIdFromKey = cachekey.split("_");
-            if (docIdFromKey[0] === file.docId) {
-                return true;
-            }
-        })
-        .map(([cachekey]) => {
-            this.cache.delete(cachekey);
-        });
+        this.removeDocIdEntriesFromCache(file.docId);
+    }
+
+    private removeDocIdEntriesFromCache(docId: string) {
+        this.removeExpirationEntry(docId);
+        return Array.from(this.cache)
+            .filter(([cachekey]) => {
+                const docIdFromKey = cachekey.split("_");
+                if (docIdFromKey[0] === docId) {
+                    return true;
+                }
+            })
+            .map(([cachekey]) => {
+                this.cache.delete(cachekey);
+            });
+    }
+
+    private removeExpirationEntry(docId: string) {
+        const timeout = this.docIdExpirationMap.get(docId);
+        if (timeout !== undefined) {
+            clearTimeout(timeout);
+            this.docIdExpirationMap.delete(docId);
+        }
+    }
+
+    private updateExpirationEntry(docId: string) {
+        this.removeExpirationEntry(docId);
+        this.docIdExpirationMap.set(
+            docId,
+            setTimeout(
+                () => {
+                    this.removeDocIdEntriesFromCache(docId);
+                },
+                this.snapshotExpiryPolicy,
+            ),
+        );
     }
 
     private keyFromEntry(entry: ICacheEntry): string {
         return `${entry.file.docId}_${entry.type}_${entry.key}`;
     }
 }
-
 export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string, T> {
     constructor(removeOnError?: (e: any) => boolean) {
         super({ expiry: { policy: "sliding", durationMs: 3600000 }, removeOnError });
@@ -114,7 +99,8 @@ export interface INonPersistentCache {
     /**
      * Cache of joined/joining session info
      */
-    readonly sessionJoinCache: PromiseCache<string, {entryTime: number, joinSessionResponse: ISocketStorageDiscovery}>;
+    readonly sessionJoinCache: PromiseCache<string,
+        { entryTime: number, joinSessionResponse: ISocketStorageDiscovery }>;
 
     /**
      * Cache of resolved/resolving file URLs
@@ -134,7 +120,7 @@ export interface IOdspCache extends INonPersistentCache {
 
 export class NonPersistentCache implements INonPersistentCache {
     public readonly sessionJoinCache =
-        new PromiseCache<string, {entryTime: number, joinSessionResponse: ISocketStorageDiscovery}>();
+        new PromiseCache<string, { entryTime: number, joinSessionResponse: ISocketStorageDiscovery }>();
 
     public readonly fileUrlCache = new PromiseCache<string, IOdspResolvedUrl>();
 }

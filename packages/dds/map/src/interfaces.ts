@@ -27,7 +27,7 @@ export interface IValueChanged {
  * @remarks
  * When used as a Map, operates on its keys.
  */
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, IDisposable {
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     /**
      * The absolute path of the directory.
      */
@@ -47,6 +47,12 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
      * @returns The IDirectory itself
      */
     set<T = any>(key: string, value: T): this;
+
+    /**
+     * Get the number of sub directory within the directory.
+     * @returns The number of sub directory within a directory.
+     */
+    countSubDirectory?(): number;
 
     /**
      * Creates an IDirectory child of this IDirectory, or retrieves the existing IDirectory child if one with the

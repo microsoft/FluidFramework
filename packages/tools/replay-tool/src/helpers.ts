@@ -16,12 +16,18 @@ import {
 import { IFileSnapshot } from "@fluidframework/replay-driver";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
-import { ReplayDataStoreFactory, ReplayRuntimeFactory } from "./replayFluidFactories";
+import {
+    excludeChannelContentDdsFactories,
+    ReplayDataStoreFactory,
+    ReplayRuntimeFactory,
+} from "./replayFluidFactories";
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
 
+const normalizeOpts: ISnapshotNormalizerConfig =
+    {excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f)=>f.type)};
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.
@@ -29,10 +35,10 @@ import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
 export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapshot {
     const normalizedSnapshot: IFileSnapshot = {
         commits: {},
-        tree: getNormalizedSnapshot(snapshot.tree),
+        tree: getNormalizedSnapshot(snapshot.tree, normalizeOpts),
     };
     for (const commit of Object.keys(snapshot.commits)) {
-        normalizedSnapshot.commits[commit] = getNormalizedSnapshot(snapshot.commits[commit]);
+        normalizedSnapshot.commits[commit] = getNormalizedSnapshot(snapshot.commits[commit], normalizeOpts);
     }
     return normalizedSnapshot;
 }
@@ -40,11 +46,11 @@ export function getNormalizedFileSnapshot(snapshot: IFileSnapshot): IFileSnapsho
 export function compareWithReferenceSnapshot(
     snapshot: IFileSnapshot,
     referenceSnapshotFilename: string,
-    errorHandler: (desciption: string, error?: any) => void,
+    errorHandler: (description: string, error?: any) => void,
 ) {
     // Read the reference snapshot and covert it to normalized IFileSnapshot.
     const referenceSnapshotString = fs.readFileSync(`${referenceSnapshotFilename}.json`, "utf-8");
-    const referenceSnapshot = getNormalizedFileSnapshot(JSON.parse(referenceSnapshotString));
+    const referenceSnapshot = JSON.parse(referenceSnapshotString);
 
     /**
      * The packageVersion of the snapshot could be different from the reference snapshot. Replace all package
@@ -56,10 +62,12 @@ export function compareWithReferenceSnapshot(
     const packageVersionPlaceholder = "\\\"packageVersion\\\":\\\"X\\\"";
 
     const normalizedSnapshot = JSON.parse(
-        stringify(snapshot, {space: 2}).replace(packageVersionRegex, packageVersionPlaceholder),
+        stringify(getNormalizedFileSnapshot(snapshot), {space: 2})
+            .replace(packageVersionRegex, packageVersionPlaceholder),
     );
     const normalizedReferenceSnapshot = JSON.parse(
-        stringify(referenceSnapshot, {space: 2}).replace(packageVersionRegex, packageVersionPlaceholder),
+        stringify(getNormalizedFileSnapshot(referenceSnapshot), {space: 2})
+            .replace(packageVersionRegex, packageVersionPlaceholder),
     );
 
     // Put the assert in a try catch block, so that we can report errors, if any.
@@ -73,6 +81,7 @@ export function compareWithReferenceSnapshot(
 export async function loadContainer(
     documentServiceFactory: IDocumentServiceFactory,
     documentName: string,
+    strictChannels: boolean,
     logger?: TelemetryLogger,
     requestHandlers?: RuntimeRequestHandler[],
     loaderOptions?: ILoaderOptions,
@@ -92,7 +101,10 @@ export async function loadContainer(
         new Map<string, IResolvedUrl>([[resolved.url, resolved]]),
     );
 
-    const dataStoreFactory = new ReplayDataStoreFactory(mixinDataStoreWithAnyChannel());
+    const dataStoreFactory = new ReplayDataStoreFactory(
+        strictChannels
+            ? undefined
+            : mixinDataStoreWithAnyChannel());
     // List of data store registries in container runtime.
     const dataStoreRegistries = new Map([
         ["_scheduler", Promise.resolve(dataStoreFactory)],

@@ -83,7 +83,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
      */
     private getProvider(provider: string & keyof TMap) {
         // this was removed, but some partners have trouble with back compat where they
-        // use invalid patterns with IFluidObject and IFluidDependencySynthesizer
+        // use invalid patterns with FluidObject and IFluidDependencySynthesizer
         // this is just for back compat until those are removed
         if(this.has(provider)) {
             if(this.providers.has(provider)) {
@@ -146,7 +146,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
             for (const parent of this.parents) {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<TMap, T>>;
-                const syn = parent.synthesize<Pick<TMap, T>,{}>(
+                const syn = parent.synthesize<Pick<TMap, T>, Record<string, unknown>>(
                     sp,
                     {});
                 const descriptor = Object.getOwnPropertyDescriptor(syn, t);

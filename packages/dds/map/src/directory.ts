@@ -490,6 +490,13 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     }
 
     /**
+     * {@inheritDoc IDirectory.countSubDirectory}
+     */
+    public countSubDirectory(): number {
+        return this.root.countSubDirectory();
+    }
+
+    /**
      * Get an iterator over the keys under this IDirectory.
      * @returns The iterator
      */
@@ -938,6 +945,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         };
         this.submitKeyMessage(op);
         return this;
+    }
+
+    /**
+     * {@inheritDoc IDirectory.countSubDirectory}
+     */
+    public countSubDirectory(): number {
+        return this._subdirectories.size;
     }
 
     /**
@@ -1563,6 +1577,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         for (const [_, subDirectory] of subDirectories) {
             this.disposeSubDirectoryTree(subDirectory);
         }
-        directory.dispose();
+        if (typeof directory.dispose === "function") {
+            directory.dispose();
+        }
     }
 }

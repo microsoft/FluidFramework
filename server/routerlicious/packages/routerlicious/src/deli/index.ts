@@ -21,6 +21,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
     const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
     const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+    const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
     const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
 
     const kafkaForwardClientId = config.get("deli:kafkaClientId");
@@ -62,6 +63,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
         kafkaReplicationFactor,
+        kafkaMaxBatchSize,
         kafkaSslCACertFilePath);
     const reverseProducer = services.createProducer(
         kafkaLibrary,
@@ -72,6 +74,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
         kafkaReplicationFactor,
+        kafkaMaxBatchSize,
         kafkaSslCACertFilePath);
 
     const redisConfig = config.get("redis");
@@ -110,8 +113,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         tenantManager,
         combinedProducer,
         reverseProducer,
-        core.DefaultServiceConfiguration,
-        globalDbMongoManager);
+        core.DefaultServiceConfiguration);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {

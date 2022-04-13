@@ -15,6 +15,7 @@ import {
     numberCases,
 } from "@fluidframework/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-loader";
+import { ConfigTypes } from "@fluidframework/telemetry-utils";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
@@ -79,11 +80,23 @@ export function generateRuntimeOptions(
         summaryOptions: [undefined, ...summaryOptions],
         loadSequenceNumberVerification: [undefined],
         useDataStoreAliasing: [undefined],
+        flushMode: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(
         applyOverrides(
             runtimeOptionsMatrix,
             {...overrides, gcOptions: undefined, summaryOptions: undefined}),
+        seed);
+}
+
+export function generateConfigurations(
+    seed: number, overrides: OptionsMatrix<Record<string,ConfigTypes>> | undefined,
+): Record<string,ConfigTypes>[] {
+    if (overrides === undefined) {
+        return [{}];
+    }
+    return generatePairwiseOptions<Record<string, ConfigTypes>>(
+        overrides,
         seed);
 }
