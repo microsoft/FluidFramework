@@ -9,7 +9,6 @@ import {
 } from "./fluidLoadable";
 import { IFluidRouter } from "./fluidRouter";
 import { IFluidHandle, IFluidHandleContext } from "./handles";
-import { IFluidSerializer } from "./serializer";
 
 /**
  * @deprecated Use `FluidObject` or the interface directly instead
