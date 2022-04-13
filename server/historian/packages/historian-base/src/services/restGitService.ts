@@ -21,7 +21,6 @@ import {
 import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import * as winston from "winston";
-import * as nconf from "nconf";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { getRequestErrorTranslator } from "../utils";
@@ -83,8 +82,8 @@ export class RestGitService {
             [BaseTelemetryProperties.documentId]: this.documentId,
         };
 
-        let baseUrl = storageUrl;
-        if (!storageUrl || storageUrl === "") {
+        let baseUrl = this.storageUrl;
+        if (!this.storageUrl || this.storageUrl === "") {
             baseUrl = storage.url;
         }
 

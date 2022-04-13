@@ -59,7 +59,7 @@ export async function createGitService(
     const writeToExternalStorage = !!customData?.externalStorageData;
     const storageName = customData?.storageName;
     const decoded = jwt.decode(token) as ITokenClaims;
-    const storageUrl = this.config.get("storageUrl") as string | undefined;
+    const storageUrl = config.get("storageUrl") as string | undefined;
     const service = new RestGitService(
         details.storage,
         writeToExternalStorage,
