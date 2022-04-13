@@ -82,7 +82,7 @@ export class RestGitService {
             [BaseTelemetryProperties.documentId]: this.documentId,
         };
 
-        const baseUrl = !this.storageUrl ? storage.url : this.storageUrl;
+        const baseUrl = this.storageUrl || storage.url;
 
         winston.info(
             `Created RestGitService: ${JSON.stringify({

@@ -40,7 +40,7 @@ export class Tenant implements core.ITenant {
  * Manages a collection of tenants
  */
 export class TenantManager implements core.ITenantManager {
-    constructor(private readonly endpoint: string, private readonly internalHistorianUrlOverride: string) {
+    constructor(private readonly endpoint: string, private readonly defaultInternalHistorianUrl: string) {
     }
 
     public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
@@ -68,7 +68,9 @@ export class TenantManager implements core.ITenantManager {
             });
         };
         const defaultHeaders = getDefaultHeaders();
-        const internalHistorianUrl = this.internalHistorianUrlOverride || details.data.storage.internalHistorianUrl;
+        // If defaultInternalHistorianUrl is undefined or empty in the server, the tenant's internalHistorianUrl
+        // will be used.
+        const internalHistorianUrl = this.defaultInternalHistorianUrl || details.data.storage.internalHistorianUrl;
         const baseUrl = `${internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
         const restWrapper = new BasicRestWrapper(
             baseUrl,
