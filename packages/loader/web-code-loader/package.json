@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/web-code-loader",
-  "version": "0.59.1000",
+  "version": "0.59.2000",
   "description": "Fluid web code loader",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@fluidframework/protocol-definitions": "^0.1028.1000-0",
     "@fluidframework/web-code-loader-previous": "npm:@fluidframework/web-code-loader@^0.58.0",
     "@microsoft/api-extractor": "^7.16.1",

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
+import type { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 
@@ -28,10 +28,11 @@ export function generateToken(
     }
 
     // Current time in seconds
-    const now = Math.round((new Date()).getTime() / 1000);
+    const now = Math.round(Date.now() / 1000);
+    const docId = documentId ?? "";
 
     const claims: ITokenClaims & { jti: string } = {
-        documentId,
+        documentId: docId,
         scopes,
         tenantId,
         user: userClaim,
@@ -42,7 +43,7 @@ export function generateToken(
     };
 
     const utf8Key = { utf8: key };
-    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
+    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 }
 
 export function generateUser(): IUser {
