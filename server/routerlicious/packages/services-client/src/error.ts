@@ -104,6 +104,21 @@ export class NetworkError extends Error {
             retryAfterMs: this.retryAfterMs,
         };
     }
+
+    /**
+     * Explicitly define how to serialize as JSON so that socket.io can emit relevant info.
+     * @public
+     */
+    public toJSON(): INetworkErrorDetails & { code: number } {
+        return {
+            code: this.code,
+            message: this.message,
+            canRetry: this.canRetry,
+            isFatal: this.isFatal,
+            retryAfterMs: this.retryAfterMs,
+            retryAfter: this.retryAfter,
+        };
+    }
 }
 
 /**

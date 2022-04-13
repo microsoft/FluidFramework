@@ -154,6 +154,9 @@ export function verifyStorageToken(
         try {
             await tenantManager.verifyToken(claims.tenantId, token);
         } catch (error) {
+            if (error instanceof NetworkError) {
+                return res.status(error.code).send(error.message);
+            }
             return res.status(403).json(error);
         }
 
