@@ -493,6 +493,9 @@ export class NetworkError extends Error {
     readonly isFatal?: boolean;
     readonly retryAfter: number;
     readonly retryAfterMs?: number;
+    toJSON(): INetworkErrorDetails & {
+        code: number;
+    };
 }
 
 // @public (undocumented)
