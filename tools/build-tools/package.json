@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@fluidframework/bundle-size-tools": "^0.0.8505",
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "chalk": "^2.4.2",
     "commander": "^6.2.1",
     "danger": "^10.9.0",
