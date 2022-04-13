@@ -937,10 +937,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				this.editLog.processEditChunkHandle(decodedHandle, startRevision);
 			} else if (type === SharedTreeOpType.Edit) {
 				if (op.version === WriteFormat.v0_1_1) {
-					// TODO: This cast can be removed on typescript 4.6
 					this.idCompressor.finalizeCreationRange(op.idRange);
 				}
-				// TODO: This cast can be removed on typescript 4.6
 				const edit = this.parseSequencedEdit(op);
 				if (op.version === WriteFormat.v0_1_1) {
 					this.internStringsFromEdit(edit);

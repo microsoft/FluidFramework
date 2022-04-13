@@ -135,16 +135,14 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 					compressedTraits = payloadTraits;
 				}
 			} else {
-				// TODO: This cast can be removed on typescript 4.6
-				compressedTraits = idOrPayloadTraits as typeof compressedTraits;
+				compressedTraits = idOrPayloadTraits;
 			}
 		}
 
 		const definition =
 			typeof maybeInternedDefinition === 'string'
 				? maybeInternedDefinition
-				: // TODO: This cast can be removed on typescript 4.6
-				  (interner.getString(maybeInternedDefinition as number) as Definition);
+				: (interner.getString(maybeInternedDefinition) as Definition);
 
 		let identifier: TId;
 		if (compressedId !== undefined) {
