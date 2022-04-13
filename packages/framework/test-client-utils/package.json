@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-client-utils",
-  "version": "0.59.1000",
+  "version": "0.59.2000",
   "description": "Fluid client development and test utilities",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@fluidframework/protocol-definitions": "^0.1028.1000-0",
-    "@fluidframework/test-runtime-utils": "^0.59.1000",
+    "@fluidframework/test-runtime-utils": "^0.59.2000",
     "sillyname": "^0.1.0"
   },
   "devDependencies": {
