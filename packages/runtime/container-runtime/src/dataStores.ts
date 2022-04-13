@@ -592,7 +592,14 @@ export class DataStores implements IDisposable {
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
         for (const route of unusedRoutes) {
-            const dataStoreId = route.split("/")[1];
+            const pathParts = route.split("/");
+            // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
+            // store based on its DDS being unused.
+            if (pathParts.length > 2) {
+                continue;
+            }
+            const dataStoreId = pathParts[1];
+            assert(this.contexts.has(dataStoreId), 0x2d7 /* `${dataStoreId} is not a data store` */);
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
             // Delete the summarizer node of the unused data stores.
@@ -616,15 +623,24 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Returns the package path of the node with the given path. This is used by GC to log when an inactive / deleted
-     * node is used.
+     * Called during GC to retrieve the package path of a data store node with the given path.
      */
-    public getNodePackagePath(nodePath: string): readonly string[] | undefined {
-        // Currently, only return the data store package path for the node since GC is only interested in data stores.
-        const dataStoreId = nodePath.split("/")[1];
-        const context = this.contexts.get(dataStoreId);
-        assert(context !== undefined, 0x2b9 /* "Data store with given id does not exist" */);
-        return context.isLoaded ? context.packagePath : undefined;
+    public getDataStorePackagePath(nodePath: string): readonly string[] | undefined {
+        // If the node belongs to a data store, return its package path if the data store is loaded. For DDSs, we return
+        // the package path of the data store that contains it.
+        const context = this.contexts.get(nodePath.split("/")[1]);
+        return context?.isLoaded ? context.packagePath : undefined;
+    }
+
+    /**
+     * Called by GC to know if a node is a data store or not. Data store ids are of the format "/dataStoreId".
+     */
+    public isDataStoreNode(nodePath: string): boolean {
+        const pathParts = nodePath.split("/");
+        if (pathParts.length === 2 && this.contexts.has(pathParts[1])) {
+            return true;
+        }
+        return false;
     }
 }
 

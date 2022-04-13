@@ -99,6 +99,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
+    deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly disableIsolatedChannels: boolean;
@@ -116,7 +117,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getAudience(): IAudience;
+    getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    getGCNodePackagePath(nodePath: string): readonly string[] | undefined;
+    // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
+    getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
     getPendingLocalState(): IPendingLocalState | undefined;
     // (undocumented)
@@ -330,7 +335,10 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 // @public
 export interface IGarbageCollectionRuntime {
     closeFn(error?: ICriticalContainerError): void;
+    deleteUnusedRoutes(unusedRoutes: string[]): void;
+    getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    getNodeType(nodePath: string): GCNodeType;
     updateStateBeforeGC(): Promise<void>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
@@ -347,10 +355,13 @@ export interface IGCRuntimeOptions {
 
 // @public
 export interface IGCStats {
+    attachmentBlobCount: number;
     dataStoreCount: number;
     nodeCount: number;
+    unrefAttachmentBlobCount: number;
     unrefDataStoreCount: number;
     unrefNodeCount: number;
+    updatedAttachmentBlobCount: number;
     updatedDataStoreCount: number;
     updatedNodeCount: number;
 }
