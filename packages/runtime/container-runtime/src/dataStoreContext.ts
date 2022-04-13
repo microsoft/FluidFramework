@@ -632,7 +632,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * globally visible now.
      */
     public makeLocallyVisible() {
-        assert(this.channel !== undefined, "undefined channel on datastore context");
+        assert(this.channel !== undefined, 0x2cf /* "undefined channel on datastore context" */);
         this.makeLocallyVisibleFn();
     }
 
@@ -1021,7 +1021,7 @@ export class LocalDetachedFluidDataStoreContext
         super.bindRuntime(dataStoreChannel);
 
         if (await this.isRoot()) {
-            // back-compat 0.58.3000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
+            // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
             // For older versions, we still have to call bindToContext.
             if (dataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
                 dataStoreChannel.makeVisibleAndAttachGraph();

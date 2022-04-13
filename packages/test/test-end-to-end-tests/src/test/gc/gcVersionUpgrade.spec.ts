@@ -28,8 +28,8 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { loadSummarizer, TestDataObject, submitAndAckSummary } from "../mockSummarizerClient";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
 /**
  * Runtime factory that increments the current GC version of the container runtime it creates. This is used to simulate
