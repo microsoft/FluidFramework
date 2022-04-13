@@ -122,6 +122,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
         const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
         const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+        const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
         const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
 
         const producer = services.createProducer(
@@ -133,6 +134,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             kafkaProducerPollIntervalMs,
             kafkaNumberOfPartitions,
             kafkaReplicationFactor,
+            kafkaMaxBatchSize,
             kafkaSslCACertFilePath);
 
         const redisConfig = config.get("redis");

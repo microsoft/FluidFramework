@@ -291,8 +291,9 @@ export abstract class TreeView {
 
 	private *iterateNodeDescendants(node: TreeViewNode): IterableIterator<TreeViewNode> {
 		yield node;
-		for (const trait of Array.from(node.traits.values()).sort()) {
-			for (const childId of trait) {
+		for (const label of [...node.traits.keys()].sort()) {
+			const trait = node.traits.get(label);
+			for (const childId of trait ?? fail('Expected trait with label')) {
 				const child = this.getViewNode(childId);
 				yield* this.iterateNodeDescendants(child);
 			}
