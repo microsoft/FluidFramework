@@ -112,7 +112,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
         return maybe as IRemovalInfo;
     }
     assert(maybe?.removedClientIds === undefined && maybe?.removedSeq === undefined,
-        "both removedClientIds and removedSeq should be set or not set");
+        0x2bf /* "both removedClientIds and removedSeq should be set or not set" */);
 }
 
 /**

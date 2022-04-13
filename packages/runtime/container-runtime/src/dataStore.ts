@@ -75,7 +75,13 @@ class DataStore implements IDataStore {
             alias,
         };
 
-        this.fluidDataStoreChannel.bindToContext();
+        // back-compat 0.58.2000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel. For
+        // older versions, we still have to call bindToContext.
+        if (this.fluidDataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
+            this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
+        } else {
+            this.fluidDataStoreChannel.bindToContext();
+        }
 
         if (this.runtime.attachState === AttachState.Detached) {
             const localResult = this.datastores.processAliasMessageCore(message);

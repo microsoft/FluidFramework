@@ -46,15 +46,17 @@ module.exports = env => {
         },
         devServer: {
             host: "0.0.0.0",
-            publicPath: '/dist',
-            stats: "minimal",
-            before: (app, server) => fluidRoute.before(app, server, env),
-            after: (app, server) => fluidRoute.after(app, server, __dirname, env),
-            watchOptions: {
-                ignored: "**/node_modules/**",
-            }
+            devMiddleware: { stats: "minimal" }
+        },
+        // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
+        // This should be configurable under devServer.static.watch
+        // (see https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md) but that does not seem to work.
+        // The CLI options for disabling watching don't seem to work either, so this may be a symptom of using webpack4 with the newer webpack-cli and webpack-dev-server.
+        watchOptions: {
+            ignored: "**/node_modules/**",
         }
     }, isProduction
         ? require("./webpack.prod")
-        : require("./webpack.dev"));
+        : require("./webpack.dev"),
+    fluidRoute.devServerConfig(__dirname, env));
 };

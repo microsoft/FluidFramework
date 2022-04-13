@@ -11,7 +11,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 /**
  * This class represents blob (long string)
@@ -203,6 +203,65 @@ export class BlobManager {
             count: snapshot.ids?.length ?? 0,
             redirectTable: snapshot.redirectTable?.length,
         });
+    }
+
+    /**
+     * Generates data used for garbage collection. Each blob uploaded represents a node in the GC graph as it can be
+     * individually referenced by storing its handle in a referenced DDS. Returns the list of blob ids as GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data. BlobManager doesn't care
+     * about this for now because the data is a simple list of blob ids.
+     */
+    public getGCData(fullGC: boolean = false): IGarbageCollectionData {
+        const getGCNodePath = (blobId: string) => { return `/${BlobManager.basePath}/${blobId}`; };
+        const gcData: IGarbageCollectionData = { gcNodes: {} };
+        /**
+          * The node path is of the format `/_blobs/blobId`. This path must match the path of the blob handle returned
+          * by the createBlob API because blobs are marked referenced by storing these handles in a referenced DDS.
+          */
+        this.blobIds.forEach((blobId: string) => {
+            gcData.gcNodes[getGCNodePath(blobId)] = [];
+        });
+
+        /**
+         * For all blobs in the redirect table, the handle returned on creation is based off of the localId. So, these
+         * nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
+         * must also be marked referenced. So, we add a route from the localId node to the storageId node.
+         * Note that because of de-duping, there can be multiple localIds that all redirect to the same storageId or
+         * a blob may be referenced via its storageId handle.
+         */
+        if (this.redirectTable !== undefined) {
+            for (const [localId, storageId] of this.redirectTable) {
+                // Add node for the localId and add a route to the storageId node. The storageId node will have been
+                // added above when adding nodes for this.blobIds.
+                gcData.gcNodes[getGCNodePath(localId)] = [getGCNodePath(storageId)];
+            }
+        }
+
+        return gcData;
+    }
+
+    /**
+     * When running GC in test mode, this is called to delete blobs that are unused.
+     * @param unusedRoutes - These are the blob node ids that are unused and should be deleted.
+     */
+    public deleteUnusedRoutes(unusedRoutes: string[]): void {
+        // The routes or blob node paths are in the same format as returned in getGCData - `/_blobs/blobId`.
+        for (const route of unusedRoutes) {
+            const pathParts = route.split("/");
+            assert(
+                pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+                0x2d5 /* "Invalid blob node id in unused routes." */,
+            );
+            const blobId = pathParts[2];
+
+            // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
+            // corresponding storageId may still be used either directly or via other localIds.
+            if (this.redirectTable?.has(blobId)) {
+                this.redirectTable.delete(blobId);
+                continue;
+            }
+            this.blobIds.delete(blobId);
+        }
     }
 
     public summarize(): ISummaryTreeWithStats {

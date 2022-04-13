@@ -114,14 +114,6 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
          * Also, they are visible in remote clients and can send ops.
          */
         it("validates that non-root data stores become visible correctly", async function() {
-            /**
-             * This test fails in detached container because of https://github.com/microsoft/FluidFramework/issues/9127.
-             * To be enabled once the bug is fixed.
-             */
-            if (detachedMode) {
-                this.skip();
-            }
-
             const dataObject2 = await createNonRootDataObject(container1, containerRuntime1);
             dataObject1._root.set("dataObject2", dataObject2.handle);
 
@@ -155,14 +147,6 @@ describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
          * until the parent data store is visible. Also, they are visible in remote clients and can send ops.
          */
         it("validates that non-root data store and its dependencies become visible correctly", async function() {
-            /**
-             * This test fails in detached container because of https://github.com/microsoft/FluidFramework/issues/9127.
-             * To be enabled once the bug is fixed.
-             */
-            if (detachedMode) {
-                this.skip();
-            }
-
             const dataObject2 = await createNonRootDataObject(container1, containerRuntime1);
             const dataObject3 = await createNonRootDataObject(container1, containerRuntime1);
 
