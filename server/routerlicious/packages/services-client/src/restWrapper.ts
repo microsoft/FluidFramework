@@ -141,6 +141,7 @@ export class BasicRestWrapper extends RestWrapper {
                         debug(`request to ${options.url} failed ${error ? error.message : ""}`);
                     }
 
+                    // TODO: replace retryAfter with retryAfterMs
                     if (error?.response?.status === 429 && error?.response?.data?.retryAfter > 0 && canRetry) {
                         setTimeout(() => {
                             this.request<T>(options, statusCode)

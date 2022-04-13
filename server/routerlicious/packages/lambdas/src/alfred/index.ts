@@ -71,8 +71,7 @@ const getMessageMetadata = (documentId: string, tenantId: string) => ({
 const handleServerError = async (logger: core.ILogger, errorMessage: string, documentId: string, tenantId: string) => {
     logger.error(errorMessage, { messageMetaData: getMessageMetadata(documentId, tenantId) });
     Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
-    // eslint-disable-next-line prefer-promise-reject-errors
-    return Promise.reject({ code: 500, message: "Failed to connect client to document." });
+    throw new NetworkError(500, "Failed to connect client to document.");
 };
 
 const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
@@ -223,11 +222,7 @@ export function configureWebSocketServices(
                 return Promise.reject(throttleError);
             }
             if (!message.token) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    code: 403,
-                    message: "Must provide an authorization token",
-                });
+                throw new NetworkError(403, "Must provide an authorization token");
             }
 
             // Validate token signature and claims
@@ -239,12 +234,12 @@ export function configureWebSocketServices(
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
             } catch (err) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    // if we don't understand the error, be lenient and allow retry
-                    code: (err as NetworkError | undefined)?.code ?? 401,
-                    message: (err as NetworkError | undefined)?.message ?? "Invalid token",
-                });
+                if (typeof (err as NetworkError | undefined)?.code === "number" &&
+                    typeof (err as NetworkError | undefined)?.message === "string") {
+                    throw (err as NetworkError);
+                }
+                // If we don't understand the error, be lenient and allow retry.
+                throw new NetworkError(401, "Invalid token");
             }
 
             const clientId = generateClientId();
@@ -289,13 +284,14 @@ export function configureWebSocketServices(
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    code: 400,
-                    message: `Unsupported client protocol. ` +
-                        `Server: ${protocolVersions}. ` +
+                throw new NetworkError(
+                    400,
+                    [
+                        `Unsupported client protocol.`,
+                        `Server: ${protocolVersions}.`,
                         `Client: ${JSON.stringify(connectVersions)}`,
-                });
+                    ].join(" "),
+                );
             }
 
             const clients = await clientManager.getClients(claims.tenantId, claims.documentId)
@@ -305,12 +301,13 @@ export function configureWebSocketServices(
                 });
 
             if (clients.length > maxNumberOfClientsPerDocument) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    code: 429,
-                    message: "Too Many Clients Connected to Document",
-                    retryAfter: 5 * 60,
-                });
+                throw new NetworkError(
+                    429,
+                    "Too Many Clients Connected to Document",
+                    true,
+                    false,
+                    5 * 60 * 1000 /* 5 min */,
+                );
             }
 
             try {
