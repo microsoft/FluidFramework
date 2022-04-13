@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, ISignalClient } from "@fluidframework/protocol-definitions";
+import { IClient, ISignalClient, ISignalMessage } from "@fluidframework/protocol-definitions";
 
 export interface ITimedClient extends IClient {
     /**
@@ -19,12 +19,17 @@ export interface IClientManager {
     /**
      * Adds a client to the list.
      */
-    addClient(tenantId: string, documentId: string, clientId: string, details: IClient): Promise<void>;
+    addClient(
+        tenantId: string,
+        documentId: string,
+        clientId: string,
+        details: IClient,
+        signalMessage?: ISignalMessage): Promise<void>;
 
     /**
      * Removes a client from the list.
      */
-    removeClient(tenantId: string, documentId: string, clientId: string): Promise<void>;
+    removeClient(tenantId: string, documentId: string, clientId: string, signalMessage?: ISignalMessage): Promise<void>;
 
     /**
      * Returns all clients currently connected.

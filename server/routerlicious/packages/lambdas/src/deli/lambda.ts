@@ -412,9 +412,18 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     // Update the msn last sent
                     this.lastSentMSN = ticketedMessage.msn;
 
+                    // create a signal for a write client if all the following are true:
+                    // 1. a signal producer is provided
+                    // 2. the sequenced op is a join or leave message
+                    // 3. enableWriteClientSignals is on or alfred told us to create a signal
+                    // #3 allows alfred to be in charge of enabling this functionality
                     if (this.signalsProducer &&
                         (sequencedMessage.type === MessageType.ClientJoin ||
-                            sequencedMessage.type === MessageType.ClientLeave)) {
+                            sequencedMessage.type === MessageType.ClientLeave) &&
+                        (this.serviceConfiguration.deli.enableWriteClientSignals ||
+                            (sequencedMessage.serverMetadata &&
+                                typeof (sequencedMessage.serverMetadata) === "object" &&
+                                sequencedMessage.serverMetadata.createSignal))) {
                         const signalMessage = this.createSignalMessage(
                             message as IRawOperationMessage,
                             sequencedMessage.sequenceNumber - 1,

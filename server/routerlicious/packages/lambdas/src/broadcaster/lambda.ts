@@ -92,7 +92,7 @@ export class BroadcasterLambda implements IPartitionLambda {
                     if (this.clientManager && ticketedSignalMessage.operation) {
                         const signalContent = JSON.parse(ticketedSignalMessage.operation.content);
                         const signalType: MessageType | undefined =
-                            typeof (signalContent.type) === "number" ? signalContent.type : undefined;
+                            typeof (signalContent.type) === "string" ? signalContent.type : undefined;
                         switch (signalType) {
                             case MessageType.ClientJoin: {
                                 const signalClient: ISignalClient = signalContent.content;
@@ -100,7 +100,8 @@ export class BroadcasterLambda implements IPartitionLambda {
                                     ticketedSignalMessage.tenantId,
                                     ticketedSignalMessage.documentId,
                                     signalClient.clientId,
-                                    signalClient.client);
+                                    signalClient.client,
+                                    ticketedSignalMessage.operation);
                                 break;
                             }
 
@@ -108,7 +109,8 @@ export class BroadcasterLambda implements IPartitionLambda {
                                 await this.clientManager.removeClient(
                                     ticketedSignalMessage.tenantId,
                                     ticketedSignalMessage.documentId,
-                                    signalContent.content);
+                                    signalContent.content,
+                                    ticketedSignalMessage.operation);
                                 break;
 
                             default:

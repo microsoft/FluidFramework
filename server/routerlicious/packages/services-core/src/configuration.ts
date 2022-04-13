@@ -13,6 +13,9 @@ export interface IDeliServerConfiguration {
     // Enables hashing of sequenced ops
     enableOpHashing: boolean;
 
+    // Enables creating join/leave signals for write clients
+    enableWriteClientSignals: boolean;
+
     // Expire clients after this amount of inactivity
     clientTimeout: number;
 
@@ -162,6 +165,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     deli: {
         enableNackMessages: true,
         enableOpHashing: true,
+        enableWriteClientSignals: false,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
         readClientIdleTimer: 60 * 1000,

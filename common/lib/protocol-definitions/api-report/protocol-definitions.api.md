@@ -360,8 +360,10 @@ export interface IServerError {
 export interface ISignalClient {
     // (undocumented)
     client: IClient;
+    clientConnectionNumber?: number;
     // (undocumented)
     clientId: string;
+    referenceSequenceNumber?: number;
 }
 
 // @public (undocumented)
