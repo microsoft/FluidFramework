@@ -239,6 +239,7 @@ export class SummaryManager implements IDisposable {
             this.logger.sendTelemetryEvent(
                 {
                     eventName: "EndingSummarizer",
+                    reason: "exception",
                 },
                 error);
 

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
@@ -37,7 +37,6 @@ import {
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
 import { SummarizeResultBuilder } from "./summaryGenerator";
 import { IConnectableRuntime } from ".";
-import { assert } from "console";
 
 const summarizingError = "summarizingError";
 
