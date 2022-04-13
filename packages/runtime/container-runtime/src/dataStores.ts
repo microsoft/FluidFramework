@@ -599,7 +599,7 @@ export class DataStores implements IDisposable {
                 continue;
             }
             const dataStoreId = pathParts[1];
-            assert(this.contexts.has(dataStoreId), `${dataStoreId} is not a data store`);
+            assert(this.contexts.has(dataStoreId), 0x2d7 /* `${dataStoreId} is not a data store` */);
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
             // Delete the summarizer node of the unused data stores.
