@@ -49,7 +49,7 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@rushstack/eslint-config": "^2.5.1",
-    "@types/async": "^3.2.6",
+    "@types/async": "^3.2.9",
     "@types/cors": "^2.8.4",
     "@types/debug": "^4.1.5",
     "@types/lorem-ipsum": "^1.0.2",

@@ -57,7 +57,7 @@
     "ts-morph": "^7.1.2"
   },
   "devDependencies": {
-    "@types/async": "^3.2.6",
+    "@types/async": "^3.2.9",
     "@types/fs-extra": "^8.1.0",
     "@types/glob": "^7.1.1",
     "@types/json5": "^0.0.30",
