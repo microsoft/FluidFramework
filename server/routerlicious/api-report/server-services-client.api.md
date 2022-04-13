@@ -45,7 +45,7 @@ export const choose: () => string;
 export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | undefined, tree: ISummaryTree, path?: string, rootNodeName?: string): IWholeSummaryTree;
 
 // @public
-export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary): INormalizedWholeSummary;
+export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary, options?: ISnapshotConversionOptions): INormalizedWholeSummary;
 
 // @public
 export function createFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): NetworkError;
@@ -341,6 +341,11 @@ export interface ISession {
     isSessionAlive: boolean;
     // (undocumented)
     ordererUrl: string;
+}
+
+// @public
+export interface ISnapshotConversionOptions {
+    stripAppPath: boolean;
 }
 
 // @public (undocumented)

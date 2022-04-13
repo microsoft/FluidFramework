@@ -19,6 +19,16 @@ import {
 } from "./storageContracts";
 
 /**
+ * Options defining conversion of IWholeFlatSummary
+ */
+ export interface ISnapshotConversionOptions {
+    /**
+    * Strip the .app/ path from app tree entries such that they are stored under root.
+    */
+    stripAppPath: boolean;
+}
+
+/**
  * Convert a list of nodes to a tree path.
  * If a node is empty (blank) it will be removed.
  * If a node's name begins and/or ends with a "/", it will be removed.
@@ -140,9 +150,13 @@ export function convertSummaryTreeToWholeSummaryTree(
  * Build a tree heirarchy from a flat tree.
  *
  * @param flatTree - a flat tree
+ * @param options - conversion options
  * @returns the heirarchical tree
  */
-function buildHeirarchy(flatTree: IWholeFlatSummaryTree): ISnapshotTree {
+ function buildHeirarchy(
+    flatTree: IWholeFlatSummaryTree,
+    options: ISnapshotConversionOptions,
+): ISnapshotTree {
     const lookup: { [path: string]: ISnapshotTree } = {};
     // Root tree id will be used to determine which version was downloaded.
     const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
@@ -150,7 +164,7 @@ function buildHeirarchy(flatTree: IWholeFlatSummaryTree): ISnapshotTree {
 
     for (const entry of flatTree.entries) {
         // Strip the .app/ path from app tree entries such that they are stored under root.
-        const entryPath = entry.path.replace(/^\.app\//, "");
+        const entryPath = options.stripAppPath ? entry.path.replace(/^\.app\//, "") : entry.path;
         const lastIndex = entryPath.lastIndexOf("/");
         const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
         const entryPathBase = entryPath.slice(lastIndex + 1);
@@ -177,9 +191,12 @@ function buildHeirarchy(flatTree: IWholeFlatSummaryTree): ISnapshotTree {
  * Converts existing IWholeFlatSummary to snapshot tree, blob array, and sequence number.
  *
  * @param flatSummary - flat summary
+ * @param options - conversion options
+ * @returns snapshot tree, blob array, and sequence number
  */
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
     flatSummary: IWholeFlatSummary,
+    options?: ISnapshotConversionOptions,
 ): INormalizedWholeSummary {
     const blobs = new Map<string, ArrayBuffer>();
     if (flatSummary.blobs) {
@@ -189,7 +206,10 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
     }
     const flatSummaryTree = flatSummary.trees && flatSummary.trees[0];
     const sequenceNumber = flatSummaryTree?.sequenceNumber;
-    const snapshotTree = buildHeirarchy(flatSummaryTree);
+    const snapshotTree = buildHeirarchy(
+        flatSummaryTree,
+        options ?? { stripAppPath: true },
+    );
 
     return {
         blobs,
