@@ -34,6 +34,15 @@ import { ReadBuffer } from "./ReadBufferUtils";
 import { EpochTracker } from "./epochTracker";
 
 /**
+ * Enum to support different types of snapshot formats.
+ */
+export enum SnapshotFormatSupportType {
+    Json,
+    Binary,
+    JsonAndBinary,
+}
+
+/**
  * Fetches a snapshot from the server with a given version id.
  * @param snapshotUrl - snapshot url from where the odsp snapshot will be fetched
  * @param token - token used for authorization in the request
@@ -428,7 +437,7 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
  * @param storageToken - token to do the auth for network request.
  * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
  * @param logger - logger
- * @param fetchBinarySnapshotFormat - whether to fetch binary snapshot or not.
+ * @param snapshotFormatFetchType - Snapshot format to fetch.
  * @param controller - abort controller if caller needs to abort the network call.
  * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
  * @returns fetched snapshot.
@@ -438,7 +447,7 @@ export async function downloadSnapshot(
     storageToken: string,
     logger: ITelemetryLogger,
     snapshotOptions: ISnapshotOptions | undefined,
-    fetchBinarySnapshotFormat?: boolean,
+    snapshotFormatFetchType?: SnapshotFormatSupportType,
     controller?: AbortController,
     epochTracker?: EpochTracker,
 ): Promise<ISnapshotRequestAndResponseOptions> {
@@ -463,10 +472,11 @@ export async function downloadSnapshot(
         signal: controller?.signal,
         method: "POST",
     };
-    // For now we are keeping both json and ms-fluid values in accept header while fetching as we want to let
-    // the server decide what format it wants to send to the client as we roll it out slowly.
-    if (fetchBinarySnapshotFormat) {
+    // Decide what snapshot format to fetch as per the feature gate.
+    if (snapshotFormatFetchType?.valueOf() === SnapshotFormatSupportType.JsonAndBinary) {
         headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
+    } else if (snapshotFormatFetchType?.valueOf() === SnapshotFormatSupportType.Binary) {
+        headers.accept = `application/ms-fluid; v=${currentReadVersion}`;
     } else {
         headers.accept = "application/json";
     }
