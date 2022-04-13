@@ -19,6 +19,6 @@
   "dependencies": {
     "@fluidframework/tool-utils": "^0.35.0",
     "azure-keyvault": "^3.0.4",
-    "ms-rest-azure": "^2.6.0"
+    "ms-rest-azure": "^3.0.1"
   }
 }
