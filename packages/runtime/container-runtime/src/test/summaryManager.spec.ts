@@ -381,7 +381,7 @@ describe("Summary Manager", () => {
             mockDeltaManager.lastSequenceNumber = 10001;
             connectedState.connect();
             await flushPromises();
-            assertState(SummaryManagerState.Running, "Summarizer should be starting");
+            assertState(SummaryManagerState.Starting, "Summarizer should be starting");
             assertRequests(1, "Should begin without delay");
             completeSummarizerRequest();
             await flushPromises();
