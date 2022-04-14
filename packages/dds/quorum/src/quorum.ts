@@ -43,9 +43,13 @@ type PendingQuorumValue = {
     type: "set";
     value: any;
     sequenceNumber: number;
+    // TODO: Consider using Set and serializing to array for snapshot
+    expectedSignoffs: string[];
 } | {
     type: "delete";
     sequenceNumber: number;
+    // TODO: Consider using Set and serializing to array for snapshot
+    expectedSignoffs: string[];
 };
 
 /**
@@ -243,7 +247,13 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.submitLocalMessage(deleteOp);
     }
 
-    private readonly handleIncomingSet = (key: string, value: any, refSeq: number, setSequenceNumber: number): void => {
+    private readonly handleIncomingSet = (
+        key: string,
+        value: any,
+        refSeq: number,
+        setSequenceNumber: number,
+        clientId: string,
+    ): void => {
         const currentValue = this.values.get(key);
         // A proposal is valid if the value is unknown
         // or if it was made with knowledge of the most recently accepted value
@@ -257,8 +267,23 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         const accepted = currentValue?.accepted;
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        this.values.set(key, { accepted, pending: { type: "set", value, sequenceNumber: setSequenceNumber }});
+        // We expect signoffs from all connected clients at the time the set was sequenced, except for the client
+        // who issued the set (who implicitly signs off).
+        const connectedClientIds = [...this.runtime.getQuorum().getMembers().keys()];
+        const expectedSignoffs = connectedClientIds.filter((quorumMemberId) => quorumMemberId !== clientId);
+
+        const newQuorumValue: QuorumValue = {
+            accepted,
+            pending: {
+                type: "set",
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                value,
+                sequenceNumber: setSequenceNumber,
+                expectedSignoffs,
+            },
+        };
+
+        this.values.set(key, newQuorumValue);
 
         this.emit("pending", key);
 
@@ -269,7 +294,12 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.submitLocalMessage(noOp);
     };
 
-    private readonly handleIncomingDelete = (key: string, refSeq: number, deleteSequenceNumber: number): void => {
+    private readonly handleIncomingDelete = (
+        key: string,
+        refSeq: number,
+        deleteSequenceNumber: number,
+        clientId: string,
+    ): void => {
         const currentValue = this.values.get(key);
         // A proposal is valid if the value is unknown
         // or if it was made with knowledge of the most recently accepted value
@@ -283,7 +313,21 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         const accepted = currentValue?.accepted;
 
-        this.values.set(key, { accepted, pending: { type: "delete", sequenceNumber: deleteSequenceNumber }});
+        // We expect signoffs from all connected clients at the time the delete was sequenced, except for the client
+        // who issued the delete (who implicitly signs off).
+        const connectedClientIds = [...this.runtime.getQuorum().getMembers().keys()];
+        const expectedSignoffs = connectedClientIds.filter((quorumMemberId) => quorumMemberId !== clientId);
+
+        const newQuorumValue: QuorumValue = {
+            accepted,
+            pending: {
+                type: "delete",
+                sequenceNumber: deleteSequenceNumber,
+                expectedSignoffs,
+            },
+        };
+
+        this.values.set(key, newQuorumValue);
 
         this.emit("pending", key);
 
@@ -371,11 +415,11 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
             switch (op.type) {
                 case "set":
-                    this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber);
+                    this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber, message.clientId);
                     break;
 
                 case "delete":
-                    this.incomingOp.emit("delete", op.key, op.refSeq, message.sequenceNumber);
+                    this.incomingOp.emit("delete", op.key, op.refSeq, message.sequenceNumber, message.clientId);
                     break;
 
                 case "noop":
