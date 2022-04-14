@@ -19,12 +19,13 @@ import {
     IThrottleMiddlewareOptions,
     getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
 import { IAlfredTenant, ISession } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
-import { Constants, handleResponse, getSession } from "../../../utils";
+import { Constants, getSession } from "../../../utils";
 
 export function create(
     storage: IDocumentStorage,
@@ -47,6 +48,7 @@ export function create(
 
     router.get(
         "/:tenantId/:id",
+        validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
@@ -70,6 +72,7 @@ export function create(
      */
     router.post(
         "/:tenantId",
+        validateRequestParams("tenantId"),
         verifyStorageToken(tenantManager, config, {
             requireDocumentId: false,
             ensureSingleUseToken: true,
@@ -126,9 +129,9 @@ export function create(
                  };
                  responseBody.session = session;
               }
-              handleResponse(createP.then(() => responseBody), response, undefined, 201);
+              handleResponse(createP.then(() => responseBody), response, undefined, undefined, 201);
             } else {
-              handleResponse(createP.then(() => id), response, undefined, 201);
+              handleResponse(createP.then(() => id), response, undefined, undefined, 201);
             }
         });
 
