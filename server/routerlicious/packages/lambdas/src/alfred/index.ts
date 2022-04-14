@@ -287,7 +287,7 @@ export function configureWebSocketServices(
                 throw new NetworkError(
                     400,
                     // eslint-disable-next-line max-len
-                    `Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`
+                    `Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`,
                 );
             }
 
