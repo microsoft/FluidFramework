@@ -45,6 +45,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
                 manager,
                 logger,
                 policies,
+                driverPolicies,
                 blobCache,
                 snapshotTreeCache,
                 noCacheGitManager,
