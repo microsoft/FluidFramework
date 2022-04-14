@@ -106,7 +106,6 @@ export function create(
 
             const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
 
-<<<<<<< HEAD
             // Handle backwards compatibility for older driver versions.
             // TODO: remove condition once old drivers are phased out and all clients can handle object response
             const clientAcceptsObjectResponse = enableDiscovery === true || generateToken === true;
@@ -130,23 +129,10 @@ export function create(
                  };
                  responseBody.session = session;
               }
-              handleResponse(createP.then(() => responseBody), response, undefined, 201);
+              handleResponse(createP.then(() => responseBody), response, undefined, undefined, 201);
             } else {
-              handleResponse(createP.then(() => id), response, undefined, 201);
+              handleResponse(createP.then(() => id), response, undefined, undefined, 201);
             }
-=======
-            const tenantKeyP = tenantManager.getKey(tenantId);
-
-            handleResponse(Promise.all([createP, tenantKeyP]).then(([_, key]) => {
-                // @TODO: Modify it to return an object only, it returns string for back-compat.
-                return generateToken
-                    ? {
-                        id,
-                        token: getCreationToken(token, key, id),
-                    }
-                    : id;
-            }), response, undefined, undefined, 201);
->>>>>>> 7cc0e1bb44 (use handleResponse from services-shared in r11s-base)
         });
 
     /**
