@@ -593,7 +593,7 @@ describe("Matrix", () => {
 
             singleClientTests();
 
-            it("reorder row insertion via undo/redo", async () => {
+            it.only("reorder row insertion via undo/redo", async () => {
                 matrix1.insertCols(/* start: */ 0, /* count: */ 2);
                 undo1.closeCurrentOperation();
 
