@@ -42,9 +42,9 @@ provided in the following ways (looked for in the following order):
 
 ### command line:
 ```
-npm run start -- --env discoveryEndpoint https://discoveryendpoint.com --env tenantId my_tenant --env tenantSecret my_secret --env bearerSecret bear_secret --env npm npm.com
+npm run start -- --env discoveryEndpoint=https://discoveryendpoint.com --env tenantId=my_tenant --env tenantSecret=my_secret --env bearerSecret=bear_secret --env npm=npm.com
 or
-npm run start -- --env fluidHost https://fluidhost.com --env tenantId my_tenant --env tenantSecret my_secret --env bearerSecret bear_secret --env npm npm.com
+npm run start -- --env fluidHost=https://fluidhost.com --env tenantId=my_tenant --env tenantSecret=my_secret --env bearerSecret=bear_secret --env npm=npm.com
 ```
 
 ### environment variables:
