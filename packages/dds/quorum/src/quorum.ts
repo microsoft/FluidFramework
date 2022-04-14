@@ -181,9 +181,12 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
+        // TODO: Unregister event handlers in dispose
         this.incomingOp.on("set", this.handleIncomingSet);
         this.incomingOp.on("delete", this.handleIncomingDelete);
         this.incomingOp.on("accept", this.handleIncomingAcceptOp);
+
+        this.runtime.getQuorum().on("removeMember", this.handleQuorumRemoveMember);
 
         this.disconnectWatcher.on("disconnect", () => {
             // assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
@@ -388,6 +391,36 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
                 this.values.delete(key);
             }
             this.emit("accepted", key);
+        }
+    };
+
+    private readonly handleQuorumRemoveMember = (clientId: string): void => {
+        for (const [key, value] of this.values) {
+            const pending = value.pending;
+            if (pending !== undefined) {
+                pending.expectedSignoffs = pending.expectedSignoffs.filter(
+                    (expectedClientId) => expectedClientId !== clientId,
+                );
+
+                if (pending.expectedSignoffs.length === 0) {
+                    // The pending value has settled
+                    if (pending.type === "set") {
+                        this.values.set(key, {
+                            accepted: {
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                                value: pending.value,
+                                // TODO: is there a better place to grab this from?
+                                // We want the sequence number of the ClientLeave message.
+                                sequenceNumber: this.runtime.deltaManager.lastSequenceNumber,
+                            },
+                            pending: undefined,
+                        });
+                    } else if (pending.type === "delete") {
+                        this.values.delete(key);
+                    }
+                    this.emit("accepted", key);
+                }
+            }
         }
     };
 
