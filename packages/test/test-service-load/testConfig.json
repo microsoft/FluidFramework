@@ -96,7 +96,7 @@
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
-                        "Fluid.Driver.Odsp.binaryFormatSnapshot": [true]
+                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [1]
                     }
                 }
             }
