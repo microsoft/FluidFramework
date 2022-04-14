@@ -14,9 +14,9 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
-# 1.0.0
+# 1.0
 
-## 1.0.0 Breaking changes
+## 1.0 Breaking changes
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
 
