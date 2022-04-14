@@ -21,6 +21,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [IDirectory extends IDisposable](#IDirectory-extends-IDisposable)
 - [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
 - [`IContainerRuntimeBase.setFlushMode` is deprecated](#icontainerruntimebasesetflushmode-is-deprecated)
+- fake commit to try and catch merge conflicts
 
 ### Doing operations not allowed on deleted sub directory
 Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory will throw `UsageError` exception now.
