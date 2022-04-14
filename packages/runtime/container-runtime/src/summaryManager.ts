@@ -211,16 +211,15 @@ export class SummaryManager implements IDisposable {
             this.state = SummaryManagerState.Running;
 
             const summarizer = await this.requestSummarizerFn();
+            this.summarizer = summarizer;
 
             // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
             const shouldSummarizeState = this.getShouldSummarizeState();
             if (shouldSummarizeState.shouldSummarize === false) {
                 this.state = SummaryManagerState.Starting;
-                summarizer.stop(shouldSummarizeState.stopReason, true /* forceClose */);
+                summarizer.stop(shouldSummarizeState.stopReason);
                 return "early exit after starting summarizer";
             }
-
-            this.summarizer = summarizer;
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const clientId = this.latestClientId!;
@@ -262,18 +261,12 @@ export class SummaryManager implements IDisposable {
                         category,
                     },
                     error);
-
-                // Note that summarizer may keep going (like doing last summary).
-                // Ideally we await stopping process, but this code path is due to a bug
-                // that needs to be fixed either way.
-                if (SummaryManager.isStartingOrRunning(this.state)) {
-                    this.stop("summarizerException");
-                }
             }
         }).finally(() => {
             assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
             this.state = SummaryManagerState.Off;
 
+            this.summarizer?.close();
             this.summarizer = undefined;
 
             if (this.getShouldSummarizeState().shouldSummarize) {
@@ -290,7 +283,7 @@ export class SummaryManager implements IDisposable {
 
         // Stopping the running summarizer client should trigger a change
         // in states when the running summarizer closes
-        this.summarizer?.stop(reason, false /* forceClose */);
+        this.summarizer?.stop(reason);
     }
 
     /**
