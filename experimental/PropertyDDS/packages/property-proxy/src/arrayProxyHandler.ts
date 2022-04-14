@@ -155,9 +155,21 @@ export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
      * @param key The name of the property/function that is to be accessed.
      * @return if the key is part of the {@link external:ArrayProperty ArrayProperty}, otherwise false.
      */
-    has: (target: ComponentArray, key: PropertyKey) =>
-        key === "swap" || key in [] || key === proxySymbol ||
-        (key as number >= 0 && key as number < target.getProperty().getLength()),
+    // Type safety note:
+    // Typescript in incorrectly typing the ProxyHandler<ComponentArray>.has to take a key of `string | symbol`
+    // This is incorrect since numbers are allowed as keys,
+    // and this code is expected to return true for numbers which index an existing value,
+    // and false for those which do not.
+    has: (target: ComponentArray, key: PropertyKey) => {
+        switch (typeof key) {
+            case "number":
+                return Number.isInteger(key) && key >= 0 && key < target.getProperty().getLength();
+            case "string":
+                return key === "swap" || key in [];
+            default:
+                return key === proxySymbol;
+        }
+    },
 
     /**
      * Trap for the Object.keys().
