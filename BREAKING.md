@@ -18,13 +18,13 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 1.0.0 Breaking changes
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
-- [Remove `IFluidSerializer` from `IFluidObject`](#Remove-IFluidSerializer-from-IFluidObject)
+- [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
 
 
 ### Remove IFluidSerializer from core-interfaces
 `IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
 
-### Remove `IFluidSerializer` from `IFluidObject`
+### Remove IFluidSerializer from IFluidObject
 `IFluidSerializer` in `IFluidObject` was deprecated in 0.52 and is now removed. Use `FluidObject` instead of `IFluidObject`.
 
 # 0.59
