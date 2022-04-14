@@ -38,9 +38,7 @@ export interface TransactionEvents extends IErrorEvent {
 export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	/** The view of the tree when this transaction was created */
 	public readonly startingView: TreeView;
-
 	private readonly transaction: GenericTransaction;
-	private open: boolean = true;
 
 	/**
 	 * Create a new transaction over the given tree. The tree's `currentView` at this time will become the `startingView` for this
@@ -59,7 +57,7 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	 * be automatically closed by a change in this transaction failing to apply (see `applyChange()`).
 	 */
 	public get isOpen(): boolean {
-		return this.open && this.status === EditStatus.Applied;
+		return this.transaction.isOpen && this.status === EditStatus.Applied;
 	}
 
 	/**
@@ -85,16 +83,14 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	 * @param changes - the changes to apply
 	 * @returns either the `EditStatus` of the given changes or the `EditStatus` of the last change before the transaction was closed
 	 */
-	public apply(change: Change, ...changes: Change[]): EditStatus;
+	public apply(...changes: Change[]): EditStatus;
 	public apply(changes: Change[]): EditStatus;
-	public apply(changeOrChanges: Change | Change[], ...changes: Change[]): EditStatus {
+	public apply(headOrChanges: Change | Change[], ...tail: Change[]): EditStatus {
 		if (this.isOpen) {
-			const changeArray = Array.isArray(changeOrChanges)
-				? [...changeOrChanges, ...changes]
-				: [changeOrChanges, ...changes];
-			if (changeArray.length > 0) {
+			const changes = Array.isArray(headOrChanges) ? headOrChanges : [headOrChanges, ...tail];
+			if (changes.length > 0) {
 				const previousView = this.currentView;
-				this.transaction.applyChanges(changeArray.map((c) => this.tree.internalizeChange(c)));
+				this.transaction.applyChanges(changes.map((c) => this.tree.internalizeChange(c)));
 				if (
 					this.listenerCount(TransactionEvent.ViewChange) > 0 &&
 					!previousView.hasEqualForest(this.currentView)
@@ -119,7 +115,6 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 				}
 				this.tree.applyEditInternal(edit);
 			}
-			this.open = false;
 		}
 	}
 }
