@@ -18,6 +18,7 @@ export enum R11sErrorType {
 
 /**
  * Interface for error responses for the WebSocket connection
+ * Intended to be compatible with output from {@link NetworkError.toJSON}
  */
 export interface IR11sSocketError {
     /**
