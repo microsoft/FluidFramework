@@ -32,7 +32,8 @@ import {
  * Please do not modify existing entries for backwards compatibility.
  */
 export enum TelemetryDataTag {
-    /** Data containing terms from code packages that may have been dynamically loaded
+    /**
+     * Data containing terms from code packages that may have been dynamically loaded
      * @deprecated 1.0, will be removed in next release (see issue #6603). Use `TelemetryDataTag.CodeArtifact` instead.
      */
     PackageData = "PackageData",
