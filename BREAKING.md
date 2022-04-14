@@ -21,7 +21,6 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
 - [Deprecate TelemetryDataTag.PackageData](#Deprecate-TelemetryDataTagPackageData)
 
-
 ### Remove IFluidSerializer from core-interfaces
 `IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
 
@@ -29,7 +28,7 @@ There are a few steps you can take to write a good change note and avoid needing
 `IFluidSerializer` in `IFluidObject` was deprecated in 0.52 and is now removed. Use `FluidObject` instead of `IFluidObject`.
 
 ### Deprecate TelemetryDataTag.PackageData
-`TelemetryDataTag.PackageData` is deprecated and will be removed in a future release. Use `TelemetryDataTag.CodeArtifact`.
+`TelemetryDataTag.PackageData` is deprecated and will be removed in a future release. Use `TelemetryDataTag.CodeArtifact` instead.
 
 # 0.59
 
