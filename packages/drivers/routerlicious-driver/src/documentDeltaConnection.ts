@@ -10,6 +10,7 @@ import { IAnyDriverError } from "@fluidframework/driver-utils";
 import { IClient, IConnect } from "@fluidframework/protocol-definitions";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { errorObjectFromSocketError, IR11sSocketError } from "./errorUtils";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -47,6 +48,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
+            relayUserAgent: [client.details.environment, ` driverVersion:${driverVersion}`].join(";"),
         };
 
         // TODO: expose to host at factory level
