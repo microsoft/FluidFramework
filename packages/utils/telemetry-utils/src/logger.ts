@@ -218,6 +218,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                 }
             }
         }
+        // Tag stack as a CodeArtifact in case it wasn't already
+        if (newEvent.stack && typeof newEvent.stack === "string") {
+            newEvent.stack = { tag: TelemetryDataTag.CodeArtifact, value: newEvent.stack };
+        }
         return newEvent;
     }
 }
