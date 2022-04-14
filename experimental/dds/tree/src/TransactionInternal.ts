@@ -186,7 +186,7 @@ export class GenericTransaction {
 	private readonly policy: GenericTransactionPolicy;
 	protected readonly before: RevisionView;
 	private state: TransactionState;
-	private isOpen = true;
+	private open = true;
 
 	/**
 	 * Create and open an edit of the provided `TreeView`. After applying 0 or more changes, this editor should be closed via `close()`.
@@ -201,6 +201,11 @@ export class GenericTransaction {
 			changes: [],
 			steps: [],
 		};
+	}
+
+	/** Whether or not this transaction has been closed via `close()` */
+	public get isOpen(): boolean {
+		return this.open;
 	}
 
 	/**
@@ -233,8 +238,8 @@ export class GenericTransaction {
 
 	/** @returns the final `EditStatus` and `TreeView` after all changes are applied. */
 	public close(): EditingResult {
-		assert(this.isOpen, 'transaction has already been closed');
-		this.isOpen = false;
+		assert(this.open, 'transaction has already been closed');
+		this.open = false;
 		if (this.state.status === EditStatus.Applied) {
 			const validation = this.policy.validateOnClose(this.state);
 			if (Result.isOk(validation)) {
@@ -331,7 +336,7 @@ export class GenericTransaction {
 	 * @returns this
 	 */
 	public applyChange(change: ChangeInternal, path: ReconciliationPath = []): this {
-		assert(this.isOpen, 'Editor must be open to apply changes.');
+		assert(this.open, 'Editor must be open to apply changes.');
 		if (this.state.status !== EditStatus.Applied) {
 			fail('Cannot apply change to an edit unless all previous changes have applied');
 		}

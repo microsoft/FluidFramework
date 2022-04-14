@@ -38,9 +38,7 @@ export interface TransactionEvents extends IErrorEvent {
 export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	/** The view of the tree when this transaction was created */
 	public readonly startingView: TreeView;
-
 	private readonly transaction: GenericTransaction;
-	private open: boolean = true;
 
 	/**
 	 * Create a new transaction over the given tree. The tree's `currentView` at this time will become the `startingView` for this
@@ -59,7 +57,7 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	 * be automatically closed by a change in this transaction failing to apply (see `applyChange()`).
 	 */
 	public get isOpen(): boolean {
-		return this.open && this.status === EditStatus.Applied;
+		return this.transaction.isOpen && this.status === EditStatus.Applied;
 	}
 
 	/**
@@ -117,7 +115,6 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 				}
 				this.tree.applyEditInternal(edit);
 			}
-			this.open = false;
 		}
 	}
 }
