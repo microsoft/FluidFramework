@@ -502,7 +502,8 @@ export class OrderedClientElection
     }
 
     public peekNextElectedClient(): ITrackedClient | undefined {
-        return this.findFirstEligibleParent(this._electedParent?.youngerClient);
+        return this.findFirstEligibleParent(this._electedParent?.youngerClient) ??
+            this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
     }
 
     public serialize(): ISerializedElection {

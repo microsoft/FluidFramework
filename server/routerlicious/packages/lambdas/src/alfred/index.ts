@@ -114,6 +114,23 @@ function selectProtocolVersion(connectVersions: string[]): string | undefined {
 }
 
 /**
+ * Converts a relayUserAgent string into a <key,value> map.
+ * @param relayUserAgent user agent string in the format "prop1:val1;prop2:val2;prop3:val3"
+ */
+function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string, string> {
+    if (!relayUserAgent) {
+        return {};
+    }
+    const map = {};
+    const propertyKeyValuePairs: string[][] = relayUserAgent.split(";").map((keyValuePair) => keyValuePair.split(":"));
+    // TODO: would be cleaner with `Object.fromEntries()` but tsconfig needs es2019 lib
+    for (const [key, value] of propertyKeyValuePairs) {
+        map[key] = value;
+    }
+    return map;
+}
+
+/**
  * @returns ThrottlingError if throttled; undefined if not throttled or no throttler provided.
  */
 function checkThrottle(
@@ -399,8 +416,13 @@ export function configureWebSocketServices(
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
+            const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);
+            const driverVersion: string | undefined = userAgentInfo.driverVersion;
             const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
-            connectMetric.setProperties(getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId));
+            connectMetric.setProperties({
+                ...getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId),
+                [CommonProperties.clientDriverVersion]: driverVersion,
+            });
 
             connectDocument(connectionMessage).then(
                 (message) => {
