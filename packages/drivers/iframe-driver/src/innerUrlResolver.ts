@@ -2,11 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as Comlink from "comlink";
 import { assert } from "@fluidframework/common-utils";
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IContainerPackageInfo, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IUrlResolverProxy, IUrlResolverProxyKey } from "./outerUrlResolver";
 import { MakeThinProxy } from "./proxyUtils";
 
@@ -33,12 +32,12 @@ export class InnerUrlResolver implements IUrlResolver {
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
-        codeDetails?: IFluidCodeDetails,
+        packageInfoSource?: IContainerPackageInfo,
     ): Promise<string> {
         return this.outerProxy.getAbsoluteUrl(
             MakeThinProxy(resolvedUrl),
             relativeUrl,
-            MakeThinProxy(codeDetails),
+            MakeThinProxy(packageInfoSource),
         );
     }
 }

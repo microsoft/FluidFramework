@@ -36,9 +36,7 @@ function applyMessagesWithReconnect(
             reconnectClientMsgs.push([message.contents as IMergeTreeOp, sg]);
         } else {
             message.sequenceNumber = ++seq;
-            logger.log(message, (c) => {
-                c.applyMsg(message);
-            });
+            clients.forEach((c) => c.applyMsg(message));
             minSeq = message.minimumSequenceNumber;
         }
     }
@@ -78,7 +76,7 @@ describe("MergeTree.Client", () => {
             const mt = random.engines.mt19937();
             mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, clientCount]);
 
-            const clients: TestClient[] = [new TestClient({ blockUpdateMarkers: true })];
+            const clients: TestClient[] = [new TestClient()];
             clients.forEach(
                 (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 

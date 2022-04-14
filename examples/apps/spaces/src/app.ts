@@ -5,8 +5,10 @@
 
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
+import React from "react";
+import ReactDOM from "react-dom";
 
-import { Spaces } from "./fluid-object";
+import { Spaces, SpacesView } from "./fluid-object";
 import { SpacesContainer } from "./container";
 
 // Re-export everything
@@ -33,9 +35,11 @@ async function start() {
 
     // For now we will just reach into the FluidObject to render it
     const contentDiv = document.getElementById("content");
-    // eslint-disable-next-line no-null/no-null
     if (contentDiv !== null) {
-        defaultObject.render(contentDiv);
+        ReactDOM.render(
+            React.createElement(SpacesView, { model: defaultObject }),
+            contentDiv,
+        );
     }
 
     // Setting "fluidStarted" is just for our test automation

@@ -88,8 +88,13 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     beforeEach(async () => {
     });
 
-    it("should generate correct container load stats with two summarizer containers", async () => {
+    it("should generate correct container load stats with two summarizer containers", async function() {
         provider = getTestObjectProvider();
+        // GitHub issue: #9534
+        if(provider.driver.type === "odsp") {
+            this.skip();
+        }
+
         // Create a Container for the first client.
         mainContainer = await createContainer(mockLogger);
 

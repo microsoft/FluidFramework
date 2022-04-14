@@ -12,7 +12,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -93,10 +92,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 
     public getAudience(): IAudience {
         return;
-    }
-
-    public raiseContainerWarning(warning: ContainerWarning): void {
-        throw new Error("Method not implemented.");
     }
 
     public submitMessage(type: string, content: any, localOpMetadata: unknown): void {

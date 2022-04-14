@@ -21,17 +21,22 @@ import {
     INack,
     NackErrorType,
 } from "@fluidframework/protocol-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
-    private  readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
+    private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
     public get protocolName() { return this.internal.protocolName; }
     public get documentServices() { return this._documentServices; }
 
     constructor(private readonly internal: IDocumentServiceFactory) { }
 
-    async createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService> {
-        const internal = await this.internal.createDocumentService(resolvedUrl, logger);
+    async createDocumentService(
+        resolvedUrl: IResolvedUrl,
+        logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
+    ): Promise<IDocumentService> {
+        const internal = await this.internal.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
         const ds = new FaultInjectionDocumentService(internal);
         assert(!this._documentServices.has(resolvedUrl), "one ds per resolved url instance");
         this._documentServices.set(resolvedUrl, ds);
@@ -41,18 +46,20 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ):
         Promise<IDocumentService> {
         return this.internal.createContainer(
             createNewSummary,
             createNewResolvedUrl,
             logger,
+            clientIsSummarizer,
         );
     }
 }
 
 export class FaultInjectionDocumentService implements IDocumentService {
-    private  _currentDeltaStream: FaultInjectionDocumentDeltaConnection | undefined;
+    private _currentDeltaStream: FaultInjectionDocumentDeltaConnection | undefined;
 
     constructor(private readonly internal: IDocumentService) {
     }
@@ -157,10 +164,11 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
     }
 }
 
-export class FaultInjectionError extends Error {
+export class FaultInjectionError extends LoggingError {
     constructor(
         message: string,
-        public readonly canRetry: boolean | undefined) {
-            super(message);
+        public readonly canRetry: boolean | undefined,
+    ) {
+        super(message, {testCategoryOverride: "generic"});
     }
 }

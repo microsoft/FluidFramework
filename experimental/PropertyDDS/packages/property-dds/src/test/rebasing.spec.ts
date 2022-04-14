@@ -6,8 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import * as crypto from "crypto";
 import { expect } from "chai";
-import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IContainer, IHostLoader, ILoaderOptions, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
@@ -26,6 +25,7 @@ import {
 	PropertyFactory,
 	ArrayProperty,
 	NamedProperty,
+    Int32Property,
 } from "@fluid-experimental/property-properties";
 import { assert } from "@fluidframework/common-utils";
 import { SharedPropertyTree } from "../propertyTree";
@@ -939,6 +939,42 @@ describe("PropertyDDS", () => {
                         await opProcessingController.processIncoming(container1);
                         await opProcessingController.ensureSynchronized();
                     });
+                });
+            });
+
+            describe("Rebase with pending changes.", () => {
+                it("Int32", async () => {
+                    const val1 = 600;
+                    const val2 = 500;
+
+                    await opProcessingController.pauseProcessing();
+
+                    const prop = PropertyFactory.create<Int32Property>("Int32");
+                    sharedPropertyTree1.root.insert("int32Prop", prop);
+
+                    sharedPropertyTree1.commit();
+                    // Make sure both shared trees are in sync
+                    await opProcessingController.ensureSynchronized();
+                    await opProcessingController.pauseProcessing();
+
+                    // Make local changes for both collaborators
+                    prop.setValue(val1);
+                    sharedPropertyTree2.root.get<Int32Property>("int32Prop")?.setValue(val2);
+
+                    sharedPropertyTree1.commit();
+                    await opProcessingController.ensureSynchronized();
+                    await opProcessingController.pauseProcessing();
+
+                    // This collaborator should still have pending changes after rebase the incoming commits
+                    expect(Object.keys(
+                        sharedPropertyTree2.root.getPendingChanges().getSerializedChangeSet()).length).to.not.equal(0);
+
+                    // Committing the new pending change
+                    sharedPropertyTree2.commit();
+                    await opProcessingController.ensureSynchronized();
+
+                    // The pending change val2 should be now the new value cross collaborators
+                    expect(prop.getValue()).to.equal(val2);
                 });
             });
         }

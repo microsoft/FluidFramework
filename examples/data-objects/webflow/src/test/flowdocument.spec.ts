@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { TagName } from "@fluid-example/flow-util-lib";
 import { Marker, ReferenceType } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluidframework/test-version-utils";
 import { FlowDocument } from "../document";
+import { TagName } from "../util";
 
 describeLoaderCompat("FlowDocument", (getTestObjectProvider) => {
     let doc: FlowDocument;

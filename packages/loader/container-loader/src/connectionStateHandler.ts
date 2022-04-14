@@ -5,14 +5,13 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
-import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { ConnectionMode, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ConnectionState } from "./container";
 
 export interface IConnectionStateHandler {
-    protocolHandler: () => ProtocolOpHandler | undefined,
+    quorumClients: () => IQuorumClients | undefined,
     logConnectionStateChangeTelemetry:
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     shouldClientJoinWrite: () => boolean,
@@ -57,8 +56,9 @@ export class ConnectionStateHandler {
         private readonly logger: ITelemetryLogger,
     ) {
         this.prevClientLeftTimer = new Timer(
-            // Default is 90 sec for which we are going to wait for its own "leave" message.
-            this.handler.maxClientLeaveWaitTime ?? 90000,
+            // Default is 5 min for which we are going to wait for its own "leave" message. This is same as
+            // the max time on server after which leave op is sent.
+            this.handler.maxClientLeaveWaitTime ?? 300000,
             () => {
                 assert(!this.connected,
                     0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */);
@@ -96,6 +96,15 @@ export class ConnectionStateHandler {
         this.prevClientLeftTimer.clear();
     }
 
+    public containerSaved() {
+        // If we were waiting for moving to Connected state, then only apply for state change. Since the container
+        // is now saved and we don't have any ops to roundtrip, we can clear the timer and apply for connected state.
+        if (this.prevClientLeftTimer.hasTimer) {
+            this.prevClientLeftTimer.clear();
+            this.applyForConnectedState("containerSaved");
+        }
+    }
+
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
@@ -118,15 +127,15 @@ export class ConnectionStateHandler {
         }
     }
 
-    private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout") {
-        const protocolHandler = this.handler.protocolHandler();
-        assert(protocolHandler !== undefined, 0x236 /* "In all cases it should be already installed" */);
+    private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved") {
+        const quorumClients = this.handler.quorumClients();
+        assert(quorumClients !== undefined, 0x236 /* "In all cases it should be already installed" */);
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
         // or timeout has occured while doing so.
         if (this.pendingClientId !== this.clientId
             && this.pendingClientId !== undefined
-            && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
+            && quorumClients.getMember(this.pendingClientId) !== undefined
             && !this.prevClientLeftTimer.hasTimer
         ) {
             this.waitEvent?.end({ source });
@@ -140,8 +149,8 @@ export class ConnectionStateHandler {
                 pendingClientId: this.pendingClientId,
                 clientId: this.clientId,
                 hasTimer: this.prevClientLeftTimer.hasTimer,
-                inQuorum: protocolHandler !== undefined && this.pendingClientId !== undefined
-                    && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined,
+                inQuorum: quorumClients !== undefined && this.pendingClientId !== undefined
+                    && quorumClients.getMember(this.pendingClientId) !== undefined,
             });
         }
     }
@@ -179,13 +188,13 @@ export class ConnectionStateHandler {
         // Report telemetry after we set client id, but before transitioning to Connected state below!
         this.handler.logConnectionStateChangeTelemetry(ConnectionState.Connecting, oldState);
 
-        const protocolHandler = this.handler.protocolHandler();
+        const quorumClients = this.handler.quorumClients();
         // Check if we already processed our own join op through delta storage!
         // we are fetching ops from storage in parallel to connecting to ordering service
         // Given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
         // Note that we might be still initializing quorum - connection is established proactively on load!
-        if ((protocolHandler !== undefined && protocolHandler.quorum.getMember(details.clientId) !== undefined)
+        if ((quorumClients !== undefined && quorumClients.getMember(details.clientId) !== undefined)
             || connectionMode === "read"
         ) {
             assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "there should be no timer for 'read' connections" */);
@@ -206,10 +215,10 @@ export class ConnectionStateHandler {
 
         const oldState = this._connectionState;
         this._connectionState = value;
-        const quorum = this.handler.protocolHandler()?.quorum;
+        const quorumClients = this.handler.quorumClients();
         let client: ILocalSequencedClient | undefined;
         if (this._clientId !== undefined) {
-            client = quorum?.getMember(this._clientId);
+            client = quorumClients?.getMember(this._clientId);
         }
         if (value === ConnectionState.Connected) {
             assert(oldState === ConnectionState.Connecting,

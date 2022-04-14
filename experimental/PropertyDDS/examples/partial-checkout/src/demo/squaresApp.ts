@@ -47,7 +47,7 @@ export function randomSquaresBoardGenerator(
                 x: _.random(SquaresBoard.WIDTH - Square.DEFAULT_LENGTH),
                 y: _.random(SquaresBoard.HEIGHT - Square.DEFAULT_LENGTH),
             },
-            color: `#${  Math.floor(Math.random() * 16777215).toString(16)}`,
+            color: `#${ Math.floor(Math.random() * 16777215).toString(16) }`,
         };
     }
     propertyNode.insert(PropertyFactory.create("autofluid:squaresBoard-1.0.0", undefined, {
@@ -63,7 +63,7 @@ export class SquaresApp {
     init() {
         // Define a runtime representation for squaresBoard & square typeids.
         this.dataBinder.defineRepresentation("view", "autofluid:squaresBoard-1.0.0", (property) => {
-            const board =  new SquaresBoard([], this.container);
+            const board = new SquaresBoard([], this.container);
             // Rendering move button to move board's squares randomly
             renderMoveButton(
                 this.dataBinder.getPropertyTree()!,

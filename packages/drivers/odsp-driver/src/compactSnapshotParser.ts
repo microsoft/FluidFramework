@@ -14,10 +14,12 @@ import {
     assertNumberInstance,
     getAndValidateNodeProps,
     NodeCore,
+    NodeTypes,
     TreeBuilder,
 } from "./zipItDataRepresentationUtils";
 
 export const snapshotMinReadVersion = "1.0";
+export const currentReadVersion = "1.0";
 
 interface ISnapshotSection {
     snapshotTree: ISnapshotTree,
@@ -28,7 +30,8 @@ interface ISnapshotSection {
  * Recreates blobs section of the tree.
  * @param node - tree node to read blob section from
  */
-function readBlobSection(node: NodeCore) {
+function readBlobSection(node: NodeTypes) {
+    assertNodeCoreInstance(node, "TreeBlobs should be of type NodeCore");
     const blobs: Map<string, ArrayBuffer> = new Map();
     for (let count = 0; count < node.length; ++count) {
         const blob = node.getNode(count);
@@ -44,7 +47,8 @@ function readBlobSection(node: NodeCore) {
  * Recreates ops section of the tree.
  * @param node - tree node to read ops section from
  */
-function readOpsSection(node: NodeCore) {
+function readOpsSection(node: NodeTypes) {
+    assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
     const ops: ISequencedDocumentMessage[] = [];
     const records = getAndValidateNodeProps(node, ["firstSequenceNumber", "deltas"]);
     assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
@@ -52,7 +56,8 @@ function readOpsSection(node: NodeCore) {
     for (let i = 0; i < records.deltas.length; ++i) {
         ops.push(JSON.parse(records.deltas.getString(i)));
     }
-    assert(records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber, 0x280 /* "Validate first op seq number" */);
+    assert(records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
+        0x280 /* "Validate first op seq number" */);
     return ops;
 }
 
@@ -63,7 +68,6 @@ function readOpsSection(node: NodeCore) {
 function readTreeSection(node: NodeCore) {
     const snapshotTree: ISnapshotTree = {
         blobs: {},
-        commits: {},
         trees: {},
     };
     for (let count = 0; count < node.length; count++) {
@@ -93,7 +97,8 @@ function readTreeSection(node: NodeCore) {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readSnapshotSection(node: NodeCore): ISnapshotSection {
+function readSnapshotSection(node: NodeTypes): ISnapshotSection {
+    assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
     const records = getAndValidateNodeProps(node,
         ["id", "sequenceNumber", "treeNodes"]);
 
@@ -120,7 +125,7 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
     const root = builder.getNode(0);
 
     const records = getAndValidateNodeProps(root,
-        ["mrv", "cv", "snapshot", "blobs", "deltas"]);
+        ["mrv", "cv", "snapshot", "blobs", "deltas"], false);
 
     assertBlobCoreInstance(records.mrv, "minReadVersion should be of BlobCore type");
     assertBlobCoreInstance(records.cv, "createVersion should be of BlobCore type");
@@ -128,14 +133,11 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
         0x20f /* "Driver min read version should >= to server minReadVersion" */);
     assert(records.cv.toString() >= snapshotMinReadVersion,
         0x210 /* "Snapshot should be created with minReadVersion or above" */);
-
-    assertNodeCoreInstance(records.snapshot, "Snapshot should be of type NodeCore");
-    assertNodeCoreInstance(records.blobs, "TreeBlobs should be of type NodeCore");
-    assertNodeCoreInstance(records.deltas, "Deltas should be of type NodeCore");
-
+    assert(currentReadVersion === records.cv.toString(),
+        0x2c2 /* "Create Version should be equal to currentReadVersion" */);
     return {
         ...readSnapshotSection(records.snapshot),
         blobs: readBlobSection(records.blobs),
-        ops: readOpsSection(records.deltas),
+        ops: records.deltas !== undefined ? readOpsSection(records.deltas) : [],
     };
 }

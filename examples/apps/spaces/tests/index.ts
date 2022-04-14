@@ -6,8 +6,11 @@
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
+import React from "react";
+import ReactDOM from "react-dom";
+
 import { SpacesContainer } from "../src/container";
-import { Spaces } from "../src/fluid-object";
+import { Spaces, SpacesView } from "../src/fluid-object";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -31,7 +34,10 @@ async function createContainerAndRenderInElement(element: HTMLElement, createNew
     const defaultObject = await getDefaultObjectFromContainer<Spaces>(container);
 
     // For now we will just reach into the FluidObject to render it
-    defaultObject.render(element);
+    ReactDOM.render(
+        React.createElement(SpacesView, { model: defaultObject }),
+        element,
+    );
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation

@@ -4,8 +4,8 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import type { OutgoingHttpHeaders } from "http";
 import * as querystring from "querystring";
+import type { AxiosRequestHeaders } from "axios";
 import * as git from "@fluidframework/gitresources";
 import {
     IGetRefParamsExternal,
@@ -57,11 +57,21 @@ export class RestGitService {
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly cache?: ICache,
-        private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
-        const defaultHeaders: OutgoingHttpHeaders = {
-            "User-Agent": userAgent,
-            "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
-        };
+        private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
+        private readonly storageName?: string) {
+        let defaultHeaders: AxiosRequestHeaders;
+        if (storageName !== undefined) {
+            defaultHeaders = {
+                "User-Agent": userAgent,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+                "Storage-Name": this.storageName,
+            };
+        } else {
+            defaultHeaders = {
+                "User-Agent": userAgent,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+            };
+        }
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
@@ -75,12 +85,15 @@ export class RestGitService {
             `Created RestGitService: ${JSON.stringify({
                 "BaseUrl": storage.url,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+                "Storage-Name": this.storageName,
             })}`,
         );
+
         Lumberjack.info(
             `Created RestGitService: ${JSON.stringify({
                 "BaseUrl": storage.url,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+                "Storage-Name": this.storageName,
             })}`,
             this.lumberProperties,
         );
@@ -230,7 +243,8 @@ export class RestGitService {
             this.getSummaryCacheKey("container"),
             async () => this.get<IWholeFlatSummary>(
                 `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`),
-            useCache);
+            useCache,
+            true);
     }
 
     public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
@@ -349,8 +363,7 @@ export class RestGitService {
             useCache);
     }
 
-    private getStorageRoutingHeaderValue()
-    {
+    private getStorageRoutingHeaderValue() {
         return `${this.tenantId}:${this.documentId}`;
     }
 
@@ -419,9 +432,22 @@ export class RestGitService {
     }
 
     /**
+     * Caches by the given key.
+     */
+    private async fetchAndCache<T>(key: string, fetch: () => Promise<T>): Promise<T> {
+        winston.info(`Fetching ${key}`);
+        Lumberjack.info(`Fetching ${key}`, this.lumberProperties);
+        const value = await fetch();
+        if (this.cache) {
+            this.setCache(key, value);
+        }
+        return value;
+    }
+
+    /**
      * Deletes the given key from the cache. Will log any errors with the cache.
      */
-     private deleteFromCache(key: string): void {
+    private deleteFromCache(key: string): void {
         if (this.cache) {
             // Attempt to delete the key from Redis - log any errors but don't fail
             this.cache.delete(key).catch((error) => {
@@ -431,7 +457,10 @@ export class RestGitService {
         }
     }
 
-    private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
+    private async resolve<T>(key: string,
+                             fetch: () => Promise<T>,
+                             useCache: boolean,
+                             resolvingSummary: boolean = false): Promise<T> {
         if (this.cache && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
@@ -447,15 +476,18 @@ export class RestGitService {
             }
 
             // Value is not cached - fetch it with the provided function and then cache the value
-            winston.info(`Fetching ${key}`);
-            Lumberjack.info(`Fetching ${key}`, this.lumberProperties);
-            const value = await fetch();
-            this.setCache(key, value);
-
-            return value;
-        } else {
-            return fetch();
+            return this.fetchAndCache(key, fetch);
         }
+
+        if (resolvingSummary) {
+            /**
+             * We set the useCache flag as false when we fetch the summary at the first time. We need to
+             * get the summary from the storage, and update the cache. If not, the following calls with
+             * useCache enabled might read the outdated summary from cache in case of the cluster change.
+             */
+             return this.fetchAndCache(key, fetch);
+        }
+        return fetch();
     }
 
     private getSummaryCacheKey(type: IWholeSummaryPayloadType): string {

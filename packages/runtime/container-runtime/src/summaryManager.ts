@@ -4,16 +4,14 @@
  */
 
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { createSummarizingWarning } from "./summarizer";
 import { ISummarizerClientElection } from "./summarizerClientElection";
 import { IThrottler } from "./throttler";
 import {
     ISummarizer,
     ISummarizerOptions,
-    ISummarizingWarning,
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
@@ -60,10 +58,6 @@ export interface IConnectedState extends IEventProvider<IConnectedEvents> {
     readonly clientId: string | undefined;
 }
 
-export interface ISummaryManagerEvents extends IEvent {
-    (event: "summarizerWarning", listener: (warning: ISummarizingWarning) => void);
-}
-
 export interface ISummaryManagerConfig {
     initialDelayMs: number;
     opsToBypassInitialDelay: number;
@@ -74,7 +68,7 @@ export interface ISummaryManagerConfig {
  * It observes changes in calculated summarizer and reacts to changes by either creating summarizer client or
  * stopping existing summarizer client.
  */
-export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> implements IDisposable {
+export class SummaryManager implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly opsToBypassInitialDelay: number;
     private readonly initialDelayMs: number;
@@ -105,8 +99,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }: Readonly<Partial<ISummaryManagerConfig>> = {},
         private readonly summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
     ) {
-        super();
-
         this.logger = ChildLogger.create(
             parentLogger,
             "SummaryManager",
@@ -145,9 +137,15 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
 
     private getShouldSummarizeState(): ShouldSummarizeState {
+        // Note that if we're in the Running state, the electedClient may be a summarizer client, so we can't
+        // enforce connectedState.clientId === clientElection.electedClientId. But once we're Running, we should
+        // only transition to Stopping when the electedParentId changes. Stopping the summarizer without
+        // changing the electedParent will just cause us to transition to Starting again.
         if (!this.connectedState.connected) {
             return { shouldSummarize: false, stopReason: "parentNotConnected" };
-        } else if (this.connectedState.clientId !== this.clientElection.electedClientId) {
+        } else if (this.connectedState.clientId !== this.clientElection.electedParentId ||
+            (this.state !== SummaryManagerState.Running &&
+                this.connectedState.clientId !== this.clientElection.electedClientId)) {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
             assert(false, 0x260 /* "Disposed should mean disconnected!" */);
@@ -207,20 +205,23 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 return;
             }
 
+            // We transition to Running before requesting the summarizer, because after requesting we can't predict
+            // when the electedClient will be replaced with the new summarizer client.
+            // The alternative would be to let connectedState.clientId !== clientElection.electedClientId when
+            // state === Starting || state === Running.
+            assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
+            this.state = SummaryManagerState.Running;
+
             const summarizer = await this.requestSummarizerFn();
 
             // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
             const shouldSummarizeState = this.getShouldSummarizeState();
             if (shouldSummarizeState.shouldSummarize === false) {
+                this.state = SummaryManagerState.Starting;
                 summarizer.stop(shouldSummarizeState.stopReason);
                 return;
             }
 
-            assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
-            this.state = SummaryManagerState.Running;
-
-            summarizer.on("summarizingError",
-                (warning: ISummarizingWarning) => this.emit("summarizerWarning", warning));
             this.summarizer = summarizer;
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -238,8 +239,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             // we ignore blindly, so try to narrow signature we are looking for - skip logging
             // error only if this client should no longer be a summarizer (which in practice
             // means it also lost connection), and error happened on load (we do not have summarizer).
-            // We could add error.fluidErrorCode !== "containerClosedWithoutErrorDuringLoad" check to narrow it down,
-            // but that does not seem to be necessary.
+            // We could annotate the error raised in Container.load where the container closed during load with no error
+            // and check for that case here, but that does not seem to be necessary.
             if (this.getShouldSummarizeState().shouldSummarize || this.summarizer !== undefined) {
                 // Report any failure as an error unless it was due to cancellation (like "disconnected" error)
                 // If failure happened on container load, we may not yet realized that socket disconnected, so check
@@ -251,7 +252,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                         category,
                     },
                     error);
-                this.emit("summarizerWarning", error);
 
                 // Note that summarizer may keep going (like doing last summary).
                 // Ideally we await stopping process, but this code path is due to a bug
@@ -296,12 +296,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private async delayBeforeCreatingSummarizer(): Promise<boolean> {
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         let delayMs = this.startThrottler.getDelay();
-        if (delayMs > 0 && delayMs > this.startThrottler.maxDelayMs) {
-            this.emit(
-                "summarizerWarning",
-                createSummarizingWarning("summaryManagerCreateSummarizerMaxThrottleDelay", false),
-            );
-        }
 
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
@@ -309,6 +303,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             eventName: "CreatingSummarizer",
             throttlerDelay: delayMs,
             initialDelay: this.initialDelayMs,
+            startThrottlerMaxDelayMs: this.startThrottler.maxDelayMs,
             opsSinceLastAck: this.summaryCollection.opsSinceLastAck,
             opsToBypassInitialDelay: this.opsToBypassInitialDelay,
         });

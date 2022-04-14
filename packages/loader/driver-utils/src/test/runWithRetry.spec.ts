@@ -11,7 +11,7 @@ import { runWithRetry } from "../runWithRetry";
 const _setTimeout = global.setTimeout;
 const fastSetTimeout: any =
     (callback: (...cbArgs: any[]) => void, ms: number, ...args: any[]) => _setTimeout(callback, ms / 1000.0, ...args);
-async function  runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
+async function runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
     global.setTimeout = fastSetTimeout;
     return callback().finally(()=>{
         global.setTimeout = _setTimeout;
@@ -35,7 +35,7 @@ describe("runWithRetry Tests", () => {
             "test",
             logger,
             {
-                retry: () => { emitDelayInfoTimes += 1; },
+                onRetry: () => { emitDelayInfoTimes += 1; },
             },
             ));
         assert.strictEqual(retryTimes, 0, "Should succeed at first time");
@@ -64,7 +64,7 @@ describe("runWithRetry Tests", () => {
             "test",
             logger,
             {
-                retry: () => { emitDelayInfoTimes += 1; },
+                onRetry: () => { emitDelayInfoTimes += 1; },
             },
         ));
         assert.strictEqual(retryTimes, 0, "Should keep retrying until success");
@@ -176,7 +176,7 @@ describe("runWithRetry Tests", () => {
                 "test",
                 logger,
                 {
-                    retry: () => { throw new Error("disposed"); },
+                    onRetry: () => { throw new Error("disposed"); },
                 },
             ));
             assert.fail("Should not succeed");

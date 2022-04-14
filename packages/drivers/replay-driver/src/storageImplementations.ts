@@ -51,10 +51,13 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     }
 
     public async getVersions(
-        versionId: string,
-        count: number): Promise<IVersion[]> {
-        if (this.docId === undefined || this.docId === versionId) {
-            this.docId = versionId;
+        versionId: string | null,
+        count: number,
+    ): Promise<IVersion[]> {
+        if (this.docId === undefined || this.docId === versionId || versionId === null) {
+            if (versionId !== null) {
+                this.docId = versionId;
+            }
             return [{ id: "latest", treeId: "" }];
         }
 
@@ -103,9 +106,11 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
         assert(!!this.docTree, 0x0b0 /* "Missing document snapshot tree!" */);
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
-        if (this.docId === undefined || this.docId === versionId) {
-            this.docId = versionId;
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+        if (this.docId === undefined || this.docId === versionId || versionId === null) {
+            if (versionId !== null) {
+                this.docId = versionId;
+            }
             return [{ id: "latest", treeId: "" }];
         }
         return this.storage.getVersions(versionId, count);
@@ -125,7 +130,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 }
 
 export class OpStorage extends ReadDocumentStorageServiceBase {
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return [];
     }
 
@@ -166,7 +171,11 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
     public readonly protocolName = "fluid-static-storage:";
     public constructor(protected readonly storage: IDocumentStorageService) { }
 
-    public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(
+        fileURL: IResolvedUrl,
+        logger?: ITelemetryLogger,
+        clientIsSummarizer?: boolean,
+    ): Promise<IDocumentService> {
         return new StaticStorageDocumentService(this.storage);
     }
 
@@ -175,6 +184,7 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
         logger: ITelemetryLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         throw new Error("Not implemented");
     }

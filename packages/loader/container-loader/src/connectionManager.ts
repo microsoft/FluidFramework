@@ -8,23 +8,31 @@ import {
     ITelemetryLogger,
     ITelemetryProperties,
 } from "@fluidframework/common-definitions";
+import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDeltaQueue,
     ReadOnlyInfo,
     IConnectionDetails,
+    ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-    TelemetryLogger,
-    normalizeError,
-    wrapError,
-} from "@fluidframework/telemetry-utils";
+    GenericError,
+} from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
-    DriverError,
 } from "@fluidframework/driver-definitions";
+import {
+    canRetryOnError,
+    createWriteError,
+    createGenericNetworkError,
+    getRetryDelayFromError,
+    IAnyDriverError,
+    waitForConnectedState,
+    DeltaStreamConnectionForbiddenError,
+    logNetworkFailure,
+} from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClient,
@@ -42,24 +50,15 @@ import {
     ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-    canRetryOnError,
-    createWriteError,
-    createGenericNetworkError,
-    getRetryDelayFromError,
-    logNetworkFailure,
-    waitForConnectedState,
-    DeltaStreamConnectionForbiddenError,
-    GenericNetworkError,
-} from "@fluidframework/driver-utils";
-import {
-    GenericError,
-} from "@fluidframework/container-utils";
-import { DeltaQueue } from "./deltaQueue";
+    TelemetryLogger,
+    normalizeError,
+} from "@fluidframework/telemetry-utils";
 import {
     ReconnectMode,
     IConnectionManager,
     IConnectionManagerFactoryArgs,
 } from "./contracts";
+import { DeltaQueue } from "./deltaQueue";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
@@ -72,14 +71,10 @@ function getNackReconnectInfo(nackContent: INackContent) {
     const canRetry = nackContent.code !== 403;
     const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
     return createGenericNetworkError(
-        `nack [${nackContent.code}]`, message, canRetry, retryAfterMs, { statusCode: nackContent.code });
+        message,
+        { canRetry, retryAfterMs },
+        { statusCode: nackContent.code, driverVersion: undefined });
 }
-
-const createReconnectError = (fluidErrorCode: string, err: any) =>
-    wrapError(
-        err,
-        (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */),
-    );
 
 /**
  * Implementation of IDocumentDeltaConnection that does not support submitting
@@ -152,9 +147,6 @@ export class ConnectionManager implements IConnectionManager {
     /** True if there is pending (async) reconnection from "read" to "write" */
     private pendingReconnect = false;
 
-    /** downgrade "write" connection to "read" */
-    private downgradedConnection = false;
-
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
     /** Counts the number of noops sent by the client which may not be acked. */
@@ -181,12 +173,7 @@ export class ConnectionManager implements IConnectionManager {
      * The current connection mode, initially read.
      */
      public get connectionMode(): ConnectionMode {
-        assert(!this.downgradedConnection || this.connection?.mode === "write",
-            0x277 /* "Did we forget to reset downgradedConnection on new connection?" */);
-        if (this.connection === undefined) {
-            return "read";
-        }
-        return this.connection.mode;
+        return this.connection?.mode ?? "read";
     }
 
     public get connected() { return this.connection !== undefined; }
@@ -314,7 +301,7 @@ export class ConnectionManager implements IConnectionManager {
         });
     }
 
-    public dispose(error: any) {
+    public dispose(error?: ICriticalContainerError) {
         if (this.closed) {
             return;
         }
@@ -495,18 +482,16 @@ export class ConnectionManager implements IConnectionManager {
                     throw error;
                 }
 
-                // Log error once - we get too many errors in logs when we are offline,
-                // and unfortunately there is no reliable way to detect that.
-                if (connectRepeatCount === 1) {
-                    logNetworkFailure(
-                        this.logger,
-                        {
-                            delay: delayMs, // milliseconds
-                            eventName: "DeltaConnectionFailureToConnect",
-                            duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
-                        },
-                        origError);
-                }
+                // Since the error is retryable this will not log to the error table
+                logNetworkFailure(
+                    this.logger,
+                    {
+                        attempts: connectRepeatCount,
+                        delay: delayMs, // milliseconds
+                        eventName: "DeltaConnectionFailureToConnect",
+                        duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                    },
+                    origError);
 
                 lastError = origError;
 
@@ -520,9 +505,10 @@ export class ConnectionManager implements IConnectionManager {
             }
         }
 
-        // If we retried more than once, log an event about how long it took
+        // If we retried more than once, log an event about how long it took (this will not log to error table)
         if (connectRepeatCount > 1) {
-            this.logger.sendTelemetryEvent(
+            logNetworkFailure(
+                this.logger,
                 {
                     eventName: "MultipleDeltaConnectionFailures",
                     attempts: connectRepeatCount,
@@ -554,7 +540,6 @@ export class ConnectionManager implements IConnectionManager {
      */
      private disconnectFromDeltaStream(reason: string): boolean {
         this.pendingReconnect = false;
-        this.downgradedConnection = false;
 
         if (this.connection === undefined) {
             return false;
@@ -686,7 +671,7 @@ export class ConnectionManager implements IConnectionManager {
     }
 
     /**
-     * Disconnect the current connection and reconnect.
+     * Disconnect the current connection and reconnect. Closes the container if it fails.
      * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
      * @param requestedMode - Read or write
      * @param error - Error reconnect information including whether or not to reconnect
@@ -694,13 +679,13 @@ export class ConnectionManager implements IConnectionManager {
      */
      private reconnectOnError(
         requestedMode: ConnectionMode,
-        error: DriverError,
+        error: IAnyDriverError,
     ) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.reconnectOnErrorCore(
+        this.reconnect(
             requestedMode,
             error.message,
-            error);
+            error)
+        .catch(this.props.closeHandler);
     }
 
     /**
@@ -710,10 +695,10 @@ export class ConnectionManager implements IConnectionManager {
      * @param error - Error reconnect information including whether or not to reconnect
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
-    private async reconnectOnErrorCore(
+    private async reconnect(
         requestedMode: ConnectionMode,
         disconnectMessage: string,
-        error?: DriverError,
+        error?: IAnyDriverError,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
@@ -722,12 +707,17 @@ export class ConnectionManager implements IConnectionManager {
 
         this.disconnectFromDeltaStream(disconnectMessage);
 
-        const canRetry = error !== undefined ? canRetryOnError(error) : true;
+        // We will always trigger reconnect, even if canRetry is false.
+        // Any truly fatal error state will result in container close upon attempted reconnect,
+        // which is a preferable to closing abruptly when a live connection fails.
+        if (error !== undefined && !error.canRetry) {
+            this.logger.sendTelemetryEvent({
+                eventName: "reconnectingDespiteFatalError",
+                reconnectMode: this.reconnectMode,
+             }, error);
+        }
 
-        // If reconnection is not an option, close the DeltaManager
-        if (!canRetry) {
-            this.props.closeHandler(normalizeError(error, { props: fatalConnectErrorProp }));
-        } else if (this.reconnectMode === ReconnectMode.Never) {
+        if (this.reconnectMode === ReconnectMode.Never) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
@@ -739,8 +729,8 @@ export class ConnectionManager implements IConnectionManager {
             return;
         }
 
-        const delayMs = error !== undefined ? getRetryDelayFromError(error) : undefined;
-        if (delayMs !== undefined) {
+        const delayMs = getRetryDelayFromError(error);
+        if (error !== undefined && delayMs !== undefined) {
             this.props.reconnectionDelayHandler(delayMs, error);
             await waitForConnectedState(delayMs);
         }
@@ -800,12 +790,12 @@ export class ConnectionManager implements IConnectionManager {
         // Note that we also want nacks to be rare and be treated as catastrophic failures.
         // Be careful with reentrancy though - disconnected event should not be be raised in the
         // middle of the current workflow, but rather on clean stack!
-        if (this.connectionMode === "read" || this.downgradedConnection) {
+        if (this.connectionMode === "read") {
             if (!this.pendingReconnect) {
                 this.pendingReconnect = true;
                 Promise.resolve().then(async () => {
                     if (this.pendingReconnect) { // still valid?
-                        await this.reconnectOnErrorCore(
+                        await this.reconnect(
                             "write", // connectionMode
                             "Switch to write", // message
                         );
@@ -843,7 +833,19 @@ export class ConnectionManager implements IConnectionManager {
             if (clientId === this.clientId) {
                 // We have been kicked out from quorum
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
-                this.downgradedConnection = true;
+
+                // Please see #8483 for more details on why maintaining connection further as is would not work.
+                // Short story - connection properties are immutable, and many processes (consensus DDSs, summarizer)
+                // assume that connection stays "write" connection until disconnect, and act accordingly, which may
+                // not work well with de-facto "read" connection we are in after receiving own leave op on timeout.
+                // Clients need to be able to transition to "read" state after some time of inactivity!
+                // Note - this may close container!
+                this.reconnect(
+                    "read", // connectionMode
+                    "Switch to read", // message
+                ).catch((error) => {
+                    this.logger.sendErrorEvent({ eventName: "SwitchToReadConnection"}, error);
+                });
             }
         }
     }
@@ -856,16 +858,18 @@ export class ConnectionManager implements IConnectionManager {
     // Always connect in write mode after getting nacked.
     private readonly nackHandler = (documentId: string, messages: INack[]) => {
         const message = messages[0];
-        // TODO: we should remove this check when service updates?
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (this._readonlyPermissions) {
-            this.props.closeHandler(createWriteError("writeOnReadOnlyDocument"));
+        if (this._readonlyPermissions === true) {
+            this.props.closeHandler(createWriteError("writeOnReadOnlyDocument", { driverVersion: undefined }));
+            return;
         }
 
-        // check message.content for Back-compat with old service.
-        const reconnectInfo = message.content !== undefined
-            ? getNackReconnectInfo(message.content) :
-            createGenericNetworkError("nackReasonUnknown", undefined, true);
+        const reconnectInfo = getNackReconnectInfo(message.content);
+
+        // If the nack indicates we cannot retry, then close the container outright
+        if (!reconnectInfo.canRetry) {
+            this.props.closeHandler(reconnectInfo);
+            return;
+        }
 
         this.reconnectOnError(
             "write",
@@ -874,19 +878,19 @@ export class ConnectionManager implements IConnectionManager {
     };
 
     // Connection mode is always read on disconnect/error unless the system mode was write.
-    private readonly disconnectHandlerInternal = (disconnectReason) => {
+    private readonly disconnectHandlerInternal = (disconnectReason: IAnyDriverError) => {
         // Note: we might get multiple disconnect calls on same socket, as early disconnect notification
         // ("server_disconnect", ODSP-specific) is mapped to "disconnect"
         this.reconnectOnError(
             this.defaultReconnectionMode,
-            createReconnectError("dmDocumentDeltaConnectionDisconnected", disconnectReason),
+            disconnectReason,
         );
     };
 
-    private readonly errorHandler = (error) => {
+    private readonly errorHandler = (error: IAnyDriverError) => {
         this.reconnectOnError(
             this.defaultReconnectionMode,
-            createReconnectError("dmDocumentDeltaConnectionError", error),
+            error,
         );
     };
 }

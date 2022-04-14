@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidPackage, isFluidPackage, IFluidPackageEnvironment } from "@fluidframework/core-interfaces";
+import { IFluidPackage, isFluidPackage, IFluidPackageEnvironment } from "./fluidPackage";
 
 /**
  * A specific Fluid package environment for browsers
@@ -52,7 +52,7 @@ export interface IFluidBrowserPackage extends IFluidPackage {
  * Determines if any object is an IFluidBrowserPackage
  * @param maybePkg - The object to check for compatibility with IFluidBrowserPackage
  */
-export const isFluidBrowserPackage = (maybePkg: any): maybePkg is Readonly<IFluidBrowserPackage>  =>
+export const isFluidBrowserPackage = (maybePkg: any): maybePkg is Readonly<IFluidBrowserPackage> =>
     isFluidPackage(maybePkg)
     && typeof maybePkg?.fluid?.browser?.umd?.library === "string"
     && Array.isArray(maybePkg?.fluid?.browser?.umd?.files);

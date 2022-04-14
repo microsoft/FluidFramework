@@ -31,8 +31,8 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     npx create-react-app collaborative-text-area-tutorial --template typescript
     ```
 
-1. The project is created in a subfolder named `collaborative-text-area-tutorial`. Navigate to it with the command `cd fluid-react-tutorial`.
-1. The project uses two Fluid libraries:
+1. The project is created in a subfolder named `collaborative-text-area-tutorial`. Navigate to it with the command `cd collaborative-text-area-tutorial`.
+1. The project uses three Fluid libraries:
 
     |Library |Description |
     |---|---|
@@ -78,7 +78,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 1. The Fluid runtime will bring changes made to the text from any client to the current client, but Fluid is agnostic about the UI framework. You can use a React hook to get the Fluid data from the SharedString object into the view layer (the React state). Add the following code below the `import` statements. This method is called when the application loads the first time, and the returned value is assigned to a React state property.
 
     ```ts
-      const useSharedString = (): SharedString => {
+    const useSharedString = (): SharedString => {
 
       const [sharedString, setSharedString] = React.useState();
       const getFluidData = async () => {

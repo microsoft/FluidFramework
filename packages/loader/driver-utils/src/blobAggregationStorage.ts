@@ -43,7 +43,7 @@ function bufferToString2(blob: ArrayBufferLike, encoding: "utf-8" | "base64"): s
   * Class responsible for aggregating smaller blobs into one and unpacking it later on.
   */
 class BlobAggregator {
-    private readonly content: [string, string][]= [];
+    private readonly content: [string, string][] = [];
 
     public addBlob(key: string, content: string) {
         this.content.push([key, content]);
@@ -99,7 +99,7 @@ export abstract class SnapshotExtractor {
                     let subTree = snapshot;
                     for (const subPath of pathSplit.slice(0, pathSplit.length - 1)) {
                         if (subTree.trees[subPath] === undefined) {
-                            subTree.trees[subPath] = { blobs: {}, commits: {}, trees: {}};
+                            subTree.trees[subPath] = { blobs: {}, trees: {}};
                         }
                         subTree = subTree.trees[subPath];
                     }
@@ -172,7 +172,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
             return storage;
         }
         const mc = loggerToMonitoringContext(logger);
-        const realAllowPackaging = mc.config.getBoolean("FluidAggregateBlobs") ??  allowPacking ?? false;
+        const realAllowPackaging = mc.config.getBoolean("FluidAggregateBlobs") ?? allowPacking ?? false;
 
         // Always create BlobAggregationStorage even if storage is not asking for packing.
         // This is mostly to avoid cases where future changes in policy would result in inability to

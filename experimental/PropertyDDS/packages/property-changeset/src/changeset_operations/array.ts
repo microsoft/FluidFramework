@@ -20,7 +20,6 @@ import { ConflictType } from "./changesetConflictTypes";
 const { MSG } = constants;
 const { isPrimitiveType } = TypeIdHelper;
 
-
 /**
  * The range combinations of two change sets (A and B)
  * This can either be complete operations, parts of complete operations or overlapping segments
@@ -35,8 +34,7 @@ enum ArrayChangeSetRangeType {
     completeBpartOfA, // a complete operation of change set B overlapping with a partial operation of change set A
     completeAcompleteB, // a complete operation of change set A overlapping a complete operation of change set B
     partOfApartOfB, // a partial operation of change set A, a partial operation of change set B
-};
-
+}
 
 interface SegmentType<T = GenericOperation, K = GenericOperation, L = GenericOperation> {
     begin?: number;
@@ -95,7 +93,6 @@ export interface OperationRangeModify extends Omit<OperationRangeDescription<Mod
 */
 export interface OperationRangeNOP extends Omit<OperationRangeDescription<NOPOperation>,
     'removeInsertOperationB' | 'removeInsertOperation' | 'removeInsertOperationA'> { }
-
 
 /**
  * A range of a none NOP array operation
@@ -166,7 +163,7 @@ const getRangeForAppliedOperation = function(
     in_operation: GenericOperation,
     io_resultingRange: OperationRangeDescription,
     in_flag?: ArrayChangeSetRangeType,
-    in_options?: ApplyChangeSetOptions
+    in_options?: ApplyChangeSetOptions,
 ) {
     if (!in_operation || in_operation.type === ArrayChangeSetIterator.types.NOP) {
         io_resultingRange.begin = undefined;
@@ -184,7 +181,6 @@ const getRangeForAppliedOperation = function(
         io_resultingRange.op.operation = [];
     }
     io_resultingRange.op.operation[0] = in_operation.operation[0];
-
 
     io_resultingRange.begin = in_operation.operation[0];
     io_resultingRange.op._absoluteBegin = in_operation.operation[0];
@@ -242,7 +238,7 @@ const _splitArrayParameter = function(
     in_firstResult: arrayModifyList | arrayRemoveList,
     in_secondResult: arrayModifyList | arrayRemoveList,
     in_data: arrayModifyList | arrayRemoveList,
-    in_start: number
+    in_start: number,
 ) {
     let firstTmp: any;
     if (isString(in_data[1])) {
@@ -291,7 +287,7 @@ const _splitOperation = function(
     in_targetRange: OperationRangeDescription<NoneNOPOperation>,
     in_targetOperation: NoneNOPOperation,
     lengthUsedInResultSegment: number,
-    in_updateOffset: boolean
+    in_updateOffset: boolean,
 ) {
     _splitArrayParameter(in_targetOperation.operation, in_targetRange.op.operation,
         in_targetRange.op.operation, lengthUsedInResultSegment);
@@ -1337,7 +1333,6 @@ export namespace ChangeSetArrayFunctions {
         ConsoleUtils.assert(!isString(io_basePropertyChanges), io_basePropertyChanges);
         ConsoleUtils.assert(!isString(in_appliedPropertyChanges), in_appliedPropertyChanges);
 
-
         const isPrimitiveTypeid = isPrimitiveType(in_typeid);
 
         // Iterator to process the changes in the ChangeSet in the correct order
@@ -1352,7 +1347,6 @@ export namespace ChangeSetArrayFunctions {
 
         getRangeForCurrentStateOperation(opA, opA.offset ? opA.offset : 0, rangeA);
         getRangeForAppliedOperation(opB, rangeB, undefined, in_options);
-
 
         const resultPropertyChanges: SerializedChangeSet = {};
         resultPropertyChanges.insert = [];
@@ -1500,7 +1494,7 @@ export namespace ChangeSetArrayFunctions {
         } else {
             delete io_basePropertyChanges.remove;
         }
-    };
+    }
 
     /**
      * Performs the rebase operation for array changes
@@ -1707,4 +1701,4 @@ export namespace ChangeSetArrayFunctions {
                 in_options);
         }
     }
-};
+}

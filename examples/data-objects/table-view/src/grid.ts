@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { KeyCode, Scheduler, Template } from "@fluid-example/flow-util-lib";
 import { colIndexToName } from "@fluid-example/table-document";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
@@ -11,39 +10,23 @@ import { BorderRect } from "./borderstyle";
 import * as styles from "./index.css";
 import { TableView } from "./tableview";
 
-const tableTemplate = new Template({
-    tag: "table",
-    props: { className: styles.view, tabIndex: 0, sortable: true },
-    children: [
-        {
-            tag: "caption",
-            children: [{ tag: "span", props: { textContent: "Table" } }],
-        },
-        {
-            tag: "thead",
-            children: [{
-                tag: "tr",
-                ref: "cols",
-            }],
-        },
-        {
-            tag: "tbody",
-            ref: "body",
-        },
-    ],
-});
-
-const rowTemplate = new Template({ tag: "tr" });
-const headerTemplate = new Template({ tag: "th" });
-const cellTemplate = new Template({ tag: "td" });
-const cellInputTemplate = new Template({ tag: "input", props: { className: styles.inputBox } });
-
 // eslint-disable-next-line unicorn/no-unsafe-regex
 const numberExp = /^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$/;
+
+const enum KeyCode {
+    tab = "Tab",                    // 9
+    enter = "Enter",                // 13
+    escape = "Escape",              // 27
+    arrowLeft = "ArrowLeft",      // 37
+    arrowUp = "ArrowUp",        // 38
+    arrowRight = "ArrowRight",     // 39
+    arrowDown = "ArrowDown",      // 40
+}
+
 export class GridView {
     private get numRows() { return this.matrix.rowCount; }
     private get numCols() { return this.matrix.colCount; }
-    public readonly root = tableTemplate.clone();
+    public readonly root;
 
     private _startRow = 0;
     public get startRow() { return this._startRow; }
@@ -53,9 +36,9 @@ export class GridView {
         this.refreshCells();
     }
 
-    private readonly cols = tableTemplate.get(this.root, "cols");
-    private readonly tbody = tableTemplate.get(this.root, "body");
-    private readonly inputBox = cellInputTemplate.clone() as HTMLInputElement;
+    private readonly cols = document.createElement("tr");
+    private readonly tbody = document.createElement("tbody");
+    private readonly inputBox = document.createElement("input");
     private tdText?: Node;
     private readonly selection = new BorderRect([
         [`${styles.selectedTL}`, `${styles.selectedT}`, `${styles.selectedTR}`],
@@ -66,17 +49,37 @@ export class GridView {
 
     private readonly sheetlet: ISheetlet;
 
+    private generateDom() {
+        const root = document.createElement("table");
+        root.classList.add(styles.view);
+        root.tabIndex = 0;
+
+        const caption = document.createElement("caption");
+        const captionSpan = document.createElement("span");
+        captionSpan.textContent = "Table";
+        caption.append(captionSpan);
+
+        const head = document.createElement("thead");
+        head.append(this.cols);
+
+        root.append(caption, head, this.tbody);
+
+        return root;
+    }
+
     constructor(
         private readonly matrix: SharedMatrix,
         private readonly tableView: TableView,
     ) {
+        this.root = this.generateDom();
         this.root.addEventListener("click", this.onGridClick as EventListener);
         this.tbody.addEventListener("pointerdown", this.cellPointerDown as EventListener);
         this.tbody.addEventListener("pointermove", this.cellPointerMove as EventListener);
+        this.inputBox.classList.add(styles.inputBox);
         this.inputBox.addEventListener("keydown", this.cellKeyDown);
         this.inputBox.addEventListener("input", this.cellInput);
 
-        const blank = headerTemplate.clone();
+        const blank = document.createElement("th");
         this.cols.appendChild(blank);
 
         this.sheetlet = createSheetletProducer(matrix);
@@ -86,23 +89,35 @@ export class GridView {
     }
 
     private setupMatrixConsumer() {
-        const scheduler = new Scheduler();
-        const refreshGrid = scheduler.coalesce(scheduler.onLayout, this.refreshCells);
+        let scheduled = false;
+        const scheduleGridRefresh = () => {
+            if (scheduled) {
+                return;
+            }
+
+            requestAnimationFrame(() => {
+                scheduled = false;
+                this.refreshCells();
+            });
+
+            scheduled = true;
+        };
+
         const invalidateCells = (rowStart: number, colStart: number, rowCount: number, colCount: number) => {
             for (let row = rowStart; row < rowStart + rowCount; row++) {
                 for (let col = colStart; col < colStart + colCount; col++) {
                     this.sheetlet.invalidate(row, col);
                 }
             }
-            refreshGrid();
+            scheduleGridRefresh();
         };
 
         const matrixReader = {
             rowsChanged() {
-                refreshGrid();
+                scheduleGridRefresh();
             },
             colsChanged() {
-                refreshGrid();
+                scheduleGridRefresh();
             },
             cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number) {
                 invalidateCells(rowStart, colStart, rowCount, colCount);
@@ -152,7 +167,7 @@ export class GridView {
 
                     // Append any missing columns
                     for (; col < this.numCols; col++) {
-                        const td = cellTemplate.clone() as HTMLTableCellElement;
+                        const td = document.createElement("td");
                         this.refreshCell(td, row, col);
                         tr.appendChild(td);
                     }
@@ -167,13 +182,13 @@ export class GridView {
 
         // Append any missing rows
         for (; row < numRows; row++) {
-            const tr = rowTemplate.clone();
-            const th = headerTemplate.clone();
+            const tr = document.createElement("tr");
+            const th = document.createElement("th");
             th.textContent = `${row + 1}`;
             tr.appendChild(th);
 
             for (let col = 0; col < this.numCols; col++) {
-                const td = cellTemplate.clone() as HTMLTableCellElement;
+                const td = document.createElement("td");
                 this.refreshCell(td, row, col);
                 tr.appendChild(td);
             }
@@ -183,7 +198,7 @@ export class GridView {
 
         // Append any missing col headers
         for (let col = this.cols.childElementCount - 1; col < this.numCols; col++) {
-            const th = headerTemplate.clone();
+            const th = document.createElement("th");
             // Skip placeholder <th> above the row number column.
             if (col >= 0) {
                 th.textContent = `${colIndexToName(col)}`;
@@ -346,12 +361,13 @@ export class GridView {
         /* eslint-disable no-fallthrough */
         switch (e.code) {
             case KeyCode.escape: { this.cancelInput(); break; }
-            case KeyCode.arrowUp: { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */  0); break; }
+            case KeyCode.arrowUp: { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */ 0); break; }
             case KeyCode.enter: { this.commitInput(); /* fall-through */ }
-            case KeyCode.arrowDown: { this.moveInputByOffset(e, /* rowOffset: */  1, /* colOffset */  0); break; }
-            case KeyCode.arrowLeft: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */ -1); break; }
+            case KeyCode.arrowDown: { this.moveInputByOffset(e, /* rowOffset: */ 1, /* colOffset */ 0); break; }
+            case KeyCode.arrowLeft: { this.moveInputByOffset(e, /* rowOffset: */ 0, /* colOffset */ -1); break; }
             case KeyCode.tab: { e.preventDefault(); /* fall-through */ }
-            case KeyCode.arrowRight: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); }
+            case KeyCode.arrowRight: { this.moveInputByOffset(e, /* rowOffset: */ 0, /* colOffset */ 1); }
+            default: break;
         }
         /* eslint-enable no-fallthrough */
     };

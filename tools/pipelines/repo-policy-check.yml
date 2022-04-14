@@ -5,14 +5,16 @@
 
 trigger:
 - main
+- next
 - release/*
 
 pr:
 - main
+- next
 - release/*
 
 pool:
-  vmImage: 'ubuntu-latest'
+  Small
 
 variables:
 - name: skipComponentGovernanceDetection

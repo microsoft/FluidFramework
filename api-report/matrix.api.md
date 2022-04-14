@@ -77,8 +77,6 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: SummarySerializer): void;
     // (undocumented)
-    protected registerCore(): void;
-    // (undocumented)
     removeCols(colStart: number, count: number): void;
     // (undocumented)
     removeRows(rowStart: number, count: number): void;

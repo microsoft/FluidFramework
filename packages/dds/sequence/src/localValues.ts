@@ -9,7 +9,6 @@ import {
     ISerializedHandle,
     parseHandles,
     serializeHandles,
-    SharedObject,
     ValueType,
 } from "@fluidframework/shared-object-base";
 import {
@@ -219,10 +218,6 @@ export class LocalValueMaker {
      * @returns An ILocalValue containing the value
      */
     public fromInMemory(value: any): ILocalValue {
-        if (SharedObject.is(value)) {
-            throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
-        }
-
         return new PlainLocalValue(value);
     }
 
@@ -253,8 +248,6 @@ export class LocalValueMaker {
         if (!valueType) {
             throw new Error(`Unknown type '${type}' specified`);
         }
-
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return valueType.factory.load(emitter, params);
     }
 }

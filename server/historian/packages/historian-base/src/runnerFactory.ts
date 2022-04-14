@@ -50,7 +50,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
         const redisClient = new Redis(redisOptions);
         const disableGitCache = config.get("restGitService:disableGitCache") as boolean | undefined;
-        const gitCache = disableGitCache ?  undefined : new historianServices.RedisCache(redisClient, redisParams);
+        const gitCache = disableGitCache ? undefined : new historianServices.RedisCache(redisClient, redisParams);
         const tenantCache = new historianServices.RedisTenantCache(redisClient, redisParams);
         // Create services
         const riddlerEndpoint = config.get("riddler");

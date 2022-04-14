@@ -15,6 +15,7 @@ import {
     numberCases,
 } from "@fluidframework/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-loader";
+import { ConfigTypes } from "@fluidframework/telemetry-utils";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
     cache: booleanCases,
@@ -32,7 +33,7 @@ export function applyOverrides<T>(options: OptionsMatrix<T>, optionsOverrides: P
             const override = optionsOverrides[key];
             if(override !== undefined) {
                 if(Array.isArray(override)) {
-                    realOptions[key] =  override;
+                    realOptions[key] = override;
                 }else{
                     throw new Error(`Override for ${key} is not array: ${JSON.stringify(optionsOverrides)}`);
                 }
@@ -43,7 +44,7 @@ export function applyOverrides<T>(options: OptionsMatrix<T>, optionsOverrides: P
 }
 
 export const generateLoaderOptions =
-    (seed: number,  overrides: Partial<OptionsMatrix<ILoaderOptions>> | undefined): ILoaderOptions[] => {
+    (seed: number, overrides: Partial<OptionsMatrix<ILoaderOptions>> | undefined): ILoaderOptions[] => {
     return generatePairwiseOptions<ILoaderOptions>(
         applyOverrides(loaderOptionsMatrix, overrides),
         seed);
@@ -78,11 +79,24 @@ export function generateRuntimeOptions(
         gcOptions: [undefined, ...gcOptions],
         summaryOptions: [undefined, ...summaryOptions],
         loadSequenceNumberVerification: [undefined],
+        useDataStoreAliasing: [undefined],
+        flushMode: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(
         applyOverrides(
             runtimeOptionsMatrix,
             {...overrides, gcOptions: undefined, summaryOptions: undefined}),
+        seed);
+}
+
+export function generateConfigurations(
+    seed: number, overrides: OptionsMatrix<Record<string,ConfigTypes>> | undefined,
+): Record<string,ConfigTypes>[] {
+    if (overrides === undefined) {
+        return [{}];
+    }
+    return generatePairwiseOptions<Record<string, ConfigTypes>>(
+        overrides,
         seed);
 }

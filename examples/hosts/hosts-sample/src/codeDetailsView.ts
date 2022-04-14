@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { getCodeDetailsFromQuorum, parsePackageDetails } from "./utils";
 
 /**
@@ -15,7 +14,8 @@ export const setupUI = (container: IContainer) => {
     // Observe container events to detect when it gets forcefully closed.
     container.once("closed", (error) => {
         if (
-            error?.message === "ExistingContextDoesNotSatisfyIncomingProposal"
+            // pre-0.58 error message: ExistingContextDoesNotSatisfyIncomingProposal
+            error?.message === "Existing context does not satisfy incoming proposal"
         ) {
             const reload = window.confirm(
                 `🛑 Container is closed\n\nThe document requires a newer code version to continue.\nPress OK to reload.`,

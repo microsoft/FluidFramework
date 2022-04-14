@@ -614,7 +614,7 @@ export class DataBindingTree {
         let maxIndex = -1;
         for (let i = 0; i < keys.length; ++i) {
             console.assert(isNormalInteger(keys[i]));
-            const key =  Number.parseInt(keys[i], 10) ;
+            const key = Number.parseInt(keys[i], 10) ;
             maxIndex = key > maxIndex ? key : maxIndex;
             replacementNode._childNodes[keys[i]] =
                 oldDataBindingTreeNode._childNodes[keys[i]];

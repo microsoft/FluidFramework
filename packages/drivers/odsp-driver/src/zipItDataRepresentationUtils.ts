@@ -12,6 +12,7 @@ import { assert, IsoBuffer, Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { ReadBuffer } from "./ReadBufferUtils";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 // eslint-disable-next-line max-len
 // https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=/cobalt/Base/Property/BinaryEncodedPropertyReader.cs&version=GBmaster&_a=contents
@@ -479,12 +480,12 @@ function throwBufferParseException(
     message: string,
 ): never {
     throw new NonRetryableError(
-        "bufferParsingException",
-        message,
+        `Buffer parsing exception: ${message}`,
         DriverErrorType.incorrectServerResponse,
         {
             nodeType: getNodeType(node),
             expectedNodeType,
+            driverVersion,
         });
 }
 

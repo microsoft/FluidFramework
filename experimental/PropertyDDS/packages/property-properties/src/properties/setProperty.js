@@ -6,12 +6,12 @@
 /**
  * @fileoverview Definition of the set property class
  */
-const _ = require('lodash');
-const { BaseProperty } = require('./baseProperty');
-const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
-const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProperty');
 const { PathHelper, TypeIdHelper } = require('@fluid-experimental/property-changeset');
 const { MSG } = require('@fluid-experimental/property-common').constants;
+const _ = require('lodash');
+const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
+const { BaseProperty } = require('./baseProperty');
+const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProperty');
 const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 
 var PATH_TOKENS = BaseProperty.PATH_TOKENS;
@@ -20,7 +20,6 @@ var PATH_TOKENS = BaseProperty.PATH_TOKENS;
  * must derive from NamedProperty and their URN is used to identify them within the set.
  */
 export class SetProperty extends IndexedCollectionBaseProperty {
-
     /**
      * @param {Object} in_params - Input parameters for property creation
      * @param {string|undefined} in_scope - The scope in which the map typeid is defined
@@ -38,7 +37,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 
         /** Contains the actual entries of the set, indexed by their GUID */
         this._dynamicChildren = {};
-    };
+    }
 
     // A set property falls back to NamedProperty, if none is specified
 
@@ -51,7 +50,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      */
     _isFlattenLeaf() {
         return true;
-    };
+    }
 
     /**
     * Returns an object with all the nested values contained in this property
@@ -75,7 +74,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
             }
         }
         return result;
-    };
+    }
 
     /**
      * Returns the full property type identifier for the ChangeSet including the enum type id
@@ -88,7 +87,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         } else {
             return TypeIdHelper.createSerializationTypeId(this._typeid, 'set');
         }
-    };
+    }
 
     /**
      * Returns the path segment for a child
@@ -100,7 +99,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      */
     _getPathSegmentForChildNode(in_childNode) {
         return '[' + in_childNode.getGuid() + ']';
-    };
+    }
 
     /**
      * Resolves a direct child node based on the given path segment
@@ -118,7 +117,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         } else {
             return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
         }
-    };
+    }
 
     /**
      * Inserts a property into the set
@@ -135,7 +134,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         } else {
             throw new Error(MSG.CANT_INSERT_NON_NAMED_PROPERTIES);
         }
-    };
+    }
 
     /**
      * Adds a property to the set
@@ -157,7 +156,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         } else {
             throw new Error(MSG.CANT_INSERT_NON_NAMED_PROPERTIES);
         }
-    };
+    }
 
     /**
      * Removes the given property from the set
@@ -175,7 +174,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
             this._removeByKey(in_entry.getGuid(), true);
             return in_entry;
         }
-    };
+    }
 
     /**
      * Returns an Object with all the entries of the set.
@@ -188,7 +187,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      */
     getEntriesReadOnly() {
         return this._dynamicChildren;
-    };
+    }
 
     /**
      * Returns the name of all the sub-properties of this property.
@@ -197,7 +196,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      */
     getIds() {
         return Object.keys(this._dynamicChildren);
-    };
+    }
 
     /**
      * Returns the collection entry with the given ID
@@ -235,7 +234,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 
             return prop;
         }
-    };
+    }
 
     /**
      * Checks whether a property with the given name exists
@@ -245,7 +244,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      */
     has(in_id) {
         return this._dynamicChildren[in_id] !== undefined;
-    };
+    }
 
     /**
      * Adds a list of properties to the set.
@@ -259,7 +258,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         this._checkIsNotReadOnly(true);
 
         var that = this;
-        _.each(in_properties, function (property) {
+        _.each(in_properties, function(property) {
             if (property instanceof BaseProperty) {
                 that.set(property);
             } else {
@@ -273,7 +272,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
                 }
             }
         });
-    };
+    }
 
     /**
      * Adds a list of properties to the set.
@@ -291,7 +290,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         }
 
         this._setValuesInternal(in_properties, in_typed);
-    };
+    }
 
     /**
      * Adds a list of properties to the set.
@@ -309,7 +308,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         } else {
             SetProperty.prototype._setValues.call(this, in_properties, false, false);
         }
-    };
+    }
 
     /**
      * Returns all entries of the set as an array.
@@ -321,7 +320,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      */
     getAsArray() {
         return _.values(this._dynamicChildren);
-    };
+    }
 
     /**
      * Get the scope to which this property belongs to.
@@ -338,18 +337,17 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         } else {
             return this._scope;
         }
-    };
+    }
 
     /**
      * Delete all values from Set
      */
     clear() {
         var that = this;
-        this.getIds().forEach(function (id) {
+        this.getIds().forEach(function(id) {
             that.remove(id);
         });
-    };
-
+    }
 }
 
 SetProperty.prototype._typeid = 'NamedProperty';

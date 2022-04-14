@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
@@ -31,7 +31,7 @@ import { MessageType, ISummaryTree } from "@fluidframework/protocol-definitions"
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
 const detachedContainerRefSeqNumber = 0;
@@ -100,11 +100,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
             assert.strictEqual(container.getLoadedCodeDetails()?.package, provider.defaultCodeDetails.package,
             "Loaded package should be same as provided");
         }
-        assert.strictEqual(
-            (container as Container).id,
-            "",
-            "Detached container's id should be empty string",
-        );
         assert.strictEqual((container as Container).clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
     });
@@ -162,6 +157,39 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(testChannel.isAttached(), true, "Channel should be attached!!");
 
         assert.strictEqual(testDataStore.context.attachState, AttachState.Attached, "DataStore should be attached!!");
+    });
+
+    it("can create DDS in detached container and attach / update it", async function() {
+        // GitHub issue: #9534
+        if(provider.driver.type === "tinylicious") {
+            this.skip();
+        }
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        const dsClient1 = await requestFluidObject<ITestFluidObject>(container, "/");
+
+        // Create a DDS after the root data store is created and loaded.
+        const mapClient1 = SharedMap.create(dsClient1.runtime);
+        dsClient1.root.set("map", mapClient1.handle);
+
+        // Attach the container and validate that the DDS is attached.
+        await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        assert(mapClient1.isAttached(), "The map should be attached after the container attaches.");
+
+        // Load a second container and validate it can load the DDS.
+        const container2 = await provider.loadTestContainer();
+        const dsClient2 = await requestFluidObject<ITestFluidObject>(container2, "/");
+        const mapClient2 = await dsClient2.root.get<IFluidHandle<SharedMap>>("map")?.get();
+        assert(mapClient2 !== undefined, "Map is not available in the second client");
+
+        // Make a change in the first client's DDS and validate that the change is reflected in the second client.
+        mapClient1.set("key1", "value1");
+        await provider.ensureSynchronized();
+        assert.strictEqual(mapClient2.get("key1"), "value1", "Map change not reflected in second client.");
+
+        // Make a change in the second client's DDS and validate that the change is reflected in the first client.
+        mapClient2.set("key2", "value2");
+        await provider.ensureSynchronized();
+        assert.strictEqual(mapClient1.get("key2"), "value2", "Map change not reflected in first client.");
     });
 
     it("Load attached container and check for dataStores", async () => {
@@ -292,7 +320,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         await defPromise.promise;
     });
 
-    it("Fire dataStore attach ops during container attach", async () => {
+    it.skip("Fire dataStore attach ops during container attach", async () => {
         const testDataStoreType = "default";
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
@@ -306,13 +334,17 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         const comp2 = await requestFluidObject<ITestFluidObject>(router, "/");
 
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
-            assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
-            assert.strictEqual(contents.contents.id,
-                comp2.context.id, "DataStore id should match");
-            assert.strictEqual(contents.contents.type,
-                testDataStoreType, "DataStore type should match");
-            defPromise.resolve();
+            try {
+                assert.strictEqual(type, MessageType.Operation, "Op should be an attach op");
+                assert.strictEqual(contents.type, ContainerMessageType.Attach, "Op should be an attach op");
+                assert.strictEqual(contents.contents.id,
+                    comp2.context.id, "DataStore id should match");
+                assert.strictEqual(contents.contents.type,
+                    testDataStoreType, "DataStore type should match");
+                defPromise.resolve();
+            } catch(e) {
+                defPromise.reject(e);
+            }
             return 0;
         };
 
@@ -610,9 +642,11 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
     }).timeout(5000);
 
-    it("Container should be closed on failed attach with non retryable error", async () => {
+    itExpects("Container should be closed on failed attach with non retryable error",[
+        { eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error" },
+    ], async () => {
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
+
         const oldFunc = provider.documentServiceFactory.createContainer;
         provider.documentServiceFactory.createContainer = (a, b, c) => { throw new Error("Test Error"); };
         let failedOnce = false;
@@ -651,5 +685,25 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         const dataStore2 = response2.value as ITestFluidObject;
         assert.strictEqual(dataStore2.root.get("attachKey").absolutePath, subDataStore1.handle.absolutePath,
             "Stored handle should match!!");
+    });
+
+    /**
+     * Fixed in 0.58.2000. Move to full compat once this is the last supported version.
+     */
+    it("Requesting non-root data stores in detached container", async () => {
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        // Get the root dataStore from the detached container.
+        const rootDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+
+        // Create another data store and bind it by adding its handle in the root data store's DDS.
+        const dataStore2 = await createFluidObject(rootDataStore.context, "default");
+        rootDataStore.root.set("dataStore2", dataStore2.handle);
+
+        // Request the new data store via the request API on the container.
+        const dataStore2Response = await container.request({ url: dataStore2.handle.absolutePath });
+        assert(
+            dataStore2Response.mimeType === "fluid/object" && dataStore2Response.status === 200,
+            "Unable to load bound data store in detached container",
+        );
     });
 });

@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import {
     createLocalResolverCreateNewRequest,
     LocalDocumentServiceFactory,
@@ -153,7 +152,7 @@ describe("No Delta Stream", () => {
         documentServiceFactory.createDocumentService = async (...args) => {
             return createDocServ(...args).then((docService) => {
                 docService.connectToDeltaStream = () => {
-                    throw new DeltaStreamConnectionForbiddenError("asdf");
+                    throw new DeltaStreamConnectionForbiddenError("asdf", { driverVersion: "1.2.3" });
                 };
                 return docService;
             });

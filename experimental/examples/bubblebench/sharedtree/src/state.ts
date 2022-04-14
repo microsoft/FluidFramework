@@ -39,7 +39,7 @@ export class AppState implements IAppState {
         this.root = TreeObjectProxy<IApp>(this.tree, this.tree.currentView.root, this.update);
 
         const json = makeClient(_width, _height, numBubbles);
-        const clientNode = fromJson(json);
+        const clientNode = fromJson(tree, json);
         (this.clients as unknown as TreeArrayProxy<IClient>).pushNode(clientNode);
         this.localClient = TreeObjectProxy(this.tree, clientNode.identifier, this.update);
 
@@ -59,7 +59,7 @@ export class AppState implements IAppState {
     }
 
     private makeBubble() {
-        return makeBubble(this.width,  this.height);
+        return makeBubble(this.width, this.height);
     }
 
     public increaseBubbles() {

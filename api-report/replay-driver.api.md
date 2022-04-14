@@ -39,7 +39,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     // (undocumented)
     getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
@@ -63,7 +63,7 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
 }
@@ -77,7 +77,7 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     // (undocumented)
     abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
     // (undocumented)
-    abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
+    abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
     // (undocumented)
     abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
@@ -117,8 +117,8 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
     // (undocumented)
     static create(from: number, to: number, documentServiceFactory: IDocumentServiceFactory): ReplayDocumentServiceFactory;
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName: any;
 }
@@ -133,7 +133,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
     // (undocumented)
     getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
@@ -159,9 +159,9 @@ export class StaticStorageDocumentService implements IDocumentService {
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(storage: IDocumentStorageService);
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger: ITelemetryLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger: ITelemetryLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
-    createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService>;
+    createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "fluid-static-storage:";
     // (undocumented)

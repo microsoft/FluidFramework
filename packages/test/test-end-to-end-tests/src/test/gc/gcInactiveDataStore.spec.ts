@@ -12,22 +12,23 @@ import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { TestDataObject } from "./mockSummarizerClient";
+import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { TestDataObject } from "../mockSummarizerClient";
 
 /**
  * Validates this scenario: When a data store becomes inactive (has been unreferenced for a given amount of time),
  * using that data store results in an error telemetry.
  */
 describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
+    const pkg = "TestDataObject";
     const dataObjectFactory = new DataObjectFactory(
-        "TestDataObject",
+        pkg,
         TestDataObject,
         [],
         []);
-    const deleteTimeoutMs = 2000;
+    const deleteTimeoutMs = 100;
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { disableSummaries: true },
         gcOptions: { gcAllowed: true, deleteTimeoutMs },
@@ -42,20 +43,19 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         runtimeOptions,
     );
     const summaryLogger = new TelemetryNullLogger();
-    const inactiveObjectRevivedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObjectRevived";
-    const inactiveObjectChangedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObjectChanged";
+    const revivedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Revived";
+    const changedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Changed";
+    const loadedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Loaded";
 
     let provider: ITestObjectProvider;
-    let containerRuntime: ContainerRuntime;
+    let summarizerRuntime: ContainerRuntime;
     let defaultDataStore: TestDataObject;
     let mockLogger: MockLogger;
 
-    const createContainer = async (logger: MockLogger) => provider.createContainer(runtimeFactory, { logger });
-
-    /** Waits for the given amount of time to be passed. */
-    async function waitForTimeout(timeout: number): Promise<void> {
+    /** Waits for the delete timeout to expire. */
+    async function waitForDeleteTimeout(): Promise<void> {
         await new Promise<void>((resolve) => {
-            setTimeout(resolve, timeout);
+            setTimeout(resolve, deleteTimeoutMs + 10);
         });
     }
 
@@ -63,11 +63,22 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
     function validateNoInactiveEvents() {
         assert(
             !mockLogger.matchAnyEvent([
-                { eventName: inactiveObjectRevivedEvent },
-                { eventName: inactiveObjectChangedEvent },
+                { eventName: revivedEvent },
+                { eventName: changedEvent },
+                { eventName: loadedEvent },
             ]),
             "inactive object events should not have been logged",
         );
+    }
+
+    async function summarize() {
+        await provider.ensureSynchronized();
+        return summarizerRuntime.summarize({
+            runGC: true,
+            fullTree: true,
+            trackState: false,
+            summaryLogger,
+        });
     }
 
     before(function() {
@@ -81,39 +92,33 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
 
     beforeEach(async () => {
         mockLogger = new MockLogger();
-        const container = await createContainer(mockLogger) as Container;
+        const container = await provider.createContainer(runtimeFactory) as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
-        containerRuntime = defaultDataStore.containerRuntime;
+
+        await provider.ensureSynchronized();
+        const summarizerContainer = await provider.loadContainer(runtimeFactory, { logger: mockLogger }) as Container;
+        summarizerRuntime = (await requestFluidObject<TestDataObject>(summarizerContainer, "/")).containerRuntime;
     });
 
-    it("can generate events when unreferenced data store is accessed after it's inactive", async () => {
-        const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
+    itExpects("can generate events when unreferenced data store is accessed after it's inactive", [
+        { eventName: changedEvent, timeout: deleteTimeoutMs },
+        { eventName: loadedEvent, timeout: deleteTimeoutMs },
+        { eventName: revivedEvent, timeout: deleteTimeoutMs },
+    ], async () => {
+        const dataStore1 = await dataObjectFactory.createInstance(defaultDataStore.containerRuntime);
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
 
         // Summarize with dataStore1 as referenced and validate that no unreferneced errors were logged.
-        await provider.ensureSynchronized();
-        await containerRuntime.summarize({
-            runGC: true,
-            fullTree: true,
-            trackState: false,
-            summaryLogger,
-        });
+        await summarize();
         validateNoInactiveEvents();
 
         // Mark dataStore1 as unreferenced, summarize and validate that no unreferenced errors were logged.
         defaultDataStore._root.delete("dataStore1");
-        await provider.ensureSynchronized();
-        await containerRuntime.summarize({
-            runGC: true,
-            fullTree: true,
-            trackState: false,
-            summaryLogger,
-        });
+        await summarize();
         validateNoInactiveEvents();
 
-        // Wait for 3000 ms which is > the configured maxUnreferencedDurationMs (2000). This will ensure that the
-        // unreferenced data store is inactive.
-        await waitForTimeout(3000);
+        // Wait for delete timeout. This will ensure that the unreferenced data store is inactive.
+        await waitForDeleteTimeout();
 
         // Make changes to the inactive data store and validate that we get the inactiveObjectChanged event.
         dataStore1._root.set("key", "value");
@@ -121,12 +126,25 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         assert(
             mockLogger.matchEvents([
                 {
-                    eventName: inactiveObjectChangedEvent,
+                    eventName: changedEvent,
+                    timeout: deleteTimeoutMs,
+                    id: `/${dataStore1.id}`,
+                    pkg: { value: `/${pkg}`, tag: TelemetryDataTag.PackageData },
+                },
+            ]),
+            "inactiveObjectChanged event not generated as expected",
+        );
+
+        await summarizerRuntime.resolveHandle({ url: `/${dataStore1.id}` });
+        assert(
+            mockLogger.matchEvents([
+                {
+                    eventName: loadedEvent,
                     timeout: deleteTimeoutMs,
                     id: `/${dataStore1.id}`,
                 },
             ]),
-            "inactiveObjectChanged event not generated as expected",
+            "inactiveObjectLoaded event not generated as expected",
         );
 
         // Make a change again and validate that we don't get another inactiveObjectChanged event as we only log it
@@ -135,24 +153,19 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
         validateNoInactiveEvents();
 
-        // Revive the inactive data store and validate that we get the inactiveObjectRevivedEvent event.
+        // Revive the inactive data store and validate that we get the revivedEvent event.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         await provider.ensureSynchronized();
-        await containerRuntime.summarize({
-            runGC: true,
-            fullTree: true,
-            trackState: false,
-            summaryLogger,
-        });
         assert(
             mockLogger.matchEvents([
                 {
-                    eventName: inactiveObjectRevivedEvent,
+                    eventName: revivedEvent,
                     timeout: deleteTimeoutMs,
                     id: `/${dataStore1.id}`,
+                    pkg: { value: `/${pkg}`, tag: TelemetryDataTag.PackageData },
                 },
             ]),
             "inactiveObjectRevived event not generated as expected",
         );
-    }).timeout(10000);
+    });
 });

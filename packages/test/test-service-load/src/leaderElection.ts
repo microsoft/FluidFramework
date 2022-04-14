@@ -59,7 +59,6 @@ export class LeaderElection {
     }
 
     private handleSignal(signal: ISignalMessage) {
-        // eslint-disable-next-line no-null/no-null
         if(signal.clientId !== null && signal.content === "leaderMessage") {
             if(this.leaderId !== signal.clientId) {
                 this.logger.sendTelemetryEvent({

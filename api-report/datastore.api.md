@@ -5,7 +5,6 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
@@ -19,7 +18,6 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -30,6 +28,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
 
 // @public (undocumented)
 export enum DataStoreMessageType {
@@ -46,7 +45,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get absolutePath(): string;
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
-    // (undocumented)
     attachGraph(): void;
     // (undocumented)
     get attachState(): AttachState;
@@ -90,6 +88,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): this;
     // (undocumented)
@@ -98,8 +97,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     processSignal(message: IInboundSignalMessage, local: boolean): void;
-    // (undocumented)
-    raiseContainerWarning(warning: ContainerWarning): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -119,11 +116,13 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    // (undocumented)
+    visibilityState: VisibilityState_2;
     waitAttached(): Promise<void>;
 }
 
 // @public (undocumented)
-export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements IFluidHandle {
+export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
     constructor(value: T, path: string, routeContext: IFluidHandleContext);
     // (undocumented)
     readonly absolutePath: string;
@@ -143,7 +142,7 @@ export class FluidObjectHandle<T extends FluidObject = IFluidObject> implements 
     readonly routeContext: IFluidHandleContext;
     // (undocumented)
     protected readonly value: T;
-}
+    }
 
 // @public (undocumented)
 export interface ISharedObjectRegistry {

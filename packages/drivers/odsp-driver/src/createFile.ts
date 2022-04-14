@@ -37,6 +37,7 @@ import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -60,7 +61,8 @@ export async function createNewFluidFile(
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throw new NonRetryableError(
-            "createNewInvalidFilename", "Invalid filename", OdspErrorType.invalidFileNameError);
+            // pre-0.58 error message: Invalid filename
+            "Invalid filename for createNew", OdspErrorType.invalidFileNameError, { driverVersion });
     }
 
     let itemId: string;
@@ -153,13 +155,14 @@ export async function createNewEmptyFluidFile(
                 const content = fetchResponse.content;
                 if (!content || !content.id) {
                     throw new NonRetryableError(
-                        "createEmptyFileNoItemId",
-                        "ODSP CreateFile call returned no item ID",
-                        DriverErrorType.incorrectServerResponse);
+                        // pre-0.58 error message: ODSP CreateFile call returned no item ID
+                        "ODSP CreateFile call returned no item ID (for empty file)",
+                        DriverErrorType.incorrectServerResponse,
+                        { driverVersion });
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
-                    ...fetchResponse.commonSpoHeaders,
+                    ...fetchResponse.propsToLog,
                 });
                 return content.id;
             },
@@ -213,14 +216,14 @@ export async function createNewFluidFileFromSummary(
                 const content = fetchResponse.content;
                 if (!content || !content.itemId) {
                     throw new NonRetryableError(
-                        "createFileNoItemId",
                         "ODSP CreateFile call returned no item ID",
-                        DriverErrorType.incorrectServerResponse);
+                        DriverErrorType.incorrectServerResponse,
+                        { driverVersion });
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                     attempts: options.refresh ? 2 : 1,
-                    ...fetchResponse.commonSpoHeaders,
+                    ...fetchResponse.propsToLog,
                 });
                 return content;
             },

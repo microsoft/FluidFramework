@@ -22,7 +22,7 @@ export class InsecureTokenProvider implements ITokenProvider {
     public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
         return {
             fromCache: true,
-            jwt:  generateToken(
+            jwt: generateToken(
                 tenantId,
                 this.tenantKey,
                 [

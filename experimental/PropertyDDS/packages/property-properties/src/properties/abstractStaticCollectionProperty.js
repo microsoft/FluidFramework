@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 const _ = require('lodash');
-const { BaseProperty } = require('./baseProperty');
 const { ConsoleUtils, constants } = require('@fluid-experimental/property-common');
 const { PathHelper, ChangeSet } = require('@fluid-experimental/property-changeset');
+const { BaseProperty } = require('./baseProperty');
 const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
@@ -30,7 +30,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             this._staticChildren = {};
         }
         this._constantChildren = {};
-    };
+    }
 
     /**
      * Returns the sub-property having the given name, or following the given paths, in this property.
@@ -93,7 +93,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         }
 
         return prop;
-    };
+    }
 
     /**
      * Returns the sub-property having the given name in this property.
@@ -104,7 +104,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      */
     _get(in_id) {
         return this._staticChildren[in_id] || this._constantChildren[in_id];
-    };
+    }
 
     /**
      * Returns a string identifying the property
@@ -119,7 +119,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         } else {
             return this.getGuid();
         }
-    };
+    }
 
     /**
      * Returns the GUID of this named property
@@ -131,7 +131,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     getGuid() {
         var guid = this.get('guid', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
         return guid ? guid.value : undefined;
-    };
+    }
 
     /**
      * returns the value of a sub-property
@@ -153,8 +153,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         ConsoleUtils.assert((property instanceof Property.ValueProperty || property instanceof Property.StringProperty),
             MSG.GET_VALUE_NOT_A_VALUE + in_ids);
         return property.getValue();
-    };
-
+    }
 
     /**
      * Get all sub-properties of the current property.
@@ -171,8 +170,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             res[ids[i]] = this.get(ids[i], { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
         }
         return res;
-    };
-
+    }
 
     /**
      * Returns the name of all the sub-properties of this property.
@@ -181,7 +179,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      */
     getIds() {
         return this._getIds();
-    };
+    }
 
     /**
      * Returns the name of all the sub-properties of this property.
@@ -190,9 +188,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      */
     _getIds() {
         return Object.keys(this._staticChildren).concat(Object.keys(this._constantChildren));
-    };
-
-
+    }
 
     /**
      * Returns an object with all the nested values contained in this property
@@ -218,7 +214,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             }
         }
         return result;
-    };
+    }
 
     /**
      * Checks whether a property with the given name exists
@@ -228,7 +224,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      */
     has(in_id) {
         return this._get(in_id) !== undefined;
-    };
+    }
 
     /**
      * Expand a path returning the property or value at the end.
@@ -269,7 +265,6 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                         }
                         iterationStart++;
                     }
-
                 }
             }
         }
@@ -290,8 +285,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             }
         }
         return node;
-
-    };
+    }
 
     /**
      * Returns the path segment for a child
@@ -303,7 +297,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      */
     _getPathSegmentForChildNode(in_childNode) {
         return PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(in_childNode.getId());
-    };
+    }
 
     /**
      * Resolves a direct child node based on the given path segment
@@ -325,7 +319,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         } else {
             return undefined;
         }
-    };
+    }
 
     /**
      * Given an object that mirrors a PSet Template, assigns the properties to the values
@@ -358,7 +352,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                 throw new Error(MSG.SET_VALUES_PATH_INVALID + propertyKey);
             }
         }
-    };
+    }
 
     /**
      * Given an object that mirrors a PSet Template, assigns the properties to the values
@@ -387,7 +381,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         } else {
             AbstractStaticCollectionProperty.prototype._setValues.call(this, in_values, false, false);
         }
-    };
+    }
 
     /**
      * Append a child property
@@ -425,7 +419,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                 throw new Error(MSG.OVERRIDDING_INHERITED_TYPES + id);
             }
         }
-    };
+    }
 
     /**
     * Merge child properties
@@ -442,7 +436,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         for (var i = 0; i < keys.length; i++) {
             this._append(in_property._staticChildren[keys[i]], true);
         }
-    };
+    }
 
     /**
      * @inheritdoc
@@ -458,7 +452,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         }
 
         return rtn;
-    };
+    }
 
     /**
      * Traverses the property hierarchy downwards until all child properties are reached
@@ -472,7 +466,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     traverseDown(in_callback) {
         ConsoleUtils.assert(_.isFunction(in_callback), MSG.CALLBACK_NOT_FCT);
         return this._traverse(in_callback, '');
-    };
+    }
 
     /**
      * Traverses all children in the child hierarchy
@@ -507,7 +501,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         }
 
         return undefined;
-    };
+    }
 
     /**
      * Traverses all static properties (properties declared in the template and not added dynamically) in the
@@ -536,7 +530,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             }
             in_callback(property, childPath);
         }
-    };
+    }
 
     /**
      * Serialize the property into a changeSet
@@ -559,7 +553,6 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         in_includeRootTypeid,
         in_dirtinessType,
         in_includeReferencedRepositories) {
-
         var serializedChildren = {};
         var childrenType;
 
@@ -567,8 +560,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         in_dirtinessType = in_dirtinessType === undefined ?
             BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE : in_dirtinessType;
 
-        this._traverseStaticProperties(function (in_node, in_pathFromTraversalStart) {
-
+        this._traverseStaticProperties(function(in_node, in_pathFromTraversalStart) {
             if (in_dirtyOnly && !in_node._isDirty(in_dirtinessType)) {
                 return;
             }
@@ -599,7 +591,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         }
 
         return serializedChildren;
-    };
+    }
 
     /**
      * Sets the property to the state in the given normalized changeset
@@ -614,11 +606,10 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      *     deserialization
      */
     _deserialize(in_serializedObj, in_reportToView) {
-
         var changeSet = {};
 
         // Traverse all properties of this template
-        this._traverseStaticProperties(function (in_node, in_pathFromTraversalStart) {
+        this._traverseStaticProperties(function(in_node, in_pathFromTraversalStart) {
             // We do not deserialize base properties, since the traverseStatic function
             // already traverses recursively
             if (in_node.getTypeid() === 'ContainerProperty' && in_node.getContext() === 'single') {
@@ -653,7 +644,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             this._reportDirtinessToView();
         }
         return changeSet;
-    };
+    }
 
     /**
      * Get a flattened, tree like representation of this object and all of it's
@@ -683,7 +674,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         flattenedRepresentation.propertyNode = this;
 
         return flattenedRepresentation;
-    };
+    }
 
     /**
      * Returns the number of children this node has
@@ -692,7 +683,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      */
     _getChildrenCount() {
         return this._getIds().length;
-    };
+    }
 
     /**
      * Sets constants
@@ -702,6 +693,5 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         ConsoleUtils.assert(_.isObject(in_constants), MSG.ASSERTION_FAILED +
             ' setConstants parameter: in_constants must be an object.');
         this._constantChildren = in_constants;
-    };
-
+    }
 }

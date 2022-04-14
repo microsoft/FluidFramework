@@ -17,6 +17,7 @@ import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/t
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { RuntimeHeaders } from "@fluidframework/container-runtime";
 
 class TestSharedDataObject1 extends DataObject {
     public get _root() {
@@ -276,7 +277,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         const url = await container.getAbsoluteUrl(dataStoreWithRequestHeaders.id);
         assert(url, "Container should return absolute url");
 
-        const headers = { wait: false, externalRequest: true };
+        const headers = { wait: false, [RuntimeHeaders.externalRequest]: true };
         // Request to the newly created data store with headers.
         const response = await loader.request({ url, headers });
 

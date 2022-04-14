@@ -16,6 +16,7 @@ import {
     ITokenClaims,
 } from "@fluidframework/protocol-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IAnyDriverError } from "@fluidframework/driver-utils";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IClientConfiguration = {
@@ -95,7 +96,10 @@ export class MockDocumentDeltaConnection
     public emitPong(latency: number) {
         this.emit("pong", latency);
     }
-    public emitError(error: any) {
+    public emitDisconnect(disconnectReason: IAnyDriverError) {
+        this.emit("error", disconnectReason);
+    }
+    public emitError(error: IAnyDriverError) {
         this.emit("error", error);
     }
 }

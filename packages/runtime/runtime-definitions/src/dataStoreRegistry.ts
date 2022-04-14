@@ -5,13 +5,6 @@
 
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 
-declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject {
-        /** @deprecated - use `FluidObject<IFluidDataStoreRegistry>` instead */
-        readonly IFluidDataStoreRegistry?: IFluidDataStoreRegistry
-     }
-}
-
 /**
  * A single registry entry that may be used to create data stores
 * It has to have either factory or registry, or both.

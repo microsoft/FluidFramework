@@ -15,9 +15,14 @@ import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
+import {
+    IAckedSummary,
+    IContainerRuntimeOptions,
+    RuntimeHeaders,
+    SummaryCollection,
+} from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { TestDataObject } from "./mockSummarizerClient";
+import { TestDataObject } from "../mockSummarizerClient";
 
 /**
  * Validates this scenario: When a data store is shared with an external app, if the data store becomes unreferenced
@@ -134,7 +139,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         );
 
         // Add externalRequest = true to the header and verify that we are unable to load dataStore2.
-        request.headers = { externalRequest: true };
+        request.headers = { [RuntimeHeaders.externalRequest]: true };
         response = await container2.request(request);
         assert(response.status === 404, "dataStore2 should have failed to load");
     });
@@ -164,7 +169,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         // load dataStore2.
         const request: IRequest = {
             url: dataStore2.id,
-            headers: { externalRequest: true },
+            headers: { [RuntimeHeaders.externalRequest]: true },
         };
         let response = await container2.request(request);
         assert(response.status === 404, "dataStore2 should have failed to load");
@@ -226,7 +231,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         // load it even though it is marked as unreferenced in initial summary.
         const request: IRequest = {
             url: dataStore2.id,
-            headers: { externalRequest: true },
+            headers: { [RuntimeHeaders.externalRequest]: true },
         };
         const response = await container2.request(request);
         assert(

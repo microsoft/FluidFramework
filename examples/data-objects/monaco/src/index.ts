@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IProvideRuntimeFactory } from "@fluidframework/container-definitions";
-import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
-import { MonacoRunner } from "./chaincode";
+import { MonacoRunner } from "./dataObject";
+import { MonacoRunnerView } from "./view";
 
 const monacoName = "@fluid-example/monaco";
 
@@ -23,14 +22,6 @@ const componentFactory = new DataObjectFactory(
     {},
 );
 
-const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    componentFactory,
-    new Map([
-        [monacoName, Promise.resolve(componentFactory)],
-    ]),
-);
+const monacoViewCallback = (model: MonacoRunner) => new MonacoRunnerView(model.text);
 
-export const fluidExport: IProvideFluidDataStoreFactory & IProvideRuntimeFactory = {
-    IFluidDataStoreFactory: componentFactory,
-    IRuntimeFactory: runtimeFactory,
-};
+export const fluidExport = new ContainerViewRuntimeFactory(componentFactory, monacoViewCallback);

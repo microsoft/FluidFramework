@@ -13,7 +13,7 @@
             "optionOverrides":{
                 "odsp":{
                     "loader":{
-                        "summarizeProtocolTree":  [true,false]
+                        "summarizeProtocolTree": [true,false]
                     }
                 }
             }
@@ -86,6 +86,37 @@
             "totalBlobCount": 300,
             "blobSize": 10240,
             "detachedBlobCount": 10
+        },
+        "binarySnapshotFormat": {
+            "opRatePerMin": 60,
+            "progressIntervalMs": 5000,
+            "numClients": 4,
+            "totalSendCount": 150,
+            "readWriteCycleMs": 10000,
+            "optionOverrides":{
+                "odsp":{
+                    "configurations":{
+                        "Fluid.Driver.Odsp.binaryFormatSnapshot": [true]
+                    }
+                }
+            }
+        },
+        "odspContainerTypeSummaryUpload": {
+            "opRatePerMin": 60,
+            "progressIntervalMs": 5000,
+            "numClients": 4,
+            "totalSendCount": 150,
+            "readWriteCycleMs": 10000,
+            "optionOverrides":{
+                "odsp":{
+                    "configurations":{
+                        "Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload": [true]
+                    },
+                    "loader":{
+                        "summarizeProtocolTree": [true]
+                    }
+                }
+            }
         }
     }
 }

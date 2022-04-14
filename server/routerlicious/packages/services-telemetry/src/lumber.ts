@@ -22,7 +22,7 @@ import {
 // or error() on Lumber to emit the data.
 export class Lumber<T extends string = LumberEventName> {
     private readonly _startTime = performance.now();
-    private  _properties = new Map<string, any>();
+    private _properties = new Map<string, any>();
     private _durationInMs?: number;
     private _successful?: boolean;
     private _message?: string;
@@ -149,7 +149,7 @@ export class Lumber<T extends string = LumberEventName> {
         }
 
         const durationOverwrite = parseFloat(this.properties.get("durationInMs"));
-        this._durationInMs = isNaN(durationOverwrite) ?  performance.now() - this._startTime : durationOverwrite;
+        this._durationInMs = isNaN(durationOverwrite) ? performance.now() - this._startTime : durationOverwrite;
 
         this._engineList.forEach((engine) => engine.emit(this));
         this._completed = true;

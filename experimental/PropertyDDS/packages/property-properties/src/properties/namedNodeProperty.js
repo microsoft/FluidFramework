@@ -15,7 +15,6 @@ const { NodeProperty } = require('./nodeProperty');
  * This makes it possible to store it in a set collection.
  */
 export class NamedNodeProperty extends NodeProperty {
-
     /**
      * @param {object} in_params         - List of parameters
      * @param {string} in_params.id      - id of the property (null, if the GUID should be used for the ID)
@@ -54,7 +53,6 @@ export class NamedNodeProperty extends NodeProperty {
      * @return {string} The URN
      */
     getUrn = NamedProperty.prototype.getUrn;
-
 }
 
 NamedNodeProperty.prototype._typeid = 'NamedNodeProperty';

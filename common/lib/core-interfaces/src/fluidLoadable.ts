@@ -27,28 +27,3 @@ export interface IFluidRunnable {
     run(...args: any[]): Promise<void>;
     stop(reason?: string): void;
 }
-
-/**
- * @deprecated 0.42 - Not recommended for use and will be removed in an upcoming release.
- */
-export const IFluidConfiguration: keyof IProvideFluidConfiguration = "IFluidConfiguration";
-
-/**
- * @deprecated 0.42 - Not recommended for use and will be removed in an upcoming release.
- */
-export interface IProvideFluidConfiguration {
-    /**
-     * @deprecated 0.42 - Not recommended for use and will be removed in an upcoming release.
-     */
-    readonly IFluidConfiguration: IFluidConfiguration;
-}
-
-/**
- * @deprecated 0.42 - Not recommended for use and will be removed in an upcoming release.
- */
-export interface IFluidConfiguration extends IProvideFluidConfiguration {
-    /**
-     * @deprecated 0.42 - Not recommended for use and will be removed in an upcoming release.
-     */
-    scopes: string[];
-}

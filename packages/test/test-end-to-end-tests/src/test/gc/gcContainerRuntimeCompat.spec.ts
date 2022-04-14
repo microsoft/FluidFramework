@@ -20,9 +20,10 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
+import { loadSummarizer, TestDataObject, submitAndAckSummary, getGCStateFromSummary } from "../mockSummarizerClient";
 import { pkgVersion } from "../../packageVersion";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-import { loadSummarizer, TestDataObject, submitAndAckSummary, getGCStateFromSummary } from "./mockSummarizerClient";
+import { mockConfigProvider } from "./mockConfigProivder";
 
 /**
  * These tests validate the compatibility of the GC data in the summary tree across the past 2 container runtime
@@ -57,6 +58,10 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
     );
     const logger = new TelemetryNullLogger();
 
+    // Enable config provider setting to write GC data at the root.
+    const settings = { "Fluid.GarbageCollection.WriteDataAtRoot": "true" };
+    const configProvider = mockConfigProvider(settings);
+
     // Stores the latest summary uploaded to the server.
     let latestUploadedSummary: ISummaryTree | undefined;
     // Stores the latest summary context uploaded to the server.
@@ -68,11 +73,17 @@ describeFullCompat("GC summary compatibility tests", (getTestObjectProvider) => 
     let dataStoreA: TestDataObject;
 
     const createContainer = async (factory: IRuntimeFactory): Promise<IContainer> => {
-        return provider.createContainer(factory);
+        return provider.createContainer(factory, { configProvider });
     };
 
     const getNewSummarizer = async (factory: IRuntimeFactory, summaryVersion?: string) => {
-        return loadSummarizer(provider, factory, mainContainer.deltaManager.lastSequenceNumber, summaryVersion);
+        return loadSummarizer(
+            provider,
+            factory,
+            mainContainer.deltaManager.lastSequenceNumber,
+            summaryVersion,
+            { configProvider },
+        );
     };
 
     /**

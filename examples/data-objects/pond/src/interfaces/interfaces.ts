@@ -3,15 +3,6 @@
  * Licensed under the MIT License.
  */
 
-declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject extends Readonly<Partial<IProvideFluidUserInformation>> {
-        /**
-         * @deprecated - Use  `FluidObject<IFluidUserInformation>` instead
-        */
-        readonly IFluidUserInformation?: IFluidUserInformation
-     }
-}
-
 export const IFluidUserInformation: keyof IProvideFluidUserInformation = "IFluidUserInformation";
 
 export interface IProvideFluidUserInformation {

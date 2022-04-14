@@ -6,9 +6,6 @@
 import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import {
     FluidObject,
-    IFluidCodeDetails,
-    IFluidConfiguration,
-    IFluidObject,
     IRequest,
     IResponse,
 } from "@fluidframework/core-interfaces";
@@ -18,7 +15,6 @@ import {
     IClientDetails,
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITree,
     MessageType,
     ISummaryTree,
     IVersion,
@@ -27,8 +23,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
-import { ICriticalContainerError, ContainerWarning } from "./error";
+import { ICriticalContainerError } from "./error";
 import { ILoader, ILoaderOptions } from "./loader";
+import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
@@ -70,11 +67,6 @@ export interface IRuntime extends IDisposable {
      * Executes a request against the runtime
      */
     request(request: IRequest): Promise<IResponse>;
-
-    /**
-     * Snapshots the runtime
-     */
-    snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
 
     /**
      * Notifies the runtime of a change in the connection state
@@ -123,10 +115,6 @@ export interface IRuntime extends IDisposable {
 export interface IContainerContext extends IDisposable {
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
-    /**
-     * @deprecated 0.45 - Configuration is not recommended to be used and will be removed in an upcoming release.
-     */
-    readonly configuration?: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly storage: IDocumentStorageService;
@@ -147,24 +135,15 @@ export interface IContainerContext extends IDisposable {
     getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
-    /** @deprecated - Use `taggedLogger` if present. Otherwise, be sure to handle tagged data
-     * before sending events to this logger. In time we will assume the presence of `taggedLogger`,
-     * but in the meantime, current and older loader versions buttress loggers that do not support tags.
-     * IContainerContext will retain both options, but hosts must now support tags as the loader
-     * will soon plumb taggedLogger's events (potentially tagged) to the host's logger.
-     */
-    readonly logger: ITelemetryBaseLogger;
     // The logger implementation, which would support tagged events, should be provided by the loader.
-    readonly taggedLogger?: ITelemetryBaseLogger;
+    readonly taggedLogger: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     pendingLocalState?: unknown;
 
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IFluidObject & FluidObject;
-
-    raiseContainerWarning(warning: ContainerWarning): void;
+    readonly scope: FluidObject;
 
     /**
      * Get an absolute url for a provided container-relative request.

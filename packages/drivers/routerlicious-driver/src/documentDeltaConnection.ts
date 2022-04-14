@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { IDocumentDeltaConnection, DriverError } from "@fluidframework/driver-definitions";
-import { IClient, IConnect } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-utils";
+import { IClient, IConnect } from "@fluidframework/protocol-definitions";
+import type { io as SocketIOClientStatic } from "socket.io-client";
 import { errorObjectFromSocketError, IR11sSocketError } from "./errorUtils";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -20,7 +22,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
         tenantId: string,
         id: string,
         token: string | null,
-        io: SocketIOClientStatic,
+        io: typeof SocketIOClientStatic,
         client: IClient,
         url: string,
         logger: ITelemetryLogger,
@@ -33,6 +35,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
                     tenantId,
                 },
                 reconnection: false,
+                // Default to websocket connection, with long-polling disabled
                 transports: ["websocket"],
                 timeout: timeoutMs,
             });
@@ -46,7 +49,9 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
             versions: protocolVersions,
         };
 
-        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger);
+        // TODO: expose to host at factory level
+        const enableLongPollingDowngrades = true;
+        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger, enableLongPollingDowngrades);
 
         await deltaConnection.initialize(connectMessage, timeoutMs);
         return deltaConnection;
@@ -55,12 +60,12 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
     /**
      * Error raising for socket.io issues
      */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+    protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
         // Note: we suspect the incoming error object is either:
         // - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
         // - anything else: let base class handle it
         if (canRetry && Number.isInteger(error?.code) && typeof error?.message === "string") {
-            return errorObjectFromSocketError(error as IR11sSocketError, handler) as DriverError;
+            return errorObjectFromSocketError(error as IR11sSocketError, handler);
         } else {
             return super.createErrorObject(handler, error, canRetry);
         }

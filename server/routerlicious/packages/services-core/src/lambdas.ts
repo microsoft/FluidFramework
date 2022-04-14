@@ -114,9 +114,7 @@ export function extractBoxcar(message: IQueuedMessage): IBoxcarMessage {
     if (!parsedMessage) {
         return {
             contents: [],
-            // eslint-disable-next-line no-null/no-null
             documentId: null,
-            // eslint-disable-next-line no-null/no-null
             tenantId: null,
             type: BoxcarType,
         };

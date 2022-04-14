@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
@@ -85,7 +83,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             const tenant = await this.tenantManager.getTenant(tenantId, documentId);
             gitManager = tenant.gitManager;
 
-            summaryReader = new SummaryReader(documentId, gitManager, this.enableWholeSummaryUpload);
+            summaryReader = new SummaryReader(tenantId, documentId, gitManager, this.enableWholeSummaryUpload);
             [latestSummary, document] = await Promise.all([
                 summaryReader.readLastSummary(),
                 this.documentCollection.findOne({ documentId, tenantId }),

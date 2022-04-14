@@ -17,6 +17,7 @@ export interface ISummarizerClientElectionEvents extends IEvent {
 
 export interface ISummarizerClientElection extends IEventProvider<ISummarizerClientElectionEvents> {
     readonly electedClientId: string | undefined;
+    readonly electedParentId: string | undefined;
 }
 
 /**
@@ -43,6 +44,9 @@ export class SummarizerClientElection
 
     public get electedClientId() {
         return this.clientElection.electedClient?.clientId;
+    }
+    public get electedParentId() {
+        return this.clientElection.electedParent?.clientId;
     }
 
     constructor(
@@ -79,6 +83,7 @@ export class SummarizerClientElection
                         lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
                         electionSequenceNumber,
                         nextElectedClientId: this.clientElection.peekNextElectedClient()?.clientId,
+                        electionEnabled: this.electionEnabled,
                     });
                     this.lastReportedSeq = sequenceNumber;
                 }
@@ -126,9 +131,10 @@ export class SummarizerClientElection
     }
 
     public serialize(): ISerializedElection {
-        const { electedClientId, electionSequenceNumber } = this.clientElection.serialize();
+        const { electedClientId, electedParentId, electionSequenceNumber } = this.clientElection.serialize();
         return {
             electedClientId,
+            electedParentId,
             electionSequenceNumber: this.lastSummaryAckSeqForClient ?? electionSequenceNumber,
         };
     }
@@ -143,5 +149,5 @@ export class SummarizerClientElection
     }
 
     public static readonly clientDetailsPermitElection = (details: IClientDetails): boolean =>
-        details.capabilities.interactive && details.type !== summarizerClientType;
+        details.capabilities.interactive || details.type === summarizerClientType;
 }

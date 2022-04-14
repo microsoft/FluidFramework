@@ -95,6 +95,11 @@ variables:
       value: latest
     - name: latestContainerTag
       value: $(containerRegistryUrl)/$(buildContainerName):$(latestContainerTagSuffix)
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/next') }}:
+    - name: latestContainerTagSuffix
+      value: next
+    - name: latestContainerTag
+      value: $(containerRegistryUrl)/$(buildContainerName):$(latestContainerTagSuffix)
 # tag the git repo when we published the docker image if the releaseKind is docker,
 # otherwise tag with the publishing the packages (where the releaseKind is both or npm)
 - ${{ if ne(parameters.releaseKind, 'docker') }}:

@@ -55,7 +55,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         );
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return this.runWithRetry(
             async () => this.internalStorageService.getVersions(versionId, count),
             "storage_getVersions",
@@ -108,7 +108,8 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 
     private checkStorageDisposed() {
         if (this._disposed) {
-            throw new GenericError("storageServiceDisposedCannotRetry", { canRetry: false });
+            // pre-0.58 error message: storageServiceDisposedCannotRetry
+            throw new GenericError("Storage Service is disposed. Cannot retry", { canRetry: false });
         }
         return undefined;
     }
@@ -119,7 +120,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             callName,
             this.logger,
             {
-                retry: () => this.checkStorageDisposed(),
+                onRetry: () => this.checkStorageDisposed(),
             },
         );
     }

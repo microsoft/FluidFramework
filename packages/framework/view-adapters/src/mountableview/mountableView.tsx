@@ -118,7 +118,6 @@ export class MountableView implements IFluidMountableView {
             if (this.htmlView.remove !== undefined) {
                 this.htmlView.remove();
             }
-            // eslint-disable-next-line no-null/no-null
             while (this.containerElement.firstChild !== null) {
                 this.containerElement.removeChild(this.containerElement.firstChild);
             }

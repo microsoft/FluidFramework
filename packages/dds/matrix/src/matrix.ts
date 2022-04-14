@@ -232,8 +232,6 @@ export class SharedMatrix<T = any>
     ) {
         if (this.undo !== undefined) {
             let oldValue = this.cells.getCell(rowHandle, colHandle);
-
-            // eslint-disable-next-line no-null/no-null
             if (oldValue === null) {
                 oldValue = undefined;
             }
@@ -362,7 +360,6 @@ export class SharedMatrix<T = any>
             for (let col = 0; col < this.colCount; col++) {
                 const colHandle = this.colHandles.getHandle(col);
                 const value = this.cells.getCell(rowHandle, colHandle);
-                // eslint-disable-next-line no-null/no-null
                 if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
                         row,
@@ -406,7 +403,6 @@ export class SharedMatrix<T = any>
             for (let row = 0; row < this.rowCount; row++) {
                 const rowHandle = this.rowHandles.getHandle(row);
                 const value = this.cells.getCell(rowHandle, colHandle);
-                // eslint-disable-next-line no-null/no-null
                 if (this.isAttached() && value !== undefined && value !== null) {
                     this.sendSetCellOp(
                         row,
@@ -619,11 +615,6 @@ export class SharedMatrix<T = any>
                 }
             }
         }
-    }
-
-    protected registerCore() {
-        this.rows.startOrUpdateCollaboration(this.runtime.clientId, 0);
-        this.cols.startOrUpdateCollaboration(this.runtime.clientId, 0);
     }
 
     // Invoked by PermutationVector to notify IMatrixConsumers of row insertion/deletions.

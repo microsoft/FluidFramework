@@ -6,12 +6,13 @@
 import * as Comlink from "comlink";
 import {
     AttachState,
-    ICodeLoader,
     IContainerContext,
     IRuntime,
     IProxyLoaderFactory,
     ILoaderOptions,
     IContainer,
+    ICodeDetailsLoader,
+    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
@@ -27,7 +28,7 @@ import {
     OuterUrlResolver,
 } from "@fluidframework/iframe-driver";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { ISequencedDocumentMessage, ITree, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 export interface IFrameInnerApi {
@@ -77,9 +78,6 @@ class ProxyRuntime implements IRuntime {
     async request(request: IRequest): Promise<IResponse> {
         throw new Error("Method not implemented.");
     }
-    async snapshot(tagMessage: string, fullTree?: boolean | undefined): Promise<ITree | null> {
-        throw new Error("Method not implemented.");
-    }
     async setConnectionState(connected: boolean, clientId?: string) {
     }
     async process(message: ISequencedDocumentMessage, local: boolean, context: any) {
@@ -107,9 +105,14 @@ class ProxyChaincode extends RuntimeFactoryHelper {
     }
 }
 
-class ProxyCodeLoader implements ICodeLoader {
-    async load() {
-        return Promise.resolve({ fluidExport: new ProxyChaincode() });
+class ProxyCodeLoader implements ICodeDetailsLoader {
+    async load(source: IFluidCodeDetails) {
+        return {
+            module: {
+                fluidExport: new ProxyChaincode(),
+            },
+            details: source,
+        };
     }
 }
 
@@ -137,7 +140,7 @@ export class IFrameOuterHost {
         // them all in one (otherwise there are mysterious runtime errors)
         const combinedProxy = {};
 
-        const outerDocumentServiceProxy =  new DocumentServiceFactoryProxy(
+        const outerDocumentServiceProxy = new DocumentServiceFactoryProxy(
             MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
             this.hostConfig.options,
         );

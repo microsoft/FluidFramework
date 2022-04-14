@@ -7,8 +7,8 @@ import assert from "assert";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerPropertyBags, ITelemetryLoggerPropertyBag, TelemetryLogger } from "../logger";
 
-class TestTelemetryLogger  extends TelemetryLogger {
-    public events: ITelemetryBaseEvent[]=[];
+class TestTelemetryLogger extends TelemetryLogger {
+    public events: ITelemetryBaseEvent[] = [];
     public send(event: ITelemetryBaseEvent): void {
         this.events.push(this.prepareEvent(event));
     }

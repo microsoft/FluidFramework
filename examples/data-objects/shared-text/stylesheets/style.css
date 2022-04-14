@@ -276,6 +276,10 @@ div.titleletters {
     display: inline-block;
     padding-top: 6px;
 }
+.flow-container {
+    touch-action: none;
+    overflow: hidden;
+}
 .graph-canvas {
     padding-left: 0;
     padding-right: 0;

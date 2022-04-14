@@ -2,11 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { IFluidPackage, IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { getHashedDocumentId } from "../odspPublicUtils";
@@ -106,7 +105,21 @@ describe("Odsp Driver Resolver", () => {
     it("Should resolve url with a string in the codeDetails package", async () => {
         const resolvedUrl = await resolver.resolve(request);
         const codeDetails = { package: packageName };
-        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
+        // codeDetails is cast to any for testing the IFluidCodeDetails approach
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails as any);
+
+        const [url, queryString] = response?.split("?") ?? [];
+        const searchParams = new URLSearchParams(queryString);
+        assert.strictEqual(searchParams.get("itemId"), resolvedUrl.itemId, "Item id should match");
+        assert.strictEqual(searchParams.get("driveId"), driveId, "Drive Id should match");
+        assert.strictEqual(searchParams.get("path"), "datastore", "Path should match");
+        assert.strictEqual(searchParams.get("containerPackageName"), packageName, "ContainerPackageName should match");
+        assert.strictEqual(url, `${siteUrl}`, "Url should match");
+    });
+
+    it("Should resolve url given container package info", async () => {
+        const resolvedUrl = await resolver.resolve(request);
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", {name: packageName});
 
         const [url, queryString] = response?.split("?") ?? [];
         const searchParams = new URLSearchParams(queryString);
@@ -119,12 +132,13 @@ describe("Odsp Driver Resolver", () => {
 
     it("Should resolve url with a IFluidPackage in the codeDetails package", async () => {
         const resolvedUrl = await resolver.resolve(request);
-        const fluidPackage: IFluidPackage = {
+        const fluidPackage: any = {
             name: packageName,
             fluid: {},
         };
         const codeDetails = { package: fluidPackage };
-        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails);
+        // codeDetails is cast to any for testing the IFluidCodeDetails approach
+        const response = await resolver.getAbsoluteUrl(resolvedUrl, "/datastore", codeDetails as any);
 
         const [url, queryString] = response?.split("?") ?? [];
         const searchParams = new URLSearchParams(queryString);

@@ -21,6 +21,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
     const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
     const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+    const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
     const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
 
     const kafkaForwardClientId = config.get("deli:kafkaClientId");
@@ -37,18 +38,21 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     // Database connection for global db if enabled
     let globalDbMongoManager;
+    let globalDb;
     const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
     if (globalDbEnabled) {
         const globalDbMongoUrl = config.get("mongo:globalDbEndpoint") as string;
         const globalDbMongoFactory = new services.MongoDbFactory(globalDbMongoUrl, bufferMaxEntries);
         globalDbMongoManager = new core.MongoManager(globalDbMongoFactory, false);
+        globalDb = await globalDbMongoManager.getDatabase();
     }
     // Connection to stored document details
     const operationsDbMongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
     const operationsDbMongoManager = new core.MongoManager(operationsDbMongoFactory, false);
-    const client = await operationsDbMongoManager.getDatabase();
+    const operationsDb = await operationsDbMongoManager.getDatabase();
+    const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
     // eslint-disable-next-line @typescript-eslint/await-thenable
-    const collection = await client.collection<core.IDocument>(documentsCollectionName);
+    const collection = await db.collection<core.IDocument>(documentsCollectionName);
 
     const forwardProducer = services.createProducer(
         kafkaLibrary,
@@ -59,6 +63,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
         kafkaReplicationFactor,
+        kafkaMaxBatchSize,
         kafkaSslCACertFilePath);
     const reverseProducer = services.createProducer(
         kafkaLibrary,
@@ -69,6 +74,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
         kafkaReplicationFactor,
+        kafkaMaxBatchSize,
         kafkaSslCACertFilePath);
 
     const redisConfig = config.get("redis");
@@ -107,8 +113,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         tenantManager,
         combinedProducer,
         reverseProducer,
-        core.DefaultServiceConfiguration,
-        globalDbMongoManager);
+        core.DefaultServiceConfiguration);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {

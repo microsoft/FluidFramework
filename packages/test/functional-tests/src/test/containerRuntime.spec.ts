@@ -79,6 +79,7 @@ describe("Container Runtime", () => {
             while (Date.now() - startTime < processingDelay) { }
 
             scheduleManager.afterOpProcessing(undefined, message);
+            deltaManager.emit("op", message);
         }
 
         beforeEach(async () => {

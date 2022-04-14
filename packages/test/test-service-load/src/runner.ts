@@ -17,7 +17,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
-import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
+import { generateConfigurations, generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 
 function printStatus(runConfig: IRunConfig, message: string) {
     if (runConfig.verbose) {
@@ -71,14 +71,6 @@ async function main() {
     // will get its own set of randoms
     randEng.seedWithArray([seed, runId]);
 
-    const l = await loggerP;
-    process.on("unhandledRejection", (reason, promise) => {
-        try {
-            l.sendErrorEvent({ eventName: "UnhandledPromiseRejection" }, reason);
-        } catch (e) {
-            console.error("Error during logging unhandled promise rejection: ", e);
-        }
-    });
     const result = await runnerProcess(
         driver,
         {
@@ -147,6 +139,8 @@ async function runnerProcess(
         const containerOptions = generateRuntimeOptions(
             seed, runConfig.testConfig?.optionOverrides?.[driver]?.container);
 
+        const configurations = generateConfigurations(
+            seed, runConfig.testConfig?.optionOverrides?.[driver]?.configurations);
         const testDriver: ITestDriver = await createTestDriver(driver, seed, runConfig.runId);
         const baseLogger = await loggerP;
         const logger = ChildLogger.create(baseLogger, undefined,
@@ -157,6 +151,13 @@ async function runnerProcess(
                     driverEndpointName: testDriver.endpointName,
                 },
             });
+        process.on("unhandledRejection", (reason, promise) => {
+            try {
+                logger.sendErrorEvent({ eventName: "UnhandledPromiseRejection" }, reason);
+            } catch (e) {
+                console.error("Error during logging unhandled promise rejection: ", e);
+            }
+        });
 
         // Cycle between creating new factory vs. reusing factory.
         // Certain behavior (like driver caches) are per factory instance, and by reusing it we hit those code paths
@@ -181,6 +182,11 @@ async function runnerProcess(
                 codeLoader: createCodeLoader(containerOptions[runConfig.runId % containerOptions.length]),
                 logger,
                 options: loaderOptions[runConfig.runId % containerOptions.length],
+                configProvider: {
+                    getRawConfig(name) {
+                        return configurations[runConfig.runId % configurations.length][name];
+                    },
+                },
             });
 
             const container: IContainer = await loader.resolve({ url, headers });

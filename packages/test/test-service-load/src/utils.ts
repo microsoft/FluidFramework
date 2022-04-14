@@ -8,10 +8,9 @@ import fs from "fs";
 import random from "random-js";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
@@ -19,7 +18,7 @@ import { ITelemetryBufferedLogger, ITestDriver, TestDriverTypes } from "@fluidfr
 import { createFluidTestDriver, generateOdspHostStoragePolicy, OdspTestDriver } from "@fluidframework/test-drivers";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { createFluidExport, ILoadTest } from "./loadTestDataStore";
-import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
+import { generateConfigurations, generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 
@@ -59,6 +58,10 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
         return baseFlushP;
     }
     send(event: ITelemetryBaseEvent): void {
+        if (typeof event.testCategoryOverride === "string") {
+            event.category = event.testCategoryOverride;
+        }
+
         this.baseLogger?.send({ ...event, hostName: pkgName });
 
         event.Event_Time = Date.now();
@@ -103,7 +106,7 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
         const id = this.size.toString();
         this.blobs.set(id, content);
-        return { id, url: "" };
+        return { id };
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
@@ -122,6 +125,10 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     const containerOptions = random.pick(
         randEng,
         generateRuntimeOptions(seed, testConfig.optionOverrides?.[testDriver.type]?.container));
+    const configurations = random.pick(
+        randEng,
+        generateConfigurations(seed, testConfig?.optionOverrides?.[testDriver.type]?.configurations));
+
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
@@ -136,6 +143,11 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
             }),
         options: loaderOptions,
         detachedBlobStorage: new MockDetachedBlobStorage(),
+        configProvider: {
+            getRawConfig(name) {
+                return configurations[name];
+            },
+        },
     });
 
     const container: IContainer = await loader.createDetachedContainer(codeDetails);

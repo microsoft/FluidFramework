@@ -7,6 +7,7 @@ import {
     IEvent,
     IEventProvider,
     ITelemetryLogger,
+    ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import {
     IFluidLoadable,
@@ -19,14 +20,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
-
-declare module "@fluidframework/core-interfaces" {
-    export interface IFluidObject {
-        /** @deprecated - use `FluidObject<ISummarizer>` instead */
-        readonly ISummarizer?: ISummarizer;
-
-     }
-}
 
 /**
  * @deprecated - This will be removed in a later release.
@@ -144,8 +137,20 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
  * only relevant at the root of the tree.
  */
 export interface IGeneratedSummaryStats extends ISummaryStats {
+    /** The total number of data stores in the container. */
     readonly dataStoreCount: number;
+    /** The number of data stores that were summarized in this summary. */
     readonly summarizedDataStoreCount: number;
+    /** The number of data stores whose GC reference state was updated in this summary. */
+    readonly gcStateUpdatedDataStoreCount?: number;
+    /** The size of the gc blobs in this summary. */
+    readonly gcTotalBlobsSize?: number;
+    /** The number of gc blobs in this summary. */
+    readonly gcBlobNodeCount?: number;
+    /** Sum of the sizes of all op contents since the last summary */
+    readonly opsSizesSinceLastSummary: number;
+    /** Number of non-system ops since the last summary @see isSystemMessage */
+    readonly nonSystemOpsSinceLastSummary: number;
 }
 
 /** Base results for all submitSummary attempts. */
@@ -155,6 +160,7 @@ export interface IBaseSummarizeResult {
     readonly error: any;
     /** Reference sequence number as of the generate summary attempt. */
     readonly referenceSequenceNumber: number;
+    readonly minimumSequenceNumber: number;
 }
 
 /** Results of submitSummary after generating the summary tree. */
@@ -166,6 +172,8 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly summaryStats: IGeneratedSummaryStats;
     /** Time it took to generate the summary tree and stats. */
     readonly generateDuration: number;
+    /** True if the full tree regeneration with no handle reuse optimizations was forced. */
+    readonly forcedFullTree: boolean;
 }
 
 /** Results of submitSummary after uploading the tree to storage. */
@@ -369,3 +377,20 @@ export interface ISummarizeHeuristicRunner {
     /** Disposes of resources */
     dispose(): void;
 }
+
+type ISummarizeTelemetryRequiredProperties =
+    /** Reason code for attempting to summarize */
+    "summarizeReason";
+
+type ISummarizeTelemetryOptionalProperties =
+    /** Number of attempts within the last time window, used for calculating the throttle delay. */
+    "summaryAttempts" |
+    /** Number of attempts within the current phase (currently capped at 2 ) */
+    "summaryAttemptsPerPhase" |
+    /** One-based count of phases we've attempted (used to index into an array of ISummarizeOptions */
+    "summaryAttemptPhase" |
+    keyof ISummarizeOptions;
+
+export type ISummarizeTelemetryProperties =
+    Pick<ITelemetryProperties, ISummarizeTelemetryRequiredProperties> &
+    Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;

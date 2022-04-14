@@ -35,7 +35,8 @@ export enum ContainerErrorType {
      usageError = "usageError",
 
     /**
-     * Error indicating an client session has expired.
+     * Error indicating an client session has expired. Currently this only happens when GC is allowed on a document and
+     * aids in safely deleting unused objects.
      */
     clientSessionExpiredError = "clientSessionExpiredError",
 }

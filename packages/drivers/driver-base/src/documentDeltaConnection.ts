@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, extractLogSafeErrorProperties, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
-    DriverError,
 } from "@fluidframework/driver-definitions";
-import { createGenericNetworkError } from "@fluidframework/driver-utils";
+import { createGenericNetworkError, IAnyDriverError } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
     IClientConfiguration,
@@ -29,9 +28,9 @@ import {
     loggerToMonitoringContext,
     MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-
-// Local storage key to disable the BatchManager
-const batchManagerDisabledKey = "Fluid.Driver.BaseDocumentDeltaConnection.DisableBatchManager";
+import type { Socket } from "socket.io-client";
+// For now, this package is versioned and released in unison with the specific drivers
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -65,9 +64,9 @@ export class DocumentDeltaConnection
 
     private socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    protected readonly submitManager: BatchManager<IDocumentMessage[]>;
-
     private _details: IConnected | undefined;
+
+    private reconnectAttempts: number = 0;
 
     // Listeners only needed while the connection is in progress
     private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
@@ -88,7 +87,6 @@ export class DocumentDeltaConnection
      */
     protected _disposed: boolean = false;
     private readonly mc: MonitoringContext;
-    protected readonly isBatchManagerDisabled: boolean = false;
     /**
      * @deprecated - Implementors should manage their own logger or monitoring context
      */
@@ -106,19 +104,19 @@ export class DocumentDeltaConnection
     /**
      * @param socket - websocket to be used
      * @param documentId - ID of the document
+     * @param logger - for reporting telemetry events
+     * @param enableLongPollingDowngrades - allow connection to be downgraded to long-polling on websocket failure
      */
     protected constructor(
-        protected readonly socket: SocketIOClient.Socket,
+        protected readonly socket: Socket,
         public documentId: string,
         logger: ITelemetryLogger,
+        private readonly enableLongPollingDowngrades: boolean = false,
     ) {
         super();
 
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(logger, "DeltaConnection"));
-
-        this.submitManager = new BatchManager<IDocumentMessage[]>(
-            (submitType, work) => this.emitMessages(submitType, work));
 
         this.on("newListener", (event, listener) => {
             assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
@@ -147,8 +145,6 @@ export class DocumentDeltaConnection
                     });
             }
         });
-
-        this.isBatchManagerDisabled = this.mc.config.getBoolean(batchManagerDisabledKey) === true;
     }
 
     /**
@@ -280,11 +276,7 @@ export class DocumentDeltaConnection
     }
 
     protected submitCore(type: string, messages: IDocumentMessage[]) {
-        if (this.isBatchManagerDisabled) {
-            this.emitMessages(type, [messages]);
-        } else {
-            this.submitManager.add(type, messages);
-        }
+        this.emitMessages(type, [messages]);
     }
 
     /**
@@ -313,10 +305,12 @@ export class DocumentDeltaConnection
     public dispose() {
         this.disposeCore(
             false, // socketProtocolError
-            createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
+            createGenericNetworkError(
+                // pre-0.58 error message: clientClosingConnection
+                "Client closing delta connection", { canRetry: true }, { driverVersion }));
     }
 
-    protected disposeCore(socketProtocolError: boolean, err: any) {
+    protected disposeCore(socketProtocolError: boolean, err: IAnyDriverError) {
         // Can't check this.disposed here, as we get here on socket closure,
         // so _disposed & socket.connected might be not in sync while processing
         // "dispose" event.
@@ -341,7 +335,7 @@ export class DocumentDeltaConnection
      *  (not on Fluid protocol level)
      * @param reason - reason for disconnect
      */
-    protected disconnect(socketProtocolError: boolean, reason: any) {
+    protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
         this.socket.disconnect();
     }
 
@@ -351,26 +345,56 @@ export class DocumentDeltaConnection
         this.earlyOpHandlerAttached = true;
 
         this._details = await new Promise<IConnected>((resolve, reject) => {
-            const fail = (socketProtocolError: boolean, err: DriverError) => {
+            const fail = (socketProtocolError: boolean, err: IAnyDriverError) => {
                 this.disposeCore(socketProtocolError, err);
                 reject(err);
             };
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
+                let isWebSocketTransportError = false;
                 try {
                     const description = error?.description;
                     if (description && typeof description === "object") {
+                        if (error.type === "TransportError") {
+                            isWebSocketTransportError = true;
+                        }
                         // That's a WebSocket. Clear it as we can't log it.
                         description.target = undefined;
                     }
                 } catch(_e) {}
-                fail(true, this.createErrorObject("connectError", error));
+
+                // Handle socket transport downgrading.
+                if (isWebSocketTransportError &&
+                    this.enableLongPollingDowngrades &&
+                    this.socket.io.opts.transports?.[0] !== "polling") {
+                    // Downgrade transports to polling upgrade mechanism.
+                    this.socket.io.opts.transports = ["polling", "websocket"];
+                    // Don't alter reconnection behavior if already enabled.
+                    if (!this.socket.io.reconnection()) {
+                        // Allow single reconnection attempt using polling upgrade mechanism.
+                        this.socket.io.reconnection(true);
+                        this.socket.io.reconnectionAttempts(1);
+                    }
+                }
+
+                // Allow built-in socket.io reconnection handling.
+                if (this.socket.io.reconnection() &&
+                    this.reconnectAttempts < this.socket.io.reconnectionAttempts()) {
+                    // Reconnection is enabled and maximum reconnect attempts have not been reached.
+                    return;
+                }
+
+                fail(true, this.createErrorObject("connect_error", error));
+            });
+
+            this.addConnectionListener("reconnect_attempt", () => {
+                this.reconnectAttempts++;
             });
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                fail(true, this.createErrorObject("connectTimeout"));
+                fail(true, this.createErrorObject("connect_timeout"));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -390,7 +414,7 @@ export class DocumentDeltaConnection
                     // In this case we will get "read", even if we requested "write"
                     if (actualMode !== requestedMode) {
                         fail(false, this.createErrorObject(
-                            "connectDocumentSuccess",
+                            "connect_document_success",
                             "Connected in a different mode than was requested",
                             false,
                         ));
@@ -399,7 +423,7 @@ export class DocumentDeltaConnection
                 } else {
                     if (actualMode === "write") {
                         fail(false, this.createErrorObject(
-                            "connectDocumentSuccess",
+                            "connect_document_success",
                             "Connected in write mode without write permissions",
                             false,
                         ));
@@ -441,7 +465,7 @@ export class DocumentDeltaConnection
 
                 // This is not an socket.io error - it's Fluid protocol error.
                 // In this case fail connection and indicate that we were unable to create connection
-                fail(false, this.createErrorObject("connectDocumentError", error));
+                fail(false, this.createErrorObject("connect_document_error", error));
             }));
 
             this.socket.emit("connect_document", connectMessage);
@@ -515,29 +539,29 @@ export class DocumentDeltaConnection
     /**
      * Error raising for socket.io issues
      */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+    protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
         // Note: we suspect the incoming error object is either:
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - an Error object thrown by socket.io engine. Be careful with not recording PII!
-        let message = `socket.io (${handler})`;
-        if (typeof error !== "object") {
-            message = `${message}: ${error}`;
-        } else if (error?.type === "TransportError") {
+        let message: string;
+        if (error?.type === "TransportError") {
             // JSON.stringify drops Error.message
-            if (error?.message !== undefined) {
-                message = `${message}: ${error.message}`;
-            }
+            const messagePrefix = (error?.message !== undefined)
+                ? `${error.message}: `
+                : "";
+
             // Websocket errors reported by engine.io-client.
             // They are Error objects with description containing WS error and description = "TransportError"
             // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
-            message = `${message}: ${JSON.stringify(error, getCircularReplacer())}`;
+            message = `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
         } else {
-            message = `${message}: [object omitted]`;
+            message = extractLogSafeErrorProperties(error).message;
         }
+
         const errorObj = createGenericNetworkError(
-            `socketError [${handler}]`,
-            message,
-            canRetry,
+            `socket.io (${handler}): ${message}`,
+            { canRetry },
+            { driverVersion },
         );
 
         return errorObj;

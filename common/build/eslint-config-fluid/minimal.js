@@ -10,7 +10,7 @@ module.exports = {
         "node": true
     },
     "extends": [
-        "@rushstack/eslint-config/profile/web-app",
+        "./eslint7",
         "plugin:eslint-comments/recommended",
         "plugin:import/errors",
         "plugin:import/warnings",
@@ -30,12 +30,26 @@ module.exports = {
         "project": "./tsconfig.json",
     },
     "plugins": [
-        "no-null",
+        // Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin
+        "@rushstack/eslint-plugin",
+        // Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin-security
+        "@rushstack/eslint-plugin-security",
+        // Plugin documentation: https://www.npmjs.com/package/@typescript-eslint/eslint-plugin
+        "@typescript-eslint/eslint-plugin",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-promise
+        "eslint-plugin-promise",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-react
         "react",
+        // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
         "unicorn",
     ],
     "reportUnusedDisableDirectives": true,
     "rules": {
+
+        // The @rushstack rules are documented in the package README:
+        // https://www.npmjs.com/package/@rushstack/eslint-plugin
+        "@rushstack/no-new-null": "warn",
+
         // RATIONALE: Harmless.  Our guideline is to only use leading underscores on private members
         //            when required to avoid a conflict between private fields and a public property.
         // Docs: https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/naming-convention.md
@@ -73,6 +87,16 @@ module.exports = {
                 "code": 120
             }
         ],
+        "no-multi-spaces": [
+            "error",
+            {
+                "ignoreEOLComments": true
+            }
+        ],
+
+        // Catches a common coding mistake where "resolve" and "reject" are confused.
+        "promise/param-names": "warn",
+
         "unicorn/better-regex": "error",
         "unicorn/filename-case": [
             "error",
@@ -87,7 +111,7 @@ module.exports = {
         "unicorn/no-unsafe-regex": "error",
 
         // DISABLED INTENTIONALLY
-        "@rushstack/no-new-null": "off",
+        // Disabled because we don't require that all variable declarations be explicitly typed.
         "@rushstack/typedef-var": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/explicit-member-accessibility": "off",
@@ -100,7 +124,6 @@ module.exports = {
         "@typescript-eslint/typedef": "off",
         "func-call-spacing": "off", // Off because it conflicts with typescript-formatter
         "no-empty": "off",
-        "no-return-assign": "off",
         "no-void": "off",
         "require-atomic-updates": "off",
         "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
@@ -117,7 +140,7 @@ module.exports = {
         },
         {
             // Rules only for test files
-            "files": ["src/test/**"],
+            "files": ["*.spec.ts", "src/test/**"],
             "rules": {
                 "@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
             }

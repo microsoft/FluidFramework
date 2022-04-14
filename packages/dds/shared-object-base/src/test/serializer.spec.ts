@@ -47,8 +47,6 @@ describe("FluidSerializer", () => {
 
         // Start with the various JSON-serializable types.  A mix of "truthy" and "falsy" values
         // are of particular interest.
-
-        // eslint-disable-next-line no-null/no-null
         const simple = createNestedCases([false, true, 0, 1, "", "x", null, [], {}]);
 
         // Add an object where each field references one of the JSON serializable types.

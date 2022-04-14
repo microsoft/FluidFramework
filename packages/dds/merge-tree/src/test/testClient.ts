@@ -259,7 +259,6 @@ export class TestClient extends Client {
         while (start < this.getLength()) {
             chunk = this.getText(start, start + TestClient.searchChunkSize);
 
-            // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
             const result = chunk.match(target);
             if (result !== null) {
                 return { text: result[0], pos: (result.index + start) };

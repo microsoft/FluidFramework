@@ -365,16 +365,4 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
             this.kernel.tryProcessMessage(message.contents, local, localOpMetadata);
         }
     }
-
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-     * @internal
-     */
-    protected registerCore() {
-        for (const value of this.values()) {
-            if (SharedObject.is(value)) {
-                value.bindToContext();
-            }
-        }
-    }
 }

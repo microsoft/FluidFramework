@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { compare } from "semver";
 import { bufferToString } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
@@ -21,20 +21,19 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IntervalType } from "@fluidframework/merge-tree";
-import { SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { IntervalType, SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, itExpects } from "@fluidframework/test-version-utils";
 import {
     getSnapshotTreeFromSerializedContainer,
     ISnapshotTreeWithBlobContents,
-    // eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/dist/utils";
 
 const detachedContainerRefSeqNumber = 0;
@@ -355,7 +354,12 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
         });
 
-        it("Storage in detached container", async () => {
+        itExpects("Storage in detached container",
+        [
+            {eventName:"fluid:telemetry:Container:NoRealStorageInDetachedContainer"},
+            {eventName:"fluid:telemetry:Container:NoRealStorageInDetachedContainer"},
+        ],
+        async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
 
@@ -366,7 +370,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert(defaultDataStore.context.storage !== undefined,
                 "Storage should be present in detached data store");
             let success1: boolean | undefined;
-            await defaultDataStore.context.storage.getSnapshotTree(undefined).catch((err) => success1 = false);
+            await defaultDataStore.context.storage.getSnapshotTree(undefined).catch((err) => { success1 = false; });
             assert(success1 === false, "Snapshot fetch should not be allowed in detached data store");
 
             const container2: IContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
@@ -379,7 +383,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert(defaultDataStore2.context.storage !== undefined,
                 "Storage should be present in rehydrated data store");
             let success2: boolean | undefined;
-            await defaultDataStore2.context.storage.getSnapshotTree(undefined).catch((err) => success2 = false);
+            await defaultDataStore2.context.storage.getSnapshotTree(undefined).catch((err) => { success2 = false; });
             assert(success2 === false, "Snapshot fetch should not be allowed in rehydrated data store");
         });
 

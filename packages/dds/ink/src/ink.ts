@@ -215,13 +215,6 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     }
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-     */
-    protected registerCore(): void {
-        return;
-    }
-
-    /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      */
     protected onDisconnect(): void {

@@ -2,31 +2,31 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions*/
+/* eslint-disable no-unused-expressions */
 /**
  * @fileoverview In this file, we will test the Int64ArrayProperty
  *    object described in /src/properties/arrayProperty.js
  */
 
-describe('Int64ArrayProperty', function () {
+describe('Int64ArrayProperty', function() {
     var PropertyFactory, BaseProperty, ChangeSet, MSG;
     var changeSetWithEntries, removalChangeSet;
     var myInt64Prop, Int64;
 
-    before(function () {
+    before(function() {
         // Get all the objects we need in this test here.
         PropertyFactory = require('../..').PropertyFactory;
         BaseProperty = require('../..').BaseProperty;
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
+        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
         Int64 = require('@fluid-experimental/property-common').Int64;
-        MSG = require('@fluid-experimental/property-common').constants.MSG
+        MSG = require('@fluid-experimental/property-common').constants.MSG;
 
         // Register a template with a set property for the tests
         var SimpleInt64TestPropertyTemplate = {
             typeid: 'autodesk.tests:SimpleInt64TestProperty-1.0.0',
             properties: [
-                { id: 'int64Property', typeid: 'Int64', context: 'array' }
-            ]
+                { id: 'int64Property', typeid: 'Int64', context: 'array' },
+            ],
         };
         PropertyFactory._reregister(SimpleInt64TestPropertyTemplate);
 
@@ -34,31 +34,28 @@ describe('Int64ArrayProperty', function () {
     });
 
     // Inserts an Int64 value into the array
-    var insertInt64Value = function (int64Prop) {
+    var insertInt64Value = function(int64Prop) {
         int64Prop.insertRange(0, [new Int64(0, 1)]);
     };
 
     // Removes the first element from the array
-    var removeArrayElement = function (int64Prop) {
+    var removeArrayElement = function(int64Prop) {
         int64Prop.removeRange(0, 1);
     };
 
     // Modifies an array value
-    var modifyInt64Value = function (int64Prop) {
+    var modifyInt64Value = function(int64Prop) {
         int64Prop.setRange(0, [new Int64(0, 2)]);
     };
 
-
-
-    describe('Testing creation, assignment and serialization', function () {
-
-        it('should be empty at the beginning', function () {
+    describe('Testing creation, assignment and serialization', function() {
+        it('should be empty at the beginning', function() {
             expect(myInt64Prop.length).to.equal(0);
             expect(myInt64Prop.serialize({ 'dirtyOnly': true })).to.be.empty;
             expect(myInt64Prop.serialize({ 'dirtyOnly': false })).to.be.empty;
         });
 
-        it('should be possible to insert into the 64 bit array', function () {
+        it('should be possible to insert into the 64 bit array', function() {
             // Text insertion
             myInt64Prop.insertRange(0, [new Int64(1, 2), '12345678987654321']);
             expect(myInt64Prop.get(0)).to.deep.equal(new Int64(1, 2));
@@ -71,7 +68,7 @@ describe('Int64ArrayProperty', function () {
                 { insert: [[0, [[1, 2], [1653732529, 2874452], [5, 0]]]] });
         });
 
-        it('should be possible to set values in the 64 bit array', function () {
+        it('should be possible to set values in the 64 bit array', function() {
             myInt64Prop.setRange(0, [1, '123', new Int64(2, 2)]);
             expect(myInt64Prop.get(0)).to.deep.equal(new Int64(1, 0));
             myInt64Prop.setRange(2, [new Int64(4, 5)]);
@@ -82,31 +79,31 @@ describe('Int64ArrayProperty', function () {
                 { insert: [[0, [[1, 0], [123, 0], [4, 5]]]] });
         });
 
-        it('.setRange should throw an error when in_offset is not an integer', function () {
+        it('.setRange should throw an error when in_offset is not an integer', function() {
             expect(() => { myInt64Prop.setRange('test', [new Int64(2, 2)]); })
                 .to.throw(MSG.NOT_NUMBER);
         });
 
-        it('.setRange should throw an error when in_array is not an array', function () {
+        it('.setRange should throw an error when in_array is not an array', function() {
             expect(() => { myInt64Prop.setRange(0, new Int64(2, 2)); })
                 .to.throw(MSG.IN_ARRAY_NOT_ARRAY + 'Int64ArrayProperty.setRange');
         });
 
-        it('Should handle removals correctly', function () {
+        it('Should handle removals correctly', function() {
             myInt64Prop.cleanDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
             myInt64Prop.removeRange(0, 2);
             expect(myInt64Prop.get(0)).to.deep.equal(new Int64(4, 5));
             removalChangeSet = myInt64Prop.serialize({
                 'dirtyOnly': true,
                 'includeRootTypeid': false,
-                'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.DIRTY
+                'dirtinessType': BaseProperty.MODIFIED_STATE_FLAGS.DIRTY,
             });
             expect(removalChangeSet).to.have.all.keys(['remove']);
             expect(removalChangeSet.remove).to.have.length(1);
             expect(removalChangeSet.remove[0]).to.deep.equal([0, 2]);
         });
 
-        it('Should support deserialization', function () {
+        it('Should support deserialization', function() {
             var deserializedNode = PropertyFactory.create('Int64', 'array');
             var deserializedChanges1 = deserializedNode.deserialize(changeSetWithEntries);
             expect(deserializedChanges1).to.deep.equal(changeSetWithEntries);
@@ -115,13 +112,13 @@ describe('Int64ArrayProperty', function () {
             expect(deserializedChanges3).to.deep.equal({ remove: [[0, 3]] });
         });
 
-        it('inserting at a bad position should throw an exception', function () {
-            expect(function () {
+        it('inserting at a bad position should throw an exception', function() {
+            expect(function() {
                 myInt64Prop.insertRange(2242, new Int64(4, 5));
             }).to.throw();
         });
 
-        it('Should support applying changeset', function () {
+        it('Should support applying changeset', function() {
             var node = PropertyFactory.create('Int64', 'array');
             node._applyChangeset(changeSetWithEntries);
             expect(node.get(0)).to.deep.equal(new Int64(1));
@@ -130,37 +127,35 @@ describe('Int64ArrayProperty', function () {
         });
     });
 
-    describe('change set specification should be met', function () {
-
-        it('Should handle push correctly', function () {
+    describe('change set specification should be met', function() {
+        it('Should handle push correctly', function() {
             var t = PropertyFactory.create('Int64', 'array');
             t.insertRange(0, [new Int64(1, 2), new Int64(3, 4)]);
             t.cleanDirty();
             t.push(new Int64(4, 5));
             expect(t.serialize({ 'dirtyOnly': true })).to.deep.equal(
                 {
-                    'insert': [[2, [[4, 5]]]]
-                }
+                    'insert': [[2, [[4, 5]]]],
+                },
             );
         });
 
-        it('Should handle modifies correctly', function () {
+        it('Should handle modifies correctly', function() {
             var t = PropertyFactory.create('Int64', 'array');
             t.insertRange(0, [new Int64(1, 2), new Int64(3, 4)]);
             t.cleanDirty();
             t.set(1, new Int64(4, 5));
             expect(t.serialize({ 'dirtyOnly': true })).to.deep.equal(
                 {
-                    'modify': [[1, [[4, 5]]]]
-                }
+                    'modify': [[1, [[4, 5]]]],
+                },
             );
         });
     });
 
-
-    describe('squashing', function () {
+    describe('squashing', function() {
         // Helper function to test the squashing for different containers
-        var innerTestChangeSetSquashing = function (io_testProperty, io_int64Property,
+        var innerTestChangeSetSquashing = function(io_testProperty, io_int64Property,
             io_initialChangeset, in_options, in_collection) {
             var squashedChangeset = new ChangeSet();
             io_initialChangeset.setIsNormalized(true);
@@ -193,8 +188,7 @@ describe('Int64ArrayProperty', function () {
         // Optionally, a a callback which controls the initial state before the squashing can
         // be given as first parameter
         //
-        var testChangeSetSquashing = function (in_options) {
-
+        var testChangeSetSquashing = function(in_options) {
             var testProperty = PropertyFactory.create('autodesk.tests:SimpleInt64TestProperty-1.0.0');
 
             if (in_options.pre) {
@@ -218,63 +212,60 @@ describe('Int64ArrayProperty', function () {
             }
         };
 
-        it('should work for multiple independent inserts', function () {
+        it('should work for multiple independent inserts', function() {
             testChangeSetSquashing({ callbacks: [insertInt64Value, insertInt64Value, insertInt64Value] });
         });
 
-        it('should work for inserts followed by removes', function () {
+        it('should work for inserts followed by removes', function() {
             testChangeSetSquashing({
                 callbacks: [insertInt64Value, insertInt64Value, removeArrayElement, removeArrayElement],
-                post: function (changeset) {
+                post: function(changeset) {
                     expect(changeset).to.be.empty;
-                }
+                },
             });
         });
 
-        it('should work for mixed modifies and inserts', function () {
+        it('should work for mixed modifies and inserts', function() {
             testChangeSetSquashing({
-                callbacks: [insertInt64Value, modifyInt64Value, insertInt64Value, modifyInt64Value]
+                callbacks: [insertInt64Value, modifyInt64Value, insertInt64Value, modifyInt64Value],
             });
         });
 
-        it('an insert, modify and a remove should give an empty changeset', function () {
+        it('an insert, modify and a remove should give an empty changeset', function() {
             testChangeSetSquashing({
                 callbacks: [insertInt64Value, modifyInt64Value, removeArrayElement],
-                post: function (changeset) {
+                post: function(changeset) {
                     expect(changeset).to.be.empty;
-                }
+                },
             });
         });
-        it('work for modifies after an already existing insert', function () {
+        it('work for modifies after an already existing insert', function() {
             testChangeSetSquashing({
                 pre: insertInt64Value,
-                callbacks: [modifyInt64Value, modifyInt64Value]
+                callbacks: [modifyInt64Value, modifyInt64Value],
             });
         });
-        it('of modify and remove after an already existing insert should work', function () {
+        it('of modify and remove after an already existing insert should work', function() {
             testChangeSetSquashing({
                 pre: insertInt64Value,
                 callbacks: [modifyInt64Value, removeArrayElement],
-                post: function (changeset) {
+                post: function(changeset) {
                     expect(changeset['array<Int64>'].int64Property).to.have.all.keys('remove');
-                }
+                },
             });
         });
-
     });
 
-
-    describe('Rebasing', function () {
-
-        var createPropertyForRebaseTestByTemplate = function () {
+    describe('Rebasing', function() {
+        var createPropertyForRebaseTestByTemplate = function() {
             return PropertyFactory.create('autodesk.tests:SimpleInt64TestProperty-1.0.0');
         };
 
-        var getint64PropertyFromNode = function (in_testProperty) {
+        var getint64PropertyFromNode = function(in_testProperty) {
             return in_testProperty._properties.int64Property;
         };
 
-        var testRebasingInner = function (in_creator, in_getInnerProperty, in_options, in_isCollection) {
+        var testRebasingInner = function(in_creator, in_getInnerProperty, in_options, in_isCollection) {
             // Prepare the initial state
             var baseProperty1 = in_creator();
             if (in_options.prepare) {
@@ -348,159 +339,156 @@ describe('Int64ArrayProperty', function () {
             }
         };
 
-        var testRebasing = function (in_options) {
+        var testRebasing = function(in_options) {
             testRebasingInner(createPropertyForRebaseTestByTemplate, getint64PropertyFromNode, in_options);
         };
 
-        it('with a NOP should be possible', function () {
+        it('with a NOP should be possible', function() {
             testRebasing({
                 op2: insertInt64Value,
-                compareToSequential: true
+                compareToSequential: true,
             });
         });
 
-        it('with independent inserts should be possible', function () {
+        it('with independent inserts should be possible', function() {
             testRebasing({
                 op1: insertInt64Value,
                 op2: insertInt64Value,
-                compareToSequential: true
+                compareToSequential: true,
             });
         });
 
-        it('with independent removes should be possible', function () {
+        it('with independent removes should be possible', function() {
             testRebasing({
-                prepare: function (root) {
+                prepare: function(root) {
                     insertInt64Value(root);
                     insertInt64Value(root);
                 },
-                op1: function (root) {
+                op1: function(root) {
                     root.removeRange(1, 1);
                 },
-                op2: function (root) {
+                op2: function(root) {
                     root.removeRange(0, 1);
                 },
-                compareToSequential: true
+                compareToSequential: true,
             });
         });
 
-        it('with a modify and a remove should possible', function () {
+        it('with a modify and a remove should possible', function() {
             testRebasing({
                 prepare: insertInt64Value,
                 op1: modifyInt64Value,
                 op2: removeArrayElement,
-                compareToSequential: true
+                compareToSequential: true,
             });
         });
 
-        it('with a remove and a modify should possible', function () {
-
+        it('with a remove and a modify should possible', function() {
             testRebasing({
                 prepare: insertInt64Value,
                 op1: removeArrayElement,
                 op2: modifyInt64Value,
                 compareToSequential: false,
-                checkResult: function (conflicts, changeSet) {
+                checkResult: function(conflicts, changeSet) {
                     expect(conflicts).to.have.length(1);
                     expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.ENTRY_MODIFIED_AFTER_REMOVE);
                     expect(conflicts[0].path).to.be.equal('int64Property');
-                }
+                },
             });
         });
 
-        it('with two compatible removes should be possible', function () {
+        it('with two compatible removes should be possible', function() {
             testRebasing({
                 prepare: insertInt64Value,
                 op1: removeArrayElement,
                 op2: removeArrayElement,
                 compareToSequential: false,
-                checkResult: function (conflicts, changeSet) {
+                checkResult: function(conflicts, changeSet) {
                     expect(ChangeSet.isEmptyChangeSet(changeSet)).to.be.ok;
-                }
+                },
             });
         });
 
-        it('with two independent modifies should be possible', function () {
+        it('with two independent modifies should be possible', function() {
             testRebasing({
-                prepare: function (root) {
+                prepare: function(root) {
                     root.insertRange(0, [new Int64(9, 8), new Int64(11, 21)]);
                 },
                 op1: modifyInt64Value,
-                op2: function (root) {
+                op2: function(root) {
                     root.setRange(1, [new Int64(5, 6)]);
                 },
                 compareToSequential: true,
-                checkResult: function (conflicts, changeSet) {
+                checkResult: function(conflicts, changeSet) {
                     expect(conflicts).to.be.empty;
-                }
+                },
             });
         });
 
-        it('with two conflicting modifies should be possible and report a conflict', function () {
+        it('with two conflicting modifies should be possible and report a conflict', function() {
             testRebasing({
                 prepare: insertInt64Value,
-                op1: function (int64Prop) {
+                op1: function(int64Prop) {
                     int64Prop.setRange(0, [new Int64(0, 64)]);
                 },
                 op2: modifyInt64Value,
                 compareToSequential: true,
-                checkResult: function (conflicts, changeSet) {
+                checkResult: function(conflicts, changeSet) {
                     expect(conflicts).to.have.length(1);
                     expect(changeSet['array<Int64>'].int64Property.modify[0][1]).to.deep.equal([[0, 2]]);
                     expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.COLLIDING_SET);
                     expect(conflicts[0].path).to.be.equal('int64Property');
-                }
+                },
             });
         });
 
-        it('with modify followed by remove+insert should work', function () {
+        it('with modify followed by remove+insert should work', function() {
             testRebasing({
                 prepare: insertInt64Value,
                 op1: modifyInt64Value,
-                op2: function (root) {
+                op2: function(root) {
                     removeArrayElement(root);
                     insertInt64Value(root);
                 },
                 compareToSequential: true,
-                checkResult: function (conflicts, changeSet) {
+                checkResult: function(conflicts, changeSet) {
                     expect(conflicts).to.have.length(1);
                     expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.REMOVE_AFTER_MODIFY);
                     expect(conflicts[0].path).to.be.equal('int64Property');
                     expect(changeSet['array<Int64>'].int64Property).to.have.all.keys('remove', 'insert');
-                }
+                },
             });
         });
 
-        it('with remove + insert followed by modify should report conflict', function () {
+        it('with remove + insert followed by modify should report conflict', function() {
             testRebasing({
                 prepare: insertInt64Value,
-                op1: function (root) {
+                op1: function(root) {
                     removeArrayElement(root);
                     insertInt64Value(root);
                 },
                 op2: modifyInt64Value,
                 compareToSequential: false,
-                checkResult: function (conflicts, changeSet) {
+                checkResult: function(conflicts, changeSet) {
                     expect(conflicts).to.have.length(1);
                     expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.ENTRY_MODIFIED_AFTER_REMOVE);
                     expect(conflicts[0].path).to.be.equal('int64Property');
-                }
+                },
             });
         });
 
-        it('with conflicting inserts should report conflict', function () {
+        it('with conflicting inserts should report conflict', function() {
             testRebasing({
                 prepare: insertInt64Value,
                 op1: insertInt64Value,
                 op2: insertInt64Value,
                 compareToSequential: false,
-                checkResult: function (conflicts, changeSet) {
+                checkResult: function(conflicts, changeSet) {
                     expect(conflicts).to.have.length(1);
                     expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.INSERTED_ENTRY_WITH_SAME_KEY);
                     expect(conflicts[0].path).to.be.equal('int64Property');
-                }
+                },
             });
         });
-
     });
-
 });

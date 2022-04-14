@@ -10,6 +10,7 @@ trigger:
   branches:
     include:
     - main
+    - next
     - release/*
   paths:
     include:

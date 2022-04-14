@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import {
@@ -26,6 +26,7 @@ import {
     SubmitSummaryResult,
     ISummaryCancellationToken,
     ISummarizeResults,
+    ISummarizeTelemetryProperties,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -51,7 +52,7 @@ export class RunningSummarizer implements IDisposable {
         configuration: ISummaryConfiguration,
         submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
         heuristicData: ISummarizeHeuristicData,
-        raiseSummarizingError: (errorCode: string) => void,
+        raiseSummarizingError: (errorMessage: string) => void,
         summaryCollection: SummaryCollection,
         cancellationToken: ISummaryCancellationToken,
         stopSummarizerCallback: (reason: SummarizerStopReason) => void,
@@ -93,6 +94,7 @@ export class RunningSummarizer implements IDisposable {
         readonly resultsBuilder: SummarizeResultBuilder;
     } | undefined;
     private summarizeCount = 0;
+    private totalSuccessfulAttempts = 0;
 
     private constructor(
         baseLogger: ITelemetryLogger,
@@ -100,14 +102,21 @@ export class RunningSummarizer implements IDisposable {
         private readonly configuration: ISummaryConfiguration,
         private readonly submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
         private readonly heuristicData: ISummarizeHeuristicData,
-        private readonly raiseSummarizingError: (errorCode: string) => void,
+        private readonly raiseSummarizingError: (errorMessage: string) => void,
         private readonly summaryCollection: SummaryCollection,
         private readonly cancellationToken: ISummaryCancellationToken,
         private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
         { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
     ) {
         this.logger = ChildLogger.create(
-            baseLogger, "Running", { all: { summaryGenTag: () => this.summarizeCount } });
+            baseLogger, "Running",
+            {
+                all: {
+                    summarizeCount: () => this.summarizeCount,
+                    summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
+                },
+            },
+        );
 
         if (!disableHeuristics) {
             this.heuristicRunner = new SummarizeHeuristicRunner(
@@ -123,8 +132,9 @@ export class RunningSummarizer implements IDisposable {
         this.pendingAckTimer = new PromiseTimer(
             maxAckWaitTime,
             () => {
-                this.raiseSummarizingError("summaryAckWaitTimeout");
-                // Note: summaryGenTag (from ChildLogger definition) may be 0,
+                // pre-0.58 error message: summaryAckWaitTimeout
+                this.raiseSummarizingError("Pending summary ack not received in time");
+                // Note: summarizeCount (from ChildLogger definition) may be 0,
                 // since this code path is hit when RunningSummarizer first starts up,
                 // before this instance has kicked off a new summarize run.
                 this.logger.sendErrorEvent({
@@ -152,6 +162,7 @@ export class RunningSummarizer implements IDisposable {
             this.heuristicData,
             this.submitSummaryCallback,
             this.raiseSummarizingError,
+            () => { this.totalSuccessfulAttempts++; },
             this.summaryWatcher,
             this.logger,
         );
@@ -183,8 +194,7 @@ export class RunningSummarizer implements IDisposable {
         switch (op.type) {
             case MessageType.ClientLeave:
             case MessageType.ClientJoin:
-            case MessageType.Propose:
-            case MessageType.Reject: {
+            case MessageType.Propose: {
                 // Synchronously handle quorum ops like regular ops
                 this.handleOp(undefined, op);
                 return;
@@ -295,7 +305,7 @@ export class RunningSummarizer implements IDisposable {
      * @returns ISummarizeResult - result of running a summary.
      */
     private trySummarizeOnce(
-        summarizeProps: ITelemetryProperties,
+        summarizeProps: ISummarizeTelemetryProperties,
         options: ISummarizeOptions,
         cancellationToken = this.cancellationToken,
         resultsBuilder = new SummarizeResultBuilder()): ISummarizeResults
@@ -338,27 +348,27 @@ export class RunningSummarizer implements IDisposable {
                 { refreshLatestAck: true, fullTree: true, delaySeconds: 10 * 60 },
             ];
             let overrideDelaySeconds: number | undefined;
-            let totalAttempts = 0;
-            let attemptPerPhase = 0;
+            let summaryAttempts = 0;
+            let summaryAttemptsPerPhase = 0;
 
             let lastResult: { message: string; error: any; } | undefined;
 
-            for (let attemptPhase = 0; attemptPhase < attempts.length;) {
+            for (let summaryAttemptPhase = 0; summaryAttemptPhase < attempts.length;) {
                 if (this.cancellationToken.cancelled) {
                     return;
                 }
 
-                totalAttempts++;
-                attemptPerPhase++;
+                summaryAttempts++;
+                summaryAttemptsPerPhase++;
 
-                const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
+                const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[summaryAttemptPhase];
                 const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
 
-                const summarizeProps: ITelemetryProperties = {
+                const summarizeProps: ISummarizeTelemetryProperties = {
                     summarizeReason,
-                    summarizeTotalAttempts: totalAttempts,
-                    summarizeAttemptsPerPhase: attemptPerPhase,
-                    summarizeAttemptPhase: attemptPhase + 1, // make everything 1-based
+                    summaryAttempts,
+                    summaryAttemptsPerPhase,
+                    summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
                     ...options,
                 };
 
@@ -382,9 +392,9 @@ export class RunningSummarizer implements IDisposable {
                 // Check for retryDelay that can come from summaryNack or upload summary flow.
                 // Retry the same step only once per retryAfter response.
                 overrideDelaySeconds = result.retryAfterSeconds;
-                if (overrideDelaySeconds === undefined || attemptPerPhase > 1) {
-                    attemptPhase++;
-                    attemptPerPhase = 0;
+                if (overrideDelaySeconds === undefined || summaryAttemptsPerPhase > 1) {
+                    summaryAttemptPhase++;
+                    summaryAttemptsPerPhase = 0;
                 }
                 lastResult = result;
             }

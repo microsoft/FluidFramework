@@ -4,16 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import {
-    IFluidObject,
-    IFluidConfiguration,
-    IRequest,
-    IResponse,
-    IFluidCodeDetails,
-    IFluidCodeDetailsComparer,
-    IProvideFluidCodeDetailsComparer,
-    FluidObject,
-} from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
 import {
     IAudience,
     IContainerContext,
@@ -21,31 +12,38 @@ import {
     ILoader,
     IRuntime,
     ICriticalContainerError,
-    ContainerWarning,
     AttachState,
     ILoaderOptions,
     IRuntimeFactory,
-    ICodeLoader,
     IProvideRuntimeFactory,
+    IFluidCodeDetails,
+    IFluidCodeDetailsComparer,
+    IProvideFluidCodeDetailsComparer,
+    ICodeDetailsLoader,
+    IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
+import {
+    IRequest,
+    IResponse,
+    FluidObject,
+} from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { isFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
     IClientConfiguration,
     IClientDetails,
     IDocumentMessage,
     IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
-    ITree,
-    MessageType,
     ISummaryTree,
     IVersion,
+    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { Container } from "./container";
-import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -53,13 +51,12 @@ export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: FluidObject,
-        codeLoader: ICodeDetailsLoader | ICodeLoader,
+        codeLoader: ICodeDetailsLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        raiseContainerWarning: (warning: ContainerWarning) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         closeFn: (error?: ICriticalContainerError) => void,
@@ -77,7 +74,6 @@ export class ContainerContext implements IContainerContext {
             deltaManager,
             quorum,
             loader,
-            raiseContainerWarning,
             submitFn,
             submitSignalFn,
             closeFn,
@@ -91,17 +87,17 @@ export class ContainerContext implements IContainerContext {
 
     public readonly taggedLogger: ITelemetryLogger;
 
-    /**
-     * Subtlety: returns this.taggedLogger since vanilla this.logger is now deprecated. See IContainerContext for more
-     * details.
-    */
-    /** @deprecated See IContainerContext for more details. */
-    public get logger(): ITelemetryLogger {
-        return this.taggedLogger;
-    }
-
     public get clientId(): string | undefined {
         return this.container.clientId;
+    }
+
+    /** @deprecated Added back to unblock 0.56 integration */
+    public get id(): string {
+        const resolvedUrl = this.container.resolvedUrl;
+        if (isFluidResolvedUrl(resolvedUrl)) {
+            return resolvedUrl.id;
+        }
+        return "";
     }
 
     public get clientDetails(): IClientDetails {
@@ -126,16 +122,6 @@ export class ContainerContext implements IContainerContext {
 
     public get options(): ILoaderOptions {
         return this.container.options;
-    }
-
-    /**
-     * @deprecated 0.55 - Configuration is not recommended to be used and will be removed in an upcoming release.
-     */
-    public get configuration(): IFluidConfiguration {
-        const config: Partial<IFluidConfiguration> = {
-            scopes: this.container.scopes,
-        };
-        return config as IFluidConfiguration;
     }
 
     public get baseSnapshot() {
@@ -163,21 +149,19 @@ export class ContainerContext implements IContainerContext {
     public get codeDetails() { return this._codeDetails; }
 
     private readonly _quorum: IQuorum;
-    // Update to return IQuorumClients after 0.45 container definitions are picked up.
-    public get quorum(): IQuorum { return this._quorum; }
+    public get quorum(): IQuorumClients { return this._quorum; }
 
     private readonly _fluidModuleP: Promise<IFluidModuleWithDetails>;
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IFluidObject & FluidObject,
-        private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
+        public readonly scope: FluidObject,
+        private readonly codeLoader: ICodeDetailsLoader,
         private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         public readonly loader: ILoader,
-        public readonly raiseContainerWarning: (warning: ContainerWarning) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
@@ -195,6 +179,11 @@ export class ContainerContext implements IContainerContext {
         this.attachListener();
     }
 
+    /**
+     * @deprecated - Temporary migratory API, to be removed when customers no longer need it.  When removed,
+     * ContainerContext should only take an IQuorumClients rather than an IQuorum.  See IContainerContext for more
+     * details.
+     */
     public getSpecifiedCodeDetails(): IFluidCodeDetails | undefined {
         return (this._quorum.get("code") ?? this._quorum.get("code2")) as IFluidCodeDetails | undefined;
     }
@@ -208,10 +197,6 @@ export class ContainerContext implements IContainerContext {
         this.runtime.dispose(error);
         this._quorum.dispose();
         this.deltaManager.dispose();
-    }
-
-    public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
-        return this.runtime.snapshot(tagMessage, fullTree);
     }
 
     public getLoadedFromVersion(): IVersion | undefined {
@@ -343,6 +328,9 @@ export class ContainerContext implements IContainerContext {
                 details: details ?? codeDetails,
             };
         } else {
+            // If "module" is not in the result, we are using a legacy ICodeLoader.  Fix the result up with details.
+            // Once usage drops to 0 we can remove this compat path.
+            this.taggedLogger.sendTelemetryEvent({ eventName: "LegacyCodeLoader" });
             return { module: loadCodeResult, details: codeDetails };
         }
     }

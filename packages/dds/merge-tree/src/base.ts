@@ -26,7 +26,6 @@ export interface Dictionary<TKey, TData> {
     put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): void;
     remove(key: TKey): void;
     map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum): void;
-    diag(): void;
 }
 
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {

@@ -32,6 +32,7 @@ trigger:
   branches:
     include:
     - main
+    - next
     - release/*
   paths:
     include:
@@ -56,6 +57,7 @@ pr:
   branches:
     include:
     - main
+    - next
     - release/*
   paths:
     include:

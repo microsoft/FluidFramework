@@ -108,7 +108,7 @@ async function loadOuterLogDiv(
         };
 
     const quorum = container.getQuorum();
-    quorum.getMembers().forEach((client) => logDiv.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`);
+    quorum.getMembers().forEach((client) => { logDiv.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`; });
     log(quorum, "Quorum", "error", "addMember", "removeMember");
     log(container, "Container", "error", "connected", "disconnected");
 }

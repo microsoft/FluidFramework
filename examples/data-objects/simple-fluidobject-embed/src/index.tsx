@@ -3,22 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { ClickerInstantiationFactory, Clicker, ClickerReactView } from "@fluid-example/clicker";
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { ClickerInstantiationFactory, Clicker, ClickerReactView } from "@fluid-example/clicker";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
-import ReactDOM from "react-dom";
 
 const simpleFluidObjectEmbedName = "@fluid-example/simple-fluidobject-embed";
 
-export class SimpleFluidObjectEmbed extends DataObject implements IFluidHTMLView {
-    public get IFluidHTMLView() { return this; }
-
-    private clicker: Clicker | undefined;
+export class SimpleFluidObjectEmbed extends DataObject {
+    private _clicker: Clicker | undefined;
+    public get clicker(): Clicker {
+        if (this._clicker === undefined) {
+            throw new Error("Clicker accessed before initialized");
+        }
+        return this._clicker;
+    }
 
     /**
    * This is only run the first time a document is created
@@ -35,37 +37,25 @@ export class SimpleFluidObjectEmbed extends DataObject implements IFluidHTMLView
    */
     protected async hasInitialized() {
         const handle = this.root.get("myEmbeddedCounter");
-        this.clicker = await handle.get();
-    }
-
-    public render(div: HTMLDivElement) {
-        // Create a div that we will use to embed the Fluid object
-        // and attach that div to the page
-        const fluidObjectDiv = document.createElement("div");
-        fluidObjectDiv.id = "fluidObjectDiv";
-        div.appendChild(fluidObjectDiv);
-
-        // Then render the clicker in our div
-        if (this.clicker !== undefined) {
-            ReactDOM.render(<ClickerReactView clicker={this.clicker} />, fluidObjectDiv);
-        }
+        this._clicker = await handle.get();
     }
 }
 
-export const SimpleFluidObjectEmbedInstantiationFactory =
-    new DataObjectFactory(
-        simpleFluidObjectEmbedName,
-        SimpleFluidObjectEmbed,
-        [],
-        {},
-        new Map([
-            ClickerInstantiationFactory.registryEntry,
-        ]),
-    );
-
-export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    SimpleFluidObjectEmbedInstantiationFactory,
+export const SimpleFluidObjectEmbedInstantiationFactory = new DataObjectFactory(
+    simpleFluidObjectEmbedName,
+    SimpleFluidObjectEmbed,
+    [],
+    {},
     new Map([
-        SimpleFluidObjectEmbedInstantiationFactory.registryEntry,
+        ClickerInstantiationFactory.registryEntry,
     ]),
 );
+
+const viewCallback = (model: SimpleFluidObjectEmbed) => <ClickerReactView clicker={ model.clicker } />;
+
+/**
+ * This does setup for the Container. The ContainerViewRuntimeFactory will instantiate a single Fluid object to use
+ * as our model (using the factory we provide), and the view callback we provide will pair that model with an
+ * appropriate view.
+ */
+export const fluidExport = new ContainerViewRuntimeFactory(SimpleFluidObjectEmbedInstantiationFactory, viewCallback);

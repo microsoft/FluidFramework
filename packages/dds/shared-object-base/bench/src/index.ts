@@ -26,7 +26,7 @@ const shallowNoHandles = makeJson(/* breadth: */ 2, /* depth: */ 2, () => ({}));
 const deepWithHandles = makeJson(/* breadth: */ 8, /* depth: */ 8, () => handle);
 
 const shallowNoHandlesString = serializer.stringify(shallowNoHandles, handle);
-const deepWithHandlesString =  serializer.stringify(deepWithHandles, handle);
+const deepWithHandlesString = serializer.stringify(deepWithHandles, handle);
 
 const measureReplaceHandles = (name: string, value: any) => new Suite(`encode Handles: ${name}`)
     .add("encode(...)", () => {

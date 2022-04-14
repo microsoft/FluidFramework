@@ -2,10 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as Comlink from "comlink";
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IContainerPackageInfo, IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { MakeThinProxy } from "./proxyUtils";
 
 export interface IUrlResolverProxy {
@@ -16,7 +15,7 @@ export interface IUrlResolverProxy {
     getAbsoluteUrl(
         resolvedUrlFn: () => Promise<IResolvedUrl>,
         relativeUrl: string,
-        codeDetailsFn: () => Promise<IFluidCodeDetails | undefined>,
+        packageInfoFn: () => Promise<IContainerPackageInfo | undefined>,
     ): Promise<string>,
 }
 
@@ -31,8 +30,8 @@ export class OuterUrlResolver {
         const proxy: IUrlResolverProxy = {
             connected: Comlink.proxy(async () => this.connected()),
             resolve: Comlink.proxy(async (requestFn) => this.resolve(requestFn)),
-            getAbsoluteUrl: Comlink.proxy(async (resolvedUrlFn, relativeUrl, codeDetailsFn) =>
-                this.getAbsoluteUrl(resolvedUrlFn, relativeUrl, codeDetailsFn),
+            getAbsoluteUrl: Comlink.proxy(async (resolvedUrlFn, relativeUrl, packageInfoFn) =>
+                this.getAbsoluteUrl(resolvedUrlFn, relativeUrl, packageInfoFn),
             ),
         };
         return proxy;
@@ -51,10 +50,10 @@ export class OuterUrlResolver {
     public async getAbsoluteUrl(
         resolvedUrlFn: () => Promise<IResolvedUrl>,
         relativeUrl: string,
-        codeDetailsFn: () => Promise<IFluidCodeDetails | undefined>,
+        packageInfoFn: () => Promise<IContainerPackageInfo | undefined>,
     ): Promise<string> {
         const resolvedUrl = await resolvedUrlFn();
-        const codeDetails = await codeDetailsFn();
-        return this.urlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl, codeDetails);
+        const packageInfo = await packageInfoFn();
+        return this.urlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl, packageInfo);
     }
 }

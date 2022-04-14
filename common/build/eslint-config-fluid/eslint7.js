@@ -12,7 +12,6 @@ module.exports = {
     "extends": [
         "eslint:recommended",
         "plugin:eslint-comments/recommended",
-        "plugin:react/recommended",
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
@@ -34,9 +33,6 @@ module.exports = {
         "project": "./tsconfig.json"
     },
     "plugins": [
-        "@typescript-eslint",
-        "no-null",
-        "react",
         "unicorn",
     ],
     "reportUnusedDisableDirectives": true,
@@ -49,39 +45,6 @@ module.exports = {
         "@typescript-eslint/await-thenable": "error",
         "@typescript-eslint/ban-types": "error",
         "@typescript-eslint/brace-style": "off",
-        // [
-        //     "error",
-        //     "1tbs",
-        //     {
-        //         "allowSingleLine": true
-        //     }
-        // ],
-        // TODO - investigate turning this on once we have correct settings
-        // "@typescript-eslint/naming-convention": [
-        //     "error",
-        //     {
-        //         "selector": "default",
-        //         "format": ["camelCase"]
-        //     },
-        //     {
-        //         "selector": "variable",
-        //         "format": ["camelCase"]
-        //     },
-        //     {
-        //         "selector": "parameter",
-        //         "format": ["camelCase"],
-        //         "leadingUnderscore": "allow"
-        //     },
-        //     {
-        //         "selector": "memberLike",
-        //         "modifiers": ["private"],
-        //         "format": ["camelCase"]
-        //     },
-        //     {
-        //         "selector": "typeLike",
-        //         "format": ["PascalCase"]
-        //     }
-        // ],
         "@typescript-eslint/comma-dangle": [
             "error",
             {
@@ -176,7 +139,12 @@ module.exports = {
         "@typescript-eslint/strict-boolean-expressions": "error",
         "@typescript-eslint/triple-slash-reference": "error",
         "@typescript-eslint/type-annotation-spacing": "error",
-        "@typescript-eslint/unbound-method": "off",
+        "@typescript-eslint/unbound-method": [
+            "error",
+            {
+                "ignoreStatic": true
+            }
+        ],
         "@typescript-eslint/unified-signatures": "error",
 
         // eslint-plugin-eslint-comments
@@ -206,9 +174,6 @@ module.exports = {
         ],
         "import/no-unused-modules": "error",
         "import/order": "error",
-
-        // eslint-plugin-no-null
-        "no-null/no-null": "error",
 
         // eslint-plugin-unicorn
         "unicorn/better-regex": "error",

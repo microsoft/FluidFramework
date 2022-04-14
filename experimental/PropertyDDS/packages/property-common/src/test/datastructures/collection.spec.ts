@@ -15,7 +15,6 @@ describe("collection", function() {
     const createObject = () => ({
         item4: Number.NaN,
         item5: undefined,
-        // eslint-disable-next-line no-null/no-null
         item6: null,
         item7: "",
         item8: false,

@@ -478,7 +478,7 @@ const invokeCallbacks = function(
     }
 };
 
-const isSubPath = function(a: string,  b: string) {
+const isSubPath = function(a: string, b: string) {
     return b.indexOf(a as string) === 0 && ((b[a.length] === '.' || b[a.length] === '[') || a.length === b.length);
 };
 

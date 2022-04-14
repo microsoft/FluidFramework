@@ -69,8 +69,9 @@ export class BaseContainerRuntimeFactory
         context: IContainerContext,
         existing: boolean,
     ): Promise<ContainerRuntime> {
-        const scope: FluidObject<IProvideFluidDependencySynthesizer> = context.scope;
-        const dc = new DependencyContainer(this.dependencyContainer, scope.IFluidDependencySynthesizer);
+        const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
+        const dc = new DependencyContainer<FluidObject<IContainerRuntime>>(
+            this.dependencyContainer, scope.IFluidDependencySynthesizer);
         scope.IFluidDependencySynthesizer = dc;
 
         const runtime: ContainerRuntime = await ContainerRuntime.load(

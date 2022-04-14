@@ -33,7 +33,7 @@ describe("SparseArray2D", () => {
         fill(a, /* rowStart: */ 0, /* colStart: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
         check(a, /* rowStart: */ 0, /* colStart: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
 
-        fill(a,  /* rowStart: */ 0xffffff00, /* colStart: */ 0xffffff00, /* rowCount: */ 256, /* colCount: */ 256);
+        fill(a, /* rowStart: */ 0xffffff00, /* colStart: */ 0xffffff00, /* rowCount: */ 256, /* colCount: */ 256);
         check(a, /* rowStart: */ 0xffffff00, /* colStart: */ 0xffffff00, /* rowCount: */ 256, /* colCount: */ 256);
     });
 

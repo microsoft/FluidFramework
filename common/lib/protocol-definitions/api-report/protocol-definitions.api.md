@@ -14,8 +14,6 @@ export type ConnectionMode = "write" | "read";
 // @public (undocumented)
 export enum FileMode {
     // (undocumented)
-    Commit = "160000",
-    // (undocumented)
     Directory = "040000",
     // (undocumented)
     Executable = "100755",
@@ -213,13 +211,6 @@ export interface INackContent {
     type: NackErrorType;
 }
 
-// @public
-export interface IPendingProposal extends ISequencedProposal {
-    disableRejection(): any;
-    reject(): any;
-    readonly rejectionDisabled: boolean;
-}
-
 // @public (undocumented)
 export interface IProcessMessageResult {
     // (undocumented)
@@ -288,8 +279,6 @@ export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>
     // (undocumented)
     get(key: string): any;
     // (undocumented)
-    getApprovalData(key: string): ICommittedProposal | undefined;
-    // (undocumented)
     has(key: string): boolean;
     // (undocumented)
     propose(key: string, value: any): Promise<void>;
@@ -298,13 +287,9 @@ export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>
 // @public
 export interface IQuorumProposalsEvents extends IErrorEvent {
     // (undocumented)
-    (event: "addProposal", listener: (proposal: IPendingProposal) => void): any;
+    (event: "addProposal", listener: (proposal: ISequencedProposal) => void): any;
     // (undocumented)
     (event: "approveProposal", listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void): any;
-    // (undocumented)
-    (event: "commitProposal", listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number, commitSequenceNumber: number) => void): any;
-    // (undocumented)
-    (event: "rejectProposal", listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void): any;
 }
 
 // @public (undocumented)
@@ -389,10 +374,6 @@ export interface ISignalMessage {
 export interface ISnapshotTree {
     // (undocumented)
     blobs: {
-        [path: string]: string;
-    };
-    // (undocumented)
-    commits: {
         [path: string]: string;
     };
     // (undocumented)
@@ -590,9 +571,6 @@ export type ITreeEntry = {
     type: TreeEntry.Blob;
     value: IBlob;
 } | {
-    type: TreeEntry.Commit;
-    value: string;
-} | {
     type: TreeEntry.Tree;
     value: ITree;
 } | {
@@ -712,8 +690,6 @@ export enum TreeEntry {
     Attachment = "Attachment",
     // (undocumented)
     Blob = "Blob",
-    // (undocumented)
-    Commit = "Commit",
     // (undocumented)
     Tree = "Tree"
 }
