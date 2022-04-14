@@ -22,7 +22,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
 
 ### Remove Write Method from IDocumentStorageService
-`IDocumentStorageService.write(...)` is no longer used and causes another reference to `ITree` which we want to eliminate.
+The `IDocumentStorageService.write(...)` method within the `@fluidframework/driver-definitions` package has been removed. Please remove all usage/implementation of this method if present.
 
 # 0.59
 
