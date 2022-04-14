@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/primitives",
-  "version": "0.58.3000",
+  "version": "0.59.1000",
   "description": "Minimal Fluid container sample to showcase some of the distributed data structures.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -38,17 +38,17 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/example-utils": "^0.58.3000",
-    "@fluidframework/aqueduct": "^0.58.3000",
+    "@fluid-example/example-utils": "^0.59.1000",
+    "@fluidframework/aqueduct": "^0.59.1000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/map": "^0.58.3000",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/map": "^0.59.1000",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.58.3000",
+    "@fluid-tools/webpack-fluid-loader": "^0.59.1000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",
     "@types/react": "^16.9.15",

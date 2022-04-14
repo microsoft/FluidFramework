@@ -14,6 +14,138 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 1.0
+
+## 1.0 Breaking changes
+- [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
+- [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
+- [Deprecate TelemetryDataTag.PackageData](#Deprecate-TelemetryDataTagPackageData)
+
+
+### Remove IFluidSerializer from core-interfaces
+`IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
+
+### Remove IFluidSerializer from IFluidObject
+`IFluidSerializer` in `IFluidObject` was deprecated in 0.52 and is now removed. Use `FluidObject` instead of `IFluidObject`.
+
+### Deprecate TelemetryDataTag.PackageData
+`TelemetryDataTag.PackageData` is deprecated and will be removed in a future release. Use `TelemetryDataTag.CodeArtifact`.
+
+# 0.59
+
+## 0.59 Upcoming changes
+- [Remove ICodeLoader interface](#Remove-ICodeLoader-interface)
+
+### Remove ICodeLoader interface
+ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
+
+## 0.59 Breaking changes
+- [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
+- [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
+- [Remove `@fluidframework/core-interface#fluidPackage.ts`](#Remove-fluidframeworkcore-interfacefluidPackagets)
+- [getAbsoluteUrl() argument type changed](#getAbsoluteUrl-argument-type-changed)
+- [Replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface)
+- [IFluidModule.fluidExport is no longer an IFluidObject](#IFluidModule.fluidExport-is-no-longer-an-IFluidObject)
+- [Scope is no longer an IFluidObject](#scope-is-no-longer-an-IFluidObject)
+- [IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject](#IFluidHandle-and-requestFluidObject-generics-default-no-longer-includes-IFluidObject)
+- [LazyLoadedDataObjectFactory.create no longer returns an IFluidObject](#LazyLoadedDataObjectFactory.create-no-longer-returns-an-IFluidObject)
+
+
+### Removing Commit from TreeEntry and commits from SnapShotTree
+Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
+These should not be used and there is no replacement provided.
+
+### raiseContainerWarning removed from IContainerContext
+`raiseContainerWarning` property will be removed from `IContainerContext` interface and `ContainerContext` class. Please refer to [raiseContainerWarning property](#Remove-raisecontainerwarning-property) for more details.
+
+### Remove `@fluidframework/core-interface#fluidPackage.ts`
+All the interfaces and const from `fluidPackage.ts` were moved to `@fluidframework/container-definitions` in previous release. Please refer to: [Moved `@fluidframework/core-interface#fluidPackage.ts` to `@fluidframework/container-definition#fluidPackage.ts`](#Moved-fluidframeworkcore-interfacefluidPackagets-to-fluidframeworkcontainer-definitionfluidPackagets). It is now removed from `@fluidframework/core-interface#fluidPackage.ts`. Import the following interfaces and const from `@fluidframework/container-definitions`:
+- `IFluidPackageEnvironment`
+- `IFluidPackage`
+- `isFluidPackage`
+- `IFluidCodeDetailsConfig`
+- `IFluidCodeDetailsConfig`
+- `IFluidCodeDetails`
+- `IFluidCodeDetailsComparer`
+- `IProvideFluidCodeDetailsComparer`
+- `IFluidCodeDetailsComparer`
+
+### `getAbsoluteUrl()` argument type changed
+The `packageInfoSource` argument in `getAbsoluteUrl()` on `@fluidframework/odsp-driver`, `@fluidframework/iframe-driver`, and `@fluidframework/driver-definitions` is typed to `IContainerPackageInfo` interface only.
+
+```diff
+- getAbsoluteUrl(
+-    resolvedUrl: IResolvedUrl,
+-    relativeUrl: string,
+-    packageInfoSource?: IFluidCodeDetails | IContainerPackageInfo,
+- ): Promise<string>;
+
++ interface IContainerPackageInfo {
++    /**
++     * Container package name.
++     */
++    name: string;
++ }
+
++ getAbsoluteUrl(
++    resolvedUrl: IResolvedUrl,
++    relativeUrl: string,
++    packageInfoSource?: IContainerPackageInfo,
++ ): Promise<string>;
+```
+
+### Replace ICodeLoader with ICodeDetailsLoader interface
+The interface `ICodeLoader` was deprecated a while ago in previous releases. The alternative for `ICodeLoader` interface is the `ICodeDetailsLoader` interface which can be imported from `@fluidframework/container-definitions`. `ICodeLoader` interface will be removed in the next release.
+
+In particular, note the `ILoaderService` and `ILoaderProps` interfaces used with the `Loader` class now only support `ICodeDetailsLoader`. If you were using an `ICodeLoader` with these previously, you'll need to update to an `ICodeDetailsLoader`.
+
+```ts
+export interface ICodeDetailsLoader
+ extends Partial<IProvideFluidCodeDetailsComparer> {
+ /**
+  * Load the code module (package) that is capable to interact with the document.
+  *
+  * @param source - Code proposal that articulates the current schema the document is written in.
+  * @returns - Code module entry point along with the code details associated with it.
+  */
+ load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+}
+```
+All codeloaders are now expected to return the object including both the runtime factory and code details of the package that was actually loaded. These code details may be used later then to check whether the currently loaded package `.satisfies()` a constraint.
+
+You can start by returning default code details that were passed into the code loader which used to be our implementation on your behalf if code details were not passed in. Later on, this gives an opportunity to implement more sophisticated code loading where the code loader now can inform about the actual loaded module via the returned details.
+
+### IFluidModule.fluidExport is no longer an IFluidObject
+IFluidObject is no longer part of the type of IFluidModule.fluidExport. IFluidModule.fluidExport is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+
+### Scope is no longer an IFluidObject
+IFluidObject is no longer part of the type of IContainerContext.scope or IContainerRuntime.scope.
+Scope is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+
+### IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject
+IFluidObject is no longer part of the type of IFluidHandle and requestFluidObject generic's default.
+
+``` diff
+- IFluidHandle<T = IFluidObject & FluidObject & IFluidLoadable>
++ IFluidHandle<T = FluidObject & IFluidLoadable>
+
+- export function requestFluidObject<T = IFluidObject & FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
++ export function requestFluidObject<T = FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
+```
+
+This will affect the result of all `get()` calls on IFluidHandle's, and the default return will no longer be and IFluidObject by default.
+
+Similarly `requestFluidObject` default generic which is also its return type no longer contains IFluidObject.
+
+In both cases the generic's default is still an [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject) which should be used instead.
+
+As a short term fix in both these cases IFluidObject can be passed at the generic type. However, IFluidObject is deprecated and will be removed in an upcoming release so this can only be a temporary workaround before moving to [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### LazyLoadedDataObjectFactory.create no longer returns an IFluidObject
+LazyLoadedDataObjectFactory.create no longer returns an IFluidObject, it now only returns a [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+As a short term fix the return type of this method can be safely casted to an IFluidObject. However, IFluidObject is deprecated and will be removed in an upcoming release so this can only be a temporary workaround before moving to [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
 # 0.58
 
 ## 0.58 Upcoming changes
@@ -21,7 +153,9 @@ There are a few steps you can take to write a good change note and avoid needing
 - [IDirectory extends IDisposable](#IDirectory-extends-IDisposable)
 - [raiseContainerWarning removed from IContainerContext](#raiseContainerWarning-removed-from-IContainerContext)
 - [`IContainerRuntimeBase.setFlushMode` is deprecated](#icontainerruntimebasesetflushmode-is-deprecated)
-- fake commit to try and catch merge conflicts
+- [connected deprecated from IContainer, IFluidContainer, and FluidContainer](#connected-deprecated-from-IContainer-IFluidContainer-and-FluidContainer)
+- [setAutoReconnect and resume deprecated from IContainer and Container](#setAutoReconnect-and-resume-deprecated-from-IContainer-and-Container)
+- [IContainer.connect() and IContainer.disconnect() will be made mandatory in future major release](#icontainer-connect-and-icontainer-disconnect-will-be-made-mandatory-in-future-major-release)
 
 ### Doing operations not allowed on deleted sub directory
 Users will not be allowed to do operations on a deleted directory. Users can subscribe to `disposed` event to know if a sub directory is deleted. Accessing deleted sub directory will throw `UsageError` exception now.
@@ -34,6 +168,19 @@ IDirectory has started extending IDisposable. This means that users implementing
 
 ### `IContainerRuntimeBase.setFlushMode` is deprecated
 `IContainerRuntimeBase.setFlushMode` is deprecated and will be removed in a future release. FlushMode will become an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977)
+
+### connected deprecated from IContainer, IFluidContainer, and FluidContainer
+`connected` has been deprecated from `IContainer`, `IFluidContainer`, and `FluidContainer`. It will be removed in a future major release. Use `connectionState` property on the respective interfaces/classes instead. Please switch to the new APIs as soon as possible, and provide any feedback to the FluidFramework team if necessary.
+``` diff
+- if (fluidContainer.connected)
++ if (fluidContainer.connectionState === ConnectionState.Connected)
+```
+
+### setAutoReconnect and resume deprecated from IContainer and Container
+`setAutoReconnect()` and `resume()` have been deprecated from `IContainer` and `Container`. They will be removed in a future major release. Use `connect()` instead of `setAutoReconnect(true)` and `resume()`, and use `disconnect()` instead of `setAutoReconnect(false)`. Note, when using these new functions you will need to ensure that the container is both attached and not closed to prevent an error being thrown. Please switch to the new APIs as soon as possible, and provide any feedback to the FluidFramework team if necessary.
+
+### IContainer.connect() and IContainer.disconnect() will be made mandatory in future major release
+In major release 1.0, the optional functions `IContainer.connect()` `IContainer.disconnect()` will be made mandatory functions.
 
 ## 0.58 Breaking changes
 - [Move IntervalType from merge-tree to sequence package](#Move-IntervalType-from-merge-tree-to-sequence-package)
@@ -547,7 +694,7 @@ The `createCreateNewRequest()` is removed and replaced with `createOdspCreateCon
 
 ### Deprecate IFluidObject and introduce FluidObject
 This release deprecates the interface `IFluidObject` and introduces the utility type [`FluidObject`](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts). The primary reason for this change is that the module augmentation used by `IFluidObject` creates excessive type coupling where a small breaking change in any type exposed off `IFluidObject` can lead to type error in all usages of `IFluidObject`.
-On investigation we also found that the uber type `IFluidObject` wasn't genenerally necessary, as consumers generally only used a small number of specific types that they knew in advance.
+On investigation we also found that the uber type `IFluidObject` wasn't generally necessary, as consumers generally only used a small number of specific types that they knew in advance.
 
 Given these points, we've introduced [`FluidObject`](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts). `FluidObject` is a utility type that is used in both its generic and non-generic forms.
 

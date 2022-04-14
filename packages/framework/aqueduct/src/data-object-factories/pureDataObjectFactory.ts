@@ -77,7 +77,7 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
     // becomes globally available. But it's not full initialization - constructor can't
     // access DDSs or other services of runtime as objects are not fully initialized.
     // In order to use object, we need to go through full initialization by calling finishInitialization().
-    const scope = context.scope as FluidObject<IFluidDependencySynthesizer>;
+    const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
     const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
     const providers = dependencyContainer.synthesize<I["OptionalProviders"]>(optionalProviders, {});
     const instance = new ctor({ runtime, context, providers, initProps });

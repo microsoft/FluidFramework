@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_FileDeltaStorageService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FileDeltaStorageService():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_FileDeltaStorageService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_FileDeltaStorageService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_FileDeltaStorageService():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_FileDeltaStorageService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_FileDocumentService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FileDocumentService():
@@ -52,7 +52,7 @@ use_current_ClassDeclaration_FileDocumentService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_FileDocumentService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_FileDocumentService():
@@ -64,7 +64,7 @@ use_old_ClassDeclaration_FileDocumentService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_FileDocumentServiceFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FileDocumentServiceFactory():
@@ -76,7 +76,7 @@ use_current_ClassDeclaration_FileDocumentServiceFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_FileDocumentServiceFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_FileDocumentServiceFactory():
@@ -88,7 +88,7 @@ use_old_ClassDeclaration_FileDocumentServiceFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_FileSnapshotWriterClassFactory": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_FileSnapshotWriterClassFactory():
@@ -100,7 +100,7 @@ use_current_VariableDeclaration_FileSnapshotWriterClassFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_FileSnapshotWriterClassFactory": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_FileSnapshotWriterClassFactory():
@@ -112,7 +112,7 @@ use_old_VariableDeclaration_FileSnapshotWriterClassFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_FileStorageDocumentName": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_FileStorageDocumentName():
@@ -124,7 +124,7 @@ use_current_VariableDeclaration_FileStorageDocumentName(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_FileStorageDocumentName": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_FileStorageDocumentName():
@@ -136,7 +136,7 @@ use_old_VariableDeclaration_FileStorageDocumentName(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_FluidFetchReader": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FluidFetchReader():
@@ -148,7 +148,7 @@ use_current_ClassDeclaration_FluidFetchReader(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_FluidFetchReader": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_FluidFetchReader():
@@ -160,7 +160,7 @@ use_old_ClassDeclaration_FluidFetchReader(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_FluidFetchReaderFileSnapshotWriter": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_FluidFetchReaderFileSnapshotWriter():
@@ -172,7 +172,7 @@ use_current_VariableDeclaration_FluidFetchReaderFileSnapshotWriter(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "VariableDeclaration_FluidFetchReaderFileSnapshotWriter": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_FluidFetchReaderFileSnapshotWriter():
@@ -184,7 +184,7 @@ use_old_VariableDeclaration_FluidFetchReaderFileSnapshotWriter(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ISnapshotWriterStorage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISnapshotWriterStorage():
@@ -196,7 +196,7 @@ use_current_InterfaceDeclaration_ISnapshotWriterStorage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_ISnapshotWriterStorage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISnapshotWriterStorage():
@@ -208,7 +208,7 @@ use_old_InterfaceDeclaration_ISnapshotWriterStorage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_ReaderConstructor": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ReaderConstructor():
@@ -220,7 +220,7 @@ use_current_TypeAliasDeclaration_ReaderConstructor(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_ReaderConstructor": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ReaderConstructor():
@@ -232,7 +232,7 @@ use_old_TypeAliasDeclaration_ReaderConstructor(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_Replayer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Replayer():
@@ -244,7 +244,7 @@ use_current_ClassDeclaration_Replayer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_Replayer": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_Replayer():
@@ -256,7 +256,7 @@ use_old_ClassDeclaration_Replayer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_ReplayFileDeltaConnection": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ReplayFileDeltaConnection():
@@ -268,7 +268,7 @@ use_current_ClassDeclaration_ReplayFileDeltaConnection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_ReplayFileDeltaConnection": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ReplayFileDeltaConnection():

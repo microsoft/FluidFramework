@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_generateToken": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_generateToken():
@@ -28,7 +28,7 @@ use_current_FunctionDeclaration_generateToken(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "FunctionDeclaration_generateToken": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_generateToken():
@@ -40,7 +40,7 @@ use_old_FunctionDeclaration_generateToken(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "EnumDeclaration_ScopeType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ScopeType():
@@ -52,7 +52,7 @@ use_current_EnumDeclaration_ScopeType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "EnumDeclaration_ScopeType": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_ScopeType():

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-client-utils",
-  "version": "0.58.3000",
+  "version": "0.59.1000",
   "description": "Fluid client development and test utilities",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,14 +36,14 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^0.1027.1000",
-    "@fluidframework/test-runtime-utils": "^0.58.3000",
+    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/test-runtime-utils": "^0.59.1000",
     "sillyname": "^0.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
-    "@fluidframework/test-client-utils-previous": "npm:@fluidframework/test-client-utils@0.58.2000",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/test-client-utils-previous": "npm:@fluidframework/test-client-utils@^0.58.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
@@ -62,7 +62,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.58.3000",
+    "version": "0.59.1000",
     "broken": {}
   }
 }

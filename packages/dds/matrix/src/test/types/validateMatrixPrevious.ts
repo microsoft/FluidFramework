@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IRevertible": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRevertible():
@@ -28,7 +28,7 @@ use_current_InterfaceDeclaration_IRevertible(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IRevertible": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IRevertible():
@@ -40,7 +40,7 @@ use_old_InterfaceDeclaration_IRevertible(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IUndoConsumer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IUndoConsumer():
@@ -52,7 +52,7 @@ use_current_InterfaceDeclaration_IUndoConsumer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "InterfaceDeclaration_IUndoConsumer": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IUndoConsumer():
@@ -64,7 +64,7 @@ use_old_InterfaceDeclaration_IUndoConsumer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_MatrixItem": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_MatrixItem():
@@ -76,7 +76,7 @@ use_current_TypeAliasDeclaration_MatrixItem(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "TypeAliasDeclaration_MatrixItem": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_MatrixItem():
@@ -88,7 +88,7 @@ use_old_TypeAliasDeclaration_MatrixItem(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_SharedMatrix": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SharedMatrix():
@@ -100,7 +100,7 @@ use_current_ClassDeclaration_SharedMatrix(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_SharedMatrix": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_SharedMatrix():
@@ -112,7 +112,7 @@ use_old_ClassDeclaration_SharedMatrix(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_SharedMatrixFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SharedMatrixFactory():
@@ -124,7 +124,7 @@ use_current_ClassDeclaration_SharedMatrixFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
 * "ClassDeclaration_SharedMatrixFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_SharedMatrixFactory():

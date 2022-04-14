@@ -5,11 +5,12 @@
 
 import * as crypto from "crypto";
 import {
+    IDocument,
     IDocumentStorage,
     IThrottler,
     ITenantManager,
     ICache,
-    MongoManager,
+    ICollection,
 } from "@fluidframework/server-services-core";
 import {
     verifyStorageToken,
@@ -20,10 +21,10 @@ import {
 } from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import winston from "winston";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IAlfredTenant, ISession } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
-import { Constants, handleResponse } from "../../../utils";
+import { Constants, handleResponse, getSession } from "../../../utils";
 
 export function create(
     storage: IDocumentStorage,
@@ -32,9 +33,10 @@ export function create(
     singleUseTokenCache: ICache,
     config: Provider,
     tenantManager: ITenantManager,
-    globalDbMongoManager?: MongoManager): Router {
+    documentsCollection: ICollection<IDocument>): Router {
     const router: Router = Router();
-
+    const ordererUrl = config.get("worker:serverUrl");
+    const historianUrl = config.get("worker:blobStorageUrl");
     // Whether to enforce server-generated document ids in create doc flow
     const enforceServerGeneratedDocumentId: boolean = config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
 
@@ -61,7 +63,7 @@ export function create(
                 (error) => {
                     response.status(400).json(error);
                 });
-    });
+        });
 
     /**
      * Creates a new document with initial summary.
@@ -74,7 +76,7 @@ export function create(
             singleUseTokenCache,
         }),
         throttle(throttler, winston, commonThrottleOptions),
-        (request, response, next) => {
+        async (request, response, next) => {
             // Tenant and document
             const tenantId = getParam(request.params, "tenantId");
             // If enforcing server generated document id, ignore id parameter
@@ -95,26 +97,53 @@ export function create(
                 sequenceNumber,
                 1,
                 crypto.randomBytes(4).toString("hex"),
+                ordererUrl,
+                historianUrl,
                 values);
 
-            // Generate creation token given a jwt from header
-            const authorizationHeader = request.header("Authorization");
-            const tokenRegex = /Basic (.+)/;
-            const tokenMatch = tokenRegex.exec(authorizationHeader);
-            const token = tokenMatch[1];
+            const enableDiscovery: boolean = request.body.enableDiscovery ?? false;
 
-            const tenantKeyP = tenantManager.getKey(tenantId);
-
-            handleResponse(Promise.all([createP, tenantKeyP]).then(([_, key]) => {
-                // @TODO: Modify it to return an object only, it returns string for back-compat.
-                return generateToken
-                    ? {
-                        id,
-                        token: getCreationToken(token, key, id),
-                    }
-                    : id;
-            }), response, undefined, 201);
+            // Handle backwards compatibility for older driver versions.
+            // TODO: remove condition once old drivers are phased out and all clients can handle object response
+            const clientAcceptsObjectResponse = enableDiscovery === true || generateToken === true;
+            if (clientAcceptsObjectResponse) {
+              const responseBody = { id, token: undefined, session: undefined };
+              if (generateToken) {
+                // Generate creation token given a jwt from header
+                const authorizationHeader = request.header("Authorization");
+                const tokenRegex = /Basic (.+)/;
+                const tokenMatch = tokenRegex.exec(authorizationHeader);
+                const token = tokenMatch[1];
+                const tenantKey = await tenantManager.getKey(tenantId);
+                responseBody.token = getCreationToken(token, tenantKey, id);
+              }
+              if (enableDiscovery) {
+                // Session information
+                const session: ISession = {
+                   ordererUrl,
+                   historianUrl,
+                   isSessionAlive: false,
+                 };
+                 responseBody.session = session;
+              }
+              handleResponse(createP.then(() => responseBody), response, undefined, 201);
+            } else {
+              handleResponse(createP.then(() => id), response, undefined, 201);
+            }
         });
 
+    /**
+     * Get the session information.
+     */
+    router.get(
+        "/:tenantId/session/:id",
+        verifyStorageToken(tenantManager, config),
+        throttle(throttler, winston, commonThrottleOptions),
+        async (request, response, next) => {
+            const documentId = getParam(request.params, "id");
+            const tenantId = getParam(request.params, "tenantId");
+            const session = getSession(ordererUrl, historianUrl, tenantId, documentId, documentsCollection);
+            handleResponse(session, response, undefined, 200);
+        });
     return router;
 }
