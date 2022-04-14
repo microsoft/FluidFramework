@@ -294,11 +294,16 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         this.emit("pending", key);
 
-        if (this.runtime.clientId !== undefined && expectedSignoffs.includes(this.runtime.clientId)) {
-            // Emit an accept upon a new key entering pending state, which is how we'll eventually advance it to
-            // accepted state.
-            // TODO: Doesn't work if there's a holdout client that disconnects prior to sending accept.  Observing
-            // client disconnects should work.
+        if (expectedSignoffs.length === 0) {
+            // Only the submitting client was connected at the time the set was sequenced.
+            this.values.set(key, {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                accepted: { value, sequenceNumber: setSequenceNumber },
+                pending: undefined,
+            });
+            this.emit("accepted", key);
+        } else if (this.runtime.clientId !== undefined && expectedSignoffs.includes(this.runtime.clientId)) {
+            // Emit an accept upon a new key entering pending state if our accept is expected.
             const acceptOp: IQuorumAcceptOperation = {
                 type: "accept",
                 key,
@@ -345,11 +350,12 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         this.emit("pending", key);
 
-        if (this.runtime.clientId !== undefined && expectedSignoffs.includes(this.runtime.clientId)) {
-            // Emit an accept upon a new key entering pending state, which is how we'll eventually advance it to
-            // accepted state.
-            // TODO: Doesn't work if there's a holdout client that disconnects prior to sending accept.  Observing
-            // client disconnects should work.
+        if (expectedSignoffs.length === 0) {
+            // Only the submitting client was connected at the time the delete was sequenced.
+            this.values.delete(key);
+            this.emit("accepted", key);
+        } else if (this.runtime.clientId !== undefined && expectedSignoffs.includes(this.runtime.clientId)) {
+            // Emit an accept upon a new key entering pending state if our accept is expected.
             const acceptOp: IQuorumAcceptOperation = {
                 type: "accept",
                 key,

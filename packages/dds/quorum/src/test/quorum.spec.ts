@@ -48,7 +48,69 @@ describe("Quorum", () => {
         });
     });
 
-    describe("Connected state", () => {
+    describe("Connected state, single client", () => {
+        let quorum: IQuorum;
+        let containerRuntimeFactory: MockContainerRuntimeFactory;
+
+        beforeEach(() => {
+            containerRuntimeFactory = new MockContainerRuntimeFactory();
+            quorum = createConnectedQuorum("quorum", containerRuntimeFactory);
+        });
+
+        it("Can create the Quorum", async () => {
+            assert.ok(quorum, "Could not create quorum");
+        });
+
+        it("Can set a value and read it from all clients", async () => {
+            const expectedKey = "key";
+            const expectedValue = "value";
+            const quorumAcceptanceP = new Promise<void>((resolve) => {
+                const watchForPending = (pendingKey: string): void => {
+                    if (pendingKey === expectedKey) {
+                        assert.strictEqual(
+                            quorum.getPending(expectedKey),
+                            expectedValue,
+                            "Value in Quorum should be pending now",
+                        );
+                        assert.strictEqual(
+                            quorum.get(expectedKey),
+                            undefined,
+                            "Value in Quorum should not be accepted yet",
+                        );
+                        quorum.off("pending", watchForPending);
+
+                        // Doing this synchronously after validating pending, since processAllMessages() won't permit
+                        // us to pause after the set but before the noop.
+                        const watchForAccepted = (acceptedKey: string): void => {
+                            if (acceptedKey === expectedKey) {
+                                assert.strictEqual(
+                                    quorum.getPending(expectedKey),
+                                    undefined,
+                                    "Value in Quorum should not be pending anymore",
+                                );
+                                assert.strictEqual(
+                                    quorum.get(expectedKey),
+                                    expectedValue,
+                                    "Value in Quorum should be accepted now",
+                                );
+                                quorum.off("accepted", watchForAccepted);
+                                resolve();
+                            }
+                        };
+                        quorum.on("accepted", watchForAccepted);
+                    }
+                };
+                quorum.on("pending", watchForPending);
+            });
+            quorum.set(expectedKey, expectedValue);
+            containerRuntimeFactory.processAllMessages();
+
+            await quorumAcceptanceP;
+            assert.strictEqual(quorum.get(expectedKey), expectedValue, "Wrong value in Quorum");
+        });
+    });
+
+    describe("Connected state, multiple clients", () => {
         let quorum1: IQuorum;
         let quorum2: IQuorum;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
@@ -61,7 +123,7 @@ describe("Quorum", () => {
 
         it("Can create the Quorums", async () => {
             assert.ok(quorum1, "Could not create quorum1");
-            assert.ok(quorum2, "Could not create quorum1");
+            assert.ok(quorum2, "Could not create quorum2");
         });
 
         it("Can set a value and read it from all clients", async () => {
