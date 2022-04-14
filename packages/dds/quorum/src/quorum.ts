@@ -82,11 +82,19 @@ interface IQuorumDeleteOperation {
     refSeq: number;
 }
 
+interface IQuorumAcceptOperation {
+    type: "accept";
+    key: string;
+    // The sequence number when the value went pending.
+    // To be used to validate that we are accepting the correct intended value.
+    pendingSeq: number;
+}
+
 interface IQuorumNoOpOperation {
     type: "noop";
 }
 
-type IQuorumOperation = IQuorumSetOperation | IQuorumDeleteOperation | IQuorumNoOpOperation;
+type IQuorumOperation = IQuorumSetOperation | IQuorumDeleteOperation | IQuorumNoOpOperation | IQuorumAcceptOperation;
 
 const snapshotFileName = "header";
 
@@ -180,6 +188,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.incomingOp.on("set", this.handleIncomingSet);
         this.incomingOp.on("delete", this.handleIncomingDelete);
         this.incomingOp.on("noop", this.handleIncomingNoOp);
+        this.incomingOp.on("accept", this.handleIncomingAcceptOp);
 
         this.disconnectWatcher.on("disconnect", () => {
             // assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
@@ -359,6 +368,41 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         }
     };
 
+    private readonly handleIncomingAcceptOp = (
+        key: string,
+        pendingSeq: number,
+        clientId: string,
+        sequenceNumber: number,
+    ): void => {
+        const pending = this.values.get(key)?.pending;
+        if (pending === undefined
+            || pending.sequenceNumber !== pendingSeq
+            || !pending.expectedSignoffs.includes(clientId)) {
+            // TODO: This is probably going to happen normally, esp. for resubmit on reconnect.
+            // It shouldn't always be an error.
+            throw new Error("Got an unexpected accept");
+        }
+
+        // Remove the client from the expected signoffs
+        pending.expectedSignoffs = pending.expectedSignoffs.filter(
+            (expectedClientId) => expectedClientId !== clientId,
+        );
+
+        if (pending.expectedSignoffs.length === 0) {
+            // The pending value has settled
+            if (pending.type === "set") {
+                this.values.set(key, {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    accepted: { value: pending.value, sequenceNumber },
+                    pending: undefined,
+                });
+            } else if (pending.type === "delete") {
+                this.values.delete(key);
+            }
+            this.emit("accepted", key);
+        }
+    };
+
     /**
      * Create a summary for the quorum
      *
@@ -424,6 +468,10 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
                 case "noop":
                     this.incomingOp.emit("noop", message.minimumSequenceNumber);
+                    break;
+
+                case "accept":
+                    this.incomingOp.emit("accept", op.key, op.pendingSeq, message.clientId, message.sequenceNumber);
                     break;
 
                 default:
