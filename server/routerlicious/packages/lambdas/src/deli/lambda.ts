@@ -1313,14 +1313,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     private setReadClientIdleTimer() {
         this.clearReadClientIdleTimer();
 
-        this.readClientIdleTimer = setTimeout(() => {
+        this.readClientIdleTimer = setInterval(() => {
             this.checkIdleReadClients();
         }, this.serviceConfiguration.deli.readClientIdleTimer);
     }
 
     private clearReadClientIdleTimer() {
         if (this.readClientIdleTimer !== undefined) {
-            clearTimeout(this.readClientIdleTimer);
+            clearInterval(this.readClientIdleTimer);
             this.readClientIdleTimer = undefined;
         }
     }
