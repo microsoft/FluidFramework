@@ -66,6 +66,10 @@ export async function createGitService(
     const writeToExternalStorage = !!customData?.externalStorageData;
     const storageName = customData?.storageName;
     const decoded = jwt.decode(token) as ITokenClaims;
+    if (containsPathTraversal(decoded.documentId)) {
+        // Prevent attempted directory traversal.
+        throw new NetworkError(400, `Invalid document id: ${decoded.documentId}`);
+    }
      const service = new RestGitService(
          details.storage,
          writeToExternalStorage,
