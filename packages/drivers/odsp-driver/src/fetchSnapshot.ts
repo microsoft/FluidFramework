@@ -37,9 +37,9 @@ import { EpochTracker } from "./epochTracker";
  * Enum to support different types of snapshot formats.
  */
 export enum SnapshotFormatSupportType {
-    Json,
-    Binary,
-    JsonAndBinary,
+    Json = 0,
+    Binary = 1,
+    JsonAndBinary = 2,
 }
 
 /**
@@ -473,13 +473,17 @@ export async function downloadSnapshot(
         method: "POST",
     };
     // Decide what snapshot format to fetch as per the feature gate.
-    if (snapshotFormatFetchType?.valueOf() === SnapshotFormatSupportType.JsonAndBinary) {
-        headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
-    } else if (snapshotFormatFetchType?.valueOf() === SnapshotFormatSupportType.Binary) {
-        headers.accept = `application/ms-fluid; v=${currentReadVersion}`;
-    } else {
-        headers.accept = "application/json";
+    switch (snapshotFormatFetchType) {
+        case SnapshotFormatSupportType.JsonAndBinary:
+            headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
+            break;
+        case SnapshotFormatSupportType.Binary:
+            headers.accept = `application/ms-fluid; v=${currentReadVersion}`;
+            break;
+        default:
+            headers.accept = "application/json";
     }
+
     const response = await (epochTracker?.fetch(url, fetchOptions, "treesLatest", true) ??
         fetchHelper(url, fetchOptions));
 
