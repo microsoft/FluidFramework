@@ -14,9 +14,6 @@
                 "odsp":{
                     "loader":{
                         "summarizeProtocolTree": [true,false]
-                    },
-                    "configurations":{
-                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [0, 1, 2]
                     }
                 }
             }
