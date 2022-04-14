@@ -351,6 +351,9 @@ export interface ISession {
 }
 
 // @public (undocumented)
+export function isNetworkError(error: unknown): error is NetworkError;
+
+// @public (undocumented)
 export interface ISummaryTree extends ISummaryTree_2 {
     // (undocumented)
     tree: {

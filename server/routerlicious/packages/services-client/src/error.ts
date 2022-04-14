@@ -100,7 +100,7 @@ export class NetworkError extends Error {
             message: this.message,
             canRetry: this.canRetry,
             isFatal: this.isFatal,
-            retryAfter: this.retryAfterMs !== undefined ? this.retryAfterMs / 1000 : undefined,
+            retryAfter: this.retryAfter,
             retryAfterMs: this.retryAfterMs,
         };
     }
@@ -119,6 +119,12 @@ export class NetworkError extends Error {
             retryAfter: this.retryAfter,
         };
     }
+}
+
+export function isNetworkError(error: unknown): error is NetworkError {
+    return (error as NetworkError).name === "NetworkError" &&
+        typeof (error as NetworkError).code === "number" &&
+        typeof (error as NetworkError).message === "string";
 }
 
 /**

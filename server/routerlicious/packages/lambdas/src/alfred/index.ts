@@ -18,6 +18,7 @@ import {
 import {
     canSummarize,
     canWrite,
+    isNetworkError,
     NetworkError,
     validateTokenClaims,
     validateTokenClaimsExpiration,
@@ -233,13 +234,13 @@ export function configureWebSocketServices(
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
-            } catch (err) {
-                if (typeof (err as NetworkError | undefined)?.code === "number" &&
-                    typeof (err as NetworkError | undefined)?.message === "string") {
-                    throw (err as NetworkError);
+            } catch (error) {
+                if (isNetworkError(error)) {
+                    throw error;
                 }
-                // If we don't understand the error, be lenient and allow retry.
-                throw new NetworkError(401, "Invalid token");
+                // We don't understand the error, so it is likely an internal service error.
+                const errMsg = `Could not verify connect document token. Error: ${safeStringify(error, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.tenantId, claims.documentId);
             }
 
             const clientId = generateClientId();
