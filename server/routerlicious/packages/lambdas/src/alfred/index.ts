@@ -286,11 +286,8 @@ export function configureWebSocketServices(
             if (!version) {
                 throw new NetworkError(
                     400,
-                    [
-                        `Unsupported client protocol.`,
-                        `Server: ${protocolVersions}.`,
-                        `Client: ${JSON.stringify(connectVersions)}`,
-                    ].join(" "),
+                    // eslint-disable-next-line max-len
+                    `Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`
                 );
             }
 
@@ -304,9 +301,9 @@ export function configureWebSocketServices(
                 throw new NetworkError(
                     429,
                     "Too Many Clients Connected to Document",
-                    true,
-                    false,
-                    5 * 60 * 1000 /* 5 min */,
+                    true, /* canRetry */
+                    false, /* isFatal */
+                    5 * 60 * 1000 /* retryAfterMs (5 min) */,
                 );
             }
 
