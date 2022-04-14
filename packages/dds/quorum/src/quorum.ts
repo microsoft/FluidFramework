@@ -90,11 +90,7 @@ interface IQuorumAcceptOperation {
     pendingSeq: number;
 }
 
-interface IQuorumNoOpOperation {
-    type: "noop";
-}
-
-type IQuorumOperation = IQuorumSetOperation | IQuorumDeleteOperation | IQuorumNoOpOperation | IQuorumAcceptOperation;
+type IQuorumOperation = IQuorumSetOperation | IQuorumDeleteOperation | IQuorumAcceptOperation;
 
 const snapshotFileName = "header";
 
@@ -132,8 +128,8 @@ const snapshotFileName = "header";
  * we first verify that it was set with knowledge of the most recently accepted value (consensus-like FWW).  If it
  * meets this bar, then the value is "pending" (TODO: naming).  During this time, clients may observe the pending
  * value and act upon it, but should be aware that not all other clients may have witnessed the value yet.  Once
- * the MSN advances past the sequence number of the set, we know that all connected clients have witnessed the value
- * and the value becomes "accepted".  Once the value is accepted, it once again becomes possible to set the value,
+ * all clients that were connected at the time of the value being set have explicitly acknowledged the new value,
+ * the value becomes "accepted".  Once the value is accepted, it once again becomes possible to set the value,
  * again with consensus-like FWW resolution.
  *
  * ### Eventing
@@ -187,7 +183,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         this.incomingOp.on("set", this.handleIncomingSet);
         this.incomingOp.on("delete", this.handleIncomingDelete);
-        this.incomingOp.on("noop", this.handleIncomingNoOp);
         this.incomingOp.on("accept", this.handleIncomingAcceptOp);
 
         this.disconnectWatcher.on("disconnect", () => {
@@ -296,11 +291,18 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         this.emit("pending", key);
 
-        // Emit a noop upon a new key entering pending state, which is how we'll eventually advance it to accepted
-        // TODO: Doesn't work if there's a holdout client that disconnects prior to sending noop, since we aren't
-        // guaranteed to get any further message advancing the MSN.  Observing client disconnects could work.
-        const noOp: IQuorumNoOpOperation = { type: "noop" };
-        this.submitLocalMessage(noOp);
+        if (this.runtime.clientId !== undefined && expectedSignoffs.includes(this.runtime.clientId)) {
+            // Emit an accept upon a new key entering pending state, which is how we'll eventually advance it to
+            // accepted state.
+            // TODO: Doesn't work if there's a holdout client that disconnects prior to sending accept.  Observing
+            // client disconnects should work.
+            const acceptOp: IQuorumAcceptOperation = {
+                type: "accept",
+                key,
+                pendingSeq: setSequenceNumber,
+            };
+            this.submitLocalMessage(acceptOp);
+        }
     };
 
     private readonly handleIncomingDelete = (
@@ -340,31 +342,17 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         this.emit("pending", key);
 
-        // Emit a noop upon a new key entering pending state, which is how we'll eventually advance it to accepted
-        // TODO: Doesn't work if there's a holdout client that disconnects prior to sending noop, since we aren't
-        // guaranteed to get any further message advancing the MSN.  Observing client disconnects could work.
-        const noOp: IQuorumNoOpOperation = { type: "noop" };
-        this.submitLocalMessage(noOp);
-    };
-
-    private readonly handleIncomingNoOp = (minimumSequenceNumber: number): void => {
-        // Run through each of the values, find any pending that should now be considered settled because the MSN has
-        // passed when they were sequenced.
-        for (const [key, value] of this.values) {
-            const pending = value.pending;
-            if (pending !== undefined && minimumSequenceNumber >= pending.sequenceNumber) {
-                // The pending value has settled
-                if (pending.type === "set") {
-                    this.values.set(key, {
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        accepted: { value: pending.value, sequenceNumber: minimumSequenceNumber },
-                        pending: undefined,
-                    });
-                } else if (pending.type === "delete") {
-                    this.values.delete(key);
-                }
-                this.emit("accepted", key);
-            }
+        if (this.runtime.clientId !== undefined && expectedSignoffs.includes(this.runtime.clientId)) {
+            // Emit an accept upon a new key entering pending state, which is how we'll eventually advance it to
+            // accepted state.
+            // TODO: Doesn't work if there's a holdout client that disconnects prior to sending accept.  Observing
+            // client disconnects should work.
+            const acceptOp: IQuorumAcceptOperation = {
+                type: "accept",
+                key,
+                pendingSeq: deleteSequenceNumber,
+            };
+            this.submitLocalMessage(acceptOp);
         }
     };
 
@@ -464,10 +452,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
                 case "delete":
                     this.incomingOp.emit("delete", op.key, op.refSeq, message.sequenceNumber, message.clientId);
-                    break;
-
-                case "noop":
-                    this.incomingOp.emit("noop", message.minimumSequenceNumber);
                     break;
 
                 case "accept":
