@@ -14,6 +14,16 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 1.0
+
+## 1.0 Upcoming changes
+
+## 1.0 Breaking changes
+- [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
+
+### Remove Write Method from IDocumentStorageService
+`IDocumentStorageService.write(...)` is no longer used and causes another reference to `ITree` which we want to eliminate.
+
 # 0.59
 
 ## 0.59 Upcoming changes
@@ -32,7 +42,6 @@ ICodeLoader interface was deprecated a while ago and will be removed in the next
 - [Scope is no longer an IFluidObject](#scope-is-no-longer-an-IFluidObject)
 - [IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject](#IFluidHandle-and-requestFluidObject-generics-default-no-longer-includes-IFluidObject)
 - [LazyLoadedDataObjectFactory.create no longer returns an IFluidObject](#LazyLoadedDataObjectFactory.create-no-longer-returns-an-IFluidObject)
-- [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
@@ -128,9 +137,6 @@ As a short term fix in both these cases IFluidObject can be passed at the generi
 LazyLoadedDataObjectFactory.create no longer returns an IFluidObject, it now only returns a [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
 
 As a short term fix the return type of this method can be safely casted to an IFluidObject. However, IFluidObject is deprecated and will be removed in an upcoming release so this can only be a temporary workaround before moving to [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
-
-### Remove Write Method from IDocumentStorageService
-`IDocumentStorageService.write(...)` is no longer used and causes another reference to `ITree` which we want to eliminate.
 
 # 0.58
 
