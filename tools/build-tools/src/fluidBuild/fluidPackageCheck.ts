@@ -276,11 +276,20 @@ export class FluidPackageCheck {
                 }
             }
 
+            if(pkg.getScript("typetests:gen")){
+                if (pkg.getScript("build:commonjs")) {
+                    buildCommonJs.push("typetests:gen");
+                } else {
+                    buildCompile.push("typetests:gen");
+                }
+            }
+
             const splitTestBuild = this.splitTestBuild(pkg, true);
             // build:test should be in build:commonjs if it exists, otherwise, it should be in build:compile
             if (pkg.getScript("build:test") || splitTestBuild) {
                 if (pkg.getScript("build:commonjs")) {
                     buildCommonJs.push("build:test");
+
                     // build common js is not concurrent by default
                 } else {
                     buildCompile.push("build:test");
@@ -288,6 +297,8 @@ export class FluidPackageCheck {
                     concurrentBuildCompile = !splitTestBuild;
                 }
             }
+
+
 
             if (pkg.getScript("build:realsvctest")) {
                 buildCompile.push("build:realsvctest");

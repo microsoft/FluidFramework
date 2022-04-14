@@ -150,3 +150,14 @@ export class GenVerTask extends LeafTask {
         return false;
     }
 };
+
+export class TypeValidationTask extends LeafTask {
+    protected addDependentTasks(dependentTasks: LeafTask[]): void {
+    }
+    protected async checkLeafIsUpToDate(): Promise<boolean> {
+        // look for the tsc task, and only regen if tsc needs to run as
+        // well, as it there are not code changes, there is no reason
+        // to regen
+        return this.node.findTask("tsc")?.isUpToDate() ?? false;
+    }
+}
