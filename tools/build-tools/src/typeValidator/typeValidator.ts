@@ -14,6 +14,7 @@ program
     .option("-d|--packageDir <dir>","The root directory of the package")
     .option("-m|--monoRepoDir <dir>","The root directory of the mono repo, under which there are packages.")
     .option("-p|--preinstallOnly", "Only prepares the package json. Doesn't generate tests. This should be done before npm install")
+    .option("-g|--generateOnly", "This only generates the tests. If does not prepare the package.json")
     .option('-v|--verbose', 'Verbose logging mode')
     .parse(process.argv);
 
@@ -36,7 +37,11 @@ async function run(): Promise<boolean>{
         console.log(program.helpInformation());
         return false;
     }
-    const concurrency = 25;
+
+    writeOutLine(`preinstallOnly: ${program.preinstallOnly}`)
+    writeOutLine(`generateOnly: ${program.generateOnly}`)
+
+    const concurrency = 1;
     const runningGenerates: Promise<boolean>[]=[];
     // this loop incrementally builds up the runningGenerates promise list
     // each dir with an index greater than concurrency looks back the concurrency value
@@ -49,7 +54,9 @@ async function run(): Promise<boolean>{
         const output = [`${(i+1).toString()}/${packageDirs.length}`,`${packageName}`];
         try{
             const start = Date.now();
-            const packageData = await getPackageDetails(packageDir, {cwd: program.monoRepoDir})
+            const updateOptions: Parameters<typeof getPackageDetails>[1] =
+                program.generateOnly ? undefined : {cwd: program.monoRepoDir};
+            const packageData = await getPackageDetails(packageDir, updateOptions)
                 .finally(()=>output.push(`Loaded(${Date.now() - start}ms)`));
             if(packageData.skipReason !== undefined){
                 output.push(packageData.skipReason)
