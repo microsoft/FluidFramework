@@ -41,7 +41,7 @@ async function run(): Promise<boolean>{
     writeOutLine(`preinstallOnly: ${program.preinstallOnly}`)
     writeOutLine(`generateOnly: ${program.generateOnly}`)
 
-    const concurrency = 1;
+    const concurrency = 10;
     const runningGenerates: Promise<boolean>[]=[];
     // this loop incrementally builds up the runningGenerates promise list
     // each dir with an index greater than concurrency looks back the concurrency value
