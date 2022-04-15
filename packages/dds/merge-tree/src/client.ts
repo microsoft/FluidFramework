@@ -706,11 +706,14 @@ export class Client {
                 case MergeTreeDeltaType.ANNOTATE:
                     assert(segment.propertyManager?.hasPendingProperties() === true,
                         0x036 /* "Segment has no pending properties" */);
-                    newOp = createAnnotateRangeOp(
-                        segmentPosition,
-                        segmentPosition + segment.cachedLength,
-                        resetOp.props,
-                        resetOp.combiningOp);
+                    // if the segment has been removed, there's no need to send the annotate op
+                    if (segment.removedSeq === undefined && segment.localRemovedSeq === undefined) {
+                        newOp = createAnnotateRangeOp(
+                            segmentPosition,
+                            segmentPosition + segment.cachedLength,
+                            resetOp.props,
+                            resetOp.combiningOp);
+                    }
                     break;
 
                 case MergeTreeDeltaType.INSERT:
@@ -773,7 +776,25 @@ export class Client {
         }
     }
 
-    public applyMsg(msg: ISequencedDocumentMessage) {
+    public applyStashedOp(op: any) {
+        switch (op.type) {
+            case MergeTreeDeltaType.INSERT:
+                this.applyInsertOp({ op });
+                return this.peekPendingSegmentGroups();
+            case MergeTreeDeltaType.REMOVE:
+                this.applyRemoveRangeOp({ op });
+                return this.peekPendingSegmentGroups();
+            case MergeTreeDeltaType.ANNOTATE:
+                this.applyAnnotateRangeOp({ op });
+                return this.peekPendingSegmentGroups();
+            case MergeTreeDeltaType.GROUP:
+                return op.ops.map((o) => this.applyStashedOp(o));
+            default:
+                break;
+        }
+    }
+
+    public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
         // Ensure client ID is registered
         this.getOrAddShortClientId(msg.clientId);
         // Apply if an operation message
@@ -782,7 +803,7 @@ export class Client {
                 op: msg.contents as IMergeTreeOp,
                 sequencedMessage: msg,
             };
-            if (opArgs.sequencedMessage?.clientId === this.longClientId) {
+            if (opArgs.sequencedMessage?.clientId === this.longClientId || local) {
                 this.ackPendingSegment(opArgs);
             }
             else {

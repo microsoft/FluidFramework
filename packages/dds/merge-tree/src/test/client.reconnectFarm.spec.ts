@@ -13,23 +13,47 @@ import {
     runMergeTreeOperationRunner,
     annotateRange,
     removeRange,
-    applyMessages,
     IMergeTreeOperationRunnerConfig,
     IConfigRange,
 } from "./mergeTreeOperationRunner";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
+// This test is based on reconnectFarm, but we keep a second set of clients. For
+// these clients, we apply the generated ops as stashed ops, then regenerate
+// them to simulate resubmit(), then apply them. In the end, they should arrive
+// at the same state as the "normal" set of clients
+let stashClients: TestClient[] = [];
+
 function applyMessagesWithReconnect(
     startingSeq: number,
-    messageDatas: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
+    messageDatas: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[], number][],
     clients: readonly TestClient[],
     logger: TestClientLogger,
 ) {
     let seq = startingSeq;
     const reconnectClientMsgs: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
     let minSeq = 0;
-    // log and apply all the ops created in the round
+
+    // apply ops as stashed ops except for client #1
+    const stashedOps = [];
+    for (const messageData of messageDatas) {
+        if (messageData[2] !== 1) {
+            const localMetadata = stashClients[messageData[2]].applyStashedOp(messageData[0].contents);
+            stashedOps.push([messageData[0].contents, localMetadata, messageData[2]]);
+        }
+    }
+    // this should put all stash clients (except #1) in the same state as the
+    // respective normal clients, having local changes only.
+    for (let i = 0; i < clients.length; ++i) {
+        if (i !== 1) {
+            new TestClientLogger([clients[i], stashClients[i]]).validate();
+        }
+    }
+    new TestClientLogger([clients[0], stashClients[1]]).validate();
+
+    // apply the ops to the normal clients. they will all be the same now,
+    // except #1 which has local changes other clients haven't seen yet
     while (messageDatas.length > 0) {
         const [message, sg] = messageDatas.shift();
         if (message.clientId === clients[1].longClientId) {
@@ -41,6 +65,30 @@ function applyMessagesWithReconnect(
         }
     }
 
+    // regenerate the ops that were applied as stashed ops. this simulates resubmit()
+    const regeneratedStashedOps = [];
+    let stashedOpSeq = startingSeq;
+    while (stashedOps.length > 0) {
+        const op = stashedOps.shift();
+        const newMsg = stashClients[op[2]].makeOpMessage(
+            stashClients[op[2]].regeneratePendingOp(
+                op[0],
+                op[1],
+            ));
+
+        regeneratedStashedOps.push(newMsg);
+    }
+
+    // apply the regenerated stashed ops
+    for (const msg of regeneratedStashedOps) {
+        msg.sequenceNumber = ++stashedOpSeq;
+        stashClients.forEach((c) => c.applyMsg(msg));
+    }
+    // all stash and normal clients should now be in the same state,
+    // except #1 (normal) which still has local changes
+    new TestClientLogger([...clients.filter((_, i) => i !== 1), ...stashClients]).validate();
+
+    // regenerate ops for client #1
     const reconnectMsgs: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
     reconnectClientMsgs.forEach((opData) => {
         const newMsg = clients[1].makeOpMessage(
@@ -53,7 +101,41 @@ function applyMessagesWithReconnect(
         reconnectMsgs.push([newMsg, undefined]);
     });
 
-    return applyMessages(seq, reconnectMsgs, clients, logger);
+    // apply regenerated ops as stashed ops for client #1
+    for (const messageData of reconnectMsgs) {
+        const localMetadata = stashClients[1].applyStashedOp(messageData[0].contents);
+        stashedOps.push([messageData[0].contents, localMetadata, 1]);
+    }
+    // now both clients at index 1 should be the same
+    new TestClientLogger([clients[1], stashClients[1]]).validate();
+
+    // apply the regenerated ops from client #1
+    while (reconnectMsgs.length > 0) {
+        const [message] = reconnectMsgs.shift();
+        message.sequenceNumber = ++seq;
+        clients.forEach((c) => c.applyMsg(message));
+    }
+
+    // resubmit regenerated stashed ops
+    const reRegeneratedStashedMessages = [];
+    for (const stashedOp of stashedOps) {
+        const newMsg = stashClients[1].makeOpMessage(
+            stashClients[1].regeneratePendingOp(
+                stashedOp[0],
+                stashedOp[1],
+            ));
+        reRegeneratedStashedMessages.push(newMsg);
+    }
+
+    for (const reRegeneratedStashedOp of reRegeneratedStashedMessages) {
+        reRegeneratedStashedOp.sequenceNumber = ++stashedOpSeq;
+        stashClients.forEach((c) => c.applyMsg(reRegeneratedStashedOp));
+    }
+
+    // all clients should now be the same
+    new TestClientLogger([...clients, ...stashClients]).validate();
+
+    return seq;
 }
 
 export const defaultOptions: IMergeTreeOperationRunnerConfig & { minLength: number, clients: IConfigRange } = {
@@ -72,22 +154,29 @@ describe("MergeTree.Client", () => {
     const clientNames = generateClientNames();
 
     doOverRange(opts.clients, opts.growthFunc.bind(opts), (clientCount) => {
-        it(`ReconnectFarm_${clientCount}`, async () => {
+        it(`applyStashedOpFarm_${clientCount}`, async () => {
             const mt = random.engines.mt19937();
             mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, clientCount]);
 
             const clients: TestClient[] = [new TestClient({ blockUpdateMarkers: true })];
             clients.forEach(
                 (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
+            stashClients = [new TestClient({ blockUpdateMarkers: true })];
+            stashClients.forEach(
+                (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 
             let seq = 0;
             clients.forEach((c) => c.updateMinSeq(seq));
+            stashClients.forEach((c) => c.updateMinSeq(seq));
 
             // Add double the number of clients each iteration
             const targetClients = Math.max(opts.clients.min, clientCount);
             for (let cc = clients.length; cc < targetClients; cc++) {
                 const newClient = await TestClient.createFromClientSnapshot(clients[0], clientNames[cc]);
                 clients.push(newClient);
+                // add 1 stash client per normal client
+                const anotherNewClient = await TestClient.createFromClientSnapshot(clients[0], clientNames[cc]);
+                stashClients.push(anotherNewClient);
             }
 
             seq = runMergeTreeOperationRunner(

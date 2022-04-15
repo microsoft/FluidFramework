@@ -565,7 +565,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             const handled = this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
 
             if (!handled) {
-                this.processMergeTreeMsg(message);
+                this.processMergeTreeMsg(message, local);
             }
         }
     }
@@ -583,6 +583,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         this.loadFinished();
     }
 
+    protected applyStashedOp(content: any) {
+        return this.client.applyStashedOp(content);
+    }
+
     private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {
         // Are we fully loaded? If not, things will go south
         assert(this.loadedDeferred.isCompleted, 0x074 /* "Snapshot called when not fully loaded" */);
@@ -595,8 +599,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.client.summarize(this.runtime, this.handle, serializer, this.messagesSinceMSNChange);
     }
 
-    private processMergeTreeMsg(
-        rawMessage: ISequencedDocumentMessage) {
+    private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage, local?: boolean) {
         const message = parseHandles(rawMessage, this.serializer);
 
         const ops: IMergeTreeDeltaOp[] = [];
@@ -611,7 +614,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             }
         }
 
-        this.client.applyMsg(message);
+        this.client.applyMsg(message, local);
 
         if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
             if (needsTransformation) {
@@ -692,9 +695,5 @@ export abstract class SharedSegmentSequence<T extends ISegment>
             const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(key);
             intervalCollection.attachGraph(this.client, key);
         }
-    }
-
-    protected applyStashedOp() {
-        throw new Error("not implemented");
     }
 }
