@@ -137,17 +137,7 @@ export class CopyfilesTask extends LeafTask {
     }
 }
 
-export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
-    protected get doneFile(): string {
-        return "package.json.done.build.log"
-    }
-    protected async getDoneFileContent(): Promise<string | undefined> {
-        return JSON.stringify(this.package.packageJson);
-    }
-}
-
-
-export class GenVerTask extends PackageJsonChangedTask {
+export class GenVerTask extends LeafTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) { }
     protected async checkLeafIsUpToDate() {
         try {
@@ -161,9 +151,16 @@ export class GenVerTask extends PackageJsonChangedTask {
     }
 };
 
-export class TypeValidationTask extends PackageJsonChangedTask {
+export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
+    protected get doneFile(): string {
+        return "package.json.done.build.log"
+    }
+    protected async getDoneFileContent(): Promise<string | undefined> {
+        return JSON.stringify(this.package.packageJson);
+    }
+}
 
+export class TypeValidationTask extends PackageJsonChangedTask {
     protected addDependentTasks(dependentTasks: LeafTask[]): void {
     }
-
 }
