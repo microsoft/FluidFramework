@@ -113,10 +113,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (event.stack === undefined && fetchStack) {
             event.stack = generateStack();
         }
-        // Tag the error stack trace as a CodeArtifact (see issue #6603)
-        if (event.stack) {
-            event.stack = { tag: TelemetryDataTag.CodeArtifact, value: event.stack};
-        }
     }
 
     public constructor(
@@ -218,10 +214,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                     }
                 }
             }
-        }
-        // Tag stack as a CodeArtifact in case it wasn't already
-        if (newEvent.stack && typeof newEvent.stack === "string") {
-            newEvent.stack = { tag: TelemetryDataTag.CodeArtifact, value: newEvent.stack };
         }
         return newEvent;
     }
