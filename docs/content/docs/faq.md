@@ -62,6 +62,24 @@ one Fluid service.
 Fluid clients connect to the Fluid service using the WebSocket protocol. However, the Fluid runtime manages
 all of the connections so that Fluid client developers can focus on local experiences.
 
+### What are data stores used for?
+
+Data stores are used to collect DDSes under a single parent. A DDS must be parented by to a data store and you can treat data stores to be collections of DDSes.
+
+### What is the difference between data stores and data objects?
+
+In core FluidFramework we have data stores. As the name suggests, it is a place where you can store data. It contains one or more DDSs that have the actual user data. A data store is responsible (among other things) for serializing this data to be stored (in a file) and then re-hydrating this data when the file is loaded.
+A data object is a layer on top of the data store added by Aqueduct, which is not part of the core FluidFramework. It adds and manages additional functionality such as creating a DDS by default, exposing simple to use initialization functions, etc. Any data that a data object contains that is not part of the data store won't be serialized / saved by the FluidFramework. You can imagine data objects to be user level objects that interact with the data that is stored in data stores and exposes additional functionality.
+
+### What is a channel?
+
+The container receives a stream of sequenced ops (or operations), but we need to know where the ops need to go, like a data store, or a DDS. We consider these places to be channels. The code isn't there yet, but we want to someday unify the code around the concept of channels so that data stores hosting other data stores, or DDSes hosting other DDSes or data stores is possible. We refer to this as "everything's a channel". Right now, things are much more rigid. We have the top level container, then data stores, and then DDSes. There are some things that have channel in their name in the code, these things are usually related to DDSes, but are at least conceptual involved in what is described above.
+
+### What is a handle and how do they work?
+
+A Fluid handle is a handle to a Fluid object like a data store or a shared object (DDS). It can be used to represent the object in the system and has the capability to get the underlying object by calling `get()` on it. For example, if you wanted to include a `SharedString` inside a `SharedMap`, you would set a key's value to the Fluid handle of the `SharedString`.
+When Fluid handles are serialized, they simply encode the path to whatever they are linked to. On load, the path is deserialized and the object is retrieved on `get()` primarily by the `resolveHandle` method on the container runtime.
+
 ## Scale
 
 ### How many concurrent users does this support?
@@ -247,3 +265,14 @@ This also applies to Blazor, Xamarin, MAUI, and other mobile frameworks.
 ### What browsers are supported?
 
 {{% include file="_includes/browsers.md" %}}
+
+## General
+
+### What is r11s?
+
+Routerlicious which is our dev server, there are 11 characters between the r and the s.
+There is also Tinylicious which is a single process version of Routerlicious used for demo/testing, sometimes called t9s.
+
+### How is an assert message determined? Ex: "assert(arr.length === 1, 0x01)".
+
+When we create an assert, we create with a message (Ex: "assert( tar.length === true, "message we want to show")"). Later on, a policy will kick in and replace with the unique tag ID in order to reduce bundle sizes. Notice, assert should be added when, in theory, that condition should never happen and we should not continue. They are meant to be a cheap way to validate and ensure conditions. If the assert fails, it is generally a fatal error.
