@@ -40,6 +40,7 @@ export function create(
     }
 
     router.post("/repos/:ignored?/:tenantId/git/tags",
+        utils.validateRequestParams("tenantId"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const tagP = createTag(request.params.tenantId, request.get("Authorization"), request.body);
@@ -47,10 +48,12 @@ export function create(
                 tagP,
                 response,
                 false,
+                undefined,
                 201);
     });
 
     router.get("/repos/:ignored?/:tenantId/git/tags/*",
+        utils.validateRequestParams("tenantId", 0),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const tagP = getTag(request.params.tenantId, request.get("Authorization"), request.params[0]);

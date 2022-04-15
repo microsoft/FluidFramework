@@ -3,12 +3,41 @@
  * Licensed under the MIT License.
  */
 
+import { parse } from "path";
 import { NetworkError } from "@fluidframework/server-services-client";
-import { Response } from "express";
+import type { RequestHandler, Response } from "express";
+
+/**
+ * Check a given path string for path traversal (e.g. "../" or "/").
+ */
+export function containsPathTraversal(path: string): boolean {
+    const parsedPath = parse(path);
+    return parsedPath.dir.includes("..") || parsedPath.dir.startsWith("/");
+}
+
+/**
+ * Validate specific request parameters to prevent directory traversal.
+ */
+ export function validateRequestParams(...paramNames: (string | number)[]): RequestHandler {
+    return (req, res, next) => {
+        for (const paramName of paramNames) {
+            const param = req.params[paramName];
+            if (!param) {
+                continue;
+            }
+            if (containsPathTraversal(param)) {
+                return handleResponse(
+                    Promise.reject(new NetworkError(400, `Invalid ${paramName}: ${param}`)),
+                    res,
+                );
+            }
+        }
+        next();
+    };
+}
 
 /**
  * Helper function to handle a promise that should be returned to the user.
- * TODO: Replace with handleResponse from services-shared.
  * @param resultP Promise whose resolved value or rejected error will send with appropriate status codes.
  * @param response Express Response used for writing response body, headers, and status.
  * @param allowClientCache sends Cache-Control header with maximum age set to 1 yr if true or no store if false.

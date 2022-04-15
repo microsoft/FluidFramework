@@ -18,11 +18,12 @@ import {
     IThrottleMiddlewareOptions,
     getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { Constants, handleResponse } from "../../../utils";
+import { Constants } from "../../../utils";
 
 async function getDeltas(
     mongoManager: MongoManager,
@@ -197,6 +198,7 @@ export function create(
      */
     router.get(
         ["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
+        validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
@@ -214,7 +216,7 @@ export function create(
                 from,
                 to);
 
-            handleResponse(deltasP, response, 500);
+            handleResponse(deltasP, response, undefined, 500);
         },
     );
 
@@ -223,6 +225,7 @@ export function create(
      */
     router.get(
         "/raw/:tenantId/:id",
+        validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
@@ -235,7 +238,7 @@ export function create(
                 tenantId,
                 getParam(request.params, "id"));
 
-            handleResponse(deltasP, response, 500);
+            handleResponse(deltasP, response, undefined, 500);
         },
     );
 
@@ -244,6 +247,7 @@ export function create(
      */
     router.get(
         "/:tenantId/:id",
+        validateRequestParams("tenantId", "id"),
         verifyStorageToken(tenantManager, config),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
@@ -260,7 +264,7 @@ export function create(
                 from,
                 to);
 
-            handleResponse(deltasP, response, 500);
+            handleResponse(deltasP, response, undefined, 500);
         },
     );
 
