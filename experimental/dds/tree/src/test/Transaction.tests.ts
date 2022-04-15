@@ -6,10 +6,12 @@
 import { expect } from 'chai';
 import { EditStatus, WriteFormat } from '../persisted-types';
 import { Change, StablePlace, StableRange } from '../ChangeTypes';
-import { Transaction } from '../Transaction';
+import { Transaction, TransactionEvent } from '../Transaction';
 import { SharedTree } from '../SharedTree';
+import { TreeView } from '../TreeView';
 import { TestTree } from './utilities/TestNode';
 import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
+import { expectDefined } from './utilities/TestCommon';
 
 describe('Transaction', () => {
 	function createTestTransaction(): { tree: SharedTree; testTree: TestTree; transaction: Transaction } {
@@ -20,6 +22,10 @@ describe('Transaction', () => {
 
 	function createValidChange(testTree: TestTree): Change {
 		return Change.delete(StableRange.only(testTree.left));
+	}
+
+	function createValidChanges(testTree: TestTree): Change[] {
+		return Change.move(StableRange.only(testTree.left), StablePlace.after(testTree.right));
 	}
 
 	function createInvalidChange(testTree: TestTree): Change {
@@ -62,7 +68,7 @@ describe('Transaction', () => {
 
 	it('can apply multiple changes at once', () => {
 		const { tree, testTree, transaction } = createTestTransaction();
-		transaction.apply(Change.move(StableRange.only(testTree.left), StablePlace.after(testTree.right)));
+		transaction.apply(createValidChanges(testTree));
 		transaction.closeAndCommit();
 		expect(tree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(0);
 		expect(tree.currentView.getTrait(testTree.right.traitLocation).length).to.equal(2);
@@ -102,5 +108,38 @@ describe('Transaction', () => {
 		expect(transaction.isOpen).to.be.true;
 		transaction.closeAndCommit();
 		expect(transaction.isOpen).to.be.false;
+	});
+
+	it('emits view change events', () => {
+		const { testTree, transaction } = createTestTransaction();
+		let beforeView: TreeView | undefined;
+		let afterView: TreeView | undefined;
+		transaction.addListener(TransactionEvent.ViewChange, (before, after) => {
+			beforeView = before;
+			afterView = after;
+		});
+		const beforeViewExpected = transaction.currentView;
+		transaction.apply(createValidChange(testTree));
+		const afterViewExpected = transaction.currentView;
+		expect(expectDefined(beforeView).equals(beforeViewExpected)).to.be.true;
+		expect(expectDefined(afterView).equals(afterViewExpected)).to.be.true;
+	});
+
+	it('emits only one view change event per apply', () => {
+		const { testTree, transaction } = createTestTransaction();
+		let eventCount = 0;
+		transaction.addListener(TransactionEvent.ViewChange, () => {
+			eventCount += 1;
+		});
+		transaction.apply(createValidChanges(testTree));
+		expect(eventCount).to.equal(1);
+	});
+
+	it('does not emit view change events when there are no changes', () => {
+		const { transaction } = createTestTransaction();
+		transaction.on(TransactionEvent.ViewChange, () => {
+			expect.fail();
+		});
+		transaction.apply([]);
 	});
 });

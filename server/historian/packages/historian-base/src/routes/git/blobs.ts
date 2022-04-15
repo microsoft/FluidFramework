@@ -54,6 +54,7 @@ export function create(
     });
 
     router.post("/repos/:ignored?/:tenantId/git/blobs",
+        utils.validateRequestParams("tenantId"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const blobP = createBlob(request.params.tenantId, request.get("Authorization"), request.body);
@@ -68,6 +69,7 @@ export function create(
      * Retrieves the given blob from the repository
      */
     router.get("/repos/:ignored?/:tenantId/git/blobs/:sha",
+        utils.validateRequestParams("tenantId", "sha"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const useCache = !("disableCache" in request.query);
@@ -82,6 +84,7 @@ export function create(
      * Retrieves the given blob as an image
      */
     router.get("/repos/:ignored?/:tenantId/git/blobs/raw/:sha",
+        utils.validateRequestParams("tenantId", "sha"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const useCache = !("disableCache" in request.query);

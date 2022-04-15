@@ -11,7 +11,7 @@ import { Revision, RevisionValueCache } from './RevisionValueCache';
 import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { RevisionView } from './RevisionView';
-import { EditingResult, TransactionInternal, TransactionFactory } from './TransactionInternal';
+import { EditingResult, TransactionInternal } from './TransactionInternal';
 
 /**
  * Callback for when an edit is applied (meaning the result of applying it to a particular revision is computed).
@@ -261,7 +261,6 @@ export class CachingLogViewer implements LogViewer {
 		expensiveValidation = false,
 		processEditStatus: EditStatusCallback = noop,
 		processSequencedEditResult: SequencedEditResultCallback = noop,
-		private readonly transactionFactory: TransactionFactory,
 		minimumSequenceNumber = 0
 	) {
 		this.log = log;
@@ -283,7 +282,6 @@ export class CachingLogViewer implements LogViewer {
 		this.processEditStatus = processEditStatus ?? noop;
 		this.processSequencedEditResult = processSequencedEditResult ?? noop;
 		this.expensiveValidation = expensiveValidation;
-		this.transactionFactory = transactionFactory;
 		this.detachFromEditLog = this.log.registerEditAddedHandler(this.handleEditAdded.bind(this));
 	}
 
@@ -446,7 +444,9 @@ export class CachingLogViewer implements LogViewer {
 			cached = true;
 		} else {
 			reconciliationPath = this.reconciliationPathFromEdit(edit.id);
-			editingResult = this.transactionFactory(prevView).applyChanges(edit.changes, reconciliationPath).close();
+			editingResult = TransactionInternal.factory(prevView)
+				.applyChanges(edit.changes, reconciliationPath)
+				.close();
 			cached = false;
 		}
 
