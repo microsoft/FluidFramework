@@ -289,7 +289,6 @@ export class FluidPackageCheck {
             if (pkg.getScript("build:test") || splitTestBuild) {
                 if (pkg.getScript("build:commonjs")) {
                     buildCommonJs.push("build:test");
-
                     // build common js is not concurrent by default
                 } else {
                     buildCompile.push("build:test");
@@ -297,8 +296,6 @@ export class FluidPackageCheck {
                     concurrentBuildCompile = !splitTestBuild;
                 }
             }
-
-
 
             if (pkg.getScript("build:realsvctest")) {
                 buildCompile.push("build:realsvctest");
