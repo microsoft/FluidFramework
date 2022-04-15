@@ -112,13 +112,17 @@ const snapshotFileName = "header";
  * ### Usage
  *
  * Setting and reading values is somewhat similar to a `SharedMap`.  However, because the acceptance strategy
- * cannot be resolved until other clients have witnessed the set, the set is an async operation and the read will
- * not reflect the set value immediately.
+ * cannot be resolved until other clients have witnessed the set, the new value will only be reflected in the data
+ * after the consensus is reached.
  *
  * ```typescript
- * quorum.set("myKey", "myValue")
- *     .then(() => { console.log(quorum.get("myKey")); })
- *     .catch((err) => { console.error(err); });
+ * quorum.on("pending", (key: string) => {
+ *     console.log(quorum.getPending(key));
+ * });
+ * quorum.on("accepted", (key: string) => {
+ *     console.log(quorum.get(key));
+ * });
+ * quorum.set("myKey", "myValue");
  *
  * // Reading from the quorum prior to the async operation's completion will still return the old value.
  * console.log(quorum.get("myKey"));
@@ -261,13 +265,13 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         clientId: string,
     ): void => {
         const currentValue = this.values.get(key);
-        // A proposal is valid if the value is unknown
-        // or if it was made with knowledge of the most recently accepted value
+        // A proposal is valid if the value is unknown or if it was made with knowledge of the most recently accepted
+        // value.  We'll drop invalid proposals on the ground.
         const proposalValid =
             currentValue === undefined
             || (currentValue.pending === undefined && currentValue.accepted.sequenceNumber <= refSeq);
         if (!proposalValid) {
-            // Drop invalid proposals on the ground.  If set() returns a promise we will need to resolve it though.
+            // TODO: If set() returns a promise we will need to resolve it false for invalid proposals.
             return;
         }
 
@@ -319,13 +323,13 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         clientId: string,
     ): void => {
         const currentValue = this.values.get(key);
-        // A proposal is valid if the value is unknown
-        // or if it was made with knowledge of the most recently accepted value
+        // A proposal is valid if the value is unknown or if it was made with knowledge of the most recently accepted
+        // value.  We'll drop invalid proposals on the ground.
         const proposalValid =
             currentValue === undefined
             || (currentValue.pending === undefined && currentValue.accepted.sequenceNumber <= refSeq);
         if (!proposalValid) {
-            // Drop invalid proposals on the ground.  If delete() returns a promise we will need to resolve it though.
+            // TODO: If delete() returns a promise we will need to resolve it false for invalid proposals.
             return;
         }
 
