@@ -7,9 +7,10 @@ import { IClient, ISignalClient, ISignalMessage } from "@fluidframework/protocol
 
 export interface ITimedClient extends IClient {
     /**
-     * Timestamp for the last time deli heard about this client
+     * The time when the client will expire.
+     * The client will expire if Date.now() exceeds this value.
      */
-    lastKeepAlive: number;
+    exp: number;
 }
 
 /**
@@ -41,4 +42,14 @@ export interface IClientManager {
      * Should be used with delis read only client functionality.
      */
     getTimedClients?(tenantId: string, documentId: string): Promise<Map<string, ITimedClient>>;
+
+    /**
+     * Called when the expiration time of clients have been extended.
+     * @param clientTimeout Amount of time in milliseconds to add to the clients expiration time.
+     */
+    extendClients?(
+        tenantId: string,
+        documentId: string,
+        clients: Map<string, ITimedClient>,
+        clientTimeout: number): Promise<void>;
 }

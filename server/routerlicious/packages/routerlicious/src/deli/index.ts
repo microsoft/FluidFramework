@@ -112,6 +112,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         operationsDbMongoManager,
         collection,
         tenantManager,
+        undefined,
         combinedProducer,
         undefined,
         reverseProducer,
