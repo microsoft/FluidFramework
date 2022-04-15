@@ -47,7 +47,7 @@ import {
     SignalOperationType,
     ITicketedMessage,
     IExtendClientControlMessageContents,
-    ITimedClient,
+    ISequencedSignalClient,
     IClientManager,
 } from "@fluidframework/server-services-core";
 import {
@@ -228,7 +228,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         private readonly serviceConfiguration: IServiceConfiguration,
         private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
         private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
-        private readonly readClients: Map<string, ITimedClient> = new Map()) {
+        private readonly readClients: Map<string, ISequencedSignalClient> = new Map()) {
         super();
 
         // Instantiate existing clients
@@ -653,30 +653,40 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 `Op not allowed`);
         }
 
-        let isReadClient = false;
-
         // Handle client join/leave messages.
         if (!message.clientId) {
             if (message.operation.type === MessageType.ClientLeave) {
-                isReadClient = this.readClients.has(dataContent);
-                if (!isReadClient && !this.clientSeqManager.removeClient(dataContent)) {
+                const readClient = this.readClients.get(dataContent);
+                if (readClient) {
+                    this.readClients.delete(dataContent);
+                    return this.createSignalMessage(message, this.sequenceNumber, dataContent);
+                } else if (!this.clientSeqManager.removeClient(dataContent)) {
                     // Return if the client has already been removed due to a prior leave message.
                     return;
                 }
             } else if (message.operation.type === MessageType.ClientJoin) {
                 const clientJoinMessage = dataContent as IClientJoin;
 
-                isReadClient = clientJoinMessage.detail.mode === "read";
-                if (isReadClient) {
+                if (clientJoinMessage.detail.mode === "read") {
                     if (this.readClients.has(clientJoinMessage.clientId)) {
                         // Return if the client has already been added due to a prior join message.
                         return;
                     }
 
-                    this.readClients.set(clientJoinMessage.clientId, {
-                        ...clientJoinMessage.detail,
+                    // create the signal message
+                    const signalMessage = this.createSignalMessage(message, this.sequenceNumber, dataContent);
+
+                    // store the read client in-memory, including the signal sequence numbers
+                    const readClient: ISequencedSignalClient = {
+                        client: clientJoinMessage.detail,
+                        referenceSequenceNumber: (signalMessage.message.operation as any).referenceSequenceNumber,
+                        clientConnectionNumber: (signalMessage.message.operation as any).clientConnectionNumber,
                         exp: Date.now() + this.serviceConfiguration.deli.clientTimeout,
-                    });
+                    };
+
+                    this.readClients.set(clientJoinMessage.clientId, readClient);
+
+                    return signalMessage;
                 } else {
                     const isNewClient = this.clientSeqManager.upsertClient(
                         clientJoinMessage.clientId,
@@ -739,11 +749,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         }
 
         let sequenceNumber = this.sequenceNumber;
-
-        if (isReadClient) {
-            // create the signal message
-            return this.createSignalMessage(message, sequenceNumber, dataContent);
-        }
 
         // Get the current sequence number and increment it if appropriate.
         // We don't increment sequence number for noops sent by client since they will
@@ -896,19 +901,19 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 case ControlMessageType.ExtendClient: {
                     const controlContents = controlMessage.contents as IExtendClientControlMessageContents;
 
-                    const clientsToExtend: Map<string, ITimedClient> = new Map();
+                    const clientsToExtend: Map<string, ISequencedSignalClient> = new Map();
 
                     const clientIds = controlContents.clientIds ??
                         (controlContents.clientId ? [controlContents.clientId] : []);
                     for (const clientId of clientIds) {
-                        const readClient = this.readClients.get(clientId);
-                        if (readClient) {
-                            clientsToExtend.set(clientId, readClient);
+                        const client = this.readClients.get(clientId);
+                        if (client) {
+                            clientsToExtend.set(clientId, client);
                         }
                     }
 
                     if (clientsToExtend.size > 0) {
-                        this.clientManager?.extendClients(
+                        this.clientManager?.extendSequencedClients?.(
                             this.tenantId,
                             this.documentId,
                             clientsToExtend,
