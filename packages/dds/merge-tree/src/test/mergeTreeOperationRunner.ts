@@ -208,11 +208,21 @@ export function applyMessages(
     logger: TestClientLogger,
 ) {
     let seq = startingSeq;
-    // log and apply all the ops created in the round
-    while (messageData.length > 0) {
-        const [message] = messageData.shift();
-        message.sequenceNumber = ++seq;
-        clients.forEach((c) => c.applyMsg(message));
+    try{
+        // log and apply all the ops created in the round
+        while (messageData.length > 0) {
+            const [message] = messageData.shift();
+            message.sequenceNumber = ++seq;
+            clients.forEach((c) => c.applyMsg(message));
+        }
+    } catch(e) {
+        if(e instanceof Error) {
+            e.message += `\n${logger.toString()}`;
+        }
+        if(typeof e === "string") {
+            throw new Error(`${e}\n${logger.toString()}`);
+        }
+        throw e;
     }
     return seq;
 }

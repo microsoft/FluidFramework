@@ -19,8 +19,8 @@ import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { loadSummarizer, TestDataObject, submitAndAckSummary } from "../mockSummarizerClient";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
 /**
  * Validates that the 'unreferenced' property in the summary tree of unreferenced data stores is present

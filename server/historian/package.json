@@ -48,8 +48,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.59529",
-    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
+    "@fluidframework/build-tools": "^0.2.61804",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/compression": "0.0.36",
     "@types/cors": "^2.8.4",
@@ -62,7 +62,7 @@
     "@types/supertest": "^2.0.7",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "eslint": "~8.6.0",

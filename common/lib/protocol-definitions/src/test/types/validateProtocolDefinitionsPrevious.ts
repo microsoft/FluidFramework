@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ConnectionMode": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ConnectionMode():
@@ -28,7 +28,7 @@ use_current_TypeAliasDeclaration_ConnectionMode(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ConnectionMode": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ConnectionMode():
@@ -40,7 +40,7 @@ use_old_TypeAliasDeclaration_ConnectionMode(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_FileMode": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_FileMode():
@@ -48,11 +48,12 @@ declare function get_old_EnumDeclaration_FileMode():
 declare function use_current_EnumDeclaration_FileMode(
     use: TypeOnly<current.FileMode>);
 use_current_EnumDeclaration_FileMode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_FileMode());
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_FileMode": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_FileMode():
@@ -64,7 +65,7 @@ use_old_EnumDeclaration_FileMode(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IActorClient": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IActorClient():
@@ -76,7 +77,7 @@ use_current_InterfaceDeclaration_IActorClient(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IActorClient": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IActorClient():
@@ -88,7 +89,7 @@ use_old_InterfaceDeclaration_IActorClient(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IApprovedProposal": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IApprovedProposal():
@@ -100,7 +101,7 @@ use_current_TypeAliasDeclaration_IApprovedProposal(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IApprovedProposal": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_IApprovedProposal():
@@ -112,7 +113,7 @@ use_old_TypeAliasDeclaration_IApprovedProposal(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAttachment": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAttachment():
@@ -124,7 +125,7 @@ use_current_InterfaceDeclaration_IAttachment(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAttachment": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IAttachment():
@@ -136,7 +137,7 @@ use_old_InterfaceDeclaration_IAttachment(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IBlob": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IBlob():
@@ -148,7 +149,7 @@ use_current_InterfaceDeclaration_IBlob(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IBlob": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IBlob():
@@ -160,7 +161,7 @@ use_old_InterfaceDeclaration_IBlob(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IBranchOrigin": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IBranchOrigin():
@@ -172,7 +173,7 @@ use_current_InterfaceDeclaration_IBranchOrigin(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IBranchOrigin": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IBranchOrigin():
@@ -184,7 +185,7 @@ use_old_InterfaceDeclaration_IBranchOrigin(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICapabilities": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICapabilities():
@@ -196,7 +197,7 @@ use_current_InterfaceDeclaration_ICapabilities(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICapabilities": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ICapabilities():
@@ -208,7 +209,7 @@ use_old_InterfaceDeclaration_ICapabilities(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClient": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IClient():
@@ -220,7 +221,7 @@ use_current_InterfaceDeclaration_IClient(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClient": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IClient():
@@ -232,7 +233,7 @@ use_old_InterfaceDeclaration_IClient(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClientConfiguration": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IClientConfiguration():
@@ -244,7 +245,7 @@ use_current_InterfaceDeclaration_IClientConfiguration(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClientConfiguration": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IClientConfiguration():
@@ -256,7 +257,7 @@ use_old_InterfaceDeclaration_IClientConfiguration(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClientDetails": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IClientDetails():
@@ -268,7 +269,7 @@ use_current_InterfaceDeclaration_IClientDetails(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClientDetails": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IClientDetails():
@@ -280,7 +281,7 @@ use_old_InterfaceDeclaration_IClientDetails(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClientJoin": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IClientJoin():
@@ -292,7 +293,7 @@ use_current_InterfaceDeclaration_IClientJoin(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClientJoin": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IClientJoin():
@@ -304,7 +305,7 @@ use_old_InterfaceDeclaration_IClientJoin(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ICommittedProposal": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ICommittedProposal():
@@ -316,7 +317,7 @@ use_current_TypeAliasDeclaration_ICommittedProposal(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ICommittedProposal": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ICommittedProposal():
@@ -328,7 +329,7 @@ use_old_TypeAliasDeclaration_ICommittedProposal(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConnect": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConnect():
@@ -340,7 +341,7 @@ use_current_InterfaceDeclaration_IConnect(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConnect": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IConnect():
@@ -352,7 +353,7 @@ use_old_InterfaceDeclaration_IConnect(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConnected": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConnected():
@@ -364,7 +365,7 @@ use_current_InterfaceDeclaration_IConnected(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConnected": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IConnected():
@@ -376,7 +377,7 @@ use_old_InterfaceDeclaration_IConnected(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICreateBlobResponse": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICreateBlobResponse():
@@ -388,7 +389,7 @@ use_current_InterfaceDeclaration_ICreateBlobResponse(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICreateBlobResponse": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ICreateBlobResponse():
@@ -400,7 +401,7 @@ use_old_InterfaceDeclaration_ICreateBlobResponse(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDocumentAttributes": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDocumentAttributes():
@@ -412,7 +413,7 @@ use_current_InterfaceDeclaration_IDocumentAttributes(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDocumentAttributes": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDocumentAttributes():
@@ -424,7 +425,7 @@ use_old_InterfaceDeclaration_IDocumentAttributes(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDocumentMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDocumentMessage():
@@ -436,7 +437,7 @@ use_current_InterfaceDeclaration_IDocumentMessage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDocumentMessage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDocumentMessage():
@@ -448,7 +449,7 @@ use_old_InterfaceDeclaration_IDocumentMessage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDocumentSystemMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDocumentSystemMessage():
@@ -460,7 +461,7 @@ use_current_InterfaceDeclaration_IDocumentSystemMessage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDocumentSystemMessage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDocumentSystemMessage():
@@ -472,7 +473,7 @@ use_old_InterfaceDeclaration_IDocumentSystemMessage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IHelpMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IHelpMessage():
@@ -484,7 +485,7 @@ use_current_InterfaceDeclaration_IHelpMessage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IHelpMessage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IHelpMessage():
@@ -496,7 +497,7 @@ use_old_InterfaceDeclaration_IHelpMessage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_INack": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_INack():
@@ -508,7 +509,7 @@ use_current_InterfaceDeclaration_INack(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_INack": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_INack():
@@ -520,7 +521,7 @@ use_old_InterfaceDeclaration_INack(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_INackContent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_INackContent():
@@ -532,7 +533,7 @@ use_current_InterfaceDeclaration_INackContent(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_INackContent": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_INackContent():
@@ -544,7 +545,7 @@ use_old_InterfaceDeclaration_INackContent(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProcessMessageResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProcessMessageResult():
@@ -556,7 +557,7 @@ use_current_InterfaceDeclaration_IProcessMessageResult(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProcessMessageResult": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProcessMessageResult():
@@ -568,7 +569,7 @@ use_old_InterfaceDeclaration_IProcessMessageResult(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProposal": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProposal():
@@ -580,7 +581,7 @@ use_current_InterfaceDeclaration_IProposal(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProposal": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProposal():
@@ -592,7 +593,7 @@ use_old_InterfaceDeclaration_IProposal(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProtocolState": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProtocolState():
@@ -604,7 +605,7 @@ use_current_InterfaceDeclaration_IProtocolState(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProtocolState": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProtocolState():
@@ -616,7 +617,7 @@ use_old_InterfaceDeclaration_IProtocolState(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQueueMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IQueueMessage():
@@ -628,7 +629,7 @@ use_current_InterfaceDeclaration_IQueueMessage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQueueMessage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IQueueMessage():
@@ -640,7 +641,7 @@ use_old_InterfaceDeclaration_IQueueMessage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQuorum": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IQuorum():
@@ -652,7 +653,7 @@ use_current_InterfaceDeclaration_IQuorum(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQuorum": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IQuorum():
@@ -664,7 +665,7 @@ use_old_InterfaceDeclaration_IQuorum(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQuorumClients": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IQuorumClients():
@@ -676,7 +677,7 @@ use_current_InterfaceDeclaration_IQuorumClients(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQuorumClients": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IQuorumClients():
@@ -688,7 +689,7 @@ use_old_InterfaceDeclaration_IQuorumClients(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQuorumClientsEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IQuorumClientsEvents():
@@ -700,7 +701,7 @@ use_current_InterfaceDeclaration_IQuorumClientsEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQuorumClientsEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IQuorumClientsEvents():
@@ -712,7 +713,7 @@ use_old_InterfaceDeclaration_IQuorumClientsEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IQuorumEvents": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IQuorumEvents():
@@ -724,7 +725,7 @@ use_current_TypeAliasDeclaration_IQuorumEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IQuorumEvents": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_IQuorumEvents():
@@ -736,7 +737,7 @@ use_old_TypeAliasDeclaration_IQuorumEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQuorumProposals": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IQuorumProposals():
@@ -748,7 +749,7 @@ use_current_InterfaceDeclaration_IQuorumProposals(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQuorumProposals": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IQuorumProposals():
@@ -760,7 +761,7 @@ use_old_InterfaceDeclaration_IQuorumProposals(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQuorumProposalsEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IQuorumProposalsEvents():
@@ -772,7 +773,7 @@ use_current_InterfaceDeclaration_IQuorumProposalsEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IQuorumProposalsEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IQuorumProposalsEvents():
@@ -784,7 +785,7 @@ use_old_InterfaceDeclaration_IQuorumProposalsEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISequencedClient": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISequencedClient():
@@ -796,7 +797,7 @@ use_current_InterfaceDeclaration_ISequencedClient(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISequencedClient": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISequencedClient():
@@ -808,7 +809,7 @@ use_old_InterfaceDeclaration_ISequencedClient(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISequencedDocumentAugmentedMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISequencedDocumentAugmentedMessage():
@@ -820,7 +821,7 @@ use_current_InterfaceDeclaration_ISequencedDocumentAugmentedMessage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISequencedDocumentAugmentedMessage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISequencedDocumentAugmentedMessage():
@@ -832,7 +833,7 @@ use_old_InterfaceDeclaration_ISequencedDocumentAugmentedMessage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISequencedDocumentMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISequencedDocumentMessage():
@@ -844,7 +845,7 @@ use_current_InterfaceDeclaration_ISequencedDocumentMessage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISequencedDocumentMessage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISequencedDocumentMessage():
@@ -856,7 +857,7 @@ use_old_InterfaceDeclaration_ISequencedDocumentMessage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISequencedDocumentSystemMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISequencedDocumentSystemMessage():
@@ -868,7 +869,7 @@ use_current_InterfaceDeclaration_ISequencedDocumentSystemMessage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISequencedDocumentSystemMessage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISequencedDocumentSystemMessage():
@@ -880,7 +881,7 @@ use_old_InterfaceDeclaration_ISequencedDocumentSystemMessage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ISequencedProposal": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ISequencedProposal():
@@ -892,7 +893,7 @@ use_current_TypeAliasDeclaration_ISequencedProposal(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ISequencedProposal": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ISequencedProposal():
@@ -904,7 +905,7 @@ use_old_TypeAliasDeclaration_ISequencedProposal(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IServerError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IServerError():
@@ -916,7 +917,7 @@ use_current_InterfaceDeclaration_IServerError(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IServerError": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IServerError():
@@ -928,7 +929,7 @@ use_old_InterfaceDeclaration_IServerError(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISignalClient": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISignalClient():
@@ -940,7 +941,7 @@ use_current_InterfaceDeclaration_ISignalClient(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISignalClient": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISignalClient():
@@ -952,7 +953,7 @@ use_old_InterfaceDeclaration_ISignalClient(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISignalMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISignalMessage():
@@ -964,7 +965,7 @@ use_current_InterfaceDeclaration_ISignalMessage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISignalMessage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISignalMessage():
@@ -976,7 +977,7 @@ use_old_InterfaceDeclaration_ISignalMessage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISnapshotTree": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISnapshotTree():
@@ -988,7 +989,7 @@ use_current_InterfaceDeclaration_ISnapshotTree(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISnapshotTree": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISnapshotTree():
@@ -996,11 +997,12 @@ declare function get_current_InterfaceDeclaration_ISnapshotTree():
 declare function use_old_InterfaceDeclaration_ISnapshotTree(
     use: TypeOnly<old.ISnapshotTree>);
 use_old_InterfaceDeclaration_ISnapshotTree(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISnapshotTree());
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISnapshotTreeEx": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISnapshotTreeEx():
@@ -1012,7 +1014,7 @@ use_current_InterfaceDeclaration_ISnapshotTreeEx(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISnapshotTreeEx": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISnapshotTreeEx():
@@ -1020,11 +1022,12 @@ declare function get_current_InterfaceDeclaration_ISnapshotTreeEx():
 declare function use_old_InterfaceDeclaration_ISnapshotTreeEx(
     use: TypeOnly<old.ISnapshotTreeEx>);
 use_old_InterfaceDeclaration_ISnapshotTreeEx(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISnapshotTreeEx());
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryAck": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryAck():
@@ -1036,7 +1039,7 @@ use_current_InterfaceDeclaration_ISummaryAck(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryAck": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryAck():
@@ -1048,7 +1051,7 @@ use_old_InterfaceDeclaration_ISummaryAck(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryAttachment": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryAttachment():
@@ -1060,7 +1063,7 @@ use_current_InterfaceDeclaration_ISummaryAttachment(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryAttachment": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryAttachment():
@@ -1072,7 +1075,7 @@ use_old_InterfaceDeclaration_ISummaryAttachment(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryAuthor": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryAuthor():
@@ -1084,7 +1087,7 @@ use_current_InterfaceDeclaration_ISummaryAuthor(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryAuthor": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryAuthor():
@@ -1096,7 +1099,7 @@ use_old_InterfaceDeclaration_ISummaryAuthor(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryBlob": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryBlob():
@@ -1108,7 +1111,7 @@ use_current_InterfaceDeclaration_ISummaryBlob(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryBlob": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryBlob():
@@ -1120,7 +1123,7 @@ use_old_InterfaceDeclaration_ISummaryBlob(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryCommitter": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryCommitter():
@@ -1132,7 +1135,7 @@ use_current_InterfaceDeclaration_ISummaryCommitter(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryCommitter": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryCommitter():
@@ -1144,7 +1147,7 @@ use_old_InterfaceDeclaration_ISummaryCommitter(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryConfiguration": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryConfiguration():
@@ -1156,7 +1159,7 @@ use_current_InterfaceDeclaration_ISummaryConfiguration(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryConfiguration": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryConfiguration():
@@ -1168,7 +1171,7 @@ use_old_InterfaceDeclaration_ISummaryConfiguration(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryContent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryContent():
@@ -1180,7 +1183,7 @@ use_current_InterfaceDeclaration_ISummaryContent(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryContent": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryContent():
@@ -1192,7 +1195,7 @@ use_old_InterfaceDeclaration_ISummaryContent(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryHandle": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryHandle():
@@ -1204,7 +1207,7 @@ use_current_InterfaceDeclaration_ISummaryHandle(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryHandle": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryHandle():
@@ -1216,7 +1219,7 @@ use_old_InterfaceDeclaration_ISummaryHandle(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryNack": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryNack():
@@ -1228,7 +1231,7 @@ use_current_InterfaceDeclaration_ISummaryNack(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryNack": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryNack():
@@ -1240,7 +1243,7 @@ use_old_InterfaceDeclaration_ISummaryNack(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryProposal": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryProposal():
@@ -1252,7 +1255,7 @@ use_current_InterfaceDeclaration_ISummaryProposal(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryProposal": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryProposal():
@@ -1264,7 +1267,7 @@ use_old_InterfaceDeclaration_ISummaryProposal(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryTokenClaims": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryTokenClaims():
@@ -1276,7 +1279,7 @@ use_current_InterfaceDeclaration_ISummaryTokenClaims(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryTokenClaims": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryTokenClaims():
@@ -1288,7 +1291,7 @@ use_old_InterfaceDeclaration_ISummaryTokenClaims(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryTree": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryTree():
@@ -1300,7 +1303,7 @@ use_current_InterfaceDeclaration_ISummaryTree(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryTree": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummaryTree():
@@ -1312,7 +1315,7 @@ use_old_InterfaceDeclaration_ISummaryTree(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenClaims": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITokenClaims():
@@ -1324,7 +1327,7 @@ use_current_InterfaceDeclaration_ITokenClaims(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenClaims": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITokenClaims():
@@ -1336,7 +1339,7 @@ use_old_InterfaceDeclaration_ITokenClaims(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenProvider": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITokenProvider():
@@ -1348,7 +1351,7 @@ use_current_InterfaceDeclaration_ITokenProvider(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenProvider": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITokenProvider():
@@ -1360,7 +1363,7 @@ use_old_InterfaceDeclaration_ITokenProvider(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenService": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITokenService():
@@ -1372,7 +1375,7 @@ use_current_InterfaceDeclaration_ITokenService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenService": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITokenService():
@@ -1384,7 +1387,7 @@ use_old_InterfaceDeclaration_ITokenService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITrace": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITrace():
@@ -1396,7 +1399,7 @@ use_current_InterfaceDeclaration_ITrace(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITrace": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITrace():
@@ -1408,7 +1411,7 @@ use_old_InterfaceDeclaration_ITrace(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITree": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITree():
@@ -1416,11 +1419,12 @@ declare function get_old_InterfaceDeclaration_ITree():
 declare function use_current_InterfaceDeclaration_ITree(
     use: TypeOnly<current.ITree>);
 use_current_InterfaceDeclaration_ITree(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITree());
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITree": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITree():
@@ -1432,7 +1436,7 @@ use_old_InterfaceDeclaration_ITree(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ITreeEntry": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ITreeEntry():
@@ -1440,11 +1444,12 @@ declare function get_old_TypeAliasDeclaration_ITreeEntry():
 declare function use_current_TypeAliasDeclaration_ITreeEntry(
     use: TypeOnly<current.ITreeEntry>);
 use_current_TypeAliasDeclaration_ITreeEntry(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_ITreeEntry());
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ITreeEntry": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ITreeEntry():
@@ -1456,7 +1461,7 @@ use_old_TypeAliasDeclaration_ITreeEntry(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IUploadedSummaryDetails": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IUploadedSummaryDetails():
@@ -1468,7 +1473,7 @@ use_current_InterfaceDeclaration_IUploadedSummaryDetails(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IUploadedSummaryDetails": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IUploadedSummaryDetails():
@@ -1480,7 +1485,7 @@ use_old_InterfaceDeclaration_IUploadedSummaryDetails(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IUser": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IUser():
@@ -1492,7 +1497,7 @@ use_current_InterfaceDeclaration_IUser(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IUser": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IUser():
@@ -1504,7 +1509,7 @@ use_old_InterfaceDeclaration_IUser(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IVersion": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IVersion():
@@ -1516,7 +1521,7 @@ use_current_InterfaceDeclaration_IVersion(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IVersion": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IVersion():
@@ -1528,7 +1533,7 @@ use_old_InterfaceDeclaration_IVersion(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_MessageType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_MessageType():
@@ -1540,7 +1545,7 @@ use_current_EnumDeclaration_MessageType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_MessageType": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_MessageType():
@@ -1552,7 +1557,7 @@ use_old_EnumDeclaration_MessageType(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_NackErrorType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_NackErrorType():
@@ -1564,7 +1569,7 @@ use_current_EnumDeclaration_NackErrorType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_NackErrorType": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_NackErrorType():
@@ -1576,7 +1581,7 @@ use_old_EnumDeclaration_NackErrorType(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ScopeType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ScopeType():
@@ -1588,7 +1593,7 @@ use_current_EnumDeclaration_ScopeType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ScopeType": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_ScopeType():
@@ -1600,7 +1605,7 @@ use_old_EnumDeclaration_ScopeType(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryObject": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SummaryObject():
@@ -1612,7 +1617,7 @@ use_current_TypeAliasDeclaration_SummaryObject(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryObject": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_SummaryObject():
@@ -1624,7 +1629,7 @@ use_old_TypeAliasDeclaration_SummaryObject(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryTree": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SummaryTree():
@@ -1636,7 +1641,7 @@ use_current_TypeAliasDeclaration_SummaryTree(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryTree": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_SummaryTree():
@@ -1648,7 +1653,7 @@ use_old_TypeAliasDeclaration_SummaryTree(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryType": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SummaryType():
@@ -1660,7 +1665,7 @@ use_current_TypeAliasDeclaration_SummaryType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryType": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_SummaryType():
@@ -1672,7 +1677,7 @@ use_old_TypeAliasDeclaration_SummaryType(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryType.Attachment": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SummaryType_Attachment():
@@ -1684,7 +1689,7 @@ use_current_TypeAliasDeclaration_SummaryType_Attachment(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryType.Attachment": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_SummaryType_Attachment():
@@ -1696,7 +1701,7 @@ use_old_TypeAliasDeclaration_SummaryType_Attachment(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_SummaryType.Attachment": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_SummaryType_Attachment():
@@ -1708,7 +1713,7 @@ use_current_VariableDeclaration_SummaryType_Attachment(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_SummaryType.Attachment": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_SummaryType_Attachment():
@@ -1720,7 +1725,7 @@ use_old_VariableDeclaration_SummaryType_Attachment(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryType.Blob": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SummaryType_Blob():
@@ -1732,7 +1737,7 @@ use_current_TypeAliasDeclaration_SummaryType_Blob(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryType.Blob": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_SummaryType_Blob():
@@ -1744,7 +1749,7 @@ use_old_TypeAliasDeclaration_SummaryType_Blob(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_SummaryType.Blob": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_SummaryType_Blob():
@@ -1756,7 +1761,7 @@ use_current_VariableDeclaration_SummaryType_Blob(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_SummaryType.Blob": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_SummaryType_Blob():
@@ -1768,7 +1773,7 @@ use_old_VariableDeclaration_SummaryType_Blob(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryType.Handle": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SummaryType_Handle():
@@ -1780,7 +1785,7 @@ use_current_TypeAliasDeclaration_SummaryType_Handle(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryType.Handle": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_SummaryType_Handle():
@@ -1792,7 +1797,7 @@ use_old_TypeAliasDeclaration_SummaryType_Handle(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_SummaryType.Handle": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_SummaryType_Handle():
@@ -1804,7 +1809,7 @@ use_current_VariableDeclaration_SummaryType_Handle(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_SummaryType.Handle": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_SummaryType_Handle():
@@ -1816,7 +1821,7 @@ use_old_VariableDeclaration_SummaryType_Handle(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryType.Tree": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SummaryType_Tree():
@@ -1828,7 +1833,7 @@ use_current_TypeAliasDeclaration_SummaryType_Tree(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryType.Tree": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_SummaryType_Tree():
@@ -1840,7 +1845,7 @@ use_old_TypeAliasDeclaration_SummaryType_Tree(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_SummaryType.Tree": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_SummaryType_Tree():
@@ -1852,7 +1857,7 @@ use_current_VariableDeclaration_SummaryType_Tree(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_SummaryType.Tree": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_SummaryType_Tree():
@@ -1864,7 +1869,7 @@ use_old_VariableDeclaration_SummaryType_Tree(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryTypeNoHandle": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SummaryTypeNoHandle():
@@ -1876,7 +1881,7 @@ use_current_TypeAliasDeclaration_SummaryTypeNoHandle(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SummaryTypeNoHandle": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_SummaryTypeNoHandle():
@@ -1888,7 +1893,7 @@ use_old_TypeAliasDeclaration_SummaryTypeNoHandle(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_TreeEntry": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_TreeEntry():
@@ -1896,11 +1901,12 @@ declare function get_old_EnumDeclaration_TreeEntry():
 declare function use_current_EnumDeclaration_TreeEntry(
     use: TypeOnly<current.TreeEntry>);
 use_current_EnumDeclaration_TreeEntry(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_TreeEntry());
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.1027.1000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_TreeEntry": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_TreeEntry():

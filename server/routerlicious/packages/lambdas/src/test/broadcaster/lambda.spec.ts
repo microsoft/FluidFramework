@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda } from "@fluidframework/server-services-core";
+import { DefaultServiceConfiguration, IPartitionLambda } from "@fluidframework/server-services-core";
 import {
     IEvent,
     KafkaMessageFactory,
@@ -33,7 +33,7 @@ describe("Routerlicious", () => {
 
                 testPublisher = new TestPublisher();
                 testContext = new TestContext();
-                lambda = new BroadcasterLambda(testPublisher, testContext);
+                lambda = new BroadcasterLambda(testPublisher, testContext, DefaultServiceConfiguration, undefined);
             });
 
             function countOps(events: IEvent[]) {

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/fluid-static",
-  "version": "0.58.3000",
+  "version": "0.59.2000",
   "description": "A tool to enable consumption of Fluid Data Objects without requiring custom container code.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -16,12 +16,13 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:commonjs": "npm run tsc",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
@@ -30,27 +31,28 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.58.3000",
+    "@fluidframework/aqueduct": "^0.59.2000",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.47.1000",
-    "@fluidframework/container-loader": "^0.58.3000",
-    "@fluidframework/container-runtime-definitions": "^0.58.3000",
-    "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/datastore-definitions": "^0.58.3000",
-    "@fluidframework/protocol-definitions": "^0.1027.1000",
-    "@fluidframework/request-handler": "^0.58.3000",
-    "@fluidframework/runtime-definitions": "^0.58.3000",
-    "@fluidframework/runtime-utils": "^0.58.3000"
+    "@fluidframework/container-definitions": "^0.48.1000-0",
+    "@fluidframework/container-loader": "^0.59.2000",
+    "@fluidframework/container-runtime-definitions": "^0.59.2000",
+    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/datastore-definitions": "^0.59.2000",
+    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/request-handler": "^0.59.2000",
+    "@fluidframework/runtime-definitions": "^0.59.2000",
+    "@fluidframework/runtime-utils": "^0.59.2000"
   },
   "devDependencies": {
-    "@fluid-experimental/get-container": "^0.58.3000",
+    "@fluid-experimental/get-container": "^0.59.2000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
-    "@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@0.58.2000",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@^0.58.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",
@@ -71,7 +73,16 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.58.3000",
-    "broken": {}
+    "version": "0.59.1000",
+    "broken": {
+      "0.58.2002": {
+        "ClassDeclaration_FluidContainer": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IFluidContainer": {
+          "forwardCompat": false
+        }
+      }
+    }
   }
 }

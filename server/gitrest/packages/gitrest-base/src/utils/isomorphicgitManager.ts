@@ -17,6 +17,7 @@ import {
     IFileSystemManager,
     IFileSystemManagerFactory,
     IRepoManagerParams,
+    IStorageDirectoryConfig,
 } from "./definitions";
 
 export class IsomorphicGitRepositoryManager implements IRepositoryManager {
@@ -344,15 +345,19 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
     private readonly repositoryCache: Set<string> = new Set();
 
     constructor(
-        private readonly baseDir: string,
+        private readonly storageDirectoryConfig: IStorageDirectoryConfig,
         private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
     ) { }
 
     public async create(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
         // Verify that both inputs are valid folder names
-        const repoPath = helpers.getRepoPath(params.repoOwner, params.repoName);
+        const repoPath = helpers.getRepoPath(
+            params.repoName,
+            this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
         const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
-        const directoryPath = `${this.baseDir}/${repoPath}`;
+        const directoryPath = helpers.getGitDirectory(
+            repoPath,
+            this.storageDirectoryConfig.baseDir);
 
         // Create and then cache the repository
         await isomorphicGit.init({
@@ -373,8 +378,12 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
     }
 
     public async open(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
-        const repoPath = helpers.getRepoPath(params.repoOwner, params.repoName);
-        const directoryPath = `${this.baseDir}/${repoPath}`;
+        const repoPath = helpers.getRepoPath(
+            params.repoName,
+            this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
+        const directoryPath = helpers.getGitDirectory(
+            repoPath,
+            this.storageDirectoryConfig.baseDir);
         const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
 
         if (!(this.repositoryCache.has(repoPath))) {

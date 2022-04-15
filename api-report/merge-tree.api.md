@@ -56,9 +56,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     propertyManager?: PropertiesManager;
     // (undocumented)
-    removedClientId?: number;
-    // (undocumented)
-    removedClientOverlap?: number[];
+    removedClientIds?: number[];
     // (undocumented)
     removedSeq?: number;
     // (undocumented)
@@ -681,15 +679,13 @@ export interface IRelativePosition {
 // @public (undocumented)
 export interface IRemovalInfo {
     // (undocumented)
-    removedClientId?: number;
+    removedClientIds: number[];
     // (undocumented)
-    removedClientOverlap?: number[];
-    // (undocumented)
-    removedSeq?: number;
+    removedSeq: number;
 }
 
 // @public
-export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
+export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
@@ -1487,6 +1483,9 @@ export class TextSegment extends BaseSegment {
     // (undocumented)
     readonly type = "TextSegment";
 }
+
+// @public (undocumented)
+export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
 
 // @public (undocumented)
 export class TrackingGroup {

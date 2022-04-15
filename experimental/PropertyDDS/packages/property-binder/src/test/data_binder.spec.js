@@ -2990,6 +2990,30 @@ describe('DataBinder', function() {
       expect(callbackSpyRegistered).toHaveBeenCalledTimes(1);
     });
 
+    it.only('should be possible to modify property and inside requestChangesetPostProcessing and get notified on the changes', function() {
+      const callbackSpyRegistered = jest.fn();
+      const callbackNestedSpyRegistered = jest.fn();
+
+      dataBinder.attachTo(workspace);
+
+      dataBinder.registerOnPath('mypath.aString', ['modify'], () => {
+        callbackNestedSpyRegistered();
+      });
+
+      dataBinder.registerOnPath('mypath', ['insert'], () => {
+        callbackSpyRegistered();
+        dataBinder.requestChangesetPostProcessing(() => {
+          const prop = workspace.root.get('mypath');
+          prop.get('aString').setValue('modified');
+        });
+      });
+
+      workspace.root.insert('mypath', PropertyFactory.create(PrimitiveChildrenTemplate.typeid));
+
+      expect(callbackSpyRegistered).toHaveBeenCalledTimes(1);
+      expect(callbackNestedSpyRegistered).toHaveBeenCalledTimes(1);
+    });
+
     it('should be possible to unregister before attaching to a workspace', function() {
       var callbackSpyRegistered = jest.fn();
       var callbackSpyUnregistered = jest.fn();

@@ -20,8 +20,8 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { channelsTreeName, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { loadSummarizer, TestDataObject, submitAndAckSummary } from "../mockSummarizerClient";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
 /**
  * Validates that unchanged Fluid objects are not resummarized again. Basically, only objects that have changed since

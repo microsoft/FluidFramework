@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ChannelFactoryRegistry": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ChannelFactoryRegistry():
@@ -28,7 +28,7 @@ use_current_TypeAliasDeclaration_ChannelFactoryRegistry(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ChannelFactoryRegistry": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ChannelFactoryRegistry():
@@ -40,7 +40,7 @@ use_old_TypeAliasDeclaration_ChannelFactoryRegistry(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createAndAttachContainer": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createAndAttachContainer():
@@ -52,7 +52,7 @@ use_current_FunctionDeclaration_createAndAttachContainer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createAndAttachContainer": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createAndAttachContainer():
@@ -64,7 +64,7 @@ use_old_FunctionDeclaration_createAndAttachContainer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createDocumentId": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_createDocumentId():
@@ -76,7 +76,7 @@ use_current_VariableDeclaration_createDocumentId(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createDocumentId": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_createDocumentId():
@@ -88,7 +88,7 @@ use_old_VariableDeclaration_createDocumentId(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createLoader": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createLoader():
@@ -100,7 +100,7 @@ use_current_FunctionDeclaration_createLoader(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createLoader": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createLoader():
@@ -112,7 +112,7 @@ use_old_FunctionDeclaration_createLoader(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createTestContainerRuntimeFactory": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_createTestContainerRuntimeFactory():
@@ -124,7 +124,7 @@ use_current_VariableDeclaration_createTestContainerRuntimeFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createTestContainerRuntimeFactory": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_createTestContainerRuntimeFactory():
@@ -136,7 +136,7 @@ use_old_VariableDeclaration_createTestContainerRuntimeFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_DataObjectFactoryType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_DataObjectFactoryType():
@@ -148,7 +148,7 @@ use_current_EnumDeclaration_DataObjectFactoryType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_DataObjectFactoryType": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_DataObjectFactoryType():
@@ -160,7 +160,7 @@ use_old_EnumDeclaration_DataObjectFactoryType(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_defaultTimeoutDurationMs": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_defaultTimeoutDurationMs():
@@ -172,7 +172,7 @@ use_current_VariableDeclaration_defaultTimeoutDurationMs(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_defaultTimeoutDurationMs": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_defaultTimeoutDurationMs():
@@ -184,7 +184,7 @@ use_old_VariableDeclaration_defaultTimeoutDurationMs(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_EventAndErrorTrackingLogger": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_EventAndErrorTrackingLogger():
@@ -196,7 +196,7 @@ use_current_ClassDeclaration_EventAndErrorTrackingLogger(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_EventAndErrorTrackingLogger": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_EventAndErrorTrackingLogger():
@@ -208,7 +208,7 @@ use_old_ClassDeclaration_EventAndErrorTrackingLogger(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_fluidEntryPoint": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_fluidEntryPoint():
@@ -220,7 +220,7 @@ use_current_TypeAliasDeclaration_fluidEntryPoint(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_fluidEntryPoint": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_fluidEntryPoint():
@@ -232,7 +232,7 @@ use_old_TypeAliasDeclaration_fluidEntryPoint(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getUnexpectedLogErrorException": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getUnexpectedLogErrorException():
@@ -244,7 +244,7 @@ use_current_FunctionDeclaration_getUnexpectedLogErrorException(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getUnexpectedLogErrorException": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_getUnexpectedLogErrorException():
@@ -256,7 +256,7 @@ use_old_FunctionDeclaration_getUnexpectedLogErrorException(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IOpProcessingController": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IOpProcessingController():
@@ -268,7 +268,7 @@ use_current_InterfaceDeclaration_IOpProcessingController(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IOpProcessingController": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IOpProcessingController():
@@ -280,7 +280,7 @@ use_old_InterfaceDeclaration_IOpProcessingController(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideTestFluidObject": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideTestFluidObject():
@@ -292,7 +292,7 @@ use_current_InterfaceDeclaration_IProvideTestFluidObject(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideTestFluidObject": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideTestFluidObject():
@@ -300,11 +300,12 @@ declare function get_current_InterfaceDeclaration_IProvideTestFluidObject():
 declare function use_old_InterfaceDeclaration_IProvideTestFluidObject(
     use: TypeOnly<old.IProvideTestFluidObject>);
 use_old_InterfaceDeclaration_IProvideTestFluidObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideTestFluidObject());
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITestContainerConfig": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITestContainerConfig():
@@ -316,7 +317,7 @@ use_current_InterfaceDeclaration_ITestContainerConfig(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITestContainerConfig": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITestContainerConfig():
@@ -328,7 +329,7 @@ use_old_InterfaceDeclaration_ITestContainerConfig(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITestFluidObject": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITestFluidObject():
@@ -340,7 +341,7 @@ use_current_InterfaceDeclaration_ITestFluidObject(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITestFluidObject": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITestFluidObject():
@@ -348,11 +349,12 @@ declare function get_current_InterfaceDeclaration_ITestFluidObject():
 declare function use_old_InterfaceDeclaration_ITestFluidObject(
     use: TypeOnly<old.ITestFluidObject>);
 use_old_InterfaceDeclaration_ITestFluidObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestFluidObject());
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITestObjectProvider": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITestObjectProvider():
@@ -364,7 +366,7 @@ use_current_InterfaceDeclaration_ITestObjectProvider(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITestObjectProvider": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITestObjectProvider():
@@ -376,7 +378,7 @@ use_old_InterfaceDeclaration_ITestObjectProvider(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LoaderContainerTracker": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LoaderContainerTracker():
@@ -388,7 +390,7 @@ use_current_ClassDeclaration_LoaderContainerTracker(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LoaderContainerTracker": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LoaderContainerTracker():
@@ -400,7 +402,7 @@ use_old_ClassDeclaration_LoaderContainerTracker(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LocalCodeLoader": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LocalCodeLoader():
@@ -412,7 +414,7 @@ use_current_ClassDeclaration_LocalCodeLoader(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LocalCodeLoader": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LocalCodeLoader():
@@ -424,7 +426,7 @@ use_old_ClassDeclaration_LocalCodeLoader(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_retryWithEventualValue": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_retryWithEventualValue():
@@ -436,7 +438,7 @@ use_current_VariableDeclaration_retryWithEventualValue(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_retryWithEventualValue": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_retryWithEventualValue():
@@ -448,7 +450,7 @@ use_old_VariableDeclaration_retryWithEventualValue(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SupportedExportInterfaces": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SupportedExportInterfaces():
@@ -460,7 +462,7 @@ use_current_TypeAliasDeclaration_SupportedExportInterfaces(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_SupportedExportInterfaces": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_SupportedExportInterfaces():
@@ -472,7 +474,7 @@ use_old_TypeAliasDeclaration_SupportedExportInterfaces(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_TestContainerRuntimeFactory": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_TestContainerRuntimeFactory():
@@ -484,7 +486,7 @@ use_current_VariableDeclaration_TestContainerRuntimeFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_TestContainerRuntimeFactory": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_TestContainerRuntimeFactory():
@@ -496,7 +498,7 @@ use_old_VariableDeclaration_TestContainerRuntimeFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TestFluidObject": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TestFluidObject():
@@ -508,7 +510,7 @@ use_current_ClassDeclaration_TestFluidObject(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TestFluidObject": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_TestFluidObject():
@@ -516,11 +518,12 @@ declare function get_current_ClassDeclaration_TestFluidObject():
 declare function use_old_ClassDeclaration_TestFluidObject(
     use: TypeOnly<old.TestFluidObject>);
 use_old_ClassDeclaration_TestFluidObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TestFluidObject());
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TestFluidObjectFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TestFluidObjectFactory():
@@ -532,7 +535,7 @@ use_current_ClassDeclaration_TestFluidObjectFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TestFluidObjectFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_TestFluidObjectFactory():
@@ -544,7 +547,7 @@ use_old_ClassDeclaration_TestFluidObjectFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TestObjectProvider": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TestObjectProvider():
@@ -556,7 +559,7 @@ use_current_ClassDeclaration_TestObjectProvider(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TestObjectProvider": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_TestObjectProvider():
@@ -568,7 +571,7 @@ use_old_ClassDeclaration_TestObjectProvider(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_timeoutAwait": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_timeoutAwait():
@@ -580,7 +583,7 @@ use_current_FunctionDeclaration_timeoutAwait(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_timeoutAwait": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_timeoutAwait():
@@ -592,7 +595,7 @@ use_old_FunctionDeclaration_timeoutAwait(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_timeoutPromise": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_timeoutPromise():
@@ -604,7 +607,7 @@ use_current_FunctionDeclaration_timeoutPromise(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_timeoutPromise": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_timeoutPromise():
@@ -616,7 +619,7 @@ use_old_FunctionDeclaration_timeoutPromise(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_TimeoutWithError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_TimeoutWithError():
@@ -628,7 +631,7 @@ use_current_InterfaceDeclaration_TimeoutWithError(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_TimeoutWithError": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_TimeoutWithError():
@@ -640,7 +643,7 @@ use_old_InterfaceDeclaration_TimeoutWithError(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_TimeoutWithValue": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_TimeoutWithValue():
@@ -652,7 +655,7 @@ use_current_InterfaceDeclaration_TimeoutWithValue(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_TimeoutWithValue": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_TimeoutWithValue():

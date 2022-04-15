@@ -58,7 +58,7 @@ export type DeserializeCallback = (properties: PropertySet) => void;
 // @public (undocumented)
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     // (undocumented)
-    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
+    (event: "addInterval" | "changeInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void): any;
 }
@@ -239,6 +239,8 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
 
 // @public
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
+    // (undocumented)
+    (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
@@ -538,6 +540,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     getCurrentSeq(): number;
     // (undocumented)
     getIntervalCollection(label: string): IntervalCollection<SequenceInterval>;
+    // (undocumented)
+    getIntervalCollectionLabels(): IterableIterator<string>;
     getLength(): number;
     getPosition(segment: ISegment): number;
     // (undocumented)

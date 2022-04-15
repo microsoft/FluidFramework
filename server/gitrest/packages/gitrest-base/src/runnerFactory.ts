@@ -15,6 +15,7 @@ import {
     IsomorphicGitManagerFactory,
     NodegitRepositoryManagerFactory,
     NodeFsManagerFactory,
+    IStorageDirectoryConfig,
 } from "./utils";
 
 export class GitrestResources implements core.IResources {
@@ -38,18 +39,18 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
         const port = normalizePort(process.env.PORT || "3000");
         const fileSystemManagerFactory = new NodeFsManagerFactory();
         const externalStorageManager = new ExternalStorageManager(config);
-        const storageDirectory = config.get("storageDir");
+        const storageDirectoryConfig: IStorageDirectoryConfig = config.get("storageDir") as IStorageDirectoryConfig;
         const gitLibrary: string | undefined = config.get("git:lib:name");
         const getRepositoryManagerFactory = () => {
             if (!gitLibrary || gitLibrary === "nodegit") {
                 return new NodegitRepositoryManagerFactory(
-                    storageDirectory,
+                    storageDirectoryConfig,
                     fileSystemManagerFactory,
                     externalStorageManager,
                 );
             } else if (gitLibrary === "isomorphic-git") {
                 return new IsomorphicGitManagerFactory(
-                    storageDirectory,
+                    storageDirectoryConfig,
                     fileSystemManagerFactory,
                 );
             }

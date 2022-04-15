@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_cloneGCData": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_cloneGCData():
@@ -28,7 +28,7 @@ use_current_FunctionDeclaration_cloneGCData(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_cloneGCData": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_cloneGCData():
@@ -40,7 +40,7 @@ use_old_FunctionDeclaration_cloneGCData(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_concatGarbageCollectionData": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_concatGarbageCollectionData():
@@ -52,7 +52,7 @@ use_current_FunctionDeclaration_concatGarbageCollectionData(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_concatGarbageCollectionData": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_concatGarbageCollectionData():
@@ -64,7 +64,7 @@ use_old_FunctionDeclaration_concatGarbageCollectionData(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_concatGarbageCollectionStates": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_concatGarbageCollectionStates():
@@ -76,7 +76,7 @@ use_current_FunctionDeclaration_concatGarbageCollectionStates(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_concatGarbageCollectionStates": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_concatGarbageCollectionStates():
@@ -88,7 +88,7 @@ use_old_FunctionDeclaration_concatGarbageCollectionStates(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_GCDataBuilder": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_GCDataBuilder():
@@ -96,11 +96,12 @@ declare function get_old_ClassDeclaration_GCDataBuilder():
 declare function use_current_ClassDeclaration_GCDataBuilder(
     use: TypeOnly<current.GCDataBuilder>);
 use_current_ClassDeclaration_GCDataBuilder(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_GCDataBuilder());
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_GCDataBuilder": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_GCDataBuilder():
@@ -112,7 +113,7 @@ use_old_ClassDeclaration_GCDataBuilder(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IGCResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGCResult():
@@ -124,7 +125,7 @@ use_current_InterfaceDeclaration_IGCResult(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IGCResult": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IGCResult():
@@ -136,7 +137,7 @@ use_old_InterfaceDeclaration_IGCResult(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_removeRouteFromAllNodes": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_removeRouteFromAllNodes():
@@ -148,7 +149,7 @@ use_current_FunctionDeclaration_removeRouteFromAllNodes(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_removeRouteFromAllNodes": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_removeRouteFromAllNodes():
@@ -160,7 +161,7 @@ use_old_FunctionDeclaration_removeRouteFromAllNodes(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_runGarbageCollection": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_runGarbageCollection():
@@ -172,7 +173,7 @@ use_current_FunctionDeclaration_runGarbageCollection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_runGarbageCollection": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_runGarbageCollection():
@@ -184,7 +185,7 @@ use_old_FunctionDeclaration_runGarbageCollection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_unpackChildNodesGCDetails": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_unpackChildNodesGCDetails():
@@ -196,7 +197,7 @@ use_current_FunctionDeclaration_unpackChildNodesGCDetails(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_unpackChildNodesGCDetails": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_unpackChildNodesGCDetails():
@@ -208,7 +209,7 @@ use_old_FunctionDeclaration_unpackChildNodesGCDetails(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_unpackChildNodesUsedRoutes": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_unpackChildNodesUsedRoutes():
@@ -220,7 +221,7 @@ use_current_FunctionDeclaration_unpackChildNodesUsedRoutes(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_unpackChildNodesUsedRoutes": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_unpackChildNodesUsedRoutes():
