@@ -277,10 +277,17 @@ export class FluidPackageCheck {
             }
 
             if(pkg.getScript("typetests:gen")){
-                if (pkg.getScript("build:commonjs")) {
-                    buildCommonJs.push("typetests:gen");
-                } else {
-                    buildCompile.push("typetests:gen");
+                // typetests:gen should be in build:commonjs if it exists, otherwise, it should be in build:compile
+                const buildTargetScripts =
+                    pkg.getScript("build:commonjs") ? buildCommonJs : buildCompile;
+                if(pkg.getScript("build:test")){
+                    // if there is a test target put test type gen after tsc
+                    // as the type test will build with the tests
+                    buildTargetScripts.push("typetests:gen");
+                }else{
+                    // if there is no test target put it before tsc
+                    // so type test build with tsc
+                    buildTargetScripts.unshift("typetests:gen");
                 }
             }
 
