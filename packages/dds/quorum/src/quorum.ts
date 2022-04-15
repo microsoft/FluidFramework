@@ -126,11 +126,11 @@ const snapshotFileName = "header";
  *
  * The acceptance process has two stages.  When an op indicating a client's attempt to set a value is sequenced,
  * we first verify that it was set with knowledge of the most recently accepted value (consensus-like FWW).  If it
- * meets this bar, then the value is "pending" (TODO: naming).  During this time, clients may observe the pending
- * value and act upon it, but should be aware that not all other clients may have witnessed the value yet.  Once
- * all clients that were connected at the time of the value being set have explicitly acknowledged the new value,
- * the value becomes "accepted".  Once the value is accepted, it once again becomes possible to set the value,
- * again with consensus-like FWW resolution.
+ * meets this bar, then the value is "pending".  During this time, clients may observe the pending value and act
+ * upon it, but should be aware that not all other clients may have witnessed the value yet.  Once all clients
+ * that were connected at the time of the value being set have explicitly acknowledged the new value, the value
+ * becomes "accepted".  Once the value is accepted, it once again becomes possible to set the value, again with
+ * consensus-like FWW resolution.
  *
  * ### Eventing
  *
@@ -181,7 +181,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     public constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
-        // TODO: Unregister event handlers in dispose
         this.incomingOp.on("set", this.handleIncomingSet);
         this.incomingOp.on("delete", this.handleIncomingDelete);
         this.incomingOp.on("accept", this.handleIncomingAcceptOp);
@@ -190,7 +189,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         this.disconnectWatcher.on("disconnect", () => {
             // assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
-            // TODO Handle appropriately
+            // TODO: Handle appropriately
         });
     }
 
@@ -275,7 +274,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         const accepted = currentValue?.accepted;
 
         // We expect signoffs from all connected clients at the time the set was sequenced, except for the client
-        // who issued the set (who implicitly signs off).
+        // who issued the set (that client implicitly signs off).
         const connectedClientIds = [...this.runtime.getQuorum().getMembers().keys()];
         const expectedSignoffs = connectedClientIds.filter((quorumMemberId) => quorumMemberId !== clientId);
 
@@ -333,7 +332,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         const accepted = currentValue?.accepted;
 
         // We expect signoffs from all connected clients at the time the delete was sequenced, except for the client
-        // who issued the delete (who implicitly signs off).
+        // who issued the delete (that client implicitly signs off).
         const connectedClientIds = [...this.runtime.getQuorum().getMembers().keys()];
         const expectedSignoffs = connectedClientIds.filter((quorumMemberId) => quorumMemberId !== clientId);
 
@@ -375,9 +374,9 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         if (pending === undefined
             || pending.sequenceNumber !== pendingSeq
             || !pending.expectedSignoffs.includes(clientId)) {
-            // TODO: This is probably going to happen normally, esp. for resubmit on reconnect.
-            // It shouldn't always be an error.
-            throw new Error("Got an unexpected accept");
+            // Drop unexpected accepts on the ground.  This can happen normally in resubmit on reconnect cases, and
+            // is benign since the client implicitly accepts on disconnect.
+            return;
         }
 
         // Remove the client from the expected signoffs
@@ -401,8 +400,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     };
 
     private readonly handleQuorumRemoveMember = (clientId: string): void => {
-        for (const [key, value] of this.values) {
-            const pending = value.pending;
+        for (const [key, { pending }] of this.values) {
             if (pending !== undefined) {
                 pending.expectedSignoffs = pending.expectedSignoffs.filter(
                     (expectedClientId) => expectedClientId !== clientId,
@@ -415,8 +413,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
                             accepted: {
                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                                 value: pending.value,
-                                // TODO: is there a better place to grab this from?
-                                // We want the sequence number of the ClientLeave message.
+                                // The sequence number of the ClientLeave message.
                                 sequenceNumber: this.runtime.deltaManager.lastSequenceNumber,
                             },
                             pending: undefined,
@@ -463,13 +460,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     protected onDisconnect(): void {
         this.disconnectWatcher.emit("disconnect");
     }
-
-    /**
-     * Override resubmit core to avoid resubmission on reconnect.
-     * TODO It's probably ok to resubmit these?
-     * @internal
-     */
-    protected reSubmitCore(): void { }
 
     /**
      * Process a quorum operation
