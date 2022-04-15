@@ -19,7 +19,15 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 1.0 Upcoming changes
 
 ## 1.0 Breaking changes
+- [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
+- [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
 - [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
+
+### Remove IFluidSerializer from core-interfaces
+`IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
+
+### Remove IFluidSerializer from IFluidObject
+`IFluidSerializer` in `IFluidObject` was deprecated in 0.52 and is now removed. Use `FluidObject` instead of `IFluidObject`.
 
 ### Remove Write Method from IDocumentStorageService
 The `IDocumentStorageService.write(...)` method within the `@fluidframework/driver-definitions` package has been removed. Please remove all usage/implementation of this method if present.
@@ -686,7 +694,7 @@ The `createCreateNewRequest()` is removed and replaced with `createOdspCreateCon
 
 ### Deprecate IFluidObject and introduce FluidObject
 This release deprecates the interface `IFluidObject` and introduces the utility type [`FluidObject`](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts). The primary reason for this change is that the module augmentation used by `IFluidObject` creates excessive type coupling where a small breaking change in any type exposed off `IFluidObject` can lead to type error in all usages of `IFluidObject`.
-On investigation we also found that the uber type `IFluidObject` wasn't genenerally necessary, as consumers generally only used a small number of specific types that they knew in advance.
+On investigation we also found that the uber type `IFluidObject` wasn't generally necessary, as consumers generally only used a small number of specific types that they knew in advance.
 
 Given these points, we've introduced [`FluidObject`](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts). `FluidObject` is a utility type that is used in both its generic and non-generic forms.
 
