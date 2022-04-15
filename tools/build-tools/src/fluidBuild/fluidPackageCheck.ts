@@ -276,6 +276,21 @@ export class FluidPackageCheck {
                 }
             }
 
+            if(pkg.getScript("typetests:gen")){
+                // typetests:gen should be in build:commonjs if it exists, otherwise, it should be in build:compile
+                const buildTargetScripts =
+                    pkg.getScript("build:commonjs") ? buildCommonJs : buildCompile;
+                if(pkg.getScript("build:test")){
+                    // if there is a test target put test type gen after tsc
+                    // as the type test will build with the tests
+                    buildTargetScripts.push("typetests:gen");
+                }else{
+                    // if there is no test target put it before tsc
+                    // so type test build with tsc
+                    buildTargetScripts.unshift("typetests:gen");
+                }
+            }
+
             const splitTestBuild = this.splitTestBuild(pkg, true);
             // build:test should be in build:commonjs if it exists, otherwise, it should be in build:compile
             if (pkg.getScript("build:test") || splitTestBuild) {
