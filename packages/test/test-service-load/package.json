@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -43,6 +43,7 @@
     "test:realsvc:tinylicious": "cross-env fluid__test__driver=t9s start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
     "test:realsvc:tinylicious:run": "npm run test:realsvc:run",
     "tsc": "tsc",
+    "typetests:gen": "fluid-type-validator -g -d .",
     "usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
   },
   "nyc": {
