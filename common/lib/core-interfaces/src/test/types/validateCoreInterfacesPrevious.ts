@@ -549,50 +549,54 @@ use_old_InterfaceDeclaration_IFluidRunnable(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.42.0:
-* "VariableDeclaration_IFluidSerializer": {"forwardCompat": false}
+* "RemovedVariableDeclaration_IFluidSerializer": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidSerializer():
     TypeOnly<typeof old.IFluidSerializer>;
-declare function use_current_VariableDeclaration_IFluidSerializer(
+declare function use_current_RemovedVariableDeclaration_IFluidSerializer(
+    // @ts-expect-error compatibility expected to be broken
     use: TypeOnly<typeof current.IFluidSerializer>);
-use_current_VariableDeclaration_IFluidSerializer(
+use_current_RemovedVariableDeclaration_IFluidSerializer(
     get_old_VariableDeclaration_IFluidSerializer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.42.0:
-* "VariableDeclaration_IFluidSerializer": {"backCompat": false}
+* "RemovedVariableDeclaration_IFluidSerializer": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_IFluidSerializer():
+declare function get_current_RemovedVariableDeclaration_IFluidSerializer():
+    // @ts-expect-error compatibility expected to be broken
     TypeOnly<typeof current.IFluidSerializer>;
 declare function use_old_VariableDeclaration_IFluidSerializer(
     use: TypeOnly<typeof old.IFluidSerializer>);
 use_old_VariableDeclaration_IFluidSerializer(
-    get_current_VariableDeclaration_IFluidSerializer());
+    get_current_RemovedVariableDeclaration_IFluidSerializer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.42.0:
-* "InterfaceDeclaration_IFluidSerializer": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IFluidSerializer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidSerializer():
     TypeOnly<old.IFluidSerializer>;
-declare function use_current_InterfaceDeclaration_IFluidSerializer(
+declare function use_current_RemovedInterfaceDeclaration_IFluidSerializer(
+    // @ts-expect-error compatibility expected to be broken
     use: TypeOnly<current.IFluidSerializer>);
-use_current_InterfaceDeclaration_IFluidSerializer(
+use_current_RemovedInterfaceDeclaration_IFluidSerializer(
     get_old_InterfaceDeclaration_IFluidSerializer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.42.0:
-* "InterfaceDeclaration_IFluidSerializer": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IFluidSerializer": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IFluidSerializer():
+declare function get_current_RemovedInterfaceDeclaration_IFluidSerializer():
+    // @ts-expect-error compatibility expected to be broken
     TypeOnly<current.IFluidSerializer>;
 declare function use_old_InterfaceDeclaration_IFluidSerializer(
     use: TypeOnly<old.IFluidSerializer>);
 use_old_InterfaceDeclaration_IFluidSerializer(
-    get_current_InterfaceDeclaration_IFluidSerializer());
+    get_current_RemovedInterfaceDeclaration_IFluidSerializer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -767,26 +771,28 @@ use_old_InterfaceDeclaration_IProvideFluidRunnable(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.42.0:
-* "InterfaceDeclaration_IProvideFluidSerializer": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IProvideFluidSerializer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidSerializer():
     TypeOnly<old.IProvideFluidSerializer>;
-declare function use_current_InterfaceDeclaration_IProvideFluidSerializer(
+declare function use_current_RemovedInterfaceDeclaration_IProvideFluidSerializer(
+    // @ts-expect-error compatibility expected to be broken
     use: TypeOnly<current.IProvideFluidSerializer>);
-use_current_InterfaceDeclaration_IProvideFluidSerializer(
+use_current_RemovedInterfaceDeclaration_IProvideFluidSerializer(
     get_old_InterfaceDeclaration_IProvideFluidSerializer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.42.0:
-* "InterfaceDeclaration_IProvideFluidSerializer": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IProvideFluidSerializer": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IProvideFluidSerializer():
+declare function get_current_RemovedInterfaceDeclaration_IProvideFluidSerializer():
+    // @ts-expect-error compatibility expected to be broken
     TypeOnly<current.IProvideFluidSerializer>;
 declare function use_old_InterfaceDeclaration_IProvideFluidSerializer(
     use: TypeOnly<old.IProvideFluidSerializer>);
 use_old_InterfaceDeclaration_IProvideFluidSerializer(
-    get_current_InterfaceDeclaration_IProvideFluidSerializer());
+    get_current_RemovedInterfaceDeclaration_IProvideFluidSerializer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -863,26 +869,28 @@ use_old_InterfaceDeclaration_IResponse(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.42.0:
-* "InterfaceDeclaration_ISerializedHandle": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISerializedHandle": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISerializedHandle():
     TypeOnly<old.ISerializedHandle>;
-declare function use_current_InterfaceDeclaration_ISerializedHandle(
+declare function use_current_RemovedInterfaceDeclaration_ISerializedHandle(
+    // @ts-expect-error compatibility expected to be broken
     use: TypeOnly<current.ISerializedHandle>);
-use_current_InterfaceDeclaration_ISerializedHandle(
+use_current_RemovedInterfaceDeclaration_ISerializedHandle(
     get_old_InterfaceDeclaration_ISerializedHandle());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.42.0:
-* "InterfaceDeclaration_ISerializedHandle": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISerializedHandle": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISerializedHandle():
+declare function get_current_RemovedInterfaceDeclaration_ISerializedHandle():
+    // @ts-expect-error compatibility expected to be broken
     TypeOnly<current.ISerializedHandle>;
 declare function use_old_InterfaceDeclaration_ISerializedHandle(
     use: TypeOnly<old.ISerializedHandle>);
 use_old_InterfaceDeclaration_ISerializedHandle(
-    get_current_InterfaceDeclaration_ISerializedHandle());
+    get_current_RemovedInterfaceDeclaration_ISerializedHandle());
 
 /*
 * Validate forward compat by using old type in place of current type
