@@ -18,7 +18,6 @@ import {
     ISummaryHandle,
     ISummaryTree,
     ITokenClaims,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "./urlResolver";
