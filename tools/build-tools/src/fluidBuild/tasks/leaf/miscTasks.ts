@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LeafTask } from "./leafTask";
+import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
 import { logVerbose } from "../../../common/logging";
 import * as path from "path";
@@ -137,7 +137,17 @@ export class CopyfilesTask extends LeafTask {
     }
 }
 
-export class GenVerTask extends LeafTask {
+export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
+    protected get doneFile(): string {
+        return "package.json.done.build.log"
+    }
+    protected async getDoneFileContent(): Promise<string | undefined> {
+        return JSON.stringify(this.package.packageJson);
+    }
+}
+
+
+export class GenVerTask extends PackageJsonChangedTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) { }
     protected async checkLeafIsUpToDate() {
         try {
@@ -151,13 +161,9 @@ export class GenVerTask extends LeafTask {
     }
 };
 
-export class TypeValidationTask extends LeafTask {
+export class TypeValidationTask extends PackageJsonChangedTask {
+
     protected addDependentTasks(dependentTasks: LeafTask[]): void {
     }
-    protected async checkLeafIsUpToDate(): Promise<boolean> {
-        // look for the tsc task, and only regen if tsc needs to run as
-        // well, as it there are not code changes, there is no reason
-        // to regen
-        return this.node.findTask("tsc")?.isUpToDate() ?? false;
-    }
+
 }
