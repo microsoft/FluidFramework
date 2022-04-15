@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LeafTask } from "./leafTask";
+import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
 import { logVerbose } from "../../../common/logging";
 import * as path from "path";
@@ -150,3 +150,17 @@ export class GenVerTask extends LeafTask {
         return false;
     }
 };
+
+export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
+    protected get doneFile(): string {
+        return "package.json.done.build.log"
+    }
+    protected async getDoneFileContent(): Promise<string | undefined> {
+        return JSON.stringify(this.package.packageJson);
+    }
+}
+
+export class TypeValidationTask extends PackageJsonChangedTask {
+    protected addDependentTasks(dependentTasks: LeafTask[]): void {
+    }
+}
