@@ -286,11 +286,6 @@ export class SummaryGenerator {
         // Use record type to prevent unexpected value types
         let summaryData: SubmitSummaryResult | undefined;
         try {
-            const generateSummaryEvent = PerformanceEvent.start(logger, {
-                eventName: "Summarize",
-                ...summarizeTelemetryProps,
-            });
-
             summaryData = await this.submitSummaryCallback({
                 fullTree,
                 refreshLatestAck,
@@ -359,7 +354,7 @@ export class SummaryGenerator {
             }
 
             // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
-            generateSummaryEvent.reportEvent("generate", {...summarizeTelemetryProps});
+            summarizeEvent.reportEvent("generate", {...summarizeTelemetryProps});
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
         } catch (error) {
             return fail("submitSummaryFailure", error);
@@ -424,7 +419,6 @@ export class SummaryGenerator {
                 summarizeEvent.end({
                     ...summarizeTelemetryProps,
                     handle: ackNackOp.contents.handle,
-                    message: "summaryAck",
                 });
                 resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
                     summaryAckOp: ackNackOp,

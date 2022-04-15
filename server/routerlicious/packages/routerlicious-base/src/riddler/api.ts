@@ -11,9 +11,9 @@ import {
     ITenantOrderer,
     ITenantCustomData,
 } from "@fluidframework/server-services-core";
+import { handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import { getParam } from "@fluidframework/server-services-utils";
-import { handleResponse } from "../utils";
 import { TenantManager } from "./tenantManager";
 
 export function create(
@@ -105,7 +105,7 @@ export function create(
         const tenantId = getParam(request.params, "id");
         const keyName = request.body.keyName as string;
         const refreshKeyP = manager.refreshTenantKey(tenantId, keyName);
-        return handleResponse(refreshKeyP, response);
+        handleResponse(refreshKeyP, response);
     });
 
     /**

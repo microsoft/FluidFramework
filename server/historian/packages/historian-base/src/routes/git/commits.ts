@@ -44,6 +44,7 @@ export function create(
     }
 
     router.post("/repos/:ignored?/:tenantId/git/commits",
+        utils.validateRequestParams("tenantId"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const commitP = createCommit(request.params.tenantId, request.get("Authorization"), request.body);
@@ -52,10 +53,12 @@ export function create(
                 commitP,
                 response,
                 false,
+                undefined,
                 201);
     });
 
     router.get("/repos/:ignored?/:tenantId/git/commits/:sha",
+        utils.validateRequestParams("tenantId", "sha"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const useCache = !("disableCache" in request.query);

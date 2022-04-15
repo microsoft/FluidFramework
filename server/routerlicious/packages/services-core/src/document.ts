@@ -64,6 +64,9 @@ export interface IDeliState {
     // Sequence number at logOffset
     sequenceNumber: number;
 
+    // Signal number for the deli client at logOffset
+    signalClientConnectionNumber: number;
+
     // Rolling hash at sequenceNumber
     expHash1: string;
 

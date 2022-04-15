@@ -24,7 +24,6 @@ import { IdCompressor } from '../id-compressor';
 import { createSessionId } from '../id-compressor/NumericUuid';
 import { SharedTreeEncoder_0_1_1 } from '../SharedTreeEncoder';
 import { CachingLogViewer } from '../LogViewer';
-import { GenericTransaction, TransactionInternal } from '../TransactionInternal';
 import { RevisionView } from '../RevisionView';
 import { MutableStringInterner } from '../StringInterner';
 import {
@@ -56,10 +55,7 @@ describe('SharedTree history virtualization', () => {
 			editLog,
 			RevisionView.fromTree(initialTree, context, true),
 			undefined,
-			true,
-			undefined,
-			undefined,
-			(view) => new GenericTransaction(view, new TransactionInternal.Policy())
+			true
 		);
 
 		const internedStrings = [
