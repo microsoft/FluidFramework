@@ -36,7 +36,7 @@
     "@fluidframework/container-loader": "^0.59.1000",
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/driver-utils": "^0.59.1000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/routerlicious-driver": "^0.59.1000",
     "@fluidframework/test-runtime-utils": "^0.59.1000",
     "@fluidframework/view-interfaces": "^0.59.1000",
