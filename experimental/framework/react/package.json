@@ -34,7 +34,7 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.59.1000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/counter": "^0.59.1000",
     "@fluidframework/datastore-definitions": "^0.59.1000",
     "@fluidframework/map": "^0.59.1000",
