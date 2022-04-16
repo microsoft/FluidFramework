@@ -44,7 +44,7 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.61804",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@0.1028.1000",
+    "@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@^0.1028.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
@@ -63,7 +63,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.1028.2000",
+    "version": "0.1029.1000",
     "broken": {}
   }
 }
