@@ -44,7 +44,7 @@
     "@fluidframework/datastore-definitions": "^0.60.1000",
     "@fluidframework/map": "^0.60.1000",
     "@fluidframework/merge-tree": "^0.60.1000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/sequence": "^0.60.1000",
     "@fluidframework/shared-object-base": "^0.60.1000",
     "react": "^16.10.2",

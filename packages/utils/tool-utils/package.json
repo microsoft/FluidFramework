@@ -63,8 +63,8 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/odsp-doclib-utils": "^0.60.1000",
-    "@fluidframework/protocol-base": "^0.1036.1000-0",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-base": "^0.1036.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "async-mutex": "^0.3.1",
     "debug": "^4.1.1",
     "jwt-decode": "^2.2.0",
@@ -72,7 +72,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.60.1000",
     "@fluidframework/tool-utils-previous": "npm:@fluidframework/tool-utils@^0.58.0",
     "@microsoft/api-extractor": "^7.16.1",

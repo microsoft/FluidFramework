@@ -60,7 +60,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/gitresources": "^0.1037.1000",
     "@fluidframework/protocol-base": "^0.1037.1000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "axios": "^0.26.0",
     "crc-32": "1.2.0",
     "debug": "^4.1.1",
@@ -72,7 +72,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/debug": "^4.1.5",
