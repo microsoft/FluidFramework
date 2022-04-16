@@ -49,7 +49,7 @@
     "@fluidframework/container-definitions": "^0.48.1000-0",
     "@fluidframework/container-loader": "^0.59.1000",
     "@fluidframework/container-runtime": "^0.59.1000",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/data-object-base": "^0.59.1000",
     "@fluidframework/datastore": "^0.59.1000",
     "@fluidframework/datastore-definitions": "^0.59.1000",
