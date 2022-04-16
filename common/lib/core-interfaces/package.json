@@ -41,7 +41,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.61804",
-    "@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@^0.42.0",
+    "@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@0.43.1000",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
@@ -62,22 +62,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.43.1000",
-    "broken": {
-      "0.42.0": {
-        "RemovedVariableDeclaration_IFluidConfiguration": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "RemovedInterfaceDeclaration_IFluidConfiguration": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "RemovedInterfaceDeclaration_IProvideFluidConfiguration": {
-          "backCompat": false,
-          "forwardCompat": false
-        }
-      }
-    }
+    "version": "0.43.2000",
+    "broken": {}
   }
 }
