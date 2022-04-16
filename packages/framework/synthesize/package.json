@@ -65,7 +65,7 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/core-interfaces": "^0.43.1000-0",
     "@fluidframework/datastore": "^0.59.1000",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.59.1000",
     "@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@^0.58.0",
     "@microsoft/api-extractor": "^7.16.1",
