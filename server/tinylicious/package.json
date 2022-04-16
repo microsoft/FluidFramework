@@ -63,7 +63,7 @@
     "level-sublevel": "6.6.4",
     "lodash": "^4.17.21",
     "morgan": "^1.8.1",
-    "nconf": "^0.11.0",
+    "nconf": "^0.11.4",
     "semver": "^6.3.0",
     "socket.io": "^4.1.2",
     "split": "^1.0.0",

@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_deleteFluidCacheIndexDbInstance": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance():
@@ -28,7 +28,7 @@ use_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_deleteFluidCacheIndexDbInstance": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance():
@@ -40,7 +40,7 @@ use_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FluidCache": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FluidCache():
@@ -52,7 +52,7 @@ use_current_ClassDeclaration_FluidCache(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FluidCache": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_FluidCache():
@@ -64,7 +64,7 @@ use_old_ClassDeclaration_FluidCache(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_FluidCacheConfig": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_FluidCacheConfig():
@@ -76,7 +76,7 @@ use_current_InterfaceDeclaration_FluidCacheConfig(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_FluidCacheConfig": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_FluidCacheConfig():
