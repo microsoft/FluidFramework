@@ -106,7 +106,9 @@ export class Client {
     // (undocumented)
     applyMsg(msg: ISequencedDocumentMessage, local?: boolean): void;
     // (undocumented)
-    applyStashedOp(op: any): SegmentGroup | SegmentGroup[] | undefined;
+    applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup | undefined;
+    // (undocumented)
+    applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[] | undefined;
     // (undocumented)
     cloneFromSegments(): Client;
     // (undocumented)

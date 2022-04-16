@@ -22,7 +22,7 @@ import { TestClientLogger } from "./testClientLogger";
 
 function applyMessagesWithReconnect(
     startingSeq: number,
-    messageDatas: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
+    messageDatas: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[], number][],
     clients: readonly TestClient[],
     logger: TestClientLogger,
 ) {
@@ -41,7 +41,7 @@ function applyMessagesWithReconnect(
         }
     }
 
-    const reconnectMsgs: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
+    const reconnectMsgs: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[], number][] = [];
     reconnectClientMsgs.forEach((opData) => {
         const newMsg = clients[1].makeOpMessage(
             clients[1].regeneratePendingOp(
@@ -50,7 +50,7 @@ function applyMessagesWithReconnect(
             ));
         newMsg.minimumSequenceNumber = minSeq;
         // apply message doesn't use the segment group, so just pass undefined
-        reconnectMsgs.push([newMsg, undefined]);
+        reconnectMsgs.push([newMsg, undefined, 1]);
     });
 
     return applyMessages(seq, reconnectMsgs, clients, logger);

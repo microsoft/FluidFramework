@@ -141,7 +141,7 @@ function applyMessagesWithReconnect(
 export const defaultOptions: IMergeTreeOperationRunnerConfig & { minLength: number, clients: IConfigRange } = {
     minLength: 16,
     clients: { min: 2, max: 8 },
-    opsPerRoundRange: { min: 40, max: 320 },
+    opsPerRoundRange: { min: 40, max: 160 },
     rounds: 3,
     operations: [annotateRange, removeRange],
     growthFunc: (input: number) => input * 2,
@@ -158,10 +158,10 @@ describe("MergeTree.Client", () => {
             const mt = random.engines.mt19937();
             mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, clientCount]);
 
-            const clients: TestClient[] = [new TestClient({ blockUpdateMarkers: true })];
+            const clients: TestClient[] = [new TestClient()];
             clients.forEach(
                 (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
-            stashClients = [new TestClient({ blockUpdateMarkers: true })];
+            stashClients = [new TestClient()];
             stashClients.forEach(
                 (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 

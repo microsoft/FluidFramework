@@ -524,7 +524,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     addLocalReference(lref: LocalReference): void;
     annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
     // (undocumented)
-    protected applyStashedOp(content: any): SegmentGroup | SegmentGroup[];
+    protected applyStashedOp(content: any): SegmentGroup;
     // (undocumented)
     protected client: Client;
     // (undocumented)

@@ -776,7 +776,9 @@ export class Client {
         }
     }
 
-    public applyStashedOp(op: any) {
+    public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup | undefined;
+    public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[] | undefined;
+    public applyStashedOp(op: IMergeTreeOp) {
         switch (op.type) {
             case MergeTreeDeltaType.INSERT:
                 this.applyInsertOp({ op });
