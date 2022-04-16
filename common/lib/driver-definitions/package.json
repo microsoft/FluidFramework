@@ -41,7 +41,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0"
+    "@fluidframework/protocol-definitions": "^0.1028.1000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

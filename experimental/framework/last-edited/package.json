@@ -59,7 +59,7 @@
     "@fluidframework/container-runtime": "^0.59.1000",
     "@fluidframework/container-runtime-definitions": "^0.59.1000",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/runtime-utils": "^0.59.1000",
     "@fluidframework/shared-summary-block": "^0.59.1000"
   },
