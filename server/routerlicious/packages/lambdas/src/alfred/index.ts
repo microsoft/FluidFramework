@@ -18,6 +18,8 @@ import {
 import {
     canSummarize,
     canWrite,
+    isNetworkError,
+    NetworkError,
     validateTokenClaims,
     validateTokenClaimsExpiration,
 } from "@fluidframework/server-services-client";
@@ -70,8 +72,7 @@ const getMessageMetadata = (documentId: string, tenantId: string) => ({
 const handleServerError = async (logger: core.ILogger, errorMessage: string, documentId: string, tenantId: string) => {
     logger.error(errorMessage, { messageMetaData: getMessageMetadata(documentId, tenantId) });
     Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
-    // eslint-disable-next-line prefer-promise-reject-errors
-    return Promise.reject({ code: 500, message: "Failed to connect client to document." });
+    throw new NetworkError(500, "Failed to connect client to document.");
 };
 
 const getSocketConnectThrottleId = (tenantId: string) => `${tenantId}_OpenSocketConn`;
@@ -111,6 +112,23 @@ function selectProtocolVersion(connectVersions: string[]): string | undefined {
             }
         }
     }
+}
+
+/**
+ * Converts a relayUserAgent string into a <key,value> map.
+ * @param relayUserAgent user agent string in the format "prop1:val1;prop2:val2;prop3:val3"
+ */
+function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string, string> {
+    if (!relayUserAgent) {
+        return {};
+    }
+    const map = {};
+    const propertyKeyValuePairs: string[][] = relayUserAgent.split(";").map((keyValuePair) => keyValuePair.split(":"));
+    // TODO: would be cleaner with `Object.fromEntries()` but tsconfig needs es2019 lib
+    for (const [key, value] of propertyKeyValuePairs) {
+        map[key] = value;
+    }
+    return map;
 }
 
 /**
@@ -205,11 +223,7 @@ export function configureWebSocketServices(
                 return Promise.reject(throttleError);
             }
             if (!message.token) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    code: 403,
-                    message: "Must provide an authorization token",
-                });
+                throw new NetworkError(403, "Must provide an authorization token");
             }
 
             // Validate token signature and claims
@@ -220,13 +234,13 @@ export function configureWebSocketServices(
 
             try {
                 await tenantManager.verifyToken(claims.tenantId, token);
-            } catch (err) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    // if we don't understand the error, be lenient and allow retry
-                    code: err?.response?.status ?? 401,
-                    message: err?.response?.data ?? "Invalid token",
-                });
+            } catch (error) {
+                if (isNetworkError(error)) {
+                    throw error;
+                }
+                // We don't understand the error, so it is likely an internal service error.
+                const errMsg = `Could not verify connect document token. Error: ${safeStringify(error, undefined, 2)}`;
+                return handleServerError(logger, errMsg, claims.tenantId, claims.documentId);
             }
 
             const clientId = generateClientId();
@@ -271,13 +285,11 @@ export function configureWebSocketServices(
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
             const version = selectProtocolVersion(connectVersions);
             if (!version) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    code: 400,
-                    message: `Unsupported client protocol. ` +
-                        `Server: ${protocolVersions}. ` +
-                        `Client: ${JSON.stringify(connectVersions)}`,
-                });
+                throw new NetworkError(
+                    400,
+                    // eslint-disable-next-line max-len
+                    `Unsupported client protocol. Server: ${protocolVersions}. Client: ${JSON.stringify(connectVersions)}`,
+                );
             }
 
             const clients = await clientManager.getClients(claims.tenantId, claims.documentId)
@@ -287,12 +299,13 @@ export function configureWebSocketServices(
                 });
 
             if (clients.length > maxNumberOfClientsPerDocument) {
-                // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({
-                    code: 429,
-                    message: "Too Many Clients Connected to Document",
-                    retryAfter: 5 * 60,
-                });
+                throw new NetworkError(
+                    429,
+                    "Too Many Clients Connected to Document",
+                    true, /* canRetry */
+                    false, /* isFatal */
+                    5 * 60 * 1000 /* retryAfterMs (5 min) */,
+                );
             }
 
             try {
@@ -399,8 +412,13 @@ export function configureWebSocketServices(
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
+            const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);
+            const driverVersion: string | undefined = userAgentInfo.driverVersion;
             const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
-            connectMetric.setProperties(getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId));
+            connectMetric.setProperties({
+                ...getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId),
+                [CommonProperties.clientDriverVersion]: driverVersion,
+            });
 
             connectDocument(connectionMessage).then(
                 (message) => {

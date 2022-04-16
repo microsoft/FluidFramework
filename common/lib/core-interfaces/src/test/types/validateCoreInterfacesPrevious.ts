@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_FluidObject": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_FluidObject():
@@ -28,7 +28,7 @@ use_current_TypeAliasDeclaration_FluidObject(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_FluidObject": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_FluidObject():
@@ -40,7 +40,7 @@ use_old_TypeAliasDeclaration_FluidObject(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_FluidObjectKeys": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_FluidObjectKeys():
@@ -52,7 +52,7 @@ use_current_TypeAliasDeclaration_FluidObjectKeys(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_FluidObjectKeys": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_FluidObjectKeys():
@@ -64,7 +64,7 @@ use_old_TypeAliasDeclaration_FluidObjectKeys(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_FluidObjectProviderKeys": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_FluidObjectProviderKeys():
@@ -76,7 +76,7 @@ use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_FluidObjectProviderKeys": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_FluidObjectProviderKeys():
@@ -88,7 +88,7 @@ use_old_TypeAliasDeclaration_FluidObjectProviderKeys(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidCodeDetails": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidCodeDetails():
@@ -100,7 +100,7 @@ use_current_InterfaceDeclaration_IFluidCodeDetails(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidCodeDetails": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidCodeDetails():
@@ -112,7 +112,7 @@ use_old_InterfaceDeclaration_IFluidCodeDetails(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidCodeDetailsComparer": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidCodeDetailsComparer():
@@ -124,7 +124,7 @@ use_current_VariableDeclaration_IFluidCodeDetailsComparer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidCodeDetailsComparer": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IFluidCodeDetailsComparer():
@@ -136,7 +136,7 @@ use_old_VariableDeclaration_IFluidCodeDetailsComparer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidCodeDetailsComparer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidCodeDetailsComparer():
@@ -148,7 +148,7 @@ use_current_InterfaceDeclaration_IFluidCodeDetailsComparer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidCodeDetailsComparer": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidCodeDetailsComparer():
@@ -160,7 +160,7 @@ use_old_InterfaceDeclaration_IFluidCodeDetailsComparer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidCodeDetailsConfig": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidCodeDetailsConfig():
@@ -172,7 +172,7 @@ use_current_InterfaceDeclaration_IFluidCodeDetailsConfig(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidCodeDetailsConfig": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidCodeDetailsConfig():
@@ -184,7 +184,7 @@ use_old_InterfaceDeclaration_IFluidCodeDetailsConfig(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedVariableDeclaration_IFluidConfiguration": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidConfiguration():
@@ -197,7 +197,7 @@ use_current_RemovedVariableDeclaration_IFluidConfiguration(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedVariableDeclaration_IFluidConfiguration": {"backCompat": false}
 */
 declare function get_current_RemovedVariableDeclaration_IFluidConfiguration():
@@ -210,7 +210,7 @@ use_old_VariableDeclaration_IFluidConfiguration(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_IFluidConfiguration": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidConfiguration():
@@ -223,7 +223,7 @@ use_current_RemovedInterfaceDeclaration_IFluidConfiguration(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_IFluidConfiguration": {"backCompat": false}
 */
 declare function get_current_RemovedInterfaceDeclaration_IFluidConfiguration():
@@ -236,7 +236,7 @@ use_old_InterfaceDeclaration_IFluidConfiguration(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidHandle": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidHandle():
@@ -248,7 +248,7 @@ use_current_VariableDeclaration_IFluidHandle(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidHandle": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IFluidHandle():
@@ -260,7 +260,7 @@ use_old_VariableDeclaration_IFluidHandle(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidHandle": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidHandle():
@@ -272,7 +272,7 @@ use_current_InterfaceDeclaration_IFluidHandle(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidHandle": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidHandle():
@@ -284,7 +284,7 @@ use_old_InterfaceDeclaration_IFluidHandle(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidHandleContext": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidHandleContext():
@@ -296,7 +296,7 @@ use_current_VariableDeclaration_IFluidHandleContext(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidHandleContext": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IFluidHandleContext():
@@ -308,7 +308,7 @@ use_old_VariableDeclaration_IFluidHandleContext(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidHandleContext": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidHandleContext():
@@ -320,7 +320,7 @@ use_current_InterfaceDeclaration_IFluidHandleContext(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidHandleContext": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidHandleContext():
@@ -332,7 +332,7 @@ use_old_InterfaceDeclaration_IFluidHandleContext(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidLoadable": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidLoadable():
@@ -344,7 +344,7 @@ use_current_VariableDeclaration_IFluidLoadable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidLoadable": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IFluidLoadable():
@@ -356,7 +356,7 @@ use_old_VariableDeclaration_IFluidLoadable(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidLoadable": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidLoadable():
@@ -368,7 +368,7 @@ use_current_InterfaceDeclaration_IFluidLoadable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidLoadable": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidLoadable():
@@ -380,7 +380,7 @@ use_old_InterfaceDeclaration_IFluidLoadable(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidObject": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidObject():
@@ -392,7 +392,7 @@ use_current_InterfaceDeclaration_IFluidObject(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidObject": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidObject():
@@ -404,7 +404,7 @@ use_old_InterfaceDeclaration_IFluidObject(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidPackage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidPackage():
@@ -416,7 +416,7 @@ use_current_InterfaceDeclaration_IFluidPackage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidPackage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidPackage():
@@ -428,7 +428,7 @@ use_old_InterfaceDeclaration_IFluidPackage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidPackageEnvironment": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidPackageEnvironment():
@@ -440,7 +440,7 @@ use_current_InterfaceDeclaration_IFluidPackageEnvironment(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidPackageEnvironment": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidPackageEnvironment():
@@ -452,7 +452,7 @@ use_old_InterfaceDeclaration_IFluidPackageEnvironment(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidRouter": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidRouter():
@@ -464,7 +464,7 @@ use_current_VariableDeclaration_IFluidRouter(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidRouter": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IFluidRouter():
@@ -476,7 +476,7 @@ use_old_VariableDeclaration_IFluidRouter(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidRouter": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidRouter():
@@ -488,7 +488,7 @@ use_current_InterfaceDeclaration_IFluidRouter(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidRouter": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidRouter():
@@ -500,7 +500,7 @@ use_old_InterfaceDeclaration_IFluidRouter(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidRunnable": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidRunnable():
@@ -512,7 +512,7 @@ use_current_VariableDeclaration_IFluidRunnable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidRunnable": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IFluidRunnable():
@@ -524,7 +524,7 @@ use_old_VariableDeclaration_IFluidRunnable(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidRunnable": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidRunnable():
@@ -536,7 +536,7 @@ use_current_InterfaceDeclaration_IFluidRunnable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidRunnable": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidRunnable():
@@ -548,7 +548,7 @@ use_old_InterfaceDeclaration_IFluidRunnable(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedVariableDeclaration_IFluidSerializer": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidSerializer():
@@ -561,7 +561,7 @@ use_current_RemovedVariableDeclaration_IFluidSerializer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedVariableDeclaration_IFluidSerializer": {"backCompat": false}
 */
 declare function get_current_RemovedVariableDeclaration_IFluidSerializer():
@@ -574,7 +574,7 @@ use_old_VariableDeclaration_IFluidSerializer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_IFluidSerializer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidSerializer():
@@ -587,7 +587,7 @@ use_current_RemovedInterfaceDeclaration_IFluidSerializer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_IFluidSerializer": {"backCompat": false}
 */
 declare function get_current_RemovedInterfaceDeclaration_IFluidSerializer():
@@ -600,7 +600,7 @@ use_old_InterfaceDeclaration_IFluidSerializer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidCodeDetailsComparer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer():
@@ -612,7 +612,7 @@ use_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidCodeDetailsComparer": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer():
@@ -624,7 +624,7 @@ use_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_IProvideFluidConfiguration": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidConfiguration():
@@ -637,7 +637,7 @@ use_current_RemovedInterfaceDeclaration_IProvideFluidConfiguration(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_IProvideFluidConfiguration": {"backCompat": false}
 */
 declare function get_current_RemovedInterfaceDeclaration_IProvideFluidConfiguration():
@@ -650,7 +650,7 @@ use_old_InterfaceDeclaration_IProvideFluidConfiguration(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidHandle": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidHandle():
@@ -662,7 +662,7 @@ use_current_InterfaceDeclaration_IProvideFluidHandle(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidHandle": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideFluidHandle():
@@ -674,7 +674,7 @@ use_old_InterfaceDeclaration_IProvideFluidHandle(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidHandleContext": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidHandleContext():
@@ -686,7 +686,7 @@ use_current_InterfaceDeclaration_IProvideFluidHandleContext(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidHandleContext": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideFluidHandleContext():
@@ -698,7 +698,7 @@ use_old_InterfaceDeclaration_IProvideFluidHandleContext(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidLoadable": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidLoadable():
@@ -710,7 +710,7 @@ use_current_InterfaceDeclaration_IProvideFluidLoadable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidLoadable": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideFluidLoadable():
@@ -722,7 +722,7 @@ use_old_InterfaceDeclaration_IProvideFluidLoadable(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidRouter": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidRouter():
@@ -734,7 +734,7 @@ use_current_InterfaceDeclaration_IProvideFluidRouter(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidRouter": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideFluidRouter():
@@ -746,7 +746,7 @@ use_old_InterfaceDeclaration_IProvideFluidRouter(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidRunnable": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidRunnable():
@@ -758,7 +758,7 @@ use_current_InterfaceDeclaration_IProvideFluidRunnable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidRunnable": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideFluidRunnable():
@@ -770,7 +770,7 @@ use_old_InterfaceDeclaration_IProvideFluidRunnable(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_IProvideFluidSerializer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidSerializer():
@@ -783,7 +783,7 @@ use_current_RemovedInterfaceDeclaration_IProvideFluidSerializer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_IProvideFluidSerializer": {"backCompat": false}
 */
 declare function get_current_RemovedInterfaceDeclaration_IProvideFluidSerializer():
@@ -796,7 +796,7 @@ use_old_InterfaceDeclaration_IProvideFluidSerializer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRequest": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRequest():
@@ -808,7 +808,7 @@ use_current_InterfaceDeclaration_IRequest(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRequest": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IRequest():
@@ -820,7 +820,7 @@ use_old_InterfaceDeclaration_IRequest(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRequestHeader": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRequestHeader():
@@ -832,7 +832,7 @@ use_current_InterfaceDeclaration_IRequestHeader(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRequestHeader": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IRequestHeader():
@@ -844,7 +844,7 @@ use_old_InterfaceDeclaration_IRequestHeader(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IResponse": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IResponse():
@@ -856,7 +856,7 @@ use_current_InterfaceDeclaration_IResponse(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IResponse": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IResponse():
@@ -868,7 +868,7 @@ use_old_InterfaceDeclaration_IResponse(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_ISerializedHandle": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISerializedHandle():
@@ -881,7 +881,7 @@ use_current_RemovedInterfaceDeclaration_ISerializedHandle(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_ISerializedHandle": {"backCompat": false}
 */
 declare function get_current_RemovedInterfaceDeclaration_ISerializedHandle():
@@ -894,7 +894,7 @@ use_old_InterfaceDeclaration_ISerializedHandle(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_isFluidCodeDetails": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_isFluidCodeDetails():
@@ -906,7 +906,7 @@ use_current_VariableDeclaration_isFluidCodeDetails(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_isFluidCodeDetails": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_isFluidCodeDetails():
@@ -918,7 +918,7 @@ use_old_VariableDeclaration_isFluidCodeDetails(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_isFluidPackage": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_isFluidPackage():
@@ -930,7 +930,7 @@ use_current_VariableDeclaration_isFluidPackage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.42.0:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_isFluidPackage": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_isFluidPackage():

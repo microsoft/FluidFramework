@@ -33,7 +33,7 @@ interface IOpPerfTelemetryProperties {
     /** Measure time between (3) and (4) - Time between DM's inbound "push" event until DM's "op" event */
     durationInboundToProcessing: number;
     /** Length of the DeltaManager's inbound queue at the time of the DM's inbound "push" event (3) */
-    lenghtInboundQueue: number;
+    lengthInboundQueue: number;
 }
 
 /**
@@ -135,7 +135,7 @@ class OpPerfTelemetry {
                 this.opPerfData.durationInboundQueue = this.opProcessingTimes.opStartTimeInboundPushEvent
                                      - this.opProcessingTimes.opStartTimeSittingInboundQueue;
                 this.opProcessingTimes.opStartTimeSittingInboundQueue = undefined;
-                this.opPerfData.lenghtInboundQueue = this.deltaManager.inbound.length;
+                this.opPerfData.lengthInboundQueue = this.deltaManager.inbound.length;
             }
         });
 

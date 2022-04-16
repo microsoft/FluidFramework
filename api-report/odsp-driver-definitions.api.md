@@ -20,6 +20,7 @@ export interface HostStoragePolicy {
     // (undocumented)
     enableRedeemFallback?: boolean;
     enableShareLinkWithCreate?: boolean;
+    // @deprecated (undocumented)
     fetchBinarySnapshotFormat?: boolean;
     isolateSocketCache?: boolean;
     // (undocumented)

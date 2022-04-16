@@ -22,7 +22,7 @@ import express from "express";
 import morgan from "morgan";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { RestLessServer } from "@fluidframework/server-services";
 import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -81,6 +81,7 @@ export function create(
                 method: tokens.method(req, res),
                 pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
                 url: tokens.url(req, res),
+                driverVersion: tokens.req(req, res, DriverVersionHeaderName),
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
                 durationInMs: tokens["response-time"](req, res),

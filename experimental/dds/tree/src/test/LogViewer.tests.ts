@@ -19,19 +19,20 @@ import { initialTree } from '../InitialTree';
 import {
 	ChangeInternal,
 	ChangeNode,
+	ChangeTypeInternal,
 	ConstraintEffect,
 	Edit,
 	EditStatus,
+	SetValueInternal,
 	StablePlaceInternal,
 } from '../persisted-types';
 import { areRevisionViewsSemanticallyEqual, newEdit } from '../EditUtilities';
 import { NodeIdContext } from '../NodeIdUtilities';
 import { RevisionView } from '../RevisionView';
 import { TransactionInternal } from '../TransactionInternal';
-import { StableRange } from '../ChangeTypes';
+import { Change, ChangeType, StableRange } from '../ChangeTypes';
 import { expectDefined } from './utilities/TestCommon';
 import { buildLeaf, TestTree } from './utilities/TestNode';
-import { MockTransaction } from './utilities/MockTransaction';
 import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities';
 
 /**
@@ -285,7 +286,6 @@ describe('CachingLogViewer', () => {
 			/* expensiveValidation */ true,
 			editStatusCallback,
 			sequencedEditResultCallback,
-			TransactionInternal.factory,
 			log.numberOfSequencedEdits
 		);
 	}
@@ -348,12 +348,12 @@ describe('CachingLogViewer', () => {
 		// Add an invalid edit
 		simpleLog.addSequencedEdit(
 			newEdit([
-				ChangeInternal.constraint(
-					StableRange.only(testTree.left),
-					ConstraintEffect.InvalidAndDiscard,
-					undefined,
-					0
-				),
+				{
+					type: ChangeTypeInternal.Constraint,
+					toConstrain: StableRange.only(testTree.left),
+					effect: ConstraintEffect.InvalidAndDiscard,
+					length: 0,
+				},
 			]),
 			{ sequenceNumber: 3, referenceSequenceNumber: 2, minimumSequenceNumber: 2 }
 		);
@@ -635,8 +635,7 @@ describe('CachingLogViewer', () => {
 				[],
 				/* expensiveValidation */ true,
 				undefined,
-				(args: SequencedEditResult) => events.push(args),
-				TransactionInternal.factory
+				(args: SequencedEditResult) => events.push(args)
 			);
 			return { log, viewer, events };
 		}
@@ -713,8 +712,7 @@ describe('CachingLogViewer', () => {
 			referenceSequenceNumber?: number
 		): Edit<unknown> {
 			const id = String(sequenceNumber ?? uuidv4()) as EditId;
-			const fakeChange = id;
-			const edit = { changes: [fakeChange], id } as unknown as Edit<ChangeInternal>;
+			const edit = { changes: [ChangeInternal.setPayload(simpleLogBaseView.root, id)], id };
 			logViewer.log.addSequencedEdit(edit, {
 				sequenceNumber,
 				referenceSequenceNumber: referenceSequenceNumber ?? sequenceNumber - 1,
@@ -723,15 +721,7 @@ describe('CachingLogViewer', () => {
 		}
 
 		function minimalLogViewer(): CachingLogViewer {
-			return new CachingLogViewer(
-				new EditLog(),
-				simpleLogBaseView,
-				[],
-				/* expensiveValidation */ true,
-				undefined,
-				undefined,
-				MockTransaction.factory
-			);
+			return new CachingLogViewer(new EditLog(), simpleLogBaseView, [], /* expensiveValidation */ true);
 		}
 
 		it('tracks the earliest sequenced edit in the session', () => {
@@ -798,7 +788,8 @@ describe('CachingLogViewer', () => {
 				expect(actual.length).equals(path.length);
 				for (let i = 0; i < path.length; ++i) {
 					expect(actual[i].length).equals(1);
-					expect(actual[i][0].resolvedChange).equals(path[i].id);
+					const change = actual[i][0].resolvedChange as SetValueInternal;
+					expect(change.payload).equals(path[i].id);
 				}
 			}
 

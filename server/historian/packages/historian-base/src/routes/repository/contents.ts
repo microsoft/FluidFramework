@@ -35,6 +35,7 @@ export function create(
     }
 
     router.get("/repos/:ignored?/:tenantId/contents/*",
+        utils.validateRequestParams("tenantId", 0),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const contentP = getContent(

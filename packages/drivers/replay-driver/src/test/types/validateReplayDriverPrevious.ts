@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FileSnapshotReader": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FileSnapshotReader():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_FileSnapshotReader(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FileSnapshotReader": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_FileSnapshotReader():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_FileSnapshotReader(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFileSnapshot": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFileSnapshot():
@@ -53,7 +53,7 @@ use_current_InterfaceDeclaration_IFileSnapshot(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFileSnapshot": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFileSnapshot():
@@ -65,7 +65,7 @@ use_old_InterfaceDeclaration_IFileSnapshot(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OpStorage": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OpStorage():
@@ -77,7 +77,7 @@ use_current_ClassDeclaration_OpStorage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OpStorage": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_OpStorage():
@@ -89,7 +89,7 @@ use_old_ClassDeclaration_OpStorage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ReadDocumentStorageServiceBase": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ReadDocumentStorageServiceBase():
@@ -101,7 +101,7 @@ use_current_ClassDeclaration_ReadDocumentStorageServiceBase(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ReadDocumentStorageServiceBase": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ReadDocumentStorageServiceBase():
@@ -113,7 +113,7 @@ use_old_ClassDeclaration_ReadDocumentStorageServiceBase(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ReplayController": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ReplayController():
@@ -125,7 +125,7 @@ use_current_ClassDeclaration_ReplayController(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ReplayController": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ReplayController():
@@ -137,7 +137,7 @@ use_old_ClassDeclaration_ReplayController(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ReplayDocumentService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ReplayDocumentService():
@@ -149,7 +149,7 @@ use_current_ClassDeclaration_ReplayDocumentService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ReplayDocumentService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ReplayDocumentService():
@@ -161,7 +161,7 @@ use_old_ClassDeclaration_ReplayDocumentService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ReplayDocumentServiceFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ReplayDocumentServiceFactory():
@@ -173,7 +173,7 @@ use_current_ClassDeclaration_ReplayDocumentServiceFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ReplayDocumentServiceFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ReplayDocumentServiceFactory():
@@ -185,7 +185,7 @@ use_old_ClassDeclaration_ReplayDocumentServiceFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SnapshotStorage": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SnapshotStorage():
@@ -197,7 +197,7 @@ use_current_ClassDeclaration_SnapshotStorage(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SnapshotStorage": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_SnapshotStorage():
@@ -209,7 +209,7 @@ use_old_ClassDeclaration_SnapshotStorage(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_StaticStorageDocumentService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_StaticStorageDocumentService():
@@ -221,7 +221,7 @@ use_current_ClassDeclaration_StaticStorageDocumentService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_StaticStorageDocumentService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_StaticStorageDocumentService():
@@ -233,7 +233,7 @@ use_old_ClassDeclaration_StaticStorageDocumentService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_StaticStorageDocumentServiceFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_StaticStorageDocumentServiceFactory():
@@ -245,7 +245,7 @@ use_current_ClassDeclaration_StaticStorageDocumentServiceFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_StaticStorageDocumentServiceFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_StaticStorageDocumentServiceFactory():
