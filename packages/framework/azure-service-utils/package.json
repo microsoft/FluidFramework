@@ -42,7 +42,7 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/azure-service-utils-previous": "npm:@fluidframework/azure-service-utils@^0.58.0",
+    "@fluidframework/azure-service-utils-previous": "npm:@fluidframework/azure-service-utils@0.59.1000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@microsoft/api-extractor": "^7.21.3",
@@ -64,7 +64,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
+    "version": "0.59.2000",
     "broken": {}
   }
 }

@@ -61,7 +61,7 @@
     "ioredis": "^4.24.2",
     "nconf": "^0.11.4",
     "request": "^2.88.0",
-    "winston": "^3.3.3"
+    "winston": "^3.6.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
