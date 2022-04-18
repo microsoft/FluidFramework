@@ -1189,6 +1189,30 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	/**
+	 * Merges `edits` from `other` into this SharedTree.
+	 * @param other - Tree containing the edits that should be applied to this one.
+	 * @param edits - Array of edits from `other` to apply.
+	 * @param stableIdRemapper - Optional remapper to translate stable identities from `other` into stable identities on this tree.
+	 * Any references that `other` contains to a stable id `foo` will be replaced with references to the id `stableIdRemapper(foo)`.
+	 *
+	 * Payloads on the edits are left intact.
+	 * @returns a list containing `EditId`s for all applied edits.
+	 */
+	public mergeEditsFrom(
+		other: SharedTree,
+		edits: readonly Edit<ChangeInternal>[],
+		stableIdRemapper?: (id: StableNodeId) => StableNodeId
+	): EditId[] {
+		const idConverter = (id: NodeId) => {
+			const stableId = other.convertToStableNodeId(id);
+			const convertedStableId = stableIdRemapper?.(stableId) ?? stableId;
+			return this.generateNodeId(convertedStableId);
+		};
+
+		return edits.map((edit) => this.applyEditInternal(convertEditIds(edit, (id) => idConverter(id))).id);
+	}
+
+	/**
 	 * Applies a set of internal changes to this tree. The result will be reflected in `SharedTree.currentView`.
 	 * External users should use one of the more specialized functions, like `applyEdit` which handles constructing the actual `Edit`
 	 * and uses public Change types.
