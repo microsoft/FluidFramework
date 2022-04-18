@@ -198,9 +198,9 @@ export class RunningSummarizer implements IDisposable {
             case MessageType.ClientLeave:
             case MessageType.ClientJoin:
             case MessageType.Propose: {
+                this.numNonSystemOps--; // Decrement to correct the counters
                 // Synchronously handle quorum ops like regular ops
                 this.handleOp(undefined, op);
-                this.numNonSystemOps--; // Decrement to correct the counters
                 return;
             }
             default: {
@@ -218,7 +218,7 @@ export class RunningSummarizer implements IDisposable {
 
         // Check for enqueued on-demand summaries; Intentionally do nothing otherwise
         if (!this.tryRunEnqueuedSummary()) {
-            this.heuristicRunner?.run();
+            this.heuristicRunner?.run(this.numSystemOps, this.numNonSystemOps);
         }
     }
 
@@ -296,12 +296,8 @@ export class RunningSummarizer implements IDisposable {
             // After summarizing, we should check to see if we need to summarize again.
             // Rerun the heuristics and check for enqueued summaries.
             if (!this.stopping && !this.tryRunEnqueuedSummary() && retry) {
-                this.heuristicRunner?.run();
+                this.heuristicRunner?.run(this.numSystemOps, this.numNonSystemOps);
             }
-
-            // Reset our op counters
-            this.numSystemOps = 0;
-            this.numNonSystemOps = 0;
         });
     }
 
@@ -342,6 +338,10 @@ export class RunningSummarizer implements IDisposable {
         summarizeReason: SummarizeReason,
         cancellationToken = this.cancellationToken): void
     {
+        // Reset our op counters
+        this.numSystemOps = 0;
+        this.numNonSystemOps = 0;
+
         if (this.summarizingLock !== undefined) {
             // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
             // if it's still needed

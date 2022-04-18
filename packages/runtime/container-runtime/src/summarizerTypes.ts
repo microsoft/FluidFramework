@@ -368,8 +368,12 @@ export interface ISummarizeHeuristicData {
 
 /** Responsible for running heuristics determining when to summarize. */
 export interface ISummarizeHeuristicRunner {
-    /** Runs the heuristic to determine if it should try to summarize */
-    run(): void;
+    /**
+     * Runs the heuristic to determine if it should try to summarize
+     * @param numSystemOps Number of system ops since the last summary
+     * @param numNonSystemOps Number of non-system ops since the last summary
+     */
+    run(numSystemOps?: number, numNonSystemOps?: number): void;
 
     /** Runs a different heuristic to check if it should summarize before closing */
     shouldRunLastSummary(): boolean;
