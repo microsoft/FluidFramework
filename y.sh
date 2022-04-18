@@ -10,3 +10,7 @@ for file in $(fd package.json --type file); do
 
     sd 'yarn:@' 'npm:@' "$file"
 done
+
+for file in $(fd package.json --type file); do
+    sd  '"\^0\.1036\.1000-0"' '"0.1036.2000"' "$file"
+done
