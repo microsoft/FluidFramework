@@ -1191,7 +1191,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	/**
 	 * Merges `edits` from `other` into this SharedTree.
 	 * @param other - Tree containing the edits that should be applied to this one.
-	 * @param edits - Array of edits from `other` to apply.
+	 * @param edits - Iterable of edits from `other` to apply.
 	 * @param stableIdRemapper - Optional remapper to translate stable identities from `other` into stable identities on this tree.
 	 * Any references that `other` contains to a stable id `foo` will be replaced with references to the id `stableIdRemapper(foo)`.
 	 *
@@ -1200,7 +1200,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public mergeEditsFrom(
 		other: SharedTree,
-		edits: readonly Edit<ChangeInternal>[],
+		edits: Iterable<Edit<ChangeInternal>>,
 		stableIdRemapper?: (id: StableNodeId) => StableNodeId
 	): EditId[] {
 		const idConverter = (id: NodeId) => {
@@ -1209,7 +1209,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			return this.generateNodeId(convertedStableId);
 		};
 
-		return edits.map((edit) => this.applyEditInternal(convertEditIds(edit, (id) => idConverter(id))).id);
+		return Array.from(edits, (edit) => this.applyEditInternal(convertEditIds(edit, (id) => idConverter(id))).id);
 	}
 
 	/**
