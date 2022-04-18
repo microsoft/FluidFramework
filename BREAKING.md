@@ -24,7 +24,7 @@ There are a few steps you can take to write a good change note and avoid needing
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
 
 ### IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release
-In major release 1.0, the optional functions `IContainer.connect()` `IContainer.disconnect()` will be made mandatory functions.
+In major release 1.0, the optional functions `IFluidContainerContainer.connect()` `IFluidContainer.disconnect()` will be made mandatory functions.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)
