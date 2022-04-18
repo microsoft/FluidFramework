@@ -67,16 +67,28 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         return this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
     }
 
-    public run() {
+    public run(numSystemOps?: number, numNonSystemOps?: number) {
         const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
         const opsSinceLastAck = this.opsSinceLastAck;
+        let needToRestart = true;
+
         if (timeSinceLastSummary > this.configuration.maxTime) {
             this.idleTimer.clear();
             this.trySummarize("maxTime");
-        } else if (opsSinceLastAck > this.configuration.maxOps) {
+            needToRestart = false;
+        } else if (numSystemOps !== undefined && numNonSystemOps !== undefined) {
+            if (true /* This is where the weighted check will happen */) {
+                this.idleTimer.clear();
+                this.trySummarize("maxOps");
+                needToRestart = false;
+            }
+        } else if (opsSinceLastAck > this.configuration.maxOps) { // Fallback to old check !!! TODO: * 10
             this.idleTimer.clear();
             this.trySummarize("maxOps");
-        } else {
+            needToRestart = false;
+        }
+
+        if (needToRestart) {
             this.idleTimer.restart();
         }
     }
