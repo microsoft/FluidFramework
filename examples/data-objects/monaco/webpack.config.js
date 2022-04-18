@@ -5,7 +5,7 @@
 
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require('path');
-const merge = require('webpack-merge');
+const { merge } = require("webpack-merge");
 // const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = env => {
