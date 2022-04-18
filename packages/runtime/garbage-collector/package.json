@@ -19,10 +19,10 @@
   },
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "yarn run build:genver && concurrently yarn:build:compile yarn:lint",
-    "build:commonjs": "yarn run tsc && yarn run build:test",
-    "build:compile": "concurrently yarn:build:commonjs yarn:build:esnext",
-    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
+    "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+    "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",
@@ -40,7 +40,8 @@
     "test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 yarn run test:mocha",
     "test:report": "npm test -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,

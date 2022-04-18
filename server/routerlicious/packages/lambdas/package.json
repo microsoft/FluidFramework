@@ -66,7 +66,7 @@
     "double-ended-queue": "^2.1.0-0",
     "json-stringify-safe": "^5.0.1",
     "lodash": "^4.17.21",
-    "nconf": "^0.11.0",
+    "nconf": "^0.11.4",
     "semver": "^6.3.0",
     "sha.js": "^2.4.11",
     "uuid": "^8.3.1"

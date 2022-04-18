@@ -22,10 +22,16 @@ export interface INetworkErrorDetails {
      */
     message?: string;
     /**
-     * Represents the time in milliseconds that should be waited before retrying.
-     * Refer to {@link NetworkError.retryAfterMs}.
+     * Represents the time in seconds that should be waited before retrying.
+     * TODO: remove in favor of retryAfterMs.
+     * Refer to {@link NetworkError.retryAfter}.
      */
     retryAfter?: number;
+    /**
+     * Represents the time in seconds that should be waited before retrying.
+     * Refer to {@link NetworkError.retryAfterMs}.
+     */
+    retryAfterMs?: number;
 }
 
 /**
@@ -38,6 +44,13 @@ export interface INetworkErrorDetails {
  * network error and making those services more prepared to react to such kinds of errors.
  */
 export class NetworkError extends Error {
+    /**
+     * Value representing the time in seconds that should be waited before retrying.
+     * TODO: remove in favor of retryAfterMs once driver supports retryAfterMs.
+     * @public
+     */
+    public readonly retryAfter: number;
+
     constructor(
         /**
          * HTTP status code that describes the error.
@@ -69,6 +82,7 @@ export class NetworkError extends Error {
     ) {
         super(message);
         this.name = "NetworkError";
+        this.retryAfter = retryAfterMs !== undefined ? retryAfterMs / 1000 : undefined;
     }
 
     /**
@@ -86,9 +100,31 @@ export class NetworkError extends Error {
             message: this.message,
             canRetry: this.canRetry,
             isFatal: this.isFatal,
-            retryAfter: this.retryAfterMs,
+            retryAfter: this.retryAfter,
+            retryAfterMs: this.retryAfterMs,
         };
     }
+
+    /**
+     * Explicitly define how to serialize as JSON so that socket.io can emit relevant info.
+     * @public
+     */
+    public toJSON(): INetworkErrorDetails & { code: number } {
+        return {
+            code: this.code,
+            message: this.message,
+            canRetry: this.canRetry,
+            isFatal: this.isFatal,
+            retryAfterMs: this.retryAfterMs,
+            retryAfter: this.retryAfter,
+        };
+    }
+}
+
+export function isNetworkError(error: unknown): error is NetworkError {
+    return (error as NetworkError).name === "NetworkError" &&
+        typeof (error as NetworkError).code === "number" &&
+        typeof (error as NetworkError).message === "string";
 }
 
 /**

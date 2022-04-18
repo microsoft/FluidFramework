@@ -18,7 +18,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
             .then(async (repoManager) => repoManager.createCommit(request.body as ICreateCommitParams));
 
-        handleResponse(resultP, response, 201);
+        handleResponse(resultP, response, undefined, undefined, 201);
     });
 
     router.get("/repos/:owner/:repo/git/commits/:sha", async (request, response, next) => {

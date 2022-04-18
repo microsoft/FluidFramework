@@ -31,7 +31,7 @@
     "@fluidframework/server-services-core": "^0.1036.2000",
     "@fluidframework/server-services-ordering-zookeeper": "^0.1036.2000",
     "kafka-node": "^5.0.0",
-    "nconf": "^0.11.0",
+    "nconf": "^0.11.4",
     "sillyname": "^0.1.0"
   },
   "devDependencies": {

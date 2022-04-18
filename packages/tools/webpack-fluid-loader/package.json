@@ -17,9 +17,9 @@
   },
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently yarn:build:compile yarn:lint",
-    "build:commonjs": "yarn run tsc && yarn run build:test",
-    "build:compile": "concurrently yarn:build:commonjs yarn:build:esnext yarn:build:webpack",
+    "build": "concurrently npm:build:compile npm:lint",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
+    "build:compile": "concurrently npm:build:commonjs npm:build:esnext npm:build:webpack",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",
@@ -38,6 +38,7 @@
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d .",
     "webpack": "webpack --color --config webpack.config.js"
   },
   "nyc": {
@@ -85,7 +86,7 @@
     "@fluidframework/web-code-loader": "^0.59.2000",
     "axios": "^0.26.0",
     "express": "^4.16.3",
-    "nconf": "^0.11.0",
+    "nconf": "^0.11.4",
     "sillyname": "^0.1.0",
     "uuid": "^8.3.1",
     "webpack-dev-server": "4.0.0"

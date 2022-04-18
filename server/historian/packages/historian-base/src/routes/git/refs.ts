@@ -90,10 +90,12 @@ export function create(
                 refP,
                 response,
                 false,
+                undefined,
                 201);
     });
 
     router.patch("/repos/:ignored?/:tenantId/git/refs/*",
+        utils.validateRequestParams("tenantId", 0),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const refP = updateRef(
@@ -108,6 +110,7 @@ export function create(
     });
 
     router.delete("/repos/:ignored?/:tenantId/git/refs/*",
+        utils.validateRequestParams("tenantId", 0),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const refP = deleteRef(request.params.tenantId, request.get("Authorization"), request.params[0]);
@@ -115,6 +118,7 @@ export function create(
                 refP,
                 response,
                 false,
+                undefined,
                 204);
     });
 

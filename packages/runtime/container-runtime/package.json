@@ -15,10 +15,10 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "yarn run build:genver && concurrently yarn:build:compile yarn:lint",
-    "build:commonjs": "yarn run tsc && yarn run build:test",
-    "build:compile": "concurrently yarn:build:commonjs yarn:build:esnext",
-    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
+    "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+    "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",
@@ -38,8 +38,7 @@
     "tsc:watch": "tsc --watch",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-    "typetests:gen": "fluid-type-validator -d .",
-    "typetests:prepare": "fluid-type-validator -d . -p"
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -82,7 +81,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.61288",
+    "@fluidframework/build-tools": "^0.2.61804",
     "@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@^0.58.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@fluidframework/mocha-test-setup": "^0.59.2000",
@@ -116,40 +115,38 @@
   "typeValidation": {
     "version": "0.59.1000",
     "broken": {
-      "0.58.2002": {
-        "InterfaceDeclaration_IBaseSummarizeResult": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IGenerateSummaryTreeResult": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_ISubmitSummaryOpResult": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IUploadSummaryResult": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_SubmitSummaryResult": {
-          "forwardCompat": false
-        },
-        "TypeAliasDeclaration_SubmitSummaryResult": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IGeneratedSummaryStats": {
-          "forwardCompat": false
-        },
-        "ClassDeclaration_ContainerRuntime": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IGarbageCollectionRuntime": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IGCStats": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IRootSummaryTreeWithStats": {
-          "forwardCompat": false
-        }
+      "InterfaceDeclaration_IBaseSummarizeResult": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IGenerateSummaryTreeResult": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISubmitSummaryOpResult": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IUploadSummaryResult": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_SubmitSummaryResult": {
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_SubmitSummaryResult": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IGeneratedSummaryStats": {
+        "forwardCompat": false
+      },
+      "ClassDeclaration_ContainerRuntime": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IGarbageCollectionRuntime": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IGCStats": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IRootSummaryTreeWithStats": {
+        "forwardCompat": false
       }
     }
   }

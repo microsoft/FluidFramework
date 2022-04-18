@@ -15,15 +15,14 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "yarn run build:gen && concurrently yarn:build:compile yarn:lint",
-    "build:compile": "concurrently yarn:tsc yarn:build:esnext",
-    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
+    "build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "build:full": "yarn run build",
-    "build:full:compile": "yarn run build:compile",
-    "build:gen": "yarn run typetests:gen",
-    "ci:build": "yarn run build:gen && yarn run build:compile",
-    "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "ci:build": "npm run build:compile",
+    "ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "ci:test": "echo No test for this package",
     "ci:test:coverage": "echo No test for this package",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
@@ -43,9 +42,9 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.61288",
+    "@fluidframework/build-tools": "^0.2.61804",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@0.1027.1000",
+    "@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@0.1028.1000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
@@ -64,28 +63,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.1028.1000",
-    "broken": {
-      "0.1027.1000": {
-        "EnumDeclaration_FileMode": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_ISnapshotTree": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ISnapshotTreeEx": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ITree": {
-          "forwardCompat": false
-        },
-        "TypeAliasDeclaration_ITreeEntry": {
-          "forwardCompat": false
-        },
-        "EnumDeclaration_TreeEntry": {
-          "forwardCompat": false
-        }
-      }
-    }
+    "version": "0.1028.2000",
+    "broken": {}
   }
 }
