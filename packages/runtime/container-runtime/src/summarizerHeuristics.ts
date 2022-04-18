@@ -78,6 +78,14 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
             needToRestart = false;
         } else if (numSystemOps !== undefined && numNonSystemOps !== undefined) {
             if (this.getWeightedNumOfOps(numSystemOps, numNonSystemOps) > this.configuration.maxOps) {
+                // !! TODO: How can we guarantee the expectations are the same for when we try to summarize?
+                // Ex: Before, we would process up to 1000 ops. Now, we have this default as 100. Say we have
+                //     someone that calls this method without the new optional parameters. The expectation of the
+                //     method has now changed since trySummarize could happen 10x more frequently.
+                // A potential solution could be to add a new property to the "DefaultSummaryConfiguration" that
+                // will hold this new "weightedOps" number (100 in this case) and we leave maxOps at 1000.
+                // Another solution could be to instead keep maxOps at 1000 and just divide this number by 10 when
+                // processing the weighted version. But this isn't bullet proof in my opinion.
                 this.idleTimer.clear();
                 this.trySummarize("maxOps");
                 needToRestart = false;
