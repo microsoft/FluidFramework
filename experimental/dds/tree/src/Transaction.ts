@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IErrorEvent } from '@fluidframework/common-definitions';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { newEditId } from './EditUtilities';
 import { TreeView } from './TreeView';
@@ -12,15 +14,31 @@ import { GenericTransaction, TransactionInternal } from './TransactionInternal';
 import { CachingLogViewer } from './LogViewer';
 
 /**
+ * An event emitted by a `Transaction` to indicate a state change. See {@link TransactionEvents} for event argument information.
+ * @public
+ */
+export enum TransactionEvent {
+	/**
+	 * `currentView` has changed from `before` to `after`
+	 */
+	ViewChange = 'viewChange',
+}
+
+/**
+ * Events which may be emitted by `Transaction`
+ */
+export interface TransactionEvents extends IErrorEvent {
+	(event: TransactionEvent.ViewChange, listener: (before: TreeView, after: TreeView) => void);
+}
+
+/**
  * Buffers changes to be applied to an isolated view of a `SharedTree` over time before applying them directly to the tree itself as a
  * single edit
  */
-export class Transaction {
+export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	/** The view of the tree when this transaction was created */
 	public readonly startingView: TreeView;
-
 	private readonly transaction: GenericTransaction;
-	private open: boolean = true;
 
 	/**
 	 * Create a new transaction over the given tree. The tree's `currentView` at this time will become the `startingView` for this
@@ -28,6 +46,7 @@ export class Transaction {
 	 * @param tree - the `SharedTree` that this transaction applies changes to
 	 */
 	public constructor(public readonly tree: SharedTree) {
+		super();
 		const { currentView } = tree;
 		this.transaction = new GenericTransaction(currentView, new TransactionInternal.Policy());
 		this.startingView = currentView;
@@ -38,7 +57,7 @@ export class Transaction {
 	 * be automatically closed by a change in this transaction failing to apply (see `applyChange()`).
 	 */
 	public get isOpen(): boolean {
-		return this.open && this.status === EditStatus.Applied;
+		return this.transaction.isOpen && this.status === EditStatus.Applied;
 	}
 
 	/**
@@ -59,18 +78,26 @@ export class Transaction {
 	/**
 	 * Attempt to apply a sequence of changes in this transaction. The `currentView` will be updated to reflect the new tree state after all
 	 * applied changes. If any change fails to apply, the remaining changes will be ignored and this transaction will be automatically
-	 * closed (see `isOpen`). If this transaction is already closed, this method has no effect.
+	 * closed (see `isOpen`). If this transaction is already closed, this method has no effect. This method will emit a
+	 * `TransactionEvent.ViewChange` event at most once per call.
 	 * @param changes - the changes to apply
 	 * @returns either the `EditStatus` of the given changes or the `EditStatus` of the last change before the transaction was closed
 	 */
-	public apply(change: Change, ...changes: Change[]): EditStatus;
+	public apply(...changes: Change[]): EditStatus;
 	public apply(changes: Change[]): EditStatus;
-	public apply(changeOrChanges: Change | Change[], ...changes: Change[]): EditStatus {
+	public apply(headOrChanges: Change | Change[], ...tail: Change[]): EditStatus {
 		if (this.isOpen) {
-			const changeArray = Array.isArray(changeOrChanges)
-				? [...changeOrChanges, ...changes]
-				: [changeOrChanges, ...changes];
-			this.transaction.applyChanges(changeArray.map((c) => this.tree.internalizeChange(c)));
+			const changes = Array.isArray(headOrChanges) ? headOrChanges : [headOrChanges, ...tail];
+			if (changes.length > 0) {
+				const previousView = this.currentView;
+				this.transaction.applyChanges(changes.map((c) => this.tree.internalizeChange(c)));
+				if (
+					this.listenerCount(TransactionEvent.ViewChange) > 0 &&
+					!previousView.hasEqualForest(this.currentView)
+				) {
+					this.emit(TransactionEvent.ViewChange, previousView, this.currentView);
+				}
+			}
 		}
 		return this.status;
 	}
@@ -81,14 +108,13 @@ export class Transaction {
 	public closeAndCommit(): void {
 		if (this.isOpen) {
 			if (this.transaction.changes.length > 0) {
-				const edit: Edit<ChangeInternal> = { id: newEditId(), changes: this.transaction.changes };
 				const result = this.transaction.close();
+				const edit: Edit<ChangeInternal> = { id: newEditId(), changes: result.changes };
 				if (this.tree.editsInternal instanceof CachingLogViewer) {
 					this.tree.editsInternal.setKnownEditingResult(edit, result);
 				}
 				this.tree.applyEditInternal(edit);
 			}
-			this.open = false;
 		}
 	}
 }

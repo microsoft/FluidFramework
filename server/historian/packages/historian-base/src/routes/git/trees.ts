@@ -57,6 +57,7 @@ export function create(
     }
 
     router.post("/repos/:ignored?/:tenantId/git/trees",
+        utils.validateRequestParams("tenantId"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const treeP = createTree(request.params.tenantId, request.get("Authorization"), request.body);
@@ -64,10 +65,12 @@ export function create(
                 treeP,
                 response,
                 false,
+                undefined,
                 201);
     });
 
     router.get("/repos/:ignored?/:tenantId/git/trees/:sha",
+        utils.validateRequestParams("tenantId", "sha"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const useCache = !("disableCache" in request.query);

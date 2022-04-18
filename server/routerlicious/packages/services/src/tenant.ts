@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/server-services-client";
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
-import Axios from "axios";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 
 export class Tenant implements core.ITenant {
@@ -44,14 +43,18 @@ export class TenantManager implements core.ITenantManager {
     }
 
     public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
-        const result = await Axios.post<core.ITenantConfig & { key: string }>(
-            `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId || "")}`);
-        return result.data;
+        const restWrapper = new BasicRestWrapper();
+        const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
+            `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId || "")}`,
+            undefined,
+        );
+        return result;
     }
 
     public async getTenant(tenantId: string, documentId: string, includeDisabledTenant = false): Promise<core.ITenant> {
+        const restWrapper = new BasicRestWrapper();
         const [details, key] = await Promise.all([
-            Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`,
+            restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`,
             { params: { includeDisabledTenant }}),
             this.getKey(tenantId, includeDisabledTenant)]);
 
@@ -70,9 +73,9 @@ export class TenantManager implements core.ITenantManager {
         const defaultHeaders = getDefaultHeaders();
         // If internalHistorianUrlOverride is undefined or empty in the server, the tenant's internalHistorianUrl
         // will be used.
-        const internalHistorianUrl = this.internalHistorianUrlOverride || details.data.storage.internalHistorianUrl;
+        const internalHistorianUrl = this.internalHistorianUrlOverride || details.storage.internalHistorianUrl;
         const baseUrl = `${internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
-        const restWrapper = new BasicRestWrapper(
+        const tenantRestWrapper = new BasicRestWrapper(
             baseUrl,
             defaultQueryString,
             undefined,
@@ -86,24 +89,26 @@ export class TenantManager implements core.ITenantManager {
             `${internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
             true,
             false,
-            restWrapper);
+            tenantRestWrapper);
         const gitManager = new GitManager(historian);
-        const tenant = new Tenant(details.data, gitManager);
+        const tenant = new Tenant(details, gitManager);
 
         return tenant;
     }
 
     public async verifyToken(tenantId: string, token: string): Promise<void> {
-        await Axios.post(
+        const restWrapper = new BasicRestWrapper();
+        await restWrapper.post(
             `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/validate`,
             { token });
     }
 
     public async getKey(tenantId: string, includeDisabledTenant = false): Promise<string> {
-        const result = await Axios.get<core.ITenantKeys>(
+        const restWrapper = new BasicRestWrapper();
+        const result = await restWrapper.get<core.ITenantKeys>(
             `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/keys`,
-            { params: { includeDisabledTenant }});
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return result.data.key1;
+            { params: { includeDisabledTenant }},
+        );
+        return result.key1;
     }
 }

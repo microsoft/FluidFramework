@@ -38,6 +38,7 @@ describe("Routerlicious", () => {
                         expHash1: defaultHash,
                         logOffset,
                         sequenceNumber,
+                        signalClientConnectionNumber: 0,
                         term: 1,
                         lastSentMSN: 0,
                         nackMessages: undefined,

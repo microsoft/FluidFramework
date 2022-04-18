@@ -138,8 +138,10 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     fileVersion?: string;
 }
 
-// @public
-export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean): Promise<boolean>;
+// Warning: (ae-forgotten-export) The symbol "SnapshotFormatSupportType" needs to be exported by the entry point index.d.ts
+//
+// @public @deprecated
+export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean, snapshotFormatFetchType?: SnapshotFormatSupportType): Promise<boolean>;
 
 // @public
 export interface ShareLinkFetcherProps {

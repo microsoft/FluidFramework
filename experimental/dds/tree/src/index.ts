@@ -111,7 +111,6 @@ export {
 export { comparePayloads } from './PayloadUtilities';
 export {
 	TransactionInternal,
-	TransactionFactory,
 	GenericTransaction,
 	GenericTransactionPolicy,
 	EditingResult,
