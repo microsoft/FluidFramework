@@ -48,7 +48,6 @@ declare function get_old_ClassDeclaration_Container():
 declare function use_current_ClassDeclaration_Container(
     use: TypeOnly<current.Container>);
 use_current_ClassDeclaration_Container(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Container());
 
 /*
@@ -61,7 +60,6 @@ declare function get_current_ClassDeclaration_Container():
 declare function use_old_ClassDeclaration_Container(
     use: TypeOnly<old.Container>);
 use_old_ClassDeclaration_Container(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Container());
 
 /*

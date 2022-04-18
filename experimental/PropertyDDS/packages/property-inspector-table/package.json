@@ -79,7 +79,7 @@
     "babel-plugin-polyfill-regenerator": "^0.1.6",
     "babel-plugin-transform-jsx": "^2.0.0",
     "body-parser": "^1.18.3",
-    "clean-webpack-plugin": "^3.0.0",
+    "clean-webpack-plugin": "^4.0.0",
     "concurrently": "^6.2.0",
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.14.0",
@@ -104,10 +104,9 @@
     "webpack": "^4.46.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "4.0.0",
-    "webpack-glsl-loader": "^1.0.1",
     "webpack-karma-die-hard": "^1.0.4",
-    "webpack-license-plugin": "^4.0.1",
-    "webpack-merge": "^4.1.4"
+    "webpack-license-plugin": "^4.2.2",
+    "webpack-merge": "^5.8.0"
   },
   "peerDependencies": {
     "@fluid-experimental/property-binder": "^0.42.0",

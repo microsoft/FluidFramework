@@ -96,7 +96,6 @@ declare function get_old_ClassDeclaration_GCDataBuilder():
 declare function use_current_ClassDeclaration_GCDataBuilder(
     use: TypeOnly<current.GCDataBuilder>);
 use_current_ClassDeclaration_GCDataBuilder(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_GCDataBuilder());
 
 /*

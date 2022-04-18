@@ -15,12 +15,12 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "yarn run build:genver && concurrently yarn:build:compile yarn:lint",
-    "build:compile": "yarn run tsc && yarn run build:test",
-    "build:compile:min": "yarn run build:compile",
-    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
-    "build:full": "yarn run build",
-    "build:full:compile": "yarn run build:compile",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
+    "build:compile:min": "npm run build:compile",
+    "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
@@ -31,7 +31,8 @@
     "lint:fix": "yarn run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -82,7 +83,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@fluidframework/test-utils-previous": "npm:@fluidframework/test-utils@^0.58.0",
+    "@fluidframework/test-utils-previous": "npm:@fluidframework/test-utils@0.59.1000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
@@ -109,19 +110,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
-    "broken": {
-      "0.58.2002": {
-        "InterfaceDeclaration_IProvideTestFluidObject": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ITestFluidObject": {
-          "backCompat": false
-        },
-        "ClassDeclaration_TestFluidObject": {
-          "backCompat": false
-        }
-      }
-    }
+    "version": "0.59.2000",
+    "broken": {}
   }
 }
