@@ -2,9 +2,11 @@
 
 This document presents a conceptual model that provides a foundation upon which the semantics of SharedTree editing can be understood.
 
-The model itself is not tied to SharedTree or SharedTree's data model. It is instead concerned with providing an abstraction for what it means to edit a document.
+The model itself is not tied to SharedTree or SharedTree's data model.
+It is instead concerned with providing an abstraction for what it means to edit a document.
 
-The model only concerns itself with the editing of a single field. More complex structures (notably, trees) can be constructed by allowing the contents of the field to represent more fields.
+The model only concerns itself with the editing of a single field.
+More complex structures (notably, trees) can be constructed by allowing the contents of the field to represent more fields.
 
 ## Motivation
 
@@ -59,15 +61,23 @@ The cell model can be thought of as a refactoring of both the traditional editin
 
 ### Fields
 
-In this model, a field is a possibly empty sequence of cells. The sequence makes cells totally ordered. It is this ordering which serves as the foundation upon which the appropriate ordering of content is ensured.
+In this model, a field is a possibly empty sequence of cells.
+The sequence makes cells totally ordered.
+It is this ordering which serves as the foundation upon which the appropriate ordering of content is ensured.
 
 ### Cells
 
-In this model, a cell is a unit of storage. A cell cannot be subdivided. It may either be empty or full. The contents of a (full) cell may be arbitrarily large or small (though a specific data model may constrain this in practice).
+In this model, a cell is a unit of storage.
+A cell cannot be subdivided.
+It may either be empty or full.
+The contents of a (full) cell may be arbitrarily large or small (though a specific data model may constrain this in practice).
 
-> Note: the model does not prescribe for the cells to be explicitly reified. While some cells may be represented at runtime some of the time, they are primarily a conceptual artefact.
+> Note: the model does not prescribe for the cells to be explicitly reified.
+> While some cells may be represented at runtime some of the time, they are primarily a conceptual artefact.
 
-A cell may be annotated with forwarding information that specifies a target destination cell. A single cell may bear any number of such forwarding annotations. This forwarding information is used to represent move information: the source cell is annotated with forwarding information that points to the destination cell.
+A cell may be annotated with forwarding information that specifies a target destination cell.
+A single cell may bear any number of such forwarding annotations.
+This forwarding information is used to represent move information: the source cell is annotated with forwarding information that points to the destination cell.
 
 In addition to their storage role, cells act as markers relative to which an edit may be performed (e.g., "Before/after cell foo").
 
@@ -75,7 +85,8 @@ In addition to their storage role, cells act as markers relative to which an edi
 
 The model admits the following operations:
 
-> WIP: An alternative set of operations based on hiding cells instead of clearing them is being considered. The general structure of the model is unaffected.
+> WIP: An alternative set of operations based on hiding cells instead of clearing them is being considered.
+> The general structure of the model is unaffected.
 
 - <u>Allocate</u> a new cell at a specific location in the sequence
 
@@ -87,17 +98,20 @@ The model admits the following operations:
 
 - <u>Remove a forwarding annotation</u> from a cell
 
-Note that cells cannot be deallocated (or moved). This reflects the fact that a client may perform an edit relative to some content's location at a point in time, even if that content has since been deleted or moved: the client is performing the edit relative to the cell which contained that content.
+Note that cells cannot be deallocated (or moved).
+This reflects the fact that a client may perform an edit relative to some content's location at a point in time, even if that content has since been deleted or moved: the client is performing the edit relative to the cell which contained that content.
 
 ## Building on the Model
 
 The model can be used to describe low-level edits that a client may perform on a field in a collaborative environment and by so doing imply some of their merge semantics.
 
-We provide here two lists of such low-level edits, one for fields whose number of cells is fixed, and one for fields whose number of cells is dynamic. The dichotomy has no basis in the cell model but reflects what we think is a sensible separation and matches industry-standard patterns of editing.
+We provide here two lists of such low-level edits, one for fields whose number of cells is fixed, and one for fields whose number of cells is dynamic.
+The dichotomy has no basis in the cell model but reflects what we think is a sensible separation and matches industry-standard patterns of editing.
 
 ### Edits on Dynamically-Sized Fields
 
-Dynamically-sized fields can be thought of as having list-like behavior: elements can be added anywhere in the list and removed at will which makes the list dynamically grow and shrink. Dynamically-sized fields typically start out empty of any cell.
+Dynamically-sized fields can be thought of as having list-like behavior: elements can be added anywhere in the list and removed at will which makes the list dynamically grow and shrink.
+Dynamically-sized fields typically start out empty of any cell.
 
 The low-level edits that such fields might support are as follows:
 
@@ -123,7 +137,8 @@ The low-level edits that such fields might support are as follows:
 
 ### Edits on Fixed-Sized Fields
 
-Fixed-sized fields can be thought of as single-value fields, optional fields, values in a map, fixed-sized arrays (not to be confused with JavaScript arrays which behave like dynamically-sized lists), and tuples. Fixed-sized fields are populated with their cells (and possibly content) from the time they are created.
+Fixed-sized fields can be thought of as single-value fields, optional fields, values in a map, fixed-sized arrays (not to be confused with JavaScript arrays which behave like dynamically-sized lists), and tuples.
+Fixed-sized fields are populated with their cells (and possibly content) from the time they are created.
 
 The low-level edits that such fields might support are as follows:
 
@@ -145,7 +160,9 @@ The SharedTree data model should differentiate between fixed-sized and dynamical
 
 ### Editing API
 
-The editing operations offered by SharedTree, even for unschematized data, need not be the ones prescribed by the model. Instead, we see value in offering two sets of higher-level operations: one for fixed-sized fields and one for dynamically-sized fields. The impact of this is two-fold:
+The editing operations offered by SharedTree, even for unschematized data, need not be the ones prescribed by the model.
+Instead, we see value in offering two sets of higher-level operations: one for fixed-sized fields and one for dynamically-sized fields.
+The impact of this is two-fold:
 
 - It makes the editing API more expressive and more familiar.
 
