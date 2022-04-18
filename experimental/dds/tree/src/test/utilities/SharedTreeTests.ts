@@ -14,7 +14,7 @@ import {
 	MockFluidDataStoreRuntime,
 } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common';
-import { EditId, OpSpaceNodeId, TraitLabel } from '../../Identifiers';
+import { EditId, NodeId, OpSpaceNodeId, TraitLabel } from '../../Identifiers';
 import { CachingLogViewer } from '../../LogViewer';
 import { EditLog, OrderedEditSet } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
@@ -1413,7 +1413,7 @@ export function runSharedTreeOperationsTests(
 
 					const uncompressedEdits: EditWithoutId<ChangeInternal>[] = [
 						{
-							changes: tree.edits.getEditInSessionAtIndex(0).changes as ChangeInternal[],
+							changes: tree.editsInternal.getEditInSessionAtIndex(0).changes,
 						},
 					];
 
