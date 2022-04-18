@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run tsc && npm run build:test",
+    "build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
@@ -28,7 +28,8 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -82,7 +83,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@fluidframework/test-version-utils-previous": "npm:@fluidframework/test-version-utils@^0.58.0",
+    "@fluidframework/test-version-utils-previous": "npm:@fluidframework/test-version-utils@0.59.1000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/nock": "^9.3.0",
@@ -111,21 +112,7 @@
     "webpack-cli": "^4.9.2"
   },
   "typeValidation": {
-    "version": "0.59.1000",
-    "broken": {
-      "0.58.2002": {
-        "InterfaceDeclaration_ITestDataObject": {
-          "backCompat": false
-        },
-        "RemovedVariableDeclaration_pkgName": {
-          "backCompat": false,
-          "forwardCompat": false
-        },
-        "RemovedVariableDeclaration_pkgVersion": {
-          "backCompat": false,
-          "forwardCompat": false
-        }
-      }
-    }
+    "version": "0.59.2000",
+    "broken": {}
   }
 }
