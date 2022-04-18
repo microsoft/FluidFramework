@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -31,7 +32,7 @@ function applyMessagesWithReconnect(
     let minSeq = 0;
     // log and apply all the ops created in the round
     while (messageDatas.length > 0) {
-        const [message, sg] = messageDatas.shift();
+        const [message, sg] = messageDatas.shift()!;
         if (message.clientId === clients[1].longClientId) {
             reconnectClientMsgs.push([message.contents as IMergeTreeOp, sg]);
         } else {
@@ -50,7 +51,7 @@ function applyMessagesWithReconnect(
             ));
         newMsg.minimumSequenceNumber = minSeq;
         // apply message doesn't use the segment group, so just pass undefined
-        reconnectMsgs.push([newMsg, undefined]);
+        reconnectMsgs.push([newMsg, undefined as any]);
     });
 
     return applyMessages(seq, reconnectMsgs, clients, logger);

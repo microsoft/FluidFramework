@@ -43,7 +43,7 @@ describe("MergeTree", () => {
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
@@ -65,7 +65,7 @@ describe("MergeTree", () => {
                 /* clientId: */ localClientId,
                 /* seq: */ UnassignedSequenceNumber,
                 /* overwrite: */ false,
-                /* opArgs */ undefined);
+                /* opArgs */ undefined as any);
 
             // In order for the removed segment to unlinked by zamboni, we need to ACK the segment
             // and advance the collaboration window's minSeq past the removedSeq.
@@ -104,7 +104,7 @@ describe("MergeTree", () => {
                 remoteClientId,
                 ++remoteSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             const count = countOperations(mergeTree);
 
@@ -115,7 +115,7 @@ describe("MergeTree", () => {
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
@@ -134,7 +134,7 @@ describe("MergeTree", () => {
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             const count = countOperations(mergeTree);
 
@@ -145,7 +145,7 @@ describe("MergeTree", () => {
                 remoteClientId,
                 ++remoteSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,

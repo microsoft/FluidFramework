@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -38,7 +39,7 @@ class TestString {
     }
 
     public insert(pos: number, text: string, increaseMsn: boolean) {
-        this.queue(this.client.insertTextLocal(pos, text, { segment: this.pending.length }), increaseMsn);
+        this.queue(this.client.insertTextLocal(pos, text, { segment: this.pending.length })!, increaseMsn);
     }
 
     public append(text: string, increaseMsn: boolean) {
@@ -46,7 +47,7 @@ class TestString {
     }
 
     public removeRange(start: number, end: number, increaseMsn: boolean) {
-        this.queue(this.client.removeRangeLocal(start, end), increaseMsn);
+        this.queue(this.client.removeRangeLocal(start, end)!, increaseMsn);
     }
 
     // Ensures the client's text matches the `expected` string and round-trips through a snapshot
@@ -83,7 +84,6 @@ class TestString {
             (id)=>this.client.getLongClientId(id));
 
         snapshot.extractSync();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return snapshot.emit(TestClient.serializer, undefined!).summary;
     }
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -16,7 +17,7 @@ describe("MergeTree.markRangeRemoved", () => {
         for (const char of "hello world") {
             client.applyMsg(
                 client.makeOpMessage(
-                    client.insertTextLocal(client.getLength(), char),
+                    client.insertTextLocal(client.getLength(), char)!,
                     client.getCurrentSeq() + 1));
         }
         assert.equal(client.getText(), "hello world");
@@ -139,7 +140,7 @@ describe("MergeTree.markRangeRemoved", () => {
             let seq = 0;
 
             // Client 1 locally inserts and removes the letter "a".
-            const op1 = actual.insertTextLocal(0, "a");
+            const op1 = actual.insertTextLocal(0, "a")!;
             const op2 = actual.removeRangeLocal(0, 1);
 
             // Client 1 receives ACKs for op1 and op2.

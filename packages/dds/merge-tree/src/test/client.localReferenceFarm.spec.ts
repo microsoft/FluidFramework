@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -74,7 +76,7 @@ describe("MergeTree.Client", () => {
                         refs.push([]);
                         for(let t = 0; t < c.getLength(); t++) {
                             const seg = c.getContainingSegment(t);
-                            const lref = new LocalReference(c, seg.segment, seg.offset, ReferenceType.SlideOnRemove);
+                            const lref = new LocalReference(c, seg.segment!, seg.offset, ReferenceType.SlideOnRemove);
                             c.addLocalReference(lref);
                             lref.addProperties({t});
                             refs[i].push(lref);

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -20,7 +22,7 @@ describe("client.getPosition", () => {
         client.startOrUpdateCollaboration(localUserLongId);
 
         const segOff = client.getContainingSegment(segPos);
-        assert(TextSegment.is(segOff.segment));
+        assert(TextSegment.is(segOff.segment!));
         assert.strictEqual(segOff.offset, 0);
         assert.strictEqual(segOff.segment.text, "o");
         segment = segOff.segment;
