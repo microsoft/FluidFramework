@@ -9,6 +9,7 @@ for file in $(fd package.json --type file); do
     # sd '"tsc": "tsc"' '"tsc": "yarn pnpify tsc"' "$file"
 
     sd 'yarn:@' 'npm:@' "$file"
+    sd 'yarn:fluid-framework' 'npm:fluid-framework' "$file"
 
     sd '\-\-typescript-compiler-folder \./node_modules/typescript &&' '&&' "$file"
     sd '\-\-typescript-compiler-folder \.\./\.\./\.\./node_modules/typescript &&' '&&' "$file"

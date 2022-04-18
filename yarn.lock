@@ -11104,7 +11104,7 @@ flatted@^3.1.0:
   resolved "https://registry.yarnpkg.com/flatted/-/flatted-3.2.5.tgz#76c8584f4fc843db64702a6bd04ab7a8bd666da3"
   integrity sha512-WIWGi2L3DyTUvUrwRKgGi9TwxQMUEqPOPQBVi71R96jZXJdFskXEmf54BoZaS1kknGODoIGASGEzBUYdyMCBJg==
 
-"fluid-framework-previous@yarn:fluid-framework@^0.58.0":
+"fluid-framework-previous@npm:fluid-framework@^0.58.0":
   version "0.58.2002"
   resolved "https://registry.yarnpkg.com/fluid-framework/-/fluid-framework-0.58.2002.tgz#a9510ede52287ed811409e0b696e3df72b157270"
   integrity sha512-5neTvjQJ/Xg9LNhGf6qgqOnqayVFSqaqDkBXNBJ3fDiU2f07lN8C2s9dAzsVQEJ71hFGkmigGs4cYty0z0ku3Q==
