@@ -47,6 +47,7 @@
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && yarn run clean",
     "dedup": "yarn-deduplicate",
+    "install-strict": "npx midgard-yarn install",
     "layer-check": "fluid-layer-check --info tools/build-tools/data/layerInfo.json",
     "lint": "lerna run lint --no-sort --stream -- -- -- --color",
     "lint:fix": "lerna run lint:fix --no-sort --stream -- -- -- --color",

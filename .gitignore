@@ -26,3 +26,6 @@ docs/resources/_gen/
 
 # documentation tool artifact
 tsdoc-metadata.json
+
+# yarn-strict dependency store
+/.yarnStore
