@@ -707,6 +707,8 @@ export class Client {
                     assert(segment.propertyManager?.hasPendingProperties() === true,
                         0x036 /* "Segment has no pending properties" */);
                     // if the segment has been removed, there's no need to send the annotate op
+                    // unless the remove was local, in which case the annotate must have come
+                    // before the remove
                     if (segment.removedSeq === undefined || segment.localRemovedSeq !== undefined) {
                         newOp = createAnnotateRangeOp(
                             segmentPosition,

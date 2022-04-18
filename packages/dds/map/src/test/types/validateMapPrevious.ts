@@ -408,7 +408,6 @@ declare function get_old_ClassDeclaration_SharedDirectory():
 declare function use_current_ClassDeclaration_SharedDirectory(
     use: TypeOnly<current.SharedDirectory>);
 use_current_ClassDeclaration_SharedDirectory(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedDirectory());
 
 /*

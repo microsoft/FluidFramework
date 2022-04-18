@@ -48,7 +48,6 @@ declare function get_old_InterfaceDeclaration_IFileSnapshot():
 declare function use_current_InterfaceDeclaration_IFileSnapshot(
     use: TypeOnly<current.IFileSnapshot>);
 use_current_InterfaceDeclaration_IFileSnapshot(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFileSnapshot());
 
 /*
