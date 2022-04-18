@@ -53,6 +53,7 @@
     "@fluidframework/routerlicious-driver": "^0.58.3000",
     "@fluidframework/runtime-utils": "^0.58.3000",
     "@fluidframework/server-services-client": "^0.1035.1000",
+    "@fluidframework/test-utils": "^0.58.3000",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
   },

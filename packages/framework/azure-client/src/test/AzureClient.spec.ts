@@ -10,6 +10,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { AzureClient } from "../AzureClient";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
+import { timeoutPromise } from "@fluidframework/test-utils";
 
 const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
     const maybeValue = map.get<T>(key);
@@ -167,18 +168,16 @@ describe("AzureClient", () => {
     it("can connect existing Azure Fluid Relay container", async () => {
         const container = (await client.createContainer(schema)).container;
         const containerId = await container.attach();
-        await new Promise<void>((resolve) => {
-            container.on("connected", () => {
-                resolve();
-            });
-        });
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            {durationMs: 4900, errorMsg:"new container connect timeout"},
+        );
 
         const containerGet = (await client.getContainer(containerId, schema)).container;
-        await new Promise<void>((resolve) => {
-            containerGet.on("connected", () => {
-                resolve();
-            });
-        });
+        await timeoutPromise(
+            (resolve) => containerGet.once("connected", () => resolve()),
+            {durationMs: 4900, errorMsg:"existing container connect timeout"},
+        );
         assert.strictEqual(
             containerGet.connectionState,
             ConnectionState.Connected,
