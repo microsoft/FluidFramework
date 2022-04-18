@@ -66,7 +66,7 @@
     "nconf": "^0.11.4",
     "notepack.io": "^2.3.0",
     "socket.io": "^4.1.2",
-    "socket.io-adapter": "^2.3.1",
+    "socket.io-adapter": "~2.3.1",
     "socket.io-parser": "^4.0.4",
     "uuid": "^8.3.1",
     "winston": "^3.6.0"

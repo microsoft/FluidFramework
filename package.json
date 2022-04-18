@@ -15,7 +15,8 @@
       "packages/*/*",
       "examples/**",
       "experimental/*/*",
-      "server/routerlicious/packages/*",
+      "server/routerlicious/packages/gitresources",
+      "server/routerlicious/packages/protocol*",
       "common/**",
       "tools/**"
     ],
