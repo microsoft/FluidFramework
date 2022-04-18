@@ -77,7 +77,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
             this.trySummarize("maxTime");
             needToRestart = false;
         } else if (numSystemOps !== undefined && numNonSystemOps !== undefined) {
-            if (true /* This is where the weighted check will happen */) {
+            if (this.getWeightedNumOfOps(numSystemOps, numNonSystemOps) > this.configuration.maxOps) {
                 this.idleTimer.clear();
                 this.trySummarize("maxOps");
                 needToRestart = false;
@@ -91,6 +91,10 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         if (needToRestart) {
             this.idleTimer.restart();
         }
+    }
+
+    private getWeightedNumOfOps(numSystemOps: number, numNonSystemOps: number): number {
+        return numNonSystemOps + (numSystemOps * 0.1);
     }
 
     public shouldRunLastSummary(): boolean {
