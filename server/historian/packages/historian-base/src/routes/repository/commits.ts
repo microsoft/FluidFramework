@@ -36,6 +36,7 @@ export function create(
     }
 
     router.get("/repos/:ignored?/:tenantId/commits",
+        utils.validateRequestParams("sha"),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             const commitsP = getCommits(

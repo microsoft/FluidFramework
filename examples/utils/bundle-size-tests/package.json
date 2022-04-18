@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/bundle-size-tests",
-  "version": "0.59.1000",
+  "version": "0.59.2000",
   "description": "A package for understanding the bundle size of Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -27,16 +27,17 @@
     "webpack:profile": "npm run webpack"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.59.1000",
-    "@fluidframework/container-loader": "^0.59.1000",
-    "@fluidframework/container-runtime": "^0.59.1000",
-    "@fluidframework/map": "^0.59.1000",
-    "@fluidframework/matrix": "^0.59.1000",
-    "@fluidframework/odsp-driver": "^0.59.1000",
-    "@fluidframework/sequence": "^0.59.1000",
+    "@fluidframework/aqueduct": "^0.59.2000",
+    "@fluidframework/container-loader": "^0.59.2000",
+    "@fluidframework/container-runtime": "^0.59.2000",
+    "@fluidframework/map": "^0.59.2000",
+    "@fluidframework/matrix": "^0.59.2000",
+    "@fluidframework/odsp-driver": "^0.59.2000",
+    "@fluidframework/sequence": "^0.59.2000",
     "source-map-loader": "^0.2.4"
   },
   "devDependencies": {
+    "@cerner/duplicate-package-checker-webpack-plugin": "^2.3.0",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/bundle-size-tools": "^0.0.8505",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
@@ -48,7 +49,6 @@
     "@typescript-eslint/parser": "~5.9.0",
     "concurrently": "^6.2.0",
     "cross-env": "^7.0.2",
-    "duplicate-package-checker-webpack-plugin": "^3.0.0",
     "eslint": "~8.6.0",
     "eslint-plugin-editorconfig": "~3.2.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
@@ -60,8 +60,8 @@
     "ts-loader": "^6.1.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0",
-    "webpack": "^4.43.0",
-    "webpack-bundle-analyzer": "^3.8.0",
-    "webpack-cli": "^3.3.11"
+    "webpack": "^4.46.0",
+    "webpack-bundle-analyzer": "^4.5.0",
+    "webpack-cli": "^4.9.2"
   }
 }

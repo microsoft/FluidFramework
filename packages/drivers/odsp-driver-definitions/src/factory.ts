@@ -106,6 +106,7 @@ export interface HostStoragePolicy {
     cacheCreateNewSummary?: boolean;
 
     /**
+     * @deprecated - This will be replaced with feature gate snapshotFormatFetchType.
      * Policy controlling if we want to fetch binary format snapshot.
      */
     fetchBinarySnapshotFormat?: boolean;

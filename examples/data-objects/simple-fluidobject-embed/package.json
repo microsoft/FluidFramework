@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/simple-fluidobject-embed",
-  "version": "0.59.1000",
+  "version": "0.59.2000",
   "description": "Simple Fluid object embed container",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -24,27 +24,27 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
-    "start": "webpack-dev-server --config webpack.config.js",
-    "start:docker": "webpack-dev-server --config webpack.config.js --env.mode docker",
-    "start:r11s": "webpack-dev-server --config webpack.config.js --env.mode r11s",
-    "start:spo": "webpack-dev-server --config webpack.config.js --env.mode spo",
-    "start:spo-df": "webpack-dev-server --config webpack.config.js --env.mode spo-df",
-    "start:tinylicious": "webpack-dev-server --config webpack.config.js --env.mode tinylicious",
+    "start": "webpack serve --config webpack.config.js",
+    "start:docker": "webpack serve --config webpack.config.js --env mode=docker",
+    "start:r11s": "webpack serve --config webpack.config.js --env mode=r11s",
+    "start:spo": "webpack serve --config webpack.config.js --env mode=spo",
+    "start:spo-df": "webpack serve --config webpack.config.js --env mode=spo-df",
+    "start:tinylicious": "webpack serve --config webpack.config.js --env mode=tinylicious",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
-    "webpack": "webpack --env.production",
-    "webpack:dev": "webpack --env.development"
+    "webpack": "webpack --env production",
+    "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/clicker": "^0.59.1000",
-    "@fluid-example/example-utils": "^0.59.1000",
-    "@fluidframework/aqueduct": "^0.59.1000",
+    "@fluid-example/clicker": "^0.59.2000",
+    "@fluid-example/example-utils": "^0.59.2000",
+    "@fluidframework/aqueduct": "^0.59.2000",
     "@fluidframework/common-definitions": "^0.20.1",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.59.1000",
+    "@fluid-tools/webpack-fluid-loader": "^0.59.2000",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",
@@ -63,10 +63,10 @@
     "ts-loader": "^6.1.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0",
-    "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "^4.1.4"
+    "webpack": "^4.46.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "4.0.0",
+    "webpack-merge": "^5.8.0"
   },
   "fluid": {
     "browser": {

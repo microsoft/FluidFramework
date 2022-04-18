@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/ordered-collection",
-  "version": "0.59.1000",
+  "version": "0.59.2000",
   "description": "Consensus Collection",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -36,7 +36,8 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -61,20 +62,20 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.43.1000-0",
-    "@fluidframework/datastore-definitions": "^0.59.1000",
+    "@fluidframework/datastore-definitions": "^0.59.2000",
     "@fluidframework/protocol-definitions": "^0.1028.1000-0",
-    "@fluidframework/runtime-definitions": "^0.59.1000",
-    "@fluidframework/runtime-utils": "^0.59.1000",
-    "@fluidframework/shared-object-base": "^0.59.1000",
+    "@fluidframework/runtime-definitions": "^0.59.2000",
+    "@fluidframework/runtime-utils": "^0.59.2000",
+    "@fluidframework/shared-object-base": "^0.59.2000",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluid-internal/test-dds-utils": "^0.59.1000",
+    "@fluid-internal/test-dds-utils": "^0.59.2000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@fluidframework/mocha-test-setup": "^0.59.1000",
+    "@fluidframework/mocha-test-setup": "^0.59.2000",
     "@fluidframework/ordered-collection-previous": "npm:@fluidframework/ordered-collection@^0.58.0",
-    "@fluidframework/test-runtime-utils": "^0.59.1000",
+    "@fluidframework/test-runtime-utils": "^0.59.2000",
     "@microsoft/api-extractor": "^7.21.3",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",

@@ -163,7 +163,9 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
         await Promise.all([...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)));
     }
 
-    const testId = Date.now().toString();
+    // Currently odsp binary snapshot format only works for special file names. This won't affect any other test
+    // since we have a unique dateId as prefix. So we can just add the required suffix.
+    const testId = `${Date.now().toString()}-WireFormatV1RWOptimizedSnapshot_45e4`;
     const request = testDriver.createCreateNewRequest(testId);
     await container.attach(request);
     assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");

@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LazyLoadedDataObject": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LazyLoadedDataObject():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_LazyLoadedDataObject(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LazyLoadedDataObject": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LazyLoadedDataObject():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_LazyLoadedDataObject(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LazyLoadedDataObjectFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LazyLoadedDataObjectFactory():
@@ -52,7 +52,7 @@ use_current_ClassDeclaration_LazyLoadedDataObjectFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LazyLoadedDataObjectFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LazyLoadedDataObjectFactory():
@@ -64,7 +64,7 @@ use_old_ClassDeclaration_LazyLoadedDataObjectFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RuntimeFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RuntimeFactory():
@@ -76,7 +76,7 @@ use_current_ClassDeclaration_RuntimeFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RuntimeFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_RuntimeFactory():

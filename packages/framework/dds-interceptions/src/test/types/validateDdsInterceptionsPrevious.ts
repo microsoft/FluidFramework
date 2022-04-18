@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createDirectoryWithInterception": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createDirectoryWithInterception():
@@ -28,7 +28,7 @@ use_current_FunctionDeclaration_createDirectoryWithInterception(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createDirectoryWithInterception": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createDirectoryWithInterception():
@@ -40,7 +40,7 @@ use_old_FunctionDeclaration_createDirectoryWithInterception(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createSharedMapWithInterception": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createSharedMapWithInterception():
@@ -52,7 +52,7 @@ use_current_FunctionDeclaration_createSharedMapWithInterception(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createSharedMapWithInterception": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createSharedMapWithInterception():
@@ -64,7 +64,7 @@ use_old_FunctionDeclaration_createSharedMapWithInterception(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createSharedStringWithInterception": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createSharedStringWithInterception():
@@ -76,7 +76,7 @@ use_current_FunctionDeclaration_createSharedStringWithInterception(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createSharedStringWithInterception": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createSharedStringWithInterception():

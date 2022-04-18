@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_buildRuntimeRequestHandler": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_buildRuntimeRequestHandler():
@@ -28,7 +28,7 @@ use_current_FunctionDeclaration_buildRuntimeRequestHandler(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_buildRuntimeRequestHandler": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_buildRuntimeRequestHandler():
@@ -40,7 +40,7 @@ use_old_FunctionDeclaration_buildRuntimeRequestHandler(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createFluidObjectResponse": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_createFluidObjectResponse():
@@ -52,7 +52,7 @@ use_current_VariableDeclaration_createFluidObjectResponse(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createFluidObjectResponse": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_createFluidObjectResponse():
@@ -64,7 +64,7 @@ use_old_VariableDeclaration_createFluidObjectResponse(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_handleFromLegacyUri": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_handleFromLegacyUri():
@@ -76,7 +76,7 @@ use_current_FunctionDeclaration_handleFromLegacyUri(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_handleFromLegacyUri": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_handleFromLegacyUri():
@@ -88,7 +88,7 @@ use_old_FunctionDeclaration_handleFromLegacyUri(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_rootDataStoreRequestHandler": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_rootDataStoreRequestHandler():
@@ -100,7 +100,7 @@ use_current_VariableDeclaration_rootDataStoreRequestHandler(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_rootDataStoreRequestHandler": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_rootDataStoreRequestHandler():
@@ -112,7 +112,7 @@ use_old_VariableDeclaration_rootDataStoreRequestHandler(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_RuntimeRequestHandler": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_RuntimeRequestHandler():
@@ -124,7 +124,7 @@ use_current_TypeAliasDeclaration_RuntimeRequestHandler(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_RuntimeRequestHandler": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_RuntimeRequestHandler():
@@ -136,7 +136,7 @@ use_old_TypeAliasDeclaration_RuntimeRequestHandler(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RuntimeRequestHandlerBuilder": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RuntimeRequestHandlerBuilder():
@@ -148,7 +148,7 @@ use_current_ClassDeclaration_RuntimeRequestHandlerBuilder(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RuntimeRequestHandlerBuilder": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_RuntimeRequestHandlerBuilder():

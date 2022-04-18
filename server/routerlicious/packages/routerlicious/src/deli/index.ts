@@ -103,7 +103,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         localProducer,
         undefined,
         localContext,
-        async (_, context: LocalContext) => new BroadcasterLambda(publisher, context));
+        async (_, context: LocalContext) =>
+            new BroadcasterLambda(publisher, context, core.DefaultServiceConfiguration, undefined));
 
     await broadcasterLambda.start();
 
@@ -112,6 +113,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         collection,
         tenantManager,
         combinedProducer,
+        undefined,
         reverseProducer,
         core.DefaultServiceConfiguration);
 }
