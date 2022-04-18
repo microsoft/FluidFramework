@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -35,7 +35,8 @@
     "test:realsvc:tinylicious:run": "mocha --unhandled-rejections=strict --recursive dist/test/**/*.spec.js --exit",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
@@ -55,7 +56,7 @@
   "devDependencies": {
     "@fluidframework/aqueduct": "^0.59.2000",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@^0.58.0",
+    "@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@0.59.1000",
     "@microsoft/api-extractor": "^7.16.1",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
@@ -72,7 +73,7 @@
     "fluid-framework": "^0.50.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
+    "version": "0.59.2000",
     "broken": {}
   }
 }

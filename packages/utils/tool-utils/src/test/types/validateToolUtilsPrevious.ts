@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_gcBlobPrefix": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_gcBlobPrefix():
@@ -28,7 +28,7 @@ use_current_VariableDeclaration_gcBlobPrefix(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_gcBlobPrefix": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_gcBlobPrefix():
@@ -40,7 +40,7 @@ use_old_VariableDeclaration_gcBlobPrefix(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_getMicrosoftConfiguration": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_getMicrosoftConfiguration():
@@ -52,7 +52,7 @@ use_current_VariableDeclaration_getMicrosoftConfiguration(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_getMicrosoftConfiguration": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_getMicrosoftConfiguration():
@@ -64,7 +64,7 @@ use_old_VariableDeclaration_getMicrosoftConfiguration(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getNormalizedSnapshot": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getNormalizedSnapshot():
@@ -76,7 +76,7 @@ use_current_FunctionDeclaration_getNormalizedSnapshot(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getNormalizedSnapshot": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_getNormalizedSnapshot():
@@ -88,7 +88,7 @@ use_old_FunctionDeclaration_getNormalizedSnapshot(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAsyncCache": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAsyncCache():
@@ -100,7 +100,7 @@ use_current_InterfaceDeclaration_IAsyncCache(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAsyncCache": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IAsyncCache():
@@ -112,7 +112,7 @@ use_old_InterfaceDeclaration_IAsyncCache(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IOdspTokenManagerCacheKey": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IOdspTokenManagerCacheKey():
@@ -124,7 +124,7 @@ use_current_InterfaceDeclaration_IOdspTokenManagerCacheKey(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IOdspTokenManagerCacheKey": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IOdspTokenManagerCacheKey():
@@ -136,7 +136,7 @@ use_old_InterfaceDeclaration_IOdspTokenManagerCacheKey(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IResources": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IResources():
@@ -148,7 +148,7 @@ use_current_InterfaceDeclaration_IResources(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IResources": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IResources():
@@ -160,7 +160,7 @@ use_old_InterfaceDeclaration_IResources(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISnapshotNormalizerConfig": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISnapshotNormalizerConfig():
@@ -172,7 +172,7 @@ use_current_InterfaceDeclaration_ISnapshotNormalizerConfig(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISnapshotNormalizerConfig": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISnapshotNormalizerConfig():
@@ -184,7 +184,7 @@ use_old_InterfaceDeclaration_ISnapshotNormalizerConfig(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_loadRC": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_loadRC():
@@ -196,7 +196,7 @@ use_current_FunctionDeclaration_loadRC(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_loadRC": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_loadRC():
@@ -208,7 +208,7 @@ use_old_FunctionDeclaration_loadRC(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_lockRC": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_lockRC():
@@ -220,7 +220,7 @@ use_current_FunctionDeclaration_lockRC(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_lockRC": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_lockRC():
@@ -232,7 +232,7 @@ use_old_FunctionDeclaration_lockRC(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_OdspTokenConfig": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_OdspTokenConfig():
@@ -244,7 +244,7 @@ use_current_TypeAliasDeclaration_OdspTokenConfig(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_OdspTokenConfig": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_OdspTokenConfig():
@@ -256,7 +256,7 @@ use_old_TypeAliasDeclaration_OdspTokenConfig(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspTokenManager": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OdspTokenManager():
@@ -268,7 +268,7 @@ use_current_ClassDeclaration_OdspTokenManager(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspTokenManager": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_OdspTokenManager():
@@ -280,7 +280,7 @@ use_old_ClassDeclaration_OdspTokenManager(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_odspTokensCache": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_odspTokensCache():
@@ -292,7 +292,7 @@ use_current_VariableDeclaration_odspTokensCache(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_odspTokensCache": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_odspTokensCache():
@@ -304,7 +304,7 @@ use_old_VariableDeclaration_odspTokensCache(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_saveRC": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_saveRC():
@@ -316,7 +316,7 @@ use_current_FunctionDeclaration_saveRC(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_saveRC": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_saveRC():

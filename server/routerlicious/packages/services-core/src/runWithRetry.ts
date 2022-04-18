@@ -135,6 +135,7 @@ export async function runWithRetry<T>(
                 return Promise.reject(error);
             }
 
+            // TODO: if error is a NetworkError, we should respect NetworkError.retryAfter or NetworkError.retryAfterMs
             const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
             await delay(intervalMs);
             retryCount++;

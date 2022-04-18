@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ExtendEventProvider": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ExtendEventProvider():
@@ -28,7 +28,7 @@ use_current_TypeAliasDeclaration_ExtendEventProvider(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ExtendEventProvider": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ExtendEventProvider():
@@ -40,7 +40,7 @@ use_old_TypeAliasDeclaration_ExtendEventProvider(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDisposable": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDisposable():
@@ -52,7 +52,7 @@ use_current_InterfaceDeclaration_IDisposable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDisposable": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDisposable():
@@ -64,7 +64,7 @@ use_old_InterfaceDeclaration_IDisposable(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IErrorEvent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IErrorEvent():
@@ -76,7 +76,7 @@ use_current_InterfaceDeclaration_IErrorEvent(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IErrorEvent": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IErrorEvent():
@@ -88,7 +88,7 @@ use_old_InterfaceDeclaration_IErrorEvent(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IEvent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IEvent():
@@ -100,7 +100,7 @@ use_current_InterfaceDeclaration_IEvent(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IEvent": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IEvent():
@@ -112,7 +112,7 @@ use_old_InterfaceDeclaration_IEvent(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IEventProvider": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IEventProvider():
@@ -124,7 +124,7 @@ use_current_InterfaceDeclaration_IEventProvider(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IEventProvider": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IEventProvider():
@@ -136,7 +136,7 @@ use_old_InterfaceDeclaration_IEventProvider(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IEventThisPlaceHolder": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IEventThisPlaceHolder():
@@ -148,7 +148,7 @@ use_current_TypeAliasDeclaration_IEventThisPlaceHolder(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IEventThisPlaceHolder": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_IEventThisPlaceHolder():
@@ -160,7 +160,7 @@ use_old_TypeAliasDeclaration_IEventThisPlaceHolder(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IEventTransformer": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IEventTransformer():
@@ -172,7 +172,7 @@ use_current_TypeAliasDeclaration_IEventTransformer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IEventTransformer": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_IEventTransformer():
@@ -184,7 +184,7 @@ use_old_TypeAliasDeclaration_IEventTransformer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ILoggingError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ILoggingError():
@@ -196,7 +196,7 @@ use_current_InterfaceDeclaration_ILoggingError(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ILoggingError": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ILoggingError():
@@ -208,7 +208,7 @@ use_old_InterfaceDeclaration_ILoggingError(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITaggedTelemetryPropertyType": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITaggedTelemetryPropertyType():
@@ -220,7 +220,7 @@ use_current_InterfaceDeclaration_ITaggedTelemetryPropertyType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITaggedTelemetryPropertyType": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITaggedTelemetryPropertyType():
@@ -232,7 +232,7 @@ use_old_InterfaceDeclaration_ITaggedTelemetryPropertyType(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryBaseEvent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryBaseEvent():
@@ -244,7 +244,7 @@ use_current_InterfaceDeclaration_ITelemetryBaseEvent(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryBaseEvent": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITelemetryBaseEvent():
@@ -256,7 +256,7 @@ use_old_InterfaceDeclaration_ITelemetryBaseEvent(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryBaseLogger": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryBaseLogger():
@@ -268,7 +268,7 @@ use_current_InterfaceDeclaration_ITelemetryBaseLogger(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryBaseLogger": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITelemetryBaseLogger():
@@ -280,7 +280,7 @@ use_old_InterfaceDeclaration_ITelemetryBaseLogger(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryErrorEvent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryErrorEvent():
@@ -292,7 +292,7 @@ use_current_InterfaceDeclaration_ITelemetryErrorEvent(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryErrorEvent": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITelemetryErrorEvent():
@@ -304,7 +304,7 @@ use_old_InterfaceDeclaration_ITelemetryErrorEvent(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryGenericEvent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryGenericEvent():
@@ -316,7 +316,7 @@ use_current_InterfaceDeclaration_ITelemetryGenericEvent(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryGenericEvent": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITelemetryGenericEvent():
@@ -328,7 +328,7 @@ use_old_InterfaceDeclaration_ITelemetryGenericEvent(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryLogger": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryLogger():
@@ -340,7 +340,7 @@ use_current_InterfaceDeclaration_ITelemetryLogger(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryLogger": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITelemetryLogger():
@@ -352,7 +352,7 @@ use_old_InterfaceDeclaration_ITelemetryLogger(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryPerformanceEvent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryPerformanceEvent():
@@ -364,7 +364,7 @@ use_current_InterfaceDeclaration_ITelemetryPerformanceEvent(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryPerformanceEvent": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITelemetryPerformanceEvent():
@@ -376,7 +376,7 @@ use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryProperties": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryProperties():
@@ -388,7 +388,7 @@ use_current_InterfaceDeclaration_ITelemetryProperties(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryProperties": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITelemetryProperties():
@@ -400,7 +400,7 @@ use_old_InterfaceDeclaration_ITelemetryProperties(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ReplaceIEventThisPlaceHolder": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder():
@@ -412,7 +412,7 @@ use_current_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ReplaceIEventThisPlaceHolder": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder():
@@ -424,7 +424,7 @@ use_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_TelemetryEventCategory": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_TelemetryEventCategory():
@@ -436,7 +436,7 @@ use_current_TypeAliasDeclaration_TelemetryEventCategory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_TelemetryEventCategory": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_TelemetryEventCategory():
@@ -448,7 +448,7 @@ use_old_TypeAliasDeclaration_TelemetryEventCategory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_TelemetryEventPropertyType": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_TelemetryEventPropertyType():
@@ -460,7 +460,7 @@ use_current_TypeAliasDeclaration_TelemetryEventPropertyType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_TelemetryEventPropertyType": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_TelemetryEventPropertyType():
@@ -472,7 +472,7 @@ use_old_TypeAliasDeclaration_TelemetryEventPropertyType(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_TransformedEvent": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_TransformedEvent():
@@ -484,7 +484,7 @@ use_current_TypeAliasDeclaration_TransformedEvent(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.20.1:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_TransformedEvent": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_TransformedEvent():
