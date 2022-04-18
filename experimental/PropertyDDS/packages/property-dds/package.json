@@ -62,7 +62,7 @@
     "@fluidframework/server-local-server": "^0.1036.1000-0",
     "@fluidframework/test-runtime-utils": "^0.59.2000",
     "@fluidframework/test-utils": "^0.59.2000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
