@@ -13,7 +13,7 @@ import { getExecutableFromCommand } from "../../common/utils";
 import { EsLintTask, TsFormatTask, TsLintTask } from "./leaf/lintTasks";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { WebpackTask } from "./leaf/webpackTask";
-import { LesscTask, CopyfilesTask, EchoTask, GenVerTask } from "./leaf/miscTasks";
+import { LesscTask, CopyfilesTask, EchoTask, GenVerTask, TypeValidationTask } from "./leaf/miscTasks";
 import { PrettierTask } from "./leaf/prettierTask";
 
 // Map of executable name to LeafTasks
@@ -30,6 +30,7 @@ const executableToLeafTask: { [key: string]: new (node: BuildPackage, command: s
     prettier: PrettierTask,
     "gen-version": GenVerTask,
     "api-extractor": ApiExtractorTask,
+    "fluid-type-validator": TypeValidationTask,
 };
 
 export class TaskFactory {

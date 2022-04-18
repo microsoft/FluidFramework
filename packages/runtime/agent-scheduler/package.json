@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/agent-scheduler",
-  "version": "0.59.1000",
+  "version": "0.60.1000",
   "description": "Built in runtime object for distributing agents across instances of a container",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "concurrently npm:tsc npm:build:esnext && npm run build:test",
+    "build:compile": "npm run tsc && npm run build:test && npm run build:esnext",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -53,20 +53,20 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000-0",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
-    "@fluidframework/datastore": "^0.59.1000",
-    "@fluidframework/datastore-definitions": "^0.59.1000",
-    "@fluidframework/map": "^0.59.1000",
-    "@fluidframework/register-collection": "^0.59.1000",
-    "@fluidframework/runtime-definitions": "^0.59.1000",
-    "@fluidframework/runtime-utils": "^0.59.1000",
+    "@fluidframework/container-definitions": "^0.48.1000",
+    "@fluidframework/core-interfaces": "^0.43.1000",
+    "@fluidframework/datastore": "^0.60.1000",
+    "@fluidframework/datastore-definitions": "^0.60.1000",
+    "@fluidframework/map": "^0.60.1000",
+    "@fluidframework/register-collection": "^0.60.1000",
+    "@fluidframework/runtime-definitions": "^0.60.1000",
+    "@fluidframework/runtime-utils": "^0.60.1000",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/agent-scheduler-previous": "npm:@fluidframework/agent-scheduler@^0.58.0",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",

@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createSingleBlobSummary": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createSingleBlobSummary():
@@ -28,7 +28,7 @@ use_current_FunctionDeclaration_createSingleBlobSummary(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createSingleBlobSummary": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createSingleBlobSummary():
@@ -40,7 +40,7 @@ use_old_FunctionDeclaration_createSingleBlobSummary(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FluidSerializer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FluidSerializer():
@@ -52,7 +52,7 @@ use_current_ClassDeclaration_FluidSerializer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FluidSerializer": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_FluidSerializer():
@@ -64,7 +64,7 @@ use_old_ClassDeclaration_FluidSerializer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidSerializer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidSerializer():
@@ -76,7 +76,7 @@ use_current_InterfaceDeclaration_IFluidSerializer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidSerializer": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidSerializer():
@@ -88,7 +88,7 @@ use_old_InterfaceDeclaration_IFluidSerializer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISerializedHandle": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISerializedHandle():
@@ -100,7 +100,7 @@ use_current_InterfaceDeclaration_ISerializedHandle(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISerializedHandle": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISerializedHandle():
@@ -112,7 +112,7 @@ use_old_InterfaceDeclaration_ISerializedHandle(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharedObject": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISharedObject():
@@ -124,7 +124,7 @@ use_current_InterfaceDeclaration_ISharedObject(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharedObject": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISharedObject():
@@ -136,7 +136,7 @@ use_old_InterfaceDeclaration_ISharedObject(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharedObjectEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISharedObjectEvents():
@@ -148,7 +148,7 @@ use_current_InterfaceDeclaration_ISharedObjectEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharedObjectEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISharedObjectEvents():
@@ -160,7 +160,7 @@ use_old_InterfaceDeclaration_ISharedObjectEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_isSerializedHandle": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_isSerializedHandle():
@@ -172,7 +172,7 @@ use_current_VariableDeclaration_isSerializedHandle(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_isSerializedHandle": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_isSerializedHandle():
@@ -184,7 +184,7 @@ use_old_VariableDeclaration_isSerializedHandle(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_makeHandlesSerializable": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_makeHandlesSerializable():
@@ -196,7 +196,7 @@ use_current_FunctionDeclaration_makeHandlesSerializable(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_makeHandlesSerializable": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_makeHandlesSerializable():
@@ -208,7 +208,7 @@ use_old_FunctionDeclaration_makeHandlesSerializable(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_parseHandles": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_parseHandles():
@@ -220,7 +220,7 @@ use_current_FunctionDeclaration_parseHandles(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_parseHandles": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_parseHandles():
@@ -232,7 +232,7 @@ use_old_FunctionDeclaration_parseHandles(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_serializeHandles": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_serializeHandles():
@@ -244,7 +244,7 @@ use_current_FunctionDeclaration_serializeHandles(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_serializeHandles": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_serializeHandles():
@@ -256,7 +256,7 @@ use_old_FunctionDeclaration_serializeHandles(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SharedObject": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SharedObject():
@@ -268,7 +268,7 @@ use_current_ClassDeclaration_SharedObject(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SharedObject": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_SharedObject():
@@ -280,7 +280,7 @@ use_old_ClassDeclaration_SharedObject(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SharedObjectCore": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SharedObjectCore():
@@ -292,7 +292,7 @@ use_current_ClassDeclaration_SharedObjectCore(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SharedObjectCore": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_SharedObjectCore():
@@ -304,7 +304,7 @@ use_old_ClassDeclaration_SharedObjectCore(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SummarySerializer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SummarySerializer():
@@ -316,7 +316,7 @@ use_current_ClassDeclaration_SummarySerializer(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SummarySerializer": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_SummarySerializer():
@@ -328,7 +328,7 @@ use_old_ClassDeclaration_SummarySerializer(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ValueType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ValueType():
@@ -340,7 +340,7 @@ use_current_EnumDeclaration_ValueType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ValueType": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_ValueType():

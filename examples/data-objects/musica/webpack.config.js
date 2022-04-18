@@ -60,10 +60,10 @@ module.exports = env => {
         libraryTarget: 'umd'
       },
       devServer: {
-        publicPath: '/dist',
+        devMiddleware: { publicPath: '/dist' },
         stats: 'minimal',
         before: fluidRoute.before,
-        after: (app, server) => fluidRoute.after(app, server, __dirname, env),
+        onAfterSetupMiddleware: (devServer) => fluidRoute.after(devServer.app, devServer, __dirname, env),
         watchOptions: {
           ignored: "**/node_modules/**",
         }
