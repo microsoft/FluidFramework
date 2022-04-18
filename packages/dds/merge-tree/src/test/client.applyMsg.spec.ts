@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UnassignedSequenceNumber } from "../constants";
 import { SegmentGroup } from "../mergeTree";
+import { MergeTreeDeltaType } from "../ops";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -401,5 +402,26 @@ describe("client.applyMsg", () => {
             clients.forEach((c)=>c.applyMsg(msg));
         }
         logger.validate();
+    });
+
+    it("regenerate annotate op over removed range", () => {
+        const clientA = new TestClient();
+        clientA.startOrUpdateCollaboration("A");
+        const clientB = new TestClient();
+        clientB.startOrUpdateCollaboration("B");
+
+        let seq = 0;
+        const insertOp = clientA.makeOpMessage(clientA.insertTextLocal(0, "AAA"), ++seq);
+        [clientA, clientB].map((c) => c.applyMsg(insertOp));
+
+        const annotateOp = clientA.annotateRangeLocal(0, clientA.getLength(), { client: "A" }, undefined);
+        const seg = clientA.peekPendingSegmentGroups();
+
+        const removeOp = clientB.makeOpMessage(clientB.removeRangeLocal(0, clientB.getLength()), ++seq);
+        [clientA, clientB].map((c) => c.applyMsg(removeOp));
+
+        const regeneratedOp = clientA.regeneratePendingOp(annotateOp, seg);
+        assert(regeneratedOp.type === MergeTreeDeltaType.GROUP);
+        assert.strictEqual(regeneratedOp.ops.length, 0);
     });
 });
