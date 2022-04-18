@@ -20,6 +20,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "dev": "yarn run build:dev -- --watch",
     "eslint": "eslint --format stylish src",

@@ -22,6 +22,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "yarn run build",
     "build:full:compile": "yarn run build:compile",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
     "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
