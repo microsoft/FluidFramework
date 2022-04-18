@@ -95,6 +95,8 @@ export class RunningSummarizer implements IDisposable {
     } | undefined;
     private summarizeCount = 0;
     private totalSuccessfulAttempts = 0;
+    private numSystemOps = 0;
+    private numNonSystemOps = 0;
 
     private constructor(
         baseLogger: ITelemetryLogger,
@@ -191,12 +193,14 @@ export class RunningSummarizer implements IDisposable {
             : undefined;
 
     public handleSystemOp(op: ISequencedDocumentMessage) {
+        this.numSystemOps++;
         switch (op.type) {
             case MessageType.ClientLeave:
             case MessageType.ClientJoin:
             case MessageType.Propose: {
                 // Synchronously handle quorum ops like regular ops
                 this.handleOp(undefined, op);
+                this.numNonSystemOps--; // Decrement to correct the counters
                 return;
             }
             default: {
@@ -206,6 +210,7 @@ export class RunningSummarizer implements IDisposable {
     }
 
     public handleOp(error: any, { sequenceNumber, type, clientId, contents }: ISequencedDocumentMessage) {
+        this.numNonSystemOps++;
         if (error !== undefined) {
             return;
         }
@@ -293,6 +298,10 @@ export class RunningSummarizer implements IDisposable {
             if (!this.stopping && !this.tryRunEnqueuedSummary() && retry) {
                 this.heuristicRunner?.run();
             }
+
+            // Reset our op counters
+            this.numSystemOps = 0;
+            this.numNonSystemOps = 0;
         });
     }
 
