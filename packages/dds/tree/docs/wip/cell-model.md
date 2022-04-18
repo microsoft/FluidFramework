@@ -45,7 +45,7 @@ These failures can be addressed by introducing new features:
 These additions, while effective, have the following drawbacks:
 
 * They increase the complexity of the core editing model
-- They lead to a set of operation that is not orthogonalized:
+- They lead to a set of operations that is not orthogonalized:
   
   - Insert, revive, and return seem to share some common traits, with revive and return being closer to each other.
   
@@ -93,7 +93,7 @@ Note that cells cannot be deallocated (or moved). This reflects the fact that a 
 
 The model can be used to describe low-level edits that a client may perform on a field in a collaborative environment and by so doing imply some of their merge semantics.
 
-We provide here two lists of such low-level edits, one for fields whose number of cells is fixed, and one for fields whose number of cells is dynamic. The dichotomy has no basis in the cell model, but reflects what we think is a sensible separation and matches industry-standard patterns of editing.
+We provide here two lists of such low-level edits, one for fields whose number of cells is fixed, and one for fields whose number of cells is dynamic. The dichotomy has no basis in the cell model but reflects what we think is a sensible separation and matches industry-standard patterns of editing.
 
 ### Edits on Dynamically-Sized Fields
 
@@ -145,7 +145,7 @@ The SharedTree data model should differentiate between fixed-sized and dynamical
 
 ### Editing API
 
-The editing operations offered by SharedTree, even for unschematized data, need not be the ones prescribed by the model. Instead, we see value in offering two sets higher-level operations: one for fixed-sized fields and one for dynamically-sized fields. The impact of this is two-fold:
+The editing operations offered by SharedTree, even for unschematized data, need not be the ones prescribed by the model. Instead, we see value in offering two sets of higher-level operations: one for fixed-sized fields and one for dynamically-sized fields. The impact of this is two-fold:
 
 - It makes the editing API more expressive and more familiar.
 
