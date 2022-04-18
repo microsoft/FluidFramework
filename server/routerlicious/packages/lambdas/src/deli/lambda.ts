@@ -913,25 +913,40 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     }
 
                     if (clientsToExtend.size > 0) {
-                        this.clientManager?.extendSequencedClients?.(
-                            this.tenantId,
-                            this.documentId,
-                            clientsToExtend,
-                            this.serviceConfiguration.deli.clientTimeout)
-                            .catch((error) => {
-                                const errorMsg = "Could not extend clients";
-                                this.context.log?.error(
-                                    `${errorMsg}: ${JSON.stringify(error)}`,
-                                    {
-                                        messageMetaData: {
-                                            documentId: this.documentId,
-                                            tenantId: this.tenantId,
-                                        },
-                                    });
-                                Lumberjack.error(
-                                    errorMsg,
-                                    getLumberBaseProperties(this.documentId, this.tenantId), error);
-                            });
+                        if (this.clientManager) {
+                            this.clientManager.extendSequencedClients(
+                                this.tenantId,
+                                this.documentId,
+                                clientsToExtend,
+                                this.serviceConfiguration.deli.clientTimeout)
+                                .catch((error) => {
+                                    const errorMsg = "Could not extend clients";
+                                    this.context.log?.error(
+                                        `${errorMsg}: ${JSON.stringify(error)}`,
+                                        {
+                                            messageMetaData: {
+                                                documentId: this.documentId,
+                                                tenantId: this.tenantId,
+                                            },
+                                        });
+                                    Lumberjack.error(
+                                        errorMsg,
+                                        getLumberBaseProperties(this.documentId, this.tenantId), error);
+                                });
+                        } else {
+                            const errorMsg = "Could not extend clients. Missing client manager";
+                            this.context.log?.error(
+                                `${errorMsg}`,
+                                {
+                                    messageMetaData: {
+                                        documentId: this.documentId,
+                                        tenantId: this.tenantId,
+                                    },
+                                });
+                            Lumberjack.error(
+                                errorMsg,
+                                getLumberBaseProperties(this.documentId, this.tenantId));
+                        }
                     }
 
                     break;

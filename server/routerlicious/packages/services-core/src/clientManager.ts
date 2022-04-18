@@ -59,13 +59,13 @@ export interface IClientManager {
      * Returns all clients currently connected including a keep alive time.
      * Should be used with delis read only client functionality.
      */
-    getSequencedClients?(tenantId: string, documentId: string): Promise<Map<string, ISequencedSignalClient>>;
+    getSequencedClients(tenantId: string, documentId: string): Promise<Map<string, ISequencedSignalClient>>;
 
     /**
      * Called when the expiration time of clients should be extended.
      * @param clientTimeout Amount of time in milliseconds to add to the clients expiration time.
      */
-    extendSequencedClients?(
+    extendSequencedClients(
         tenantId: string,
         documentId: string,
         clients: Map<string, ISequencedSignalClient>,
