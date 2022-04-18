@@ -141,7 +141,7 @@ function applyMessagesWithReconnect(
 export const defaultOptions: IMergeTreeOperationRunnerConfig & { minLength: number, clients: IConfigRange } = {
     minLength: 16,
     clients: { min: 2, max: 8 },
-    opsPerRoundRange: { min: 40, max: 160 },
+    opsPerRoundRange: { min: 40, max: 120 },
     rounds: 3,
     operations: [annotateRange, removeRange],
     growthFunc: (input: number) => input * 2,
