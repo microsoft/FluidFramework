@@ -28,7 +28,6 @@ import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
@@ -100,6 +99,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
+    deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly disableIsolatedChannels: boolean;
@@ -117,7 +117,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getAudience(): IAudience;
+    getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    getGCNodePackagePath(nodePath: string): readonly string[] | undefined;
+    // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
+    getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
     getPendingLocalState(): IPendingLocalState | undefined;
     // (undocumented)
@@ -152,7 +156,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
     // (undocumented)
-    get scope(): IFluidObject & FluidObject;
+    get scope(): FluidObject;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
@@ -198,11 +202,11 @@ export interface ContainerRuntimeMessage {
 export class DeltaScheduler {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLogger);
     // (undocumented)
-    batchBegin(): void;
+    batchBegin(message: ISequencedDocumentMessage): void;
     // (undocumented)
-    batchEnd(): void;
+    batchEnd(message: ISequencedDocumentMessage): void;
     // (undocumented)
-    static readonly processingTime = 20;
+    static readonly processingTime = 50;
     }
 
 // @public (undocumented)
@@ -250,6 +254,8 @@ export interface IAckSummaryResult {
 // @public
 export interface IBaseSummarizeResult {
     readonly error: any;
+    // (undocumented)
+    readonly minimumSequenceNumber: number;
     readonly referenceSequenceNumber: number;
     // (undocumented)
     readonly stage: "base";
@@ -311,12 +317,13 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    readonly flushMode?: FlushMode;
     // (undocumented)
-    gcOptions?: IGCRuntimeOptions;
-    loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    readonly gcOptions?: IGCRuntimeOptions;
+    readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     // (undocumented)
-    summaryOptions?: ISummaryRuntimeOptions;
-    useDataStoreAliasing?: boolean;
+    readonly summaryOptions?: ISummaryRuntimeOptions;
+    readonly useDataStoreAliasing?: boolean;
 }
 
 // @public
@@ -328,7 +335,10 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 // @public
 export interface IGarbageCollectionRuntime {
     closeFn(error?: ICriticalContainerError): void;
+    deleteUnusedRoutes(unusedRoutes: string[]): void;
+    getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    getNodeType(nodePath: string): GCNodeType;
     updateStateBeforeGC(): Promise<void>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
@@ -345,10 +355,13 @@ export interface IGCRuntimeOptions {
 
 // @public
 export interface IGCStats {
+    attachmentBlobCount: number;
     dataStoreCount: number;
     nodeCount: number;
+    unrefAttachmentBlobCount: number;
     unrefDataStoreCount: number;
     unrefNodeCount: number;
+    updatedAttachmentBlobCount: number;
     updatedDataStoreCount: number;
     updatedNodeCount: number;
 }
@@ -356,7 +369,11 @@ export interface IGCStats {
 // @public
 export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly dataStoreCount: number;
+    readonly gcBlobNodeCount?: number;
     readonly gcStateUpdatedDataStoreCount?: number;
+    readonly gcTotalBlobsSize?: number;
+    readonly nonSystemOpsSinceLastSummary: number;
+    readonly opsSizesSinceLastSummary: number;
     readonly summarizedDataStoreCount: number;
 }
 

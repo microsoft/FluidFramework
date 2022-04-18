@@ -4,407 +4,142 @@
  */
 
 import { expect } from 'chai';
-import { v4 as uuidv4 } from 'uuid';
-import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
-import { EditStatus } from '../generic';
-import { Transaction, Change, ChangeType, ConstraintEffect, Insert, StableRange, StablePlace } from '../default-edits';
-import { Side } from '../Snapshot';
-import {
-	makeEmptyNode,
-	testTrait,
-	left,
-	leftTraitLocation,
-	right,
-	rightTraitLocation,
-	leftTraitLabel,
-	rightTraitLabel,
-	simpleTreeSnapshotWithValidation,
-	initialSnapshotWithValidation,
-	initialSnapshot,
-} from './utilities/TestUtilities';
+import { EditStatus, WriteFormat } from '../persisted-types';
+import { Change, StablePlace, StableRange } from '../ChangeTypes';
+import { Transaction, TransactionEvent } from '../Transaction';
+import { SharedTree } from '../SharedTree';
+import { TreeView } from '../TreeView';
+import { TestTree } from './utilities/TestNode';
+import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
+import { expectDefined } from './utilities/TestCommon';
 
 describe('Transaction', () => {
-	describe('Constraints', () => {
-		it('can be met', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange({
-				toConstrain: StableRange.all(testTrait),
-				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
-			});
-			expect(transaction.status).equals(EditStatus.Applied);
-		});
-		const nonExistentNode = '57dd2fc4-72fa-471c-9f37-70010d31b59c' as NodeId;
-		const invalidStableRange: StableRange = {
-			start: { side: Side.After, referenceSibling: nonExistentNode },
-			end: { side: Side.Before },
-		};
-		it('can be unmet', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange({
-				toConstrain: invalidStableRange,
-				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
-			});
-			expect(transaction.status).equals(EditStatus.Invalid);
-		});
-		it('effect can apply anyway', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange({
-				toConstrain: invalidStableRange,
-				effect: ConstraintEffect.ValidRetry,
-				type: ChangeType.Constraint,
-			});
-			expect(transaction.status).equals(EditStatus.Applied);
-		});
-		it('length can be met', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange({
-				toConstrain: StableRange.all(testTrait),
-				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
-				length: 0,
-			});
-			expect(transaction.status).equals(EditStatus.Applied);
-		});
-		it('length can be unmet', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange({
-				toConstrain: StableRange.all(testTrait),
-				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
-				length: 1,
-			});
-			expect(transaction.status).equals(EditStatus.Invalid);
-		});
-		it('parent can be met', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange({
-				toConstrain: StableRange.all(testTrait),
-				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
-				parentNode: initialSnapshot.root,
-			});
-			expect(transaction.status).equals(EditStatus.Applied);
-		});
-		it('parent can be unmet', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange({
-				toConstrain: StableRange.all(testTrait),
-				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
-				parentNode: nonExistentNode,
-			});
-			expect(transaction.status).equals(EditStatus.Invalid);
-		});
-		it('label can be met', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange({
-				toConstrain: StableRange.all(testTrait),
-				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
-				label: testTrait.label,
-			});
-			expect(transaction.status).equals(EditStatus.Applied);
-		});
-		it('label can be unmet', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange({
-				toConstrain: StableRange.all(testTrait),
-				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
-				label: '7969ee2e-5418-43db-929a-4e9a23c5499d' as TraitLabel, // Arbitrary label not equal to testTrait.label
-			});
-			expect(transaction.status).equals(EditStatus.Invalid);
-		});
+	function createTestTransaction(): { tree: SharedTree; testTree: TestTree; transaction: Transaction } {
+		const { tree } = setUpTestSharedTree({ writeFormat: WriteFormat.v0_1_1 });
+		const testTree = setUpTestTree(tree);
+		return { tree, testTree, transaction: new Transaction(tree) };
+	}
+
+	function createValidChange(testTree: TestTree): Change {
+		return Change.delete(StableRange.only(testTree.left));
+	}
+
+	function createValidChanges(testTree: TestTree): Change[] {
+		return Change.move(StableRange.only(testTree.left), StablePlace.after(testTree.right));
+	}
+
+	function createInvalidChange(testTree: TestTree): Change {
+		return Change.delete(StableRange.only(testTree.generateNodeId()));
+	}
+
+	function createMalformedChange(testTree: TestTree): Change {
+		return Change.insert(Number.NaN, StablePlace.after(testTree.left));
+	}
+
+	it('can apply an edit to the tree', () => {
+		const { tree, testTree, transaction } = createTestTransaction();
+		const editCountBefore = tree.edits.length;
+		transaction.apply(createValidChange(testTree));
+		transaction.closeAndCommit();
+		expect(tree.edits.length).to.equal(editCountBefore + 1);
+		expect(tree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(0);
 	});
 
-	describe('SetValue', () => {
-		it('can be invalid', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange({
-				nodeToModify: '7969ee2e-5418-43db-929a-4e9a23c5499d' as NodeId, // Arbitrary id not equal to initialSnapshot.root
-				payload: {}, // Arbitrary payload.
-				type: ChangeType.SetValue,
-			});
-			expect(transaction.status).equals(EditStatus.Invalid);
-		});
-
-		it('can change payload', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			const payload = { foo: {} };
-			transaction.applyChange({
-				nodeToModify: initialSnapshot.root,
-				payload, // Arbitrary payload.
-				type: ChangeType.SetValue,
-			});
-			expect(transaction.status).equals(EditStatus.Applied);
-			expect(transaction.view.getSnapshotNode(initialSnapshot.root).payload).deep.equals(payload);
-		});
-
-		// 'null' is not included here since it means clear the payload in setValue.
-		for (const payload of [0, '', [], {}]) {
-			it(`can set payload to ${JSON.stringify(payload)}`, () => {
-				const transaction = new Transaction(initialSnapshotWithValidation);
-				transaction.applyChange({
-					nodeToModify: initialSnapshot.root,
-					payload,
-					type: ChangeType.SetValue,
-				});
-				expect(transaction.status).equals(EditStatus.Applied);
-				expect(transaction.view.getSnapshotNode(initialSnapshot.root).payload).equals(payload);
-			});
-		}
-
-		it('can clear an unset payload', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange(Change.clearPayload(initialSnapshot.root));
-			expect(transaction.status).equals(EditStatus.Applied);
-			expect({}.hasOwnProperty.call(transaction.view.getSnapshotNode(initialSnapshot.root), 'payload')).false;
-			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialSnapshot.root), 'payload')).false;
-		});
-
-		it('can clear a set payload', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			transaction.applyChange({
-				nodeToModify: initialSnapshot.root,
-				payload: {},
-				type: ChangeType.SetValue,
-			});
-
-			expect(transaction.status).equals(EditStatus.Applied);
-			expect(transaction.view.getSnapshotNode(initialSnapshot.root).payload).not.undefined;
-			transaction.applyChange(Change.clearPayload(initialSnapshot.root));
-			expect(transaction.status).equals(EditStatus.Applied);
-			expect({}.hasOwnProperty.call(transaction.view.getSnapshotNode(initialSnapshot.root), 'payload')).false;
-			expect({}.hasOwnProperty.call(transaction.view.getChangeNode(initialSnapshot.root), 'payload')).false;
-		});
+	it('has correct edit status when applied', () => {
+		const { testTree, transaction } = createTestTransaction();
+		expect(transaction.apply(createValidChange(testTree))).to.equal(EditStatus.Applied);
+		expect(transaction.status).to.equal(EditStatus.Applied);
+		transaction.closeAndCommit();
 	});
 
-	describe('Insert', () => {
-		const buildId = 0 as DetachedSequenceId;
-		const builtNodeId = uuidv4() as NodeId;
-		const newNode = makeEmptyNode(builtNodeId);
-		it('can be malformed', () => {
-			const transaction = new Transaction(simpleTreeSnapshotWithValidation);
-			transaction.applyChange(Change.build([newNode], buildId));
-			transaction.applyChange(
-				Change.insert(
-					// Non-existent detached id
-					1 as DetachedSequenceId,
-					{ referenceSibling: initialSnapshot.root, side: Side.After }
-				)
-			);
-			expect(transaction.status).equals(EditStatus.Malformed);
-		});
-		it('can be invalid', () => {
-			const transaction = new Transaction(simpleTreeSnapshotWithValidation);
-			transaction.applyChange(Change.build([newNode], buildId));
-			transaction.applyChange(
-				Change.insert(
-					buildId,
-					// Arbitrary id not present in the tree
-					{ referenceSibling: '7969ee2e-5418-43db-929a-4e9a23c5499d' as NodeId, side: Side.After }
-				)
-			);
-			expect(transaction.status).equals(EditStatus.Invalid);
-		});
-		[Side.Before, Side.After].forEach((side) => {
-			it(`can insert a node at the ${side === Side.After ? 'beginning' : 'end'} of a trait`, () => {
-				const transaction = new Transaction(simpleTreeSnapshotWithValidation);
-				transaction.applyChanges(
-					Insert.create(
-						[newNode],
-						side === Side.After
-							? StablePlace.atStartOf(leftTraitLocation)
-							: StablePlace.atEndOf(leftTraitLocation)
-					)
-				);
-				expect(transaction.view.getTrait(leftTraitLocation)).deep.equals(
-					side === Side.After ? [builtNodeId, left.identifier] : [left.identifier, builtNodeId]
-				);
-			});
-			it(`can insert a node ${side === Side.Before ? 'before' : 'after'} another node`, () => {
-				const transaction = new Transaction(simpleTreeSnapshotWithValidation);
-				transaction.applyChanges(Insert.create([newNode], { referenceSibling: left.identifier, side }));
-				expect(transaction.view.getTrait(leftTraitLocation)).deep.equals(
-					side === Side.Before ? [builtNodeId, left.identifier] : [left.identifier, builtNodeId]
-				);
-			});
-		});
+	it('has correct edit status when invalid', () => {
+		const { testTree, transaction } = createTestTransaction();
+		expect(transaction.apply(createInvalidChange(testTree))).to.equal(EditStatus.Invalid);
+		expect(transaction.status).to.equal(EditStatus.Invalid);
+		transaction.closeAndCommit();
 	});
 
-	describe('Build', () => {
-		it('can be malformed due to detached ID collision', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			// Apply two Build_s with the same detached id
-			transaction.applyChange(Change.build([makeEmptyNode()], 0 as DetachedSequenceId));
-			expect(transaction.status).equals(EditStatus.Applied);
-			transaction.applyChange(Change.build([makeEmptyNode()], 0 as DetachedSequenceId));
-			expect(transaction.status).equals(EditStatus.Malformed);
-		});
-		it('can be malformed due to duplicate node identifiers', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			// Build two nodes with the same identifier, one of them nested
-			const newNode = makeEmptyNode();
-			transaction.applyChange(
-				Change.build(
-					[
-						newNode,
-						{
-							...makeEmptyNode(),
-							traits: { [leftTraitLabel]: [{ ...makeEmptyNode(), identifier: newNode.identifier }] },
-						},
-					],
-					0 as DetachedSequenceId
-				)
-			);
-			expect(transaction.status).equals(EditStatus.Malformed);
-		});
-		it('can be invalid', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			// Build two nodes with the same identifier
-			const identifier = uuidv4() as NodeId;
-			transaction.applyChange(Change.build([makeEmptyNode(identifier)], 0 as DetachedSequenceId));
-			expect(transaction.status).equals(EditStatus.Applied);
-			transaction.applyChange(Change.build([makeEmptyNode(identifier)], 1 as DetachedSequenceId));
-			expect(transaction.status).equals(EditStatus.Invalid);
-		});
-		it('can build a detached node', () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			const identifier = uuidv4() as NodeId;
-			const newNode = makeEmptyNode(identifier);
-			transaction.applyChange(Change.build([newNode], 0 as DetachedSequenceId));
-			expect(transaction.status).equals(EditStatus.Applied);
-			expect(transaction.view.hasNode(identifier)).is.true;
-			expect(transaction.view.getParentSnapshotNode(identifier)).is.undefined;
-			expect(transaction.view.getChangeNode(identifier)).deep.equals(newNode);
-		});
-		it("is malformed if detached node id doesn't exist", () => {
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			const detachedSequenceId = 0 as DetachedSequenceId;
-			transaction.applyChange({
-				destination: 1 as DetachedSequenceId,
-				source: [detachedSequenceId],
-				type: ChangeType.Build,
-			});
-			expect(transaction.status).equals(EditStatus.Malformed);
-		});
-		it('can build a node with an explicit empty trait', () => {
-			// Forest should strip off the empty trait
-			const nodeWithEmpty = makeEmptyNode();
-			const traits = new Map<TraitLabel, NodeId[]>();
-			const emptyTrait: NodeId[] = [];
-			traits.set(leftTraitLabel, emptyTrait);
-
-			const transaction = new Transaction(initialSnapshotWithValidation);
-			const detachedSequenceId = 0 as DetachedSequenceId;
-			transaction.applyChange(Change.build([nodeWithEmpty], detachedSequenceId));
-			expect(transaction.status).equals(EditStatus.Applied);
-			const snapshotNodeWithEmpty = transaction.view.getSnapshotNode(nodeWithEmpty.identifier);
-			expect(snapshotNodeWithEmpty.traits.size).to.equal(0);
-		});
+	it('has correct edit status when malformed', () => {
+		const { testTree, transaction } = createTestTransaction();
+		expect(transaction.apply(createMalformedChange(testTree))).to.equal(EditStatus.Malformed);
+		expect(transaction.status).to.equal(EditStatus.Malformed);
+		transaction.closeAndCommit();
 	});
 
-	describe('Detach', () => {
-		it('can be malformed', () => {
-			const transaction = new Transaction(simpleTreeSnapshotWithValidation);
-			// Supplied StableRange is malformed
-			transaction.applyChange(
-				Change.detach({
-					start: { referenceTrait: leftTraitLocation, referenceSibling: left.identifier, side: Side.Before },
-					end: StablePlace.after(right),
-				})
-			);
-			expect(transaction.status).equals(EditStatus.Malformed);
-		});
-		it('can be invalid', () => {
-			const transaction = new Transaction(simpleTreeSnapshotWithValidation);
-			// Start place is before end place
-			transaction.applyChange(
-				Change.detach({
-					start: StablePlace.atEndOf(leftTraitLocation),
-					end: StablePlace.atStartOf(leftTraitLocation),
-				})
-			);
-			expect(transaction.status).equals(EditStatus.Invalid);
-		});
-		it('can delete a node', () => {
-			const transaction = new Transaction(simpleTreeSnapshotWithValidation);
-			transaction.applyChange(Change.detach(StableRange.only(left)));
-			expect(transaction.view.hasNode(left.identifier)).is.false;
-		});
+	it('can apply multiple changes at once', () => {
+		const { tree, testTree, transaction } = createTestTransaction();
+		transaction.apply(createValidChanges(testTree));
+		transaction.closeAndCommit();
+		expect(tree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(0);
+		expect(tree.currentView.getTrait(testTree.right.traitLocation).length).to.equal(2);
 	});
 
-	describe('Composite changes', () => {
-		it('can form a node move', () => {
-			const transaction = new Transaction(simpleTreeSnapshotWithValidation);
-			const detachedId = 0 as DetachedSequenceId;
-			transaction.applyChange(Change.detach(StableRange.only(left), detachedId));
-			transaction.applyChange(Change.insert(detachedId, StablePlace.after(right)));
-			expect(transaction.view.getTrait(leftTraitLocation)).deep.equals([]);
-			expect(transaction.view.getTrait(rightTraitLocation)).deep.equals([right.identifier, left.identifier]);
-		});
-		it('can form a wrap insert', () => {
-			// A wrap insert is an edit that inserts a new node between a subtree and its parent atomically.
-			// Ex: given A -> B -> C, a wrap insert of D around B would produce A -> D -> B -> C
-			const transaction = new Transaction(simpleTreeSnapshotWithValidation);
-			const leftNodeDetachedId = 0 as DetachedSequenceId;
-			const parentDetachedId = 1 as DetachedSequenceId;
-			transaction.applyChange(Change.detach(StableRange.only(left), leftNodeDetachedId));
-			// This is node D, from the example
-			const wrappingParentId = uuidv4() as NodeId;
-			const wrappingTraitLabel = 'wrapTrait' as TraitLabel;
-			transaction.applyChange(
-				Change.build(
-					[
-						{
-							...makeEmptyNode(wrappingParentId),
-							traits: { [wrappingTraitLabel]: [leftNodeDetachedId] }, // Re-parent left under new node
-						},
-					],
-					parentDetachedId
-				)
-			);
-			transaction.applyChange(Change.insert(parentDetachedId, StablePlace.atStartOf(leftTraitLocation)));
-			const leftTrait = transaction.view.getTrait(leftTraitLocation);
-			expect(leftTrait).deep.equals([wrappingParentId]);
-			const wrappingTrait = transaction.view.getTrait({ parent: wrappingParentId, label: wrappingTraitLabel });
-			expect(wrappingTrait).deep.equals([left.identifier]);
-		});
-		it('can build and insert a tree that contains detached subtrees', () => {
-			const transaction = new Transaction(simpleTreeSnapshotWithValidation);
-			const leftNodeDetachedId = 0 as DetachedSequenceId;
-			const rightNodeDetachedId = 1 as DetachedSequenceId;
-			const detachedIdSubtree = 2 as DetachedSequenceId;
-			transaction.applyChange(Change.detach(StableRange.only(left), leftNodeDetachedId));
-			transaction.applyChange(Change.detach(StableRange.only(right), rightNodeDetachedId));
+	it('does not apply empty edits', () => {
+		const { tree, transaction } = createTestTransaction();
+		const editCountBefore = tree.edits.length;
+		transaction.apply([]);
+		transaction.closeAndCommit();
+		expect(tree.edits.length).to.equal(editCountBefore);
+	});
 
-			const detachedSubtree = {
-				...makeEmptyNode(),
-				traits: {
-					[leftTraitLabel]: [leftNodeDetachedId],
-					[rightTraitLabel]: [rightNodeDetachedId],
-				},
-			};
-			transaction.applyChange(Change.build([detachedSubtree], detachedIdSubtree));
-			transaction.applyChange(Change.insert(detachedIdSubtree, StablePlace.atStartOf(leftTraitLocation)));
-			expect(transaction.view.getTrait(rightTraitLocation)).deep.equals([]);
-			expect(transaction.view.getTrait(leftTraitLocation)).deep.equals([detachedSubtree.identifier]);
-			const insertedSubtree = transaction.view.getChangeNode(detachedSubtree.identifier);
-			expect(insertedSubtree.traits).deep.equals({
-				[leftTraitLabel]: [left],
-				[rightTraitLabel]: [right],
-			});
+	it('does not apply a batch of changes if any of them fail', () => {
+		const { testTree, transaction } = createTestTransaction();
+		const change = createValidChange(testTree);
+		expect(transaction.apply(change, change)).to.equal(EditStatus.Invalid); // Second change is invalid
+		expect(transaction.status).to.equal(EditStatus.Invalid);
+		transaction.closeAndCommit();
+	});
+
+	it('is open when created', () => {
+		const { transaction } = createTestTransaction();
+		expect(transaction.isOpen).to.be.true;
+	});
+
+	it('closes when a change fails to apply', () => {
+		const { testTree, transaction } = createTestTransaction();
+		transaction.apply(createInvalidChange(testTree));
+		expect(transaction.isOpen).to.be.false;
+	});
+
+	it('closes when an edit is applied', () => {
+		const { testTree, transaction } = createTestTransaction();
+		expect(transaction.isOpen).to.be.true;
+		transaction.apply(createValidChange(testTree));
+		expect(transaction.isOpen).to.be.true;
+		transaction.closeAndCommit();
+		expect(transaction.isOpen).to.be.false;
+	});
+
+	it('emits view change events', () => {
+		const { testTree, transaction } = createTestTransaction();
+		let beforeView: TreeView | undefined;
+		let afterView: TreeView | undefined;
+		transaction.addListener(TransactionEvent.ViewChange, (before, after) => {
+			beforeView = before;
+			afterView = after;
 		});
-		it('can build and insert a tree with the same identity as that of a detached subtree', () => {
-			const transaction = new Transaction(simpleTreeSnapshotWithValidation);
-			transaction.applyChange(Change.detach(StableRange.only(left)));
-			const idOfDetachedNodeToInsert = 1 as DetachedSequenceId;
-			expect(transaction.view.getTrait(leftTraitLocation)).deep.equals([]);
-			transaction.applyChange(Change.build([makeEmptyNode(left.identifier)], idOfDetachedNodeToInsert));
-			transaction.applyChange(Change.insert(idOfDetachedNodeToInsert, StablePlace.atStartOf(leftTraitLocation)));
-			expect(transaction.view.getTrait(leftTraitLocation)).deep.equals([left.identifier]);
+		const beforeViewExpected = transaction.currentView;
+		transaction.apply(createValidChange(testTree));
+		const afterViewExpected = transaction.currentView;
+		expect(expectDefined(beforeView).equals(beforeViewExpected)).to.be.true;
+		expect(expectDefined(afterView).equals(afterViewExpected)).to.be.true;
+	});
+
+	it('emits only one view change event per apply', () => {
+		const { testTree, transaction } = createTestTransaction();
+		let eventCount = 0;
+		transaction.addListener(TransactionEvent.ViewChange, () => {
+			eventCount += 1;
 		});
+		transaction.apply(createValidChanges(testTree));
+		expect(eventCount).to.equal(1);
+	});
+
+	it('does not emit view change events when there are no changes', () => {
+		const { transaction } = createTestTransaction();
+		transaction.on(TransactionEvent.ViewChange, () => {
+			expect.fail();
+		});
+		transaction.apply([]);
 	});
 });

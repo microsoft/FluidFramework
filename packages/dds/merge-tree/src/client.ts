@@ -545,6 +545,8 @@ export class Client {
             }
         }
 
+        // start and end are guaranteed to be non-null here, otherwise we throw above.
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         return { start, end } as IIntegerRange;
     }
 
@@ -704,11 +706,16 @@ export class Client {
                 case MergeTreeDeltaType.ANNOTATE:
                     assert(segment.propertyManager?.hasPendingProperties() === true,
                         0x036 /* "Segment has no pending properties" */);
-                    newOp = createAnnotateRangeOp(
-                        segmentPosition,
-                        segmentPosition + segment.cachedLength,
-                        resetOp.props,
-                        resetOp.combiningOp);
+                    // if the segment has been removed, there's no need to send the annotate op
+                    // unless the remove was local, in which case the annotate must have come
+                    // before the remove
+                    if (segment.removedSeq === undefined || segment.localRemovedSeq !== undefined) {
+                        newOp = createAnnotateRangeOp(
+                            segmentPosition,
+                            segmentPosition + segment.cachedLength,
+                            resetOp.props,
+                            resetOp.combiningOp);
+                    }
                     break;
 
                 case MergeTreeDeltaType.INSERT:

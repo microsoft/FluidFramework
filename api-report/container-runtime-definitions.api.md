@@ -16,7 +16,6 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHelpMessage } from '@fluidframework/protocol-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -51,7 +50,7 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     readonly options: ILoaderOptions;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
     // (undocumented)
     readonly storage: IDocumentStorageService;
 }
