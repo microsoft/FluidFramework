@@ -112,9 +112,6 @@
     "version": "0.59.1000",
     "broken": {
       "0.58.2002": {
-        "InterfaceDeclaration_IDataObjectProps": {
-          "backCompat": false
-        }
       }
     }
   }
