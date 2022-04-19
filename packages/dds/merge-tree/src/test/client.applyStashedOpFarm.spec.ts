@@ -42,10 +42,10 @@ function applyMessagesWithReconnect(
     // respective normal clients, having local changes only.
     for (let i = 0; i < clients.length; ++i) {
         if (i !== 1) {
-            new TestClientLogger([clients[i], stashClients[i]]).validate();
+            TestClientLogger.validate([clients[i], stashClients[i]]);
         }
     }
-    new TestClientLogger([clients[0], stashClients[1]]).validate();
+    TestClientLogger.validate([clients[0], stashClients[1]]);
 
     // apply the ops to the normal clients. they will all be the same now,
     // except #1 which has local changes other clients haven't seen yet
@@ -75,7 +75,7 @@ function applyMessagesWithReconnect(
     }
     // all stash and normal clients should now be in the same state,
     // except #1 (normal) which still has local changes
-    new TestClientLogger([...clients.filter((_, i) => i !== 1), ...stashClients]).validate();
+    TestClientLogger.validate([...clients.filter((_, i) => i !== 1), ...stashClients]);
 
     // regenerate ops for client #1
     const reconnectMsgs: ISequencedDocumentMessage[] = [];
@@ -95,7 +95,7 @@ function applyMessagesWithReconnect(
         return [message.contents, localMetadata];
     });
     // now both clients at index 1 should be the same
-    new TestClientLogger([clients[1], stashClients[1]]).validate();
+    TestClientLogger.validate([clients[1], stashClients[1]]);
 
     // apply the regenerated ops from client #1
     for (const message of reconnectMsgs) {
@@ -117,7 +117,7 @@ function applyMessagesWithReconnect(
     }
 
     // all clients should now be the same
-    new TestClientLogger([...clients, ...stashClients]).validate();
+    TestClientLogger.validate([...clients, ...stashClients]);
 
     return seq;
 }
