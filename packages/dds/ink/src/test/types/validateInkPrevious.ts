@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClearOperation": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IClearOperation():
@@ -28,7 +28,7 @@ use_current_InterfaceDeclaration_IClearOperation(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClearOperation": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IClearOperation():
@@ -40,7 +40,7 @@ use_old_InterfaceDeclaration_IClearOperation(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IColor": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IColor():
@@ -52,7 +52,7 @@ use_current_InterfaceDeclaration_IColor(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IColor": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IColor():
@@ -64,7 +64,7 @@ use_old_InterfaceDeclaration_IColor(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICreateStrokeOperation": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICreateStrokeOperation():
@@ -76,7 +76,7 @@ use_current_InterfaceDeclaration_ICreateStrokeOperation(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICreateStrokeOperation": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ICreateStrokeOperation():
@@ -88,7 +88,7 @@ use_old_InterfaceDeclaration_ICreateStrokeOperation(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInk": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IInk():
@@ -100,7 +100,7 @@ use_current_InterfaceDeclaration_IInk(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInk": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IInk():
@@ -112,7 +112,7 @@ use_old_InterfaceDeclaration_IInk(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInkEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IInkEvents():
@@ -124,7 +124,7 @@ use_current_InterfaceDeclaration_IInkEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInkEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IInkEvents():
@@ -136,7 +136,7 @@ use_old_InterfaceDeclaration_IInkEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IInkOperation": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IInkOperation():
@@ -148,7 +148,7 @@ use_current_TypeAliasDeclaration_IInkOperation(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IInkOperation": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_IInkOperation():
@@ -160,7 +160,7 @@ use_old_TypeAliasDeclaration_IInkOperation(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInkPoint": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IInkPoint():
@@ -172,7 +172,7 @@ use_current_InterfaceDeclaration_IInkPoint(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInkPoint": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IInkPoint():
@@ -184,7 +184,7 @@ use_old_InterfaceDeclaration_IInkPoint(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInkStroke": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IInkStroke():
@@ -196,7 +196,7 @@ use_current_InterfaceDeclaration_IInkStroke(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInkStroke": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IInkStroke():
@@ -208,7 +208,7 @@ use_old_InterfaceDeclaration_IInkStroke(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_Ink": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Ink():
@@ -220,7 +220,7 @@ use_current_ClassDeclaration_Ink(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_Ink": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_Ink():
@@ -232,7 +232,7 @@ use_old_ClassDeclaration_Ink(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InkCanvas": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_InkCanvas():
@@ -244,7 +244,7 @@ use_current_ClassDeclaration_InkCanvas(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InkCanvas": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_InkCanvas():
@@ -256,7 +256,7 @@ use_old_ClassDeclaration_InkCanvas(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InkFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_InkFactory():
@@ -268,7 +268,7 @@ use_current_ClassDeclaration_InkFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InkFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_InkFactory():
@@ -280,7 +280,7 @@ use_old_ClassDeclaration_InkFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IPen": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IPen():
@@ -292,7 +292,7 @@ use_current_InterfaceDeclaration_IPen(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IPen": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IPen():
@@ -304,7 +304,7 @@ use_old_InterfaceDeclaration_IPen(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IStylusOperation": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IStylusOperation():
@@ -316,7 +316,7 @@ use_current_InterfaceDeclaration_IStylusOperation(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IStylusOperation": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IStylusOperation():

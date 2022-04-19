@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import path from "path";
 import random from "random-js";
@@ -36,7 +37,7 @@ export function propertyCopy() {
         map.set(a[i], v[i]);
     }
     let clockStart = clock();
-    let obj: MapLike<number>;
+    let obj: MapLike<number> = {};
     for (let j = 0; j < iterCount; j++) {
         obj = createMap<number>();
         for (let i = 0; i < propCount; i++) {
@@ -101,8 +102,7 @@ export function propertyCopy() {
     const grayMap = new Map<string, number>();
     for (let j = 0; j < iterCount; j++) {
         map.forEach((value, key) => {
-            // eslint-disable-next-line eqeqeq
-            if (diffMap.get(key) != value) {
+            if (diffMap.get(key) !== value) {
                 grayMap.set(key, 1);
             }
         });
@@ -124,7 +124,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
         if (i & 1) {
             refType = ReferenceType.SlideOnRemove;
         }
-        const lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
+        const lref = new LocalReference(client, segoff.segment!, segoff.offset, refType);
         client.mergeTree.addLocalReference(lref);
         bookmarks.push(lref);
     }
@@ -133,7 +133,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
 
 function measureFetch(startFile: string, withBookmarks = false) {
     const bookmarkCount = 20000;
-    const client = new TestClient({ blockUpdateMarkers: true });
+    const client = new TestClient();
     loadTextFromFileWithMarkers(startFile, client.mergeTree);
     if (withBookmarks) {
         makeBookmarks(client, bookmarkCount);
@@ -152,13 +152,13 @@ function measureFetch(startFile: string, withBookmarks = false) {
             //     caBegin = 0;
             // }
             // curPG.pos is ca end
-            const curPG = client.findTile(pos, "pg", false);
-            const properties = curPG.tile.properties;
-            const curSegOff = client.getContainingSegment(pos);
-            const curSeg = curSegOff.segment;
+            const curPG = client.findTile(pos, "pg", false)!;
+            const properties = curPG.tile.properties!;
+            const curSegOff = client.getContainingSegment(pos)!;
+            const curSeg = curSegOff.segment!;
             // Combine paragraph and direct properties
             extend(properties, curSeg.properties);
-            pos += (curSeg.cachedLength - curSegOff.offset);
+            pos += (curSeg.cachedLength - curSegOff.offset!);
             count++;
         }
     }

@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DefaultTokenProvider": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DefaultTokenProvider():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_DefaultTokenProvider(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DefaultTokenProvider": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DefaultTokenProvider():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_DefaultTokenProvider(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DeltaStorageService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DeltaStorageService():
@@ -52,7 +52,7 @@ use_current_ClassDeclaration_DeltaStorageService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DeltaStorageService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DeltaStorageService():
@@ -64,7 +64,7 @@ use_old_ClassDeclaration_DeltaStorageService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DocumentDeltaStorageService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DocumentDeltaStorageService():
@@ -76,7 +76,7 @@ use_current_ClassDeclaration_DocumentDeltaStorageService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DocumentDeltaStorageService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DocumentDeltaStorageService():
@@ -88,7 +88,7 @@ use_old_ClassDeclaration_DocumentDeltaStorageService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DocumentService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DocumentService():
@@ -100,7 +100,7 @@ use_current_ClassDeclaration_DocumentService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DocumentService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DocumentService():
@@ -112,7 +112,7 @@ use_old_ClassDeclaration_DocumentService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DocumentStorageService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DocumentStorageService():
@@ -124,7 +124,7 @@ use_current_ClassDeclaration_DocumentStorageService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DocumentStorageService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DocumentStorageService():
@@ -136,7 +136,7 @@ use_old_ClassDeclaration_DocumentStorageService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRouterliciousDriverPolicies": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRouterliciousDriverPolicies():
@@ -148,7 +148,7 @@ use_current_InterfaceDeclaration_IRouterliciousDriverPolicies(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRouterliciousDriverPolicies": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IRouterliciousDriverPolicies():
@@ -160,7 +160,7 @@ use_old_InterfaceDeclaration_IRouterliciousDriverPolicies(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenProvider": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITokenProvider():
@@ -172,7 +172,7 @@ use_current_InterfaceDeclaration_ITokenProvider(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenProvider": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITokenProvider():
@@ -184,7 +184,7 @@ use_old_InterfaceDeclaration_ITokenProvider(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenResponse": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITokenResponse():
@@ -196,7 +196,7 @@ use_current_InterfaceDeclaration_ITokenResponse(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenResponse": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITokenResponse():
@@ -208,7 +208,7 @@ use_old_InterfaceDeclaration_ITokenResponse(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenService": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITokenService():
@@ -220,7 +220,7 @@ use_current_InterfaceDeclaration_ITokenService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenService": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITokenService():
@@ -232,7 +232,7 @@ use_old_InterfaceDeclaration_ITokenService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_NullBlobStorageService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_NullBlobStorageService():
@@ -244,7 +244,7 @@ use_current_ClassDeclaration_NullBlobStorageService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_NullBlobStorageService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_NullBlobStorageService():
@@ -256,7 +256,7 @@ use_old_ClassDeclaration_NullBlobStorageService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RouterliciousDocumentServiceFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RouterliciousDocumentServiceFactory():
@@ -268,7 +268,7 @@ use_current_ClassDeclaration_RouterliciousDocumentServiceFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RouterliciousDocumentServiceFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_RouterliciousDocumentServiceFactory():

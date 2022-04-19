@@ -7,6 +7,8 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
     ICache,
     IClientManager,
+    ICollection,
+    IDocument,
     IDocumentStorage,
     IOrdererManager,
     IProducer,
@@ -45,7 +47,7 @@ export class AlfredRunner implements IRunner {
         private readonly operationsDbMongoManager: MongoManager,
         private readonly producer: IProducer,
         private readonly metricClientConfig: any,
-        private readonly globalDbMongoManager?: MongoManager) {
+        private readonly documentsCollection: ICollection<IDocument>) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -62,7 +64,7 @@ export class AlfredRunner implements IRunner {
             this.appTenants,
             this.operationsDbMongoManager,
             this.producer,
-            this.globalDbMongoManager);
+            this.documentsCollection);
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);

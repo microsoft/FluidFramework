@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/dds-interceptions",
-  "version": "0.58.3000",
+  "version": "0.59.2000",
   "description": "Distributed Data Structures that support an interception callback",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:compile:min": "npm run build:compile",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
@@ -37,7 +37,8 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -61,18 +62,18 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/map": "^0.58.3000",
-    "@fluidframework/merge-tree": "^0.58.3000",
-    "@fluidframework/runtime-definitions": "^0.58.3000",
-    "@fluidframework/sequence": "^0.58.3000"
+    "@fluidframework/map": "^0.59.2000",
+    "@fluidframework/merge-tree": "^0.59.2000",
+    "@fluidframework/runtime-definitions": "^0.59.2000",
+    "@fluidframework/sequence": "^0.59.2000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/dds-interceptions-previous": "npm:@fluidframework/dds-interceptions@0.58.2000",
-    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
-    "@fluidframework/mocha-test-setup": "^0.58.3000",
-    "@fluidframework/test-runtime-utils": "^0.58.3000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@fluidframework/dds-interceptions-previous": "npm:@fluidframework/dds-interceptions@0.59.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/mocha-test-setup": "^0.59.2000",
+    "@fluidframework/test-runtime-utils": "^0.59.2000",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^8.2.2",
@@ -99,7 +100,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.58.3000",
+    "version": "0.59.2000",
     "broken": {}
   }
 }

@@ -44,14 +44,15 @@ export function createClientsAtInitialState<TClients extends ClientMap>(
     const clients: Partial<Record<keyof TClients, TestClient>> = {};
     for(const id of clientIds) {
         if(clients[id] === undefined) {
-            clients[id] = new TestClient();
-            all.push(clients[id]);
-            setup(clients[id]);
-            clients[id].startOrUpdateCollaboration(id);
+            const client = new TestClient();
+            clients[id] = client;
+            all.push(client);
+            setup(client);
+            client.startOrUpdateCollaboration(id);
         }
     }
 
-    return {...clients, all};
+    return {...clients as Record<keyof TClients, TestClient>, all};
 }
 export class TestClientLogger {
     public static toString(clients: readonly TestClient[]) {
@@ -67,8 +68,8 @@ export class TestClientLogger {
     private readonly paddings: number[] = [];
     private readonly roundLogLines: string[][] = [];
 
-    private ackedLine: string[];
-    private localLine: string[];
+    private ackedLine: string[] = [];
+    private localLine: string[] = [];
     // initialize to private instance, so first real edit will create a new line
     private lastOp: any | undefined = {};
 
@@ -76,18 +77,20 @@ export class TestClientLogger {
         private readonly clients: readonly TestClient[],
         private readonly title?: string,
     ) {
-        const logHeaders = [];
+        const logHeaders: string[] = [];
         clients.forEach((c,i)=>{
             logHeaders.push("op");
             logHeaders.push(`client ${c.longClientId}`);
-            const callback = (op: IMergeTreeDeltaOpArgs)=>{
-                if(this.lastOp !== op.op) {
+            const callback = (op: IMergeTreeDeltaOpArgs | undefined)=>{
+                if(this.lastOp !== op?.op) {
                     this.addNewLogLine();
-                    this.lastOp = op.op;
+                    this.lastOp = op?.op;
                 }
                 const clientLogIndex = i * 2;
 
-                this.ackedLine[clientLogIndex] = getOpString(op.sequencedMessage ?? c.makeOpMessage(op.op));
+                this.ackedLine[clientLogIndex] = op === undefined
+                    ? ""
+                    : getOpString(op.sequencedMessage ?? c.makeOpMessage(op.op));
                 const segStrings = TestClientLogger.getSegString(c);
                 this.ackedLine[clientLogIndex + 1] = segStrings.acked;
                 this.localLine[clientLogIndex + 1] = segStrings.local;
@@ -120,7 +123,7 @@ export class TestClientLogger {
         if(this.incrementalLog) {
             while(this.roundLogLines.length > 0) {
                 const logLine = this.roundLogLines.shift();
-                if(logLine.some((c)=>c.trim().length > 0)) {
+                if(logLine?.some((c)=>c.trim().length > 0)) {
                     console.log(logLine.map((v, i) => v.padEnd(this.paddings[i])).join(" | "));
                 }
             }

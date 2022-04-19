@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import * as fs from "fs";
 import assert from "assert";
@@ -34,10 +35,10 @@ describe("MergeTree.Client", () => {
                 const initialText = logger.validate();
                 assert.strictEqual(initialText, group.initialText, "Initial text not as expected");
                 for(const msg of group.msgs) {
-                    const msgClient = msgClients.get(msg.clientId);
+                    const msgClient = msgClients.get(msg.clientId)!;
                     while(msgClient.msgs.length > 0
                         && msg.referenceSequenceNumber > msgClient.client.getCurrentSeq()) {
-                        msgClient.client.applyMsg(msgClient.msgs.shift());
+                        msgClient.client.applyMsg(msgClient.msgs.shift()!);
                     }
                     const op = msg.contents as IMergeTreeOp;
                     msgClient.client.localTransaction(
@@ -47,7 +48,7 @@ describe("MergeTree.Client", () => {
 
                 msgClients.forEach((mc)=>{
                     while(mc.msgs.length > 0) {
-                        mc.client.applyMsg(mc.msgs.shift());
+                        mc.client.applyMsg(mc.msgs.shift()!);
                     }
                 });
                 const result = logger.validate();

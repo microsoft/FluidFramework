@@ -212,6 +212,12 @@ export class GCDataBuilder implements IGarbageCollectionData {
         }
     }
 
+    public addNodes(gcNodes: { [ id: string ]: string[] }) {
+        for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
+            this.gcNodes[id] = Array.from(outboundRoutes);
+        }
+    }
+
     /**
      * Adds the given outbound route to the outbound routes of all GC nodes.
      */

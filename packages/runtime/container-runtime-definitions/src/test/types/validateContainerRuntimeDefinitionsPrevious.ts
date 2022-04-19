@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IContainerRuntime": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IContainerRuntime():
@@ -28,7 +28,7 @@ use_current_VariableDeclaration_IContainerRuntime(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IContainerRuntime": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IContainerRuntime():
@@ -40,7 +40,7 @@ use_old_VariableDeclaration_IContainerRuntime(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IContainerRuntime": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IContainerRuntime():
@@ -52,7 +52,7 @@ use_current_InterfaceDeclaration_IContainerRuntime(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IContainerRuntime": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IContainerRuntime():
@@ -64,7 +64,7 @@ use_old_InterfaceDeclaration_IContainerRuntime(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents():
@@ -76,7 +76,7 @@ use_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents():
@@ -88,7 +88,7 @@ use_old_TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IContainerRuntimeEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IContainerRuntimeEvents():
@@ -100,7 +100,7 @@ use_current_InterfaceDeclaration_IContainerRuntimeEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IContainerRuntimeEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IContainerRuntimeEvents():
@@ -112,7 +112,7 @@ use_old_InterfaceDeclaration_IContainerRuntimeEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated():
@@ -124,7 +124,7 @@ use_current_InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated():
@@ -136,7 +136,7 @@ use_old_InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideContainerRuntime": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideContainerRuntime():
@@ -148,7 +148,7 @@ use_current_InterfaceDeclaration_IProvideContainerRuntime(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideContainerRuntime": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideContainerRuntime():

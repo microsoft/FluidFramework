@@ -198,8 +198,6 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
                 });
             }
 
-            assert(Object.keys(snapshotTree.commits).length === 0,
-                0x095 /* "Leftover distinct commits after building tree!" */);
             return tree;
         }
     };
