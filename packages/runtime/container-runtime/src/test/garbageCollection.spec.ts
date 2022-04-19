@@ -783,10 +783,8 @@ describe("Garbage Collection Tests", () => {
             const unknownReferencesEvent = "GarbageCollector:gcUnknownOutboundReferences";
             const eventsFound = mockLogger.matchEvents([{
                     eventName: unknownReferencesEvent,
-                    missingExplicitReferences: 3,
-                    0: `${nodeA} -> ${nodeB}`,
-                    1: `${nodeA} -> ${nodeC}`,
-                    2: `${nodeD} -> ${nodeC}`,
+                    gcNode: "/",
+                    gcRoutes: JSON.stringify(["/A", "/D"]),
             }]);
             assert(eventsFound, `Expected unknownReferenceEvent event!`);
         });
