@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
@@ -17,7 +17,7 @@ describe("MergeTree.markRangeRemoved", () => {
         for (const char of "hello world") {
             client.applyMsg(
                 client.makeOpMessage(
-                    client.insertTextLocal(client.getLength(), char)!,
+                    client.insertTextLocal(client.getLength(), char),
                     client.getCurrentSeq() + 1));
         }
         assert.equal(client.getText(), "hello world");
