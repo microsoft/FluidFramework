@@ -829,7 +829,7 @@ export class LocalReference implements ReferencePosition {
     toPosition(): number;
 }
 
-// @public (undocumented)
+// @public
 export class LocalReferenceCollection {
     // (undocumented)
     [Symbol.iterator](): {
@@ -837,7 +837,8 @@ export class LocalReferenceCollection {
         [Symbol.iterator](): any;
     };
     // Warning: (ae-forgotten-export) The symbol "IRefsAtOffset" needs to be exported by the entry point index.d.ts
-    constructor(segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
+    constructor(
+    segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
     // (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReference>[]): void;
     // (undocumented)
@@ -855,7 +856,6 @@ export class LocalReferenceCollection {
     hierRefCount: number;
     // (undocumented)
     removeLocalRef(lref: LocalReference): LocalReference | undefined;
-    // (undocumented)
     split(offset: number, splitSeg: ISegment): void;
 }
 
