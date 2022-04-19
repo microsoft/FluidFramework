@@ -2332,7 +2332,6 @@ export class MergeTree {
 
         // OpArgs == undefined => test code
         if (this.mergeTreeDeltaCallback) {
-            // TOOD: Check for test which annotates concurrently deleted segment.
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
