@@ -19,17 +19,11 @@ import {
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
-// This test is based on reconnectFarm, but we keep a second set of clients. For
-// these clients, we apply the generated ops as stashed ops, then regenerate
-// them to simulate resubmit(), then apply them. In the end, they should arrive
-// at the same state as the "normal" set of clients
-let stashClients: TestClient[] = [];
-
 function applyMessagesWithReconnect(
     startingSeq: number,
-    messageDatas: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[], number][],
+    messageDatas: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
     clients: readonly TestClient[],
-    logger: TestClientLogger,
+    stashClients: readonly TestClient[],
 ) {
     let seq = startingSeq;
     const reconnectClientMsgs: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
@@ -38,9 +32,10 @@ function applyMessagesWithReconnect(
     // apply ops as stashed ops except for client #1
     const stashedOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[], number][] = [];
     for (const messageData of messageDatas) {
-        if (messageData[2] !== 1) {
-            const localMetadata = stashClients[messageData[2]].applyStashedOp(messageData[0].contents);
-            stashedOps.push([messageData[0].contents, localMetadata, messageData[2]]);
+        if (messageData[0].clientId !== clients[1].longClientId) {
+            const index = clients.map((c) => c.longClientId).indexOf(messageData[0].clientId);
+            const localMetadata = stashClients[index].applyStashedOp(messageData[0].contents);
+            stashedOps.push([messageData[0].contents, localMetadata, index]);
         }
     }
     // this should put all stash clients (except #1) in the same state as the
@@ -95,9 +90,9 @@ function applyMessagesWithReconnect(
     });
 
     // apply regenerated ops as stashed ops for client #1
-    const stashedRegeneratedOps = reconnectMsgs.map((message) =>  {
+    const stashedRegeneratedOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = reconnectMsgs.map((message) => {
         const localMetadata = stashClients[1].applyStashedOp(message.contents);
-        return [message.contents, localMetadata, 1];
+        return [message.contents, localMetadata];
     });
     // now both clients at index 1 should be the same
     new TestClientLogger([clients[1], stashClients[1]]).validate();
@@ -113,7 +108,7 @@ function applyMessagesWithReconnect(
         stashClients[1].makeOpMessage(
             stashClients[1].regeneratePendingOp(
                 stashedOp[0],
-                stashedOp[1])
+                stashedOp[1]),
             ));
 
     for (const reRegeneratedStashedOp of reRegeneratedStashedMessages) {
@@ -129,7 +124,7 @@ function applyMessagesWithReconnect(
 
 export const defaultOptions: IMergeTreeOperationRunnerConfig & { minLength: number, clients: IConfigRange } = {
     minLength: 16,
-    clients: { min: 2, max: 8 },
+    clients: { min: 3, max: 12 },
     opsPerRoundRange: { min: 40, max: 120 },
     rounds: 3,
     operations: [annotateRange, removeRange],
@@ -148,6 +143,12 @@ describe("MergeTree.Client", () => {
             mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, clientCount]);
 
             const clients: TestClient[] = [new TestClient()];
+            // This test is based on reconnectFarm, but we keep a second set of clients. For
+            // these clients, we apply the generated ops as stashed ops, then regenerate
+            // them to simulate resubmit(), then apply them. In the end, they should arrive
+            // at the same state as the "normal" set of clients
+            let stashClients: TestClient[] = [];
+
             clients.forEach(
                 (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
             stashClients = [new TestClient()];
@@ -174,7 +175,7 @@ describe("MergeTree.Client", () => {
                 clients,
                 opts.minLength,
                 opts,
-                applyMessagesWithReconnect);
+                (s, m, c) => applyMessagesWithReconnect(s, m, c, stashClients));
         })
             .timeout(30 * 1000);
     });

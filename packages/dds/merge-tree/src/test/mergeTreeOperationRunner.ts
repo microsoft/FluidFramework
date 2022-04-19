@@ -145,14 +145,12 @@ export function generateOperationMessagesForClients(
     operations: readonly TestOperation[]) {
     const minimumSequenceNumber = startingSeq;
     let tempSeq = startingSeq * -1;
-    const messages: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[], number][] = [];
+    const messages: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
 
-    let clientIndex;
     for (let i = 0; i < opsPerRound; i++) {
         // pick a client greater than 0, client 0 only applies remote ops
         // and is our baseline
-        clientIndex = random.integer(1, clients.length - 1)(mt);
-        const client = clients[clientIndex];
+        const client = clients[random.integer(1, clients.length - 1)(mt)];
         const len = client.getLength();
         const sg = client.mergeTree.pendingSegments?.last();
         let op: IMergeTreeOp | undefined;
@@ -182,11 +180,8 @@ export function generateOperationMessagesForClients(
             }
             const message = client.makeOpMessage(op, --tempSeq);
             message.minimumSequenceNumber = minimumSequenceNumber;
-            messages.push([
-                message,
-                client.peekPendingSegmentGroups(op.type === MergeTreeDeltaType.GROUP ? op.ops.length : 1)!,
-                clientIndex,
-            ]);
+            messages.push(
+                [message, client.peekPendingSegmentGroups(op.type === MergeTreeDeltaType.GROUP ? op.ops.length : 1)!]);
         }
     }
     return messages;
@@ -210,7 +205,7 @@ export function generateClientNames(): string[] {
 
 export function applyMessages(
     startingSeq: number,
-    messageData: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[], number][],
+    messageData: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
     clients: readonly TestClient[],
     logger: TestClientLogger,
 ) {
