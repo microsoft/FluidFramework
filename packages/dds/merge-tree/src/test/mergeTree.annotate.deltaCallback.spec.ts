@@ -46,7 +46,7 @@ describe("MergeTree", () => {
                 currentSequenceNumber,
                 localClientId,
                 UnassignedSequenceNumber,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.ANNOTATE]: 1,
@@ -77,7 +77,7 @@ describe("MergeTree", () => {
                 currentSequenceNumber,
                 localClientId,
                 UnassignedSequenceNumber,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.ANNOTATE]: 1,
@@ -111,7 +111,7 @@ describe("MergeTree", () => {
                 currentSequenceNumber,
                 localClientId,
                 UnassignedSequenceNumber,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.ANNOTATE]: 1,
@@ -130,7 +130,7 @@ describe("MergeTree", () => {
                 remoteSequenceNumber,
                 ++remoteSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             const count = countOperations(mergeTree);
 
@@ -144,7 +144,7 @@ describe("MergeTree", () => {
                 currentSequenceNumber,
                 localClientId,
                 UnassignedSequenceNumber,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.ANNOTATE]: 1,
