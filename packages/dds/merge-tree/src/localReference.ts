@@ -314,6 +314,9 @@ export class LocalReferenceCollection {
                 this.refCount--;
                 localRefs.refCount++;
             }
+        } else {
+            // shrink the offset array when empty and splitting
+            this.refsByOffset.length = offset;
         }
     }
 
