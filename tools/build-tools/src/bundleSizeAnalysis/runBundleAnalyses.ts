@@ -12,7 +12,7 @@ function main() {
     try {
         child_process.execSync(`npx danger ci -d ${__dirname}/dangerfile.js`, { stdio: "inherit" });
     } catch (e) {
-        console.error(e.toString());
+        console.error(e);
         process.exit(-1);
     }
 }
