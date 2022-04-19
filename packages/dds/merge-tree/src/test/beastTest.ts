@@ -4,6 +4,8 @@
  */
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise */
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import fs from "fs";
@@ -63,11 +65,9 @@ function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDi
         if (props.length !== 0) { return; }
 
         if (_start === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             _start = min()!.key;
         }
         if (_end === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             _end = max()!.key;
         }
         for (let i = 0, len = props.length; i < len; i++) {
@@ -151,8 +151,8 @@ const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 const compareNumbers = (a: number, b: number) => a - b;
 
-function printStringProperty(p: Property<string, string>) {
-    log(`[${p.key}, ${p.data}]`);
+function printStringProperty(p?: Property<string, string>) {
+    log(`[${p?.key}, ${p?.data}]`);
     return true;
 }
 
@@ -327,7 +327,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree, start: number, end: numb
     const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
     const checkText = editFlat(origText, start, end - start);
     const clockStart = clock();
-    mergeTree.markRangeRemoved(start, end, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined);
+    mergeTree.markRangeRemoved(start, end, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, {op: createRemoveRangeOp(start, end)});
     accumTime += elapsedMicroseconds(clockStart);
     const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
     const result = (checkText === updatedText);
@@ -352,7 +352,7 @@ export function mergeTreeTest1() {
     checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
     mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
     const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
-    log(mergeTree.getPosition(segoff.segment, UniversalSequenceNumber, LocalClientId));
+    log(mergeTree.getPosition(segoff.segment!, UniversalSequenceNumber, LocalClientId));
     log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
     log(mergeTree.toString());
     TestPack().firstTest();
@@ -406,7 +406,7 @@ export function mergeTreeLargeTest() {
         const pos = random.integer(0, preLen)(mt);
         // Log(itree.toString());
         const clockStart = clock();
-        mergeTree.markRangeRemoved(pos, pos + dlen, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined);
+        mergeTree.markRangeRemoved(pos, pos + dlen, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined as any);
         accumTime += elapsedMicroseconds(clockStart);
 
         if ((i > 0) && (0 === (i % 50000))) {
@@ -625,7 +625,7 @@ export function TestPack(verbose = true) {
         const aveTime = (client.accumTime / client.accumOps).toFixed(1);
         const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
         const stats = client.mergeTree.getStats();
-        const windowTime = stats.windowTime;
+        const windowTime = stats.windowTime!;
         const packTime = stats.packTime;
         const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
         const avePackTime = ((packTime || 0) / (client.accumOps)).toFixed(1);
@@ -765,10 +765,10 @@ export function TestPack(verbose = true) {
             if (includeMarkers) {
                 const insertMarkerOp = client.insertMarkerLocal(pos, ReferenceType.Tile,
                     { [reservedTileLabelsKey]: "test" });
-                server.enqueueMsg(client.makeOpMessage(insertMarkerOp, UnassignedSequenceNumber));
+                server.enqueueMsg(client.makeOpMessage(insertMarkerOp!, UnassignedSequenceNumber));
             }
             const insertTextOp = client.insertTextLocal(pos, text);
-            server.enqueueMsg(client.makeOpMessage(insertTextOp, UnassignedSequenceNumber));
+            server.enqueueMsg(client.makeOpMessage(insertTextOp!, UnassignedSequenceNumber));
 
             if (TestClient.useCheckQ) {
                 client.enqueueTestString();
@@ -780,7 +780,7 @@ export function TestPack(verbose = true) {
             const preLen = client.getLength();
             const pos = random.integer(0, preLen)(mt);
             const op = client.removeRangeLocal(pos, pos + dlen);
-            server.enqueueMsg(client.makeOpMessage(op));
+            server.enqueueMsg(client.makeOpMessage(op!));
             if (TestClient.useCheckQ) {
                 client.enqueueTestString();
             }
@@ -792,7 +792,7 @@ export function TestPack(verbose = true) {
                 const removeStart = word1.pos;
                 const removeEnd = removeStart + word1.text.length;
                 const removeOp = client.removeRangeLocal(removeStart, removeEnd);
-                server.enqueueMsg(client.makeOpMessage(removeOp, UnassignedSequenceNumber));
+                server.enqueueMsg(client.makeOpMessage(removeOp!, UnassignedSequenceNumber));
                 if (TestClient.useCheckQ) {
                     client.enqueueTestString();
                 }
@@ -802,7 +802,7 @@ export function TestPack(verbose = true) {
                 }
                 const pos = word2.pos + word2.text.length;
                 const insertOp = client.insertTextLocal(pos, word1.text);
-                server.enqueueMsg(client.makeOpMessage(insertOp, UnassignedSequenceNumber));
+                server.enqueueMsg(client.makeOpMessage(insertOp!, UnassignedSequenceNumber));
 
                 if (TestClient.useCheckQ) {
                     client.enqueueTestString();
@@ -1065,13 +1065,13 @@ export function TestPack(verbose = true) {
                     const preLen = cliA.getLength();
                     const pos = random.integer(0, preLen)(mt);
 
-                    const msg = cliA.makeOpMessage(cliA.insertTextLocal(pos, text), sequenceNumber++);
+                    const msg = cliA.makeOpMessage(cliA.insertTextLocal(pos, text)!, sequenceNumber++);
                     msg.minimumSequenceNumber = min;
                     cliAMsgs.push(msg);
                     cliB.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliA.applyMsg(cliAMsgs.shift());
+                    cliA.applyMsg(cliAMsgs.shift()!);
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -1088,13 +1088,13 @@ export function TestPack(verbose = true) {
                     const text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
                     const preLen = cliB.getLength();
                     const pos = random.integer(0, preLen)(mt);
-                    const msg = cliB.makeOpMessage(cliB.insertTextLocal(pos, text), sequenceNumber++);
+                    const msg = cliB.makeOpMessage(cliB.insertTextLocal(pos, text)!, sequenceNumber++);
                     msg.minimumSequenceNumber = min;
                     cliBMsgs.push(msg);
                     cliA.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliB.applyMsg(cliBMsgs.shift());
+                    cliB.applyMsg(cliBMsgs.shift()!);
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -1115,13 +1115,13 @@ export function TestPack(verbose = true) {
                     const dlen = randTextLength();
                     const preLen = cliA.getLength();
                     const pos = random.integer(0, preLen)(mt);
-                    const msg = cliA.makeOpMessage(cliA.removeRangeLocal(pos, pos + dlen), sequenceNumber++);
+                    const msg = cliA.makeOpMessage(cliA.removeRangeLocal(pos, pos + dlen)!, sequenceNumber++);
                     msg.minimumSequenceNumber = min;
                     cliAMsgs.push(msg);
                     cliB.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliA.applyMsg(cliAMsgs.shift());
+                    cliA.applyMsg(cliAMsgs.shift()!);
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -1137,13 +1137,13 @@ export function TestPack(verbose = true) {
                     const dlen = randTextLength();
                     const preLen = cliB.getLength() - 1;
                     const pos = random.integer(0, preLen)(mt);
-                    const msg = cliB.makeOpMessage(cliB.removeRangeLocal(pos, pos + dlen), sequenceNumber++);
+                    const msg = cliB.makeOpMessage(cliB.removeRangeLocal(pos, pos + dlen)!, sequenceNumber++);
                     msg.minimumSequenceNumber = min;
                     cliBMsgs.push(msg);
                     cliA.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliB.applyMsg(cliBMsgs.shift());
+                    cliB.applyMsg(cliBMsgs.shift()!);
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -1326,7 +1326,7 @@ export function TestPack(verbose = true) {
         }
         const removeOp = cli.removeRangeLocal(3, 5);
         cli.applyMsg(cli.makeOpMessage(createRemoveRangeOp(3, 6), 10, 9, "2"));
-        cli.applyMsg(cli.makeOpMessage(removeOp, 11));
+        cli.applyMsg(cli.makeOpMessage(removeOp!, 11));
         if (verbose) {
             log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1402,7 +1402,7 @@ function tst() {
     function addCorpus(_corpusContent: string, _corpusTree: TST<number>) {
         let count = 0;
         const re = /\b\w+\b/g;
-        let result: RegExpExecArray;
+        let result: RegExpExecArray | null;
         do {
             result = re.exec(_corpusContent);
             if (result) {
@@ -1496,7 +1496,7 @@ export type DocumentNode = string | DocumentTree;
 export class DocumentTree {
     pos = 0;
     ids = { box: 0, row: 0 };
-    id: string;
+    id: string | undefined;
     static randPack = new RandomPack();
 
     constructor(public name: string, public children: DocumentNode[]) {
@@ -1508,7 +1508,7 @@ export class DocumentTree {
             client.insertTextLocal(this.pos, text);
             this.pos += text.length;
         } else {
-            let id: number;
+            let id: number | undefined;
             if (docNode.name === "pg") {
                 client.insertMarkerLocal(this.pos, ReferenceType.Tile,
                     {
@@ -1538,7 +1538,7 @@ export class DocumentTree {
                 this.addToMergeTree(client, child);
             }
             if (docNode.name !== "pg") {
-                const etrid = `end-${docNode.name}${id.toString()}`;
+                const etrid = `end-${docNode.name}${id?.toString()}`;
                 client.insertMarkerLocal(this.pos, ReferenceType.NestEnd,
                     {
                         [reservedMarkerIdKey]: etrid,
@@ -1633,12 +1633,12 @@ export class DocumentTree {
         };
 
         let prevPos = -1;
-        let prevChild: DocumentNode;
+        let prevChild: DocumentNode | undefined;
 
         // log(client.mergeTree.toString());
         for (const rootChild of this.children) {
             if (prevPos >= 0) {
-                if ((typeof prevChild !== "string") && (prevChild.name === "row")) {
+                if ((typeof prevChild !== "string") && (prevChild?.name === "row")) {
                     const id = prevChild.id;
                     const endId = `end-${id}`;
                     const endRowMarker = <Marker>client.getMarkerFromId(endId);
@@ -1754,7 +1754,7 @@ function findReplacePerf(filename: string) {
                     client.getClientId(),
                     1,
                     false,
-                    undefined);
+                    undefined as any);
                 insertText(
                     client.mergeTree,
                     pos + i,
@@ -1767,7 +1767,7 @@ function findReplacePerf(filename: string) {
                 pos = pos + i + 3;
                 cReplaces++;
             } else {
-                pos += (curSeg.cachedLength - curSegOff.offset);
+                pos += (curSeg!.cachedLength - curSegOff!.offset!);
             }
         }
     }

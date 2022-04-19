@@ -32,14 +32,14 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/view-interfaces": "^0.59.2000",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/view-adapters-previous": "npm:@fluidframework/view-adapters@0.59.1000",
     "@microsoft/api-extractor": "^7.21.3",
     "@rushstack/eslint-config": "^2.5.1",

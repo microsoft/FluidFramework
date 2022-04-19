@@ -41,7 +41,7 @@
     "@fluid-experimental/react-inputs": "^0.59.2000",
     "@fluidframework/aqueduct": "^0.59.2000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/sequence": "^0.59.2000",
     "@fluidframework/view-interfaces": "^0.59.2000",
     "css-loader": "^1.0.0",
@@ -52,7 +52,7 @@
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.59.2000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/test-tools": "^0.2.3074",
     "@fluidframework/test-utils": "^0.59.2000",
     "@rushstack/eslint-config": "^2.5.1",

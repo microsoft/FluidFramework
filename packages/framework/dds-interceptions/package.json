@@ -70,7 +70,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/dds-interceptions-previous": "npm:@fluidframework/dds-interceptions@0.59.1000",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.59.2000",
     "@fluidframework/test-runtime-utils": "^0.59.2000",
     "@microsoft/api-extractor": "^7.21.3",
