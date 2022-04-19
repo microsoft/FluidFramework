@@ -12,5 +12,4 @@ export function generateToken(tenantId: string, key: string, scopes: ScopeType[]
 
 export { ScopeType }
 
-
 ```
