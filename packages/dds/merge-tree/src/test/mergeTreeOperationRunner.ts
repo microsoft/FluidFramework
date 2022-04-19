@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -9,7 +9,7 @@ import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import random from "random-js";
 import { LocalReference } from "../localReference";
-import { IMergeTreeOp, MergeTreeDeltaType } from "../ops";
+import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { ISegment, SegmentGroup } from "../mergeTree";
 import { TestClient } from "./testClient";
@@ -43,9 +43,13 @@ export const insertAtRefPos: TestOperation =
         if(segs.length > 0) {
             const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
             const seg = random.pick(mt,segs);
-            return client.insertAtReferencePositionLocal(
-                new LocalReference(client, seg, random.integer(0, seg.cachedLength - 1)(mt)),
-                TextSegment.make(text));
+            const lref = new LocalReference(
+                client, seg, random.integer(0, seg.cachedLength - 1)(mt),
+                random.pick(mt,[ReferenceType.Simple, ReferenceType.SlideOnRemove, ReferenceType.Transient]));
+            if(lref.refType !== ReferenceType.Transient) {
+                client.addLocalReference(lref);
+            }
+            return client.insertAtReferencePositionLocal(lref,TextSegment.make(text));
         }
     };
 
@@ -87,7 +91,8 @@ export function runMergeTreeOperationRunner(
     clients: readonly TestClient[],
     minLength: number,
     config: IMergeTreeOperationRunnerConfig,
-    apply = applyMessages) {
+    apply = applyMessages,
+    logger?: TestClientLogger) {
     let seq = startingSeq;
     const results: ReplayGroup[] = [];
 
@@ -97,21 +102,20 @@ export function runMergeTreeOperationRunner(
         }
         for (let round = 0; round < config.rounds; round++) {
             const initialText = clients[0].getText();
-            const logger = new TestClientLogger(
-                clients,
-                `Clients: ${clients.length} Ops: ${opsPerRound} Round: ${round}`);
+            const internalLogger = logger ?? new TestClientLogger(clients);
+            internalLogger.title = `Clients: ${clients.length} Ops: ${opsPerRound} Round: ${round}`;
             const messageData = generateOperationMessagesForClients(
                 mt,
                 seq,
                 clients,
-                logger,
+                internalLogger,
                 opsPerRound,
                 minLength,
                 config.operations,
             );
             const msgs = messageData.map((md)=>md[0]);
-            seq = apply(seq, messageData, clients, logger);
-            const resultText = logger.validate();
+            seq = apply(seq, messageData, clients, internalLogger);
+            const resultText = internalLogger.validate();
             results.push({
                 initialText,
                 resultText,

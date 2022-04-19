@@ -314,6 +314,9 @@ export class LocalReferenceCollection {
                 this.refCount--;
                 localRefs.refCount++;
             }
+        }else{
+            // shrink the offest array when emtpy and splitting
+            this.refsByOffset.length = offset;
         }
     }
 

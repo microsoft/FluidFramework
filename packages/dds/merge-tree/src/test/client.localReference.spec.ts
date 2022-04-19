@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
