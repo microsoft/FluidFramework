@@ -135,7 +135,7 @@ export {
 } from './TreeView';
 export { RevisionView, TransactionView } from './RevisionView';
 export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
-export { Transaction } from './Transaction';
+export { Transaction, TransactionEvent, TransactionEvents } from './Transaction';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package
