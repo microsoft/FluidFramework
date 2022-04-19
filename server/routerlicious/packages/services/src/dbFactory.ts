@@ -4,7 +4,7 @@
  */
 
 import { IDbFactory } from "@fluidframework/server-services-core";
-import debug from "debug";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import * as services from "./";
 
@@ -16,7 +16,7 @@ interface IDBFactoryConfig {
 }
 
 const creator = (dbFactoryConfig: IDBFactoryConfig) => async (): Promise<IDbFactory> => {
-    debug(`Using ${dbFactoryConfig.name} Database`);
+    Lumberjack.info(`Using ${dbFactoryConfig.name} Database.`);
     // Dynamically load the module
     const externalDbFactoryModule = await import (dbFactoryConfig.modulePathOrName);
     return new externalDbFactoryModule[dbFactoryConfig.dbFactoryConstructorName](
@@ -37,8 +37,8 @@ export async function getDbFactory(config: Provider): Promise<IDbFactory> {
     // @TODO: in the initial proposal it was part of the config file, but perhaps it should be an
     // environment variable instead ?
     if (config.get("loadExtensions") === true) {
-        const EXTENSIONS = config.get("extensions:db") as IDBFactoryConfig[] || [];
-        const extension = EXTENSIONS.find((ext) => ext.name === dbFactoryConfig.name);
+        const dbExtensions = config.get("extensions:db") as IDBFactoryConfig[] || [];
+        const extension = dbExtensions.find((ext) => ext.name === dbFactoryConfig.name);
 
         if (extension === undefined) {
             throw new Error(`The database ${dbFactoryConfig.name} is not found.`);

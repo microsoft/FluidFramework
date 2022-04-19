@@ -25,14 +25,13 @@ export class InMemoryDb extends EventEmitter implements IDb {
 }
 
 export class InMemoryDbFactory implements IDbFactory {
-    private readonly db;
+    private readonly db: InMemoryDb;
 
     constructor() {
         this.db = new InMemoryDb();
     }
 
     public async connect(): Promise<IDb> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.db;
     }
 }

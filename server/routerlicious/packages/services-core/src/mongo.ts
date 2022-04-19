@@ -79,8 +79,8 @@ export class MongoManager {
             this.reconnect(this.reconnectDelayMs);
         });
 
-        debug(`Successfully connected`);
-        Lumberjack.info(`Successfully connected to Db`);
+        debug("Successfully connected");
+        Lumberjack.info("Successfully connected to Db");
         return databaseP;
     }
 
@@ -89,8 +89,8 @@ export class MongoManager {
      */
     private reconnect(delay) {
         if (!this.shouldReconnect) {
-            debug(`Should not reconnect to Db`);
-            Lumberjack.info(`Should not reconnect to Db`);
+            debug("Should not reconnect to Db");
+            Lumberjack.info("Should not reconnect to Db");
             return;
         }
 

@@ -65,14 +65,13 @@ export class LevelDb extends EventEmitter implements IDb {
 }
 
 export class LevelDbFactory implements IDbFactory {
-    private readonly db;
+    private readonly db: LevelDb;
 
     constructor(path: string) {
         this.db = new LevelDb(path);
     }
 
     public async connect(): Promise<IDb> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.db;
     }
 }
