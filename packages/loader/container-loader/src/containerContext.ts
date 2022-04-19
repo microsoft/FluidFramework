@@ -91,7 +91,6 @@ export class ContainerContext implements IContainerContext {
         return this.container.clientId;
     }
 
-    /** @deprecated Added back to unblock 0.56 integration */
     public get id(): string {
         const resolvedUrl = this.container.resolvedUrl;
         if (isFluidResolvedUrl(resolvedUrl)) {
