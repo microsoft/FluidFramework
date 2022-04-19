@@ -239,16 +239,12 @@ module.exports = {
         "@typescript-eslint/no-unsafe-member-access": "warn",
 
         // Disallow unused expressions.
-        "@typescript-eslint/no-unused-expressions": "warn",
+        "@typescript-eslint/no-unused-expressions": "error",
 
         // Enforces spacing in curly brackets.
         "@typescript-eslint/object-curly-spacing": [
             "error",
             "always",
-            {
-                "arraysInObjects": false,
-                "objectsInObjects": false,
-            }
         ],
 
         // Prefer a `for-of` loop over a standard `for` loop if the index is only used to access the array being
