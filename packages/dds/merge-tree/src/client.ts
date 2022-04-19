@@ -163,7 +163,7 @@ export class Client {
     public annotateMarker(
         marker: Marker,
         props: PropertySet,
-        combiningOp: ICombiningOp): IMergeTreeAnnotateMsg | undefined {
+        combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined {
         const annotateOp =
             createAnnotateMarkerOp(marker, props, combiningOp)!;
 
