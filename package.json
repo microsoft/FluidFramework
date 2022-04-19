@@ -109,7 +109,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.60108",
+    "@fluidframework/build-tools": "^0.2.61804",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.12.7",
     "@microsoft/api-extractor": "^7.16.1",
@@ -137,7 +137,6 @@
       },
       "tools": [
         "tools/benchmark",
-        "tools/generator-fluid",
         "server/tinylicious",
         "server/azure-local-service"
       ],
@@ -149,7 +148,6 @@
           "azure-local-service"
         ]
       }
-    },
-    "generatorName": "generator-fluid"
+    }
   }
 }

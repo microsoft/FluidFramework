@@ -42,6 +42,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         expHash1: defaultHash,
         logOffset: -1,
         sequenceNumber: 0,
+        signalClientConnectionNumber: 0,
         term: 1,
         lastSentMSN: 0,
         nackMessages: undefined,
@@ -55,6 +56,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly collection: ICollection<IDocument>,
         private readonly tenantManager: ITenantManager,
         private readonly forwardProducer: IProducer,
+        private readonly signalProducer: IProducer | undefined,
         private readonly reverseProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration) {
         super();
@@ -160,6 +162,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             checkpointManager,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
+            this.signalProducer,
             this.reverseProducer,
             this.serviceConfiguration,
             sessionMetric,
@@ -195,8 +198,9 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
     public async dispose(): Promise<void> {
         const mongoClosedP = this.operationsDbMongoManager.close();
         const forwardProducerClosedP = this.forwardProducer.close();
+        const signalProducerClosedP = this.signalProducer?.close();
         const reverseProducerClosedP = this.reverseProducer.close();
-        await Promise.all([mongoClosedP, forwardProducerClosedP, reverseProducerClosedP]);
+        await Promise.all([mongoClosedP, forwardProducerClosedP, signalProducerClosedP, reverseProducerClosedP]);
     }
 
     // Fetches last durable deli state from summary. Returns undefined if not present.
