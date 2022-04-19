@@ -1272,6 +1272,7 @@ declare function get_old_InterfaceDeclaration_IRuntime():
 declare function use_current_InterfaceDeclaration_IRuntime(
     use: TypeOnly<current.IRuntime>);
 use_current_InterfaceDeclaration_IRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRuntime());
 
 /*

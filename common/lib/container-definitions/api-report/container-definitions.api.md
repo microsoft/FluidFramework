@@ -448,7 +448,7 @@ export type ILoaderOptions = {
     maxClientLeaveWaitTime?: number;
 };
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IPendingLocalState {
     // (undocumented)
     pendingRuntimeState: unknown;
@@ -502,6 +502,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     process(message: ISequencedDocumentMessage, local: boolean, context: any): any;
     processSignal(message: any, local: boolean): any;
     request(request: IRequest): Promise<IResponse>;
@@ -525,6 +526,18 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 
 // @public
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+
+// @public
+export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
+    // (undocumented)
+    blobsContents: {
+        [path: string]: ArrayBufferLike;
+    };
+    // (undocumented)
+    trees: {
+        [path: string]: ISnapshotTreeWithBlobContents;
+    };
+}
 
 // @public
 export interface IThrottlingWarning extends IErrorBase {
