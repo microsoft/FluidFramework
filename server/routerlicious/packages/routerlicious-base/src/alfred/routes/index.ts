@@ -10,6 +10,8 @@ import {
     MongoManager,
     IThrottler,
     ICache,
+    ICollection,
+    IDocument,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -30,7 +32,7 @@ export function create(
     storage: IDocumentStorage,
     producer: IProducer,
     appTenants: IAlfredTenant[],
-    globalDbMongoManager?: MongoManager) {
+    documentsCollection: ICollection<IDocument>) {
     return {
         api: api.create(
             config,
@@ -41,7 +43,7 @@ export function create(
             operationsDbMongoManager,
             producer,
             appTenants,
-            globalDbMongoManager,
+            documentsCollection,
         ),
     };
 }

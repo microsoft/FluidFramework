@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/clicker-context",
-  "version": "0.58.3000",
+  "version": "0.59.2000",
   "description": "Minimal Fluid object sample to implement a collaborative counter using Fluid React hooks",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -26,30 +26,30 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
-    "start": "webpack-dev-server --config webpack.config.js",
-    "start:docker": "webpack-dev-server --config webpack.config.js --env.mode docker",
-    "start:r11s": "webpack-dev-server --config webpack.config.js --env.mode r11s",
-    "start:spo": "webpack-dev-server --config webpack.config.js --env.mode spo",
-    "start:spo-df": "webpack-dev-server --config webpack.config.js --env.mode spo-df",
-    "start:tinylicious": "webpack-dev-server --config webpack.config.js --env.mode tinylicious",
+    "start": "webpack serve --config webpack.config.js",
+    "start:docker": "webpack serve --config webpack.config.js --env mode=docker",
+    "start:r11s": "webpack serve --config webpack.config.js --env mode=r11s",
+    "start:spo": "webpack serve --config webpack.config.js --env mode=spo",
+    "start:spo-df": "webpack serve --config webpack.config.js --env mode=spo-df",
+    "start:tinylicious": "webpack serve --config webpack.config.js --env mode=tinylicious",
     "test": "npm run test:jest",
     "test:jest": "jest",
     "test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
     "tsc": "tsc",
-    "webpack": "webpack --env.production",
-    "webpack:dev": "webpack --env.development"
+    "webpack": "webpack --env production",
+    "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/example-utils": "^0.58.3000",
-    "@fluid-experimental/react": "^0.58.3000",
-    "@fluidframework/aqueduct": "^0.58.3000",
+    "@fluid-example/example-utils": "^0.59.2000",
+    "@fluid-experimental/react": "^0.59.2000",
+    "@fluidframework/aqueduct": "^0.59.2000",
     "@fluidframework/common-definitions": "^0.20.1",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.58.3000",
+    "@fluid-tools/webpack-fluid-loader": "^0.59.2000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.27.0",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/expect-puppeteer": "2.2.1",
@@ -77,9 +77,9 @@
     "ts-jest": "^26.4.4",
     "ts-loader": "^6.1.2",
     "typescript": "~4.1.3",
-    "webpack": "^4.43.0",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "^4.1.4"
+    "webpack": "^4.46.0",
+    "webpack-dev-server": "4.0.0",
+    "webpack-merge": "^5.8.0"
   },
   "fluid": {
     "browser": {

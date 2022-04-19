@@ -9,10 +9,15 @@ import { Params } from "express-serve-static-core";
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
-import { NetworkError, validateTokenClaimsExpiration } from "@fluidframework/server-services-client";
+import {
+    NetworkError,
+    isNetworkError,
+    validateTokenClaimsExpiration,
+} from "@fluidframework/server-services-client";
 import type { ICache, ITenantManager } from "@fluidframework/server-services-core";
-import type { RequestHandler } from "express";
+import type { RequestHandler, Response } from "express";
 import type { Provider } from "nconf";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Validates a JWT token to authorize routerlicious.
@@ -42,6 +47,19 @@ export function validateTokenClaims(
     }
 
     return claims;
+}
+
+/**
+ * Generates a document creation JWT token, this token doesn't provide any sort of authorization to the user.
+ * But it can be used by other services to validate the document creator identity upon creating a document.
+ */
+export function getCreationToken(token: string, key: string, documentId: string, lifetime = 5 * 60) {
+    // Current time in seconds
+    const tokenClaims = jwt.decode(token) as ITokenClaims;
+
+    const { tenantId, user } = tokenClaims;
+
+    return generateToken(tenantId, documentId, key, [], user, lifetime);
 }
 
 /**
@@ -93,6 +111,13 @@ interface IVerifyTokenOptions {
     singleUseTokenCache: ICache | undefined;
 }
 
+export function respondWithNetworkError(
+    response: Response,
+    error: NetworkError,
+): Response {
+    return response.status(error.code).json(error.details);
+}
+
 /**
  * Verifies the storage token claims and calls riddler to validate the token.
  */
@@ -109,54 +134,70 @@ export function verifyStorageToken(
         const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
         const authorizationHeader = request.header("Authorization");
         if (!authorizationHeader) {
-            return res.status(403).send("Missing Authorization header.");
+            return respondWithNetworkError(res, new NetworkError(403, "Missing Authorization header."));
         }
         const tokenRegex = /Basic (.+)/;
         const tokenMatch = tokenRegex.exec(authorizationHeader);
         if (!tokenMatch || !tokenMatch[1]) {
-            return res.status(403).send("Missing access token.");
+            return respondWithNetworkError(res, new NetworkError(403, "Missing access token."));
         }
         const token = tokenMatch[1];
         const tenantId = getParam(request.params, "tenantId");
         if (!tenantId) {
-            return res.status(403).send("Missing tenantId in request.");
+            return respondWithNetworkError(res, new NetworkError(403, "Missing tenantId in request."));
         }
         const documentId = getParam(request.params, "id") || request.body.id;
         if (options.requireDocumentId && !documentId) {
-            return res.status(403).send("Missing documentId in request");
+            return respondWithNetworkError(res, new NetworkError(403, "Missing documentId in request"));
         }
-        let claims: ITokenClaims;
+        let claims: ITokenClaims | undefined;
         let tokenLifetimeMs: number | undefined;
         try {
             claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
             if (isTokenExpiryEnabled) {
                 tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
             }
-        } catch (error) {
-            if (error instanceof NetworkError) {
-                return res.status(error.code).send(error.message);
-            }
-            throw error;
-        }
-        try {
             await tenantManager.verifyToken(claims.tenantId, token);
         } catch (error) {
-            return res.status(403).json(error);
+            if (isNetworkError(error)) {
+                return respondWithNetworkError(res, error);
+            }
+            // We don't understand the error, so it is likely an internal service error.
+            Lumberjack.error(
+                "Unrecognized error when validating/verifying request token",
+                claims ? getLumberBaseProperties(claims.documentId, claims.tenantId) : undefined,
+                error,
+            );
+            return respondWithNetworkError(res, new NetworkError(500, "Internal server error."));
         }
 
         if (options.ensureSingleUseToken) {
-            // TODO: remove `as any` after #7065 is merged and released
-            const singleUseKey = (claims as any).jti ?? token;
+            // Use token as key for minimum chance of collision.
+            const singleUseKey = token;
             // TODO: monitor uptime of services and switch to errors blocking
             // flow if needed to prevent malicious activity
-            if (await options.singleUseTokenCache?.get(singleUseKey).catch(() => false)) {
+            const cachedSingleUseToken = await options.singleUseTokenCache?.get(singleUseKey).catch((error) => {
+                Lumberjack.error(
+                    "Unable to retrieve cached single-use JWT",
+                    claims ? getLumberBaseProperties(claims.documentId, claims.tenantId) : undefined,
+                    error,
+                );
+                return false;
+            });
+            if (cachedSingleUseToken) {
                 return res.status(403).send("Access token has already been used.");
             }
             options.singleUseTokenCache?.set(
                 singleUseKey,
                 "used",
                 tokenLifetimeMs !== undefined ? Math.floor(tokenLifetimeMs / 1000) : undefined,
-            ).catch((error) => {});
+            ).catch((error) => {
+                Lumberjack.error(
+                    "Unable to cache single-use JWT",
+                    claims ? getLumberBaseProperties(claims.documentId, claims.tenantId) : undefined,
+                    error,
+                );
+            });
         }
         next();
     };

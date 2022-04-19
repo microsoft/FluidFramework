@@ -2,6 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -39,7 +42,7 @@ export const insertAtRefPos: TestOperation =
             return true;
         });
         if(segs.length > 0) {
-            const text = client.longClientId.repeat(random.integer(1, 3)(mt));
+            const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
             const seg = random.pick(mt,segs);
             return client.insertAtReferencePositionLocal(
                 new LocalReference(client, seg, random.integer(0, seg.cachedLength - 1)(mt)),
@@ -145,10 +148,10 @@ export function generateOperationMessagesForClients(
         // and is our baseline
         const client = clients[random.integer(1, clients.length - 1)(mt)];
         const len = client.getLength();
-        const sg = client.mergeTree.pendingSegments.last();
+        const sg = client.mergeTree.pendingSegments?.last();
         let op: IMergeTreeOp | undefined;
         if (len === 0 || len < minLength) {
-            const text = client.longClientId.repeat(random.integer(1, 3)(mt));
+            const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
             op = client.insertTextLocal(
                 random.integer(0, len)(mt),
                 text);
@@ -165,23 +168,23 @@ export function generateOperationMessagesForClients(
         }
         if (op !== undefined) {
             // Pre-check to avoid logger.toString() in the string template
-            if (sg === client.mergeTree.pendingSegments.last()) {
+            if (sg === client.mergeTree.pendingSegments?.last()) {
                 assert.notEqual(
                     sg,
-                    client.mergeTree.pendingSegments.last(),
+                    client.mergeTree.pendingSegments?.last(),
                     `op created but segment group not enqueued.${logger}`);
             }
             const message = client.makeOpMessage(op, --tempSeq);
             message.minimumSequenceNumber = minimumSequenceNumber;
             messages.push(
-                [message, client.peekPendingSegmentGroups(op.type === MergeTreeDeltaType.GROUP ? op.ops.length : 1)]);
+                [message, client.peekPendingSegmentGroups(op.type === MergeTreeDeltaType.GROUP ? op.ops.length : 1)!]);
         }
     }
     return messages;
 }
 
 export function generateClientNames(): string[] {
-    const clientNames = [];
+    const clientNames: string[] = [];
     function addClientNames(startChar: string, count: number) {
         const startCode = startChar.charCodeAt(0);
         for (let i = 0; i < count; i++) {
@@ -192,7 +195,7 @@ export function generateClientNames(): string[] {
     addClientNames("A", 26);
     addClientNames("a", 26);
     addClientNames("0", 17);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return clientNames;
 }
 
@@ -203,11 +206,21 @@ export function applyMessages(
     logger: TestClientLogger,
 ) {
     let seq = startingSeq;
-    // log and apply all the ops created in the round
-    while (messageData.length > 0) {
-        const [message] = messageData.shift();
-        message.sequenceNumber = ++seq;
-        clients.forEach((c) => c.applyMsg(message));
+    try{
+        // log and apply all the ops created in the round
+        while (messageData.length > 0) {
+            const [message] = messageData.shift()!;
+            message.sequenceNumber = ++seq;
+            clients.forEach((c) => c.applyMsg(message));
+        }
+    } catch(e) {
+        if(e instanceof Error) {
+            e.message += `\n${logger.toString()}`;
+        }
+        if(typeof e === "string") {
+            throw new Error(`${e}\n${logger.toString()}`);
+        }
+        throw e;
     }
     return seq;
 }

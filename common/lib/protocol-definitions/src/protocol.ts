@@ -181,6 +181,16 @@ export interface ISignalMessage {
     clientId: string | null;
 
     content: any;
+
+    /**
+     * Counts the number of signals sent by the client
+     */
+    clientConnectionNumber?: number;
+
+    /**
+     * Sequence number that indicates when the signal was created in relation to the delta stream
+     */
+    referenceSequenceNumber?: number;
 }
 
 export interface IUploadedSummaryDetails {

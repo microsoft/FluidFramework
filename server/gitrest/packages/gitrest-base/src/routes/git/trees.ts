@@ -6,26 +6,22 @@
 import { ICreateTreeParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import nconf from "nconf";
-import { IRepositoryManagerFactory } from "../../utils";
+import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory } from "../../utils";
 import { handleResponse } from "../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
 
     router.post("/repos/:owner/:repo/git/trees", async (request, response, next) => {
-        const resultP = repoManagerFactory.open(
-            request.params.owner,
-            request.params.repo,
-        ).then(async (repoManager) => repoManager.createTree(request.body as ICreateTreeParams));
+        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+            .then(async (repoManager) => repoManager.createTree(request.body as ICreateTreeParams));
 
-        handleResponse(resultP, response, 201);
+        handleResponse(resultP, response, undefined, undefined, 201);
     });
 
     router.get("/repos/:owner/:repo/git/trees/:sha", async (request, response, next) => {
-        const resultP = repoManagerFactory.open(
-            request.params.owner,
-            request.params.repo,
-        ).then(async (repoManager) => repoManager.getTree(request.params.sha, request.query.recursive === "1"));
+        const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
+            .then(async (repoManager) => repoManager.getTree(request.params.sha, request.query.recursive === "1"));
 
         handleResponse(resultP, response);
     });

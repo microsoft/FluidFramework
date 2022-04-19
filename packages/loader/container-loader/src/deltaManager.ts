@@ -123,7 +123,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private readonly throttlingIdSet = new Set<string>();
     private timeTillThrottling: number = 0;
 
-    private readonly closeAbortController = new AbortController();
+    public readonly closeAbortController = new AbortController();
 
     private readonly deltaStorageDelayId = uuid();
     private readonly deltaStreamDelayId = uuid();
@@ -201,11 +201,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.messageBuffer.push(message);
 
+        this.emit("submitOp", message);
+
         if (!batch) {
             this.flush();
         }
 
-        this.emit("submitOp", message);
         return message.clientSequenceNumber;
     }
 

@@ -7,7 +7,7 @@ import program from "commander";
 import { bumpDependencies } from "../bumpVersion/bumpDependencies";
 import { bumpVersionCommand } from "../bumpVersion/bumpVersion";
 import { Context, VersionChangeType } from "../bumpVersion/context";
-import { GitRepo } from "../bumpVersion/utils";
+import { GitRepo } from "../bumpVersion/gitRepo";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { validateRepo } from "./repoValidator";
 import { BreakingIncrement, enableLogging } from "./validatorUtils";

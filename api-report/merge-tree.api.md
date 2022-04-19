@@ -56,9 +56,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     propertyManager?: PropertiesManager;
     // (undocumented)
-    removedClientId?: number;
-    // (undocumented)
-    removedClientOverlap?: number[];
+    removedClientIds?: number[];
     // (undocumented)
     removedSeq?: number;
     // (undocumented)
@@ -102,7 +100,7 @@ export class Client {
     addLocalReference(lref: LocalReference): void;
     // (undocumented)
     addLongClientId(longClientId: string): void;
-    annotateMarker(marker: Marker, props: PropertySet, combiningOp: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
+    annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, consensusCallback: (m: Marker) => void): IMergeTreeAnnotateMsg | undefined;
     annotateRangeLocal(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg | undefined;
     // (undocumented)
@@ -255,7 +253,7 @@ export const compareStrings: (a: string, b: string) => number;
 export type ConflictAction<TKey, TData> = (key: TKey, currentKey: TKey, data: TData, currentData: TData) => QProperty<TKey, TData>;
 
 // @public
-export function createAnnotateMarkerOp(marker: Marker, props: PropertySet, combiningOp: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
+export function createAnnotateMarkerOp(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
 
 // @public
 export function createAnnotateRangeOp(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg;
@@ -679,15 +677,13 @@ export interface IRelativePosition {
 // @public (undocumented)
 export interface IRemovalInfo {
     // (undocumented)
-    removedClientId?: number;
+    removedClientIds: number[];
     // (undocumented)
-    removedClientOverlap?: number[];
-    // (undocumented)
-    removedSeq?: number;
+    removedSeq: number;
 }
 
 // @public
-export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
+export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
@@ -1485,6 +1481,9 @@ export class TextSegment extends BaseSegment {
     // (undocumented)
     readonly type = "TextSegment";
 }
+
+// @public (undocumented)
+export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
 
 // @public (undocumented)
 export class TrackingGroup {
