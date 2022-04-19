@@ -32,7 +32,7 @@ describe("MergeTree", () => {
             /* currentSeq: */ currentSequenceNumber);
     });
 
-    describe("markRangeRemoved", () => {
+    describe.only("markRangeRemoved", () => {
         it("Event on Removal", () => {
             const count = countOperations(mergeTree);
 
@@ -149,6 +149,36 @@ describe("MergeTree", () => {
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
+        });
+
+        it("Local delete shadows remote", () => {
+            const remoteClientId: number = 35;
+            let remoteSequenceNumber = currentSequenceNumber;
+
+            mergeTree.markRangeRemoved(
+                3,
+                6,
+                currentSequenceNumber,
+                localClientId,
+                UnassignedSequenceNumber,
+                false,
+                undefined as any);
+
+            const count = countOperations(mergeTree);
+
+            mergeTree.markRangeRemoved(
+                4,
+                5,
+                remoteSequenceNumber,
+                remoteClientId,
+                ++remoteSequenceNumber,
+                false,
+                undefined as any);
+
+            assert.deepStrictEqual(count, {
+                /* MergeTreeDeltaType.REMOVE is absent as it should not be fired */
                 [MergeTreeMaintenanceType.SPLIT]: 2,
             });
         });
