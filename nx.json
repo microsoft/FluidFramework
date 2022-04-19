@@ -144,7 +144,7 @@
         ]
     },
     "affected": {
-        "defaultBase": "yarn1/reset"
+        "defaultBase": "yarn"
     },
     "pluginsConfig": {
         "@nrwl/js": {
