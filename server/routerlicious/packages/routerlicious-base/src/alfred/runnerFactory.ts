@@ -209,8 +209,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             operationsDbMongoManager,
             config.get("mongo:collectionNames:reservations"));
 
-        const internalHistorianUrlOverride = config.get("worker:internalBlobStorageUrl");
-        const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrlOverride);
+        const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+        const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 
         // Redis connection for throttling.
         const redisConfigForThrottling = config.get("redisForThrottling");
