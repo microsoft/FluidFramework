@@ -321,6 +321,7 @@ export interface INetworkErrorDetails {
     isFatal?: boolean;
     message?: string;
     retryAfter?: number;
+    retryAfterMs?: number;
 }
 
 // @public
@@ -348,6 +349,9 @@ export interface ISession {
     // (undocumented)
     ordererUrl: string;
 }
+
+// @public (undocumented)
+export function isNetworkError(error: unknown): error is NetworkError;
 
 // @public (undocumented)
 export interface ISummaryTree extends ISummaryTree_2 {
@@ -490,7 +494,11 @@ export class NetworkError extends Error {
     readonly code: number;
     get details(): INetworkErrorDetails | string;
     readonly isFatal?: boolean;
+    readonly retryAfter: number;
     readonly retryAfterMs?: number;
+    toJSON(): INetworkErrorDetails & {
+        code: number;
+    };
 }
 
 // @public (undocumented)

@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { parse } from "path";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
@@ -81,6 +83,15 @@ export function parseToken(tenantId: string, authorization: string): string {
     }
 
     return token;
+}
+
+/**
+ * Check a given path string for path traversal (e.g. "../" or "/").
+ * TODO: replace with containsPathTraversal from services-shared
+ */
+ export function containsPathTraversal(path: string): boolean {
+    const parsedPath = parse(path);
+    return parsedPath.dir.includes("..") || parsedPath.dir.startsWith("/");
 }
 
 /**

@@ -58,7 +58,8 @@ data:
             "endpoint": "{{ .Values.zookeeper.url }}"
         },
         "storage": {
-            "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }}
+            "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }},
+            "storageUrl": "{{ .Values.storage.storageUrl }}",
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",

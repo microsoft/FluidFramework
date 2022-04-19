@@ -45,11 +45,11 @@
     "isomorphic-git": "^1.14.0",
     "json-stringify-safe": "^5.0.1",
     "morgan": "^1.9.1",
-    "nconf": "^0.11.0",
+    "nconf": "^0.11.4",
     "nodegit": "^0.27.0",
     "split": "^1.0.0",
     "uuid": "^3.3.2",
-    "winston": "^3.3.3"
+    "winston": "^3.6.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

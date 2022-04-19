@@ -58,7 +58,8 @@ export class RestGitService {
         private readonly documentId: string,
         private readonly cache?: ICache,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
-        private readonly storageName?: string) {
+        private readonly storageName?: string,
+        private readonly storageUrl?: string) {
         let defaultHeaders: AxiosRequestHeaders;
         if (storageName !== undefined) {
             defaultHeaders = {
@@ -81,9 +82,11 @@ export class RestGitService {
             [BaseTelemetryProperties.documentId]: this.documentId,
         };
 
+        const baseUrl = this.storageUrl || storage.url;
+
         winston.info(
             `Created RestGitService: ${JSON.stringify({
-                "BaseUrl": storage.url,
+                "BaseUrl": baseUrl,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
                 "Storage-Name": this.storageName,
             })}`,
@@ -91,7 +94,7 @@ export class RestGitService {
 
         Lumberjack.info(
             `Created RestGitService: ${JSON.stringify({
-                "BaseUrl": storage.url,
+                "BaseUrl": baseUrl,
                 "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
                 "Storage-Name": this.storageName,
             })}`,
@@ -99,7 +102,7 @@ export class RestGitService {
         );
 
         this.restWrapper = new BasicRestWrapper(
-            storage.url,
+            baseUrl,
             undefined,
             undefined,
             undefined,

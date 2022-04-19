@@ -151,8 +151,6 @@ export class OdspDocumentService implements IDocumentService {
             }));
 
         this.hostPolicy = hostPolicy;
-        this.hostPolicy.fetchBinarySnapshotFormat ??=
-            this.mc.config.getBoolean("Fluid.Driver.Odsp.binaryFormatSnapshot");
         if (this.clientIsSummarizer) {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
@@ -187,6 +185,7 @@ export class OdspDocumentService implements IDocumentService {
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
+                this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
             );
         }
 

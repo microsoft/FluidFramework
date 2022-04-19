@@ -44,7 +44,7 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/gitresources": "^0.1036.2000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/server-kafka-orderer": "^0.1036.2000",
     "@fluidframework/server-lambdas": "^0.1036.2000",
     "@fluidframework/server-lambdas-driver": "^0.1036.2000",
@@ -59,13 +59,13 @@
     "commander": "^2.17.1",
     "express": "^4.16.3",
     "ioredis": "^4.24.2",
-    "nconf": "^0.11.0",
+    "nconf": "^0.11.4",
     "request": "^2.88.0",
-    "winston": "^3.3.3"
+    "winston": "^3.6.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/server-local-server": "^0.1036.2000",
     "@fluidframework/server-test-utils": "^0.1036.2000",
     "@rushstack/eslint-config": "^2.5.1",
