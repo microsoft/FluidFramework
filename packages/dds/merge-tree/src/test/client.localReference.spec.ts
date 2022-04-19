@@ -5,8 +5,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LocalReference } from "../localReference";
 import { ReferenceType } from "../ops";
+import { TextSegment } from "../textSegment";
+import { createClientsAtInitialState } from "./testClientLogger";
 import { TestClient } from "./";
 
 describe("MergeTree.Client", () => {
@@ -170,5 +173,45 @@ describe("MergeTree.Client", () => {
         client2.applyMsg(remove);
 
         assert.equal(c1LocalRef.toPosition(), -1);
+    });
+
+    it("Split segment with no references and append to segment with references", () => {
+        const clients = createClientsAtInitialState("","A", "B");
+
+        const messages: ISequencedDocumentMessage[] = [];
+        let seq = 0;
+        messages.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "0123456789"),++seq));
+        // initialize the local reference collection on the segment, but keep it empty
+        {
+            const segInfo = clients.A.getContainingSegment(9);
+            const segment = segInfo.segment;
+            assert(TextSegment.is(segment!));
+            assert.strictEqual(segment.text[segInfo.offset!], "9");
+            const localRef =
+                new LocalReference(clients.A, segment, segInfo.offset, ReferenceType.Simple);
+            clients.A.addLocalReference(localRef);
+            clients.A.removeLocalReference(localRef);
+        }
+        // split the segment
+        messages.push(clients.A.makeOpMessage(clients.A.insertTextLocal(5, "ABCD"),++seq));
+
+        // add a local reference to the newly inserted segment that caused the split
+        {
+            const segInfo = clients.A.getContainingSegment(6);
+            const segment = segInfo.segment;
+            assert(TextSegment.is(segment!));
+            assert.strictEqual(segment.text[segInfo.offset!], "B");
+            const localRef =
+                new LocalReference(clients.A, segment, segInfo.offset, ReferenceType.SlideOnRemove);
+            clients.A.addLocalReference(localRef);
+        }
+        // apply all the ops
+        while (messages.length > 0) {
+            const msg = messages.shift()!;
+            clients.all.forEach((c)=>c.applyMsg(msg));
+        }
+
+        // regression: would fire 0x2be on zamboni during segment append
+        clients.all.forEach((c)=>c.updateMinSeq(seq));
     });
 });
