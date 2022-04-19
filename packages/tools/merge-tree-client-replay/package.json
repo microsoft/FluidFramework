@@ -38,14 +38,14 @@
     "@fluidframework/container-runtime": "^0.59.2000",
     "@fluidframework/file-driver": "^0.59.2000",
     "@fluidframework/merge-tree": "^0.59.2000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/runtime-definitions": "^0.59.2000",
     "@fluidframework/sequence": "^0.59.2000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
