@@ -11,7 +11,7 @@ import * as child_process from "child_process";
 function main() {
     try {
         child_process.execSync(`npx danger ci -d ${__dirname}/dangerfile.js`, { stdio: "inherit" });
-    } catch (e) {
+    } catch (e: any) {
         console.error(e.toString());
         process.exit(-1);
     }

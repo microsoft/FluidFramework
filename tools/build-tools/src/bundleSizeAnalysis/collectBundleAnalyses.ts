@@ -17,7 +17,7 @@ function main() {
         if (!Array.isArray(lernaOutput)) {
             throw new Error("failed to get package information");
         }
-    } catch (e) {
+    } catch (e: any) {
         console.error(e.toString());
         process.exit(-1);
     }
@@ -36,7 +36,7 @@ function main() {
             try {
                 console.log(`found bundleAnalysis for ${pkg.name}`);
                 fse.copySync(packageAnalysisPath, path.join(analysesDestPath, pkg.name), {recursive: true});
-            } catch (e) {
+            } catch (e: any) {
                 console.error(e.toString());
                 process.exit(-1);
             }
