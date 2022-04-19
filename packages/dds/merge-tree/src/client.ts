@@ -163,7 +163,7 @@ export class Client {
     public annotateMarker(
         marker: Marker,
         props: PropertySet,
-        combiningOp: ICombiningOp): IMergeTreeAnnotateMsg | undefined {
+        combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined {
         const annotateOp =
             createAnnotateMarkerOp(marker, props, combiningOp)!;
 
@@ -778,8 +778,8 @@ export class Client {
         }
     }
 
-    public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup | undefined;
-    public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[] | undefined;
+    public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
+    public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
     public applyStashedOp(op: IMergeTreeOp) {
         switch (op.type) {
             case MergeTreeDeltaType.INSERT:

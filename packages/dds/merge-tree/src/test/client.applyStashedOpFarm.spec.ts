@@ -36,7 +36,7 @@ function applyMessagesWithReconnect(
     let minSeq = 0;
 
     // apply ops as stashed ops except for client #1
-    const stashedOps = [];
+    const stashedOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[], number][] = [];
     for (const messageData of messageDatas) {
         if (messageData[2] !== 1) {
             const localMetadata = stashClients[messageData[2]].applyStashedOp(messageData[0].contents);
@@ -54,8 +54,7 @@ function applyMessagesWithReconnect(
 
     // apply the ops to the normal clients. they will all be the same now,
     // except #1 which has local changes other clients haven't seen yet
-    while (messageDatas.length > 0) {
-        const [message, sg] = messageDatas.shift();
+    for (const [message, sg] of messageDatas) {
         if (message.clientId === clients[1].longClientId) {
             reconnectClientMsgs.push([message.contents as IMergeTreeOp, sg]);
         } else {
@@ -66,20 +65,15 @@ function applyMessagesWithReconnect(
     }
 
     // regenerate the ops that were applied as stashed ops. this simulates resubmit()
-    const regeneratedStashedOps = [];
-    let stashedOpSeq = startingSeq;
-    while (stashedOps.length > 0) {
-        const op = stashedOps.shift();
-        const newMsg = stashClients[op[2]].makeOpMessage(
+    const regeneratedStashedOps = stashedOps.map((op) =>
+        stashClients[op[2]].makeOpMessage(
             stashClients[op[2]].regeneratePendingOp(
                 op[0],
                 op[1],
-            ));
-
-        regeneratedStashedOps.push(newMsg);
-    }
+            )));
 
     // apply the regenerated stashed ops
+    let stashedOpSeq = startingSeq;
     for (const msg of regeneratedStashedOps) {
         msg.sequenceNumber = ++stashedOpSeq;
         stashClients.forEach((c) => c.applyMsg(msg));
@@ -89,7 +83,7 @@ function applyMessagesWithReconnect(
     new TestClientLogger([...clients.filter((_, i) => i !== 1), ...stashClients]).validate();
 
     // regenerate ops for client #1
-    const reconnectMsgs: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
+    const reconnectMsgs: ISequencedDocumentMessage[] = [];
     reconnectClientMsgs.forEach((opData) => {
         const newMsg = clients[1].makeOpMessage(
             clients[1].regeneratePendingOp(
@@ -97,35 +91,30 @@ function applyMessagesWithReconnect(
                 opData[1],
             ));
         newMsg.minimumSequenceNumber = minSeq;
-        // apply message doesn't use the segment group, so just pass undefined
-        reconnectMsgs.push([newMsg, undefined]);
+        reconnectMsgs.push(newMsg);
     });
 
     // apply regenerated ops as stashed ops for client #1
-    for (const messageData of reconnectMsgs) {
-        const localMetadata = stashClients[1].applyStashedOp(messageData[0].contents);
-        stashedOps.push([messageData[0].contents, localMetadata, 1]);
-    }
+    const stashedRegeneratedOps = reconnectMsgs.map((message) =>  {
+        const localMetadata = stashClients[1].applyStashedOp(message.contents);
+        return [message.contents, localMetadata, 1];
+    });
     // now both clients at index 1 should be the same
     new TestClientLogger([clients[1], stashClients[1]]).validate();
 
     // apply the regenerated ops from client #1
-    while (reconnectMsgs.length > 0) {
-        const [message] = reconnectMsgs.shift();
+    for (const message of reconnectMsgs) {
         message.sequenceNumber = ++seq;
         clients.forEach((c) => c.applyMsg(message));
     }
 
     // resubmit regenerated stashed ops
-    const reRegeneratedStashedMessages = [];
-    for (const stashedOp of stashedOps) {
-        const newMsg = stashClients[1].makeOpMessage(
+    const reRegeneratedStashedMessages = stashedRegeneratedOps.map((stashedOp) =>
+        stashClients[1].makeOpMessage(
             stashClients[1].regeneratePendingOp(
                 stashedOp[0],
-                stashedOp[1],
+                stashedOp[1])
             ));
-        reRegeneratedStashedMessages.push(newMsg);
-    }
 
     for (const reRegeneratedStashedOp of reRegeneratedStashedMessages) {
         reRegeneratedStashedOp.sequenceNumber = ++stashedOpSeq;

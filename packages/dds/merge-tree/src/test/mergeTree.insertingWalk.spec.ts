@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "assert";
 import {
     IMergeBlock,
@@ -88,13 +90,13 @@ const treeFactories: ITestTreeFactory[] = [
 
             const nodes: IMergeBlock[] = [mergeTree.root];
             while (nodes.length > 0) {
-                const node = nodes.pop();
+                const node = nodes.pop()!;
                 assert.equal(node.childCount, MaxNodesInBlock - 1);
-                const childernBlocks =
+                const childrenBlocks =
                     node.children
                         .map((v) => v as IMergeBlock)
                         .filter((v) => v === undefined);
-                nodes.push(...childernBlocks);
+                nodes.push(...childrenBlocks);
             }
 
             mergeTree.startCollaboration(
@@ -145,7 +147,7 @@ const treeFactories: ITestTreeFactory[] = [
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
             initialText = initialText.substring(remove);
 
             // remove from end
@@ -156,7 +158,7 @@ const treeFactories: ITestTreeFactory[] = [
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
             initialText = initialText.substring(0, initialText.length - remove);
 
             mergeTree.startCollaboration(

@@ -153,7 +153,7 @@ export class LocalReferenceCollection {
         private readonly segment: ISegment,
         initialRefsByfOffset = new Array<IRefsAtOffset | undefined>(segment.cachedLength)) {
         // Since javascript arrays are sparse the above won't populate any of the
-        // indicies, but it will ensure the length property of the array matches
+        // indices, but it will ensure the length property of the array matches
         // the length of the segment.
         this.refsByOffset = initialRefsByfOffset;
     }

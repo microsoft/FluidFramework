@@ -177,7 +177,7 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
         value: TInterval;
         done: boolean;
     };
-    }
+}
 
 // @public (undocumented)
 export enum IntervalType {
@@ -365,7 +365,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     readonly isEmpty: boolean;
     get last(): Readonly<ISequenceDeltaRange<TOperation>> | undefined;
     get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[];
-    }
+}
 
 // @public (undocumented)
 export class SequenceInterval implements ISerializableInterval {
@@ -747,7 +747,6 @@ export class SubSequence<T> extends BaseSegment {
     // (undocumented)
     static readonly typeString: string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 
