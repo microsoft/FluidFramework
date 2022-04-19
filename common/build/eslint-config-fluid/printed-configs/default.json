@@ -333,7 +333,7 @@
             "always"
         ],
         "@typescript-eslint/sort-type-union-intersection-members": [
-            "warn"
+            "off"
         ],
         "@typescript-eslint/space-before-function-paren": [
             "error",
