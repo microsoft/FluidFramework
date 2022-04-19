@@ -19,7 +19,7 @@ import {
 import { TestQuorum } from "./testQuorum";
 
 describe("Summarizer Client Election", () => {
-    const maxOps = 100;
+    const maxOps = 1000;
     const testQuorum = new TestQuorum();
     let currentSequenceNumber: number = 0;
     const testDeltaManager = { get lastSequenceNumber() { return currentSequenceNumber; } };

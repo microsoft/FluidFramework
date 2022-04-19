@@ -20,7 +20,7 @@ describe("Runtime", () => {
             const defaultSummaryConfig: ISummaryConfiguration = {
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
-                maxOps: 100, // 100 ops (active)
+                maxOps: 1000, // 1000 ops (active)
                 maxAckWaitTime: 120000, // 2 min
             };
             let summaryConfig: Readonly<ISummaryConfiguration>;

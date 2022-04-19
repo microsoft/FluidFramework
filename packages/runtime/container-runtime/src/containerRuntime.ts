@@ -191,20 +191,20 @@ export interface ContainerRuntimeMessage {
 }
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
-const IdleDetectionTime = 15000;
+const IdleDetectionTime = 5000;
 
 const DefaultSummaryConfiguration: ISummaryConfiguration = {
     idleTime: IdleDetectionTime,
 
-    maxTime: IdleDetectionTime * 4,
+    maxTime: IdleDetectionTime * 12,
 
     // Snapshot if 100 ops received since last snapshot.
     maxOps: 100,
 
-    // Wait 10 minutes for summary ack
+    // Wait 2 minutes for summary ack
     // this is less than maxSummarizeAckWaitTime
     // the min of the two will be chosen
-    maxAckWaitTime: 120000 * 5,
+    maxAckWaitTime: 120000,
 };
 
 export interface IGCRuntimeOptions {
