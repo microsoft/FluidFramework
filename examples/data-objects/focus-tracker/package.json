@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/expect-puppeteer": "2.2.1",
@@ -63,7 +63,7 @@
     "eslint-plugin-no-null": "~1.0.2",
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-unicorn": "~40.0.0",
-    "html-webpack-plugin": "^4.3.0",
+    "html-webpack-plugin": "^4.5.2",
     "jest": "^26.6.3",
     "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.3.0",
@@ -76,7 +76,7 @@
     "webpack": "^4.46.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "4.0.0",
-    "webpack-merge": "^4.1.4"
+    "webpack-merge": "^5.8.0"
   },
   "fluid": {
     "browser": {
