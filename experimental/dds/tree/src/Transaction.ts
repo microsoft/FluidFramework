@@ -26,6 +26,7 @@ export enum TransactionEvent {
 
 /**
  * Events which may be emitted by `Transaction`
+ * @public
  */
 export interface TransactionEvents extends IErrorEvent {
 	(event: TransactionEvent.ViewChange, listener: (before: TreeView, after: TreeView) => void);
