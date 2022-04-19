@@ -113,7 +113,7 @@ The dichotomy has no basis in the cell model but reflects what we think is a sen
 Dynamically-sized fields can be thought of as having list-like behavior: elements can be added anywhere in the list and removed at will which makes the list dynamically grow and shrink.
 Dynamically-sized fields typically start out empty of any cell.
 
-The low-level edits that such fields might support are as follows:
+The low-level edits that such fields might support can decomposed as follows:
 
 - Insert: allocate and fill a cell
 
@@ -140,7 +140,7 @@ The low-level edits that such fields might support are as follows:
 Fixed-sized fields can be thought of as single-value fields, optional fields, values in a map, fixed-sized arrays (not to be confused with JavaScript arrays which behave like dynamically-sized lists), and tuples.
 Fixed-sized fields are populated with their cells (and possibly content) from the time they are created.
 
-The low-level edits that such fields might support are as follows:
+The low-level edits that such fields might support can be decomposed as follows:
 
 - Upsert: fill a (potentially empty) cell
 
@@ -160,6 +160,8 @@ The SharedTree data model should differentiate between fixed-sized and dynamical
 
 ### Editing API
 
+New editing operations need to be exposed for fixed-sized fields.
+
 The editing operations offered by SharedTree, even for unschematized data, need not be the ones prescribed by the model.
 Instead, we see value in offering two sets of higher-level operations: one for fixed-sized fields and one for dynamically-sized fields.
 The impact of this is two-fold:
@@ -173,6 +175,8 @@ The impact of this is two-fold:
 The changeset format should not be forced to adopt the primitive operations defined by the model as this would likely lead to bloat (such as specifying both "allocate" and "fill" for the insert edit).
 
 The changeset format may however be constructed in such a way that it could be translated to the primitive operations defined by the model.
+
+The changeset format also needs to represent the new kind of edits supported by fixed-sized fields.
 
 ### Change Application Logic
 
