@@ -227,14 +227,14 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      * {@inheritDoc IFluidContainer.connect}
      */
     public async connect(): Promise<void> {
-        return this.container.connect?.();
+        this.container.connect?.();
     }
 
     /**
      * {@inheritDoc IFluidContainer.connect}
      */
     public async disconnect(): Promise<void> {
-        return this.container?.disconnect?.();
+        this.container.disconnect?.();
     }
 
     /**
