@@ -118,19 +118,21 @@ export interface ILumberjackSchemaValidationResult {
 
 // Helper method to assist with handling Lumberjack/Lumber errors depending on the context.
 export function handleError(eventName: LumberEventName, errMsg: string, engineList: ILumberjackEngine[]) {
-    const err = new Error(errMsg);
-    // If there is no LumberjackEngine specified, making the list empty,
-    // we log the error to the console as a last resort, so the information can
-    // be found in raw logs.
-    if (engineList.length === 0) {
-        console.error(serializeError(err));
-    } else {
-        // Otherwise, we log the error through the current LumberjackEngines.
-        const errLumber = new Lumber<LumberEventName>(
-            eventName,
-            LumberType.Metric,
-            engineList);
-        errLumber.error(errMsg, err);
+    if (process.env.IS_SERVER) {
+        const err = new Error(errMsg);
+        // If there is no LumberjackEngine specified, making the list empty,
+        // we log the error to the console as a last resort, so the information can
+        // be found in raw logs.
+        if (engineList.length === 0) {
+            console.error(serializeError(err));
+        } else {
+            // Otherwise, we log the error through the current LumberjackEngines.
+            const errLumber = new Lumber<LumberEventName>(
+                eventName,
+                LumberType.Metric,
+                engineList);
+            errLumber.error(errMsg, err);
+        }
     }
 }
 

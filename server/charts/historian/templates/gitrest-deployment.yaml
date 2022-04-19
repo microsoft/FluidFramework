@@ -42,6 +42,8 @@ spec:
         env:
         - name: NODE_ENV
           value: production
+        - name: IS_SERVER
+          value: true
         volumeMounts:
         - name: data
           mountPath: /home/node/documents

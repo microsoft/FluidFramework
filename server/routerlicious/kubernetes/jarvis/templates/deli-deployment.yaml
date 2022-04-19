@@ -33,6 +33,8 @@ spec:
           value: "fluid:*"
         - name: NODE_ENV
           value: production
+        - name: IS_SERVER
+          value: true
         volumeMounts:
         - name: config
           mountPath: /usr/src/server/functions/deli/config.json
