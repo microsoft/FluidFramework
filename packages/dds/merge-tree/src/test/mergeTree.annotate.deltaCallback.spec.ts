@@ -54,6 +54,25 @@ describe("MergeTree", () => {
             });
         });
 
+        it("No event on annotation of empty range", () => {
+            const count = countOperations(mergeTree);
+            mergeTree.annotateRange(
+                3,
+                3,
+                {
+                    foo: "bar",
+                },
+                undefined,
+                currentSequenceNumber,
+                localClientId,
+                ++currentSequenceNumber,
+                undefined as any);
+
+            assert.deepStrictEqual(count, {
+                [MergeTreeMaintenanceType.SPLIT]: 1,
+            });
+        });
+
         it("Annotate over local insertion", () => {
             insertText(
                 mergeTree,

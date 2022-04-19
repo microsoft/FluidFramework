@@ -32,7 +32,7 @@ describe("MergeTree", () => {
             /* currentSeq: */ currentSequenceNumber);
     });
 
-    describe.only("markRangeRemoved", () => {
+    describe("markRangeRemoved", () => {
         it("Event on Removal", () => {
             const count = countOperations(mergeTree);
 
@@ -178,7 +178,7 @@ describe("MergeTree", () => {
                 undefined as any);
 
             assert.deepStrictEqual(count, {
-                /* MergeTreeDeltaType.REMOVE is absent as it should not be fired */
+                /* MergeTreeDeltaType.REMOVE is absent as it should not be fired. */
                 [MergeTreeMaintenanceType.SPLIT]: 2,
             });
         });
