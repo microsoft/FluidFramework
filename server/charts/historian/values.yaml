@@ -17,6 +17,7 @@ historian:
   cert: historian_cert
   ingressClass: ingress_class
   riddler: riddler_url
+  storageUrl: historian_storage_url
   error:
     track: true
     endpoint: "error_tracking_endpoint"

@@ -6,6 +6,7 @@
 import { AsyncLocalStorage } from "async_hooks";
 import { RequestHandler, Response } from "express";
 import * as jwt from "jsonwebtoken";
+import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
@@ -53,6 +54,7 @@ import { containsPathTraversal, parseToken } from "../utils";
 }
 
 export async function createGitService(
+    config: nconf.Provider,
     tenantId: string,
     authorization: string,
     tenantService: ITenantService,
@@ -66,19 +68,20 @@ export async function createGitService(
     const writeToExternalStorage = !!customData?.externalStorageData;
     const storageName = customData?.storageName;
     const decoded = jwt.decode(token) as ITokenClaims;
+    const storageUrl = config.get("storageUrl") as string | undefined;
     if (containsPathTraversal(decoded.documentId)) {
         // Prevent attempted directory traversal.
         throw new NetworkError(400, `Invalid document id: ${decoded.documentId}`);
     }
-     const service = new RestGitService(
-         details.storage,
-         writeToExternalStorage,
-         tenantId,
-         decoded.documentId,
-         cache,
-         asyncLocalStorage,
-         storageName);
-
+    const service = new RestGitService(
+        details.storage,
+        writeToExternalStorage,
+        tenantId,
+        decoded.documentId,
+        cache,
+        asyncLocalStorage,
+        storageName,
+        storageUrl);
     return service;
 }
 

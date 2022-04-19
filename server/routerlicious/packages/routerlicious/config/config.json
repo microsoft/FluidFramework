@@ -47,7 +47,8 @@
         "endpoint": "zookeeper:2181"
     },
     "storage": {
-        "enableWholeSummaryUpload": false
+        "enableWholeSummaryUpload": false,
+        "storageUrl": "http://gitrest:3000"
     },
     "alfred": {
         "kafkaClientId": "alfred",
