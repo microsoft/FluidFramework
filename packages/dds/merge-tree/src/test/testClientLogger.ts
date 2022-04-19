@@ -71,11 +71,11 @@ export class TestClientLogger {
     private ackedLine: string[] = [];
     private localLine: string[] = [];
     // initialize to private instance, so first real edit will create a new line
-    private lastOp: any = {};
+    private lastOp: any | undefined = {};
 
     constructor(
         private readonly clients: readonly TestClient[],
-        public title?: string,
+        private readonly title?: string,
     ) {
         const logHeaders: string[] = [];
         clients.forEach((c,i)=>{
@@ -84,7 +84,7 @@ export class TestClientLogger {
             const callback = (op: IMergeTreeDeltaOpArgs | undefined)=>{
                 if(this.lastOp !== op?.op) {
                     this.addNewLogLine();
-                    this.lastOp = op?.op ?? {};
+                    this.lastOp = op?.op;
                 }
                 const clientLogIndex = i * 2;
 
