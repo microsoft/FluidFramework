@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
@@ -139,7 +140,7 @@ describe("MergeTree.markRangeRemoved", () => {
             let seq = 0;
 
             // Client 1 locally inserts and removes the letter "a".
-            const op1 = actual.insertTextLocal(0, "a");
+            const op1 = actual.insertTextLocal(0, "a")!;
             const op2 = actual.removeRangeLocal(0, 1);
 
             // Client 1 receives ACKs for op1 and op2.

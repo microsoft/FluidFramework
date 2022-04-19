@@ -36,13 +36,13 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/driver-definitions": "^0.46.1000-0"
+    "@fluidframework/driver-definitions": "^0.46.1000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@0.59.1000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",

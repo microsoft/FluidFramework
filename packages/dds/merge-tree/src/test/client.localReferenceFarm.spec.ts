@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import random from "random-js";
@@ -74,7 +75,7 @@ describe("MergeTree.Client", () => {
                         refs.push([]);
                         for(let t = 0; t < c.getLength(); t++) {
                             const seg = c.getContainingSegment(t);
-                            const lref = new LocalReference(c, seg.segment, seg.offset, ReferenceType.SlideOnRemove);
+                            const lref = new LocalReference(c, seg.segment!, seg.offset, ReferenceType.SlideOnRemove);
                             c.addLocalReference(lref);
                             lref.addProperties({t});
                             refs[i].push(lref);

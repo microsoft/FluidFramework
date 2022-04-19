@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import { LocalReference } from "../localReference";
@@ -27,7 +28,7 @@ describe("MergeTree.Client", () => {
         }
 
         const segInfo = client1.getContainingSegment(2);
-        const c1LocalRef = new LocalReference(client1, segInfo.segment, segInfo.offset, ReferenceType.Simple);
+        const c1LocalRef = new LocalReference(client1, segInfo.segment!, segInfo.offset, ReferenceType.Simple);
         client1.addLocalReference(c1LocalRef);
 
         assert.equal(c1LocalRef.toPosition(), 2);
@@ -43,7 +44,7 @@ describe("MergeTree.Client", () => {
         // this only works because zamboni hasn't run yet
         assert.equal(c1LocalRef.toPosition(), -1);
 
-        // this will force zamoni to run
+        // this will force Zamboni to run
         for (let i = 0; i < 5; i++) {
             const insert =
                 client1.makeOpMessage(
@@ -75,7 +76,7 @@ describe("MergeTree.Client", () => {
         }
 
         const segInfo = client1.getContainingSegment(2);
-        const c1LocalRef = new LocalReference(client1, segInfo.segment, segInfo.offset, ReferenceType.SlideOnRemove);
+        const c1LocalRef = new LocalReference(client1, segInfo.segment!, segInfo.offset, ReferenceType.SlideOnRemove);
         client1.addLocalReference(c1LocalRef);
 
         assert.equal(c1LocalRef.toPosition(), 2);
@@ -121,7 +122,7 @@ describe("MergeTree.Client", () => {
         }
 
         const segInfo = client1.getContainingSegment(2);
-        const c1LocalRef = new LocalReference(client1, segInfo.segment, segInfo.offset, ReferenceType.SlideOnRemove);
+        const c1LocalRef = new LocalReference(client1, segInfo.segment!, segInfo.offset, ReferenceType.SlideOnRemove);
         client1.addLocalReference(c1LocalRef);
 
         assert.equal(c1LocalRef.toPosition(), 2);
@@ -155,7 +156,7 @@ describe("MergeTree.Client", () => {
         }
 
         const segInfo = client1.getContainingSegment(2);
-        const c1LocalRef = new LocalReference(client1, segInfo.segment, segInfo.offset, ReferenceType.SlideOnRemove);
+        const c1LocalRef = new LocalReference(client1, segInfo.segment!, segInfo.offset, ReferenceType.SlideOnRemove);
         client1.addLocalReference(c1LocalRef);
 
         assert.equal(c1LocalRef.toPosition(), 2);
