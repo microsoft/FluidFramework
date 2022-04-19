@@ -23,7 +23,7 @@ describe("MergeTree.tracking", () => {
 
             const segmentInfo = testClient.getContainingSegment(0);
 
-            assert(segmentInfo.segment.trackingCollection.empty);
+            assert(segmentInfo?.segment?.trackingCollection.empty);
         });
 
     it("Insert single segment with single tracking group",
@@ -41,10 +41,10 @@ describe("MergeTree.tracking", () => {
 
             const segmentInfo = testClient.getContainingSegment(0);
 
-            assert.equal(segmentInfo.segment.trackingCollection.trackingGroups.size, 1);
+            assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
         });
 
-    it("Spliting segment should split tracking group",
+    it("Splitting segment should split tracking group",
         () => {
             const trackingGroup = new TrackingGroup();
 
@@ -63,7 +63,7 @@ describe("MergeTree.tracking", () => {
 
             assert.equal(trackingGroup.size, 2);
             const segmentInfo = testClient.getContainingSegment(0);
-            assert.equal(segmentInfo.segment.trackingCollection.trackingGroups.size, 1);
+            assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
         });
 
     it("Zamboni should merge matching tracking groups",
@@ -84,19 +84,19 @@ describe("MergeTree.tracking", () => {
 
             assert.equal(trackingGroup.size, 3);
             let segmentInfo = testClient.getContainingSegment(0);
-            assert.equal(segmentInfo.segment.trackingCollection.trackingGroups.size, 1);
+            assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
 
             let seq = 1;
             ops.forEach((op) => testClient.applyMsg(testClient.makeOpMessage(op, ++seq)));
 
             assert.equal(trackingGroup.size, 3);
             segmentInfo = testClient.getContainingSegment(0);
-            assert.equal(segmentInfo.segment.trackingCollection.trackingGroups.size, 1);
+            assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
 
             testClient.updateMinSeq(seq);
 
             assert.equal(trackingGroup.size, 1);
             segmentInfo = testClient.getContainingSegment(0);
-            assert.equal(segmentInfo.segment.trackingCollection.trackingGroups.size, 1);
+            assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
         });
 });
