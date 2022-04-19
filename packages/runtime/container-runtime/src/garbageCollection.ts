@@ -335,7 +335,7 @@ export class GarbageCollector implements IGarbageCollector {
     private latestSummaryGCVersion: GCVersion;
 
     // Keeps track of the GC state from the last run.
-    private previousGCData: IGarbageCollectionData | undefined;
+    private previousGCDataFromLastRun: IGarbageCollectionData | undefined;
     // Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
     // outbound routes from that node.
     private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
@@ -528,7 +528,7 @@ export class GarbageCollector implements IGarbageCollector {
                 }
                 gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
             }
-            this.previousGCData = { gcNodes };
+            this.previousGCDataFromLastRun = { gcNodes };
         });
 
         // Get the GC details for each node from the GC state in the base summary. This is returned in getBaseGCDetails
@@ -652,12 +652,12 @@ export class GarbageCollector implements IGarbageCollector {
      * blobs. All the blob keys should start with `gcBlobPrefix`.
      */
     public summarize(): ISummaryTreeWithStats | undefined {
-        if (!this.shouldRunGC || this.previousGCData === undefined) {
+        if (!this.shouldRunGC || this.previousGCDataFromLastRun === undefined) {
             return;
         }
 
         const gcState: IGarbageCollectionState = { gcNodes: {} };
-        for (const [nodeId, outboundRoutes] of Object.entries(this.previousGCData.gcNodes)) {
+        for (const [nodeId, outboundRoutes] of Object.entries(this.previousGCDataFromLastRun.gcNodes)) {
             gcState.gcNodes[nodeId] = {
                 outboundRoutes,
                 unreferencedTimestampMs: this.unreferencedNodesState.get(nodeId)?.unreferencedTimestampMs,
@@ -787,7 +787,7 @@ export class GarbageCollector implements IGarbageCollector {
         gcResult: IGCResult,
         currentReferenceTimestampMs?: number,
     ) {
-        this.previousGCData = cloneGCData(gcData);
+        this.previousGCDataFromLastRun = cloneGCData(gcData);
         this.newReferencesSinceLastRun.clear();
 
         // Iterate through the referenced nodes and stop tracking if they were unreferenced before.
@@ -842,14 +842,14 @@ export class GarbageCollector implements IGarbageCollector {
      */
     private updateStateSinceLastRun(currentGCData: IGarbageCollectionData) {
         // If we haven't run GC before there is nothing to do.
-        if (this.previousGCData === undefined) {
+        if (this.previousGCDataFromLastRun === undefined) {
             return;
         }
 
         // Find any references that haven't been identified correctly.
         const missingExplicitReferences = this.findMissingExplicitReferences(
             currentGCData,
-            this.previousGCData,
+            this.previousGCDataFromLastRun,
             this.newReferencesSinceLastRun,
         );
 
@@ -887,7 +887,7 @@ export class GarbageCollector implements IGarbageCollector {
          *      which is tracked by https://github.com/microsoft/FluidFramework/issues/8470.
          *    - A new data store may have "root" DDSs already created and we don't detect them today.
          */
-        const gcDataSuperSet = concatGarbageCollectionData(this.previousGCData, currentGCData);
+        const gcDataSuperSet = concatGarbageCollectionData(this.previousGCDataFromLastRun, currentGCData);
         this.newReferencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
             if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
                 gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
