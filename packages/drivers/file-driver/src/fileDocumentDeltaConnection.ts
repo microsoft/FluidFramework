@@ -130,7 +130,7 @@ export class ReplayFileDeltaConnection
                 maxMessageSize: ReplayMaxMessageSize,
                 summary: {
                     idleTime: 5000,
-                    maxOps: 1000,
+                    maxOps: 100,
                     maxTime: 5000 * 12,
                     maxAckWaitTime: 600000,
                 },

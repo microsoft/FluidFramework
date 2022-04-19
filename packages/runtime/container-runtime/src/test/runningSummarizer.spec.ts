@@ -42,7 +42,7 @@ describe("Runtime", () => {
             const summaryConfig: ISummaryConfiguration = {
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
-                maxOps: 1000, // 1k ops (active)
+                maxOps: 100, // 100 ops (active)
                 maxAckWaitTime: 120000, // 2 min
             };
             let shouldDeferGenerateSummary: boolean = false;
