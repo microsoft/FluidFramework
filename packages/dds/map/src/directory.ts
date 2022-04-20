@@ -410,14 +410,14 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         );
         this.root.on(
             "subDirectoryCreated",
-            (path: string, local: boolean) => {
-                this.emit("subDirectoryCreated", path, local, this);
+            (relativePath: string, local: boolean) => {
+                this.emit("subDirectoryCreated", relativePath, local, this);
             },
         );
         this.root.on(
             "subDirectoryDeleted",
-            (path: string, local: boolean) => {
-                this.emit("subDirectoryDeleted", path, local, this);
+            (relativePath: string, local: boolean) => {
+                this.emit("subDirectoryDeleted", relativePath, local, this);
             },
         );
     }
