@@ -72,8 +72,8 @@ export class RunningSummarizer implements IDisposable {
 
         await summarizer.waitStart();
 
-        // Run the heuristics after starting
-        summarizer.heuristicRunner?.run();
+        // Start heuristics
+        summarizer.heuristicRunner?.start();
         return summarizer;
     }
 

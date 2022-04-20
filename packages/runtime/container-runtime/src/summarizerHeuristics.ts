@@ -99,6 +99,10 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         return this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
     }
 
+    public start() {
+        this.idleTimer?.start();
+    }
+
     public run() {
         for (const strategy of this.summarizeStrategies) {
             if (strategy.shouldRunSummarize(this.configuration, this.heuristicData)) {
@@ -143,7 +147,7 @@ export class WeightedOpsSummarizeHeuristicStrategy implements ISummarizeHeuristi
 }
 
 const DefaultHeuristicWeightConfiguration: ISummarizeHeuristicWeightConfiguration = {
-    systemOpWeight: 0.1,
+    systemOpWeight   : 0.1,
     nonSystemOpWeight: 1.0,
 }
 

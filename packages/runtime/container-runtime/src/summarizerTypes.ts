@@ -381,7 +381,10 @@ export interface ISummarizeHeuristicData {
 
 /** Responsible for running heuristics determining when to summarize. */
 export interface ISummarizeHeuristicRunner {
-    /** Runs the heuristic to determine if it should try to summarize */
+    /** Start specific heuristic trackers (ex: idle timer) */
+    start(): void;
+
+    /** Runs the heuristics to determine if it should try to summarize */
     run(): void;
 
     /** Runs a different heuristic to check if it should summarize before closing */
