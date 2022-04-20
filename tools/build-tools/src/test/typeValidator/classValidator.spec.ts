@@ -484,30 +484,28 @@ describe("Class", () => {
     });
 
     describe("type parameters", () => {
-        // adding/removing class type parameters is not a breaking change if they
-        // aren't also exposed on the public API elsewhere
-        it("adds a class type parameters not exposed on the public API", () => {
+        // removing required class type parameters is a breaking change
+        it.skip("removes a required class type parameters", () => {
             const classOld =
-            `
-            export class TestClass {
-                private prop1?: Array<string>;
-            }
-            `;
-
-            const classNew =
             `
             export class TestClass<X> {
                 private prop1?: Array<X>;
             }
             `;
 
+            const classNew =
+            `
+            export class TestClass {
+                private prop1?: Array<string>;
+            }
+            `;
+
             let increment = checkIncrement(classOld, classNew);
-            assert.strictEqual(increment, BreakingIncrement.none);
+            assert.strictEqual(increment, BreakingIncrement.major);
         });
 
-        // class type parameter changes exposed on the public API are the same as
-        // equivalent typing changes
-        it.skip("changes a class type parameters exposed on the public API", () => {
+        /// adding required class type parameters is a breaking change
+        it.skip("adds a required class type parameter", () => {
             const classOld =
             `
             export class TestClass {
@@ -524,6 +522,46 @@ describe("Class", () => {
 
             let increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
+        });
+
+        // removing optional class type parameters is breaking
+        it.skip("removes an optional class type parameter", () => {
+            const classOld =
+            `
+            export class TestClass<X = string> {
+                public prop1?: Array<X>;
+            }
+            `;
+
+            const classNew =
+            `
+            export class TestClass {
+                public prop1?: Array<string>;
+            }
+            `;
+
+            let increment = checkIncrement(classOld, classNew);
+            assert.strictEqual(increment, BreakingIncrement.major);
+        });
+
+        // adding optional class type parameters is incremental
+        it("adds an optional class type parameter", () => {
+            const classOld =
+            `
+            export class TestClass {
+                public prop1?: Array<string>;
+            }
+            `;
+
+            const classNew =
+            `
+            export class TestClass<X = string> {
+                public prop1?: Array<X>;
+            }
+            `;
+
+            let increment = checkIncrement(classOld, classNew);
+            assert.strictEqual(increment, BreakingIncrement.minor);
         });
 
         // changing type parameter names is not breaking

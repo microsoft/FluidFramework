@@ -125,6 +125,25 @@ describe("Interface", () => {
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
+        // removing an optional method is an incremental change
+        it("removed an optional method declaration", () => {
+            const sourceOld =
+            `
+            export interface ITestInterface {
+                newMethod?();
+            }
+            `;
+
+            const sourceNew =
+            `
+            export interface ITestInterface {
+            }
+            `;
+
+            let increment = checkIncrement(sourceOld, sourceNew);
+            assert.strictEqual(increment, BreakingIncrement.minor);
+        });
+
         // getters are treated the same as public methods
         // adding/removing one is a breaking change
         // TODO: getters currently unsupported in ts-morph but we don't use this/it's rare
