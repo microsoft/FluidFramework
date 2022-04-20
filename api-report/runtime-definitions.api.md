@@ -394,9 +394,7 @@ const VisibilityState_2: {
 
 // @public (undocumented)
 type VisibilityState_2 = typeof VisibilityState_2[keyof typeof VisibilityState_2];
-
 export { VisibilityState_2 as VisibilityState }
-
 
 // (No @packageDocumentation comment for this package)
 

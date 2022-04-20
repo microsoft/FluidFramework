@@ -42,17 +42,17 @@
     "isomorphic-git": "^1.14.0",
     "json-stringify-safe": "^5.0.1",
     "morgan": "^1.9.1",
-    "nconf": "^0.11.0",
+    "nconf": "^0.11.4",
     "nodegit": "^0.27.0",
     "split": "^1.0.0",
     "uuid": "^3.3.2",
-    "winston": "^3.3.3"
+    "winston": "^3.6.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
     "@rushstack/eslint-config": "^2.5.1",
-    "@types/async": "^3.2.6",
+    "@types/async": "^3.2.9",
     "@types/cors": "^2.8.4",
     "@types/debug": "^4.1.5",
     "@types/lorem-ipsum": "^1.0.2",
@@ -67,7 +67,7 @@
     "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
     "eslint-plugin-editorconfig": "~3.2.0",
@@ -81,6 +81,6 @@
     "rimraf": "^2.6.3",
     "sillyname": "^0.1.0",
     "supertest": "^3.4.2",
-    "typescript": "~4.1.3"
+    "typescript": "~4.5.5"
   }
 }

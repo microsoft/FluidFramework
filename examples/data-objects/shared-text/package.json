@@ -45,9 +45,9 @@
     "@fluid-example/example-utils": "^0.59.2000",
     "@fluidframework/aqueduct": "^0.59.2000",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000-0",
+    "@fluidframework/container-definitions": "^0.48.1000",
     "@fluidframework/container-runtime": "^0.59.2000",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore": "^0.59.2000",
     "@fluidframework/datastore-definitions": "^0.59.2000",
     "@fluidframework/ink": "^0.59.2000",
@@ -100,7 +100,7 @@
     "webpack": "^4.46.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "4.0.0",
-    "webpack-merge": "^4.1.4"
+    "webpack-merge": "^5.8.0"
   },
   "fluid": {
     "browser": {

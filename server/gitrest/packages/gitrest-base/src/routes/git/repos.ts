@@ -28,7 +28,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
             repoName: createParams.name,
         });
 
-        handleResponse(repoManagerP.then(() => undefined), response, 201);
+        handleResponse(repoManagerP.then(() => undefined), response, undefined, undefined, 201);
     });
 
     /**

@@ -22,7 +22,7 @@ import {
     getOdspResolvedUrl,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
-import { downloadSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
+import { downloadSnapshot, fetchSnapshotWithRedeem, SnapshotFormatSupportType } from "./fetchSnapshot";
 import { IVersionedValueWithEpoch } from "./contracts";
 
 /**
@@ -38,6 +38,9 @@ import { IVersionedValueWithEpoch } from "./contracts";
  * @param enableRedeemFallback - True to have the sharing link redeem fallback in case the Trees Latest/Redeem
  *  1RT call fails with redeem error. During fallback it will first redeem the sharing link and then make
  *  the Trees latest call.
+ *  @deprecated - This will be replaced with snapshotFormatFetchType.
+ * @param fetchBinarySnapshotFormat - Control if we want to fetch binary format snapshot.
+ * @param snapshotFormatFetchType - Snapshot format to fetch.
  * @returns - True if the snapshot is cached, false otherwise.
  */
 export async function prefetchLatestSnapshot(
@@ -49,6 +52,7 @@ export async function prefetchLatestSnapshot(
     hostSnapshotFetchOptions: ISnapshotOptions | undefined,
     enableRedeemFallback?: boolean,
     fetchBinarySnapshotFormat?: boolean,
+    snapshotFormatFetchType?: SnapshotFormatSupportType,
 ): Promise<boolean> {
     const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
@@ -72,7 +76,7 @@ export async function prefetchLatestSnapshot(
         controller?: AbortController,
     ) => {
         return downloadSnapshot(
-            finalOdspResolvedUrl, storageToken, odspLogger, snapshotOptions, fetchBinarySnapshotFormat, controller);
+            finalOdspResolvedUrl, storageToken, odspLogger, snapshotOptions, snapshotFormatFetchType, controller);
     };
     const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
     let cacheP: Promise<void> | undefined;

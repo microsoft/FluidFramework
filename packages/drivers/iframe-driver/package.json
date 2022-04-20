@@ -35,18 +35,18 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
-    "@fluidframework/driver-definitions": "^0.46.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
+    "@fluidframework/driver-definitions": "^0.46.1000",
     "@fluidframework/driver-utils": "^0.59.2000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/telemetry-utils": "^0.59.2000",
     "comlink": "^4.3.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@fluidframework/iframe-driver-previous": "npm:@fluidframework/iframe-driver@^0.58.0",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/iframe-driver-previous": "npm:@fluidframework/iframe-driver@0.59.1000",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/nock": "^9.3.0",
@@ -69,7 +69,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
+    "version": "0.59.2000",
     "broken": {}
   }
 }

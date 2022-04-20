@@ -20,7 +20,10 @@ export interface BrokenCompatSettings{
     forwardCompat?: false;
 }
 
-export type BrokenCompatTypes = Partial<Record<string,Record<string, BrokenCompatSettings>>>;
+// back compat for the previous back compat setting the nested under the version number
+export type BackCompatBrokenCompatSettings = BrokenCompatSettings & Partial<Record<string, BrokenCompatSettings>>
+
+export type BrokenCompatTypes = Partial<Record<string, BackCompatBrokenCompatSettings>>;
 
 
 interface PackageJson{

@@ -36,24 +36,25 @@ export enum ChangeType {
  *
  * `Change` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
  * @example
- * TreeChange.insert(sourceId, destination)
+ * Change.insert(sourceId, destination)
  * @public
  */
 export type Change = Insert | Detach | Build | SetValue | Constraint;
 
 /**
- * Node or sequence of Nodes for use in a Build change.
- *
- * Other formats for sub-sequences of Nodes can be added here, and those formats should be supported in blobs as well.
- * Future formats will include referenced blobs containing sequences of Nodes,
- * template based metadata and identity deduplication, and possibly compressed and binary formats.
- * These optimized formats should also be used within tree views.
+ * Node or a detached sequence of nodes (referred to by a detached sequence ID) for use in a Build change.
+ * See `BuildTreeNode` for more.
  * @public
  */
 export type BuildNode = BuildTreeNode | number;
 
 /**
- * Node for use in a Build change.
+ * Node for use in a Build change, which is composed of a definition describing what this nodes type, an identifier identifying this node
+ * within the tree, and a payload containing an opaque serializable piece of data.
+ * An identifier can be provided explicitly if the node must be referred to before the results of the `Change` containing this
+ * BuildTreeNode can be observed. If `identifier` is not supplied, one will be generated for it in an especially efficient manner
+ * that allows for compact storage and transmission and thus this property should be omitted if convenient.
+ * See the SharedTree readme for more on the tree format.
  */
 export interface BuildTreeNode extends HasVariadicTraits<BuildNode> {
 	definition: string;
@@ -67,12 +68,6 @@ export interface BuildTreeNode extends HasVariadicTraits<BuildNode> {
  *
  * Valid if (transitively) all DetachedSequenceId are used according to their rules (use here counts as a destination),
  * and all Nodes' identifiers are previously unused.
- *
- * TODO: Design Decision:
- * If allowing 'moving from nowhere' to restore nodes: all new Nodes must have never before used identifiers.
- * Otherwise could just forbid identifiers currently reachable?
- * Could also allow introducing a node with a particular identifier to mean replacing that node with the new one
- * (could include optional constraint to require/prevent this).
  *
  * @public
  */

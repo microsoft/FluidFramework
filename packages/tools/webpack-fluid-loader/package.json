@@ -18,7 +18,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext npm:build:webpack",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -38,6 +38,7 @@
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d .",
     "webpack": "webpack --color --config webpack.config.js"
   },
   "nyc": {
@@ -63,21 +64,21 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.59.2000",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000-0",
+    "@fluidframework/container-definitions": "^0.48.1000",
     "@fluidframework/container-loader": "^0.59.2000",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
-    "@fluidframework/driver-definitions": "^0.46.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
+    "@fluidframework/driver-definitions": "^0.46.1000",
     "@fluidframework/driver-utils": "^0.59.2000",
     "@fluidframework/local-driver": "^0.59.2000",
     "@fluidframework/odsp-doclib-utils": "^0.59.2000",
     "@fluidframework/odsp-driver": "^0.59.2000",
     "@fluidframework/odsp-driver-definitions": "^0.59.2000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/routerlicious-driver": "^0.59.2000",
     "@fluidframework/runtime-definitions": "^0.59.2000",
     "@fluidframework/runtime-utils": "^0.59.2000",
-    "@fluidframework/server-local-server": "^0.1036.1000-0",
-    "@fluidframework/server-services-client": "^0.1036.1000-0",
+    "@fluidframework/server-local-server": "^0.1036.1000",
+    "@fluidframework/server-services-client": "^0.1036.1000",
     "@fluidframework/test-runtime-utils": "^0.59.2000",
     "@fluidframework/tool-utils": "^0.59.2000",
     "@fluidframework/view-adapters": "^0.59.2000",
@@ -85,15 +86,15 @@
     "@fluidframework/web-code-loader": "^0.59.2000",
     "axios": "^0.26.0",
     "express": "^4.16.3",
-    "nconf": "^0.11.0",
+    "nconf": "^0.11.4",
     "sillyname": "^0.1.0",
     "uuid": "^8.3.1",
     "webpack-dev-server": "4.0.0"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader-previous": "npm:@fluid-tools/webpack-fluid-loader@^0.58.0",
+    "@fluid-tools/webpack-fluid-loader-previous": "npm:@fluid-tools/webpack-fluid-loader@0.59.1000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.59.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/express": "^4.11.0",
@@ -123,7 +124,7 @@
     "webpack-cli": "^4.9.2"
   },
   "typeValidation": {
-    "version": "0.59.1000",
+    "version": "0.59.2000",
     "broken": {}
   }
 }

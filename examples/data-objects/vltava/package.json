@@ -48,10 +48,10 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-runtime": "^0.59.2000",
     "@fluidframework/container-runtime-definitions": "^0.59.2000",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore-definitions": "^0.59.2000",
     "@fluidframework/map": "^0.59.2000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/request-handler": "^0.59.2000",
     "@fluidframework/runtime-definitions": "^0.59.2000",
     "@fluidframework/runtime-utils": "^0.59.2000",
@@ -66,7 +66,7 @@
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.59.2000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/test-tools": "^0.2.3074",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",
@@ -100,7 +100,7 @@
     "webpack": "^4.46.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "4.0.0",
-    "webpack-merge": "^4.1.4"
+    "webpack-merge": "^5.8.0"
   },
   "fluid": {
     "browser": {

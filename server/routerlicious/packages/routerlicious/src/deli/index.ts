@@ -34,7 +34,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
-    const tenantManager = new services.TenantManager(authEndpoint);
+    const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+    const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 
     // Database connection for global db if enabled
     let globalDbMongoManager;
@@ -103,7 +104,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         localProducer,
         undefined,
         localContext,
-        async (_, context: LocalContext) => new BroadcasterLambda(publisher, context));
+        async (_, context: LocalContext) =>
+            new BroadcasterLambda(publisher, context, core.DefaultServiceConfiguration, undefined));
 
     await broadcasterLambda.start();
 
@@ -112,6 +114,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         collection,
         tenantManager,
         combinedProducer,
+        undefined,
         reverseProducer,
         core.DefaultServiceConfiguration);
 }
