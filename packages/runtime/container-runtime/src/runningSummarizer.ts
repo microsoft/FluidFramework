@@ -6,10 +6,10 @@
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
+import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,
-    MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
@@ -95,8 +95,6 @@ export class RunningSummarizer implements IDisposable {
     } | undefined;
     private summarizeCount = 0;
     private totalSuccessfulAttempts = 0;
-    private numSystemOps = 0;
-    private numNonSystemOps = 0;
 
     private constructor(
         baseLogger: ITelemetryLogger,
@@ -192,33 +190,18 @@ export class RunningSummarizer implements IDisposable {
             ? this.logger
             : undefined;
 
-    public handleSystemOp(op: ISequencedDocumentMessage) {
-        this.numSystemOps++;
-        switch (op.type) {
-            case MessageType.ClientLeave:
-            case MessageType.ClientJoin:
-            case MessageType.Propose: {
-                this.numNonSystemOps--; // Decrement to correct the counters
-                // Synchronously handle quorum ops like regular ops
-                this.handleOp(undefined, op);
-                return;
-            }
-            default: {
-                return;
-            }
-        }
-    }
+    public handleOp(op: ISequencedDocumentMessage) {
+        this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
-    public handleOp(error: any, { sequenceNumber, type, clientId, contents }: ISequencedDocumentMessage) {
-        this.numNonSystemOps++;
-        if (error !== undefined) {
-            return;
+        if (isSystemMessage(op)) {
+            this.heuristicData.numSystemOps++;
+        } else {
+            this.heuristicData.numNonSystemOps++;
         }
-        this.heuristicData.lastOpSequenceNumber = sequenceNumber;
 
         // Check for enqueued on-demand summaries; Intentionally do nothing otherwise
         if (!this.tryRunEnqueuedSummary()) {
-            this.heuristicRunner?.run(this.numSystemOps, this.numNonSystemOps);
+            this.heuristicRunner?.run();
         }
     }
 
@@ -296,7 +279,7 @@ export class RunningSummarizer implements IDisposable {
             // After summarizing, we should check to see if we need to summarize again.
             // Rerun the heuristics and check for enqueued summaries.
             if (!this.stopping && !this.tryRunEnqueuedSummary() && retry) {
-                this.heuristicRunner?.run(this.numSystemOps, this.numNonSystemOps);
+                this.heuristicRunner?.run();
             }
         });
     }
@@ -338,10 +321,6 @@ export class RunningSummarizer implements IDisposable {
         summarizeReason: SummarizeReason,
         cancellationToken = this.cancellationToken): void
     {
-        // Reset our op counters
-        this.numSystemOps = 0;
-        this.numNonSystemOps = 0;
-
         if (this.summarizingLock !== undefined) {
             // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
             // if it's still needed

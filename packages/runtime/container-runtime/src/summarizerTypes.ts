@@ -17,9 +17,11 @@ import {
     ISequencedDocumentMessage,
     ISummaryTree,
     IDocumentMessage,
+    ISummaryConfiguration,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
+import { SummarizeReason } from "./summaryGenerator";
 
 /**
  * @deprecated - This will be removed in a later release.
@@ -95,7 +97,9 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     /** clientId of parent (non-summarizing) container that owns summarizer container */
     readonly summarizerClientId: string | undefined;
     closeFn(): void;
+    /** @deprecated 1.0, please remove all implementations and usage */
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
+    /** @deprecated 1.0, please remove all implementations and usage */
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
@@ -348,6 +352,12 @@ export interface ISummarizeHeuristicData {
     /** Most recent summary that received an ack */
     readonly lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
 
+    /** Number of system ops since last summary */
+    numSystemOps: number;
+
+    /** Number of non-system ops since last summary */
+    numNonSystemOps: number;
+
     /**
      * Initializes lastAttempt and lastSuccessfulAttempt based on the last summary.
      * @param lastSummary - last ack summary
@@ -364,16 +374,15 @@ export interface ISummarizeHeuristicData {
 
     /** Mark that the last sent summary attempt has received an ack */
     markLastAttemptAsSuccessful(): void;
+
+    /** Adjust the heuristic data when a summarizer failure occurs */
+    adjustOnFailure(): void;
 }
 
 /** Responsible for running heuristics determining when to summarize. */
 export interface ISummarizeHeuristicRunner {
-    /**
-     * Runs the heuristic to determine if it should try to summarize
-     * @param numSystemOps Number of system ops since the last summary
-     * @param numNonSystemOps Number of non-system ops since the last summary
-     */
-    run(numSystemOps?: number, numNonSystemOps?: number): void;
+    /** Runs the heuristic to determine if it should try to summarize */
+    run(): void;
 
     /** Runs a different heuristic to check if it should summarize before closing */
     shouldRunLastSummary(): boolean;
@@ -398,3 +407,25 @@ type ISummarizeTelemetryOptionalProperties =
 export type ISummarizeTelemetryProperties =
     Pick<ITelemetryProperties, ISummarizeTelemetryRequiredProperties> &
     Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
+
+/** Op weights to use in heuristic summarizing */
+export interface ISummarizeHeuristicWeightConfiguration {
+    /** Weight to be given to system ops */
+    systemOpWeight: number;
+
+    /** Weight to be given to non-system ops */
+    nonSystemOpWeight: number;
+}
+
+/** Strategy used to heuristically determine when we should run a summarize */
+export interface ISummarizeHeuristicStrategy {
+    /** Summarize reason for this summarize heuristic strategy (ex: "maxTime") */
+    summarizeReason: Readonly<SummarizeReason>;
+
+    /**
+     * Determines if this strategy's summarize criteria been met
+     * @param configuration - summarize configuration we are to check against
+     * @param heuristicData - heuristic data used to confirm conditions are met
+     */
+    shouldRunSummarize(configuration: ISummaryConfiguration, heuristicData: ISummarizeHeuristicData): boolean;
+}

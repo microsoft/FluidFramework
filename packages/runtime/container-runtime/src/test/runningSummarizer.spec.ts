@@ -56,7 +56,7 @@ describe("Runtime", () => {
                     sequenceNumber: lastRefSeq,
                     timestamp,
                 };
-                summarizer.handleOp(undefined, op as ISequencedDocumentMessage);
+                summarizer.handleOp(op as ISequencedDocumentMessage);
                 mockDeltaManager.emit("op", op);
                 await flushPromises();
             }
