@@ -61,7 +61,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-definitions": "^0.46.1000-0",
+    "@fluidframework/driver-definitions": "^0.46.1000",
     "@fluidframework/driver-utils": "^0.59.2000",
     "@fluidframework/odsp-driver-definitions": "^0.59.2000",
     "@fluidframework/telemetry-utils": "^0.59.2000",
@@ -69,9 +69,9 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.59.2000",
-    "@fluidframework/odsp-doclib-utils-previous": "npm:@fluidframework/odsp-doclib-utils@^0.58.0",
+    "@fluidframework/odsp-doclib-utils-previous": "npm:@fluidframework/odsp-doclib-utils@0.59.1000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node-fetch": "^2.5.10",
@@ -93,7 +93,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
+    "version": "0.59.2000",
     "broken": {}
   }
 }

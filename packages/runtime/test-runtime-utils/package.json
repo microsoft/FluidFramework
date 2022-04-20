@@ -16,7 +16,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "npm run tsc && npm run build:test",
+    "build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -34,7 +34,8 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -60,12 +61,12 @@
     "@fluidframework/azure-service-utils": "^0.59.2000",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000-0",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/container-definitions": "^0.48.1000",
+    "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore-definitions": "^0.59.2000",
-    "@fluidframework/driver-definitions": "^0.46.1000-0",
+    "@fluidframework/driver-definitions": "^0.46.1000",
     "@fluidframework/driver-utils": "^0.59.2000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/routerlicious-driver": "^0.59.2000",
     "@fluidframework/runtime-definitions": "^0.59.2000",
     "@fluidframework/runtime-utils": "^0.59.2000",
@@ -75,10 +76,10 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.59.2000",
-    "@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@^0.58.0",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@0.59.1000",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",
@@ -102,13 +103,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
-    "broken": {
-      "0.58.2002": {
-        "ClassDeclaration_MockFluidDataStoreContext": {
-          "backCompat": false
-        }
-      }
-    }
+    "version": "0.59.2000",
+    "broken": {}
   }
 }

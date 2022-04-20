@@ -45,7 +45,7 @@
     "@fluid-experimental/task-manager": "^0.59.2000",
     "@fluidframework/aqueduct": "^0.59.2000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/counter": "^0.59.2000",
     "@fluidframework/runtime-definitions": "^0.59.2000",
     "react": "^16.10.2"
@@ -53,7 +53,7 @@
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.59.2000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/test-tools": "^0.2.3074",
     "@fluidframework/test-utils": "^0.59.2000",
     "@rushstack/eslint-config": "^2.5.1",
@@ -86,7 +86,7 @@
     "webpack": "^4.46.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "4.0.0",
-    "webpack-merge": "^4.1.4"
+    "webpack-merge": "^5.8.0"
   },
   "fluid": {
     "browser": {

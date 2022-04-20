@@ -67,9 +67,7 @@ export function runPendingLocalStateTests(
 						testObjectProvider,
 						container,
 						() =>
-							tree.applyEdit(
-								...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left))
-							) as Edit<ChangeInternal>
+							tree.applyEdit(...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left)))
 					);
 					await testObjectProvider.ensureSynchronized();
 					const leftTraitAfterOfflineClose = tree2.currentView.getTrait(
@@ -99,7 +97,7 @@ export function runPendingLocalStateTests(
 						'Tree collaborating with a client that applies stashed pending edits should see them.'
 					);
 
-					const stableEdit = stabilizeEdit(tree, edit);
+					const stableEdit = stabilizeEdit(tree, edit as unknown as Edit<ChangeInternal>);
 					expect(
 						stabilizeEdit(tree2, (await tree2.editsInternal.tryGetEdit(edit.id)) ?? fail())
 					).to.deep.equal(stableEdit);

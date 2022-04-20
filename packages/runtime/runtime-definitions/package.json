@@ -15,7 +15,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "npm run tsc && npm run build:test",
+    "build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -28,22 +28,23 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000-0",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
-    "@fluidframework/driver-definitions": "^0.46.1000-0",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/container-definitions": "^0.48.1000",
+    "@fluidframework/core-interfaces": "^0.43.1000",
+    "@fluidframework/driver-definitions": "^0.46.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@types/node": "^14.18.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@^0.58.0",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@0.59.1000",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
@@ -61,25 +62,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
-    "broken": {
-      "0.58.2002": {
-        "InterfaceDeclaration_IAttachMessage": {
-          "forwardCompat": false
-        },
-        "InterfaceDeclaration_IFluidDataStoreContext": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_IFluidDataStoreContextDetached": {
-          "backCompat": false
-        },
-        "TypeAliasDeclaration_InboundAttachMessage": {
-          "forwardCompat": false
-        },
-        "TypeAliasDeclaration_CreateChildSummarizerNodeParam": {
-          "forwardCompat": false
-        }
-      }
-    }
+    "version": "0.59.2000",
+    "broken": {}
   }
 }

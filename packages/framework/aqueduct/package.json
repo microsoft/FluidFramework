@@ -65,11 +65,11 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000-0",
+    "@fluidframework/container-definitions": "^0.48.1000",
     "@fluidframework/container-loader": "^0.59.2000",
     "@fluidframework/container-runtime": "^0.59.2000",
     "@fluidframework/container-runtime-definitions": "^0.59.2000",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore": "^0.59.2000",
     "@fluidframework/datastore-definitions": "^0.59.2000",
     "@fluidframework/map": "^0.59.2000",
@@ -81,11 +81,11 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@^0.58.0",
+    "@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@0.59.1000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.59.2000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",
@@ -109,13 +109,7 @@
   },
   "module:es5": "es5/index.js",
   "typeValidation": {
-    "version": "0.59.1000",
-    "broken": {
-      "0.58.2002": {
-        "InterfaceDeclaration_IDataObjectProps": {
-          "backCompat": false
-        }
-      }
-    }
+    "version": "0.59.2000",
+    "broken": {}
   }
 }

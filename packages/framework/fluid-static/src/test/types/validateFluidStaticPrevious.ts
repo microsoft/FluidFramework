@@ -145,7 +145,6 @@ declare function get_old_InterfaceDeclaration_IFluidContainer():
 declare function use_current_InterfaceDeclaration_IFluidContainer(
     use: TypeOnly<current.IFluidContainer>);
 use_current_InterfaceDeclaration_IFluidContainer(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidContainer());
 
 /*

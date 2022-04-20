@@ -1413,7 +1413,7 @@ export function runSharedTreeOperationsTests(
 
 					const uncompressedEdits: EditWithoutId<ChangeInternal>[] = [
 						{
-							changes: tree.edits.getEditInSessionAtIndex(0).changes as ChangeInternal[],
+							changes: tree.editsInternal.getEditInSessionAtIndex(0).changes,
 						},
 					];
 

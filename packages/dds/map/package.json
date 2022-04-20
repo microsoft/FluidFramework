@@ -63,10 +63,10 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-utils": "^0.59.2000",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore-definitions": "^0.59.2000",
     "@fluidframework/driver-utils": "^0.59.2000",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/runtime-definitions": "^0.59.2000",
     "@fluidframework/runtime-utils": "^0.59.2000",
     "@fluidframework/shared-object-base": "^0.59.2000",
@@ -75,11 +75,11 @@
   "devDependencies": {
     "@fluid-internal/test-dds-utils": "^0.59.2000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
-    "@fluidframework/map-previous": "npm:@fluidframework/map@^0.58.0",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/map-previous": "npm:@fluidframework/map@0.59.1000",
     "@fluidframework/mocha-test-setup": "^0.59.2000",
     "@fluidframework/test-runtime-utils": "^0.59.2000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",
@@ -102,13 +102,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
-    "broken": {
-      "0.58.2002": {
-        "ClassDeclaration_SharedDirectory": {
-          "forwardCompat": false
-        }
-      }
-    }
+    "version": "0.59.2000",
+    "broken": {}
   }
 }

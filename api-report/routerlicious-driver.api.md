@@ -76,7 +76,7 @@ export class DocumentService implements api.IDocumentService {
 
 // @public (undocumented)
 export class DocumentStorageService extends DocumentStorageServiceProxy {
-    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies, blobCache?: ICache<ArrayBufferLike>, snapshotTreeCache?: ICache<ISnapshotTreeVersion>);
+    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies, blobCache?: ICache<ArrayBufferLike>, snapshotTreeCache?: ICache<ISnapshotTreeVersion>, noCacheGitManager?: GitManager | undefined);
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
@@ -85,11 +85,14 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
     get logTailSha(): string | undefined;
     // (undocumented)
     manager: GitManager;
+    // (undocumented)
+    noCacheGitManager?: GitManager | undefined;
 }
 
 // @public (undocumented)
 export interface IRouterliciousDriverPolicies {
     aggregateBlobsSmallerThanBytes: number | undefined;
+    enableDiscovery?: boolean;
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
@@ -143,7 +146,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, isCreateContainer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "fluid:";
     }

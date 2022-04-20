@@ -38,16 +38,16 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
-    "@fluidframework/driver-definitions": "^0.46.1000-0",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
+    "@fluidframework/driver-definitions": "^0.46.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "nconf": "^0.11.4"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.59.2000",
-    "@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@^0.58.0",
+    "@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@0.59.1000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/nconf": "^0.10.0",
@@ -70,7 +70,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
+    "version": "0.59.2000",
     "broken": {}
   }
 }

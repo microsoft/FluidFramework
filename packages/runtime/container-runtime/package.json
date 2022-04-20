@@ -63,16 +63,16 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.48.1000-0",
+    "@fluidframework/container-definitions": "^0.48.1000",
     "@fluidframework/container-runtime-definitions": "^0.59.2000",
     "@fluidframework/container-utils": "^0.59.2000",
-    "@fluidframework/core-interfaces": "^0.43.1000-0",
+    "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/datastore": "^0.59.2000",
-    "@fluidframework/driver-definitions": "^0.46.1000-0",
+    "@fluidframework/driver-definitions": "^0.46.1000",
     "@fluidframework/driver-utils": "^0.59.2000",
     "@fluidframework/garbage-collector": "^0.59.2000",
-    "@fluidframework/protocol-base": "^0.1036.1000-0",
-    "@fluidframework/protocol-definitions": "^0.1028.1000-0",
+    "@fluidframework/protocol-base": "^0.1036.1000",
+    "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/runtime-definitions": "^0.59.2000",
     "@fluidframework/runtime-utils": "^0.59.2000",
     "@fluidframework/telemetry-utils": "^0.59.2000",
@@ -82,11 +82,11 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.61804",
-    "@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@^0.58.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000-61189",
+    "@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@0.59.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.59.2000",
     "@fluidframework/test-runtime-utils": "^0.59.2000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/double-ended-queue": "^2.1.0",
     "@types/mocha": "^8.2.2",
@@ -113,41 +113,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
-    "broken": {
-      "InterfaceDeclaration_IBaseSummarizeResult": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IGenerateSummaryTreeResult": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_ISubmitSummaryOpResult": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IUploadSummaryResult": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_SubmitSummaryResult": {
-        "forwardCompat": false
-      },
-      "TypeAliasDeclaration_SubmitSummaryResult": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IGeneratedSummaryStats": {
-        "forwardCompat": false
-      },
-      "ClassDeclaration_ContainerRuntime": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IGarbageCollectionRuntime": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IGCStats": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IRootSummaryTreeWithStats": {
-        "forwardCompat": false
-      }
-    }
+    "version": "0.59.2000",
+    "broken": {}
   }
 }
