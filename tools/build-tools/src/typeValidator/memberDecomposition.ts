@@ -4,10 +4,12 @@
  */
 
 import {
+    CallSignatureDeclaration,
     ClassDeclaration,
     ConstructorDeclaration,
     DiagnosticCategory,
     GetAccessorDeclaration,
+    IndexSignatureDeclaration,
     MethodDeclaration,
     MethodSignature,
     ModifierableNode,
@@ -17,6 +19,7 @@ import {
     PropertySignature,
     Scope,
     SetAccessorDeclaration,
+    Type,
     TypeChecker,
 } from "ts-morph";
 import { decomposeType, decomposeTypes, GenericsInfo, typeToString } from "./typeDecomposition";
@@ -46,6 +49,65 @@ function getModifiersAndPrefix(member: ModifierableNode): [string, string] {
     return [modifiers, propNamePrefix];
 }
 
+function decomposeAndMerge(
+    typeChecker: TypeChecker,
+    requiredGenerics: GenericsInfo,
+    replacedTypes: Set<string>,
+    type: Type,
+): string {
+    const result = decomposeType(typeChecker, type);
+    mergeIntoSet(replacedTypes, result.replacedTypes);
+    requiredGenerics.merge(result.requiredGenerics);
+    return result.typeAsString;
+}
+
+/**
+ * E.g. (event: "error", listener: (message: any) => void);
+ * CallSignature:
+ *      TypeParameters_opt ( ParameterList_opt ) TypeAnnotation_opt
+ */
+ export function getCallSignatureReplacement(
+    typeChecker: TypeChecker,
+    requiredGenerics: GenericsInfo,
+    replacedTypes: Set<string>,
+    member: CallSignatureDeclaration,
+): string {
+    // Handle type params/generics
+    let typeArgsString = "";
+    if (member.getTypeParameters().length > 0) {
+        const typeArgsResult = decomposeTypes(
+            typeChecker,
+            member.getTypeParameters().map((tp) => tp.getType()),
+            ", ",
+        );
+        mergeIntoSet(replacedTypes, typeArgsResult.replacedTypes);
+        requiredGenerics.merge(typeArgsResult.requiredGenerics);
+        typeArgsString = `<${typeArgsResult.typeAsString}>`;
+    }
+
+    // Handle parameters
+    let paramsString = "";
+    paramsString = member.getParameters().map((p) => {
+        const subResultType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, p.getType());
+
+        // Convert initializers to q tokens
+        const qToken = p.hasInitializer() ? "?" : "";
+
+        return `${p.getName()}${qToken}: ${subResultType}`;
+    }).join(", ");
+
+    // Handle return type
+    const returnType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, member.getReturnType());
+
+    const call = `${typeArgsString}(${paramsString}): ${returnType};`;
+
+    return call;
+}
+
+/**
+ * MethodSignature:
+ *      PropertyName ?_opt CallSignature
+ */
 export function getMethodReplacement(
     typeChecker: TypeChecker,
     requiredGenerics: GenericsInfo,
@@ -75,25 +137,21 @@ export function getMethodReplacement(
     // Handle parameters
     let paramsString = "";
     paramsString = member.getParameters().map((p) => {
-        const subResult = decomposeType(typeChecker, p.getType());
-        mergeIntoSet(replacedTypes, subResult.replacedTypes);
-        requiredGenerics.merge(subResult.requiredGenerics);
+        const subResultType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, p.getType());
 
         // Convert initializers to q tokens
         const qToken = p.hasInitializer() ? "?" : "";
 
-        return `${p.getName()}${qToken}: ${subResult.typeAsString}`;
+        return `${p.getName()}${qToken}: ${subResultType}`;
     }).join(", ");
 
     // Handle return type
-    const returnResult = decomposeType(typeChecker, member.getReturnType());
-    mergeIntoSet(replacedTypes, returnResult.replacedTypes);
-    requiredGenerics.merge(returnResult.requiredGenerics);
+    const returnType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, member.getReturnType());
 
-    // Other stuff
+    // Q token
     const qToken = member.hasQuestionToken() ? "?" : "";
 
-    const method = `${modifiers} ${propNamePrefix}${member.getName()}${qToken}${typeArgsString}(${paramsString}): ${returnResult.typeAsString};`;
+    const method = `${modifiers} ${propNamePrefix}${member.getName()}${qToken}${typeArgsString}(${paramsString}): ${returnType};`;
 
     return method;
 }
@@ -107,11 +165,9 @@ export function getPropertyReplacement(
     // Handle modifiers
     const [modifiers, propNamePrefix] = getModifiersAndPrefix(member);
 
-    const result = decomposeType(typeChecker, member.getType());
-    mergeIntoSet(replacedTypes, result.replacedTypes);
-    requiredGenerics.merge(result.requiredGenerics);
+    const propertyType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, member.getType());
     const qToken = member.hasQuestionToken() ? "?" : "";
-    const property = `${modifiers} ${propNamePrefix}${member.getName()}${qToken}: ${result.typeAsString};`;
+    const property = `${modifiers} ${propNamePrefix}${member.getName()}${qToken}: ${propertyType};`;
 
     return property;
 }
@@ -130,9 +186,7 @@ export function getConstructorReplacements(
     // Handle parameters
     let paramsString = "";
     paramsString = member.getParameters().map((p) => {
-        const subResult = decomposeType(typeChecker, p.getType());
-        mergeIntoSet(replacedTypes, subResult.replacedTypes);
-        requiredGenerics.merge(subResult.requiredGenerics);
+        const subResultType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, p.getType());
 
         // Handle inline property declarations
         const paramModifiers = p.getModifiers().map((val) => val.getText());
@@ -144,11 +198,11 @@ export function getConstructorReplacements(
                 prefix += "__protected__";
             }
             const qToken = p.hasQuestionToken() ? "?" : "";
-            const ctorProperty = `${paramModifiers.join(" ")} ${prefix}${p.getName()}${qToken}: ${subResult.typeAsString};`;
+            const ctorProperty = `${paramModifiers.join(" ")} ${prefix}${p.getName()}${qToken}: ${subResultType};`;
             replacedMembers.push(ctorProperty);
         }
 
-        return `${p.getName()}: ${subResult.typeAsString}`;
+        return `${p.getName()}: ${subResultType}`;
     }).join(", ");
 
     const method = `${modifiers} __ctorDecl__(${paramsString}): void;`;
@@ -167,10 +221,8 @@ export function getGetterReplacement(
     const [modifiers, propNamePrefix] = getModifiersAndPrefix(member);
 
     // Handle return type
-    const result = decomposeType(typeChecker, member.getReturnType());
-    mergeIntoSet(replacedTypes, result.replacedTypes);
-    requiredGenerics.merge(result.requiredGenerics);
-    const getter = `${modifiers} get ${propNamePrefix}${member.getName()}(): ${result.typeAsString}`;
+    const returnType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, member.getReturnType());
+    const getter = `${modifiers} get ${propNamePrefix}${member.getName()}(): ${returnType}`;
 
     return getter;
 }
@@ -186,10 +238,35 @@ export function getSetterReplacement(
 
     // setter delcaration must always has exactly one param
     const param = member.getParameters()[0];
-    const paramResult = decomposeType(typeChecker, param.getType());
-    mergeIntoSet(replacedTypes, paramResult.replacedTypes);
-    requiredGenerics.merge(paramResult.requiredGenerics);
-    const setter = `${modifiers} set ${propNamePrefix}${member.getName()}(${param.getName()}: ${paramResult.typeAsString});`;
+    const paramType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, param.getType());
+    const setter = `${modifiers} set ${propNamePrefix}${member.getName()}(${param.getName()}: ${paramType});`;
 
     return setter;
+}
+
+/**
+ * E.g. [index: string]: string;
+ */
+export function getIndexSignatureReplacement(
+    typeChecker: TypeChecker,
+    requiredGenerics: GenericsInfo,
+    replacedTypes: Set<string>,
+    member: IndexSignatureDeclaration,
+): string {
+    // Handle modifiers if applicable
+    // No prefixes used for index signatures
+    let modifiers = "";
+    if (Node.isModifierableNode(member)) {
+        [modifiers] = getModifiersAndPrefix(member);
+    }
+
+    // Handle key type (it's always string or number for index signatures)
+    const keyTypeString = typeToString(typeChecker, member.getKeyType());
+
+    // Handle return type
+    const returnType = decomposeAndMerge(typeChecker, requiredGenerics, replacedTypes, member.getReturnType());
+
+    const index = `${modifiers} [${member.getKeyName()}: ${keyTypeString}]: ${returnType};`;
+
+    return index;
 }

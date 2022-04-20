@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ClassDeclaration, DiagnosticCategory, Node, Project, Scope, TypeChecker } from "ts-morph";
+import { DiagnosticCategory, InterfaceDeclaration, Node, Project, TypeChecker } from "ts-morph";
 import {
-    getConstructorReplacements,
-    getGetterReplacement,
+    getCallSignatureReplacement,
+    getIndexSignatureReplacement,
     getMethodReplacement,
     getPropertyReplacement,
-    getSetterReplacement,
 } from "./memberDecomposition";
 import { decomposeType, GenericsInfo, typeToString } from "./typeDecomposition";
 import { BreakingIncrement, IValidator, log } from "./validatorUtils";
@@ -18,7 +17,7 @@ import { BreakingIncrement, IValidator, log } from "./validatorUtils";
  * Total result of a class decomposition which may be reconstructed into an equivalent class
  * declaration to bypass issues with normal class type comparisions
  */
-interface ClassData {
+interface InterfaceData {
     readonly name: string;
     readonly typeParameters: string[];
     readonly properties: string[];
@@ -30,37 +29,39 @@ function mergeIntoSet<T>(into: Set<T>, from: Set<T>) {
     from.forEach((v) => into.add(v));
 }
 
-export class ClassValidator implements IValidator {
-    private oldTypeData?: ClassData;
-    private newTypeData?: ClassData;
+/**
+ * A decent chunk of this is similar/identical to ClassValidator and could maybe be refactored
+ */
+export class InterfaceValidator implements IValidator {
+    private oldTypeData?: InterfaceData;
+    private newTypeData?: InterfaceData;
 
     public decomposeDeclarations(
         oldTypeChecker: TypeChecker,
-        oldDecl: ClassDeclaration,
+        oldDecl: InterfaceDeclaration,
         newTypeChecker: TypeChecker,
-        newDecl: ClassDeclaration,
+        newDecl: InterfaceDeclaration,
     ) {
         this.oldTypeData = this.decompose(oldTypeChecker, oldDecl);
         this.newTypeData = this.decompose(newTypeChecker, newDecl);
     }
 
     /**
-     * Break down a normal class declaration into all its parts to facilitate type comparision
+     * Break down a normal interface declaration into all its parts to facilitate type comparision
      * - Remove external type dependencies to examine separately
-     * - Convert static properties into instance properties so they affect type compatibility
+     * - Do not consider declaration merging
      *
-     * TODO: inline object types e.g. Promise<{a: ICustomInterface, b: CustomClass}>
-     * TODO: conditionals, extensions on generics
-     * TODO: access modifier changes (e.g. making readonly)
-     * TODO: type arguments on heritage types
-     * TODO: handle abstract classes
-     * TODO: handle method overloads
-     * TODO: handle generators, decorators?
+     * - Do not consider unusual interactions with inheritance.  E.g. InterfaceA extends ClassA, and
+     *   ClassB implements InterfaceA but does not extend ClassA.  If a private property myPrivateProp
+     *   is added on ClassA, ClassB will no longer be valid because it will be either missing a
+     *   declaration for myPrivateProp or its declaration of myPrivateProp will be considered separate
+     *   from that of ClassA's because it does not directly extend ClassA.
+     *
      * @param typeChecker - The TypeChecker object from the node's TS project for getting type names
-     * @param node - The class declaration node to decompose
-     * @returns - ClassData for the decomposed class declaration
+     * @param node - The interface declaration node to decompose
+     * @returns - InterfaceData for the decomposed interface declaration
      */
-    private decompose(typeChecker: TypeChecker, node: ClassDeclaration): ClassData {
+    private decompose(typeChecker: TypeChecker, node: InterfaceDeclaration): InterfaceData {
         const replacedTypes = new Set<string>();
         const replacedMembers: string[] = [];
         const requiredGenerics = new GenericsInfo();
@@ -72,32 +73,18 @@ export class ClassValidator implements IValidator {
 
         // Convert extensions and implementations to properties for comparison because they
         // can't be replaced as string literal types
-        const extendsExpr = node.getExtends();
-        if (extendsExpr !== undefined) {
+        // Interface declarations can have any number of extends expressions unlike classes
+        const extendsExprs = node.getExtends();
+        for (const extendsExpr of extendsExprs) {
             const result = decomposeType(typeChecker, extendsExpr.getType());
             mergeIntoSet(replacedTypes, result.replacedTypes);
             requiredGenerics.merge(result.requiredGenerics);
-            // replace characters that can't be used in a method name e.g. brackets from type params
-            // any types affected are handled earlier in the decomposeType call
             const typeName = typeToString(typeChecker, extendsExpr.getType()).replace(/[^\w]/g, "_");
             replacedMembers.push(`__extends__${typeName}: ${result.typeAsString};`);
         }
-        node.getImplements().forEach((ex) => {
-            const result = decomposeType(typeChecker, ex.getType());
-            mergeIntoSet(replacedTypes, result.replacedTypes);
-            requiredGenerics.merge(result.requiredGenerics);
-            const typeName = typeToString(typeChecker, ex.getType()).replace(/[^\w]/g, "_");
-            replacedMembers.push(`__implements__${typeName}: ${result.typeAsString};`);
-        });
 
         for (const member of node.getMembers()) {
-            // Pass over Private properties because they don't affect the public API
-            const modifierList = member.getModifiers().map((val) => val.getText());
-            if (modifierList.indexOf(Scope.Private) != -1) {
-                continue;
-            }
-
-            if (Node.isMethodDeclaration(member)) {
+            if (Node.isMethodSignature(member)) {
                 const replacement = getMethodReplacement(
                     typeChecker,
                     requiredGenerics,
@@ -105,15 +92,7 @@ export class ClassValidator implements IValidator {
                     member,
                 );
                 replacedMembers.push(replacement);
-            } else if (Node.isConstructorDeclaration(member)) {
-                const replacements = getConstructorReplacements(
-                    typeChecker,
-                    requiredGenerics,
-                    replacedTypes,
-                    member,
-                );
-                replacedMembers.push(...replacements);
-            } else if (Node.isPropertyDeclaration(member)) {
+            } else if (Node.isPropertySignature(member)) {
                 const replacement = getPropertyReplacement(
                     typeChecker,
                     requiredGenerics,
@@ -121,23 +100,29 @@ export class ClassValidator implements IValidator {
                     member,
                 );
                 replacedMembers.push(replacement);
-            } else if (Node.isGetAccessorDeclaration(member)) {
-                const replacement = getGetterReplacement(
+            } else if (Node.isCallSignatureDeclaration(member)) {
+                const replacement = getCallSignatureReplacement(
                     typeChecker,
                     requiredGenerics,
                     replacedTypes,
                     member,
                 );
                 replacedMembers.push(replacement);
-            } else if (Node.isSetAccessorDeclaration(member)) {
-                const replacement = getSetterReplacement(
+            } else if (Node.isIndexSignatureDeclaration(member)) {
+                const replacement = getIndexSignatureReplacement(
                     typeChecker,
                     requiredGenerics,
                     replacedTypes,
                     member,
                 );
                 replacedMembers.push(replacement);
+            } else if (Node.isConstructSignatureDeclaration(member)) {
+                throw new Error("interface construct signature declarations not implemented");
+            } else {
+                throw new Error("unhandled member declaration type");
             }
+            // TODO: get/set accessor declarations are unhandled here (they currently do not
+            // show up in the member enumeration)
         }
 
         return {
@@ -169,9 +154,9 @@ export class ClassValidator implements IValidator {
         }
 
         // Check for major increment through transitivity then bivariant assignment
-        // Type decomposition will have converted the class into a form where this is
+        // Type decomposition will have converted the interface into a form where this is
         // valid for finding major breaking changes
-        const testFile = this.buildClassTestFileMajor(
+        const testFile = this.buildTestFileMajor(
                 `old${this.oldTypeData.name}`,
                 this.oldTypeData,
                 `new${this.newTypeData.name}`,
@@ -205,7 +190,7 @@ export class ClassValidator implements IValidator {
         }
 
         // check for minor increment by comparing exact types
-        const testFile = this.buildClassTestFileMinor(
+        const testFile = this.buildTestFileMinor(
             `old${this.oldTypeData.name}`,
             this.oldTypeData,
             `new${this.newTypeData.name}`,
@@ -233,16 +218,16 @@ export class ClassValidator implements IValidator {
         return BreakingIncrement.none;
     }
 
-    private buildClassTestFileMajor(
-        oldClassName: string,
-        oldClassData: ClassData,
-        newClassName: string,
-        newClassData: ClassData,
+    private buildTestFileMajor(
+        oldName: string,
+        oldData: InterfaceData,
+        newName: string,
+        newData: InterfaceData,
     ): string {
         const fileLines: string[] = [];
 
-        const requiredGenerics = new GenericsInfo(oldClassData.requiredGenerics);
-        requiredGenerics.merge(newClassData.requiredGenerics);
+        const requiredGenerics = new GenericsInfo(oldData.requiredGenerics);
+        requiredGenerics.merge(newData.requiredGenerics);
         for (const [generic, paramCount] of requiredGenerics) {
             const numberArray = Array.from(Array(paramCount).keys());
             const typeParams = numberArray.map((n) => `T${n} = any`).join(", ");
@@ -252,22 +237,22 @@ export class ClassValidator implements IValidator {
             fileLines.push(`};`);
         }
 
-        let oldTypeParameters = oldClassData.typeParameters.join(", ");
+        let oldTypeParameters = oldData.typeParameters.join(", ");
         oldTypeParameters = oldTypeParameters === "" ? oldTypeParameters : `<${oldTypeParameters}>`;
-        fileLines.push(`declare class ${oldClassName}${oldTypeParameters} {`);
-        fileLines.push(...oldClassData.properties);
+        fileLines.push(`declare class ${oldName}${oldTypeParameters} {`);
+        fileLines.push(...oldData.properties);
         fileLines.push("}");
 
-        let newTypeParameters = newClassData.typeParameters.join(", ");
+        let newTypeParameters = newData.typeParameters.join(", ");
         newTypeParameters = newTypeParameters === "" ? newTypeParameters : `<${newTypeParameters}>`;
-        fileLines.push(`declare class ${newClassName}${newTypeParameters} {`);
-        fileLines.push(...newClassData.properties);
+        fileLines.push(`declare class ${newName}${newTypeParameters} {`);
+        fileLines.push(...newData.properties);
         fileLines.push("}");
 
-        const oldTypeArgs = oldClassData.typeParameters.map(() => "any").join(", ");
-        const oldClassType = oldTypeArgs === "" ? oldClassName : `${oldClassName}<${oldTypeArgs}>`;
-        const newTypeArgs = newClassData.typeParameters.map(() => "any").join(", ");
-        const newClassType = newTypeArgs === "" ? newClassName : `${newClassName}<${newTypeArgs}>`;
+        const oldTypeArgs = oldData.typeParameters.map(() => "any").join(", ");
+        const oldClassType = oldTypeArgs === "" ? oldName : `${oldName}<${oldTypeArgs}>`;
+        const newTypeArgs = newData.typeParameters.map(() => "any").join(", ");
+        const newClassType = newTypeArgs === "" ? newName : `${newName}<${newTypeArgs}>`;
         fileLines.push(`const oldToNew: ${newClassType} = undefined as any as ${oldClassType}`);
         fileLines.push(`const newToOld: ${oldClassType} = undefined as any as ${newClassType}`);
 
@@ -275,11 +260,11 @@ export class ClassValidator implements IValidator {
         return declaration;
     }
 
-    private buildClassTestFileMinor(
-        oldClassName: string,
-        oldClassData: ClassData,
-        newClassName: string,
-        newClassData: ClassData,
+    private buildTestFileMinor(
+        oldName: string,
+        oldData: InterfaceData,
+        newName: string,
+        newData: InterfaceData,
     ): string {
         const fileLines: string[] = [];
 
@@ -287,8 +272,8 @@ export class ClassValidator implements IValidator {
         fileLines.push(`    (<T>() => (T extends Y ? 1 : 2)) ? true : false;`);
         fileLines.push(`let trueVal: true = true;`);
 
-        const requiredGenerics = new GenericsInfo(oldClassData.requiredGenerics);
-        requiredGenerics.merge(newClassData.requiredGenerics);
+        const requiredGenerics = new GenericsInfo(oldData.requiredGenerics);
+        requiredGenerics.merge(newData.requiredGenerics);
         for (const [generic, paramCount] of requiredGenerics) {
             const numberArray = Array.from(Array(paramCount).keys());
             const typeParams = numberArray.map((n) => `T${n} = any`).join(", ");
@@ -298,22 +283,22 @@ export class ClassValidator implements IValidator {
             fileLines.push(`};`);
         }
 
-        let oldTypeParameters = oldClassData.typeParameters.join(", ");
+        let oldTypeParameters = oldData.typeParameters.join(", ");
         oldTypeParameters = oldTypeParameters === "" ? oldTypeParameters : `<${oldTypeParameters}>`;
-        fileLines.push(`declare class ${oldClassName}${oldTypeParameters} {`);
-        fileLines.push(...oldClassData.properties);
+        fileLines.push(`declare class ${oldName}${oldTypeParameters} {`);
+        fileLines.push(...oldData.properties);
         fileLines.push("}");
 
-        let newTypeParameters = newClassData.typeParameters.join(", ");
+        let newTypeParameters = newData.typeParameters.join(", ");
         newTypeParameters = newTypeParameters === "" ? newTypeParameters : `<${newTypeParameters}>`;
-        fileLines.push(`declare class ${newClassName}${newTypeParameters} {`);
-        fileLines.push(...newClassData.properties);
+        fileLines.push(`declare class ${newName}${newTypeParameters} {`);
+        fileLines.push(...newData.properties);
         fileLines.push("}");
 
-        const oldTypeArgs = oldClassData.typeParameters.map(() => "any").join(", ");
-        const oldClassType = oldTypeArgs === "" ? oldClassName : `${oldClassName}<${oldTypeArgs}>`;
-        const newTypeArgs = newClassData.typeParameters.map(() => "any").join(", ");
-        const newClassType = newTypeArgs === "" ? newClassName : `${newClassName}<${newTypeArgs}>`;
+        const oldTypeArgs = oldData.typeParameters.map(() => "any").join(", ");
+        const oldClassType = oldTypeArgs === "" ? oldName : `${oldName}<${oldTypeArgs}>`;
+        const newTypeArgs = newData.typeParameters.map(() => "any").join(", ");
+        const newClassType = newTypeArgs === "" ? newName : `${newName}<${newTypeArgs}>`;
         fileLines.push(`trueVal = undefined as any as Equals<${newClassType}, ${oldClassType}>;`);
 
         const declaration = fileLines.join("\n");

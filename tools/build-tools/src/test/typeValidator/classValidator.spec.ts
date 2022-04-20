@@ -209,8 +209,8 @@ describe("Class", () => {
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
-        // adding a new method parameter is a breaking change
-        it("added a new method param", () => {
+        // adding a new required method parameter is a breaking change
+        it("added a new required method param", () => {
             const classOld =
             `
             export class TestClass {
@@ -467,14 +467,14 @@ describe("Class", () => {
             const classOld =
             `
             interface TestInterface1 {}
-            interface TestInterface12 {}
+            interface TestInterface2 {}
             export class TestClass implements TestInterface1, TestInterface2 {}
             `;
 
             const classNew =
             `
             interface TestInterface1 {}
-            interface TestInterface12 {}
+            interface TestInterface2 {}
             export class TestClass implements TestInterface2, TestInterface1 {}
             `;
 
