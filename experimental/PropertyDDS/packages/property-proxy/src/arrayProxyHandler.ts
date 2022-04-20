@@ -68,7 +68,7 @@ const setTrapSpecialCases = getTrapSpecialCases.concat(["fill", "sort"]);
  * must be used in conjunction with this class.
  * @hidden
  */
-export const arrayProxyHandler = {
+export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
     /**
      * The get trap that handles access to properties and functions.
      * @param target The {@link ComponentArray} the Proxy handles.
@@ -155,9 +155,23 @@ export const arrayProxyHandler = {
      * @param key The name of the property/function that is to be accessed.
      * @return if the key is part of the {@link external:ArrayProperty ArrayProperty}, otherwise false.
      */
-    has: (target: ComponentArray, key: string | number | typeof proxySymbol) =>
-        key === "swap" || key in [] || key === proxySymbol ||
-        (key >= 0 && key < target.getProperty().getLength()),
+    // Type safety note:
+    // Typescript is incorrectly typing the ProxyHandler<ComponentArray>.has to take a key of `string | symbol`.
+    // This is incorrect since numbers are allowed as keys.
+    // This function thus takes PropertyKey to allow numbers despite
+    // ProxyHandler<ComponentArray>.has's type claiming thats unneeded.
+    // This code is expected to return true for numbers which index an existing value, and false for those which do not.
+    // This is how "has" behaves for javascript arrays as well.
+    has: (target: ComponentArray, key: PropertyKey) => {
+        switch (typeof key) {
+            case "number":
+                return Number.isInteger(key) && key >= 0 && key < target.getProperty().getLength();
+            case "string":
+                return key === "swap" || key in [];
+            default:
+                return key === proxySymbol;
+        }
+    },
 
     /**
      * Trap for the Object.keys().
@@ -177,7 +191,12 @@ export const arrayProxyHandler = {
      * @param value The value to be set.
      * @return Returns a boolean.
      */
-    set(target: ComponentArray, key: string | number, value: any) {
+    // Type safety note:
+    // Typescript is incorrectly typing the ProxyHandler<ComponentArray>.set to take a key of `string | symbol`.
+    // This is incorrect since numbers are allowed as keys.
+    // This function thus takes PropertyKey to allow numbers despite
+    // ProxyHandler<ComponentArray>.set's type claiming thats unneeded.
+    set(target: ComponentArray, key: PropertyKey, value: any) {
         // process key for cases like "*1" 1 "string_key", "*string_key"
         let processed_key = key;
         const asteriskFound = Utilities.containsAsterisk(processed_key);
@@ -192,7 +211,7 @@ export const arrayProxyHandler = {
             if (processed_key === "length") {
                 return setLength(target, Number(value));
             }
-        } else {
+        } else if (typeof processed_key === "number") {
             if (!isNaN(processed_key) && processed_key >= 0) {
                 const property = target.getProperty();
                 const isReferenceArray = PropertyFactory.instanceOf(property, "Reference", "array");

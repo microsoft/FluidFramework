@@ -646,7 +646,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         parentProp.setValues({[rowData.name]: newPath});
         try {
           (parentProp as unknown as ReferenceMapProperty).isReferenceValid(rowData.name);
-        } catch (e) {
+        } catch (e: any) {
           // if maximum call stack size is exceeded, user probably created cyclic reference
           // we can't delete cyclic references so we need set reference path to some other value
           if (e.message.includes("Maximum call stack size exceeded")) {
@@ -660,7 +660,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         unresolvedProperty.setValue(newPath);
         try {
           unresolvedProperty.isReferenceValid();
-        } catch (e) {
+        } catch (e: any) {
           if (e.message.includes("Maximum call stack size exceeded")) {
             unresolvedProperty.setValue("Could not resolve the reference");
           }
