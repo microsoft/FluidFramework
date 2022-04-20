@@ -8,6 +8,15 @@ It is instead concerned with providing an abstraction for what it means to edit 
 The model only concerns itself with the editing of a single field.
 More complex structures (notably, trees) can be constructed by allowing the contents of the field to represent more fields.
 
+## Summary
+
+Previously we were trying to build the notion of tree locations (anchors) on top of nodes that are moving and popping in/out of existence.
+
+It's simpler to start with a foundation of tree locations (cells) that never move/disappear, and then layer the idea of moveable/removable nodes on top of that.
+
+The impedance mismatch between our internal model the semantics desired by users was making things unnecessarily complicated: forcing the internal model to be excessively general, and then requiring higher layers to compensate.
+The primary example being the use of constraints and/or hierarchical edits to constrain the semantics of insert/remove to fit the desired semantics of setting a fixed-sized field.
+
 ## Motivation
 
 We present here an example that portrays the challenges encountered by editing models based on insertion and removal.
@@ -74,6 +83,7 @@ The contents of a (full) cell may be arbitrarily large or small (though a specif
 
 > Note: the model does not prescribe for the cells to be explicitly reified.
 > While some cells may be represented at runtime some of the time, they are primarily a conceptual artefact.
+> An application would not have explicit access to the cell, and is likely not aware of the concept in the first place.
 
 A cell may be annotated with forwarding information that specifies a target destination cell.
 A single cell may bear any number of such forwarding annotations.
