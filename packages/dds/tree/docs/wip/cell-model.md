@@ -20,7 +20,7 @@ Consider a collaborative editing session between three participants (all acting 
 
 3. User 3: insert X after B (local state: [A, B, X, C, D])
 
-4. User 1: undo the removal of A, B, C (local state: [A, B, C])
+4. User 1: undo the removal of B, C (local state: [A, B, C, D])
 
 The outcome we expect from such a session is [A, B, X, C, Y, D].
 
@@ -32,7 +32,7 @@ Traditional models based on insertion and removal may fail to produce this outco
 
 The first failure stems from the fact that, as the insertion of X and Y are made relative to removed content, information is lost as to their precise insertion point.
 
-The second failure stems from the fact that the undo of the removal of A, B, C by user 1 is modeled as an insertion.
+The second failure stems from the fact that the undo of the removal of B, C by user 1 is modeled as an insertion.
 
 This second failure can also occur when elements are moved-out and the move is then undone (and the undo is modeled as a move in the opposite direction).
 
@@ -53,7 +53,7 @@ These additions, while effective, have the following drawbacks:
   
   - It seems like it should be possible to support a "replace" operation that is similar to revive but with new elements instead of resurrecting removed ones, but that too needs to be added as separate operation)
 
-- They do not alleviate the complexity of modeling an optional value field.
+- They do not alleviate the complexity of modeling an optional field.
 
 The cell model can be thought of as a refactoring of both the traditional editing primitives and the above additions such that the listed drawbacks are avoided.
 
@@ -106,20 +106,25 @@ This reflects the fact that a client may perform an edit relative to some conten
 The model can be used to describe low-level edits that a client may perform on a field in a collaborative environment and by so doing imply some of their merge semantics.
 
 We provide here two lists of such low-level edits, one for fields whose number of cells is fixed, and one for fields whose number of cells is dynamic.
+
+Note that the fixed and dynamic characteristics here apply only to the number of cells, not to the number of elements.
+For example, an optional field, which can contain zero or one element, is a fixed-sized field composed of exactly one cell.
+That cell exists even when the field is not populated with an element. 
+
 The dichotomy has no basis in the cell model but reflects what we think is a sensible separation and matches industry-standard patterns of editing.
 
 ### Edits on Dynamically-Sized Fields
 
-Dynamically-sized fields can be thought of as having list-like behavior: elements can be added anywhere in the list and removed at will which makes the list dynamically grow and shrink.
+Dynamically-sized fields can be thought of as having list-like behavior: elements can be added anywhere in the list and removed at will which makes the list contents dynamically grow and shrink (while the number of cells in the list only grows).
 Dynamically-sized fields typically start out empty of any cell.
 
-The low-level edits that such fields might support can decomposed as follows:
+The low-level edits that such fields might support can be decomposed as follows:
 
 - Insert: allocate and fill a cell
 
 - Delete/Remove: clear a cell
 
-- Revive: fill a (cleared) cell with the contents it 
+- Revive: fill a (cleared) cell with the contents it contained before
 
 - Replace: fill a (filled) cell
 
@@ -137,7 +142,7 @@ The low-level edits that such fields might support can decomposed as follows:
 
 ### Edits on Fixed-Sized Fields
 
-Fixed-sized fields can be thought of as single-value fields, optional fields, values in a map, fixed-sized arrays (not to be confused with JavaScript arrays which behave like dynamically-sized lists), and tuples.
+Fixed-sized fields can be used to model required (i.e., unary) fields, optional fields, fixed-sized arrays (not to be confused with JavaScript arrays which behave like dynamically-sized lists), and tuples.
 Fixed-sized fields are populated with their cells (and possibly content) from the time they are created.
 
 The low-level edits that such fields might support can be decomposed as follows:
@@ -157,6 +162,8 @@ Note that no further cell allocations are made after the field is created.
 ### Data Model
 
 The SharedTree data model should differentiate between fixed-sized and dynamically-sized fields.
+Users of SharedTree, when writing a schema, implicitly choose whether to use fixed-size or dynamically-sized field.
+This is not a new choice (they're still choosing from the same set of options) but their choice is now reflected at the data model level.
 
 ### Editing API
 
@@ -164,11 +171,16 @@ New editing operations need to be exposed for fixed-sized fields.
 
 The editing operations offered by SharedTree, even for unschematized data, need not be the ones prescribed by the model.
 Instead, we see value in offering two sets of higher-level operations: one for fixed-sized fields and one for dynamically-sized fields.
-The impact of this is two-fold:
+This allows the editing API to be more specialized for each kind of field, which in turn allows the API to be more expressive and more familiar.
 
-- It makes the editing API more expressive and more familiar.
 
-- It allows the merge resolution logic to exclude the possibility of having to merge operations from both sets within a single field (outside of schema migration scenarios).
+### Merge Semantics
+
+The merge resolution logic can now exclude the possibility of having to merge operations from both sets within a single field (outside of schema migration scenarios).
+
+Since the merge resolution logic is specialized to each field kind, merge resolution logic becomes extensible: we can introduce new kind of fields with associated merge logic.
+This allows us to support new kinds of fields in the future, but more importantly it means that we can migrate from a less desirable set of merge semantics to a more desirable one.
+This dramatically reduces the negative impact of starting out is suboptimal the merge semantics.
 
 ### Changeset Format
 
