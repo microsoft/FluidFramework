@@ -781,8 +781,7 @@ export class Client {
     public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
     public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
     public applyStashedOp(op: IMergeTreeOp) {
-        const opType = op.type;
-        switch (opType) {
+        switch (op.type) {
             case MergeTreeDeltaType.INSERT:
                 this.applyInsertOp({ op });
                 return this.peekPendingSegmentGroups();
@@ -795,7 +794,7 @@ export class Client {
             case MergeTreeDeltaType.GROUP:
                 return op.ops.map((o) => this.applyStashedOp(o));
             default:
-                unreachableCase(opType, "unrecognized op type")
+                unreachableCase(op, "unrecognized op type");
         }
     }
 
