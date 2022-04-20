@@ -339,7 +339,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             s.insertText(s.getLength(), " world!");
         });
 
-        // load container with pending ops, which should resend the op not sent by previous container
+        // load with pending ops, which it should not resend because they were already sent successfully
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
@@ -374,7 +374,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
         string1.insertText(0, "goodbye cruel world");
 
-        // load container with pending ops, which should resend the op not sent by previous container
+        // load with pending ops, which it should not resend because they were already sent successfully
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
@@ -409,7 +409,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         // change annotation, which should not be overwritten by successful stashed ops
         string1.annotateRange(0, string1.getLength(), { bold: false });
 
-        // load container with pending ops, which should resend the op not sent by previous container
         const container2 = await loader.resolve({ url }, pendingOps);
         const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
         const string2 = await dataStore2.getSharedObject<SharedString>(stringId);

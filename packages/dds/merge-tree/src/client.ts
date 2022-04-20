@@ -11,7 +11,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Trace } from "@fluidframework/common-utils";
+import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
@@ -781,7 +781,8 @@ export class Client {
     public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
     public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
     public applyStashedOp(op: IMergeTreeOp) {
-        switch (op.type) {
+        const opType = op.type;
+        switch (opType) {
             case MergeTreeDeltaType.INSERT:
                 this.applyInsertOp({ op });
                 return this.peekPendingSegmentGroups();
@@ -794,7 +795,7 @@ export class Client {
             case MergeTreeDeltaType.GROUP:
                 return op.ops.map((o) => this.applyStashedOp(o));
             default:
-                break;
+                unreachableCase(opType, "unrecognized op type")
         }
     }
 
