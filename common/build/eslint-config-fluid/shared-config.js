@@ -94,7 +94,10 @@ module.exports = {
         ],
 
         // Prefer `interface` over `type` when defining types.
-        "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+        "@typescript-eslint/consistent-type-definitions": [
+            "error",
+            "interface",
+        ],
 
         // Prefer type-only imports where possible,
         "@typescript-eslint/consistent-type-imports": [
@@ -312,6 +315,7 @@ module.exports = {
         // Enforce template literal expressions to be of string type.
         "@typescript-eslint/restrict-template-expressions": "warn",
 
+        // Enforces consistent use of semicolons after statements.
         "@typescript-eslint/semi": [
             "error",
             "always"
