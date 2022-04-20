@@ -131,7 +131,7 @@ module.exports = {
 
         // Requires explicit typing for anything exported from a module. Explicit types for function return values and
         // arguments makes it clear to any calling code what is the module boundary's input and output.
-        "@typescript-eslint/explicit-module-boundary-types": "error",
+        "@typescript-eslint/explicit-module-boundary-types": "warn",
 
         // Enforces no space between functions and their invocation.
         "@typescript-eslint/func-call-spacing": "error",
@@ -225,7 +225,7 @@ module.exports = {
         // Prohibits using a type assertion that does not change the type of an expression.
         "@typescript-eslint/no-unnecessary-type-assertion": "error",
 
-        // Disallows calling a function with an any-typed value.
+        // Disallows using untyped values as arguments.
         "@typescript-eslint/no-unsafe-argument": "warn",
 
         // Disallows assigning any to a variable, and assigning any[] to an array destructuring. Assigning an
@@ -711,6 +711,7 @@ module.exports = {
                 "@typescript-eslint/consistent-type-imports": "off",
                 "@typescript-eslint/no-explicit-any": "off",
                 "@typescript-eslint/no-unsafe-argument": "off",
+                "max-lines": "off",
             }
         },
         {

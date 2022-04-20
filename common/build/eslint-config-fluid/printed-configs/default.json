@@ -107,7 +107,7 @@
             }
         ],
         "@typescript-eslint/explicit-module-boundary-types": [
-            "error"
+            "warn"
         ],
         "@typescript-eslint/func-call-spacing": [
             "error"
