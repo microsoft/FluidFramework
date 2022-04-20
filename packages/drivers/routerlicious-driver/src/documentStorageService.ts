@@ -37,15 +37,18 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         policies: IDocumentStorageServicePolicies,
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTreeVersion>): IDocumentStorageService {
+        snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
+        noCacheGitManager?: GitManager): IDocumentStorageService {
         const storageService = driverPolicies?.enableWholeSummaryUpload ?
             new WholeSummaryDocumentStorageService(
                 id,
                 manager,
                 logger,
                 policies,
+                driverPolicies,
                 blobCache,
                 snapshotTreeCache,
+                noCacheGitManager,
             ) :
             new ShreddedSummaryDocumentStorageService(
                 id,
@@ -70,7 +73,8 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         policies: IDocumentStorageServicePolicies = {},
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTreeVersion>) {
+        snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
+        public noCacheGitManager?: GitManager) {
         super(DocumentStorageService.loadInternalDocumentStorageService(
             id,
             manager,
@@ -79,6 +83,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
             driverPolicies,
             blobCache,
             snapshotTreeCache,
+            noCacheGitManager,
         ));
     }
 
