@@ -185,7 +185,7 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @public (undocumented)
+// @public
 export interface IPendingContainerState {
     // (undocumented)
     clientId?: string;

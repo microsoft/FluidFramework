@@ -21,6 +21,7 @@ import {
     IProvideFluidCodeDetailsComparer,
     ICodeDetailsLoader,
     IFluidModuleWithDetails,
+    ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions";
 import {
     IRequest,
@@ -286,10 +287,9 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
-    public notifyAttaching(snapshot: ISnapshotTree) {
+    public notifyAttaching(snapshot: ISnapshotTreeWithBlobContents) {
         this._baseSnapshot = snapshot;
-        // TODO: this will require an API change to remove this type assertion before merging
-        (this.runtime as any).notifyAttaching?.(snapshot);
+        this.runtime.notifyAttaching?.(snapshot);
         this.runtime.setAttachState(AttachState.Attaching);
     }
 

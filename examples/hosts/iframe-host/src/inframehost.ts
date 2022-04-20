@@ -13,6 +13,7 @@ import {
     IContainer,
     ICodeDetailsLoader,
     IFluidCodeDetails,
+    ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
@@ -89,6 +90,8 @@ class ProxyRuntime implements IRuntime {
         throw new Error("Method not implemented.");
     }
     setAttachState(state: AttachState.Attaching | AttachState.Attached) {
+    }
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void {
     }
     getPendingLocalState() {
         throw new Error("Method not implemented.");

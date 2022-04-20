@@ -228,6 +228,10 @@ const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
+/**
+ * State saved by a container at close time, to be used to load a new instance
+ * of the container to the same state
+ */
 export interface IPendingContainerState {
     pendingRuntimeState: unknown;
     url: string;
@@ -1169,7 +1173,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const attributes: IDocumentAttributes = pendingLocalState === undefined
             ? await this.getDocumentAttributes(this.storageService, snapshot)
-            : { sequenceNumber: pendingLocalState.protocol.sequenceNumber,
+            : {
+                sequenceNumber: pendingLocalState.protocol.sequenceNumber,
                 minimumSequenceNumber: pendingLocalState.protocol.minimumSequenceNumber,
                 term: pendingLocalState.term,
             };
@@ -1202,7 +1207,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 attributes,
                 pendingLocalState.protocol.members,
                 pendingLocalState.protocol.proposals,
-                pendingLocalState.protocol.values);
+                pendingLocalState.protocol.values,
+            );
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(

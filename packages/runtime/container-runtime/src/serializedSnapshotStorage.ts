@@ -13,7 +13,11 @@ import {
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 
+/**
+ * Serialized blobs from a snapshot. Used to load offline.
+ */
 export interface ISerializedBaseSnapshotBlobs {
     [id: string]: string;
 }
@@ -55,7 +59,7 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
     }
 
     public static serializeTreeWithBlobContents(
-        snapshot: ISnapshotTree,
+        snapshot: ISnapshotTreeWithBlobContents,
     ): ISerializedBaseSnapshotBlobs {
         const blobs = {};
         this.serializeTreeWithBlobContentsCore(snapshot, blobs);
@@ -63,18 +67,14 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
     }
 
     private static serializeTreeWithBlobContentsCore(
-        tree: ISnapshotTree,
+        tree: ISnapshotTreeWithBlobContents,
         blobs: ISerializedBaseSnapshotBlobs,
     ) {
-        // TODO: ISnapshotTreeWithBlobContents needs to be exported from container to avoid this type assertion
-        // (this is the format used in detached container since there is no storage)
-        const blobsContents: {[path: string]: ArrayBufferLike} = (tree as any).blobsContents;
-        assert(!!blobsContents, "Tree must have blob contents");
         for (const subTree of Object.values(tree.trees)) {
             this.serializeTreeWithBlobContentsCore(subTree, blobs);
         }
         for (const id of Object.values(tree.blobs)) {
-            const blob = blobsContents[id];
+            const blob = tree.blobsContents[id];
             assert(!!blob, "Blob must be present in blobsContents");
             // ArrayBufferLike will not survive JSON.stringify()
             blobs[id] = bufferToString(blob, "utf8");

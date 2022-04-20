@@ -40,6 +40,7 @@ import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryConfiguration } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -146,7 +147,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
-    notifyAttaching(snapshot: ISnapshotTree): void;
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     // (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)
@@ -322,7 +323,7 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
-    enableOfflineLoad?: boolean;
+    readonly enableOfflineLoad?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
@@ -443,17 +444,12 @@ export interface IPendingMessage {
     type: "message";
 }
 
-// @public (undocumented)
+// @public
 export interface IPendingRuntimeState {
-    // (undocumented)
     baseSnapshot: ISnapshotTree;
-    // (undocumented)
     pending?: IPendingLocalState;
-    // (undocumented)
     savedOps: ISequencedDocumentMessage[];
     // Warning: (ae-forgotten-export) The symbol "ISerializedBaseSnapshotBlobs" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
     snapshotBlobs: ISerializedBaseSnapshotBlobs;
 }
 
