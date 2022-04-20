@@ -66,6 +66,7 @@ import {
 	ghostSessionId,
 	WriteFormat,
 	TreeNodeSequence,
+	InternalizedChange,
 } from './persisted-types';
 import { serialize, SummaryContents } from './Summary';
 import {
@@ -558,8 +559,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @returns the edit history of the tree.
 	 * @public
 	 */
-	public get edits(): OrderedEditSet {
-		return this.editLog;
+	public get edits(): OrderedEditSet<InternalizedChange> {
+		return this.editLog as unknown as OrderedEditSet<InternalizedChange>;
 	}
 
 	/**
@@ -1174,9 +1175,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * should be used instead.
 	 * @public
 	 */
-	public applyEdit(...changes: Change[]): Edit<unknown>;
-	public applyEdit(changes: Change[]): Edit<unknown>;
-	public applyEdit(headOrChanges: Change | Change[], ...tail: Change[]): Edit<unknown> {
+	public applyEdit(...changes: Change[]): Edit<InternalizedChange>;
+	public applyEdit(changes: Change[]): Edit<InternalizedChange>;
+	public applyEdit(headOrChanges: Change | Change[], ...tail: Change[]): Edit<InternalizedChange> {
 		const changes = Array.isArray(headOrChanges) ? headOrChanges : [headOrChanges, ...tail];
 		const id = newEditId();
 		const internalEdit: Edit<ChangeInternal> = {
@@ -1185,7 +1186,34 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		};
 		this.submitEditOp(internalEdit);
 		this.applyEditLocally(internalEdit, undefined);
-		return internalEdit;
+		return internalEdit as unknown as Edit<InternalizedChange>;
+	}
+
+	/**
+	 * Merges `edits` from `other` into this SharedTree.
+	 * @param other - Tree containing the edits that should be applied to this one.
+	 * @param edits - Iterable of edits from `other` to apply.
+	 * @param stableIdRemapper - Optional remapper to translate stable identities from `other` into stable identities on this tree.
+	 * Any references that `other` contains to a stable id `foo` will be replaced with references to the id `stableIdRemapper(foo)`.
+	 *
+	 * Payloads on the edits are left intact.
+	 * @returns a list containing `EditId`s for all applied edits.
+	 */
+	public mergeEditsFrom(
+		other: SharedTree,
+		edits: Iterable<Edit<InternalizedChange>>,
+		stableIdRemapper?: (id: StableNodeId) => StableNodeId
+	): EditId[] {
+		const idConverter = (id: NodeId) => {
+			const stableId = other.convertToStableNodeId(id);
+			const convertedStableId = stableIdRemapper?.(stableId) ?? stableId;
+			return this.generateNodeId(convertedStableId);
+		};
+
+		return Array.from(
+			edits as unknown as Iterable<Edit<ChangeInternal>>,
+			(edit) => this.applyEditInternal(convertEditIds(edit, (id) => idConverter(id))).id
+		);
 	}
 
 	/**

@@ -54,12 +54,31 @@ describe("MergeTree", () => {
             });
         });
 
+        it("No event on annotation of empty range", () => {
+            const count = countOperations(mergeTree);
+            mergeTree.annotateRange(
+                3,
+                3,
+                {
+                    foo: "bar",
+                },
+                undefined,
+                currentSequenceNumber,
+                localClientId,
+                ++currentSequenceNumber,
+                undefined as any);
+
+            assert.deepStrictEqual(count, {
+                [MergeTreeMaintenanceType.SPLIT]: 1,
+            });
+        });
+
         it("Annotate over local insertion", () => {
             insertText(
                 mergeTree,
                 4,
-                localClientId,
                 currentSequenceNumber,
+                localClientId,
                 UnassignedSequenceNumber,
                 "a",
                 undefined,
@@ -92,8 +111,8 @@ describe("MergeTree", () => {
             insertText(
                 mergeTree,
                 4,
-                remoteClientId,
                 remoteSequenceNumber,
+                remoteClientId,
                 ++remoteSequenceNumber,
                 "a",
                 undefined,
@@ -126,8 +145,8 @@ describe("MergeTree", () => {
             mergeTree.markRangeRemoved(
                 4,
                 6,
-                remoteClientId,
                 remoteSequenceNumber,
+                remoteClientId,
                 ++remoteSequenceNumber,
                 false,
                 undefined as any);
@@ -144,6 +163,39 @@ describe("MergeTree", () => {
                 currentSequenceNumber,
                 localClientId,
                 UnassignedSequenceNumber,
+                undefined as any);
+
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.ANNOTATE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
+        });
+
+        it("Remote annotate within local deletion", () => {
+            const remoteClientId: number = 35;
+            let remoteSequenceNumber = currentSequenceNumber;
+
+            mergeTree.markRangeRemoved(
+                3,
+                8,
+                currentSequenceNumber,
+                localClientId,
+                UnassignedSequenceNumber,
+                false,
+                undefined as any);
+
+            const count = countOperations(mergeTree);
+
+            mergeTree.annotateRange(
+                4,
+                6,
+                {
+                    foo: "bar",
+                },
+                undefined,
+                remoteSequenceNumber,
+                remoteClientId,
+                ++remoteSequenceNumber,
                 undefined as any);
 
             assert.deepStrictEqual(count, {
