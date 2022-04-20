@@ -14,7 +14,7 @@ Previously we were trying to build the notion of tree locations (anchors) on top
 
 It's simpler to start with a foundation of tree locations (cells) that never move/disappear, and then layer the idea of moveable/removable nodes on top of that.
 
-The impedance mismatch between our internal model the semantics desired by users was making things unnecessarily complicated: forcing the internal model to be excessively general, and then requiring higher layers to compensate.
+The impedance mismatch between our internal model and the semantics desired by users was making things unnecessarily complicated: forcing the internal model to be excessively general, and then requiring higher layers to compensate.
 The primary example being the use of constraints and/or hierarchical edits to constrain the semantics of insert/remove to fit the desired semantics of setting a fixed-sized field.
 
 ## Motivation
