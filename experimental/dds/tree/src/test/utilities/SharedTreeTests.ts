@@ -1363,10 +1363,11 @@ export function runSharedTreeOperationsTests(
 					const { internedStrings } = tree.saveSummary() as SharedTreeSummary;
 
 					const log = getEditLogInternal(tree);
+					const log2 = getEditLogInternal(secondTree);
 					const insertEdit = normalizeEdit(tree, log.getEditInSessionAtIndex(1));
 					const moveEdit = normalizeEdit(tree, log.getEditInSessionAtIndex(2));
-					const insertEdit2 = normalizeEdit(secondTree, log.getEditInSessionAtIndex(1));
-					const moveEdit2 = normalizeEdit(secondTree, log.getEditInSessionAtIndex(2));
+					const insertEdit2 = normalizeEdit(secondTree, log2.getEditInSessionAtIndex(1));
+					const moveEdit2 = normalizeEdit(secondTree, log2.getEditInSessionAtIndex(2));
 					expect(insertEdit).to.deep.equal(insertEdit2);
 					expect(moveEdit).to.deep.equal(moveEdit2);
 					expect(tree.equals(secondTree)).to.be.true;
