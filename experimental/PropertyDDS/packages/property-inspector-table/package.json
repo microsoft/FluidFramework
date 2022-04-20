@@ -34,7 +34,7 @@
     "test:coverage": "jest --coverage --ci  --reporters=default --reporters=jest-junit",
     "test:jest": "jest",
     "tsc": "tsc",
-    "webpack": "webpack --config webpack.prod.js --env production"
+    "webpack": "webpack --config webpack.prod.js --env production --color --no-stats"
   },
   "dependencies": {
     "@hig/fonts": "^1.0.2",
