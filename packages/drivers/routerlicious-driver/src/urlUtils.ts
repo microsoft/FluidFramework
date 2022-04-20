@@ -5,7 +5,7 @@
 
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import URLParse from "url-parse";
-import { ISession } from "./contracts";
+import { ISession } from "@fluidframework/server-services-client";
 
 export const parseFluidUrl = (fluidUrl: string): URLParse => {
     return new URLParse(fluidUrl, true);
