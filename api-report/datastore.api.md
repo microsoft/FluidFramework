@@ -142,7 +142,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
     readonly routeContext: IFluidHandleContext;
     // (undocumented)
     protected readonly value: T;
-    }
+}
 
 // @public (undocumented)
 export interface ISharedObjectRegistry {
@@ -158,7 +158,6 @@ export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime) => 
     path: string[];
     content: string;
 } | undefined>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
-
 
 // (No @packageDocumentation comment for this package)
 

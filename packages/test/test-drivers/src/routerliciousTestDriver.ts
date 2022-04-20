@@ -31,13 +31,26 @@ const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies) => ({
 });
 
 function getConfig(
+    discoveryEndpoint?: string,
     fluidHost?: string,
     tenantId?: string,
     tenantSecret?: string,
     driverPolicies?: IRouterliciousDriverPolicies) {
-    assert(fluidHost, "Missing Fluid host");
     assert(tenantId, "Missing tenantId");
     assert(tenantSecret, "Missing tenant secret");
+    if (discoveryEndpoint !== undefined) {
+        return {
+            serviceEndpoint: {
+                hostUrl: "",
+                ordererUrl: discoveryEndpoint,
+                deltaStorageUrl: "https://dummy-historian",
+            },
+            tenantId,
+            tenantSecret,
+            driverPolicies,
+        };
+    }
+    assert(fluidHost, "Missing Fluid host");
     return {
         serviceEndpoint: {
             hostUrl: fluidHost,
@@ -51,10 +64,11 @@ function getConfig(
 }
 
 function getLegacyConfigFromEnv() {
+    const discoveryEndpoint = process.env.fluid__webpack__discoveryEndpoint;
     const fluidHost = process.env.fluid__webpack__fluidHost;
     const tenantSecret = process.env.fluid__webpack__tenantSecret;
     const tenantId = process.env.fluid__webpack__tenantId ?? "fluid";
-    return getConfig(fluidHost, tenantId, tenantSecret);
+    return getConfig(discoveryEndpoint, fluidHost, tenantId, tenantSecret);
 }
 
 function getEndpointConfigFromEnv(r11sEndpointName: string) {
