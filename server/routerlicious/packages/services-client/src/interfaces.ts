@@ -8,7 +8,7 @@ export interface IAlfredTenant {
     key: string;
 }
 
-// Session information that includes the server urls and session status in the document's metadata
+// Session information that includes the server urls and session status
 export interface ISession {
     // Orderer url of the session
     ordererUrl: string;
