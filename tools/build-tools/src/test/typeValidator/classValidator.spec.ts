@@ -422,8 +422,8 @@ describe("Class", () => {
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
-        // structurally identical extends changes with different names are breaking
-        // (this isn't actually breaking but is difficult to handle and errs on the side
+        // structurally identical extends changes with different names are considered breaking
+        // (this isn't actually breaking but is difficult to handle so we err on the side
         // of over-bumping)
         it("changed class extensions that are structurally identical", () => {
             const classOld =
