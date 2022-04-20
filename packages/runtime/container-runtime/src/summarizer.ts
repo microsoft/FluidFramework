@@ -159,8 +159,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
     public close() {
-        // This will result in dispose() call and "summarizerClientDisconnected" stop reason,
+        // This will result in "summarizerClientDisconnected" stop reason recorded in telemetry,
         // unless stop() was called earlier
+        this.dispose();
         this.runtime.closeFn();
     }
 
