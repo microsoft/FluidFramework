@@ -9,6 +9,7 @@ import {
     ITelemetryLogger,
     ITelemetryProperties,
 } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import {
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
@@ -438,7 +439,7 @@ export type SummaryGeneratorTelemetry =
     Pick<ITelemetryProperties, SummaryGeneratorRequiredTelemetryProperties> &
     Partial<Pick<ITelemetryProperties, SummaryGeneratorOptionalTelemetryProperties>>;
 
-export interface ISummarizeRunnerTelemetry {
+export interface ISummarizeRunnerTelemetry extends ITelemetryLoggerPropertyBag {
     /** Number of times the summarizer run. */
     summarizeCount: () => number;
     /** Number of successful attempts to summarize. */

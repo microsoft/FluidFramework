@@ -117,10 +117,7 @@ export class RunningSummarizer implements IDisposable {
         this.logger = ChildLogger.create(
             baseLogger, "Running",
             {
-                all: {
-                    summarizeCount: telemetryProps.summarizeCount,
-                    summarizerSuccessfulAttempts: telemetryProps.summarizerSuccessfulAttempts,
-                },
+                all: telemetryProps,
             },
         );
 
