@@ -185,7 +185,7 @@ export class OdspDocumentService implements IDocumentService {
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
-                this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
+                1,
             );
         }
 
