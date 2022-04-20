@@ -12,7 +12,6 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, IdRangeDescriptor, isLocalId } from '../../id-compressor/IdCompressor';
 import {
-	assertIsStableId,
 	createSessionId,
 	ensureSessionUuid,
 	NumericUuid,
@@ -26,6 +25,7 @@ import type {
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
 } from '../../id-compressor';
+import { assertIsStableId } from '../../UuidUtilities';
 
 /** Identifies a compressor in a network */
 export enum Client {

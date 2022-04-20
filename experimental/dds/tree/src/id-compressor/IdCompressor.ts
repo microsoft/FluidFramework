@@ -25,6 +25,7 @@ import {
 	SessionId,
 	CompressedId,
 } from '../Identifiers';
+import { assertIsStableId, isStableId } from '../UuidUtilities';
 import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from './AppendOnlySortedMap';
 import { getIds } from './IdRange';
 import {
@@ -34,8 +35,6 @@ import {
 	numericUuidFromStableId,
 	NumericUuid,
 	stableIdFromNumericUuid,
-	isStableId,
-	assertIsStableId,
 	ensureSessionUuid,
 } from './NumericUuid';
 import type {

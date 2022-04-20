@@ -21,15 +21,14 @@ import {
 } from '../Identifiers';
 import { assert, assertNotUndefined, fail } from '../Common';
 import {
-	assertIsStableId,
-	createSessionId as createSessionId,
+	createSessionId,
 	incrementUuid,
-	isStableId,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid';
 import { getIds } from '../id-compressor/IdRange';
 import type { UnackedLocalId } from '../id-compressor';
+import { assertIsStableId, isStableId } from '../UuidUtilities';
 import {
 	createCompressor,
 	performFuzzActions,
