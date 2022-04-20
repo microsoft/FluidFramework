@@ -149,6 +149,15 @@
         },
         "InterfaceDeclaration_IRootSummaryTreeWithStats": {
           "forwardCompat": false
+        },
+        "ClassDeclaration_Summarizer": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IProvideSummarizer": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_ISummarizer": {
+          "forwardCompat": false
         }
       }
     }
