@@ -65,10 +65,17 @@ type SummaryGeneratorRequiredTelemetryProperties =
 type SummaryGeneratorOptionalTelemetryProperties =
     /** Reference sequence number as of the generate summary attempt. */
     "referenceSequenceNumber" |
+    /** minimum sequence number (at the reference sequence number) */
+    "minimumSequenceNumber" |
     /** Delta between the current reference sequence number and the reference sequence number of the last attempt */
     "opsSinceLastAttempt" |
     /** Delta between the current reference sequence number and the reference sequence number of the last summary */
     "opsSinceLastSummary" |
+    /** Delta in sum of op sizes between the current reference sequence number and the reference
+     *  sequence number of the last summary */
+    "opsSizesSinceLastSummary" |
+    /** Delta between the number of non-system ops since the last summary @see isSystemMessage */
+    "nonSystemOpsSinceLastSummary" |
     /** Time it took to generate the summary tree and stats. */
     "generateDuration" |
     /** The handle returned by storage pointing to the uploaded summary tree. */
@@ -84,7 +91,7 @@ type SummaryGeneratorOptionalTelemetryProperties =
     /** Actual sequence number of the summary op proposal. */
     "summarySequenceNumber" |
     /** Optional Retry-After time in seconds. If specified, the client should wait this many seconds before retrying. */
-     "nackRetryAfter";
+    "nackRetryAfter";
 type SummaryGeneratorTelemetry =
     Pick<ITelemetryProperties, SummaryGeneratorRequiredTelemetryProperties> &
     Partial<Pick<ITelemetryProperties, SummaryGeneratorOptionalTelemetryProperties>>;
@@ -279,11 +286,6 @@ export class SummaryGenerator {
         // Use record type to prevent unexpected value types
         let summaryData: SubmitSummaryResult | undefined;
         try {
-            const generateSummaryEvent = PerformanceEvent.start(logger, {
-                eventName: "Summarize",
-                ...summarizeTelemetryProps,
-            });
-
             summaryData = await this.submitSummaryCallback({
                 fullTree,
                 refreshLatestAck,
@@ -298,6 +300,7 @@ export class SummaryGenerator {
             summarizeTelemetryProps = {
                 ...summarizeTelemetryProps,
                 referenceSequenceNumber,
+                minimumSequenceNumber: summaryData.minimumSequenceNumber,
                 opsSinceLastAttempt: referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
                 opsSinceLastSummary,
             };
@@ -351,7 +354,7 @@ export class SummaryGenerator {
             }
 
             // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
-            generateSummaryEvent.reportEvent("generate", {...summarizeTelemetryProps});
+            summarizeEvent.reportEvent("generate", {...summarizeTelemetryProps});
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
         } catch (error) {
             return fail("submitSummaryFailure", error);
@@ -416,7 +419,6 @@ export class SummaryGenerator {
                 summarizeEvent.end({
                     ...summarizeTelemetryProps,
                     handle: ackNackOp.contents.handle,
-                    message: "summaryAck",
                 });
                 resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
                     summaryAckOp: ackNackOp,

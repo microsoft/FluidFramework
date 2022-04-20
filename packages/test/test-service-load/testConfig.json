@@ -96,7 +96,24 @@
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
-                        "Fluid.Driver.Odsp.binaryFormatSnapshot": [true]
+                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [1]
+                    }
+                }
+            }
+        },
+        "odspContainerTypeSummaryUpload": {
+            "opRatePerMin": 60,
+            "progressIntervalMs": 5000,
+            "numClients": 4,
+            "totalSendCount": 150,
+            "readWriteCycleMs": 10000,
+            "optionOverrides":{
+                "odsp":{
+                    "configurations":{
+                        "Fluid.Driver.Odsp.EnableContainerTypeSummaryUpload": [true]
+                    },
+                    "loader":{
+                        "summarizeProtocolTree": [true]
                     }
                 }
             }

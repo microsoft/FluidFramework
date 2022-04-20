@@ -11,6 +11,11 @@ export enum Constants {
     StorageNameHeader = "Storage-Name",
 }
 
+export interface IStorageDirectoryConfig {
+    useRepoOwner: boolean;
+    baseDir?: string;
+}
+
 export interface IExternalWriterConfig {
     enabled: boolean;
 }

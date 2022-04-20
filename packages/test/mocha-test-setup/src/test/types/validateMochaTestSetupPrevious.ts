@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_mochaHooks": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_mochaHooks():
@@ -28,7 +28,7 @@ use_current_VariableDeclaration_mochaHooks(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_mochaHooks": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_mochaHooks():

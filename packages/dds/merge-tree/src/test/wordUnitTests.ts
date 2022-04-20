@@ -133,7 +133,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
 
 function measureFetch(startFile: string, withBookmarks = false) {
     const bookmarkCount = 20000;
-    const client = new TestClient({ blockUpdateMarkers: true });
+    const client = new TestClient();
     loadTextFromFileWithMarkers(startFile, client.mergeTree);
     if (withBookmarks) {
         makeBookmarks(client, bookmarkCount);

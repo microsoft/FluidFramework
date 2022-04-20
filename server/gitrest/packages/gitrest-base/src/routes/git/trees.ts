@@ -16,7 +16,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
             .then(async (repoManager) => repoManager.createTree(request.body as ICreateTreeParams));
 
-        handleResponse(resultP, response, 201);
+        handleResponse(resultP, response, undefined, undefined, 201);
     });
 
     router.get("/repos/:owner/:repo/git/trees/:sha", async (request, response, next) => {

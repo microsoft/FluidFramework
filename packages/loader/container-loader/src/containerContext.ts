@@ -23,7 +23,6 @@ import {
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import {
-    IFluidObject,
     IRequest,
     IResponse,
     FluidObject,
@@ -156,7 +155,7 @@ export class ContainerContext implements IContainerContext {
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IFluidObject & FluidObject,
+        public readonly scope: FluidObject,
         private readonly codeLoader: ICodeDetailsLoader,
         private readonly _codeDetails: IFluidCodeDetails,
         private _baseSnapshot: ISnapshotTree | undefined,

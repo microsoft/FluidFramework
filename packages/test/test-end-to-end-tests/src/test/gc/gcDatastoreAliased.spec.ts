@@ -17,7 +17,7 @@ import {
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { TestDataObject } from "./mockSummarizerClient";
+import { TestDataObject } from "../mockSummarizerClient";
 import { mockConfigProvider } from "./mockConfigProivder";
 
 /**

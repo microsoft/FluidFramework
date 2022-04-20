@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_AzureAudience": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_AzureAudience():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_AzureAudience(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_AzureAudience": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_AzureAudience():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_AzureAudience(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_AzureClient": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_AzureClient():
@@ -48,11 +48,12 @@ declare function get_old_ClassDeclaration_AzureClient():
 declare function use_current_ClassDeclaration_AzureClient(
     use: TypeOnly<current.AzureClient>);
 use_current_ClassDeclaration_AzureClient(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_AzureClient());
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_AzureClient": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_AzureClient():
@@ -64,7 +65,7 @@ use_old_ClassDeclaration_AzureClient(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_AzureClientProps": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_AzureClientProps():
@@ -76,7 +77,7 @@ use_current_InterfaceDeclaration_AzureClientProps(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_AzureClientProps": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_AzureClientProps():
@@ -88,7 +89,7 @@ use_old_InterfaceDeclaration_AzureClientProps(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_AzureConnectionConfig": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_AzureConnectionConfig():
@@ -100,7 +101,7 @@ use_current_InterfaceDeclaration_AzureConnectionConfig(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_AzureConnectionConfig": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_AzureConnectionConfig():
@@ -112,7 +113,7 @@ use_old_InterfaceDeclaration_AzureConnectionConfig(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_AzureContainerServices": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_AzureContainerServices():
@@ -124,7 +125,7 @@ use_current_InterfaceDeclaration_AzureContainerServices(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_AzureContainerServices": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_AzureContainerServices():
@@ -136,7 +137,7 @@ use_old_InterfaceDeclaration_AzureContainerServices(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_AzureFunctionTokenProvider": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_AzureFunctionTokenProvider():
@@ -148,7 +149,7 @@ use_current_ClassDeclaration_AzureFunctionTokenProvider(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_AzureFunctionTokenProvider": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_AzureFunctionTokenProvider():
@@ -160,7 +161,7 @@ use_old_ClassDeclaration_AzureFunctionTokenProvider(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_AzureMember": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_AzureMember():
@@ -172,7 +173,7 @@ use_current_InterfaceDeclaration_AzureMember(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_AzureMember": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_AzureMember():
@@ -184,7 +185,7 @@ use_old_InterfaceDeclaration_AzureMember(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IAzureAudience": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IAzureAudience():
@@ -196,7 +197,7 @@ use_current_TypeAliasDeclaration_IAzureAudience(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_IAzureAudience": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_IAzureAudience():
@@ -208,7 +209,7 @@ use_old_TypeAliasDeclaration_IAzureAudience(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryBaseEvent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryBaseEvent():
@@ -220,7 +221,7 @@ use_current_InterfaceDeclaration_ITelemetryBaseEvent(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryBaseEvent": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITelemetryBaseEvent():
@@ -232,7 +233,7 @@ use_old_InterfaceDeclaration_ITelemetryBaseEvent(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryBaseLogger": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITelemetryBaseLogger():
@@ -244,7 +245,7 @@ use_current_InterfaceDeclaration_ITelemetryBaseLogger(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITelemetryBaseLogger": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITelemetryBaseLogger():
@@ -256,7 +257,7 @@ use_old_InterfaceDeclaration_ITelemetryBaseLogger(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenClaims": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITokenClaims():
@@ -268,7 +269,7 @@ use_current_InterfaceDeclaration_ITokenClaims(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenClaims": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITokenClaims():
@@ -280,7 +281,7 @@ use_old_InterfaceDeclaration_ITokenClaims(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenProvider": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITokenProvider():
@@ -292,7 +293,7 @@ use_current_InterfaceDeclaration_ITokenProvider(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenProvider": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITokenProvider():
@@ -304,7 +305,7 @@ use_old_InterfaceDeclaration_ITokenProvider(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenResponse": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITokenResponse():
@@ -316,7 +317,7 @@ use_current_InterfaceDeclaration_ITokenResponse(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITokenResponse": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITokenResponse():
@@ -328,7 +329,7 @@ use_old_InterfaceDeclaration_ITokenResponse(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IUser": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IUser():
@@ -340,7 +341,7 @@ use_current_InterfaceDeclaration_IUser(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IUser": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IUser():
@@ -352,7 +353,7 @@ use_old_InterfaceDeclaration_IUser(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_LOCAL_MODE_TENANT_ID": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_LOCAL_MODE_TENANT_ID():
@@ -364,7 +365,7 @@ use_current_VariableDeclaration_LOCAL_MODE_TENANT_ID(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_LOCAL_MODE_TENANT_ID": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_LOCAL_MODE_TENANT_ID():
@@ -376,7 +377,7 @@ use_old_VariableDeclaration_LOCAL_MODE_TENANT_ID(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ScopeType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ScopeType():
@@ -388,7 +389,7 @@ use_current_EnumDeclaration_ScopeType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ScopeType": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_ScopeType():

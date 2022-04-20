@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ExpiryTimeType } from '@fluid-experimental/property-properties';
+import { ExpiryTimeType } from "@fluid-experimental/property-properties";
 
-export type IExpiryState = 'live' | 'expired';
-export type IExpiryAction = 'expire' | 'destroy';
+export type IExpiryState = "live" | "expired";
+export type IExpiryAction = "expire" | "destroy";
 
 /**
  * The expiry information retrieved by the `getExpiry` method.

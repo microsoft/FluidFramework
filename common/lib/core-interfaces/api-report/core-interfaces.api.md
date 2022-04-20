@@ -7,7 +7,9 @@
 // Warning: (ae-incompatible-release-tags) The symbol "FluidObject" is marked as @public, but its signature references "FluidObjectProviderKeys" which is marked as @internal
 //
 // @public
-export type FluidObject<T = unknown> = Partial<Pick<T, FluidObjectProviderKeys<T>>>;
+export type FluidObject<T = unknown> = {
+    [P in FluidObjectProviderKeys<T>]?: T[P];
+};
 
 // @public
 export type FluidObjectKeys<T> = keyof FluidObject<T>;
@@ -15,7 +17,7 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // Warning: (ae-internal-missing-underscore) The name "FluidObjectProviderKeys" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal
-export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Exclude<T[TProp], undefined> ? TProp : never;
+export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @public @deprecated (undocumented)
 export interface IFluidCodeDetails {
@@ -42,7 +44,7 @@ export interface IFluidCodeDetailsConfig {
 export const IFluidHandle: keyof IProvideFluidHandle;
 
 // @public
-export interface IFluidHandle<T = IFluidObject & FluidObject & IFluidLoadable> extends IProvideFluidHandle {
+export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly absolutePath: string;
     attachGraph(): void;
@@ -85,8 +87,6 @@ export interface IFluidObject {
     readonly IFluidRouter?: IFluidRouter;
     // @deprecated (undocumented)
     readonly IFluidRunnable?: IFluidRunnable;
-    // @deprecated (undocumented)
-    readonly IFluidSerializer?: IFluidSerializer;
 }
 
 // @public @deprecated (undocumented)
@@ -127,17 +127,6 @@ export interface IFluidRunnable {
 }
 
 // @public @deprecated (undocumented)
-export const IFluidSerializer: keyof IProvideFluidSerializer;
-
-// @public @deprecated (undocumented)
-export interface IFluidSerializer extends IProvideFluidSerializer {
-    decode?(input: any): any;
-    parse(value: string): any;
-    replaceHandles(value: any, bind: IFluidHandle): any;
-    stringify(value: any, bind: IFluidHandle): string;
-}
-
-// @public @deprecated (undocumented)
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
@@ -173,12 +162,6 @@ export interface IProvideFluidRunnable {
     readonly IFluidRunnable: IFluidRunnable;
 }
 
-// @public @deprecated (undocumented)
-export interface IProvideFluidSerializer {
-    // (undocumented)
-    readonly IFluidSerializer: IFluidSerializer;
-}
-
 // @public (undocumented)
 export interface IRequest {
     // (undocumented)
@@ -207,14 +190,6 @@ export interface IResponse {
     status: number;
     // (undocumented)
     value: any;
-}
-
-// @public @deprecated
-export interface ISerializedHandle {
-    // (undocumented)
-    type: "__fluid_handle__";
-    // (undocumented)
-    url: string;
 }
 
 // @public @deprecated (undocumented)

@@ -17,6 +17,7 @@ import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
 import { throwR11sNetworkError } from "./errorUtils";
 import { ITokenProvider } from "./tokens";
+import { pkgVersion as driverVersion } from "./packageVersion";
 
 type AuthorizationHeaderGetter = (refresh?: boolean) => Promise<string | undefined>;
 
@@ -107,8 +108,10 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
         return {
             ...requestHeaders,
+            // TODO: replace header names with CorrelationIdHeaderName and DriverVersionHeaderName from services-client
             // NOTE: Can correlationId actually be number | true?
             "x-correlation-id": correlationId as string,
+            "x-driver-version": driverVersion,
             // NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?
             "Authorization": this.authorizationHeader!,
         };

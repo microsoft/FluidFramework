@@ -16,10 +16,8 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IProvideFluidCodeDetailsComparer as IProvideFluidCodeDetailsComparer_2 } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -131,9 +129,12 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;
     readonly closed: boolean;
+    connect?(): void;
+    // @deprecated
     readonly connected: boolean;
     readonly connectionState: ConnectionState;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    disconnect?(): void;
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -145,10 +146,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     readonly readOnlyInfo: ReadOnlyInfo;
     request(request: IRequest): Promise<IResponse>;
     resolvedUrl: IResolvedUrl | undefined;
-    // @alpha
+    // @deprecated
     resume?(): void;
     serialize(): string;
-    // @alpha
+    // @deprecated
     setAutoReconnect?(reconnect: boolean): void;
 }
 
@@ -184,7 +185,7 @@ export interface IContainerContext extends IDisposable {
     pendingLocalState?: unknown;
     // (undocumented)
     readonly quorum: IQuorumClients;
-    readonly scope: IFluidObject & FluidObject;
+    readonly scope: FluidObject;
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
@@ -364,7 +365,7 @@ export interface IFluidCodeResolver {
 // @public (undocumented)
 export interface IFluidModule {
     // (undocumented)
-    fluidExport: IFluidObject & FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer_2>;
+    fluidExport: FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;
 }
 
 // @public
@@ -501,6 +502,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     process(message: ISequencedDocumentMessage, local: boolean, context: any): any;
     processSignal(message: any, local: boolean): any;
     request(request: IRequest): Promise<IResponse>;
@@ -524,6 +526,18 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 
 // @public
 export const isFluidPackage: (pkg: any) => pkg is Readonly<IFluidPackage>;
+
+// @public
+export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
+    // (undocumented)
+    blobsContents: {
+        [path: string]: ArrayBufferLike;
+    };
+    // (undocumented)
+    trees: {
+        [path: string]: ISnapshotTreeWithBlobContents;
+    };
+}
 
 // @public
 export interface IThrottlingWarning extends IErrorBase {

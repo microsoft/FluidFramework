@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_addBlobToSummary": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_addBlobToSummary():
@@ -28,7 +28,7 @@ use_current_FunctionDeclaration_addBlobToSummary(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_addBlobToSummary": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_addBlobToSummary():
@@ -40,7 +40,7 @@ use_old_FunctionDeclaration_addBlobToSummary(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_addTreeToSummary": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_addTreeToSummary():
@@ -52,7 +52,7 @@ use_current_FunctionDeclaration_addTreeToSummary(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_addTreeToSummary": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_addTreeToSummary():
@@ -64,7 +64,7 @@ use_old_FunctionDeclaration_addTreeToSummary(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_calculateStats": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_calculateStats():
@@ -76,7 +76,7 @@ use_current_FunctionDeclaration_calculateStats(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_calculateStats": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_calculateStats():
@@ -88,7 +88,7 @@ use_old_FunctionDeclaration_calculateStats(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_convertSnapshotTreeToSummaryTree": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_convertSnapshotTreeToSummaryTree():
@@ -100,7 +100,7 @@ use_current_FunctionDeclaration_convertSnapshotTreeToSummaryTree(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_convertSnapshotTreeToSummaryTree": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_convertSnapshotTreeToSummaryTree():
@@ -112,7 +112,7 @@ use_old_FunctionDeclaration_convertSnapshotTreeToSummaryTree(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_convertSummaryTreeToITree": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_convertSummaryTreeToITree():
@@ -124,7 +124,7 @@ use_current_FunctionDeclaration_convertSummaryTreeToITree(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_convertSummaryTreeToITree": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_convertSummaryTreeToITree():
@@ -136,7 +136,7 @@ use_old_FunctionDeclaration_convertSummaryTreeToITree(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_convertToSummaryTree": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_convertToSummaryTree():
@@ -148,7 +148,7 @@ use_current_FunctionDeclaration_convertToSummaryTree(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_convertToSummaryTree": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_convertToSummaryTree():
@@ -160,7 +160,7 @@ use_old_FunctionDeclaration_convertToSummaryTree(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_convertToSummaryTreeWithStats": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_convertToSummaryTreeWithStats():
@@ -172,7 +172,7 @@ use_current_FunctionDeclaration_convertToSummaryTreeWithStats(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_convertToSummaryTreeWithStats": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_convertToSummaryTreeWithStats():
@@ -184,7 +184,7 @@ use_old_FunctionDeclaration_convertToSummaryTreeWithStats(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_create404Response": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_create404Response():
@@ -196,7 +196,7 @@ use_current_VariableDeclaration_create404Response(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_create404Response": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_create404Response():
@@ -208,7 +208,7 @@ use_old_VariableDeclaration_create404Response(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createDataStoreFactory": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createDataStoreFactory():
@@ -220,7 +220,7 @@ use_current_FunctionDeclaration_createDataStoreFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createDataStoreFactory": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createDataStoreFactory():
@@ -232,7 +232,7 @@ use_old_FunctionDeclaration_createDataStoreFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createResponseError": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createResponseError():
@@ -244,7 +244,7 @@ use_current_FunctionDeclaration_createResponseError(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createResponseError": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createResponseError():
@@ -256,7 +256,7 @@ use_old_FunctionDeclaration_createResponseError(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createRootSummarizerNode": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_createRootSummarizerNode():
@@ -268,7 +268,7 @@ use_current_VariableDeclaration_createRootSummarizerNode(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createRootSummarizerNode": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_createRootSummarizerNode():
@@ -280,7 +280,7 @@ use_old_VariableDeclaration_createRootSummarizerNode(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createRootSummarizerNodeWithGC": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_createRootSummarizerNodeWithGC():
@@ -292,7 +292,7 @@ use_current_VariableDeclaration_createRootSummarizerNodeWithGC(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createRootSummarizerNodeWithGC": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_createRootSummarizerNodeWithGC():
@@ -304,7 +304,7 @@ use_old_VariableDeclaration_createRootSummarizerNodeWithGC(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_exceptionToResponse": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_exceptionToResponse():
@@ -316,7 +316,7 @@ use_current_FunctionDeclaration_exceptionToResponse(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_exceptionToResponse": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_exceptionToResponse():
@@ -328,7 +328,7 @@ use_old_FunctionDeclaration_exceptionToResponse(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_Factory": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_Factory():
@@ -340,7 +340,7 @@ use_current_TypeAliasDeclaration_Factory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_Factory": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_Factory():
@@ -352,7 +352,7 @@ use_old_TypeAliasDeclaration_Factory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_generateHandleContextPath": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_generateHandleContextPath():
@@ -364,7 +364,7 @@ use_current_FunctionDeclaration_generateHandleContextPath(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_generateHandleContextPath": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_generateHandleContextPath():
@@ -376,7 +376,7 @@ use_old_FunctionDeclaration_generateHandleContextPath(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getBlobSize": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getBlobSize():
@@ -388,7 +388,7 @@ use_current_FunctionDeclaration_getBlobSize(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getBlobSize": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_getBlobSize():
@@ -400,7 +400,7 @@ use_old_FunctionDeclaration_getBlobSize(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getNormalizedObjectStoragePathParts": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getNormalizedObjectStoragePathParts():
@@ -412,7 +412,7 @@ use_current_FunctionDeclaration_getNormalizedObjectStoragePathParts(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getNormalizedObjectStoragePathParts": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_getNormalizedObjectStoragePathParts():
@@ -424,7 +424,7 @@ use_old_FunctionDeclaration_getNormalizedObjectStoragePathParts(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRootSummarizerNode": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRootSummarizerNode():
@@ -436,7 +436,7 @@ use_current_InterfaceDeclaration_IRootSummarizerNode(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRootSummarizerNode": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IRootSummarizerNode():
@@ -448,7 +448,7 @@ use_old_InterfaceDeclaration_IRootSummarizerNode(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRootSummarizerNodeWithGC": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRootSummarizerNodeWithGC():
@@ -460,7 +460,7 @@ use_current_InterfaceDeclaration_IRootSummarizerNodeWithGC(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRootSummarizerNodeWithGC": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IRootSummarizerNodeWithGC():
@@ -472,7 +472,7 @@ use_old_InterfaceDeclaration_IRootSummarizerNodeWithGC(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummarizerNodeRootContract": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummarizerNodeRootContract():
@@ -484,7 +484,7 @@ use_current_InterfaceDeclaration_ISummarizerNodeRootContract(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummarizerNodeRootContract": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISummarizerNodeRootContract():
@@ -496,7 +496,7 @@ use_old_InterfaceDeclaration_ISummarizerNodeRootContract(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_listBlobsAtTreePath": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_listBlobsAtTreePath():
@@ -508,7 +508,7 @@ use_current_FunctionDeclaration_listBlobsAtTreePath(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_listBlobsAtTreePath": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_listBlobsAtTreePath():
@@ -520,7 +520,7 @@ use_old_FunctionDeclaration_listBlobsAtTreePath(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_mergeStats": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_mergeStats():
@@ -532,7 +532,7 @@ use_current_FunctionDeclaration_mergeStats(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_mergeStats": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_mergeStats():
@@ -544,7 +544,7 @@ use_old_FunctionDeclaration_mergeStats(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ObjectStoragePartition": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ObjectStoragePartition():
@@ -556,7 +556,7 @@ use_current_ClassDeclaration_ObjectStoragePartition(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ObjectStoragePartition": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ObjectStoragePartition():
@@ -568,7 +568,7 @@ use_old_ClassDeclaration_ObjectStoragePartition(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ReadAndParseBlob": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ReadAndParseBlob():
@@ -580,7 +580,7 @@ use_current_TypeAliasDeclaration_ReadAndParseBlob(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ReadAndParseBlob": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ReadAndParseBlob():
@@ -592,7 +592,7 @@ use_old_TypeAliasDeclaration_ReadAndParseBlob(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_RefreshSummaryResult": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_RefreshSummaryResult():
@@ -604,7 +604,7 @@ use_current_TypeAliasDeclaration_RefreshSummaryResult(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_RefreshSummaryResult": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_RefreshSummaryResult():
@@ -617,7 +617,7 @@ use_old_TypeAliasDeclaration_RefreshSummaryResult(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_requestFluidObject": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_requestFluidObject():
@@ -629,7 +629,7 @@ use_current_FunctionDeclaration_requestFluidObject(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_requestFluidObject": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_requestFluidObject():
@@ -641,7 +641,7 @@ use_old_FunctionDeclaration_requestFluidObject(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RequestParser": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RequestParser():
@@ -653,7 +653,7 @@ use_current_ClassDeclaration_RequestParser(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RequestParser": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_RequestParser():
@@ -665,7 +665,7 @@ use_old_ClassDeclaration_RequestParser(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_responseToException": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_responseToException():
@@ -677,7 +677,7 @@ use_current_FunctionDeclaration_responseToException(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_responseToException": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_responseToException():
@@ -689,7 +689,7 @@ use_old_FunctionDeclaration_responseToException(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RuntimeFactoryHelper": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RuntimeFactoryHelper():
@@ -701,7 +701,7 @@ use_current_ClassDeclaration_RuntimeFactoryHelper(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RuntimeFactoryHelper": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_RuntimeFactoryHelper():
@@ -713,7 +713,7 @@ use_old_ClassDeclaration_RuntimeFactoryHelper(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_seqFromTree": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_seqFromTree():
@@ -725,7 +725,7 @@ use_current_FunctionDeclaration_seqFromTree(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_seqFromTree": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_seqFromTree():
@@ -737,7 +737,7 @@ use_old_FunctionDeclaration_seqFromTree(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SummaryTreeBuilder": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SummaryTreeBuilder():
@@ -749,7 +749,7 @@ use_current_ClassDeclaration_SummaryTreeBuilder(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SummaryTreeBuilder": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_SummaryTreeBuilder():
@@ -761,7 +761,7 @@ use_old_ClassDeclaration_SummaryTreeBuilder(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_utf8ByteLength": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_utf8ByteLength():
@@ -773,7 +773,7 @@ use_current_FunctionDeclaration_utf8ByteLength(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_utf8ByteLength": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_utf8ByteLength():

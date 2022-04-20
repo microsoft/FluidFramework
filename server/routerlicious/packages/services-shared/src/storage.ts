@@ -15,6 +15,7 @@ import {
     IGitCache,
     SummaryTreeUploadManager,
     WholeSummaryUploadManager,
+    ISession,
 } from "@fluidframework/server-services-client";
 import {
     ICollection,
@@ -117,6 +118,8 @@ export class DocumentStorage implements IDocumentStorage {
         sequenceNumber: number,
         term: number,
         initialHash: string,
+        ordererUrl: string,
+        historianUrl: string,
         values: [string, ICommittedProposal][],
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
@@ -165,6 +168,7 @@ export class DocumentStorage implements IDocumentStorage {
             expHash1: initialHash,
             logOffset: -1,
             sequenceNumber,
+            signalClientConnectionNumber: 0,
             epoch: undefined,
             term: 1,
             lastSentMSN: 0,
@@ -187,6 +191,15 @@ export class DocumentStorage implements IDocumentStorage {
             lastSummarySequenceNumber: 0,
         };
 
+        const session: ISession = {
+            ordererUrl,
+            historianUrl,
+            isSessionAlive: true,
+        };
+
+        winston.info(`Session: ${JSON.stringify(session)}`, { messageMetaData });
+        Lumberjack.info(`Session: ${JSON.stringify(session)}`, lumberjackProperties);
+
         const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
             {
@@ -197,6 +210,7 @@ export class DocumentStorage implements IDocumentStorage {
                 createTime: Date.now(),
                 deli: JSON.stringify(deli),
                 documentId,
+                session,
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
@@ -282,11 +296,13 @@ export class DocumentStorage implements IDocumentStorage {
         tenantId: string,
         documentId: string,
         deli?: string,
-        scribe?: string): Promise<IDocument> {
+        scribe?: string,
+        session?: ISession): Promise<IDocument> {
         const value: IDocument = {
             createTime: Date.now(),
             deli,
             documentId,
+            session,
             scribe,
             tenantId,
             version: "0.1",

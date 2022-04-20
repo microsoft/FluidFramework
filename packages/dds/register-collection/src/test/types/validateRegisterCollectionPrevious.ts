@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ConsensusRegisterCollection": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ConsensusRegisterCollection():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_ConsensusRegisterCollection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ConsensusRegisterCollection": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ConsensusRegisterCollection():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_ConsensusRegisterCollection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ConsensusRegisterCollectionFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ConsensusRegisterCollectionFactory():
@@ -52,7 +52,7 @@ use_current_ClassDeclaration_ConsensusRegisterCollectionFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ConsensusRegisterCollectionFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_ConsensusRegisterCollectionFactory():
@@ -64,7 +64,7 @@ use_old_ClassDeclaration_ConsensusRegisterCollectionFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusRegisterCollection": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConsensusRegisterCollection():
@@ -76,7 +76,7 @@ use_current_InterfaceDeclaration_IConsensusRegisterCollection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusRegisterCollection": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IConsensusRegisterCollection():
@@ -88,7 +88,7 @@ use_old_InterfaceDeclaration_IConsensusRegisterCollection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusRegisterCollectionEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConsensusRegisterCollectionEvents():
@@ -100,7 +100,7 @@ use_current_InterfaceDeclaration_IConsensusRegisterCollectionEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusRegisterCollectionEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IConsensusRegisterCollectionEvents():
@@ -112,7 +112,7 @@ use_old_InterfaceDeclaration_IConsensusRegisterCollectionEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusRegisterCollectionFactory": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory():
@@ -124,7 +124,7 @@ use_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConsensusRegisterCollectionFactory": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory():
@@ -136,7 +136,7 @@ use_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ReadPolicy": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ReadPolicy():
@@ -148,7 +148,7 @@ use_current_EnumDeclaration_ReadPolicy(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ReadPolicy": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_ReadPolicy():

@@ -112,7 +112,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
         return maybe as IRemovalInfo;
     }
     assert(maybe?.removedClientIds === undefined && maybe?.removedSeq === undefined,
-        "both removedClientIds and removedSeq should be set or not set");
+        0x2bf /* "both removedClientIds and removedSeq should be set or not set" */);
 }
 
 /**
@@ -1036,10 +1036,6 @@ export class MergeTree {
 
     private static readonly initBlockUpdateActions: BlockUpdateActions;
     private static readonly theUnfinishedNode = <IMergeBlock>{ childCount: -1 };
-    // WARNING:
-    // Setting blockUpdateMarkers to false will result in eventual consistency issues
-    // for property updates on markers when loading from snapshots
-    private static readonly blockUpdateMarkers = true;
 
     root: IMergeBlock;
     private readonly blockUpdateActions: BlockUpdateActions = MergeTree.initBlockUpdateActions;
@@ -1060,12 +1056,7 @@ export class MergeTree {
     }
 
     private makeBlock(childCount: number) {
-        let block: MergeBlock;
-        if (MergeTree.blockUpdateMarkers) {
-            block = new HierMergeBlock(childCount);
-        } else {
-            block = new MergeBlock(childCount);
-        }
+        const block: MergeBlock = new HierMergeBlock(childCount);
         block.ordinal = "";
         return block;
     }

@@ -293,7 +293,7 @@ export class Loader implements IHostLoader {
     private readonly mc: MonitoringContext;
 
     constructor(loaderProps: ILoaderProps) {
-        const scope = { ...loaderProps.scope as FluidObject<ILoader> };
+        const scope: FluidObject<ILoader> = { ...loaderProps.scope };
         if (loaderProps.options?.provideScopeLoader !== false) {
             scope.ILoader = this;
         }

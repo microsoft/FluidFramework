@@ -81,6 +81,7 @@ export function generateRuntimeOptions(
         loadSequenceNumberVerification: [undefined],
         useDataStoreAliasing: [undefined],
         enableOfflineLoad: [undefined],
+        flushMode: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(

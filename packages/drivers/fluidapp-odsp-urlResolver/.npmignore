@@ -3,4 +3,3 @@ nyc
 **/*.tsbuildinfo
 src/test
 dist/test
-
