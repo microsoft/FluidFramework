@@ -26,7 +26,7 @@ export interface IFluidPackageEnvironment {
          * of Library, the entrypoint for umd packages
          */
         [key: string]: unknown;
-    }
+    };
 }
 
 /**
@@ -115,8 +115,7 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
      * {@link https://github.com/npm/node-semver#usage}
      */
     satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
-
-/* eslint-disable max-len */
+ 
     /**
      * Return a number representing the ascending sort order of the `a` and `b` code details;
      *      `< 0` if `a < b`.

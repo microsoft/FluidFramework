@@ -10,7 +10,7 @@ declare function useFluidObject(params: FluidObject | undefined): void;
 
 declare function useProvider<T extends FluidObject>(params: FluidObject<T> | undefined): void;
 
-declare function useProviderKey<T,TKey extends FluidObjectKeys<T> = FluidObjectKeys<T>>(key: TKey): void;
+declare function useProviderKey<T, TKey extends FluidObjectKeys<T> = FluidObjectKeys<T>>(key: TKey): void;
 
 declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): void;
 declare function getLoadable(): IFluidLoadable;
@@ -117,7 +117,7 @@ declare function getIFluidObject(): IFluidObject;
 // validate provider inheritance
 {
     interface IProvideFooParent{
-        IFooParent: IFooParent
+        IFooParent: IFooParent;
     }
 
     interface IFooParent extends Partial<IProvideFooParent>{
@@ -125,7 +125,7 @@ declare function getIFluidObject(): IFluidObject;
     }
 
     interface IFooProvideChild {
-        IFooChild: IFooChild
+        IFooChild: IFooChild;
     }
 
     interface IFooChild extends IFooParent, Partial<IFooProvideChild>{
