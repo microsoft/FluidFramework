@@ -106,7 +106,7 @@ describe("Directory", () => {
                     assert.equal(directoryCreationExpected, true, "subDirectoryCreated event not expected");
                     directoryCreationExpected = false;
 
-                    assert.equal(path, `${directory.absolutePath}rock`);
+                    assert.equal(path, "rock");
 
                     assert.equal(local, true, "local should be true for local action for subDirectoryCreated event");
                     assert.equal(target, directory, "target should be the directory for subDirectoryCreated event");
@@ -114,7 +114,7 @@ describe("Directory", () => {
                 directory.on("subDirectoryDeleted", (path, local, target) => {
                     assert.equal(directoryDeletedExpected, true, "subDirectoryDeleted event not expected");
                     directoryDeletedExpected = false;
-                    assert.equal(path, `${directory.absolutePath}rock`);
+                    assert.equal(path, "rock");
 
                     assert.equal(local, true, "local should be true for local action for subDirectoryDeleted event");
                     assert.equal(target, directory, "target should be the directory for subDirectoryDeleted event");
@@ -196,7 +196,7 @@ describe("Directory", () => {
                 let directoryDeletionExpected2 = false;
                 directory.on("subDirectoryDeleted", (relativePath, local, target) => {
                     directoryDeletionExpected = true;
-                    assert.equal(relativePath, "/rock/rockChild/rockChildChild" , "Path should match");
+                    assert.equal(relativePath, "rock/rockChild/rockChildChild" , "Path should match");
                 });
                 subDirectory.on("subDirectoryDeleted", (relativePath, local, target) => {
                     directoryDeletionExpected1 = true;
