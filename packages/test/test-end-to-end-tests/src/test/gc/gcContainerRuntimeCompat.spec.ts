@@ -20,10 +20,10 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
+import { loadSummarizer, TestDataObject, submitAndAckSummary, getGCStateFromSummary } from "../mockSummarizerClient";
 import { pkgVersion } from "../../packageVersion";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 import { mockConfigProvider } from "./mockConfigProivder";
-import { loadSummarizer, TestDataObject, submitAndAckSummary, getGCStateFromSummary } from "./mockSummarizerClient";
 
 /**
  * These tests validate the compatibility of the GC data in the summary tree across the past 2 container runtime

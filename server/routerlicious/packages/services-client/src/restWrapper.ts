@@ -9,6 +9,7 @@ import Axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosRequestHeade
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
+import { CorrelationIdHeaderName } from "./constants";
 
 export abstract class RestWrapper {
     constructor(
@@ -149,7 +150,7 @@ export class BasicRestWrapper extends RestWrapper {
                     } else if (error?.response?.status === 401 && canRetry && this.refreshOnAuthError()) {
                         const retryConfig = { ...requestConfig };
                         retryConfig.headers = this.generateHeaders(
-                            retryConfig.headers, options.headers["x-correlation-id"] as string);
+                            retryConfig.headers, options.headers[CorrelationIdHeaderName] as string);
 
                         this.request<T>(retryConfig, statusCode, false)
                             .then(resolve)
@@ -190,10 +191,10 @@ export class BasicRestWrapper extends RestWrapper {
             result = { ...this.defaultHeaders, ...headers };
         }
 
-        if (result["x-correlation-id"]) {
+        if (result[CorrelationIdHeaderName]) {
             return result;
         }
-        return { "x-correlation-id": fallbackCorrelationId, ...result };
+        return { [CorrelationIdHeaderName]: fallbackCorrelationId, ...result };
     }
 
     private refreshOnAuthError(): boolean {

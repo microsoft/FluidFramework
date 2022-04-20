@@ -8,10 +8,9 @@ const common = require('./webpack.common.js');
 
 const fs = require('fs');
 const path = require('path');
-const assert = require('assert');
 
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 const _ = require('underscore');
 
 const baseConfig = require('./webpack.base.js');

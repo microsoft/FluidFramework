@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FluidAppOdspUrlResolver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FluidAppOdspUrlResolver():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_FluidAppOdspUrlResolver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2002:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FluidAppOdspUrlResolver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_FluidAppOdspUrlResolver():

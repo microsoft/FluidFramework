@@ -11,7 +11,7 @@ import { CachingLogViewer } from './LogViewer';
 import { TreeView } from './TreeView';
 import { RevisionView } from './RevisionView';
 import { EditCommittedHandler, SharedTree } from './SharedTree';
-import { GenericTransaction, ValidEditingResult } from './TransactionInternal';
+import { GenericTransaction, TransactionInternal, ValidEditingResult } from './TransactionInternal';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { SharedTreeEvent } from './EventTypes';
 import { newEditId } from './EditUtilities';
@@ -153,7 +153,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 */
 	public openEdit(): void {
 		assert(this.currentEdit === undefined, 'An edit is already open.');
-		this.currentEdit = this.tree.transactionFactory(this.latestCommittedView);
+		this.currentEdit = TransactionInternal.factory(this.latestCommittedView);
 	}
 
 	/**
@@ -275,7 +275,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		// When closed, the result might indicate Malformed due to unused detached entities.
 		// This is not an error, as the edit was still open and can still use those entities.
 		const priorResults = this.currentEdit.close();
-		const rebasedEdit = this.tree.transactionFactory(this.latestCommittedView).applyChanges(priorResults.changes);
+		const rebasedEdit = TransactionInternal.factory(this.latestCommittedView).applyChanges(priorResults.changes);
 		assert(
 			rebasedEdit.status !== EditStatus.Malformed,
 			'Malformed changes should have been caught on original application.'

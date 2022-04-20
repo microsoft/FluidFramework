@@ -63,7 +63,7 @@ export class Partition extends EventEmitter {
                     }
 
                     callback();
-                } catch (error) {
+                } catch (error: any) {
                     callback(error);
                 }
             },

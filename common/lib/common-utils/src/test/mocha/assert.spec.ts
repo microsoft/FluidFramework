@@ -12,7 +12,7 @@ describe("Assert", () => {
         for (const shortCode of ["0x000", "0x03a", "0x200", "0x4321"]) {
             try {
                 assert(false, Number.parseInt(shortCode, 16));
-            } catch (e) {
+            } catch (e: any) {
                 strict(e instanceof Error, "not an error");
                 strict.strictEqual(
                     e.message,
