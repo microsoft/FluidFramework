@@ -1201,7 +1201,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public mergeEditsFrom(
 		other: SharedTree,
-		edits: Iterable<Edit<ChangeInternal>>,
+		edits: Iterable<Edit<InternalizedChange>>,
 		stableIdRemapper?: (id: StableNodeId) => StableNodeId
 	): EditId[] {
 		const idConverter = (id: NodeId) => {
@@ -1210,7 +1210,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			return this.generateNodeId(convertedStableId);
 		};
 
-		return Array.from(edits, (edit) => this.applyEditInternal(convertEditIds(edit, (id) => idConverter(id))).id);
+		return Array.from(
+			edits as unknown as Iterable<Edit<ChangeInternal>>,
+			(edit) => this.applyEditInternal(convertEditIds(edit, (id) => idConverter(id))).id
+		);
 	}
 
 	/**

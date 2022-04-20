@@ -1482,7 +1482,7 @@ export function runSharedTreeOperationsTests(
 					Change.delete(StableRange.all({ parent: testTree.identifier, label: testTree.right.traitLabel }))
 				);
 				const preEditRootHandle = getTestTreeRootHandle(sharedTree2, testTree2);
-				const edits = [0, 1, 2].map((i) => sharedTree.editsInternal.getEditInSessionAtIndex(i));
+				const edits = [0, 1, 2].map((i) => sharedTree.edits.getEditInSessionAtIndex(i));
 				// Since the TestTree setup edit is a `setTrait`, this should wipe `testTree2` state.
 				sharedTree2.mergeEditsFrom(sharedTree, edits);
 				expect(sharedTree2.edits.length).to.equal(4);
@@ -1511,7 +1511,7 @@ export function runSharedTreeOperationsTests(
 				sharedTree.applyEdit(
 					Change.delete(StableRange.all({ parent: testTree.identifier, label: testTree.right.traitLabel }))
 				);
-				const edits = [1, 2].map((i) => sharedTree.editsInternal.getEditInSessionAtIndex(i));
+				const edits = [1, 2].map((i) => sharedTree.edits.getEditInSessionAtIndex(i));
 				sharedTree2.mergeEditsFrom(sharedTree, edits, (id) => translationMap.get(id) ?? id);
 
 				const root = getTestTreeRootHandle(sharedTree, testTree);
