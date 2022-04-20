@@ -225,6 +225,9 @@ module.exports = {
         // Prohibits using a type assertion that does not change the type of an expression.
         "@typescript-eslint/no-unnecessary-type-assertion": "error",
 
+        // Disallows calling a function with an any-typed value.
+        "@typescript-eslint/no-unsafe-argument": "warn",
+
         // Disallows assigning any to a variable, and assigning any[] to an array destructuring. Assigning an
         // any typed value to a variable can be hard to pick up on, particularly if it leaks in from an external
         // library.
@@ -240,6 +243,9 @@ module.exports = {
 
         // Disallow unused expressions.
         "@typescript-eslint/no-unused-expressions": "error",
+
+        // Disallow unused variables.
+        "@typescript-eslint/no-unused-vars": "error",
 
         // Enforces spacing in curly brackets.
         "@typescript-eslint/object-curly-spacing": [

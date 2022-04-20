@@ -247,7 +247,7 @@
             "error"
         ],
         "@typescript-eslint/no-unsafe-argument": [
-            "error"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-assignment": [
             "warn"
@@ -265,7 +265,7 @@
             "error"
         ],
         "@typescript-eslint/no-unused-vars": [
-            "warn"
+            "error"
         ],
         "@typescript-eslint/no-var-requires": [
             "error"
