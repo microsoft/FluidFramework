@@ -114,6 +114,16 @@
   },
   "typeValidation": {
     "version": "0.59.2000",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_Summarizer": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IProvideSummarizer": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISummarizer": {
+        "forwardCompat": false
+      }
+    }
   }
 }
