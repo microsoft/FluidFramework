@@ -5,7 +5,13 @@
 
 import { Timer } from "@fluidframework/common-utils";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
-import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummarizeAttempt, ISummarizeHeuristicStrategy, ISummarizeHeuristicWeightConfiguration } from "./summarizerTypes";
+import {
+    ISummarizeHeuristicData,
+    ISummarizeHeuristicRunner,
+    ISummarizeAttempt,
+    ISummarizeHeuristicStrategy,
+    ISummarizeHeuristicWeightConfiguration,
+} from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
 
 /** Simple implementation of class for tracking summarize heuristic data. */
@@ -90,7 +96,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
             if (opsSinceLastAck > 0) {
                 trySummarize(reason);
             }
-        }
+        };
     }
 
     public get opsSinceLastAck(): number {
@@ -147,7 +153,7 @@ export class WeightedOpsSummarizeHeuristicStrategy implements ISummarizeHeuristi
 const DefaultHeuristicWeightConfiguration: ISummarizeHeuristicWeightConfiguration = {
     systemOpWeight   : 0.1,
     nonSystemOpWeight: 1.0,
-}
+};
 
 export function getDefaultSummarizeHeuristicStrategies(
         weightConfiguration: ISummarizeHeuristicWeightConfiguration = DefaultHeuristicWeightConfiguration) {
@@ -155,4 +161,4 @@ export function getDefaultSummarizeHeuristicStrategies(
         new MaxTimeSummarizeHeuristicStrategy(),
         new WeightedOpsSummarizeHeuristicStrategy(weightConfiguration),
     ];
-};
+}
