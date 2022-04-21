@@ -194,7 +194,7 @@ export interface ContainerRuntimeMessage {
 const IdleDetectionTime = 5000;
 
 const DefaultSummaryConfiguration: ISummaryConfiguration = {
-    idleTime: IdleDetectionTime,
+    idleTime: IdleDetectionTime * 3,
 
     maxTime: IdleDetectionTime * 12,
 
