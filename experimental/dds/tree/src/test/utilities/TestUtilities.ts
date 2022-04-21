@@ -282,14 +282,14 @@ export async function setUpLocalServerTestSharedTree(
 		new TestContainerRuntimeFactory(
 			TestDataStoreType,
 			new TestFluidObjectFactory(registry),
-            {
-                summaryOptions: {
-                    summaryConfigOverrides: {
-                        idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
-                    },
-                    initialSummarizerDelayMs: 0
-                },
-            },
+			{
+				summaryOptions: {
+					summaryConfigOverrides: {
+						idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
+					},
+					initialSummarizerDelayMs: 0,
+				},
+			},
 			[innerRequestHandler]
 		);
 
