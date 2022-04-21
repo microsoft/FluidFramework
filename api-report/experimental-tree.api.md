@@ -520,6 +520,12 @@ export interface InsertInternal_0_0_2 {
 }
 
 // @public
+export interface InternalizedChange {
+    // (undocumented)
+    InternalChangeBrand: '2cae1045-61cf-4ef7-a6a3-8ad920cb7ab3';
+}
+
+// @public
 export type InternedStringId = number & {
     readonly InternedStringId: 'e221abc9-9d17-4493-8db0-70c871a1c27c';
 };
@@ -821,9 +827,9 @@ export interface SetValueInternal_0_0_2 {
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
     constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_0_2>);
     constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_1_1>);
-    applyEdit(...changes: Change[]): Edit<unknown>;
+    applyEdit(...changes: Change[]): Edit<InternalizedChange>;
     // (undocumented)
-    applyEdit(changes: Change[]): Edit<unknown>;
+    applyEdit(changes: Change[]): Edit<InternalizedChange>;
     // @internal
     applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
     protected applyStashedOp(op: unknown): void;
@@ -835,9 +841,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     // (undocumented)
     get currentView(): RevisionView;
     // (undocumented)
-    get edits(): OrderedEditSet;
-    // @internal (undocumented)
-    get editsInternal(): OrderedEditSet<ChangeInternal>;
+    get edits(): OrderedEditSet<InternalizedChange>;
     // @internal
     equals(sharedTree: SharedTree): boolean;
     generateNodeId(override?: string): NodeId;
@@ -858,6 +862,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     // (undocumented)
     protected readonly logger: ITelemetryLogger;
     get logViewer(): LogViewer;
+    mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
     // (undocumented)
     protected onDisconnect(): void;
     // (undocumented)
@@ -866,7 +871,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     protected registerCore(): void;
     revert(editId: EditId): EditId | undefined;
     // @internal
-    revertChanges(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined;
+    revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined;
     // @internal
     saveSerializedSummary(options?: {
         serializer?: IFluidSerializer;

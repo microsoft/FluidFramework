@@ -14,7 +14,7 @@ import {
 	MockFluidDataStoreRuntime,
 } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common';
-import { EditId, OpSpaceNodeId, TraitLabel } from '../../Identifiers';
+import { EditId, NodeId, OpSpaceNodeId, TraitLabel } from '../../Identifiers';
 import { CachingLogViewer } from '../../LogViewer';
 import { EditLog, OrderedEditSet } from '../../EditLog';
 import { initialTree } from '../../InitialTree';
@@ -71,6 +71,7 @@ import {
 	applyNoop,
 	getIdNormalizerFromSharedTree,
 	waitForSummary,
+	getEditLogInternal,
 } from './TestUtilities';
 
 function revertEditInTree(tree: SharedTree, edit: EditId): EditId | undefined {
@@ -1358,7 +1359,7 @@ export function runSharedTreeOperationsTests(
 			});
 
 			// Verify we loaded a no-history summary.
-			expect(tree3.editsInternal.length).to.equal(1);
+			expect(tree3.edits.length).to.equal(1);
 
 			let unexpectedHistoryChunkCount = 0;
 			tree3.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => unexpectedHistoryChunkCount++);
@@ -1425,10 +1426,12 @@ export function runSharedTreeOperationsTests(
 					containerRuntimeFactory.processAllMessages();
 					const { internedStrings } = tree.saveSummary() as SharedTreeSummary;
 
-					const insertEdit = normalizeEdit(tree, tree.editsInternal.getEditInSessionAtIndex(1));
-					const moveEdit = normalizeEdit(tree, tree.editsInternal.getEditInSessionAtIndex(2));
-					const insertEdit2 = normalizeEdit(secondTree, secondTree.editsInternal.getEditInSessionAtIndex(1));
-					const moveEdit2 = normalizeEdit(secondTree, secondTree.editsInternal.getEditInSessionAtIndex(2));
+					const log = getEditLogInternal(tree);
+					const log2 = getEditLogInternal(secondTree);
+					const insertEdit = normalizeEdit(tree, log.getEditInSessionAtIndex(1));
+					const moveEdit = normalizeEdit(tree, log.getEditInSessionAtIndex(2));
+					const insertEdit2 = normalizeEdit(secondTree, log2.getEditInSessionAtIndex(1));
+					const moveEdit2 = normalizeEdit(secondTree, log2.getEditInSessionAtIndex(2));
 					expect(insertEdit).to.deep.equal(insertEdit2);
 					expect(moveEdit).to.deep.equal(moveEdit2);
 					expect(tree.equals(secondTree)).to.be.true;
@@ -1477,7 +1480,7 @@ export function runSharedTreeOperationsTests(
 
 					const uncompressedEdits: EditWithoutId<ChangeInternal>[] = [
 						{
-							changes: tree.edits.getEditInSessionAtIndex(0).changes as ChangeInternal[],
+							changes: getEditLogInternal(tree).getEditInSessionAtIndex(0).changes,
 						},
 					];
 
@@ -1530,5 +1533,67 @@ export function runSharedTreeOperationsTests(
 				});
 			});
 		}
+
+		describe('mergeEditsFrom', () => {
+			const getTestTreeRootHandle = (tree: SharedTree, testTree: TestTree): TreeNodeHandle => {
+				const view = tree.currentView;
+				const handle = new TreeNodeHandle(view, view.root);
+				return handle.traits[testTree.traitLabel][0];
+			};
+
+			it('can be used with simple edits', () => {
+				const { sharedTree, testTree } = createSimpleTestTree();
+				const { sharedTree: sharedTree2, testTree: testTree2 } = createSimpleTestTree();
+				sharedTree.applyEdit(...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left)));
+				sharedTree.applyEdit(
+					Change.delete(StableRange.all({ parent: testTree.identifier, label: testTree.right.traitLabel }))
+				);
+				const preEditRootHandle = getTestTreeRootHandle(sharedTree2, testTree2);
+				const edits = [0, 1, 2].map((i) => sharedTree.edits.getEditInSessionAtIndex(i));
+				// Since the TestTree setup edit is a `setTrait`, this should wipe `testTree2` state.
+				sharedTree2.mergeEditsFrom(sharedTree, edits);
+				expect(sharedTree2.edits.length).to.equal(4);
+				const rootHandle = getTestTreeRootHandle(sharedTree2, testTree2);
+				expect(preEditRootHandle.identifier).to.not.equal(rootHandle.identifier);
+				expect(rootHandle.traits[testTree2.left.traitLabel].length).to.equal(2);
+			});
+
+			it('can be used with a translation map', () => {
+				const { sharedTree, testTree } = createSimpleTestTree();
+				const { sharedTree: sharedTree2, testTree: testTree2 } = createSimpleTestTree();
+				// For each of the identities in the simple test tree...
+				const nodeIdGetters: ((tree: TestTree) => NodeId)[] = [
+					(tree) => tree.identifier,
+					(tree) => tree.left.identifier,
+					(tree) => tree.right.identifier,
+				];
+				// Make a map translating that identifier from `testTree` to `testTree2`
+				const translationMap = new Map(
+					nodeIdGetters.map((getter) => [
+						sharedTree.convertToStableNodeId(getter(testTree)),
+						sharedTree2.convertToStableNodeId(getter(testTree2)),
+					])
+				);
+				sharedTree.applyEdit(...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left)));
+				sharedTree.applyEdit(
+					Change.delete(StableRange.all({ parent: testTree.identifier, label: testTree.right.traitLabel }))
+				);
+				const edits = [1, 2].map((i) => sharedTree.edits.getEditInSessionAtIndex(i));
+				sharedTree2.mergeEditsFrom(sharedTree, edits, (id) => translationMap.get(id) ?? id);
+
+				const root = getTestTreeRootHandle(sharedTree, testTree);
+				const root2 = getTestTreeRootHandle(sharedTree2, testTree2);
+
+				const leftTrait = root.traits[testTree.left.traitLabel];
+				const leftTrait2 = root2.traits[testTree2.left.traitLabel];
+
+				// Inserted leaves should be equivalent.
+				expect(leftTrait2.length).to.equal(2);
+				expect(leftTrait2[1]).to.deep.equal(leftTrait[1]);
+				// Right subtree should have been deleted.
+				expect(Object.entries(root2.traits).length).to.equal(1);
+				expect(root2.traits[testTree2.right.traitLabel]).to.equal(undefined);
+			});
+		});
 	});
 }

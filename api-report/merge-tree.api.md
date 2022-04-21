@@ -104,7 +104,11 @@ export class Client {
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, consensusCallback: (m: Marker) => void): IMergeTreeAnnotateMsg | undefined;
     annotateRangeLocal(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg | undefined;
     // (undocumented)
-    applyMsg(msg: ISequencedDocumentMessage): void;
+    applyMsg(msg: ISequencedDocumentMessage, local?: boolean): void;
+    // (undocumented)
+    applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
+    // (undocumented)
+    applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
     // (undocumented)
