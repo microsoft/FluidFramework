@@ -1,0 +1,37 @@
+{
+  "name": "@tylerbu/mrm",
+  "version": "0.0.1",
+  "description": "",
+  "license": "MIT",
+  "author": "Tyler Butler <tyler@tylerbutler.com>",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "fix": "sort-package-json",
+    "test": "xo && ava",
+    "xo": "xo"
+  },
+  "xo": {
+    "rules": {
+      "capitalized-comments": "off",
+      "func-names": "off",
+      "no-unused-vars": "off",
+      "object-curly-spacing": [
+        "error",
+        "always"
+      ],
+      "unicorn/prefer-module": "off",
+      "unicorn/prefer-node-protocol": "off"
+    },
+    "space": true
+  },
+  "dependencies": {
+    "globby": "^13.1.1",
+    "mrm-core": "^7.0.0"
+  },
+  "devDependencies": {
+    "ava": "^4.2.0",
+    "sort-package-json": "^1.55.0",
+    "xo": "^0.48.0"
+  }
+}

@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/tylerbutler/.mrm
+	branch = main
+	commit = 48ea87b6aac27c27cbcf4fa7c03879a70b3f9409
+	parent = ba41cde3208405ba80067fbff7176554394226a5
+	method = merge
+	cmdver = 0.4.3
