@@ -860,14 +860,15 @@ export class GarbageCollector implements IGarbageCollector {
             missingExplicitReferences.forEach((missingExplicitReference) => {
                 const event: ITelemetryPerformanceEvent = {
                     eventName: "gcUnknownOutboundReferences",
-                    gcNode: missingExplicitReference[0],
+                    gcNodeId: missingExplicitReference[0],
                     gcRoutes: JSON.stringify(missingExplicitReference[1]),
                 };
                 this.mc.logger.sendPerformanceEvent(event);
             });
         }
 
-        // No references were added since the last run so we don't need to run garbage collection
+        // No references were added since the last run so we don't have to update reference states of any unreferenced
+        // nodes
         if (this.newReferencesSinceLastRun.size === 0) {
             return;
         }
@@ -940,11 +941,14 @@ export class GarbageCollector implements IGarbageCollector {
         const missingExplicitReferences = currentGraph.filter(([nodeId, currentOutboundRoutes]) => {
             const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
             const explicitRoutes = explicitReferences.get(nodeId) ?? [];
-            let found = false;
+            let notFound = false;
             currentOutboundRoutes.forEach((route) => {
-                 found = previousRoutes.includes(route) || explicitRoutes.includes(route);
+                // filter out routes from DDS's to their parent data store.
+                if (!route.startsWith(nodeId)) {
+                    notFound = !previousRoutes.includes(route) && !explicitRoutes.includes(route);
+                }
             });
-            return found;
+            return notFound;
         });
 
         // Ideally missingExplicitReferences should always have a size 0

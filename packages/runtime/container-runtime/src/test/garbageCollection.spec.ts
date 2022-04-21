@@ -781,11 +781,18 @@ describe("Garbage Collection Tests", () => {
 
             // Validate that we got the "gcUnknownOutboundReferences" error.
             const unknownReferencesEvent = "GarbageCollector:gcUnknownOutboundReferences";
-            const eventsFound = mockLogger.matchEvents([{
+            const eventsFound = mockLogger.matchEvents([
+                {
                     eventName: unknownReferencesEvent,
-                    gcNode: "/",
-                    gcRoutes: JSON.stringify(["/A", "/D"]),
-            }]);
+                    gcNodeId: "/A",
+                    gcRoutes: JSON.stringify(["/B", "/C"]),
+                },
+                {
+                    eventName: unknownReferencesEvent,
+                    gcNodeId: "/D",
+                    gcRoutes: JSON.stringify(["/C"]),
+                },
+            ]);
             assert(eventsFound, `Expected unknownReferenceEvent event!`);
         });
     });
