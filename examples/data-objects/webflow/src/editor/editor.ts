@@ -4,7 +4,6 @@
  */
 
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { caretEnter, Direction, getDeltaX, getDeltaY, KeyCode } from "../util";
@@ -15,13 +14,6 @@ import { Caret } from "./caret";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 
-/**
- * The Host provides the Editor with a registry of view factories which will be used to render components that have
- * been inserted into the document.
- */
-export interface IFluidHTMLViewFactory {
-    createView(model: FluidObject, scope?: FluidObject): IFluidHTMLView;
-}
 
 export class Editor {
     private readonly layout: Layout;
@@ -29,8 +21,8 @@ export class Editor {
     private readonly caretSync: () => void;
     private get doc() { return this.layout.doc; }
 
-    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, viewFactoryRegistry?: Map<string, IFluidHTMLViewFactory>, scope?: FluidObject) {
-        this.layout = new Layout(doc, root, formatter, viewFactoryRegistry, scope);
+    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, scope?: FluidObject) {
+        this.layout = new Layout(doc, root, formatter, scope);
         this.caret = new Caret(this.layout);
 
         let scheduled = false;
