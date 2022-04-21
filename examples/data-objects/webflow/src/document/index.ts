@@ -30,7 +30,6 @@ import {
     SequenceDeltaEvent,
 } from "@fluidframework/sequence";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { IFluidHTMLOptions } from "@fluidframework/view-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
 import { clamp, emptyArray, randomId, TagName, TokenList } from "../util";
 import { IHTMLAttributes } from "../util/attr";
@@ -95,8 +94,6 @@ const empty = Object.freeze({});
 
 export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-export const getComponentOptions = (segment: ISegment): IFluidHTMLOptions | undefined => (segment.properties && segment.properties.componentOptions) || empty;
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
 
