@@ -4,11 +4,13 @@
  */
 
 import { TaskManager } from "@fluid-experimental/task-manager";
+import { Quorum } from "@fluid-internal/quorum";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 // import { IFluidHandle } from "@fluidframework/core-interfaces";
 
+const quorumKey = "quorum";
 const crcKey = "crc";
 const taskManagerKey = "task-manager";
 const markedForDestructionKey = "marked";
@@ -29,8 +31,16 @@ export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvent
 }
 
 export class ContainerKillBit extends DataObject implements IContainerKillBit {
+    private _quorum: Quorum | undefined;
     private _crc: ConsensusRegisterCollection<boolean> | undefined;
     private _taskManager: TaskManager | undefined;
+
+    private get quorum() {
+        if (this._quorum === undefined) {
+            throw new Error("Couldn't retrieve the Quorum");
+        }
+        return this._quorum;
+    }
 
     private get crc() {
         if (this._crc === undefined) {
@@ -57,6 +67,7 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public get markedForDestruction() {
+        // return this.quorum.get(markedForDestructionKey) as boolean;
         return this.crc.read(markedForDestructionKey) as boolean;
     }
 
@@ -64,6 +75,8 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         // This should probably use a quorum-type data structure here.
         // Then, when everyone sees the quorum proposal get approved they can choose to either volunteer
         // or close themselves
+        // TODO: fully replace crc for markedForDestruction
+        this.quorum.set(markedForDestructionKey, true);
         await this.crc.write(markedForDestructionKey, true);
     }
 
@@ -76,10 +89,14 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     protected async initializingFirstTime() {
+        const quorum = Quorum.create(this.runtime);
         const crc = ConsensusRegisterCollection.create(this.runtime);
         const taskManager = TaskManager.create(this.runtime);
+        this.root.set(quorumKey, quorum.handle);
         this.root.set(crcKey, crc.handle);
         this.root.set(taskManagerKey, taskManager.handle);
+        // TODO: fully replace crc for markedForDestruction
+        quorum.set(markedForDestructionKey, false);
         await Promise.all([
             crc.write(markedForDestructionKey, false),
             crc.write(deadKey, false),
@@ -87,6 +104,9 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     protected async hasInitialized() {
+        const quorumHandle = this.root.get(quorumKey);
+        this._quorum = await quorumHandle.get();
+
         const crcHandle = this.root.get(crcKey);
         this._crc = await crcHandle.get();
 
@@ -114,6 +134,7 @@ export const ContainerKillBitInstantiationFactory =
         ContainerKillBit,
         [
             ConsensusRegisterCollection.getFactory(),
+            Quorum.getFactory(),
             TaskManager.getFactory(),
         ],
         {},
