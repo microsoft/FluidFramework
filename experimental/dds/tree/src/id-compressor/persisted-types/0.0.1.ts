@@ -4,12 +4,18 @@
  */
 
 import type { Serializable } from '@fluidframework/datastore-definitions';
-import type { FinalCompressedId, LocalCompressedId, OpSpaceCompressedId, SessionId } from '../../Identifiers';
+import type {
+	FinalCompressedId,
+	LocalCompressedId,
+	OpSpaceCompressedId,
+	SessionId,
+	UuidString,
+} from '../../Identifiers';
 
 /**
- * Extensible attribution info associated with a session.
+ * An identifier associated with a session for the purpose of attributing its edits to some entity.
  */
-export type AttributionInfo = Serializable;
+export type AttributionId = UuidString;
 
 /**
  * A serialized ID allocation session for an `IdCompressor`.
@@ -21,9 +27,9 @@ export type SerializedSessionData = readonly [
 	sessionId: SessionId,
 
 	/**
-	 * The attribution info provided for the session
+	 * Index into the serialized AttributionIDs array; points to the attribution ID provided for this session
 	 */
-	attributionInfo?: AttributionInfo
+	attributionId?: number
 ];
 
 export type SerializedClusterOverrides = readonly [
@@ -106,6 +112,8 @@ export interface SerializedIdCompressor extends VersionedSerializedIdCompressor 
 	readonly sessions: readonly SerializedSessionData[];
 	/** All clusters in the compressor in the order they were created. */
 	readonly clusters: readonly SerializedCluster[];
+	/** All attribution IDs for all sessions */
+	readonly attributionIds?: readonly AttributionId[];
 }
 
 /**
@@ -154,7 +162,7 @@ export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCo
 export interface IdCreationRange {
 	readonly sessionId: SessionId;
 	readonly ids?: IdCreationRange.Ids;
-	readonly attributionInfo?: AttributionInfo;
+	readonly attributionId?: AttributionId;
 }
 
 export type UnackedLocalId = LocalCompressedId & OpSpaceCompressedId;

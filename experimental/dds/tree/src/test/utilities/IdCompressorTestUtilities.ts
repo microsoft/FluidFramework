@@ -24,14 +24,15 @@ import type {
 	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
+	AttributionId,
 } from '../../id-compressor';
 import { assertIsStableId } from '../../UuidUtilities';
 
 /** Identifies a compressor in a network */
 export enum Client {
-	Client1 = 'Client1',
-	Client2 = 'Client2',
-	Client3 = 'Client3',
+	Client1 = '393ba9b8-20bf-4995-b7b6-50757672149c', // Values are the `AttributionIds` of each client
+	Client2 = '96df5256-05ff-43f0-b37b-7b038ee6b34c',
+	Client3 = 'a41e91e2-b9aa-4c23-8b73-ff60541cb6c0',
 }
 
 /** Identifies a compressor with respect to a specific operation */
@@ -58,12 +59,8 @@ export const DestinationClient = { ...Client, ...MetaClient };
 /**
  * Creates a new compressor with the supplied cluster capacity.
  */
-export function createCompressor<T>(
-	client: Client,
-	clusterCapacity = 5,
-	attributionInfo?: Serializable<T>
-): IdCompressor {
-	const compressor = new IdCompressor(sessionIds.get(client), 1024, attributionInfo);
+export function createCompressor(client: Client, clusterCapacity = 5, attributionId?: AttributionId): IdCompressor {
+	const compressor = new IdCompressor(sessionIds.get(client), 1024, attributionId);
 	compressor.clusterCapacity = clusterCapacity;
 	return compressor;
 }
@@ -143,7 +140,7 @@ export class IdCompressorTestNetwork {
 		const clientIds = new Map<Client, TestIdData[]>();
 		const clientSequencedIds = new Map<Client, TestIdData[]>();
 		for (const client of Object.values(Client)) {
-			const compressor = createCompressor(client, initialClusterSize, client);
+			const compressor = createCompressor(client, initialClusterSize, client as AttributionId);
 			compressors.set(client, compressor);
 			clientProgress.set(client, 0);
 			clientIds.set(client, []);
@@ -336,7 +333,7 @@ export class IdCompressorTestNetwork {
 	 */
 	public assertNetworkState(): void {
 		const sequencedLogs = Object.values(Client).map(
-			(client) => [this.compressors.get(client), this.getSequencedIdLog(client)] as [IdCompressor, TestIdData[]]
+			(client) => [this.compressors.get(client), this.getSequencedIdLog(client)] as const
 		);
 
 		const maxLogLength = sequencedLogs.map(([_, data]) => data.length).reduce((p, n) => Math.max(p, n));

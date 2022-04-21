@@ -27,8 +27,8 @@ import {
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid';
 import { getIds } from '../id-compressor/IdRange';
-import type { UnackedLocalId } from '../id-compressor';
-import { assertIsStableId, isStableId } from '../UuidUtilities';
+import type { AttributionId, UnackedLocalId } from '../id-compressor';
+import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities';
 import {
 	createCompressor,
 	performFuzzActions,
@@ -240,12 +240,28 @@ describe('IdCompressor', () => {
 		});
 	});
 
-	it('only sends attribution info on the first range from each session', () => {
-		const compressor = createCompressor(Client.Client1, 5, 'attribution');
+    it('correctly uses default attribution ID', () => {
+		const compressor = createCompressor(Client.Client1, 5);
+        const attributionId = compressor.attributionId;
 		const range1 = compressor.takeNextCreationRange();
-		expectDefined(range1.attributionInfo);
+        expect(range1.attributionId).to.equal(attributionId);
+	});
+
+    it('correctly uses explicit attribution ID', () => {
+        const attributionId = generateStableId();
+		const compressor = createCompressor(Client.Client1, 5, attributionId);
+        expect(compressor.attributionId).to.equal(attributionId);
+		const range1 = compressor.takeNextCreationRange();
+        expect(compressor.attributionId).to.equal(attributionId);
+        expect(range1.attributionId).to.equal(attributionId);
+	});
+
+	it('only sends attribution ID on the first range from each session', () => {
+		const compressor = createCompressor(Client.Client1, 5, generateStableId());
+		const range1 = compressor.takeNextCreationRange();
+		expectDefined(range1.attributionId);
 		const range2 = compressor.takeNextCreationRange();
-		expect(range2.attributionInfo).to.be.undefined;
+		expect(range2.attributionId).to.be.undefined;
 	});
 
 	describe('can produce a creation range', () => {
@@ -583,8 +599,8 @@ describe('IdCompressor', () => {
 		});
 
 		it('correctly deserializes and resumes a session', () => {
-			const compressor1 = createCompressor(Client.Client1, undefined, Client.Client1);
-			const compressor2 = createCompressor(Client.Client2, undefined, Client.Client2);
+			const compressor1 = createCompressor(Client.Client1, undefined, Client.Client1 as AttributionId);
+			const compressor2 = createCompressor(Client.Client2, undefined, Client.Client2 as AttributionId);
 			compressor1.generateCompressedId();
 			const creationRange = compressor1.takeNextCreationRange();
 			compressor1.finalizeCreationRange(creationRange);

@@ -417,7 +417,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 				editIds: [],
 			},
 			undefined,
-			this.idCompressor, // TODO: Attribution info
+			this.idCompressor, // TODO: Attribution ID
 			this.processEditResult,
 			this.processSequencedEditResult,
 			WriteFormat.v0_1_1
@@ -1123,7 +1123,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		this.interner = new MutableStringInterner([initialTree.definition]);
 		const oldIdCompressor = this.idCompressor;
 		// Create the IdCompressor that will be used after the upgrade
-		const newIdCompressor = new IdCompressor(createSessionId(), reservedIdCount); // TODO: attribution info
+		const newIdCompressor = new IdCompressor(createSessionId(), reservedIdCount); // TODO: attribution ID
 		const newContext = getNodeIdContext(newIdCompressor);
 		// Generate all local IDs in the new compressor that were in the old compressor and preserve their UUIDs.
 		// This will allow the client to continue to use local IDs that were allocated pre-upgrade
@@ -1138,7 +1138,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			}
 		};
 		// Construct a temporary "ghost" compressor which is used to generate final IDs that will be consistent across all upgrading clients
-		const ghostIdCompressor = new IdCompressor(ghostSessionId, reservedIdCount); // TODO: attribution info
+		const ghostIdCompressor = new IdCompressor(ghostSessionId, reservedIdCount); // TODO: attribution ID
 		const ghostContext = getNodeIdContext(ghostIdCompressor);
 		if (this.summarizeHistory) {
 			// All clients have the full history, and can therefore all "generate" the same final IDs for every ID in the history
