@@ -938,17 +938,26 @@ export class GarbageCollector implements IGarbageCollector {
         );
 
         const currentGraph = Object.entries(currentGCData.gcNodes);
-        const missingExplicitReferences = currentGraph.filter(([nodeId, currentOutboundRoutes]) => {
+        const missingExplicitReferences: [string, string[]][] = [];
+        currentGraph.forEach(([nodeId, currentOutboundRoutes]) => {
             const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
             const explicitRoutes = explicitReferences.get(nodeId) ?? [];
-            let notFound = false;
+            const missingExplicitRoutes: string[] = [];
             currentOutboundRoutes.forEach((route) => {
-                // filter out routes from DDS's to their parent data store.
-                if (!route.startsWith(nodeId)) {
-                    notFound = !previousRoutes.includes(route) && !explicitRoutes.includes(route);
+                const isBlobOrDataStoreRoute = this.runtime.getNodeType(route) !== GCNodeType.Other;
+                const notRouteFromDDSToParentDataStore = !nodeId.startsWith(route);
+                const routeNotFound = !previousRoutes.includes(route) && !explicitRoutes.includes(route);
+                if (
+                    isBlobOrDataStoreRoute &&
+                    notRouteFromDDSToParentDataStore &&
+                    routeNotFound
+                ) {
+                    missingExplicitRoutes.push(route);
                 }
             });
-            return notFound;
+            if (missingExplicitRoutes.length > 0) {
+                missingExplicitReferences.push([nodeId, missingExplicitRoutes]);
+            }
         });
 
         // Ideally missingExplicitReferences should always have a size 0

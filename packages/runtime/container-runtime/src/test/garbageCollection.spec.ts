@@ -45,6 +45,9 @@ describe("Garbage Collection Tests", () => {
     const eventPkg = { value:`/${testPkgPath.join("/")}`, tag: TelemetryDataTag.PackageData };
 
     const getNodeType = (nodePath: string) => {
+        if (nodePath.split("/").length !== 2) {
+            return GCNodeType.Other;
+        }
         return GCNodeType.DataStore;
     };
     // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
@@ -442,6 +445,7 @@ describe("Garbage Collection Tests", () => {
         const nodeB = "/B";
         const nodeC = "/C";
         const nodeD = "/D";
+        const nodeE = "/A/E";
 
         // Runs GC and returns the unreferenced timestamps of all nodes in the GC summary.
         async function getUnreferencedTimestamps() {
@@ -773,10 +777,15 @@ describe("Garbage Collection Tests", () => {
 
             // 3. Add reference from A to B, A to C, and D to C without calling addedOutboundReference.
             // E = [A -> B, A -> C, D -> C].
-            defaultGCData.gcNodes[nodeA] = [ nodeB, nodeC ];
+            defaultGCData.gcNodes[nodeA] = [ nodeB, nodeC, nodeE ];
             defaultGCData.gcNodes[nodeD] = [ nodeC ];
+            defaultGCData.gcNodes[nodeE] = [ nodeA ];
 
-            // 4. Run GC and generate summary 2. E = [A -> B, A -> C, D -> C].
+            // 4. Add reference from A to D with calling addedOutboundReference
+            defaultGCData.gcNodes[nodeA].push(nodeD);
+            garbageCollector.addedOutboundReference(nodeA, nodeD);
+
+            // 5. Run GC and generate summary 2. E = [A -> B, A -> C, D -> C].
             await getUnreferencedTimestamps();
 
             // Validate that we got the "gcUnknownOutboundReferences" error.
