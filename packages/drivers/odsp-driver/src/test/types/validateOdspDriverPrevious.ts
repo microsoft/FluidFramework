@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_checkUrl": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_checkUrl():
@@ -28,7 +28,7 @@ use_current_FunctionDeclaration_checkUrl(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_checkUrl": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_checkUrl():
@@ -40,7 +40,7 @@ use_old_FunctionDeclaration_checkUrl(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ClpCompliantAppHeader": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ClpCompliantAppHeader():
@@ -52,7 +52,7 @@ use_current_EnumDeclaration_ClpCompliantAppHeader(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ClpCompliantAppHeader": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_ClpCompliantAppHeader():
@@ -64,7 +64,7 @@ use_old_EnumDeclaration_ClpCompliantAppHeader(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createOdspCreateContainerRequest": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createOdspCreateContainerRequest():
@@ -76,7 +76,7 @@ use_current_FunctionDeclaration_createOdspCreateContainerRequest(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createOdspCreateContainerRequest": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createOdspCreateContainerRequest():
@@ -88,7 +88,7 @@ use_old_FunctionDeclaration_createOdspCreateContainerRequest(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createOdspUrl": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createOdspUrl():
@@ -100,7 +100,7 @@ use_current_FunctionDeclaration_createOdspUrl(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createOdspUrl": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createOdspUrl():
@@ -112,7 +112,7 @@ use_old_FunctionDeclaration_createOdspUrl(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_encodeOdspFluidDataStoreLocator": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_encodeOdspFluidDataStoreLocator():
@@ -124,7 +124,7 @@ use_current_FunctionDeclaration_encodeOdspFluidDataStoreLocator(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_encodeOdspFluidDataStoreLocator": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_encodeOdspFluidDataStoreLocator():
@@ -136,7 +136,7 @@ use_old_FunctionDeclaration_encodeOdspFluidDataStoreLocator(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getApiRoot": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getApiRoot():
@@ -148,7 +148,7 @@ use_current_FunctionDeclaration_getApiRoot(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getApiRoot": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_getApiRoot():
@@ -160,7 +160,7 @@ use_old_FunctionDeclaration_getApiRoot(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getHashedDocumentId": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getHashedDocumentId():
@@ -172,7 +172,7 @@ use_current_FunctionDeclaration_getHashedDocumentId(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getHashedDocumentId": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_getHashedDocumentId():
@@ -184,7 +184,7 @@ use_old_FunctionDeclaration_getHashedDocumentId(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getLocatorFromOdspUrl": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getLocatorFromOdspUrl():
@@ -196,7 +196,7 @@ use_current_FunctionDeclaration_getLocatorFromOdspUrl(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getLocatorFromOdspUrl": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_getLocatorFromOdspUrl():
@@ -208,7 +208,7 @@ use_old_FunctionDeclaration_getLocatorFromOdspUrl(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getOdspUrlParts": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getOdspUrlParts():
@@ -220,7 +220,7 @@ use_current_FunctionDeclaration_getOdspUrlParts(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getOdspUrlParts": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_getOdspUrlParts():
@@ -232,7 +232,7 @@ use_old_FunctionDeclaration_getOdspUrlParts(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClpCompliantAppHeader": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IClpCompliantAppHeader():
@@ -244,7 +244,7 @@ use_current_InterfaceDeclaration_IClpCompliantAppHeader(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClpCompliantAppHeader": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IClpCompliantAppHeader():
@@ -256,7 +256,7 @@ use_old_InterfaceDeclaration_IClpCompliantAppHeader(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharingLinkHeader": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISharingLinkHeader():
@@ -268,7 +268,7 @@ use_current_InterfaceDeclaration_ISharingLinkHeader(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharingLinkHeader": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISharingLinkHeader():
@@ -280,7 +280,7 @@ use_old_InterfaceDeclaration_ISharingLinkHeader(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_isOdcOrigin": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_isOdcOrigin():
@@ -292,7 +292,7 @@ use_current_FunctionDeclaration_isOdcOrigin(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_isOdcOrigin": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_isOdcOrigin():
@@ -304,7 +304,7 @@ use_old_FunctionDeclaration_isOdcOrigin(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_isOdcUrl": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_isOdcUrl():
@@ -316,7 +316,7 @@ use_current_FunctionDeclaration_isOdcUrl(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_isOdcUrl": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_isOdcUrl():
@@ -328,7 +328,7 @@ use_old_FunctionDeclaration_isOdcUrl(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_isSpoUrl": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_isSpoUrl():
@@ -340,7 +340,7 @@ use_current_FunctionDeclaration_isSpoUrl(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_isSpoUrl": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_isSpoUrl():
@@ -352,7 +352,7 @@ use_old_FunctionDeclaration_isSpoUrl(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_locatorQueryParamName": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_locatorQueryParamName():
@@ -364,7 +364,7 @@ use_current_VariableDeclaration_locatorQueryParamName(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_locatorQueryParamName": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_locatorQueryParamName():
@@ -376,7 +376,7 @@ use_old_VariableDeclaration_locatorQueryParamName(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_OdcApiSiteOrigin": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_OdcApiSiteOrigin():
@@ -388,7 +388,7 @@ use_current_VariableDeclaration_OdcApiSiteOrigin(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_OdcApiSiteOrigin": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_OdcApiSiteOrigin():
@@ -400,7 +400,7 @@ use_old_VariableDeclaration_OdcApiSiteOrigin(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_OdcFileSiteOrigin": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_OdcFileSiteOrigin():
@@ -412,7 +412,7 @@ use_current_VariableDeclaration_OdcFileSiteOrigin(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_OdcFileSiteOrigin": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_OdcFileSiteOrigin():
@@ -424,7 +424,7 @@ use_old_VariableDeclaration_OdcFileSiteOrigin(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspDocumentServiceFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OdspDocumentServiceFactory():
@@ -436,7 +436,7 @@ use_current_ClassDeclaration_OdspDocumentServiceFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspDocumentServiceFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_OdspDocumentServiceFactory():
@@ -448,7 +448,7 @@ use_old_ClassDeclaration_OdspDocumentServiceFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspDocumentServiceFactoryCore": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OdspDocumentServiceFactoryCore():
@@ -460,7 +460,7 @@ use_current_ClassDeclaration_OdspDocumentServiceFactoryCore(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspDocumentServiceFactoryCore": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_OdspDocumentServiceFactoryCore():
@@ -472,7 +472,7 @@ use_old_ClassDeclaration_OdspDocumentServiceFactoryCore(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit():
@@ -484,7 +484,7 @@ use_current_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit():
@@ -496,7 +496,7 @@ use_old_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspDriverUrlResolver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OdspDriverUrlResolver():
@@ -508,7 +508,7 @@ use_current_ClassDeclaration_OdspDriverUrlResolver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspDriverUrlResolver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_OdspDriverUrlResolver():
@@ -520,7 +520,7 @@ use_old_ClassDeclaration_OdspDriverUrlResolver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspDriverUrlResolverForShareLink": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OdspDriverUrlResolverForShareLink():
@@ -532,7 +532,7 @@ use_current_ClassDeclaration_OdspDriverUrlResolverForShareLink(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspDriverUrlResolverForShareLink": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_OdspDriverUrlResolverForShareLink():
@@ -544,7 +544,7 @@ use_old_ClassDeclaration_OdspDriverUrlResolverForShareLink(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_OdspFluidDataStoreLocator": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_OdspFluidDataStoreLocator():
@@ -556,7 +556,7 @@ use_current_InterfaceDeclaration_OdspFluidDataStoreLocator(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_OdspFluidDataStoreLocator": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_OdspFluidDataStoreLocator():
@@ -568,7 +568,7 @@ use_old_InterfaceDeclaration_OdspFluidDataStoreLocator(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_prefetchLatestSnapshot": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_prefetchLatestSnapshot():
@@ -580,7 +580,7 @@ use_current_FunctionDeclaration_prefetchLatestSnapshot(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_prefetchLatestSnapshot": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_prefetchLatestSnapshot():
@@ -592,7 +592,7 @@ use_old_FunctionDeclaration_prefetchLatestSnapshot(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ShareLinkFetcherProps": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ShareLinkFetcherProps():
@@ -604,7 +604,7 @@ use_current_InterfaceDeclaration_ShareLinkFetcherProps(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ShareLinkFetcherProps": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ShareLinkFetcherProps():
@@ -616,7 +616,7 @@ use_old_InterfaceDeclaration_ShareLinkFetcherProps(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_SharingLinkHeader": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_SharingLinkHeader():
@@ -628,7 +628,7 @@ use_current_EnumDeclaration_SharingLinkHeader(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_SharingLinkHeader": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_SharingLinkHeader():
@@ -640,7 +640,7 @@ use_old_EnumDeclaration_SharingLinkHeader(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_storeLocatorInOdspUrl": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_storeLocatorInOdspUrl():
@@ -652,7 +652,7 @@ use_current_FunctionDeclaration_storeLocatorInOdspUrl(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_storeLocatorInOdspUrl": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_storeLocatorInOdspUrl():

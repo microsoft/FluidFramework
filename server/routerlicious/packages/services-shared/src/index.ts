@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./http";
 export * from "./redisSocketIoAdapter";
 export * from "./restLessServer";
 export * from "./runner";

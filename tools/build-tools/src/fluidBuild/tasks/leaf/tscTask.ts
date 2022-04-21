@@ -119,7 +119,7 @@ export class TscTask extends LeafTask {
                     this.logVerboseTrigger(`version mismatch for ${key}, ${hash}, ${fileInfos[key].version}`);
                     return false;
                 }
-            } catch (e) {
+            } catch (e: any) {
                 this.logVerboseTrigger(`exception generating hash for ${key}`);
                 logVerbose(e.stack);
                 return false;

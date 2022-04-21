@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_AllowList": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_AllowList():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_AllowList(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_AllowList": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_AllowList():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_AllowList(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_extractPackageIdentifierDetails": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_extractPackageIdentifierDetails():
@@ -52,7 +52,7 @@ use_current_FunctionDeclaration_extractPackageIdentifierDetails(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_extractPackageIdentifierDetails": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_extractPackageIdentifierDetails():
@@ -64,7 +64,7 @@ use_old_FunctionDeclaration_extractPackageIdentifierDetails(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IPackageIdentifierDetails": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IPackageIdentifierDetails():
@@ -76,7 +76,7 @@ use_current_InterfaceDeclaration_IPackageIdentifierDetails(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IPackageIdentifierDetails": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IPackageIdentifierDetails():
@@ -88,7 +88,7 @@ use_old_InterfaceDeclaration_IPackageIdentifierDetails(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_resolveFluidPackageEnvironment": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_resolveFluidPackageEnvironment():
@@ -100,7 +100,7 @@ use_current_FunctionDeclaration_resolveFluidPackageEnvironment(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_resolveFluidPackageEnvironment": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_resolveFluidPackageEnvironment():
@@ -112,7 +112,7 @@ use_old_FunctionDeclaration_resolveFluidPackageEnvironment(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SemVerCdnCodeResolver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SemVerCdnCodeResolver():
@@ -124,7 +124,7 @@ use_current_ClassDeclaration_SemVerCdnCodeResolver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SemVerCdnCodeResolver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_SemVerCdnCodeResolver():
@@ -136,7 +136,7 @@ use_old_ClassDeclaration_SemVerCdnCodeResolver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_WebCodeLoader": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_WebCodeLoader():
@@ -148,7 +148,7 @@ use_current_ClassDeclaration_WebCodeLoader(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_WebCodeLoader": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_WebCodeLoader():

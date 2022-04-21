@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createFluidTestDriver": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createFluidTestDriver():
@@ -28,7 +28,7 @@ use_current_FunctionDeclaration_createFluidTestDriver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createFluidTestDriver": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_createFluidTestDriver():
@@ -40,7 +40,7 @@ use_old_FunctionDeclaration_createFluidTestDriver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_CreateFromEnvConfigParam": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_CreateFromEnvConfigParam():
@@ -52,7 +52,7 @@ use_current_TypeAliasDeclaration_CreateFromEnvConfigParam(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_CreateFromEnvConfigParam": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_CreateFromEnvConfigParam():
@@ -64,7 +64,7 @@ use_old_TypeAliasDeclaration_CreateFromEnvConfigParam(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_DriverApi": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_DriverApi():
@@ -76,7 +76,7 @@ use_current_VariableDeclaration_DriverApi(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_DriverApi": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_DriverApi():
@@ -88,7 +88,7 @@ use_old_VariableDeclaration_DriverApi(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_DriverApiType": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_DriverApiType():
@@ -100,7 +100,7 @@ use_current_InterfaceDeclaration_DriverApiType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_DriverApiType": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_DriverApiType():
@@ -112,7 +112,7 @@ use_old_InterfaceDeclaration_DriverApiType(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_FluidTestDriverConfig": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_FluidTestDriverConfig():
@@ -124,7 +124,7 @@ use_current_InterfaceDeclaration_FluidTestDriverConfig(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_FluidTestDriverConfig": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_FluidTestDriverConfig():
@@ -136,7 +136,7 @@ use_old_InterfaceDeclaration_FluidTestDriverConfig(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_generateOdspHostStoragePolicy": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_generateOdspHostStoragePolicy():
@@ -148,7 +148,7 @@ use_current_VariableDeclaration_generateOdspHostStoragePolicy(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_generateOdspHostStoragePolicy": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_generateOdspHostStoragePolicy():
@@ -160,7 +160,7 @@ use_old_VariableDeclaration_generateOdspHostStoragePolicy(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_LocalDriverApi": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_LocalDriverApi():
@@ -172,7 +172,7 @@ use_current_VariableDeclaration_LocalDriverApi(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_LocalDriverApi": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_LocalDriverApi():
@@ -184,7 +184,7 @@ use_old_VariableDeclaration_LocalDriverApi(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_LocalDriverApiType": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_LocalDriverApiType():
@@ -196,7 +196,7 @@ use_current_TypeAliasDeclaration_LocalDriverApiType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_LocalDriverApiType": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_LocalDriverApiType():
@@ -208,7 +208,7 @@ use_old_TypeAliasDeclaration_LocalDriverApiType(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LocalServerTestDriver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LocalServerTestDriver():
@@ -220,7 +220,7 @@ use_current_ClassDeclaration_LocalServerTestDriver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_LocalServerTestDriver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LocalServerTestDriver():
@@ -232,7 +232,7 @@ use_old_ClassDeclaration_LocalServerTestDriver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_OdspDriverApi": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_OdspDriverApi():
@@ -244,7 +244,7 @@ use_current_VariableDeclaration_OdspDriverApi(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_OdspDriverApi": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_OdspDriverApi():
@@ -256,7 +256,7 @@ use_old_VariableDeclaration_OdspDriverApi(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_OdspDriverApiType": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_OdspDriverApiType():
@@ -268,7 +268,7 @@ use_current_TypeAliasDeclaration_OdspDriverApiType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_OdspDriverApiType": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_OdspDriverApiType():
@@ -280,7 +280,7 @@ use_old_TypeAliasDeclaration_OdspDriverApiType(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspTestDriver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OdspTestDriver():
@@ -292,7 +292,7 @@ use_current_ClassDeclaration_OdspTestDriver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspTestDriver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_OdspTestDriver():
@@ -304,7 +304,7 @@ use_old_ClassDeclaration_OdspTestDriver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_RouterliciousDriverApi": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_RouterliciousDriverApi():
@@ -316,7 +316,7 @@ use_current_VariableDeclaration_RouterliciousDriverApi(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_RouterliciousDriverApi": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_RouterliciousDriverApi():
@@ -328,7 +328,7 @@ use_old_VariableDeclaration_RouterliciousDriverApi(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_RouterliciousDriverApiType": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_RouterliciousDriverApiType():
@@ -340,7 +340,7 @@ use_current_TypeAliasDeclaration_RouterliciousDriverApiType(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_RouterliciousDriverApiType": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_RouterliciousDriverApiType():
@@ -352,7 +352,7 @@ use_old_TypeAliasDeclaration_RouterliciousDriverApiType(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RouterliciousTestDriver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RouterliciousTestDriver():
@@ -364,7 +364,7 @@ use_current_ClassDeclaration_RouterliciousTestDriver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RouterliciousTestDriver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_RouterliciousTestDriver():
@@ -376,7 +376,7 @@ use_old_ClassDeclaration_RouterliciousTestDriver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TinyliciousTestDriver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TinyliciousTestDriver():
@@ -388,7 +388,7 @@ use_current_ClassDeclaration_TinyliciousTestDriver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TinyliciousTestDriver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_TinyliciousTestDriver():

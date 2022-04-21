@@ -244,11 +244,7 @@ export function TestPack(verbose = true) {
         let annotateProps: PropertySet;
         const insertAsRefPos = false;
 
-        let options = {};
-        if (measureBookmarks) {
-            options = { blockUpdateMarkers: true };
-        }
-        const testServer = new TestServer(options);
+        const testServer = new TestServer({});
         testServer.measureOps = true;
         if (startFile) {
             loadTextFromFile(startFile, testServer.mergeTree, fileSegCount);
@@ -1463,7 +1459,7 @@ export class DocumentTree {
     }
 
     private generateClient() {
-        const client = new TestClient({ blockUpdateMarkers: true });
+        const client = new TestClient();
         client.startOrUpdateCollaboration("Fred");
         for (const child of this.children) {
             this.addToMergeTree(client, child);

@@ -49,7 +49,7 @@ export function create(
                 createRefParams,
                 createRefParams.config,
             ));
-        handleResponse(resultP, response, 201);
+        handleResponse(resultP, response, undefined, undefined, 201);
     });
 
     router.patch("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
@@ -67,7 +67,7 @@ export function create(
         const resultP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request))
             .then(async (repoManager) => repoManager.deleteRef(getRefId(request.params[0])));
 
-        handleResponse(resultP, response, 204);
+        handleResponse(resultP, response, undefined, undefined, 204);
     });
     return router;
 }

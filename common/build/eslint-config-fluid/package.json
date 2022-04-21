@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/eslint-config-fluid",
-  "version": "0.27.2000",
+  "version": "0.28.2000",
   "description": "Shareable ESLint config for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -11,21 +11,31 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "index.js",
+  "scripts": {
+    "cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
+    "print-config": "concurrently npm:print-config:default npm:print-config:test && npm run cleanup-printed-configs",
+    "print-config:default": "eslint --config ./index.js --print-config ./src/file.ts > ./printed-configs/default.json",
+    "print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json"
+  },
   "dependencies": {
-    "@rushstack/eslint-patch": "^1.1.0",
-    "@rushstack/eslint-plugin": "^0.8.5",
-    "@rushstack/eslint-plugin-security": "^0.2.5",
+    "@rushstack/eslint-patch": "~1.1.0",
+    "@rushstack/eslint-plugin": "~0.8.5",
+    "@rushstack/eslint-plugin-security": "~0.2.5",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "eslint-plugin-editorconfig": "~3.2.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.25.4",
-    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-promise": "~6.0.0",
     "eslint-plugin-react": "~7.28.0",
+    "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0"
   },
   "devDependencies": {
-    "eslint": ">=8.6.0",
-    "typescript": ">=4.5.3"
+    "concurrently": "^6.2.0",
+    "eslint": "~8.6.0",
+    "node-jq": "^2.3.3",
+    "sort-json": "^2.0.1",
+    "typescript": "~4.5.5"
   }
 }

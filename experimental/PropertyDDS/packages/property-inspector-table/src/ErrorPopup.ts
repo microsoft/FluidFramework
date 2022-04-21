@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { notificationContext } from './NotificationsViewer';
+import { notificationContext } from "./NotificationsViewer";
 
 const isPromise = <K, R>(in_obj: Promise<K> | R): in_obj is Promise<K> => {
   return Promise.resolve(in_obj as Promise<K>) === in_obj;
@@ -13,7 +13,7 @@ const isPromise = <K, R>(in_obj: Promise<K> | R): in_obj is Promise<K> => {
  */
 export const CreateErrorObjAndSend = (err: string | Error) => {
   const errObj = {
-    message: (typeof err === 'string' ? err : err.message),
+    message: (typeof err === "string" ? err : err.message),
   };
   notificationContext.pushNotification(errObj);
 };
@@ -39,9 +39,10 @@ type anyFunction = (...args: any[]) => any;
  *  When an exception is thrown in the given function, we return a resolved Promise, or a Promise that is rejected with
  *  the original error object, depending on the `catchErr` flag.
  */
-export function ErrorPopup<T extends anyFunction = anyFunction,
-  K = ReturnType<T> extends Promise<infer R> ? R: ReturnType<T>>(anythingThatMightEmitError: T, catchErr = true)
-  : Promise<void | K> {
+export async function ErrorPopup<
+  T extends anyFunction = anyFunction,
+  K = ReturnType<T> extends Promise<infer R> ? R : ReturnType<T>
+>(anythingThatMightEmitError: T, catchErr = true): Promise<void | K> {
   try {
     const result = anythingThatMightEmitError();
     if (isPromise<K, ReturnType<T>>(result)) {
@@ -53,7 +54,7 @@ export function ErrorPopup<T extends anyFunction = anyFunction,
     } else {
       return Promise.resolve(result);
     }
-  } catch (err) {
+  } catch (err: any) {
     processError(err);
     if (catchErr) {
       return Promise.resolve();

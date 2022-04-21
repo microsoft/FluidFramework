@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DocumentServiceFactoryProxy": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DocumentServiceFactoryProxy():
@@ -28,7 +28,7 @@ use_current_ClassDeclaration_DocumentServiceFactoryProxy(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DocumentServiceFactoryProxy": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_DocumentServiceFactoryProxy():
@@ -40,7 +40,7 @@ use_old_ClassDeclaration_DocumentServiceFactoryProxy(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICombinedDriver": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICombinedDriver():
@@ -52,7 +52,7 @@ use_current_InterfaceDeclaration_ICombinedDriver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICombinedDriver": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ICombinedDriver():
@@ -64,7 +64,7 @@ use_old_InterfaceDeclaration_ICombinedDriver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDocumentServiceFactoryProxy": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDocumentServiceFactoryProxy():
@@ -76,7 +76,7 @@ use_current_InterfaceDeclaration_IDocumentServiceFactoryProxy(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDocumentServiceFactoryProxy": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDocumentServiceFactoryProxy():
@@ -88,7 +88,7 @@ use_old_InterfaceDeclaration_IDocumentServiceFactoryProxy(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IDocumentServiceFactoryProxyKey": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IDocumentServiceFactoryProxyKey():
@@ -100,7 +100,7 @@ use_current_VariableDeclaration_IDocumentServiceFactoryProxyKey(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IDocumentServiceFactoryProxyKey": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IDocumentServiceFactoryProxyKey():
@@ -112,7 +112,7 @@ use_old_VariableDeclaration_IDocumentServiceFactoryProxyKey(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InnerDocumentDeltaConnection": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_InnerDocumentDeltaConnection():
@@ -124,7 +124,7 @@ use_current_ClassDeclaration_InnerDocumentDeltaConnection(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InnerDocumentDeltaConnection": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_InnerDocumentDeltaConnection():
@@ -136,7 +136,7 @@ use_old_ClassDeclaration_InnerDocumentDeltaConnection(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InnerDocumentService": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_InnerDocumentService():
@@ -148,7 +148,7 @@ use_current_ClassDeclaration_InnerDocumentService(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InnerDocumentService": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_InnerDocumentService():
@@ -160,7 +160,7 @@ use_old_ClassDeclaration_InnerDocumentService(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InnerDocumentServiceFactory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_InnerDocumentServiceFactory():
@@ -172,7 +172,7 @@ use_current_ClassDeclaration_InnerDocumentServiceFactory(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InnerDocumentServiceFactory": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_InnerDocumentServiceFactory():
@@ -184,7 +184,7 @@ use_old_ClassDeclaration_InnerDocumentServiceFactory(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InnerUrlResolver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_InnerUrlResolver():
@@ -196,7 +196,7 @@ use_current_ClassDeclaration_InnerUrlResolver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_InnerUrlResolver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_InnerUrlResolver():
@@ -208,7 +208,7 @@ use_old_ClassDeclaration_InnerUrlResolver(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IOuterDocumentDeltaConnectionProxy": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IOuterDocumentDeltaConnectionProxy():
@@ -220,7 +220,7 @@ use_current_InterfaceDeclaration_IOuterDocumentDeltaConnectionProxy(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IOuterDocumentDeltaConnectionProxy": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IOuterDocumentDeltaConnectionProxy():
@@ -232,7 +232,7 @@ use_old_InterfaceDeclaration_IOuterDocumentDeltaConnectionProxy(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IUrlResolverProxy": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IUrlResolverProxy():
@@ -244,7 +244,7 @@ use_current_InterfaceDeclaration_IUrlResolverProxy(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IUrlResolverProxy": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IUrlResolverProxy():
@@ -256,7 +256,7 @@ use_old_InterfaceDeclaration_IUrlResolverProxy(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IUrlResolverProxyKey": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IUrlResolverProxyKey():
@@ -268,7 +268,7 @@ use_current_VariableDeclaration_IUrlResolverProxyKey(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IUrlResolverProxyKey": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IUrlResolverProxyKey():
@@ -280,7 +280,7 @@ use_old_VariableDeclaration_IUrlResolverProxyKey(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OuterUrlResolver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OuterUrlResolver():
@@ -292,7 +292,7 @@ use_current_ClassDeclaration_OuterUrlResolver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OuterUrlResolver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_OuterUrlResolver():
