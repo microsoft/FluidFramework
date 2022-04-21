@@ -25,7 +25,8 @@
     "nohoist": [
       "**/@fluidframework/mocha-test-setup",
       "**/@types/expect-puppeteer",
-      "**/@types/jwt-decode"
+      "**/@types/jwt-decode",
+      "**/commander"
     ]
   },
   "scripts": {
