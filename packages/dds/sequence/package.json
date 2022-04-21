@@ -83,7 +83,7 @@
     "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@^0.58.0",
     "@fluidframework/server-services-client": "^0.1036.1000",
     "@fluidframework/test-runtime-utils": "^0.60.1000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^8.2.2",

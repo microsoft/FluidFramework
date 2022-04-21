@@ -41,9 +41,9 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/debugger-previous": "npm:@fluidframework/debugger@^0.58.0",
+    "@fluidframework/debugger-previous": "npm:@fluidframework/debugger@^0.59.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",
@@ -64,7 +64,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
+    "version": "0.60.1000",
     "broken": {}
   }
 }
