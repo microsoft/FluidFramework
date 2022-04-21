@@ -14,7 +14,6 @@ import { Caret } from "./caret";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 
-
 export class Editor {
     private readonly layout: Layout;
     private readonly caret: Caret;

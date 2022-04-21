@@ -94,7 +94,6 @@ const empty = Object.freeze({});
 
 export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
 
-
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
 
 /**
