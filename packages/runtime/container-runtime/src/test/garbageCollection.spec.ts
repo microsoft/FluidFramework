@@ -775,7 +775,7 @@ describe("Garbage Collection Tests", () => {
             defaultGCData.gcNodes[nodeB] = [];
             defaultGCData.gcNodes[nodeC] = [];
 
-            // 3. Add reference from A to B, A to C, and D to C without calling addedOutboundReference.
+            // 3. Add reference from A to B, A to C, A to E, D to C, and E to A without calling addedOutboundReference.
             // E = [A -> B, A -> C, A -> E, D -> C, E -> A].
             defaultGCData.gcNodes[nodeA] = [ nodeB, nodeC, nodeE ];
             defaultGCData.gcNodes[nodeD] = [ nodeC ];
