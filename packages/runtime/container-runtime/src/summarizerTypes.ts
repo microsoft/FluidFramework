@@ -374,9 +374,6 @@ export interface ISummarizeHeuristicData {
 
     /** Mark that the last sent summary attempt has received an ack */
     markLastAttemptAsSuccessful(): void;
-
-    /** Adjust the heuristic data when a summarizer failure occurs */
-    adjustOnFailure(): void;
 }
 
 /** Responsible for running heuristics determining when to summarize. */

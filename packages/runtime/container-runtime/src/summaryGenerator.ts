@@ -270,8 +270,6 @@ export class SummaryGenerator {
             // offlineError too.
             const category = cancellationToken.cancelled || error?.errorType === DriverErrorType.offlineError ?
                 "generic" : "error";
-            
-            this.heuristicData.adjustOnFailure();
 
             summarizeEvent.cancel({
                  ...properties,

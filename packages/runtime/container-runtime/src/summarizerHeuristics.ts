@@ -47,19 +47,17 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
         };
 
         this.numSystemOpsBefore = this.numSystemOps;
-        this.numSystemOps = 0;
-
         this.numNonSystemOpsBefore = this.numNonSystemOps;
-        this.numNonSystemOps = 0;
     }
 
     public markLastAttemptAsSuccessful() {
         this._lastSuccessfulSummary = { ...this.lastAttempt };
-    }
 
-    public adjustOnFailure(): void {
-        this.numSystemOps += this.numSystemOpsBefore;
-        this.numNonSystemOps += this.numNonSystemOpsBefore;
+        this.numSystemOps -= this.numSystemOpsBefore;
+        this.numSystemOpsBefore = 0;
+
+        this.numNonSystemOps -= this.numNonSystemOpsBefore;
+        this.numNonSystemOpsBefore = 0;
     }
 }
 
