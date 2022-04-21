@@ -66,7 +66,7 @@ const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
 const runSessionExpiry = "Fluid.GarbageCollection.RunSessionExpiry";
-// Feature gate key to log error messages if gc route validation fails.
+// Feature gate key to log error messages if GC reference validation fails.
 const logUnknownOutboundReferencesKey = "Fluid.GarbageCollection.LogUnknownOutboundReferences";
 
 const defaultDeleteTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -231,7 +231,7 @@ class UnreferencedStateTracker {
  * its state across summaries.
  *
  * Node - represented as nodeId, it's a node on the GC graph
- * Outbound Route - a node that is reachable from another node, think `nodeId`
+ * Outbound Route - a path from one node to another node, think `nodeA` -> `nodeB`
  * Graph - all nodes with their respective routes
  *             GC Graph
  *
@@ -944,13 +944,15 @@ export class GarbageCollector implements IGarbageCollector {
             const explicitRoutes = explicitReferences.get(nodeId) ?? [];
             const missingExplicitRoutes: string[] = [];
             currentOutboundRoutes.forEach((route) => {
-                const isBlobOrDataStoreRoute = this.runtime.getNodeType(route) !== GCNodeType.Other;
+                const isBlobOrDataStoreRoute =
+                    this.runtime.getNodeType(route) === GCNodeType.Blob ||
+                    this.runtime.getNodeType(route) === GCNodeType.DataStore;
+                // Ignore implicitly added DDS routes to their parent datastores
                 const notRouteFromDDSToParentDataStore = !nodeId.startsWith(route);
-                const routeNotFound = !previousRoutes.includes(route) && !explicitRoutes.includes(route);
                 if (
                     isBlobOrDataStoreRoute &&
                     notRouteFromDDSToParentDataStore &&
-                    routeNotFound
+                    (!previousRoutes.includes(route) && !explicitRoutes.includes(route))
                 ) {
                     missingExplicitRoutes.push(route);
                 }

@@ -776,7 +776,7 @@ describe("Garbage Collection Tests", () => {
             defaultGCData.gcNodes[nodeC] = [];
 
             // 3. Add reference from A to B, A to C, and D to C without calling addedOutboundReference.
-            // E = [A -> B, A -> C, D -> C].
+            // E = [A -> B, A -> C, A -> E, D -> C, E -> A].
             defaultGCData.gcNodes[nodeA] = [ nodeB, nodeC, nodeE ];
             defaultGCData.gcNodes[nodeD] = [ nodeC ];
             defaultGCData.gcNodes[nodeE] = [ nodeA ];
@@ -785,7 +785,7 @@ describe("Garbage Collection Tests", () => {
             defaultGCData.gcNodes[nodeA].push(nodeD);
             garbageCollector.addedOutboundReference(nodeA, nodeD);
 
-            // 5. Run GC and generate summary 2. E = [A -> B, A -> C, D -> C].
+            // 5. Run GC and generate summary 2. E = [A -> B, A -> C, A -> E, D -> C, E -> A].
             await getUnreferencedTimestamps();
 
             // Validate that we got the "gcUnknownOutboundReferences" error.
