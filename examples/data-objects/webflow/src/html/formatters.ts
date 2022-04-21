@@ -4,12 +4,10 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FluidObject } from "@fluidframework/core-interfaces";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
 import * as styles from "../editor/index.css";
-import { caretEnter, Direction, emptyObject, Rect, TagName } from "../util";
+import { emptyObject, TagName } from "../util";
 import { getAttrs, syncAttrs } from "../util/attr";
 
 import { Formatter, IFormatterState, RootFormatter } from "../view/formatter";
@@ -70,7 +68,6 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
 interface IInclusionState {
     root?: HTMLElement;
     slot?: HTMLElement;
-    view?: Promise<IFluidHTMLView>;
 }
 
 export class InclusionFormatter extends Formatter<IInclusionState> {
@@ -80,27 +77,10 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
         const state: IInclusionState = prevState || {};
 
         if (!state.root) {
-            const marker = segment as Marker;
-
             state.root = document.createElement(TagName.span);
             state.root.contentEditable = "false";
 
-            state.slot = document.createElement(
-                getComponentOptions(segment).display === "block"
-                    ? TagName.div
-                    : TagName.span);
-
-            const viewFactory = layout.viewFactoryRegistry.get(marker.properties.view);
-            state.view = layout.doc.getComponentFromMarker(marker).then((component: FluidObject) => {
-                if (viewFactory) {
-                    // We found a view class registered for this marker's view type
-                    const view = viewFactory.createView(component, layout.scope);
-                    view.render(state.slot);
-                    caretEnter(state.slot, Direction.right, Rect.empty);
-                    state.slot.focus();
-                    return view;
-                }
-            });
+            state.slot = document.createElement(TagName.div);
         }
 
         syncCss(state.root, getCss(segment), styles.inclusion);
