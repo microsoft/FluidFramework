@@ -75,8 +75,8 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
-    "@fluidframework/mocha-test-setup": "^0.59.2000",
-    "@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@0.59.1000",
+    "@fluidframework/mocha-test-setup": "^0.60.1000",
+    "@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@^0.59.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
@@ -102,13 +102,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
-    "broken": {
-      "0.58.2002": {
-        "TypeAliasDeclaration_RefreshSummaryResult": {
-          "backCompat": false
-        }
-      }
-    }
+    "version": "0.60.1000",
+    "broken": {}
   }
 }

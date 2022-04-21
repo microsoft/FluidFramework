@@ -348,7 +348,6 @@ declare function get_current_InterfaceDeclaration_ITestDataObject():
 declare function use_old_InterfaceDeclaration_ITestDataObject(
     use: TypeOnly<old.ITestDataObject>);
 use_old_InterfaceDeclaration_ITestDataObject(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestDataObject());
 
 /*
@@ -398,58 +397,6 @@ declare function use_old_FunctionDeclaration_mochaGlobalSetup(
     use: TypeOnly<typeof old.mochaGlobalSetup>);
 use_old_FunctionDeclaration_mochaGlobalSetup(
     get_current_FunctionDeclaration_mochaGlobalSetup());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_pkgName": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_pkgName():
-    TypeOnly<typeof old.pkgName>;
-declare function use_current_RemovedVariableDeclaration_pkgName(
-    // @ts-expect-error compatibility expected to be broken
-    use: TypeOnly<typeof current.pkgName>);
-use_current_RemovedVariableDeclaration_pkgName(
-    get_old_VariableDeclaration_pkgName());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_pkgName": {"backCompat": false}
-*/
-declare function get_current_RemovedVariableDeclaration_pkgName():
-    // @ts-expect-error compatibility expected to be broken
-    TypeOnly<typeof current.pkgName>;
-declare function use_old_VariableDeclaration_pkgName(
-    use: TypeOnly<typeof old.pkgName>);
-use_old_VariableDeclaration_pkgName(
-    get_current_RemovedVariableDeclaration_pkgName());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_pkgVersion": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_pkgVersion():
-    TypeOnly<typeof old.pkgVersion>;
-declare function use_current_RemovedVariableDeclaration_pkgVersion(
-    // @ts-expect-error compatibility expected to be broken
-    use: TypeOnly<typeof current.pkgVersion>);
-use_current_RemovedVariableDeclaration_pkgVersion(
-    get_old_VariableDeclaration_pkgVersion());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_pkgVersion": {"backCompat": false}
-*/
-declare function get_current_RemovedVariableDeclaration_pkgVersion():
-    // @ts-expect-error compatibility expected to be broken
-    TypeOnly<typeof current.pkgVersion>;
-declare function use_old_VariableDeclaration_pkgVersion(
-    use: TypeOnly<typeof old.pkgVersion>);
-use_old_VariableDeclaration_pkgVersion(
-    get_current_RemovedVariableDeclaration_pkgVersion());
 
 /*
 * Validate forward compat by using old type in place of current type

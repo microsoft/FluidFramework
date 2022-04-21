@@ -96,7 +96,6 @@ declare function get_old_TypeAliasDeclaration_CreateChildSummarizerNodeParam():
 declare function use_current_TypeAliasDeclaration_CreateChildSummarizerNodeParam(
     use: TypeOnly<current.CreateChildSummarizerNodeParam>);
 use_current_TypeAliasDeclaration_CreateChildSummarizerNodeParam(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_CreateChildSummarizerNodeParam());
 
 /*
@@ -217,7 +216,6 @@ declare function get_old_InterfaceDeclaration_IAttachMessage():
 declare function use_current_InterfaceDeclaration_IAttachMessage(
     use: TypeOnly<current.IAttachMessage>);
 use_current_InterfaceDeclaration_IAttachMessage(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAttachMessage());
 
 /*
@@ -374,7 +372,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>);
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -399,7 +396,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>);
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -676,7 +672,6 @@ declare function get_old_TypeAliasDeclaration_InboundAttachMessage():
 declare function use_current_TypeAliasDeclaration_InboundAttachMessage(
     use: TypeOnly<current.InboundAttachMessage>);
 use_current_TypeAliasDeclaration_InboundAttachMessage(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_InboundAttachMessage());
 
 /*
@@ -1026,3 +1021,51 @@ declare function use_old_TypeAliasDeclaration_SummarizeInternalFn(
     use: TypeOnly<old.SummarizeInternalFn>);
 use_old_TypeAliasDeclaration_SummarizeInternalFn(
     get_current_TypeAliasDeclaration_SummarizeInternalFn());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_VisibilityState": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_VisibilityState():
+    TypeOnly<typeof old.VisibilityState>;
+declare function use_current_VariableDeclaration_VisibilityState(
+    use: TypeOnly<typeof current.VisibilityState>);
+use_current_VariableDeclaration_VisibilityState(
+    get_old_VariableDeclaration_VisibilityState());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_VisibilityState": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_VisibilityState():
+    TypeOnly<typeof current.VisibilityState>;
+declare function use_old_VariableDeclaration_VisibilityState(
+    use: TypeOnly<typeof old.VisibilityState>);
+use_old_VariableDeclaration_VisibilityState(
+    get_current_VariableDeclaration_VisibilityState());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_VisibilityState": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_VisibilityState():
+    TypeOnly<old.VisibilityState>;
+declare function use_current_TypeAliasDeclaration_VisibilityState(
+    use: TypeOnly<current.VisibilityState>);
+use_current_TypeAliasDeclaration_VisibilityState(
+    get_old_TypeAliasDeclaration_VisibilityState());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_VisibilityState": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_VisibilityState():
+    TypeOnly<current.VisibilityState>;
+declare function use_old_TypeAliasDeclaration_VisibilityState(
+    use: TypeOnly<old.VisibilityState>);
+use_old_TypeAliasDeclaration_VisibilityState(
+    get_current_TypeAliasDeclaration_VisibilityState());
