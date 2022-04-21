@@ -106,7 +106,7 @@ export enum FieldKind {
  * Example for how we might want to handle values.
  *
  * This might be significantly different if we want to focus more on binary formats
- * (need to work out how fluid GC would work with that).
+ * (need to work out how Fluid GC would work with that).
  * For now, this is a simple easy to support setup.
  *
  * Note that use of non-Nothing values might be restricted in the actual user facing schema languages:
