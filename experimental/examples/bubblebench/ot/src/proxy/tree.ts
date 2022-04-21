@@ -55,33 +55,36 @@ const createObjectProxy = (
     consumer: Consumer,
     parent?: IProxy,
     parentKey?: json1.Key,
-) => new Proxy(subject, {
-    get: (target, key, receiver) => {
-        if (key === contextSym) {
-            return { parent, parentKey };
-        }
+) => {
+    const handler: ProxyHandler<IProxy> = {
+        get: (target, key, receiver) => {
+            if (key === contextSym) {
+                return { parent, parentKey };
+            }
 
-        const value = target[key];
+            const value = target[key];
 
-        /* eslint-disable @typescript-eslint/no-unsafe-return */
-        return value !== null && typeof value === "object"
-            ? getProxy(/* target: */ value, consumer, /* parent: */ receiver, key as string)
-            : value;
-        /* eslint-enable @typescript-eslint/no-unsafe-return */
-    },
-    set: (target, key, value, receiver) => {
-        const path = getPath(receiver, key as json1.Key);
+            /* eslint-disable @typescript-eslint/no-unsafe-return */
+            return value !== null && typeof value === "object"
+                ? getProxy(/* target: */ value, consumer, /* parent: */ receiver, key as string)
+                : value;
+            /* eslint-enable @typescript-eslint/no-unsafe-return */
+        },
+        set: (target, key, value, receiver) => {
+            const path = getPath(receiver, key as json1.Key);
 
-        if (Object.prototype.hasOwnProperty.call(target, key)) {
-            consumer(json1.replaceOp(path, /* oldVal: */ target[key], /* newVal: */ value));
-        } else {
-            consumer(json1.insertOp(path, value));
-        }
+            if (Object.prototype.hasOwnProperty.call(target, key)) {
+                consumer(json1.replaceOp(path, /* oldVal: */ target[key], /* newVal: */ value));
+            } else {
+                consumer(json1.insertOp(path, value));
+            }
 
-        target[key] = value;
-        return true;
-    },
-});
+            target[key] = value;
+            return true;
+        },
+    };
+    return new Proxy(subject, handler);
+};
 
 // If given key is a string containing an integer then convert it to an integer,
 // otherwise return the key unmodified.

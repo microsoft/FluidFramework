@@ -21,6 +21,7 @@ import {
     IProvideFluidCodeDetailsComparer,
     ICodeDetailsLoader,
     IFluidModuleWithDetails,
+    IFluidModule,
 } from "@fluidframework/container-definitions";
 import {
     IRequest,
@@ -314,8 +315,8 @@ export class ContainerContext implements IContainerContext {
         });
     }
 
-    private async loadCodeModule(codeDetails: IFluidCodeDetails) {
-        const loadCodeResult = await PerformanceEvent.timedExecAsync(
+    private async loadCodeModule(codeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
+        const loadCodeResult: IFluidModuleWithDetails = await PerformanceEvent.timedExecAsync(
             this.taggedLogger,
             { eventName: "CodeLoad" },
             async () => this.codeLoader.load(codeDetails),
@@ -331,7 +332,7 @@ export class ContainerContext implements IContainerContext {
             // If "module" is not in the result, we are using a legacy ICodeLoader.  Fix the result up with details.
             // Once usage drops to 0 we can remove this compat path.
             this.taggedLogger.sendTelemetryEvent({ eventName: "LegacyCodeLoader" });
-            return { module: loadCodeResult, details: codeDetails };
+            return { module: loadCodeResult as unknown as IFluidModule, details: codeDetails };
         }
     }
     // #endregion

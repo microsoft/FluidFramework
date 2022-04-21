@@ -507,7 +507,7 @@ export class SharedMatrix<T = any>
             default: {
                 assert(content.type === MatrixOp.set, 0x020 /* "Unknown SharedMatrix 'op' type." */);
 
-                const setOp = content as ISetOp<Serializable<T>>;
+                const setOp = content as ISetOp<T>;
                 const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
 
                 // If there are more pending local writes to the same row/col handle, it is important
