@@ -1,15 +1,11 @@
-/**
- * Config file for API Extractor. For more info, please visit: https://api-extractor.com
- */
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-common.json",
-	/**
-	 * For now, retain explicit report generation in the package folder.
-	 */
+	"extends": "@fluidframework/build-common/api-extractor-common-report.json",
 	"apiReport": {
 		"enabled": true,
-		"reportFolder": "<projectFolder>/api",
-		"reportTempFolder": "<projectFolder>/_api-extractor-temp"
+		// Note: `tree.api.md` is the file used for the upcoming tree DDS's API report.
+		"reportFileName": "experimental-<unscopedPackageName>.api.md",
+		"reportFolder": "<projectFolder>/../../../api-report/",
+		"reportTempFolder": "<projectFolder>/_api-extractor-temp/"
 	}
 }

@@ -38,6 +38,8 @@ alfred:
   enforceServerGeneratedDocumentId: false
 storage:
   enableWholeSummaryUpload: false
+  storageUrl: storage_url
+
 deli:
   name: deli
   replicas: 8
