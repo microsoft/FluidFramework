@@ -17,6 +17,8 @@
       "experimental/*/*",
       "server/routerlicious/packages/gitresources",
       "server/routerlicious/packages/*",
+      "server/tinylicious",
+      "server/azure-local-service",
       "common/**",
       "tools/**"
     ],
