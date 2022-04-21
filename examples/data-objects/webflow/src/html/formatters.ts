@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
-import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
+import { DocSegmentKind, getCss, getDocSegmentKind } from "../document";
 import * as styles from "../editor/index.css";
 import { emptyObject, TagName } from "../util";
 import { getAttrs, syncAttrs } from "../util/attr";
@@ -213,9 +213,9 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
 
             case DocSegmentKind.inclusion: {
                 // If the inclusion is a block, it implicitly terminates the current paragraph.
-                if (getComponentOptions(segment).display === "block") {
-                    layout.popFormat();
-                }
+                // if (getComponentOptions(segment).display === "block") {
+                layout.popFormat();
+                // }
 
                 layout.pushFormat(inclusionFormatter, emptyObject);
                 return { state, consumed: false };
