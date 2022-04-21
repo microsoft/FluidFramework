@@ -1223,6 +1223,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return {
             sequenceNumber: attributes.sequenceNumber,
             version: versionId,
+            quorumSize: this.getQuorum().getMembers().size,
         };
     }
 
@@ -1625,6 +1626,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
             checkpointSequenceNumber,
+            quorumSize: this.getQuorum().getMembers().size,
             ...this._deltaManager.connectionProps,
         });
 
