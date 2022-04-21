@@ -39,6 +39,8 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryConfiguration } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -123,11 +125,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(): IPendingLocalState | undefined;
+    getPendingLocalState(): IPendingRuntimeState;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+    // (undocumented)
+    getSnapshotBlobs(): Promise<void>;
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
@@ -142,6 +146,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    // (undocumented)
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     // (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)
@@ -317,6 +323,7 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    readonly enableOfflineLoad?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
@@ -416,7 +423,6 @@ export interface IPendingFlushMode {
 
 // @public (undocumented)
 export interface IPendingLocalState {
-    clientId?: string;
     pendingStates: IPendingState[];
 }
 
@@ -436,6 +442,15 @@ export interface IPendingMessage {
     referenceSequenceNumber: number;
     // (undocumented)
     type: "message";
+}
+
+// @public
+export interface IPendingRuntimeState {
+    baseSnapshot: ISnapshotTree;
+    pending?: IPendingLocalState;
+    savedOps: ISequencedDocumentMessage[];
+    // Warning: (ae-forgotten-export) The symbol "ISerializedBaseSnapshotBlobs" needs to be exported by the entry point index.d.ts
+    snapshotBlobs: ISerializedBaseSnapshotBlobs;
 }
 
 // @public (undocumented)
