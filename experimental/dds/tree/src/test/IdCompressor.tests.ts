@@ -1325,7 +1325,7 @@ function createNetworkTestFunction(validateAfter: boolean): NetworkTestFunction 
 				network.deliverOperations(DestinationClient.All);
 				network.assertNetworkState();
 			}
-		});
+		}).timeout(10000);
 	};
 }
 

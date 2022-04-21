@@ -111,8 +111,8 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 			if (this.transaction.changes.length > 0) {
 				const result = this.transaction.close();
 				const edit: Edit<ChangeInternal> = { id: newEditId(), changes: result.changes };
-				if (this.tree.editsInternal instanceof CachingLogViewer) {
-					this.tree.editsInternal.setKnownEditingResult(edit, result);
+				if (this.tree.edits instanceof CachingLogViewer) {
+					this.tree.edits.setKnownEditingResult(edit, result);
 				}
 				this.tree.applyEditInternal(edit);
 			}

@@ -109,6 +109,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
             }
             if (options.mode === "r11s") {
+                options.discoveryEndpoint = options.discoveryEndpoint || config.get("fluid:webpack:discoveryEndpoint");
                 options.fluidHost = options.fluidHost || config.get("fluid:webpack:fluidHost");
             }
         }
