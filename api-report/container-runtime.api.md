@@ -374,6 +374,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcTotalBlobsSize?: number;
     readonly nonSystemOpsSinceLastSummary: number;
     readonly opsSizesSinceLastSummary: number;
+    readonly quorumSize?: number;
     readonly summarizedDataStoreCount: number;
 }
 
