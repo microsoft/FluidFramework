@@ -27,9 +27,17 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
     }
 
     public numSystemOps: number = 0;
+    /** 
+     * Number of system ops at beginning of attempting to summarize.
+     * Is used to adjust numSystemOps appropriately after successful summarization.
+     */
     private numSystemOpsBefore: number = 0;
 
     public numNonSystemOps: number = 0;
+    /** 
+     * Number of non-system ops at beginning of attempting to summarize.
+     * Is used to adjust numNonSystemOps appropriately after successful summarization.
+     */
     private numNonSystemOpsBefore: number = 0;
 
     constructor(
