@@ -18,7 +18,7 @@ function main() {
             throw new Error("failed to get package information");
         }
     } catch (e) {
-        console.error(e.toString());
+        console.error(e);
         process.exit(-1);
     }
 
@@ -37,7 +37,7 @@ function main() {
                 console.log(`found bundleAnalysis for ${pkg.name}`);
                 fse.copySync(packageAnalysisPath, path.join(analysesDestPath, pkg.name), {recursive: true});
             } catch (e) {
-                console.error(e.toString());
+                console.error(e);
                 process.exit(-1);
             }
         }

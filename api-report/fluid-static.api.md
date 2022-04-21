@@ -42,9 +42,11 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     constructor(container: IContainer, rootDataObject: RootDataObject);
     attach(): Promise<string>;
     get attachState(): AttachState;
+    connect(): Promise<void>;
     get connected(): boolean;
     get connectionState(): ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    disconnect(): Promise<void>;
     dispose(): void;
     get disposed(): boolean;
     get initialObjects(): Record<string, IFluidLoadable>;
@@ -61,10 +63,12 @@ export interface IConnection {
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
     readonly attachState: AttachState;
+    connect?(): void;
     // @deprecated
     readonly connected: boolean;
     readonly connectionState: ConnectionState;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    disconnect?(): void;
     dispose(): void;
     readonly disposed: boolean;
     readonly initialObjects: LoadableObjectRecord;

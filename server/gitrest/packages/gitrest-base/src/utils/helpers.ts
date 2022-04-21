@@ -52,7 +52,7 @@ export async function exists(
     try {
         const fileOrDirectoryStats = await fileSystemManager.promises.stat(fileOrDirectoryPath);
         return fileOrDirectoryStats;
-    } catch (error) {
+    } catch (error: any) {
         if (error?.code === "ENOENT") {
             // File/Directory does not exist.
             return false;
@@ -92,7 +92,7 @@ export async function retrieveLatestFullSummaryFromStorage(
         // TODO: This will be converted back to a JSON string for the HTTP response
         const summary: IWholeFlatSummary = JSON.parse(summaryFile.toString());
         return summary;
-    } catch (error) {
+    } catch (error: any) {
         if (error?.code === "ENOENT") {
             // File does not exist.
             return undefined;

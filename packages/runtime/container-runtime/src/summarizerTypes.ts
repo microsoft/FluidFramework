@@ -297,7 +297,15 @@ export interface ISummarizerEvents extends IEvent {
 
 export interface ISummarizer extends
     IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer>{
+    /*
+     * Asks summarizer to move to exit.
+     * Summarizer will finish current processes, which may take a while.
+     * For example, summarizer may complete last summary before exiting.
+     */
     stop(reason: SummarizerStopReason): void;
+
+    /* Closes summarizer. Any pending processes (summary in flight) are abandoned. */
+    close(): void;
 
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
 
