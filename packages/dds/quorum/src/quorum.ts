@@ -229,7 +229,19 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     public set(key: string, value: any): void {
-        // TODO: handle detached scenario, just auto accept basically
+        // If not attached, we basically pretend we got an ack immediately.
+        // TODO: Should we just directly store the value rather than the full simulation?
+        // TODO: Should we defer this to the next microtask so sync callers complete before processing?
+        if (!this.isAttached()) {
+            this.handleIncomingSet(
+                key,
+                value,
+                0 /* refSeq */,
+                0 /* setSequenceNumber */,
+                "detachedClient" /* clientId */,
+            );
+            return;
+        }
 
         const setOp: IQuorumSetOperation = {
             type: "set",
@@ -246,7 +258,18 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * {@inheritDoc IQuorum.delete}
      */
     public delete(key: string): void {
-        // TODO: handle detached scenario, just auto accept basically
+        // If not attached, we basically pretend we got an ack immediately.
+        // TODO: Should we just directly store the value rather than the full simulation?
+        // TODO: Should we defer this to the next microtask so sync callers complete before processing?
+        if (!this.isAttached()) {
+            this.handleIncomingDelete(
+                key,
+                0 /* refSeq */,
+                0 /* setSequenceNumber */,
+                "detachedClient" /* clientId */,
+            );
+            return;
+        }
 
         const deleteOp: IQuorumDeleteOperation = {
             type: "delete",

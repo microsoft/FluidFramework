@@ -67,17 +67,24 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public get markedForDestruction() {
-        // return this.quorum.get(markedForDestructionKey) as boolean;
-        return this.crc.read(markedForDestructionKey) as boolean;
+        return this.quorum.get(markedForDestructionKey) as boolean;
     }
 
     public async markForDestruction() {
         // This should probably use a quorum-type data structure here.
         // Then, when everyone sees the quorum proposal get approved they can choose to either volunteer
         // or close themselves
-        // TODO: fully replace crc for markedForDestruction
-        this.quorum.set(markedForDestructionKey, true);
-        await this.crc.write(markedForDestructionKey, true);
+        // TODO: Update when Quorum has a promise API surface
+        return new Promise<void>((resolve, reject) => {
+            const acceptedListener = (key: string) => {
+                if (key === markedForDestructionKey) {
+                    resolve();
+                    this.quorum.off("accepted", acceptedListener);
+                }
+            };
+            this.quorum.on("accepted", acceptedListener);
+            this.quorum.set(markedForDestructionKey, true);
+        });
     }
 
     public async volunteerForDestruction(): Promise<void> {
@@ -95,12 +102,8 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         this.root.set(quorumKey, quorum.handle);
         this.root.set(crcKey, crc.handle);
         this.root.set(taskManagerKey, taskManager.handle);
-        // TODO: fully replace crc for markedForDestruction
         quorum.set(markedForDestructionKey, false);
-        await Promise.all([
-            crc.write(markedForDestructionKey, false),
-            crc.write(deadKey, false),
-        ]);
+        await crc.write(deadKey, false);
     }
 
     protected async hasInitialized() {
@@ -110,10 +113,14 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         const crcHandle = this.root.get(crcKey);
         this._crc = await crcHandle.get();
 
-        this.crc.on("atomicChanged", (key) => {
+        this.quorum.on("accepted", (key: string) => {
             if (key === markedForDestructionKey) {
                 this.emit("markedForDestruction");
-            } else if (key === deadKey) {
+            }
+        });
+
+        this.crc.on("atomicChanged", (key) => {
+            if (key === deadKey) {
                 this.emit("dead");
             }
         });
