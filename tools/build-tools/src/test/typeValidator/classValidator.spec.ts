@@ -235,14 +235,14 @@ describe("Class", () => {
             const classOld =
             `
             export class TestClass {
-                public testMethod() { return "afg"; }
+                public testMethod() { return "minotaur"; }
             }
             `;
 
             const classNew =
             `
             export class TestClass {
-                public testMethod(param1 : string = "afg") { return "afg"; }
+                public testMethod(param1 : string = "target") { return "minotaur"; }
             }
             `;
 
@@ -256,14 +256,14 @@ describe("Class", () => {
             const classOld =
             `
             export class TestClass {
-                public testMethod(param1 : string = "afg") { return "afg"; }
+                public testMethod(param1 : string = "target") { return "minotaur"; }
             }
             `;
 
             const classNew =
             `
             export class TestClass {
-                public testMethod(param1 : boolean = false) { return "afg"; }
+                public testMethod(param1 : boolean = false) { return "minotaur"; }
             }
             `;
 
@@ -278,14 +278,14 @@ describe("Class", () => {
             const classOld =
             `
             export class TestClass {
-                public testMethod(param1 : string = "afg") { return "afg"; }
+                public testMethod(param1 : string = "target") { return "minotaur"; }
             }
             `;
 
             const classNew =
             `
             export class TestClass {
-                public testMethod(param1 : string) { return "afg"; }
+                public testMethod(param1 : string) { return "minotaur"; }
             }
             `;
 
@@ -576,9 +576,9 @@ describe("Class", () => {
 
             const classNew =
             `
-            export class TestClass<Y, X> {
-                private prop1?: Array<Y>;
-                private prop2?: Array<X>;
+            export class TestClass<XXX, YYY> {
+                private prop1?: Array<XXX>;
+                private prop2?: Array<YYY>;
             }
             `;
 

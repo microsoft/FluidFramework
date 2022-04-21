@@ -106,7 +106,7 @@ describe("Interface", () => {
         });
 
         // making a required method optional is a breaking change
-        it("adds a new optional method declaration", () => {
+        it("changes a required method declaration to optional", () => {
             const sourceOld =
             `
             export interface ITestInterface {
@@ -209,6 +209,7 @@ describe("Interface", () => {
 
     describe("properties", () => {
         // adding a readonly modifier is a breaking change
+        // TODO: handle readonly and enable this test
         it.skip("added a readonly modifier", () => {
             const sourceOld =
             `
@@ -351,9 +352,9 @@ describe("Interface", () => {
 
             const sourceNew =
             `
-            export interface ITestInterface<Y, X> {
-                prop1?: Array<Y>;
-                prop2?: Array<X>;
+            export interface ITestInterface<XXX, YYY> {
+                prop1?: Array<XXX>;
+                prop2?: Array<YYY>;
             }
             `;
 
