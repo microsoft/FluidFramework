@@ -4,9 +4,11 @@
  */
 
 module.exports = {
-	extends: ['@fluidframework/eslint-config-fluid'],
+	extends: ['@fluidframework/eslint-config-fluid/formatting'],
 	root: true,
 	rules: {
+		'@typescript-eslint/unbound-method': 'off',
+
 		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
 		// '@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
 		'@typescript-eslint/quotes': [

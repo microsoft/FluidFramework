@@ -1344,7 +1344,7 @@ class PropertyFactory {
         creationFunctionSource += ` return ${resultVarName};`;
 
         // Finally, create the actual JS function with the source we compiled above
-        let creationFunction = new Function('parameters',' GuidUtils', creationFunctionSource).bind(this,
+        let creationFunction = new Function('parameters', ' GuidUtils', creationFunctionSource).bind(this,
             parameters, GuidUtils);
 
         // Add the created function to the cache
@@ -1713,7 +1713,7 @@ class PropertyFactory {
             }
 
             // If this is a declaration which contains a properties list, we have to create a new container property for it
-            let copiedPropertyEntry = Object.assign({typeid: 'ContainerProperty'}, in_propertiesEntry);
+            let copiedPropertyEntry = Object.assign({ typeid: 'ContainerProperty' }, in_propertiesEntry);
             out_propertyDef.constructorFunction = ContainerProperty;
             out_propertyDef.entry = copiedPropertyEntry;
             out_propertyDef.signal = false;

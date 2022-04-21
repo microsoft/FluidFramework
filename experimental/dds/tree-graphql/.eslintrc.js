@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: ['@fluidframework/eslint-config-fluid'],
+	extends: ['@fluidframework/eslint-config-fluid/formatting'],
 	root: true,
 	rules: {
 		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
