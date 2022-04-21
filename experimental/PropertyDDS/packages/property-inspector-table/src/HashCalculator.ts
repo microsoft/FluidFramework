@@ -240,7 +240,7 @@ export class HashCalculator {
 
     // Compute the hash for the remaining bytes in the buffer
     const buffer = this.hashBuffer.Uint8HashArray;
-    /* eslint-disable no-multi-spaces */ // Allows cases to fallthrough without complaints.
+    /* eslint-disable no-multi-spaces */
     switch (this.hashBuffer.pos) {
       case 15: k4 = (k4 ^ (buffer[14] << 16)) >>> 0;
       case 14: k4 = (k4 ^ (buffer[13] << 8)) >>> 0;
