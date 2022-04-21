@@ -39,7 +39,7 @@ spec:
           value: "fluid:*"
         - name: NODE_ENV
           value: production
-        - name: IS_SERVER
+        - name: IS_FLUID_SERVER
           value: true
         volumeMounts:
         - name: config

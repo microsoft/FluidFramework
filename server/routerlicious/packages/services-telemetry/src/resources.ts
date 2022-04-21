@@ -118,7 +118,7 @@ export interface ILumberjackSchemaValidationResult {
 
 // Helper method to assist with handling Lumberjack/Lumber errors depending on the context.
 export function handleError(eventName: LumberEventName, errMsg: string, engineList: ILumberjackEngine[]) {
-    if (process.env.IS_SERVER) {
+    if (typeof window === "undefined" && process?.env?.IS_FLUID_SERVER) {
         const err = new Error(errMsg);
         // If there is no LumberjackEngine specified, making the list empty,
         // we log the error to the console as a last resort, so the information can
