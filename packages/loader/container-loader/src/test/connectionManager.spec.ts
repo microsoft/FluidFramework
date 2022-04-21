@@ -143,7 +143,7 @@ describe("connectionManager", () => {
         assert(!mockLogger.matchEvents([{ eventName: "reconnectingDespiteFatalError" }]), "Should not see reconnectingDespiteFatalError event after fatal nack");
     });
 
-    it("should reconnect as read after timeout", async () => {
+    it("should reconnect as read with leave op", async () => {
         const connectionManager = new ConnectionManager(
             () => mockDocumentService,
             client as IClient,
@@ -168,6 +168,6 @@ describe("connectionManager", () => {
             timestamp:1,
         };
         connectionManager.beforeProcessingIncomingOp(message);
-        assert.strictEqual(connectionManager.connectionMode, "read", "connection mode should be read after leave op");
+        assert.strictEqual(connectionManager.connectionMode, "read", "should be reconnected as read mode");
     });
 });
