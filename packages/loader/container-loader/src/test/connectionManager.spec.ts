@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { Deferred } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IAnyDriverError, NonRetryableError, RetryableError } from "@fluidframework/driver-utils";
-import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
+import { IClient, INack, NackErrorType, ISequencedDocumentSystemMessage } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { ConnectionManager } from "../connectionManager";
@@ -155,12 +155,12 @@ describe("connectionManager", () => {
         await waitForConnection();
         assert.strictEqual(connectionManager.connectionMode, "write", "connection mode should be write");
 
-        const message = {
-            clientId:"0",
-            data:'"mock_client_0"',
+        const message: ISequencedDocumentSystemMessage = {
+            clientId: `${nextClientId}`,
+            data: `${connectionManager.clientId}`,
             sequenceNumber:1,
             term:1,
-            minimumSequenceNumber:1,
+            minimumSequenceNumber:0,
             clientSequenceNumber:1,
             referenceSequenceNumber:1,
             type:"leave",
