@@ -201,10 +201,10 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     // Summarize if 1000 ops received since last snapshot.
     maxOps: 1000,
 
-    // Wait 10 minutes for summary ack
+    // Wait 2 minutes for summary ack
     // this is less than maxSummarizeAckWaitTime
     // the min of the two will be chosen
-    maxAckWaitTime: 600000,
+    maxAckWaitTime: 120000,
 };
 
 export interface IGCRuntimeOptions {
