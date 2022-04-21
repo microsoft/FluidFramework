@@ -53,6 +53,7 @@ import { newEdit, setTrait } from '../../EditUtilities';
 import { SharedTree } from '../../SharedTree';
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
 import { convertEditIds } from '../../IdConversion';
+import { OrderedEditSet } from '../../EditLog';
 import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
@@ -583,6 +584,10 @@ export function stabilizeEdit(
 	edit: Edit<ChangeInternal>
 ): Edit<ReplaceRecursive<ChangeInternal, NodeId, StableNodeId>> {
 	return convertEditIds(edit, (id) => tree.convertToStableNodeId(id));
+}
+
+export function getEditLogInternal(tree: SharedTree): OrderedEditSet<ChangeInternal> {
+	return tree.edits as unknown as OrderedEditSet<ChangeInternal>;
 }
 
 /**
