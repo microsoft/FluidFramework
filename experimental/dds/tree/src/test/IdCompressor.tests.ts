@@ -18,6 +18,7 @@ import {
 	SessionSpaceCompressedId,
 	OpSpaceCompressedId,
 	SessionId,
+	AttributionId,
 } from '../Identifiers';
 import { assert, assertNotUndefined, fail } from '../Common';
 import {
@@ -27,7 +28,7 @@ import {
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid';
 import { getIds } from '../id-compressor/IdRange';
-import type { AttributionId, UnackedLocalId } from '../id-compressor';
+import type { UnackedLocalId } from '../id-compressor';
 import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities';
 import {
 	createCompressor,
@@ -240,20 +241,18 @@ describe('IdCompressor', () => {
 		});
 	});
 
-    it('correctly uses default attribution ID', () => {
-		const compressor = createCompressor(Client.Client1, 5);
-        const attributionId = compressor.attributionId;
-		const range1 = compressor.takeNextCreationRange();
-        expect(range1.attributionId).to.equal(attributionId);
+	it('has default attribution ID', () => {
+		const compressor = createCompressor(Client.Client1);
+		expectDefined(compressor.attributionId);
 	});
 
-    it('correctly uses explicit attribution ID', () => {
-        const attributionId = generateStableId();
+	it('correctly uses explicit attribution ID', () => {
+		const attributionId = generateStableId();
 		const compressor = createCompressor(Client.Client1, 5, attributionId);
-        expect(compressor.attributionId).to.equal(attributionId);
+		expect(compressor.attributionId).to.equal(attributionId);
 		const range1 = compressor.takeNextCreationRange();
-        expect(compressor.attributionId).to.equal(attributionId);
-        expect(range1.attributionId).to.equal(attributionId);
+		expect(compressor.attributionId).to.equal(attributionId);
+		expect(range1.attributionId).to.equal(attributionId);
 	});
 
 	it('only sends attribution ID on the first range from each session', () => {
@@ -262,6 +261,12 @@ describe('IdCompressor', () => {
 		expectDefined(range1.attributionId);
 		const range2 = compressor.takeNextCreationRange();
 		expect(range2.attributionId).to.be.undefined;
+	});
+
+	it('does not send default attribution ID', () => {
+		const compressor = createCompressor(Client.Client1);
+		const range = compressor.takeNextCreationRange();
+		expect(range.attributionId).to.be.undefined;
 	});
 
 	describe('can produce a creation range', () => {

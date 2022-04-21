@@ -30,7 +30,15 @@ import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidfram
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { DetachedSequenceId, EditId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from '../../Identifiers';
+import {
+	AttributionId,
+	DetachedSequenceId,
+	EditId,
+	NodeId,
+	OpSpaceNodeId,
+	SessionId,
+	StableNodeId,
+} from '../../Identifiers';
 import { assert, fail, identity, ReplaceRecursive } from '../../Common';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
@@ -50,7 +58,7 @@ import { TraitLocation, TreeView } from '../../TreeView';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes';
 import { getNodeId, getNodeIdContext, NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities';
 import { newEdit, setTrait } from '../../EditUtilities';
-import { SharedTree } from '../../SharedTree';
+import { SharedTree, SharedTreeFactory } from '../../SharedTree';
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
 import { convertEditIds } from '../../IdConversion';
 import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
@@ -100,6 +108,10 @@ export interface SharedTreeTestingOptions {
 	 */
 	writeFormat?: WriteFormat;
 	/**
+	 * Optional attribution ID to give to the new tree
+	 */
+	attributionId?: AttributionId;
+	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
 	setupEditId?: EditId;
@@ -122,7 +134,16 @@ export function testTrait(view: TreeView): TraitLocation {
 export function setUpTestSharedTree(
 	options: SharedTreeTestingOptions = { localMode: true }
 ): SharedTreeTestingComponents {
-	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId, summarizeHistory, writeFormat } = options;
+	const {
+		id,
+		initialTree,
+		localMode,
+		containerRuntimeFactory,
+		setupEditId,
+		summarizeHistory,
+		writeFormat,
+		attributionId,
+	} = options;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
 		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
@@ -139,11 +160,16 @@ export function setUpTestSharedTree(
 	}
 
 	// Enable expensiveValidation
-	const factory = SharedTree.getFactory(
-		writeFormat ?? WriteFormat.v0_1_1,
-		summarizeHistory === undefined || summarizeHistory === true ? { uploadEditChunks: true } : false
-	);
-	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true);
+	let factory: SharedTreeFactory;
+	if (writeFormat === WriteFormat.v0_0_2) {
+		factory = SharedTree.getFactory(writeFormat, { summarizeHistory: summarizeHistory ?? true });
+	} else {
+		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, {
+			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: true } : false,
+			attributionId,
+		});
+	}
+	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id);
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
 		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
@@ -225,6 +251,10 @@ export interface LocalServerSharedTreeTestingOptions {
 	 */
 	writeFormat?: WriteFormat;
 	/**
+	 * Optional attribution ID to give to the new tree
+	 */
+	attributionId?: AttributionId;
+	/**
 	 * If not set, will upload edit chunks when they are full.
 	 */
 	uploadEditChunks?: boolean;
@@ -261,20 +291,20 @@ export async function setUpLocalServerTestSharedTree(
 		summarizeHistory,
 		writeFormat,
 		uploadEditChunks,
+		attributionId,
 	} = options;
 
 	const treeId = id ?? 'test';
-	const registry: ChannelFactoryRegistry = [
-		[
-			treeId,
-			SharedTree.getFactory(
-				writeFormat ?? WriteFormat.v0_1_1,
-				summarizeHistory === undefined || summarizeHistory === true
-					? { uploadEditChunks: uploadEditChunks ?? true }
-					: false
-			),
-		],
-	];
+	let factory: SharedTreeFactory;
+	if (writeFormat === WriteFormat.v0_0_2) {
+		factory = SharedTree.getFactory(writeFormat, { summarizeHistory: summarizeHistory ?? true });
+	} else {
+		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, {
+			summarizeHistory: summarizeHistory ?? true ? { uploadEditChunks: uploadEditChunks ?? true } : false,
+			attributionId,
+		});
+	}
+	const registry: ChannelFactoryRegistry = [[treeId, factory]];
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
 

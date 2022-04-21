@@ -8,7 +8,6 @@
 import { v5 } from 'uuid';
 import Prando from 'prando';
 import { expect } from 'chai';
-import { Serializable } from '@fluidframework/datastore-definitions';
 import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, IdRangeDescriptor, isLocalId } from '../../id-compressor/IdCompressor';
 import {
@@ -18,13 +17,12 @@ import {
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../../id-compressor/NumericUuid';
-import { FinalCompressedId, SessionId, StableId, SessionSpaceCompressedId } from '../../Identifiers';
+import { FinalCompressedId, SessionId, StableId, SessionSpaceCompressedId, AttributionId } from '../../Identifiers';
 import { getIds } from '../../id-compressor/IdRange';
 import type {
 	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
-	AttributionId,
 } from '../../id-compressor';
 import { assertIsStableId } from '../../UuidUtilities';
 

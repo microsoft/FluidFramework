@@ -12,7 +12,6 @@ import {
 	compareFiniteNumbers,
 	compareMaps,
 	compareStrings,
-	copyPropertyIfDefined,
 	fail,
 	getOrCreate,
 	Mutable,
@@ -27,6 +26,7 @@ import {
 	SessionId,
 	CompressedId,
 	UuidString,
+	AttributionId,
 } from '../Identifiers';
 import { assertIsStableId, isStableId } from '../UuidUtilities';
 import { AppendOnlyDoublySortedMap, AppendOnlySortedMap } from './AppendOnlySortedMap';
@@ -41,7 +41,6 @@ import {
 	ensureSessionUuid,
 } from './NumericUuid';
 import type {
-	AttributionId,
 	IdCreationRange,
 	SerializedCluster,
 	SerializedClusterOverrides,
@@ -118,7 +117,7 @@ interface Session {
 	/**
 	 * The attribution ID for the session, if it exists.
 	 */
-	attributionId?: AttributionId;
+	readonly attributionId: AttributionId;
 }
 
 /**
@@ -310,8 +309,11 @@ export class IdCompressor {
 		this.newClusterCapacity = value;
 	}
 
+	/**
+	 * The UUID used for attribution of identities created by this compressor
+	 */
 	public get attributionId(): AttributionId {
-		return this.localSession.attributionId ?? this.localSessionId;
+		return this.localSession.attributionId;
 	}
 
 	/**
@@ -444,8 +446,8 @@ export class IdCompressor {
 			sessionUuid,
 			currentClusterDetails: undefined,
 			lastFinalizedLocalId: undefined,
+			attributionId: attributionId ?? sessionId,
 		};
-		setPropertyIfDefined(attributionId, session, 'attributionId');
 		this.sessions.set(sessionId, session);
 		return session;
 	}
@@ -489,7 +491,7 @@ export class IdCompressor {
 		const [_, cluster] =
 			this.getClusterForFinalId(opSpaceNormalizedId) ?? fail('Cluster does not exist for final ID');
 
-		return cluster.session.attributionId ?? stableIdFromNumericUuid(cluster.session.sessionUuid);
+		return cluster.session.attributionId;
 	}
 
 	/**
@@ -599,7 +601,9 @@ export class IdCompressor {
 
 		const range: Mutable<IdCreationRange> = { sessionId: this.localSessionId };
 		if (!this.sentAttributionId) {
-			setPropertyIfDefined(this.localSession.attributionId, range, 'attributionId');
+			if (this.localSession.attributionId !== this.localSessionId) {
+				range.attributionId = this.localSession.attributionId;
+			}
 			this.sentAttributionId = true;
 		}
 
@@ -1316,7 +1320,7 @@ export class IdCompressor {
 	}
 
 	/**
-	 * @returns if `other` is equal to this `IdCompressor`. The equality check includes local session state.
+	 * @returns if `other` is equal to this `IdCompressor`. The equality check includes local session state only if specified.
 	 * @testOnly
 	 */
 	public equals(other: IdCompressor, compareLocalState: boolean): boolean {
@@ -1325,7 +1329,8 @@ export class IdCompressor {
 				this.localIdCount !== other.localIdCount ||
 				this.localSessionId !== other.localSessionId ||
 				this.lastTakenLocalId !== other.lastTakenLocalId ||
-				this.sentAttributionId !== other.sentAttributionId
+				this.sentAttributionId !== other.sentAttributionId ||
+				this.attributionId !== other.attributionId
 			) {
 				return false;
 			}
@@ -1529,7 +1534,8 @@ export class IdCompressor {
 
 			if (includeSession) {
 				const sessionData: Mutable<SerializedSessionData> = [sessionId];
-				if (session.attributionId !== undefined) {
+				if (session.attributionId !== sessionId) {
+					// As an optimization, don't include the attributionId if it is its default (the sessionId)
 					// Get the index into the array for the given attribution ID. If it doesn't exist, push it onto the array and update the map.
 					sessionData.push(
 						getOrCreate(
@@ -1618,8 +1624,7 @@ export class IdCompressor {
 	public static deserialize(serialized: SerializedIdCompressorWithOngoingSession): IdCompressor;
 
 	/**
-	 * Deserialize an serialized IdCompressor with a new session. The provided serialized compressor
-	 * must have an ongoing session.
+	 * Deserialize a serialized IdCompressor with a new session.
 	 * @param serialized the serialized compressor state
 	 * @param newSessionId the session ID for the new compressor.
 	 * @param attributionId information used by other clients to attribute IDs made by this client
@@ -1631,10 +1636,19 @@ export class IdCompressor {
 	): IdCompressor;
 
 	public static deserialize(
-		serialized: SerializedIdCompressorWithNoSession | SerializedIdCompressorWithOngoingSession,
-		newSessionIdMaybe?: SessionId,
-		attributionIdMaybe?: AttributionId
+		...args:
+			| [
+					serialized: SerializedIdCompressorWithNoSession,
+					newSessionIdMaybe: SessionId,
+					attributionIdMaybe?: AttributionId
+			  ]
+			| [
+					serialized: SerializedIdCompressorWithOngoingSession,
+					newSessionIdMaybe?: undefined,
+					attributionIdMaybe?: undefined
+			  ]
 	): IdCompressor {
+		const [serialized, newSessionIdMaybe, attributionIdMaybe] = args;
 		const {
 			clusterCapacity,
 			reservedIdCount,
@@ -1643,12 +1657,10 @@ export class IdCompressor {
 			attributionIds: serializedAttributionIds,
 		} = serialized;
 
-		const hasSession = hasOngoingSession(serialized);
 		let localSessionId: SessionId;
 		let attributionId: AttributionId | undefined;
 		let serializedLocalState: SerializedLocalState | undefined;
-		if (hasSession) {
-			assert(newSessionIdMaybe === undefined && attributionIdMaybe === undefined);
+		if (newSessionIdMaybe === undefined) {
 			// TODO: This cast can be removed on typescript 4.6
 			const serializedSessionData =
 				serializedSessions[(serialized as SerializedIdCompressorWithOngoingSession).localSessionIndex];
@@ -1661,7 +1673,6 @@ export class IdCompressor {
 			// TODO: This cast can be removed on typescript 4.6
 			serializedLocalState = (serialized as SerializedIdCompressorWithOngoingSession).localState;
 		} else {
-			assert(newSessionIdMaybe !== undefined);
 			localSessionId = newSessionIdMaybe;
 			attributionId = attributionIdMaybe;
 		}
@@ -1694,7 +1705,7 @@ export class IdCompressor {
 		for (const serializedSession of serializedSessions) {
 			const [sessionId, attributionIndex] = serializedSession;
 			if (sessionId === localSessionId) {
-				assert(hasSession, 'Cannot resume existing session.');
+				assert(hasOngoingSession(serialized), 'Cannot resume existing session.');
 				sessionInfos.push({ session: compressor.localSession, sessionId });
 			} else {
 				let attributionId: AttributionId | undefined;
