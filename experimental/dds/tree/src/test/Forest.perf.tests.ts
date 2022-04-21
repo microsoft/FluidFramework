@@ -18,7 +18,7 @@ import { refreshTestTree } from './utilities/TestUtilities';
 describe('Forest Perf', () => {
 	const testTree = refreshTestTree();
 	// Larger sizes can slow down correctness test runs, or even time out, so only run smaller sizes as correctness tests.
-	const sizes = isInPerformanceTestingMode ? [100, 1_000, 10_000, 100_000] : [100, 1_100];
+	const sizes = isInPerformanceTestingMode ? [100, 1_000, 10_000, 100_000] : [100, 1_000];
 
 	for (const count of sizes) {
 		// Pick a single representative size for the 'Measurement' suite to keep it small.
