@@ -168,6 +168,10 @@ export class TestClientLogger {
         return baseText;
     }
 
+    static validate(clients: readonly TestClient[], title?: string) {
+        return new TestClientLogger(clients, title).validate();
+    }
+
     public toString(excludeHeader: boolean = false) {
         let str = "";
         if(!excludeHeader) {
