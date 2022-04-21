@@ -2331,7 +2331,7 @@ export class MergeTree {
         this.mapRange({ leaf: annotateSegment }, refSeq, clientId, undefined, start, end);
 
         // OpArgs == undefined => test code
-        if (this.mergeTreeDeltaCallback) {
+        if (this.mergeTreeDeltaCallback && deltaSegments.length > 0) {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
@@ -2445,7 +2445,7 @@ export class MergeTree {
         }
 
         // opArgs == undefined => test code
-        if (this.mergeTreeDeltaCallback) {
+        if (this.mergeTreeDeltaCallback && removedSegments.length > 0) {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
