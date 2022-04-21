@@ -7,20 +7,20 @@ import { bufferToString, IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import {
-    IFluidDataStoreRuntime,
-    IChannelStorageService,
-    IChannelFactory,
-    IChannelAttributes,
-    IChannelServices,
-    IChannel,
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+	IChannelFactory,
+	IChannelAttributes,
+	IChannelServices,
+	IChannel,
 } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import {
-    createSingleBlobSummary,
-    IFluidSerializer,
-    ISharedObjectEvents,
-    serializeHandles,
-    SharedObject,
+	createSingleBlobSummary,
+	IFluidSerializer,
+	ISharedObjectEvents,
+	serializeHandles,
+	SharedObject,
 } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
@@ -30,53 +30,53 @@ import { EditHandle, EditLog, getNumberOfHandlesFromEditLogSummary, OrderedEditS
 import { EditId, NodeId, StableNodeId, DetachedSequenceId, OpSpaceNodeId, isDetachedSequenceId } from './Identifiers';
 import { initialTree } from './InitialTree';
 import {
-    CachingLogViewer,
-    EditCacheEntry,
-    EditStatusCallback,
-    LogViewer,
-    SequencedEditResult,
-    SequencedEditResultCallback,
+	CachingLogViewer,
+	EditCacheEntry,
+	EditStatusCallback,
+	LogViewer,
+	SequencedEditResult,
+	SequencedEditResultCallback,
 } from './LogViewer';
 import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility';
 import { ReconciliationPath } from './ReconciliationPath';
 import {
-    BuildNodeInternal,
-    ChangeInternal,
-    ChangeNode,
-    ChangeTypeInternal,
-    ConstraintInternal,
-    DetachInternal,
-    Edit,
-    EditLogSummary,
-    EditChunkContents,
-    EditStatus,
-    EditWithoutId,
-    reservedIdCount,
-    SharedTreeEditOp,
-    SharedTreeEditOp_0_0_2,
-    SharedTreeHandleOp,
-    SharedTreeNoOp,
-    SharedTreeOp,
-    SharedTreeOpType,
-    SharedTreeOp_0_0_2,
-    SharedTreeSummary,
-    SharedTreeSummaryBase,
-    SharedTreeSummary_0_0_2,
-    TreeNode,
-    ghostSessionId,
-    WriteFormat,
-    TreeNodeSequence,
-    InternalizedChange,
+	BuildNodeInternal,
+	ChangeInternal,
+	ChangeNode,
+	ChangeTypeInternal,
+	ConstraintInternal,
+	DetachInternal,
+	Edit,
+	EditLogSummary,
+	EditChunkContents,
+	EditStatus,
+	EditWithoutId,
+	reservedIdCount,
+	SharedTreeEditOp,
+	SharedTreeEditOp_0_0_2,
+	SharedTreeHandleOp,
+	SharedTreeNoOp,
+	SharedTreeOp,
+	SharedTreeOpType,
+	SharedTreeOp_0_0_2,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
+	SharedTreeSummary_0_0_2,
+	TreeNode,
+	ghostSessionId,
+	WriteFormat,
+	TreeNodeSequence,
+	InternalizedChange,
 } from './persisted-types';
 import { serialize, SummaryContents } from './Summary';
 import {
-    areRevisionViewsSemanticallyEqual,
-    convertTreeNodes,
-    deepCloneStablePlace,
-    deepCloneStableRange,
-    internalizeBuildNode,
-    newEditId,
-    walkTree,
+	areRevisionViewsSemanticallyEqual,
+	convertTreeNodes,
+	deepCloneStablePlace,
+	deepCloneStableRange,
+	internalizeBuildNode,
+	newEditId,
+	walkTree,
 } from './EditUtilities';
 import { getNodeIdContext, NodeIdContext, NodeIdNormalizer, sequencedIdNormalizer } from './NodeIdUtilities';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
@@ -95,85 +95,85 @@ import { MutableStringInterner } from './StringInterner';
  * @public
  */
 export class SharedTreeFactory implements IChannelFactory {
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
-     */
-    public static Type = 'SharedTree';
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+	 */
+	public static Type = 'SharedTree';
 
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
-     */
-    public static Attributes: IChannelAttributes = {
-        type: SharedTreeFactory.Type,
-        snapshotFormatVersion: '0.1',
-        packageVersion: '0.1',
-    };
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+	 */
+	public static Attributes: IChannelAttributes = {
+		type: SharedTreeFactory.Type,
+		snapshotFormatVersion: '0.1',
+		packageVersion: '0.1',
+	};
 
-    /**
-     * Get a factory for SharedTree to register with the data store.
-     * @param writeFormat - Determines the format version the SharedTree will write ops and summaries in. See [the write format
-     * documentation](../docs/Write-Format.md) for more information.
-     * @param summarizeHistory - Determines if the history is included in summaries and if edit chunks are uploaded when they are full.
-     * See the [breaking change migration documentation](docs/Breaking-Change-Migration) for more details on this scheme.
-     * @param expensiveValidation - Enables expensive asserts on SharedTree.
-     * @returns A factory that creates `SharedTree`s and loads them from storage.
-     */
-    constructor(
-        private readonly writeFormat: WriteFormat,
-        private readonly summarizeHistory: false | { uploadEditChunks: boolean } = false,
-        private expensiveValidation = false
-    ) { }
+	/**
+	 * Get a factory for SharedTree to register with the data store.
+	 * @param writeFormat - Determines the format version the SharedTree will write ops and summaries in. See [the write format
+	 * documentation](../docs/Write-Format.md) for more information.
+	 * @param summarizeHistory - Determines if the history is included in summaries and if edit chunks are uploaded when they are full.
+	 * See the [breaking change migration documentation](docs/Breaking-Change-Migration) for more details on this scheme.
+	 * @param expensiveValidation - Enables expensive asserts on SharedTree.
+	 * @returns A factory that creates `SharedTree`s and loads them from storage.
+	 */
+	constructor(
+		private readonly writeFormat: WriteFormat,
+		private readonly summarizeHistory: false | { uploadEditChunks: boolean } = false,
+		private expensiveValidation = false
+	) {}
 
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
-     */
-    public get type(): string {
-        return SharedTreeFactory.Type;
-    }
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+	 */
+	public get type(): string {
+		return SharedTreeFactory.Type;
+	}
 
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
-     */
-    public get attributes(): IChannelAttributes {
-        return SharedTreeFactory.Attributes;
-    }
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+	 */
+	public get attributes(): IChannelAttributes {
+		return SharedTreeFactory.Attributes;
+	}
 
-    /**
-     * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
-     */
-    public async load(
-        runtime: IFluidDataStoreRuntime,
-        id: string,
-        services: IChannelServices,
-        _channelAttributes: Readonly<IChannelAttributes>
-    ): Promise<IChannel> {
-        const sharedTree = this.createSharedTree(runtime, id);
-        await sharedTree.load(services);
-        return sharedTree;
-    }
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
+	 */
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		_channelAttributes: Readonly<IChannelAttributes>
+	): Promise<IChannel> {
+		const sharedTree = this.createSharedTree(runtime, id);
+		await sharedTree.load(services);
+		return sharedTree;
+	}
 
-    /**
-     * Create a new SharedTree.
-     * @param runtime - data store runtime that owns the new SharedTree
-     * @param id - optional name for the SharedTree
-     */
-    public create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation: boolean = false): SharedTree {
-        this.expensiveValidation = expensiveValidation;
-        const sharedTree = this.createSharedTree(runtime, id);
-        sharedTree.initializeLocal();
-        return sharedTree;
-    }
+	/**
+	 * Create a new SharedTree.
+	 * @param runtime - data store runtime that owns the new SharedTree
+	 * @param id - optional name for the SharedTree
+	 */
+	public create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation: boolean = false): SharedTree {
+		this.expensiveValidation = expensiveValidation;
+		const sharedTree = this.createSharedTree(runtime, id);
+		sharedTree.initializeLocal();
+		return sharedTree;
+	}
 
-    private createSharedTree(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
-        const sharedTree = new SharedTree(
-            runtime,
-            id,
-            this.writeFormat,
-            this.summarizeHistory,
-            this.expensiveValidation
-        );
-        return sharedTree;
-    }
+	private createSharedTree(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
+		const sharedTree = new SharedTree(
+			runtime,
+			id,
+			this.writeFormat,
+			this.summarizeHistory,
+			this.expensiveValidation
+		);
+		return sharedTree;
+	}
 }
 
 /**
@@ -191,12 +191,12 @@ const sortedWriteVersions = [WriteFormat.v0_0_2, WriteFormat.v0_1_1];
  * @public
  */
 export interface EditCommittedEventArguments {
-    /** The ID of the edit committed. */
-    readonly editId: EditId;
-    /** Whether or not this is a local edit. */
-    readonly local: boolean;
-    /** The tree the edit was committed on. Required for local edit events handled by SharedTreeUndoRedoHandler. */
-    readonly tree: SharedTree;
+	/** The ID of the edit committed. */
+	readonly editId: EditId;
+	/** Whether or not this is a local edit. */
+	readonly local: boolean;
+	/** The tree the edit was committed on. Required for local edit events handled by SharedTreeUndoRedoHandler. */
+	readonly tree: SharedTree;
 }
 
 /**
@@ -204,18 +204,18 @@ export interface EditCommittedEventArguments {
  * @public
  */
 export interface SequencedEditAppliedEventArguments {
-    /** The ID of the edit committed. */
-    readonly edit: Edit<ChangeInternal>;
-    /** Whether or not this was a local edit. */
-    readonly wasLocal: boolean;
-    /** The tree the edit was applied to. */
-    readonly tree: SharedTree;
-    /** The telemetry logger associated with sequenced edit application. */
-    readonly logger: ITelemetryLogger;
-    /** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
-    readonly reconciliationPath: ReconciliationPath;
-    /** The outcome of the sequenced edit being applied. */
-    readonly outcome: EditApplicationOutcome;
+	/** The ID of the edit committed. */
+	readonly edit: Edit<ChangeInternal>;
+	/** Whether or not this was a local edit. */
+	readonly wasLocal: boolean;
+	/** The tree the edit was applied to. */
+	readonly tree: SharedTree;
+	/** The telemetry logger associated with sequenced edit application. */
+	readonly logger: ITelemetryLogger;
+	/** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
+	readonly reconciliationPath: ReconciliationPath;
+	/** The outcome of the sequenced edit being applied. */
+	readonly outcome: EditApplicationOutcome;
 }
 
 /**
@@ -223,34 +223,34 @@ export interface SequencedEditAppliedEventArguments {
  * @public
  */
 export type EditApplicationOutcome =
-    | {
-        /**
-         * The revision view resulting from the edit.
-         */
-        readonly view: RevisionView;
-        /**
-         * The status code for the edit that produced the revision.
-         */
-        readonly status: EditStatus.Applied;
-    }
-    | {
-        /**
-         * The revision view resulting from the edit.
-         */
-        readonly failure: TransactionInternal.Failure;
-        /**
-         * The status code for the edit that produced the revision.
-         */
-        readonly status: EditStatus.Invalid | EditStatus.Malformed;
-    };
+	| {
+			/**
+			 * The revision view resulting from the edit.
+			 */
+			readonly view: RevisionView;
+			/**
+			 * The status code for the edit that produced the revision.
+			 */
+			readonly status: EditStatus.Applied;
+	  }
+	| {
+			/**
+			 * The revision view resulting from the edit.
+			 */
+			readonly failure: TransactionInternal.Failure;
+			/**
+			 * The status code for the edit that produced the revision.
+			 */
+			readonly status: EditStatus.Invalid | EditStatus.Malformed;
+	  };
 
 /**
  * Events which may be emitted by `SharedTree`. See {@link SharedTreeEvent} for documentation of event semantics.
  * @public
  */
 export interface ISharedTreeEvents extends ISharedObjectEvents {
-    (event: 'committedEdit', listener: EditCommittedHandler);
-    (event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler);
+	(event: 'committedEdit', listener: EditCommittedHandler);
+	(event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler);
 }
 
 /**
@@ -561,14 +561,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public get edits(): OrderedEditSet<InternalizedChange> {
 		return this.editLog as unknown as OrderedEditSet<InternalizedChange>;
-	}
-
-	/**
-	 * @returns the edit history of the tree. The format of the contents of edits are subject to change and should not be relied upon.
-	 * @internal
-	 */
-	public get editsInternal(): OrderedEditSet<ChangeInternal> {
-		return this.editLog;
 	}
 
 	private deserializeHandle(serializedHandle: string): IFluidHandle<ArrayBufferLike> {
@@ -1134,7 +1126,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		const unifyHistoricalIds = (context: NodeIdContext): void => {
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				const edit = this.editsInternal.getEditInSessionAtIndex(i);
+				const edit = this.editLog.getEditInSessionAtIndex(i);
 				convertEditIds(edit, (id) => context.generateNodeId(this.convertToStableNodeId(id)));
 			}
 		};
@@ -1147,7 +1139,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			unifyHistoricalIds(ghostContext);
 			// The same logic applies to string interning, so intern all the strings in the history (superset of those in the current view)
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				this.internStringsFromEdit(this.editsInternal.getEditInSessionAtIndex(i));
+				this.internStringsFromEdit(this.editLog.getEditInSessionAtIndex(i));
 			}
 		} else {
 			// Clients do not have the full history, but all share the same current view (sequenced). They can all finalize the same final
@@ -1333,7 +1325,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public revert(editId: EditId): EditId | undefined {
 		const index = this.edits.getIndexOfId(editId);
-		const edit = this.editLog.getEditInSessionAtIndex(index);
+		const edit = this.edits.getEditInSessionAtIndex(index);
 		const before = this.logViewer.getRevisionViewInSession(index);
 		const changes = this.revertChanges(edit.changes, before);
 		if (changes === undefined) {
@@ -1350,8 +1342,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @returns the inverse of `changes` or undefined if the changes could not be inverted for the given tree state.
 	 * @internal
 	 */
-	public revertChanges(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined {
-		return revert(changes, before);
+	public revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined {
+		return revert(changes as unknown as readonly ChangeInternal[], before);
 	}
 
 	/**
@@ -1494,20 +1486,20 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
  * @throws if either version isn't a valid WriteFormat version.
  */
 function compareSummaryFormatVersions(versionA: string, versionB: string): number {
-    const versionAIndex = sortedWriteVersions.indexOf(versionA as WriteFormat);
-    const versionBIndex = sortedWriteVersions.indexOf(versionB as WriteFormat);
+	const versionAIndex = sortedWriteVersions.indexOf(versionA as WriteFormat);
+	const versionBIndex = sortedWriteVersions.indexOf(versionB as WriteFormat);
 
-    if (versionAIndex === -1 || versionBIndex === -1) {
-        fail('Summary version being compared cannot be read.');
-    }
+	if (versionAIndex === -1 || versionBIndex === -1) {
+		fail('Summary version being compared cannot be read.');
+	}
 
-    if (versionAIndex < versionBIndex) {
-        return -1;
-    } else if (versionAIndex > versionBIndex) {
-        return 1;
-    }
+	if (versionAIndex < versionBIndex) {
+		return -1;
+	} else if (versionAIndex > versionBIndex) {
+		return 1;
+	}
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -1516,14 +1508,14 @@ function compareSummaryFormatVersions(versionA: string, versionB: string): numbe
  * @throws if the new version isn't a supported WriteFormat version.
  */
 function isUpdateRequired(oldVersion: string, newVersion: string): boolean {
-    const newVersionIndex = sortedWriteVersions.indexOf(newVersion as WriteFormat);
-    if (newVersionIndex === -1) {
-        fail('New write version is invalid.');
-    }
+	const newVersionIndex = sortedWriteVersions.indexOf(newVersion as WriteFormat);
+	if (newVersionIndex === -1) {
+		fail('New write version is invalid.');
+	}
 
-    return compareSummaryFormatVersions(oldVersion, newVersion) === -1 ? true : false;
+	return compareSummaryFormatVersions(oldVersion, newVersion) === -1 ? true : false;
 }
 
 function isTreeNodeSequence(source: TreeNodeSequence<BuildNode> | BuildNode): source is TreeNodeSequence<BuildNode> {
-    return Array.isArray(source);
+	return Array.isArray(source);
 }
