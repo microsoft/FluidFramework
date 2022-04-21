@@ -142,4 +142,32 @@ describe("connectionManager", () => {
         assert(!oldConnection.disposed, "connection shouldn't be disposed since mock closeHandler doesn't do it - don't expect it here after fatal nack");
         assert(!mockLogger.matchEvents([{ eventName: "reconnectingDespiteFatalError" }]), "Should not see reconnectingDespiteFatalError event after fatal nack");
     });
+
+    it("should reconnect as read with leave op", async () => {
+        const connectionManager = new ConnectionManager(
+            () => mockDocumentService,
+            client as IClient,
+            true /* reconnectAllowed */,
+            mockLogger,
+            props,
+        );
+        connectionManager.connect();
+        await waitForConnection();
+        assert.strictEqual(connectionManager.connectionMode, "write", "connection mode should be write");
+
+        const message = {
+            clientId:"0",
+            data:'"mock_client_0"',
+            sequenceNumber:1,
+            term:1,
+            minimumSequenceNumber:1,
+            clientSequenceNumber:1,
+            referenceSequenceNumber:1,
+            type:"leave",
+            contents:"",
+            timestamp:1,
+        };
+        connectionManager.beforeProcessingIncomingOp(message);
+        assert.strictEqual(connectionManager.connectionMode, "read", "should be reconnected as read mode");
+    });
 });
