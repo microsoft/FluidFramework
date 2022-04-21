@@ -47,7 +47,8 @@ export class InterfaceValidator implements IValidator {
     }
 
     /**
-     * Break down a normal interface declaration into all its parts to facilitate type comparision
+     * Break down a normal interface declaration into all its parts to facilitate type comparison
+     *
      * - Remove external type dependencies to examine separately
      * - Do not consider declaration merging
      *
