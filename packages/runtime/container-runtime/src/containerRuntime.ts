@@ -194,17 +194,17 @@ export interface ContainerRuntimeMessage {
 const IdleDetectionTime = 5000;
 
 const DefaultSummaryConfiguration: ISummaryConfiguration = {
-    idleTime: IdleDetectionTime,
+    idleTime: IdleDetectionTime * 3,
 
     maxTime: IdleDetectionTime * 12,
 
-    // Snapshot if 1000 ops received since last snapshot.
+    // Summarize if 1000 ops received since last snapshot.
     maxOps: 1000,
 
-    // Wait 2 minutes for summary ack
+    // Wait 10 minutes for summary ack
     // this is less than maxSummarizeAckWaitTime
     // the min of the two will be chosen
-    maxAckWaitTime: 120000,
+    maxAckWaitTime: 600000,
 };
 
 export interface IGCRuntimeOptions {
@@ -967,8 +967,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return {
             // the defaults
             ... DefaultSummaryConfiguration,
-            // the server provided values
-            ... this.context?.serviceConfiguration?.summary,
             // the runtime configuration overrides
             ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
         };
