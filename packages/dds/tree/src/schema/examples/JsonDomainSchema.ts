@@ -8,7 +8,7 @@
 
 import {
     TreeSchema,
-    Multiplicity,
+    FieldKind,
     ValueSchema,
     FieldSchema,
     TreeSchemaIdentifier,
@@ -44,7 +44,7 @@ const jsonArray: NamedTreeSchema = {
     localFields: new Map([
         [
             "items" as LocalFieldKey,
-            { multiplicity: Multiplicity.Sequence, types: jsonTypes },
+            { kind: FieldKind.Sequence, types: jsonTypes },
         ],
     ]),
     value: ValueSchema.Nothing,
@@ -93,6 +93,6 @@ for (const named of json) {
 }
 
 export const jsonRoot: FieldSchema = {
-    multiplicity: Multiplicity.Value,
+    kind: FieldKind.Value,
     types: jsonTypes,
 };

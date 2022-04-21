@@ -6,7 +6,7 @@
 import { fail } from "../utils";
 import { allowsRepoSuperset, isNeverTree } from "./Comparison";
 import {
-    FieldSchema, GlobalFieldKey, LocalFieldKey, Multiplicity, SchemaRepository, TreeSchema, TreeSchemaIdentifier,
+    FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, SchemaRepository, TreeSchema, TreeSchemaIdentifier,
 } from "./Schema";
 import { StoredSchemaRepository } from "./StoredSchemaRepository";
 
@@ -122,7 +122,7 @@ export function adaptRepo(original: SchemaRepository, adapters: Adapters): Schem
  * Adapt original such that it allows member types which can be adapted to its specified types.
  */
 export function adaptField(original: FieldSchema, adapters: Adapters, allowMissing: boolean): FieldSchema {
-    const multiplicity = adaptMultiplicity(original.multiplicity, allowMissing);
+    const kind = adaptKind(original.kind, allowMissing);
     if (original.types) {
         const types: Set<TreeSchemaIdentifier> = new Set(original.types);
         for (const adapter of adapters?.tree ?? []) {
@@ -131,9 +131,9 @@ export function adaptField(original: FieldSchema, adapters: Adapters, allowMissi
             }
         }
 
-        return { ...original, types, multiplicity };
+        return { ...original, types, kind };
     }
-    return { ...original, multiplicity };
+    return { ...original, kind };
 }
 
 export function adaptTree(original: TreeSchema, adapters: Adapters): TreeSchema {
@@ -145,9 +145,9 @@ export function adaptTree(original: TreeSchema, adapters: Adapters): TreeSchema 
     return { ...original, localFields };
 }
 
-export function adaptMultiplicity(original: Multiplicity, allowMissing: boolean): Multiplicity {
+export function adaptKind(original: FieldKind, allowMissing: boolean): FieldKind {
     if (allowMissing) {
-        return original === Multiplicity.Value ? Multiplicity.Optional : original;
+        return original === FieldKind.Value ? FieldKind.Optional : original;
     }
     return original;
 }

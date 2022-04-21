@@ -15,7 +15,7 @@ import {
 	FieldSchema,
 	GlobalFieldKey,
 	LocalFieldKey,
-	Multiplicity,
+	FieldKind,
 	NamedTreeSchema,
 	TreeSchema,
 	TreeSchemaIdentifier,
@@ -54,7 +54,7 @@ describe("Schema", () => {
 
 	const optionalLocalFieldTree: NamedTreeSchema = {
 		name: "optionalLocalFieldTree" as TreeSchemaIdentifier,
-		localFields: new Map([["x" as LocalFieldKey, fieldSchema(Multiplicity.Optional, [emptyTree.name])]]),
+		localFields: new Map([["x" as LocalFieldKey, fieldSchema(FieldKind.Optional, [emptyTree.name])]]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
 		extraGlobalFields: false,
@@ -63,7 +63,7 @@ describe("Schema", () => {
 
 	const valueLocalFieldTree: NamedTreeSchema = {
 		name: "valueLocalFieldTree" as TreeSchemaIdentifier,
-		localFields: new Map([["x" as LocalFieldKey, fieldSchema(Multiplicity.Value, [emptyTree.name])]]),
+		localFields: new Map([["x" as LocalFieldKey, fieldSchema(FieldKind.Value, [emptyTree.name])]]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
 		extraGlobalFields: false,
@@ -75,7 +75,7 @@ describe("Schema", () => {
 		assert(isNeverField(repo, neverField));
 		repo.tryUpdateTreeSchema("never" as TreeSchemaIdentifier, neverTree);
 		const neverField2: FieldSchema = {
-			multiplicity: Multiplicity.Value,
+			kind: FieldKind.Value,
 			types: new Set(["never" as TreeSchemaIdentifier]),
 		};
 		assert(isNeverField(repo, neverField2));
@@ -83,7 +83,7 @@ describe("Schema", () => {
 		assert.equal(isNeverField(repo, anyField), false);
 		repo.tryUpdateTreeSchema("empty" as TreeSchemaIdentifier, emptyTree);
 		assert.equal(isNeverField(repo, {
-			multiplicity: Multiplicity.Value,
+			kind: FieldKind.Value,
 			types: new Set(["empty" as TreeSchemaIdentifier]),
 		}), false);
 	});
@@ -139,7 +139,7 @@ describe("Schema", () => {
 		const repo = new StoredSchemaRepository();
 		repo.tryUpdateTreeSchema("never" as TreeSchemaIdentifier, neverTree);
 		const neverField2: FieldSchema = {
-			multiplicity: Multiplicity.Value,
+			kind: FieldKind.Value,
 			types: new Set(["never" as TreeSchemaIdentifier]),
 		};
 		const compare = (a: FieldSchema, b: FieldSchema): boolean => allowsFieldSuperset(repo, a, b);

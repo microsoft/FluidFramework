@@ -54,9 +54,11 @@ export type GlobalFieldKey = SchemaIdentifier & {
 };
 
 /**
- * Schema for how many children are allowed in a field.
+ * Describes how a particular field functions.
+ *
+ * This determine its reading and editing APIs, multiplicity, and what merge resolution policies it will use.
  */
-export enum Multiplicity {
+export enum FieldKind {
     /**
      * Exactly one item.
      */
@@ -75,7 +77,7 @@ export enum Multiplicity {
      * Using Forbidden makes what types are listed for allowed in a field irrelevant
      * since the field will never have values in it.
      *
-     * Using Forbidden is equivalent to picking a multiplicity that permits empty (like sequence or optional)
+     * Using Forbidden is equivalent to picking a kind that permits empty (like sequence or optional)
      * and having no allowed types (or only never types).
      * Because of this, its possible to express everything constraint wise without Forbidden,
      * but using Forbidden can be more semantically clear than optional with no allowed types.
@@ -135,7 +137,7 @@ export enum ValueSchema {
 }
 
 export interface FieldSchema {
-    readonly multiplicity: Multiplicity;
+    readonly kind: FieldKind;
     /**
      * The set of allowed child types.
      * Providing multiple values here allows polymorphism, tagged union style.
@@ -189,8 +191,8 @@ export interface TreeSchema {
      *
      * To forbid this map like usage, use {@link emptyField} here.
      *
-     * Usually `Multiplicity.Value` should NOT be used here
-     * since no nodes can ever be in schema are in schema if you use `Multiplicity.Value` here
+     * Usually `FieldKind.Value` should NOT be used here
+     * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
      * (that would require infinite children).
      * This pattern, which produces a schema which can never be met, is used by @link neverTree},
      * and can be useful in special cases (like a default stored schema when none is specified).

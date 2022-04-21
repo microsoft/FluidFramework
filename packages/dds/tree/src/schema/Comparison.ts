@@ -9,7 +9,7 @@ import {
     TreeSchema,
     ValueSchema,
     FieldSchema,
-    Multiplicity,
+    FieldKind,
 } from "./Schema";
 import { emptyField } from "./Builders";
 
@@ -120,14 +120,14 @@ export function allowsFieldSuperset(
         return true;
     }
     if (
-        !allowsMultiplicitySuperset(
-            original.multiplicity,
-            superset.multiplicity,
+        !allowsKindSuperset(
+            original.kind,
+            superset.kind,
         )
     ) {
         return false;
     }
-    if (original.multiplicity === Multiplicity.Forbidden) {
+    if (original.kind === FieldKind.Forbidden) {
         return true;
     }
     if (superset.types === undefined) {
@@ -189,16 +189,16 @@ export function allowsRepoSuperset(
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
-export function allowsMultiplicitySuperset(
-    original: Multiplicity,
-    superset: Multiplicity,
+export function allowsKindSuperset(
+    original: FieldKind,
+    superset: FieldKind,
 ): boolean {
     return (
         original === superset ||
-        superset === Multiplicity.Sequence ||
-        ((original === Multiplicity.Forbidden ||
-            original === Multiplicity.Value) &&
-            superset === Multiplicity.Optional)
+        superset === FieldKind.Sequence ||
+        ((original === FieldKind.Forbidden ||
+            original === FieldKind.Value) &&
+            superset === FieldKind.Optional)
     );
 }
 
@@ -238,7 +238,7 @@ export function isNeverField(
     field: FieldSchema,
 ): boolean {
     if (
-        field.multiplicity === Multiplicity.Value &&
+        field.kind === FieldKind.Value &&
         field.types !== undefined
     ) {
         for (const type of field.types) {
@@ -254,7 +254,7 @@ export function isNeverField(
 }
 
 export function isNeverTree(repo: SchemaRepository, tree: TreeSchema): boolean {
-    if (tree.extraLocalFields.multiplicity === Multiplicity.Value) {
+    if (tree.extraLocalFields.kind === FieldKind.Value) {
         return true;
     }
     for (const field of tree.localFields.values()) {

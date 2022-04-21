@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldSchema, Multiplicity, TreeSchema, ValueSchema } from "./Schema";
+import { FieldSchema, FieldKind, TreeSchema, ValueSchema } from "./Schema";
 import { emptySet, emptyMap } from "./Builders";
 
 /**
@@ -16,7 +16,7 @@ import { emptySet, emptyMap } from "./Builders";
  * FieldSchema which is impossible for any data to be in schema with.
  */
 export const neverField: FieldSchema = {
-    multiplicity: Multiplicity.Value,
+    kind: FieldKind.Value,
     types: emptySet,
 };
 
@@ -36,7 +36,7 @@ export const neverTree: TreeSchema = {
  * Note that children inside the field still have to be in schema.
  */
 export const anyField: FieldSchema = {
-    multiplicity: Multiplicity.Sequence,
+    kind: FieldKind.Sequence,
 };
 
 /**

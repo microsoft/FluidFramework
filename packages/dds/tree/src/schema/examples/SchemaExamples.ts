@@ -13,7 +13,7 @@
 
  import {
     TreeSchema,
-    Multiplicity,
+    FieldKind,
     ValueSchema,
     TreeSchemaIdentifier,
     LocalFieldKey,
@@ -44,7 +44,7 @@ export const string: TreeSchema = {
     localFields: new Map([
         [
             "children" as LocalFieldKey,
-            { multiplicity: Multiplicity.Sequence, types: new Set([codePoint.name]) },
+            { kind: FieldKind.Sequence, types: new Set([codePoint.name]) },
         ],
     ]),
     value: ValueSchema.Nothing,

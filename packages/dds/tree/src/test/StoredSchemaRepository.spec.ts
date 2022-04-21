@@ -10,7 +10,7 @@ import { strict as assert } from "assert";
 
 import {
 	FieldSchema,
-	GlobalFieldKey, Multiplicity, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+	GlobalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "../schema/Schema";
 import { codePoint, string } from "../schema/examples/SchemaExamples";
 import { StoredSchemaRepository } from "../schema/StoredSchemaRepository";
@@ -48,25 +48,25 @@ describe("StoredSchemaRepository", () => {
 	const pointIdentifier = "a68c1750-9fba-4b6e-8643-9d830e271c05" as TreeSchemaIdentifier;
 	const numberIdentifier = "08b4087a-da53-45d1-86cd-15a2948077bf" as TreeSchemaIdentifier;
 
-	const canvas = treeSchema({ localFields: { items: fieldSchema(Multiplicity.Sequence, [numberIdentifier]) } });
+	const canvas = treeSchema({ localFields: { items: fieldSchema(FieldKind.Sequence, [numberIdentifier]) } });
 	const number = treeSchema({ value: ValueSchema.Number });
 
 	const point = treeSchema({
 		localFields: {
-			x: fieldSchema(Multiplicity.Value, [numberIdentifier]),
-			y: fieldSchema(Multiplicity.Value, [numberIdentifier]),
+			x: fieldSchema(FieldKind.Value, [numberIdentifier]),
+			y: fieldSchema(FieldKind.Value, [numberIdentifier]),
 		},
 	});
 
 	// A type that can be used to position items without an inherent position within the canvas.
 	const positionedCanvasItem = treeSchema({
 		localFields: {
-			position: fieldSchema(Multiplicity.Value, [pointIdentifier]),
-			content: fieldSchema(Multiplicity.Value, [textIdentifier]),
+			position: fieldSchema(FieldKind.Value, [pointIdentifier]),
+			content: fieldSchema(FieldKind.Value, [textIdentifier]),
 		},
 	});
 
-	const root = fieldSchema(Multiplicity.Value, [canvasIdentifier]);
+	const root = fieldSchema(FieldKind.Value, [canvasIdentifier]);
 
 	/**
 	 * This shows basic usage of stored and view schema, including a schema change handled using the
@@ -133,7 +133,7 @@ describe("StoredSchemaRepository", () => {
 		// This example picks the first approach.
 		// Lets simulate the developers of the app making this change by modifying the view schema
 		// (instead of reloading it all).
-		const tolerantRoot = fieldSchema(Multiplicity.Optional, [canvasIdentifier]);
+		const tolerantRoot = fieldSchema(FieldKind.Optional, [canvasIdentifier]);
 		view.overwriteFieldSchema(rootFieldKey, tolerantRoot);
 
 		{
@@ -186,14 +186,14 @@ describe("StoredSchemaRepository", () => {
 			const counterIdentifier = "0d8da0ca-b3ba-4025-93a3-b8f181379e3b" as TreeSchemaIdentifier;
 			const counter = treeSchema({
 				localFields: {
-					count: fieldSchema(Multiplicity.Value, [numberIdentifier]),
+					count: fieldSchema(FieldKind.Value, [numberIdentifier]),
 				},
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
 			const positionedCanvasItem2 = treeSchema({
 				localFields: {
-					position: fieldSchema(Multiplicity.Value, [pointIdentifier]),
-					content: fieldSchema(Multiplicity.Value, [textIdentifier, counterIdentifier]),
+					position: fieldSchema(FieldKind.Value, [pointIdentifier]),
+					content: fieldSchema(FieldKind.Value, [textIdentifier, counterIdentifier]),
 				},
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
@@ -296,8 +296,8 @@ describe("StoredSchemaRepository", () => {
 		const formattedTextIdentifier = "2cbc277e-8820-41ef-a3f4-0a00de8ef934" as TreeSchemaIdentifier;
 		const formattedText = treeSchema({
 			localFields: {
-				content: fieldSchema(Multiplicity.Sequence, [formattedTextIdentifier, codePoint.name]),
-				size: fieldSchema(Multiplicity.Value, [numberIdentifier]),
+				content: fieldSchema(FieldKind.Sequence, [formattedTextIdentifier, codePoint.name]),
+				size: fieldSchema(FieldKind.Value, [numberIdentifier]),
 			},
 		});
 
@@ -310,9 +310,9 @@ describe("StoredSchemaRepository", () => {
 		// (except for some approaches for staging roll-outs which are not covered here).
 		const positionedCanvasItemNew = treeSchema({
 			localFields: {
-				position: fieldSchema(Multiplicity.Value, [pointIdentifier]),
+				position: fieldSchema(FieldKind.Value, [pointIdentifier]),
 				// Note that we are specifically excluding the old text here
-				content: fieldSchema(Multiplicity.Value, [formattedTextIdentifier]),
+				content: fieldSchema(FieldKind.Value, [formattedTextIdentifier]),
 			},
 		});
 
@@ -344,7 +344,7 @@ describe("StoredSchemaRepository", () => {
 		{
 			const stored = new StoredSchemaRepository();
 			// This is the root type produced by the adapter for the root.
-			const tolerantRoot = fieldSchema(Multiplicity.Optional, [canvasIdentifier]);
+			const tolerantRoot = fieldSchema(FieldKind.Optional, [canvasIdentifier]);
 			assert(stored.tryUpdateTreeSchema(canvasIdentifier, canvas));
 			assert(stored.tryUpdateTreeSchema(numberIdentifier, number));
 			assert(stored.tryUpdateTreeSchema(pointIdentifier, point));

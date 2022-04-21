@@ -4,7 +4,7 @@
  */
 
 import {
-    FieldSchema, GlobalFieldKey, LocalFieldKey, Multiplicity, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+    FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "./Schema";
 
 /**
@@ -40,12 +40,12 @@ export const rootFieldKey = "rootFieldKey" as GlobalFieldKey;
  * Default field which only permits emptiness.
  */
 export const emptyField: FieldSchema = {
-    multiplicity: Multiplicity.Forbidden,
+    kind: FieldKind.Forbidden,
 };
 
-export function fieldSchema(multiplicity: Multiplicity, types: readonly TreeSchemaIdentifier[]): FieldSchema {
+export function fieldSchema(kind: FieldKind, types: readonly TreeSchemaIdentifier[]): FieldSchema {
     return {
-        multiplicity,
+        kind,
         types: new Set(types),
     };
 }
