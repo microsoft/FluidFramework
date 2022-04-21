@@ -819,9 +819,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     constructor(runtime: IFluidDataStoreRuntime, id: string, writeFormat: WriteFormat, summarizeHistory?: false | {
         uploadEditChunks: boolean;
     }, expensiveValidation?: boolean);
-    applyEdit(...changes: Change[]): Edit<InternalizedChange>;
+    applyEdit(...changes: Change[]): Edit<unknown>;
     // (undocumented)
-    applyEdit(changes: Change[]): Edit<InternalizedChange>;
+    applyEdit(changes: Change[]): Edit<unknown>;
     // @internal
     applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
     protected applyStashedOp(op: unknown): void;
@@ -830,10 +830,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
     // (undocumented)
     get currentView(): RevisionView;
-    // Warning: (ae-forgotten-export) The symbol "InternalizedChange" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
-    get edits(): OrderedEditSet<InternalizedChange>;
+    get edits(): OrderedEditSet;
     // @internal (undocumented)
     get editsInternal(): OrderedEditSet<ChangeInternal>;
     // @internal
@@ -857,7 +855,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     // (undocumented)
     protected readonly logger: ITelemetryLogger;
     get logViewer(): LogViewer;
-    mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
     // (undocumented)
     protected onDisconnect(): void;
     // (undocumented)
