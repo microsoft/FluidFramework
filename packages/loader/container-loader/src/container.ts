@@ -1223,7 +1223,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return {
             sequenceNumber: attributes.sequenceNumber,
             version: versionId,
-            quorumSize: this.getQuorum().getMembers().size,
         };
     }
 
