@@ -101,6 +101,19 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_BlobAggregationStorage": {
+        "backCompat": false
+      },
+      "ClassDeclaration_BlobCacheStorageService": {
+        "backCompat": false
+      },
+      "ClassDeclaration_DocumentStorageServiceProxy": {
+        "backCompat": false
+      },
+      "ClassDeclaration_PrefetchDocumentStorageService": {
+        "backCompat": false
+      }
+    }
   }
 }

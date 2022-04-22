@@ -109,6 +109,13 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_DocumentStorageService": {
+        "backCompat": false
+      },
+      "ClassDeclaration_NullBlobStorageService": {
+        "backCompat": false
+      }
+    }
   }
 }

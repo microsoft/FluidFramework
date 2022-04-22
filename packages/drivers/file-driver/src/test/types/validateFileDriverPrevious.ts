@@ -156,6 +156,7 @@ declare function get_current_ClassDeclaration_FluidFetchReader():
 declare function use_old_ClassDeclaration_FluidFetchReader(
     use: TypeOnly<old.FluidFetchReader>);
 use_old_ClassDeclaration_FluidFetchReader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_FluidFetchReader());
 
 /*
@@ -204,6 +205,7 @@ declare function get_current_InterfaceDeclaration_ISnapshotWriterStorage():
 declare function use_old_InterfaceDeclaration_ISnapshotWriterStorage(
     use: TypeOnly<old.ISnapshotWriterStorage>);
 use_old_InterfaceDeclaration_ISnapshotWriterStorage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISnapshotWriterStorage());
 
 /*
