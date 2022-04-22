@@ -77,7 +77,7 @@
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/counter": "^0.60.1000",
     "@fluidframework/datastore-definitions": "^0.60.1000",
-    "@fluidframework/driver-definitions": "^0.46.1000",
+    "@fluidframework/driver-definitions": "^0.47.1000-0",
     "@fluidframework/map": "^0.60.1000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/runtime-definitions": "^0.60.1000",
