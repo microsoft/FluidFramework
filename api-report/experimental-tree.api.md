@@ -859,6 +859,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     // (undocumented)
     protected readonly logger: ITelemetryLogger;
     get logViewer(): LogViewer;
+    mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
     // (undocumented)
     protected onDisconnect(): void;
     // (undocumented)
