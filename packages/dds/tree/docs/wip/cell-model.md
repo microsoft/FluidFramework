@@ -183,7 +183,6 @@ The editing operations offered by SharedTree, even for unschematized data, need 
 Instead, we see value in offering two sets of higher-level operations: one for fixed-sized fields and one for dynamically-sized fields.
 This allows the editing API to be more specialized for each kind of field, which in turn allows the API to be more expressive and more familiar.
 
-
 ### Merge Semantics
 
 The merge resolution logic can now exclude the possibility of having to merge operations from both sets within a single field (outside of schema migration scenarios).
