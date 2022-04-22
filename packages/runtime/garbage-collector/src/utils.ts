@@ -208,7 +208,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
             }
 
             // Add the outbound routes against the normalized and prefixed id.
-            this.gcNodes[normalizedId] = outboundRoutes;
+            this.gcNodes[normalizedId] = Array.from(outboundRoutes);
         }
     }
 

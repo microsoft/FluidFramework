@@ -675,6 +675,15 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         let channelBaseGCDetails = (await this.channelsBaseGCDetails).get(channelId);
         if (channelBaseGCDetails === undefined) {
             channelBaseGCDetails = {};
+        } else if (channelBaseGCDetails.gcData?.gcNodes !== undefined) {
+            const channels = Object.entries(channelBaseGCDetails.gcData.gcNodes);
+            channels.forEach(([_, outboundRoutes]) => {
+                // remove 1 route from channel to parent for each channel
+                const routeIndex = outboundRoutes.findIndex((route) => route === this.absolutePath);
+                if (routeIndex !== -1) {
+                    outboundRoutes.splice(routeIndex, 1);
+                }
+            });
         }
 
         // Currently, channel context's are always considered used. So, it there are no used routes for it, we still
