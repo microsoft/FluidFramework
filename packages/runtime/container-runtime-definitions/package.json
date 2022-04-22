@@ -62,6 +62,13 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IContainerRuntime": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IProvideContainerRuntime": {
+        "backCompat": false
+      }
+    }
   }
 }

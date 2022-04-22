@@ -70,6 +70,16 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_DocumentServiceFactoryProxy": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ICombinedDriver": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IDocumentServiceFactoryProxy": {
+        "backCompat": false
+      }
+    }
   }
 }
