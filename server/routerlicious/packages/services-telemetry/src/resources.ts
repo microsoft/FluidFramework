@@ -8,6 +8,9 @@ import { Lumber } from "./lumber";
 import { LumberEventName } from "./lumberEventNames";
 import { Lumberjack } from "./lumberjack";
 
+const isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
+const isNode = typeof process !== "undefined" && process.versions != null && process.versions.node != null;
+
 export enum LogLevel {
     Error,
     Warning,
@@ -118,7 +121,8 @@ export interface ILumberjackSchemaValidationResult {
 
 // Helper method to assist with handling Lumberjack/Lumber errors depending on the context.
 export function handleError(eventName: LumberEventName, errMsg: string, engineList: ILumberjackEngine[]) {
-    if (typeof window === "undefined" && process?.env?.IS_FLUID_SERVER) {
+    // We only want to log Lumberjack errors if running on a Fluid server instance.
+    if (!isBrowser && isNode && process?.env?.IS_FLUID_SERVER) {
         const err = new Error(errMsg);
         // If there is no LumberjackEngine specified, making the list empty,
         // we log the error to the console as a last resort, so the information can
