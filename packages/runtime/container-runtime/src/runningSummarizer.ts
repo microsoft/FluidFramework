@@ -379,7 +379,7 @@ export class RunningSummarizer implements IDisposable {
                     this.logger.sendPerformanceEvent({
                         eventName: "SummarizeAttemptDelay",
                         duration: delaySeconds,
-                        summaryNackDelay: overrideDelaySeconds !== undefined ? "nack with retryAfter" : undefined,
+                        summaryNackDelay: overrideDelaySeconds !== undefined,
                         ...summarizeProps,
                     });
                     await delay(delaySeconds * 1000);
