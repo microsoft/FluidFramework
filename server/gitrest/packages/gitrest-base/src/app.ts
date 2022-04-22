@@ -9,16 +9,16 @@ import express, { Express } from "express";
 import morgan from "morgan";
 import nconf from "nconf";
 import split from "split";
-import winston from "winston";
+import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import * as routes from "./routes";
-import { IFileSystemManagerFactory, IRepositoryManagerFactory } from "./utils";
+import { Constants, IFileSystemManagerFactory, IRepositoryManagerFactory, parseStorageRoutingId } from "./utils";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
  */
 const stream = split().on("data", (message) => {
-    winston.info(message);
+    Lumberjack.info(message);
 });
 
 export function create(
@@ -32,16 +32,22 @@ export function create(
     const loggerFormat = store.get("logger:morganFormat");
     if (loggerFormat === "json") {
         app.use(morgan((tokens, req, res) => {
+            const { tenantId,documentId } = parseStorageRoutingId(tokens.req(req, res, Constants.StorageRoutingIdHeader));
             const messageMetaData = {
                 method: tokens.method(req, res),
+                pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
+                // TODO: replace "x-driver-version" with DriverVersionHeaderName from services-client
+                driverVersion: tokens.req(req, res, "x-driver-version"),
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
                 responseTime: tokens["response-time"](req, res),
+                tenantId,
+                documentId,
                 serviceName: "gitrest",
                 eventName: "http_requests",
              };
-             winston.info("request log generated", { messageMetaData });
+             logRequestMetric(messageMetaData);
              return undefined;
         }, { stream }));
     } else {
@@ -80,7 +86,7 @@ export function create(
     // will print stacktrace
     if (app.get("env") === "development") {
         app.use((err, req, res, next) => {
-            winston.error({ status: err.status, error: err, message: err.message });
+            Lumberjack.error(err.message, { status: err.status }, err);
             res.status(err.status || 500);
             res.json({
                 error: err,
@@ -92,7 +98,7 @@ export function create(
     // production error handler
     // no stacktraces leaked to user
     app.use((err, req, res, next) => {
-        winston.error({ status: err.status, error: err, message: err.message });
+        Lumberjack.error(err.message, { status: err.status }, err);
         res.status(err.status || 500);
         res.json({
             error: {},

@@ -11,8 +11,6 @@ import {
 } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import { Provider } from "nconf";
-import winston from "winston";
-import safeStringify from "json-stringify-safe";
 import {
     getExternalWriterParams,
     IExternalWriterConfig,
@@ -29,6 +27,7 @@ import {
     getRepoManagerParamsFromRequest,
 } from "../utils";
 import { handleResponse } from "./utils";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 function getDocumentStorageDirectory(repoManager: IRepositoryManager, documentId: string): string {
     return `${repoManager.path}/${documentId}`;
@@ -55,10 +54,10 @@ async function getSummary(
         } catch (e) {
             // This read is for optimization purposes, so on failure
             // we can try to read the summary in typical fashion.
-            winston.error(`Failed to read latest full summary from storage: ${safeStringify(e)}`, {
-                documentId,
-                tenantId,
-            });
+            Lumberjack.error(
+                "Failed to read latest full summary from storage.",
+                getLumberBaseProperties(documentId, tenantId),
+                e);
         }
     }
 
@@ -93,10 +92,10 @@ async function createSummary(
             writeSummaryResponse.id,
         ).catch((err) => {
             // This read is for Historian caching purposes, so it should be ignored on failure.
-            winston.error(`Failed to read latest summary after writing container summary: ${safeStringify(err)}`, {
-                documentId,
-                tenantId,
-            });
+            Lumberjack.error(
+                "Failed to read latest summary after writing container summary",
+                getLumberBaseProperties(documentId, tenantId),
+                err);
             return undefined;
         });
         if (latestFullSummary) {
@@ -109,10 +108,10 @@ async function createSummary(
                         latestFullSummary,
                     );
                 } catch(e) {
-                    winston.error(`Failed to persist latest full summary to storage: ${safeStringify(e)}`, {
-                        documentId,
-                        tenantId,
-                    });
+                    Lumberjack.error(
+                        "Failed to persist latest full summary to storage",
+                        getLumberBaseProperties(documentId, tenantId),
+                        e);
                     // TODO: Find and add more information about this failure so that Scribe can retry as necessary.
                     throw new NetworkError(500, "Failed to persist latest full summary to storage");
                 }
@@ -148,22 +147,20 @@ export function create(
      * If sha is "latest", returns latest summary for owner/repo.
      */
     router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
-        const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
-        const [tenantId,documentId] = storageRoutingId.split(":");
-        if (!documentId) {
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        if (!repoManagerParams.storageRoutingId.documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
                 response);
             return;
         }
-        const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => getSummary(
                 repoManager,
                 fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
                 request.params.sha,
-                documentId,
-                tenantId,
+                repoManagerParams.storageRoutingId.documentId,
+                repoManagerParams.storageRoutingId.tenantId,
                 getExternalWriterParams(request.query?.config as string | undefined),
                 persistLatestFullSummary,
             ));
@@ -174,23 +171,21 @@ export function create(
      * Creates a new summary.
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
-        const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
-        const [tenantId,documentId] = storageRoutingId.split(":");
-        if (!documentId) {
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        if (!repoManagerParams.storageRoutingId.documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
                 response);
             return;
         }
-        const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const wholeSummaryPayload: IWholeSummaryPayload = request.body;
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => createSummary(
                 repoManager,
                 fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
                 wholeSummaryPayload,
-                documentId,
-                tenantId,
+                repoManagerParams.storageRoutingId.documentId,
+                repoManagerParams.storageRoutingId.tenantId,
                 getExternalWriterParams(request.query?.config as string | undefined),
                 persistLatestFullSummary,
             ));
@@ -202,22 +197,20 @@ export function create(
      * If header Soft-Delete="true", only flags summary as deleted.
      */
     router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
-        const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
-        const [tenantId,documentId] = storageRoutingId.split(":");
-        if (!documentId) {
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        if (!repoManagerParams.storageRoutingId.documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
                 response);
             return;
         }
-        const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => deleteSummary(
                 repoManager,
                 fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
-                documentId,
-                tenantId,
+                repoManagerParams.storageRoutingId.documentId,
+                repoManagerParams.storageRoutingId.tenantId,
                 softDelete,
                 getExternalWriterParams(request.query?.config as string | undefined),
                 persistLatestFullSummary,

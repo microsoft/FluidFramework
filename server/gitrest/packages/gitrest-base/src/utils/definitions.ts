@@ -73,9 +73,15 @@ export interface IFileSystemManagerFactory {
     create(fileSystemManagerParams?: IFileSystemManagerParams): IFileSystemManager;
 }
 
+export interface IStorageRoutingId {
+    tenantId: string;
+    documentId: string;
+}
+
 export interface IRepoManagerParams {
     repoOwner: string;
     repoName: string;
+    storageRoutingId: IStorageRoutingId;
     fileSystemManagerParams?: IFileSystemManagerParams;
 }
 

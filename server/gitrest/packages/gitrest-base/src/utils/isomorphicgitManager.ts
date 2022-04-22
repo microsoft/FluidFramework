@@ -4,8 +4,6 @@
  */
 
 import * as isomorphicGit from "isomorphic-git";
-import winston from "winston";
-import safeStringify from "json-stringify-safe";
 import type * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
 import * as helpers from "./helpers";
@@ -19,6 +17,7 @@ import {
     IRepoManagerParams,
     IStorageDirectoryConfig,
 } from "./definitions";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class IsomorphicGitRepositoryManager implements IRepositoryManager {
     constructor(
@@ -73,7 +72,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                 return result;
             });
         } catch (err) {
-            winston.info(`getCommits error: ${err}`);
+            Lumberjack.error("getCommits error", undefined, err);
             throw new NetworkError(500, "Unable to get commits.");
         }
     }
@@ -276,7 +275,13 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
             ]);
             return conversions.refToIRef(resolvedRef, expandedRef);
         } catch (err) {
-            winston.error(`getRef error: ${safeStringify(err, undefined, 2)} repo: ${this.repoName} ref: ${refId}`);
+            Lumberjack.error(
+                "getRef error",
+                 {
+                    repo: this.repoName,
+                    ref: refId,
+                 },
+                 err);
             throw new NetworkError(500, "Unable to get ref.");
         }
     }
@@ -350,7 +355,6 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
     ) { }
 
     public async create(params: IRepoManagerParams): Promise<IsomorphicGitRepositoryManager> {
-        // Verify that both inputs are valid folder names
         const repoPath = helpers.getRepoPath(
             params.repoName,
             this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
@@ -359,7 +363,6 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
             repoPath,
             this.storageDirectoryConfig.baseDir);
 
-        // Create and then cache the repository
         await isomorphicGit.init({
             fs: fileSystemManager,
             gitdir: directoryPath,
@@ -372,7 +375,14 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
             params.repoOwner,
             params.repoName,
             directoryPath);
-        winston.info(`Created a new repo for owner ${params.repoOwner} reponame: ${params.repoName}`);
+
+        Lumberjack.info(
+            "Created a new repo",
+            {
+                repoOwner: params.repoOwner,
+                repoName: params.repoName,
+                directoryPath,
+            });
 
         return repoManager;
     }
@@ -389,7 +399,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
         if (!(this.repositoryCache.has(repoPath))) {
             const repoExists = await helpers.exists(fileSystemManager, directoryPath);
             if (!repoExists || !repoExists.isDirectory()) {
-                winston.info(`Repo does not exist ${directoryPath}`);
+                Lumberjack.error(`Repo does not exist ${directoryPath}`);
                 // services-client/getOrCreateRepository depends on a 400 response code
                 throw new NetworkError(400, `Repo does not exist ${directoryPath}`);
             }

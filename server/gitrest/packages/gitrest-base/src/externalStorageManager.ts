@@ -4,11 +4,10 @@
  */
 
 import Axios, { AxiosRequestHeaders } from "axios";
-import safeStringify from "json-stringify-safe";
 import nconf from "nconf";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import * as uuid from "uuid";
-import * as winston from "winston";
+import { BaseTelemetryProperties, getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export interface IExternalStorageManager {
     read(tenantId: string, documentId: string): Promise<boolean>;
@@ -35,8 +34,9 @@ export class ExternalStorageManager implements IExternalStorageManager {
     }
 
     public async read(tenantId: string, documentId: string): Promise<boolean> {
+        const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
         if (!this.config.get("externalStorage:enabled")) {
-            winston.info("External storage is not enabled");
+            Lumberjack.info("External storage is not enabled", lumberjackProperties);
             return false;
         }
         let result = true;
@@ -48,8 +48,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
                     ...this.getCommonHeaders(),
                 },
             }).catch((error) => {
-                const messageMetaData = { tenantId, documentId };
-                winston.error(`Failed to read document: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
+                Lumberjack.error("Failed to read document", lumberjackProperties, error);
                 result = false;
             });
 
@@ -57,8 +56,13 @@ export class ExternalStorageManager implements IExternalStorageManager {
     }
 
     public async write(tenantId: string, ref: string, sha: string, update: boolean): Promise<void> {
+        const lumberjackProperties = {
+            [BaseTelemetryProperties.tenantId]: tenantId,
+            ref,
+            sha,
+         };
         if (!this.config.get("externalStorage:enabled")) {
-            winston.info("External storage is not enabled");
+            Lumberjack.info("External storage is not enabled", lumberjackProperties);
             return;
         }
         await Axios.post<void>(
@@ -73,8 +77,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
                     ...this.getCommonHeaders(),
                 },
             }).catch((error) => {
-                const messageMetaData = { tenantId, ref };
-                winston.error(`Failed to write to file: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
+                Lumberjack.error("Failed to write to file", lumberjackProperties, error);
                 throw error;
             });
     }
