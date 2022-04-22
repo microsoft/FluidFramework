@@ -1625,7 +1625,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
             checkpointSequenceNumber,
-            quorumSize: this.getQuorum().getMembers().size,
+            quorumSize: this._protocolHandler?.quorum.getMembers().size,
             ...this._deltaManager.connectionProps,
         });
 
