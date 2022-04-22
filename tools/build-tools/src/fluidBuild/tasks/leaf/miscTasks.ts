@@ -33,7 +33,7 @@ export class LesscTask extends LeafTask {
                 this.logVerboseNotUpToDate();
             }
             return result;
-        } catch (e) {
+        } catch (e: any) {
             logVerbose(`${this.node.pkg.nameColored}: ${e.message}`);
             this.logVerboseTrigger("failed to get file stats");
             return false;
@@ -129,7 +129,7 @@ export class CopyfilesTask extends LeafTask {
                 }
             }
             return true;
-        } catch (e) {
+        } catch (e: any) {
             logVerbose(`${this.node.pkg.nameColored}: ${e.message}`);
             this.logVerboseTrigger("failed to get file stats");
             return false;

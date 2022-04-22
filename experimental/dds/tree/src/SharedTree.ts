@@ -66,6 +66,7 @@ import {
 	ghostSessionId,
 	WriteFormat,
 	TreeNodeSequence,
+	InternalizedChange,
 } from './persisted-types';
 import { serialize, SummaryContents } from './Summary';
 import {
@@ -558,16 +559,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @returns the edit history of the tree.
 	 * @public
 	 */
-	public get edits(): OrderedEditSet {
-		return this.editLog;
-	}
-
-	/**
-	 * @returns the edit history of the tree. The format of the contents of edits are subject to change and should not be relied upon.
-	 * @internal
-	 */
-	public get editsInternal(): OrderedEditSet<ChangeInternal> {
-		return this.editLog;
+	public get edits(): OrderedEditSet<InternalizedChange> {
+		return this.editLog as unknown as OrderedEditSet<InternalizedChange>;
 	}
 
 	private deserializeHandle(serializedHandle: string): IFluidHandle<ArrayBufferLike> {
@@ -1133,7 +1126,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		const unifyHistoricalIds = (context: NodeIdContext): void => {
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				const edit = this.editsInternal.getEditInSessionAtIndex(i);
+				const edit = this.editLog.getEditInSessionAtIndex(i);
 				convertEditIds(edit, (id) => context.generateNodeId(this.convertToStableNodeId(id)));
 			}
 		};
@@ -1146,7 +1139,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			unifyHistoricalIds(ghostContext);
 			// The same logic applies to string interning, so intern all the strings in the history (superset of those in the current view)
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				this.internStringsFromEdit(this.editsInternal.getEditInSessionAtIndex(i));
+				this.internStringsFromEdit(this.editLog.getEditInSessionAtIndex(i));
 			}
 		} else {
 			// Clients do not have the full history, but all share the same current view (sequenced). They can all finalize the same final
@@ -1174,9 +1167,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * should be used instead.
 	 * @public
 	 */
-	public applyEdit(...changes: Change[]): Edit<unknown>;
-	public applyEdit(changes: Change[]): Edit<unknown>;
-	public applyEdit(headOrChanges: Change | Change[], ...tail: Change[]): Edit<unknown> {
+	public applyEdit(...changes: Change[]): Edit<InternalizedChange>;
+	public applyEdit(changes: Change[]): Edit<InternalizedChange>;
+	public applyEdit(headOrChanges: Change | Change[], ...tail: Change[]): Edit<InternalizedChange> {
 		const changes = Array.isArray(headOrChanges) ? headOrChanges : [headOrChanges, ...tail];
 		const id = newEditId();
 		const internalEdit: Edit<ChangeInternal> = {
@@ -1185,7 +1178,34 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		};
 		this.submitEditOp(internalEdit);
 		this.applyEditLocally(internalEdit, undefined);
-		return internalEdit;
+		return internalEdit as unknown as Edit<InternalizedChange>;
+	}
+
+	/**
+	 * Merges `edits` from `other` into this SharedTree.
+	 * @param other - Tree containing the edits that should be applied to this one.
+	 * @param edits - Iterable of edits from `other` to apply.
+	 * @param stableIdRemapper - Optional remapper to translate stable identities from `other` into stable identities on this tree.
+	 * Any references that `other` contains to a stable id `foo` will be replaced with references to the id `stableIdRemapper(foo)`.
+	 *
+	 * Payloads on the edits are left intact.
+	 * @returns a list containing `EditId`s for all applied edits.
+	 */
+	public mergeEditsFrom(
+		other: SharedTree,
+		edits: Iterable<Edit<InternalizedChange>>,
+		stableIdRemapper?: (id: StableNodeId) => StableNodeId
+	): EditId[] {
+		const idConverter = (id: NodeId) => {
+			const stableId = other.convertToStableNodeId(id);
+			const convertedStableId = stableIdRemapper?.(stableId) ?? stableId;
+			return this.generateNodeId(convertedStableId);
+		};
+
+		return Array.from(
+			edits as unknown as Iterable<Edit<ChangeInternal>>,
+			(edit) => this.applyEditInternal(convertEditIds(edit, (id) => idConverter(id))).id
+		);
 	}
 
 	/**
@@ -1305,7 +1325,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public revert(editId: EditId): EditId | undefined {
 		const index = this.edits.getIndexOfId(editId);
-		const edit = this.editLog.getEditInSessionAtIndex(index);
+		const edit = this.edits.getEditInSessionAtIndex(index);
 		const before = this.logViewer.getRevisionViewInSession(index);
 		const changes = this.revertChanges(edit.changes, before);
 		if (changes === undefined) {
@@ -1322,8 +1342,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @returns the inverse of `changes` or undefined if the changes could not be inverted for the given tree state.
 	 * @internal
 	 */
-	public revertChanges(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined {
-		return revert(changes, before);
+	public revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined {
+		return revert(changes as unknown as readonly ChangeInternal[], before);
 	}
 
 	/**

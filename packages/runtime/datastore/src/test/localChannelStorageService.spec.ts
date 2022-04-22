@@ -20,7 +20,7 @@ describe("LocalChannelStorageService", () => {
         assert.deepStrictEqual(await ss.list(""), []);
         try {
             await ss.readBlob("test");
-        } catch (error) {
+        } catch (error: any) {
             assert.strictEqual(error.message, "Blob Not Found");
         }
     });

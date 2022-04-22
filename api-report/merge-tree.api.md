@@ -104,7 +104,11 @@ export class Client {
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, consensusCallback: (m: Marker) => void): IMergeTreeAnnotateMsg | undefined;
     annotateRangeLocal(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg | undefined;
     // (undocumented)
-    applyMsg(msg: ISequencedDocumentMessage): void;
+    applyMsg(msg: ISequencedDocumentMessage, local?: boolean): void;
+    // (undocumented)
+    applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
+    // (undocumented)
+    applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
     // (undocumented)
     cloneFromSegments(): Client;
     // (undocumented)
@@ -825,7 +829,7 @@ export class LocalReference implements ReferencePosition {
     toPosition(): number;
 }
 
-// @public (undocumented)
+// @public
 export class LocalReferenceCollection {
     // (undocumented)
     [Symbol.iterator](): {
@@ -833,7 +837,8 @@ export class LocalReferenceCollection {
         [Symbol.iterator](): any;
     };
     // Warning: (ae-forgotten-export) The symbol "IRefsAtOffset" needs to be exported by the entry point index.d.ts
-    constructor(segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
+    constructor(
+    segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
     // (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReference>[]): void;
     // (undocumented)
@@ -851,7 +856,6 @@ export class LocalReferenceCollection {
     hierRefCount: number;
     // (undocumented)
     removeLocalRef(lref: LocalReference): LocalReference | undefined;
-    // (undocumented)
     split(offset: number, splitSeg: ISegment): void;
 }
 
@@ -1044,7 +1048,7 @@ export class MergeTree {
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
     // (undocumented)
     walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
-    }
+}
 
 // @public (undocumented)
 export type MergeTreeDeltaCallback = (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
@@ -1114,7 +1118,7 @@ export class MergeTreeTextHelper {
         parallelText: string[];
         parallelMarkers: Marker[];
     };
-    }
+}
 
 // @public (undocumented)
 export interface MinListener {
@@ -1147,7 +1151,7 @@ export class PropertiesManager {
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
     hasPendingProperties(): boolean;
-    }
+}
 
 // @public (undocumented)
 export interface Property<TKey, TData> {
@@ -1565,7 +1569,6 @@ export const UnassignedSequenceNumber = -1;
 
 // @public
 export const UniversalSequenceNumber = 0;
-
 
 // (No @packageDocumentation comment for this package)
 
