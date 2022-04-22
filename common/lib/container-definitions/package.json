@@ -74,6 +74,9 @@
     "broken": {
       "InterfaceDeclaration_IRuntime": {
         "forwardCompat": false
+      },
+      "InterfaceDeclaration_IContainerContext": {
+        "backCompat": false
       }
     }
   }
