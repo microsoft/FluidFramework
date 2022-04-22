@@ -404,7 +404,8 @@ export class IdCompressor {
 	 * compressor must have the same reservedIdCount forever). Compressors with different reserved ID counts will fail to synchronize their
 	 * IDs.
 	 * @param attributionId a UUID that identifiers the user of this instance of the compressor. IDs created by this compressor will be associated
-	 * with this UUID and can be queried later via `attributeID`. If no UUID is provided, this compressor will generate its own.
+	 * with this UUID and can be queried later via `attributeID`. If no UUID is provided, this compressor will generate its own. An `AttributionId`
+     * is an `UuidString` which may be validated via {@link isUuidString} or generated via {@link generateStableId}.
 	 */
 	public constructor(
 		public readonly localSessionId: SessionId,

@@ -35,7 +35,6 @@ import {
 	EditStatus,
 	EditWithoutId,
 	FluidEditHandle,
-	ghostSessionId,
 	SharedTreeEditOp,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
@@ -50,7 +49,7 @@ import { InterningTreeCompressor } from '../../TreeCompressor';
 import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder';
 import { sequencedIdNormalizer } from '../../NodeIdUtilities';
 import { convertNodeDataIds } from '../../IdConversion';
-import { generateStableId } from '../../UuidUtilities';
+import { generateStableId, nilUuid } from '../../UuidUtilities';
 import { buildLeaf, SimpleTestTree, TestTree } from './TestNode';
 import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
 import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
@@ -369,18 +368,14 @@ export function runSharedTreeOperationsTests(
 			it('correctly reports attribution ID', () => {
 				const attributionId = generateStableId();
 				const { tree } = setUpTestSharedTree({ attributionId });
-				expect(tree.attributionId).to.equal(
-					writeFormat === WriteFormat.v0_0_2 ? ghostSessionId : attributionId
-				);
+				expect(tree.attributionId).to.equal(writeFormat === WriteFormat.v0_0_2 ? nilUuid : attributionId);
 			});
 
 			it('correctly attributes node IDs', () => {
 				const attributionId = generateStableId();
 				const { tree } = setUpTestSharedTree({ attributionId });
 				const id = tree.generateNodeId();
-				expect(tree.attributeNodeId(id)).to.equal(
-					writeFormat === WriteFormat.v0_0_2 ? ghostSessionId : attributionId
-				);
+				expect(tree.attributeNodeId(id)).to.equal(writeFormat === WriteFormat.v0_0_2 ? nilUuid : attributionId);
 			});
 
 			runSharedTreeUndoRedoTestSuite({ localMode: true, ...undoRedoOptions });

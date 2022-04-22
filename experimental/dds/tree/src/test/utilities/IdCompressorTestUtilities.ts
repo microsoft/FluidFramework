@@ -24,13 +24,14 @@ import type {
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
 } from '../../id-compressor';
-import { assertIsStableId } from '../../UuidUtilities';
+import { assertIsStableId, assertIsUuidString } from '../../UuidUtilities';
+import { expectDefined } from './TestCommon';
 
 /** Identifies a compressor in a network */
 export enum Client {
-	Client1 = '393ba9b8-20bf-4995-b7b6-50757672149c', // Values are the `AttributionIds` of each client
-	Client2 = '96df5256-05ff-43f0-b37b-7b038ee6b34c',
-	Client3 = 'a41e91e2-b9aa-4c23-8b73-ff60541cb6c0',
+	Client1 = 'Client1',
+	Client2 = 'Client2',
+	Client3 = 'Client3',
 }
 
 /** Identifies a compressor with respect to a specific operation */
@@ -94,6 +95,10 @@ export const sessionNumericUuids = new Map(
 	})
 ) as ClientMap<NumericUuid>;
 
+export const attributionIds = new Map(
+	Object.values(Client).map((c, i) => [c, assertIsUuidString(`00000000-0000-0000-0000-${(i + 1).toString(16).padStart(12, '0')}`)])
+) as ClientMap<AttributionId>;
+
 /** An immutable view of an `IdCompressor` */
 export interface ReadonlyIdCompressor
 	extends Omit<
@@ -138,7 +143,7 @@ export class IdCompressorTestNetwork {
 		const clientIds = new Map<Client, TestIdData[]>();
 		const clientSequencedIds = new Map<Client, TestIdData[]>();
 		for (const client of Object.values(Client)) {
-			const compressor = createCompressor(client, initialClusterSize, client as AttributionId);
+			const compressor = createCompressor(client, initialClusterSize, attributionIds.get(client));
 			compressors.set(client, compressor);
 			clientProgress.set(client, 0);
 			clientIds.set(client, []);
@@ -392,6 +397,11 @@ export class IdCompressorTestNetwork {
 					idDataA.originatingClient === originatingClient,
 					'Test infra gave wrong originating client to TestIdData'
 				);
+                const attributionA = compressorA.attributeId(idDataA.id);
+				if (attributionA !== attributionIds.get(idDataA.originatingClient)) {
+                    // Unification
+                    expectDefined(idDataA.expectedOverride);
+                }
 
 				// Only one client should have this ID as local in its session space, as only one client could have created this ID
 				if (isLocalId(sessionSpaceIdA)) {

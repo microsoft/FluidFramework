@@ -3,9 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { v4 } from 'uuid';
+import { v4, NIL } from 'uuid';
 import { assert } from './Common';
 import { StableId, UuidString } from './Identifiers';
+
+const hexadecimalCharCodes = Array.from('09afAF').map((c) => c.charCodeAt(0)) as [
+	zero: number,
+	nine: number,
+	a: number,
+	f: number,
+	A: number,
+	F: number
+];
+
+function isHexadecimalCharacter(charCode: number): boolean {
+	return (
+		(charCode >= hexadecimalCharCodes[0] && charCode <= hexadecimalCharCodes[1]) ||
+		(charCode >= hexadecimalCharCodes[2] && charCode <= hexadecimalCharCodes[3]) ||
+		(charCode >= hexadecimalCharCodes[4] && charCode <= hexadecimalCharCodes[5])
+	);
+}
+
+/** The null (lowest/all-zeros) UUID */
+export const nilUuid = assertIsUuidString(NIL);
 
 /**
  * Asserts that the given string is a UUID
@@ -100,20 +120,4 @@ export function isStableId(str: string): str is StableId {
 	}
 
 	return true;
-}
-
-const charCodes = Array.from('09afAF').map((c) => c.charCodeAt(0)) as [
-	zero: number,
-	nine: number,
-	a: number,
-	f: number,
-	A: number,
-	F: number
-];
-function isHexadecimalCharacter(charCode: number): boolean {
-	return (
-		(charCode >= charCodes[0] && charCode <= charCodes[1]) ||
-		(charCode >= charCodes[2] && charCode <= charCodes[3]) ||
-		(charCode >= charCodes[4] && charCode <= charCodes[5])
-	);
 }

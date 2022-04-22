@@ -96,6 +96,7 @@ import { TransactionInternal } from './TransactionInternal';
 import { IdCompressor, createSessionId } from './id-compressor';
 import { convertEditIds } from './IdConversion';
 import { MutableStringInterner } from './StringInterner';
+import { nilUuid } from './UuidUtilities';
 
 /**
  * The write format and associated options used to construct a `SharedTree`
@@ -367,15 +368,19 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	/**
 	 * The UUID used for attribution of nodes created by this SharedTree. All shared trees with a write format of 0.1.1 or
 	 * greater have a unique attribution ID which may be configured in the constructor. All other shared trees (i.e. those
-	 * with a write format of 0.0.2) share a constant, global attribution ID.
+	 * with a write format of 0.0.2) use the nil UUID as their attribution ID.
 	 * @public
 	 */
 	public get attributionId(): AttributionId {
 		switch (this.writeFormat) {
 			case WriteFormat.v0_0_2:
-				return ghostSessionId;
+				return nilUuid;
 			default:
-				return this.idCompressor.attributionId;
+				const attributionId = this.idCompressor.attributionId;
+                if (attributionId === ghostSessionId) {
+                    return nilUuid;
+                }
+                return attributionId;
 		}
 	}
 
@@ -648,9 +653,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	public attributeNodeId(id: NodeId): AttributionId {
 		switch (this.writeFormat) {
 			case WriteFormat.v0_0_2:
-				return ghostSessionId;
+				return nilUuid;
 			default:
-				return this.idCompressor.attributeId(id);
+				const attributionId = this.idCompressor.attributeId(id);
+                if (attributionId === ghostSessionId) {
+                    return nilUuid;
+                }
+                return attributionId;
 		}
 	}
 
@@ -833,7 +842,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		let convertedSummary: SummaryContents;
 		switch (loadedSummaryVersion) {
 			case WriteFormat.v0_0_2:
-				convertedSummary = this.encoder_0_0_2.decodeSummary(summary as SharedTreeSummary_0_0_2);
+				convertedSummary = this.encoder_0_0_2.decodeSummary(
+					summary as SharedTreeSummary_0_0_2,
+					this.attributionId
+				);
 				break;
 			case WriteFormat.v0_1_1: {
 				const typedSummary = summary as SharedTreeSummary;

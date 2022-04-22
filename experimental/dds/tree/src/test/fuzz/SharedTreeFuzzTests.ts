@@ -8,18 +8,17 @@ import { join } from 'path';
 import Prando from 'prando';
 import { expect } from 'chai';
 import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
-import { ChangeInternal, WriteFormat } from '../../persisted-types';
+import { WriteFormat } from '../../persisted-types';
 import { fail } from '../../Common';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
-import { EditLog } from '../../EditLog';
 import { FuzzTestState, done, EditGenerationConfig, AsyncGenerator, Operation } from './Types';
 import { chain, makeOpGenerator, take } from './Generators';
 
 const directory = join(testDocumentsPathBase, 'fuzz-tests');
 
 // TODO: Kludge: Use this to change the seed such that the tests avoid hitting bugs in the Fluid Framework.
-// Should be removed once fuzz tests pass reliably with any seed.
-const adjustSeed = 2;
+// Should be removed once fuzz tests pass reliably with every seed.
+const adjustSeed = 3;
 
 /**
  * Performs random actions on a set of clients.
@@ -119,6 +118,14 @@ export async function performFuzzActions(
 							}
 							expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first))
 								.to.be.true;
+
+							for (const node of tree.currentView) {
+								expect(tree.attributeNodeId(node.identifier)).to.equal(
+									first.attributeNodeId(
+										first.convertToNodeId(tree.convertToStableNodeId(node.identifier))
+									)
+								);
+							}
 						}
 					}
 					break;

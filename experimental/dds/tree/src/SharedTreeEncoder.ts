@@ -374,9 +374,12 @@ export class SharedTreeEncoder_0_0_2 {
 	/**
 	 * Decodes an encoded summary.
 	 */
-	public decodeSummary({ currentTree, sequencedEdits }: SharedTreeSummary_0_0_2): SummaryContents {
+	public decodeSummary(
+		{ currentTree, sequencedEdits }: SharedTreeSummary_0_0_2,
+		attributionId?: AttributionId
+	): SummaryContents {
 		assert(sequencedEdits !== undefined, '0.0.2 summary encountered with missing sequencedEdits field.');
-		const idCompressor = new IdCompressor(createSessionId(), reservedIdCount);
+		const idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId);
 		const idGenerator = getNodeIdContext(idCompressor);
 		const generateId = (id) => idGenerator.generateNodeId(id);
 

@@ -15,6 +15,7 @@ import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
 import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types';
 import { SharedTree } from '../../SharedTree';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
+import { nilUuid } from '../../UuidUtilities';
 import { applyTestEdits } from '../Summary.tests';
 import { buildLeaf } from './TestNode';
 import {
@@ -453,12 +454,13 @@ export function runSharedTreeVersioningTests(
 			expect(areRevisionViewsSemanticallyEqual(tree1.currentView, tree1, tree2.currentView, tree2)).to.be.true;
 		}).timeout(10000);
 
-		it('attributes IDs correctly after upgrading from 0.0.2', async () => {
+		it('attributes all pre-upgrade IDs to the nil UUID after upgrading from 0.0.2', async () => {
 			const { testObjectProvider, tree: tree } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_0_2,
 			});
 
 			const attributionId = tree.attributionId;
+			expect(attributionId).to.equal(nilUuid);
 			const nodeId = tree.generateNodeId();
 			const stableNodeId = tree.convertToStableNodeId(nodeId);
 
