@@ -18,7 +18,7 @@ import { ISnapshotContents } from "./odspUtils";
 function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
     const lookup: { [path: string]: api.ISnapshotTree } = {};
     // id is required for root tree as it will be used to determine the version we loaded from.
-    const root: api.ISnapshotTree = { id: flatTree.id, blobs: {}, commits: {}, trees: {} };
+    const root: api.ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.entries) {
@@ -33,7 +33,6 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
         if (entry.type === "tree") {
             const newTree: api.ISnapshotTree = {
                 blobs: {},
-                commits: {},
                 trees: {},
                 unreferenced: entry.unreferenced,
             };
@@ -41,8 +40,6 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
             lookup[entry.path] = newTree;
         } else if (entry.type === "blob") {
             node.blobs[decodeURIComponent(entryPathBase)] = entry.id;
-        } else if (entry.type === "commit") {
-            node.commits[decodeURIComponent(entryPathBase)] = entry.id;
         }
     }
 

@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
@@ -17,7 +18,6 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDetachedBlobStorage } from "./loader";
-import { ISnapshotTreeWithBlobContents } from "./utils";
 
 /**
  * This class wraps the actual storage and make sure no wrong apis are called according to

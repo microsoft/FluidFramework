@@ -38,6 +38,7 @@ export enum CommonProperties {
     clientId = "clientId",
     clientType = "clientType",
     clientCount = "clientCount",
+    clientDriverVersion = "clientDriverVersion",
 
     // Session properties
     sessionState = "sessionState",

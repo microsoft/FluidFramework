@@ -4,13 +4,12 @@
 
 ```ts
 
-import { IUser } from '@fluidframework/protocol-definitions';
+import type { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 
 // @public
 export function generateToken(tenantId: string, key: string, scopes: ScopeType[], documentId?: string, user?: IUser, lifetime?: number, ver?: string): string;
 
 export { ScopeType }
-
 
 ```

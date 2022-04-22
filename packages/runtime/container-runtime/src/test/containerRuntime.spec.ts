@@ -167,9 +167,12 @@ describe("Runtime", () => {
             const sandbox = createSandbox();
             const createMockContext =
                 (attachState: AttachState, addPendingMsg: boolean): Partial<IContainerContext> => {
-                    const pendingMessage = {
-                        type: "message",
-                        content: {},
+                    const pendingState = {
+                        pending: { pendingStates: [{
+                            type: "attach",
+                            content: {},
+                        }]},
+                        savedOps: [],
                     };
 
                     return {
@@ -179,7 +182,7 @@ describe("Runtime", () => {
                         clientDetails: { capabilities: { interactive: true } },
                         updateDirtyContainerState: (dirty: boolean) => { },
                         attachState,
-                        pendingLocalState: addPendingMsg ? { pendingStates: [pendingMessage] } : undefined,
+                        pendingLocalState: addPendingMsg ? pendingState : undefined,
                     };
                 };
 
@@ -593,8 +596,8 @@ describe("Runtime", () => {
                 return {
                     replayPendingStates: () => { },
                     hasPendingMessages: () => hasPendingMessages,
-                    processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
-                        return { localAck: false, localOpMetadata: undefined };
+                    processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
+                        return undefined;
                     },
                 } as PendingStateManager;
             };

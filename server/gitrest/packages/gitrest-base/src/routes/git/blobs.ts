@@ -17,7 +17,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
                 request.body as ICreateBlobParams,
             ));
 
-        handleResponse(resultP, response, 201);
+        handleResponse(resultP, response, undefined, undefined, 201);
     });
 
     /**

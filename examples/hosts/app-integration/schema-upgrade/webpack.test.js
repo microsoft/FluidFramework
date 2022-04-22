@@ -4,26 +4,27 @@
  */
 
 const path = require("path");
-const merge = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = env => {
-    return ({
+    return {
         entry: {
-            app: "./tests/index.tsx"
+            app: "./tests/index.tsx",
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [{
-                test: /\.tsx?$/,
-                loader: "ts-loader"
-            },
-            {
-                test: /\.css$/i,
-                use: ['style-loader', 'css-loader'],
-            }]
+            rules: [
+                {
+                    test: /\.tsx?$/,
+                    loader: "ts-loader",
+                },
+                {
+                    test: /\.css$/i,
+                    use: ["style-loader", "css-loader"],
+                },
+            ],
         },
         output: {
             filename: "[name].bundle.js",
@@ -32,10 +33,12 @@ module.exports = env => {
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
             devtoolNamespace: "fluid-example/draft-js",
-            libraryTarget: "umd"
+            libraryTarget: "umd",
         },
         devServer: {
-            contentBase: path.join(__dirname, 'tests')
+            static: {
+                directory: path.join(__dirname, "tests"),
+            },
         },
         plugins: [
             new HtmlWebpackPlugin({
@@ -43,6 +46,6 @@ module.exports = env => {
             }),
         ],
         mode: "development",
-        devtool: "inline-source-map"
-    });
+        devtool: "inline-source-map",
+    };
 };

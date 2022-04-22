@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_after": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_after():
@@ -28,7 +28,7 @@ use_current_VariableDeclaration_after(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_after": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_after():
@@ -40,7 +40,7 @@ use_old_VariableDeclaration_after(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_before": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_before():
@@ -52,7 +52,7 @@ use_current_VariableDeclaration_before(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_before": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_before():
