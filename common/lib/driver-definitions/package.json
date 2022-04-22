@@ -66,6 +66,10 @@
   },
   "typeValidation": {
     "version": "0.47.1000",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IDocumentStorageService": {
+        "backCompat": false
+      }
+    }
   }
 }
