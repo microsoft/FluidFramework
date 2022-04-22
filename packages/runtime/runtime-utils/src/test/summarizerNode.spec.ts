@@ -99,7 +99,7 @@ describe("Runtime", () => {
                 try {
                     fn();
                     throw Error(`${failMsg}: Expected to fail`);
-                } catch (error) {
+                } catch (error: any) {
                     assert(expectedErrors.some((e) => e === error.message), errMsg);
                 }
             }
@@ -113,7 +113,7 @@ describe("Runtime", () => {
                 try {
                     await fn();
                     throw Error(`${failMsg}: Expected to reject`);
-                } catch (error) {
+                } catch (error: any) {
                     assert(expectedErrors.some((e) => e === error.message), errMsg);
                 }
             }
