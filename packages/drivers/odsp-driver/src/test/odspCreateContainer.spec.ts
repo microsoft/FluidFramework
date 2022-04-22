@@ -131,7 +131,7 @@ describe("Odsp Create Container Test", () => {
                     async () => okResponse({}, {}),
                 ],
             );
-        } catch (error) {
+        } catch (error: any) {
             assert.strictEqual(error.statusCode, undefined, "Wrong error code");
             assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
                 "Error type should be correct");
