@@ -328,7 +328,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(container.connectionState, ConnectionState.Connected, "container can't connect()");
     });
 
-    it("disconnect() prevents op processing", async () => {
+    it("can control op processing with connect() and disconnect()", async () => {
         const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
                 runtime.IFluidHandleContext.resolveHandle(request);
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
