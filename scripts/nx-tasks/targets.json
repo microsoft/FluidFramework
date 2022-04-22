@@ -1,0 +1,114 @@
+{
+    "nx": {
+        "targets": {
+            "build:esnext": {
+                "executor": "@nrwl/workspace:run-script",
+                "options": {
+                    "script": "build:esnext"
+                },
+                "outputPath": [
+                    "lib"
+                ]
+            },
+            "build:commonjs": {
+                "executor": "@nrwl/workspace:run-commands",
+                "options": {
+                    "outputPath": [
+                        "dist"
+                    ],
+                    "commands": [
+                        "echo 'build:commonjs'"
+                    ],
+                    "parallel": false,
+                    "dependsOn": [
+                        {
+                            "target": "tsc",
+                            "projects": "dependencies"
+                        },
+                        {
+                            "target": "build:test",
+                            "projects": "dependencies"
+                        }
+                    ]
+                }
+            },
+            "build:compile": {
+                "executor": "@nrwl/workspace:run-commands",
+                "options": {
+                    "outputPath": [
+                        "dist",
+                        "lib"
+                    ],
+                    "commands": [
+                        "echo 'build:compile'"
+                    ],
+                    "parallel": false,
+                    "dependsOn": [
+                        {
+                            "target": "build:commonjs",
+                            "projects": "dependencies"
+                        },
+                        {
+                            "target": "build:esnext",
+                            "projects": "dependencies"
+                        }
+                    ]
+                }
+            },
+            "build": {
+                "executor": "@nrwl/workspace:run-commands",
+                "options": {
+                    "outputPath": [
+                        "dist",
+                        "lib"
+                    ],
+                    "commands": [
+                        "echo 'build'"
+                    ],
+                    "parallel": true,
+                    "dependsOn": [
+                        {
+                            "target": "build:genver",
+                            "projects": "dependencies"
+                        },
+                        {
+                            "target": "build:compile",
+                            "projects": "dependencies"
+                        },
+                        {
+                            "target": "build:esnext",
+                            "projects": "dependencies"
+                        },
+                        {
+                            "target": "eslint",
+                            "projects": "self"
+                        }
+                    ]
+                }
+            },
+            "full": {
+                "executor": "@nrwl/workspace:run-command",
+                "options": {
+                    "outputPath": [
+                        "dist",
+                        "lib"
+                    ],
+                    "commands": [
+                        "echo 'full'"
+                    ],
+                    "parallel": false,
+                    "dependsOn": [
+                        {
+                            "target": "build:commonjs",
+                            "projects": "dependencies"
+                        },
+                        {
+                            "target": "build:esnext",
+                            "projects": "dependencies"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

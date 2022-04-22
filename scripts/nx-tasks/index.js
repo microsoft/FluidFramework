@@ -3,8 +3,13 @@ import * as path from 'path';
 import * as process from 'process';
 import mrm from 'mrm-core';
 import { globby, globbyStream } from 'globby';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 const { json, lines, packageJson } = mrm;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const FLUID_ROOT = process.env._FLUID_ROOT_ ? process.env._FLUID_ROOT_ : 'C:\\code\\FluidFramework';
 const STARTING_PATH = process.cwd();
@@ -24,7 +29,7 @@ const STARTING_PATH = process.cwd();
         const pkgName = pkgJson.get('name');
         const isPrivate = pkgJson.get('private');
 
-        if (!isPrivate) {
+        if (true) {
             let tags = [];
             let projectType;
             if (absPath.includes('common')) {
@@ -41,17 +46,33 @@ const STARTING_PATH = process.cwd();
                 projectType = 'library';
             }
 
+            // let pkg = packageJson(path.join(absPath, 'package.json')).getScript()
+
+            const scripts = pkgJson.get('scripts');
+            // console.log(scripts);
+            const all_targets = json(path.join(__dirname, 'targets.json')).get('nx.targets');
+            // console.log(all_targets);
+            const keys = [...Object.keys(all_targets)];
+            // let targets = new Map(); // [];
+            const targets = {};
+
+            if (scripts) {
+                for (const [script, content] of Object.entries(scripts)) {
+                    console.log(`checking ${script}...`);
+                    if (keys.includes(script)) {
+                        pkgJson.unset(`scripts.${script}`).save();
+                        console.log(`removed ${script} from scripts...`);
+                        // targets.push(script);
+                        targets[script] = all_targets[script];
+                    }
+                }
+            }
+            targets.full = all_targets.full;
+            console.log(targets);
+
             pkgJson
                 .set('nx.tags', tags)
-                .set('nx.targets', {
-                    'build:esnext': {
-                        executor: '@nrwl/workspace:run-script',
-                        outputPath: ['libs'],
-                        options: {
-                            script: 'build:esnext',
-                        },
-                    }
-                })
+                .set('nx.targets', targets)
                 .set('nx.projectType', projectType)
                 .save();
 
