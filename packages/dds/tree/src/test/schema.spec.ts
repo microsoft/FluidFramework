@@ -259,11 +259,11 @@ function intoSimpleObject(obj: unknown): unknown {
 	if (obj instanceof Set) {
 		return Array.from(obj as ReadonlySet<string>);
 	}
-	const out = {};
+	const out: Record<string, unknown> = {};
 	// eslint-disable-next-line no-restricted-syntax
 	for (const key in obj) {
 		if (Object.prototype.hasOwnProperty.call(obj, key)) {
-			out[key] = intoSimpleObject(obj[key]);
+			out[key] = intoSimpleObject((obj as Record<string, unknown>)[key]);
 		}
 	}
 	return out;
