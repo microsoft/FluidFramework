@@ -53,6 +53,7 @@ import { newEdit, setTrait } from '../../EditUtilities';
 import { SharedTree } from '../../SharedTree';
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
 import { convertEditIds } from '../../IdConversion';
+import { OrderedEditSet } from '../../EditLog';
 import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
 
 /** Objects returned by setUpTestSharedTree */
@@ -283,8 +284,12 @@ export async function setUpLocalServerTestSharedTree(
 			TestDataStoreType,
 			new TestFluidObjectFactory(registry),
 			{
-				summaryOptions: { initialSummarizerDelayMs: 0 },
-				enableOfflineLoad: true,
+				summaryOptions: {
+					summaryConfigOverrides: {
+						idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
+					},
+					initialSummarizerDelayMs: 0,
+				},
 			},
 			[innerRequestHandler]
 		);
@@ -584,6 +589,10 @@ export function stabilizeEdit(
 	edit: Edit<ChangeInternal>
 ): Edit<ReplaceRecursive<ChangeInternal, NodeId, StableNodeId>> {
 	return convertEditIds(edit, (id) => tree.convertToStableNodeId(id));
+}
+
+export function getEditLogInternal(tree: SharedTree): OrderedEditSet<ChangeInternal> {
+	return tree.edits as unknown as OrderedEditSet<ChangeInternal>;
 }
 
 /**

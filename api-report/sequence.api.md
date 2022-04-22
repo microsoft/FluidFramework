@@ -45,6 +45,7 @@ import { PropertySet } from '@fluidframework/merge-tree';
 import { RangeStackMap } from '@fluidframework/merge-tree';
 import { ReferencePosition } from '@fluidframework/merge-tree';
 import { ReferenceType } from '@fluidframework/merge-tree';
+import { SegmentGroup } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SummarySerializer } from '@fluidframework/shared-object-base';
@@ -176,7 +177,7 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
         value: TInterval;
         done: boolean;
     };
-    }
+}
 
 // @public (undocumented)
 export enum IntervalType {
@@ -359,12 +360,12 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
     // (undocumented)
     readonly deltaOperation: TOperation;
-    get first(): Readonly<ISequenceDeltaRange<TOperation>> | undefined;
-    // (undocumented)
+    get first(): Readonly<ISequenceDeltaRange<TOperation>>;
+    // @deprecated (undocumented)
     readonly isEmpty: boolean;
-    get last(): Readonly<ISequenceDeltaRange<TOperation>> | undefined;
+    get last(): Readonly<ISequenceDeltaRange<TOperation>>;
     get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[];
-    }
+}
 
 // @public (undocumented)
 export class SequenceInterval implements ISerializableInterval {
@@ -523,7 +524,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     addLocalReference(lref: LocalReference): void;
     annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
     // (undocumented)
-    protected applyStashedOp(): void;
+    protected applyStashedOp(content: any): SegmentGroup;
     // (undocumented)
     protected client: Client;
     // (undocumented)
@@ -746,7 +747,6 @@ export class SubSequence<T> extends BaseSegment {
     // (undocumented)
     static readonly typeString: string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

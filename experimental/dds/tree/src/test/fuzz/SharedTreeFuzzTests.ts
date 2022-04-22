@@ -109,8 +109,8 @@ export async function performFuzzActions(
 						const first = trees[0].tree;
 						for (let i = 1; i < trees.length; i++) {
 							const tree = trees[i].tree;
-							const editLogA = first.editsInternal as EditLog<ChangeInternal>;
-							const editLogB = tree.editsInternal as EditLog<ChangeInternal>;
+							const editLogA = first.edits;
+							const editLogB = tree.edits;
 							const minEdits = Math.min(editLogA.length, editLogB.length);
 							for (let j = 0; j < minEdits - 1; j++) {
 								const editA = await editLogA.getEditAtIndex(editLogA.length - j - 1);
