@@ -34,7 +34,7 @@
     "test:coverage": "jest --coverage --ci  --reporters=default --reporters=jest-junit",
     "test:jest": "jest",
     "tsc": "tsc",
-    "webpack": "webpack --config webpack.prod.js --env production"
+    "webpack": "webpack --config webpack.prod.js --env production --color --no-stats"
   },
   "dependencies": {
     "@hig/fonts": "^1.0.2",
@@ -104,8 +104,6 @@
     "webpack": "^4.46.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "4.0.0",
-    "webpack-karma-die-hard": "^1.0.4",
-    "webpack-license-plugin": "^4.2.2",
     "webpack-merge": "^5.8.0"
   },
   "peerDependencies": {

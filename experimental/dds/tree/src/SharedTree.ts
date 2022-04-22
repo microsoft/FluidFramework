@@ -563,14 +563,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		return this.editLog as unknown as OrderedEditSet<InternalizedChange>;
 	}
 
-	/**
-	 * @returns the edit history of the tree. The format of the contents of edits are subject to change and should not be relied upon.
-	 * @internal
-	 */
-	public get editsInternal(): OrderedEditSet<ChangeInternal> {
-		return this.editLog;
-	}
-
 	private deserializeHandle(serializedHandle: string): IFluidHandle<ArrayBufferLike> {
 		const deserializeHandle = this.serializer.parse(serializedHandle);
 		assert(typeof deserializeHandle === 'object');
@@ -1134,7 +1126,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		const unifyHistoricalIds = (context: NodeIdContext): void => {
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				const edit = this.editsInternal.getEditInSessionAtIndex(i);
+				const edit = this.editLog.getEditInSessionAtIndex(i);
 				convertEditIds(edit, (id) => context.generateNodeId(this.convertToStableNodeId(id)));
 			}
 		};
@@ -1147,7 +1139,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			unifyHistoricalIds(ghostContext);
 			// The same logic applies to string interning, so intern all the strings in the history (superset of those in the current view)
 			for (let i = 0; i < this.editLog.numberOfSequencedEdits; i++) {
-				this.internStringsFromEdit(this.editsInternal.getEditInSessionAtIndex(i));
+				this.internStringsFromEdit(this.editLog.getEditInSessionAtIndex(i));
 			}
 		} else {
 			// Clients do not have the full history, but all share the same current view (sequenced). They can all finalize the same final
@@ -1333,7 +1325,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	public revert(editId: EditId): EditId | undefined {
 		const index = this.edits.getIndexOfId(editId);
-		const edit = this.editLog.getEditInSessionAtIndex(index);
+		const edit = this.edits.getEditInSessionAtIndex(index);
 		const before = this.logViewer.getRevisionViewInSession(index);
 		const changes = this.revertChanges(edit.changes, before);
 		if (changes === undefined) {
@@ -1350,8 +1342,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @returns the inverse of `changes` or undefined if the changes could not be inverted for the given tree state.
 	 * @internal
 	 */
-	public revertChanges(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined {
-		return revert(changes, before);
+	public revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined {
+		return revert(changes as unknown as readonly ChangeInternal[], before);
 	}
 
 	/**

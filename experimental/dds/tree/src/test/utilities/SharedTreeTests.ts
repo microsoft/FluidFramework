@@ -69,6 +69,7 @@ import {
 	applyNoop,
 	getIdNormalizerFromSharedTree,
 	waitForSummary,
+	getEditLogInternal,
 } from './TestUtilities';
 
 function revertEditInTree(tree: SharedTree, edit: EditId): EditId | undefined {
@@ -1294,7 +1295,7 @@ export function runSharedTreeOperationsTests(
 			});
 
 			// Verify we loaded a no-history summary.
-			expect(tree3.editsInternal.length).to.equal(1);
+			expect(tree3.edits.length).to.equal(1);
 
 			let unexpectedHistoryChunkCount = 0;
 			tree3.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => unexpectedHistoryChunkCount++);
@@ -1361,10 +1362,12 @@ export function runSharedTreeOperationsTests(
 					containerRuntimeFactory.processAllMessages();
 					const { internedStrings } = tree.saveSummary() as SharedTreeSummary;
 
-					const insertEdit = normalizeEdit(tree, tree.editsInternal.getEditInSessionAtIndex(1));
-					const moveEdit = normalizeEdit(tree, tree.editsInternal.getEditInSessionAtIndex(2));
-					const insertEdit2 = normalizeEdit(secondTree, secondTree.editsInternal.getEditInSessionAtIndex(1));
-					const moveEdit2 = normalizeEdit(secondTree, secondTree.editsInternal.getEditInSessionAtIndex(2));
+					const log = getEditLogInternal(tree);
+					const log2 = getEditLogInternal(secondTree);
+					const insertEdit = normalizeEdit(tree, log.getEditInSessionAtIndex(1));
+					const moveEdit = normalizeEdit(tree, log.getEditInSessionAtIndex(2));
+					const insertEdit2 = normalizeEdit(secondTree, log2.getEditInSessionAtIndex(1));
+					const moveEdit2 = normalizeEdit(secondTree, log2.getEditInSessionAtIndex(2));
 					expect(insertEdit).to.deep.equal(insertEdit2);
 					expect(moveEdit).to.deep.equal(moveEdit2);
 					expect(tree.equals(secondTree)).to.be.true;
@@ -1413,7 +1416,7 @@ export function runSharedTreeOperationsTests(
 
 					const uncompressedEdits: EditWithoutId<ChangeInternal>[] = [
 						{
-							changes: tree.editsInternal.getEditInSessionAtIndex(0).changes,
+							changes: getEditLogInternal(tree).getEditInSessionAtIndex(0).changes,
 						},
 					];
 
