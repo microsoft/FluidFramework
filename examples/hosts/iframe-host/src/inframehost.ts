@@ -6,12 +6,13 @@
 import * as Comlink from "comlink";
 import {
     AttachState,
-    ICodeLoader,
     IContainerContext,
     IRuntime,
     IProxyLoaderFactory,
     ILoaderOptions,
     IContainer,
+    ICodeDetailsLoader,
+    IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
@@ -104,9 +105,14 @@ class ProxyChaincode extends RuntimeFactoryHelper {
     }
 }
 
-class ProxyCodeLoader implements ICodeLoader {
-    async load() {
-        return Promise.resolve({ fluidExport: new ProxyChaincode() });
+class ProxyCodeLoader implements ICodeDetailsLoader {
+    async load(source: IFluidCodeDetails) {
+        return {
+            module: {
+                fluidExport: new ProxyChaincode(),
+            },
+            details: source,
+        };
     }
 }
 

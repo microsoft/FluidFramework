@@ -56,9 +56,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     propertyManager?: PropertiesManager;
     // (undocumented)
-    removedClientId?: number;
-    // (undocumented)
-    removedClientOverlap?: number[];
+    removedClientIds?: number[];
     // (undocumented)
     removedSeq?: number;
     // (undocumented)
@@ -102,7 +100,7 @@ export class Client {
     addLocalReference(lref: LocalReference): void;
     // (undocumented)
     addLongClientId(longClientId: string): void;
-    annotateMarker(marker: Marker, props: PropertySet, combiningOp: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
+    annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, consensusCallback: (m: Marker) => void): IMergeTreeAnnotateMsg | undefined;
     annotateRangeLocal(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg | undefined;
     // (undocumented)
@@ -255,7 +253,7 @@ export const compareStrings: (a: string, b: string) => number;
 export type ConflictAction<TKey, TData> = (key: TKey, currentKey: TKey, data: TData, currentData: TData) => QProperty<TKey, TData>;
 
 // @public
-export function createAnnotateMarkerOp(marker: Marker, props: PropertySet, combiningOp: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
+export function createAnnotateMarkerOp(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
 
 // @public
 export function createAnnotateRangeOp(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg;
@@ -679,15 +677,13 @@ export interface IRelativePosition {
 // @public (undocumented)
 export interface IRemovalInfo {
     // (undocumented)
-    removedClientId?: number;
+    removedClientIds: number[];
     // (undocumented)
-    removedClientOverlap?: number[];
-    // (undocumented)
-    removedSeq?: number;
+    removedSeq: number;
 }
 
 // @public
-export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
+export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
@@ -829,7 +825,7 @@ export class LocalReference implements ReferencePosition {
     toPosition(): number;
 }
 
-// @public (undocumented)
+// @public
 export class LocalReferenceCollection {
     // (undocumented)
     [Symbol.iterator](): {
@@ -837,7 +833,8 @@ export class LocalReferenceCollection {
         [Symbol.iterator](): any;
     };
     // Warning: (ae-forgotten-export) The symbol "IRefsAtOffset" needs to be exported by the entry point index.d.ts
-    constructor(segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
+    constructor(
+    segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
     // (undocumented)
     addAfterTombstones(...refs: Iterable<LocalReference>[]): void;
     // (undocumented)
@@ -855,7 +852,6 @@ export class LocalReferenceCollection {
     hierRefCount: number;
     // (undocumented)
     removeLocalRef(lref: LocalReference): LocalReference | undefined;
-    // (undocumented)
     split(offset: number, splitSeg: ISegment): void;
 }
 
@@ -1048,7 +1044,7 @@ export class MergeTree {
     startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void;
     // (undocumented)
     walkAllSegments<TClientData>(block: IMergeBlock, action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
-    }
+}
 
 // @public (undocumented)
 export type MergeTreeDeltaCallback = (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
@@ -1118,7 +1114,7 @@ export class MergeTreeTextHelper {
         parallelText: string[];
         parallelMarkers: Marker[];
     };
-    }
+}
 
 // @public (undocumented)
 export interface MinListener {
@@ -1151,7 +1147,7 @@ export class PropertiesManager {
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
     hasPendingProperties(): boolean;
-    }
+}
 
 // @public (undocumented)
 export interface Property<TKey, TData> {
@@ -1487,6 +1483,9 @@ export class TextSegment extends BaseSegment {
 }
 
 // @public (undocumented)
+export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
+
+// @public (undocumented)
 export class TrackingGroup {
     constructor();
     // (undocumented)
@@ -1566,7 +1565,6 @@ export const UnassignedSequenceNumber = -1;
 
 // @public
 export const UniversalSequenceNumber = 0;
-
 
 // (No @packageDocumentation comment for this package)
 

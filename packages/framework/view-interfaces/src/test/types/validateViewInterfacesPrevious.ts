@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidHTMLOptions": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidHTMLOptions():
@@ -28,7 +28,7 @@ use_current_InterfaceDeclaration_IFluidHTMLOptions(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidHTMLOptions": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidHTMLOptions():
@@ -40,7 +40,7 @@ use_old_InterfaceDeclaration_IFluidHTMLOptions(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidHTMLView": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidHTMLView():
@@ -52,7 +52,7 @@ use_current_VariableDeclaration_IFluidHTMLView(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidHTMLView": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IFluidHTMLView():
@@ -64,7 +64,7 @@ use_old_VariableDeclaration_IFluidHTMLView(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidHTMLView": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidHTMLView():
@@ -76,7 +76,7 @@ use_current_InterfaceDeclaration_IFluidHTMLView(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidHTMLView": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidHTMLView():
@@ -88,7 +88,7 @@ use_old_InterfaceDeclaration_IFluidHTMLView(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidMountableView": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidMountableView():
@@ -100,7 +100,7 @@ use_current_VariableDeclaration_IFluidMountableView(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidMountableView": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IFluidMountableView():
@@ -112,7 +112,7 @@ use_old_VariableDeclaration_IFluidMountableView(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidMountableView": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidMountableView():
@@ -124,7 +124,7 @@ use_current_InterfaceDeclaration_IFluidMountableView(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidMountableView": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidMountableView():
@@ -136,7 +136,7 @@ use_old_InterfaceDeclaration_IFluidMountableView(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidMountableViewClass": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidMountableViewClass():
@@ -148,7 +148,7 @@ use_current_InterfaceDeclaration_IFluidMountableViewClass(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidMountableViewClass": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidMountableViewClass():
@@ -160,7 +160,7 @@ use_old_InterfaceDeclaration_IFluidMountableViewClass(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidHTMLView": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidHTMLView():
@@ -172,7 +172,7 @@ use_current_InterfaceDeclaration_IProvideFluidHTMLView(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidHTMLView": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideFluidHTMLView():
@@ -184,7 +184,7 @@ use_old_InterfaceDeclaration_IProvideFluidHTMLView(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidMountableView": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidMountableView():
@@ -196,7 +196,7 @@ use_current_InterfaceDeclaration_IProvideFluidMountableView(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidMountableView": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideFluidMountableView():

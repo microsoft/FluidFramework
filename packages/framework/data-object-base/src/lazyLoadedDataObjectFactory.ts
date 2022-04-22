@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IFluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
@@ -67,7 +67,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         return runtime;
     }
 
-    public async create(parentContext: IFluidDataStoreContext, props?: any): Promise<IFluidObject & FluidObject> {
+    public async create(parentContext: IFluidDataStoreContext, props?: any): Promise<FluidObject> {
         const { containerRuntime, packagePath } = parentContext;
 
         const router = await containerRuntime.createDataStore(packagePath.concat(this.type));

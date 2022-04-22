@@ -29,15 +29,17 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
     const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
     const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+    const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
     const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
     const sendTopic = config.get("lambdas:deli:topic");
     const kafkaClientId = config.get("scribe:kafkaClientId");
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
     const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+    const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
-    const tenantManager = new TenantManager(authEndpoint);
+    const tenantManager = new TenantManager(authEndpoint, internalHistorianUrl);
 
     // Access Mongo storage for pending summaries
     const operationsDbMongoFactory = new MongoDbFactory(operationsDbMongoUrl, bufferMaxEntries);
@@ -94,6 +96,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
         kafkaReplicationFactor,
+        kafkaMaxBatchSize,
         kafkaSslCACertFilePath);
 
     return new ScribeLambdaFactory(

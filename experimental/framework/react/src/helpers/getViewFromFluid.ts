@@ -58,9 +58,9 @@ export function getViewFromFluid<
         return viewConverter(viewState, partialFluidState, fluidObjectMap);
     } else {
         const partialViewState: Partial<SV> = {};
-        const valueAsIFluidHandle = (value as FluidObject<IFluidHandle>).IFluidHandle;
-        const convertedValue = valueAsIFluidHandle !== undefined
-            ? fluidObjectMap.get(valueAsIFluidHandle.absolutePath)
+        const valueAsIFluidHandle: FluidObject<IFluidHandle> = value;
+        const convertedValue = valueAsIFluidHandle.IFluidHandle !== undefined
+            ? fluidObjectMap.get(valueAsIFluidHandle.IFluidHandle.absolutePath)
             : value;
         partialViewState[fluidKey as string] = convertedValue;
         return partialViewState;

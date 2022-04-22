@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharedCounter": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISharedCounter():
@@ -28,7 +28,7 @@ use_current_InterfaceDeclaration_ISharedCounter(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharedCounter": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISharedCounter():
@@ -40,7 +40,7 @@ use_old_InterfaceDeclaration_ISharedCounter(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharedCounterEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISharedCounterEvents():
@@ -52,7 +52,7 @@ use_current_InterfaceDeclaration_ISharedCounterEvents(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharedCounterEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ISharedCounterEvents():
@@ -64,7 +64,7 @@ use_old_InterfaceDeclaration_ISharedCounterEvents(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SharedCounter": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SharedCounter():
@@ -76,7 +76,7 @@ use_current_ClassDeclaration_SharedCounter(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_SharedCounter": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_SharedCounter():

@@ -73,6 +73,8 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             sequenceNumber,
             documentAttributes.term ?? 1,
             defaultHash,
+            resolvedUrl.endpoints.ordererUrl ?? "",
+            resolvedUrl.endpoints.storageUrl ?? "",
             quorumValues,
         );
         return this.createDocumentService(resolvedUrl, logger, clientIsSummarizer);

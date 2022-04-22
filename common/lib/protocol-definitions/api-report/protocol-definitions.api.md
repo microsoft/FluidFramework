@@ -14,8 +14,6 @@ export type ConnectionMode = "write" | "read";
 // @public (undocumented)
 export enum FileMode {
     // (undocumented)
-    Commit = "160000",
-    // (undocumented)
     Directory = "040000",
     // (undocumented)
     Executable = "100755",
@@ -360,26 +358,26 @@ export interface IServerError {
 export interface ISignalClient {
     // (undocumented)
     client: IClient;
+    clientConnectionNumber?: number;
     // (undocumented)
     clientId: string;
+    referenceSequenceNumber?: number;
 }
 
 // @public (undocumented)
 export interface ISignalMessage {
+    clientConnectionNumber?: number;
     // (undocumented)
     clientId: string | null;
     // (undocumented)
     content: any;
+    referenceSequenceNumber?: number;
 }
 
 // @public (undocumented)
 export interface ISnapshotTree {
     // (undocumented)
     blobs: {
-        [path: string]: string;
-    };
-    // (undocumented)
-    commits: {
         [path: string]: string;
     };
     // (undocumented)
@@ -577,9 +575,6 @@ export type ITreeEntry = {
     type: TreeEntry.Blob;
     value: IBlob;
 } | {
-    type: TreeEntry.Commit;
-    value: string;
-} | {
     type: TreeEntry.Tree;
     value: ITree;
 } | {
@@ -699,8 +694,6 @@ export enum TreeEntry {
     Attachment = "Attachment",
     // (undocumented)
     Blob = "Blob",
-    // (undocumented)
-    Commit = "Commit",
     // (undocumented)
     Tree = "Tree"
 }

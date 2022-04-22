@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/synthesize",
-  "version": "0.58.3000",
+  "version": "0.59.2000",
   "description": "A library for synthesizing scope objects.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -39,7 +39,8 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "nyc": {
     "all": true,
@@ -63,12 +64,12 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/core-interfaces": "^0.42.0",
-    "@fluidframework/datastore": "^0.58.3000",
-    "@fluidframework/eslint-config-fluid": "^0.27.2000-59622",
-    "@fluidframework/mocha-test-setup": "^0.58.3000",
-    "@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@0.58.2000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@fluidframework/core-interfaces": "^0.43.1000",
+    "@fluidframework/datastore": "^0.59.2000",
+    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/mocha-test-setup": "^0.59.2000",
+    "@fluidframework/synthesize-previous": "npm:@fluidframework/synthesize@0.59.1000",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",
@@ -91,7 +92,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.58.3000",
+    "version": "0.59.2000",
     "broken": {}
   }
 }

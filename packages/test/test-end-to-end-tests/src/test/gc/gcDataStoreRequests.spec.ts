@@ -22,7 +22,7 @@ import {
     SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { TestDataObject } from "./mockSummarizerClient";
+import { TestDataObject } from "../mockSummarizerClient";
 
 /**
  * Validates this scenario: When a data store is shared with an external app, if the data store becomes unreferenced

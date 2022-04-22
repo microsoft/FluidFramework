@@ -59,11 +59,13 @@ export async function generateTests(packageDetails: PackageDetails) {
                 ... currentTypeData,
                 removed: false
             };
-            const brokenData = currentProjectData.packageDetails.broken?.[oldProjectData.packageDetails.version]?.[getFullTypeName(currentType)];
+            const broken = currentProjectData.packageDetails.broken;
+            // look for settings not under version, then fall back to version for back compat
+            const brokenData = broken?.[getFullTypeName(currentType)] ?? broken?.[oldProjectData.packageDetails.version]?.[getFullTypeName(currentType)];
 
             testString.push(`/*`)
             testString.push(`* Validate forward compat by using old type in place of current type`);
-            testString.push(`* If breaking change required, add in package.json under typeValidation.broken.${oldProjectData.packageDetails.version}:`);
+            testString.push(`* If breaking change required, add in package.json under typeValidation.broken:`);
             testString.push(`* "${getFullTypeName(currentType)}": {"forwardCompat": false}`);
             testString.push("*/");
             testString.push(...  buildTestCase(oldType, currentType, brokenData?.forwardCompat ?? true));
@@ -72,7 +74,7 @@ export async function generateTests(packageDetails: PackageDetails) {
 
             testString.push(`/*`)
             testString.push(`* Validate back compat by using current type in place of old type`);
-            testString.push(`* If breaking change required, add in package.json under typeValidation.broken.${oldProjectData.packageDetails.version}:`);
+            testString.push(`* If breaking change required, add in package.json under typeValidation.broken:`);
             testString.push(`* "${getFullTypeName(currentType)}": {"backCompat": false}`);
             testString.push("*/");
             testString.push(... buildTestCase(currentType, oldType, brokenData?.backCompat ?? true));
