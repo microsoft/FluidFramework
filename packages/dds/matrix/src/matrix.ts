@@ -705,7 +705,7 @@ export class SharedMatrix<T = any>
         } else {
             assert(content.type === MatrixOp.set, "Unknown SharedMatrix 'op' type.");
 
-            const setOp = content as ISetOp<Serializable<T>>;
+            const setOp = content as ISetOp<T>;
             const rowHandle = this.rows.getAllocatedHandle(setOp.row);
             const colHandle = this.cols.getAllocatedHandle(setOp.col);
             if (this.undo !== undefined) {
@@ -720,7 +720,7 @@ export class SharedMatrix<T = any>
                     oldValue);
             }
 
-            this.cells.setCell(rowHandle, colHandle, setOp.value as any);
+            this.cells.setCell(rowHandle, colHandle, setOp.value);
             const localSeq = this.nextLocalSeq();
             const metadata: ISetOpMetadata = {
                 rowHandle,
