@@ -6,6 +6,7 @@ import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { AzureClient } from "../AzureClient";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
@@ -252,5 +253,86 @@ describe("AzureClient", () => {
         map1.set("new-pair-id", newPair.handle);
         const obj = await map1.get("new-pair-id").get();
         assert.ok(obj, "container added dynamic objects incorrectly");
+    });
+
+    /**
+     * Scenario: test if connect()/disconnect() can manage a container's connection state
+     *
+     * Expected behavior: the container should be able to connect and disconnect. The connectionState
+     * value should be updated accordingly. No errors should be thrown.
+     */
+    it("can disconnect() and connect() a container", async () => {
+        const container = (await client.createContainer(schema)).container;
+        await container.attach();
+        await new Promise<void>((resolve) => {
+            container.once("connected", () => {
+                resolve();
+            });
+        });
+
+        container.disconnect?.();
+        assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect");
+
+        container.connect?.();
+        await new Promise<void>((resolve) => {
+            container.once("connected", () => {
+                resolve();
+            });
+        });
+        assert.strictEqual(
+            container.connectionState, ConnectionState.Connected,
+            "container can't connect after calling disconnect()",
+        );
+    });
+
+    /**
+     * Scenario: test that ops processing stops when disconnect() is called, and it resumes
+     * when connect() is called.
+     *
+     * Expected behavior: We should not be able to get the updated map value after disconnect() is called.
+     * Once connect() is called and the container is reconnected we should be able to fetch the updated value.
+     */
+    it("can disconnect() to prevent processing ops and connect() to catch up", async () => {
+        const containerCreate = (await client.createContainer(schema)).container;
+        const containerId = await containerCreate.attach();
+        await new Promise<void>((resolve) => {
+            containerCreate.once("connected", () => {
+                resolve();
+            });
+        });
+
+        const initialObjectsCreate = containerCreate.initialObjects;
+        const map1Create = initialObjectsCreate.map1 as SharedMap;
+        map1Create.set("key", "value");
+        let valueCreate = await map1Create.get("key");
+
+        const containerGet = (await client.getContainer(containerId, schema)).container;
+        const map1Get = containerGet.initialObjects.map1 as SharedMap;
+        if (containerGet.connectionState !== ConnectionState.Connected) {
+            await new Promise<void>((resolve) => {
+                containerGet.once("connected", () => {
+                    resolve();
+                });
+            });
+        }
+
+        let valueGet = await map1Get.get("key");
+        assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
+
+        containerGet.disconnect?.();
+        map1Create.set("key", "new-value");
+        valueCreate = await map1Create.get("key");
+
+        valueGet = await map1Get.get("key");
+        assert.notStrictEqual(valueGet, valueCreate, "container continued processing ops after disconnect()");
+
+        containerGet.connect?.();
+        await new Promise<void>((resolve) => {
+            map1Get.once("valueChanged", () => {
+                resolve();
+            });
+        });
+        valueGet = await map1Get.get("key");
+        assert.strictEqual(valueGet, valueCreate, "container did not catch up after connect()");
     });
 });
