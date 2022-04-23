@@ -81,7 +81,7 @@ export interface IStorageRoutingId {
 export interface IRepoManagerParams {
     repoOwner: string;
     repoName: string;
-    storageRoutingId: IStorageRoutingId;
+    storageRoutingId?: IStorageRoutingId;
     fileSystemManagerParams?: IFileSystemManagerParams;
 }
 

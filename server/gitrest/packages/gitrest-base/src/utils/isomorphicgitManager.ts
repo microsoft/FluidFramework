@@ -18,6 +18,7 @@ import {
     IStorageDirectoryConfig,
 } from "./definitions";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { getLumberjackBasePropertiesFromRepoManagerParams } from "./helpers";
 
 export class IsomorphicGitRepositoryManager implements IRepositoryManager {
     constructor(
@@ -25,6 +26,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         private readonly repoOwner: string,
         private readonly repoName: string,
         private readonly directory: string,
+        private readonly lumberjackBaseProperties: Record<string, any>,
     ) {}
 
     public get path(): string {
@@ -72,7 +74,7 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
                 return result;
             });
         } catch (err) {
-            Lumberjack.error("getCommits error", undefined, err);
+            Lumberjack.error("getCommits error", this.lumberjackBaseProperties, err);
             throw new NetworkError(500, "Unable to get commits.");
         }
     }
@@ -277,11 +279,12 @@ export class IsomorphicGitRepositoryManager implements IRepositoryManager {
         } catch (err) {
             Lumberjack.error(
                 "getRef error",
-                 {
+                {
+                    ...this.lumberjackBaseProperties,
                     repo: this.repoName,
                     ref: refId,
-                 },
-                 err);
+                },
+                err);
             throw new NetworkError(500, "Unable to get ref.");
         }
     }
@@ -370,15 +373,18 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
         });
 
         this.repositoryCache.add(repoPath);
+        const lumberjackBaseProperties = getLumberjackBasePropertiesFromRepoManagerParams(params);
         const repoManager = new IsomorphicGitRepositoryManager(
             fileSystemManager,
             params.repoOwner,
             params.repoName,
-            directoryPath);
+            directoryPath,
+            lumberjackBaseProperties);
 
         Lumberjack.info(
             "Created a new repo",
             {
+                ...lumberjackBaseProperties,
                 repoOwner: params.repoOwner,
                 repoName: params.repoName,
                 directoryPath,
@@ -395,11 +401,12 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
             repoPath,
             this.storageDirectoryConfig.baseDir);
         const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
+        const lumberjackBaseProperties = getLumberjackBasePropertiesFromRepoManagerParams(params);
 
         if (!(this.repositoryCache.has(repoPath))) {
             const repoExists = await helpers.exists(fileSystemManager, directoryPath);
             if (!repoExists || !repoExists.isDirectory()) {
-                Lumberjack.error(`Repo does not exist ${directoryPath}`);
+                Lumberjack.error(`Repo does not exist ${directoryPath}`, lumberjackBaseProperties);
                 // services-client/getOrCreateRepository depends on a 400 response code
                 throw new NetworkError(400, `Repo does not exist ${directoryPath}`);
             }
@@ -411,7 +418,8 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
             fileSystemManager,
             params.repoOwner,
             params.repoName,
-            directoryPath);
+            directoryPath,
+            lumberjackBaseProperties);
         return repoManager;
     }
 }

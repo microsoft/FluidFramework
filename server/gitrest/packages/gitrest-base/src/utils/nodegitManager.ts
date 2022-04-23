@@ -19,6 +19,7 @@ import {
     IStorageDirectoryConfig,
 } from "./definitions";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { getLumberjackBasePropertiesFromRepoManagerParams } from "./helpers";
 
 export class NodegitRepositoryManager implements IRepositoryManager {
     constructor(
@@ -26,6 +27,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
         private readonly repoName: string,
         private readonly repo: nodegit.Repository,
         private readonly externalStorageManager: IExternalStorageManager,
+        private readonly lumberjackBaseProperties: Record<string, any>,
     ) {}
 
     public get path(): string {
@@ -74,7 +76,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
 
             return Promise.all(detailedCommits);
         } catch (err) {
-            Lumberjack.error("getCommits error", undefined, err);
+            Lumberjack.error("getCommits error", this.lumberjackBaseProperties, err);
             if (externalWriterConfig?.enabled) {
                 try {
                     const result = await this.externalStorageManager.read(this.repoName, sha);
@@ -84,7 +86,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
                     return this.getCommits(sha, count, externalWriterConfig);
                 } catch (bridgeError) {
                     // If file does not exist or error trying to look up commit, return the original error.
-                    Lumberjack.error("BridgeError", undefined, bridgeError);
+                    Lumberjack.error("BridgeError", this.lumberjackBaseProperties, bridgeError);
                     return Promise.reject(err);
                 }
             }
@@ -223,7 +225,10 @@ export class NodegitRepositoryManager implements IRepositoryManager {
             const ref = await nodegit.Reference.lookup(this.repo, refId, undefined);
             return conversions.refToIRef(ref);
         } catch (err) {
-            Lumberjack.error("getRef error", { repo: this.repoName, ref: refId }, err);
+            Lumberjack.error(
+                "getRef error",
+                { ...this.lumberjackBaseProperties, repo: this.repoName, ref: refId },
+                err);
             // Lookup external storage if commit does not exist.
             const fileName = refId.substring(refId.lastIndexOf("/") + 1);
             // If file does not exist or error trying to look up commit, return the original error.
@@ -235,7 +240,10 @@ export class NodegitRepositoryManager implements IRepositoryManager {
                     }
                     return this.getRef(refId, externalWriterConfig);
                 } catch (bridgeError) {
-                    Lumberjack.error("Giving up on creating ref. BridgeError", bridgeError);
+                    Lumberjack.error(
+                        "Giving up on creating ref. BridgeError",
+                        this.lumberjackBaseProperties,
+                        bridgeError);
                     return Promise.reject(err);
                 }
             }
@@ -258,7 +266,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
             try {
                 await this.externalStorageManager.write(this.repoName, createRefParams.ref, createRefParams.sha, false);
             } catch (e) {
-                Lumberjack.error("Error writing to file", undefined, e);
+                Lumberjack.error("Error writing to file", this.lumberjackBaseProperties, e);
             }
         }
 
@@ -283,7 +291,7 @@ export class NodegitRepositoryManager implements IRepositoryManager {
             } catch (error) {
                 Lumberjack.error(
                     "External storage write failed while trying to update file",
-                    { repo: this.repoName, ref: refId },
+                    { ...this.lumberjackBaseProperties, repo: this.repoName, ref: refId },
                     error);
             }
         }
@@ -352,14 +360,17 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         this.repositoryPCache[repoPath] = repositoryP;
 
         const repository = await this.repositoryPCache[repoPath];
+        const lumberjackBaseProperties = getLumberjackBasePropertiesFromRepoManagerParams(params);
         const repoManager = new NodegitRepositoryManager(
             params.repoOwner,
             params.repoName,
             repository,
-            this.externalStorageManager);
+            this.externalStorageManager,
+            lumberjackBaseProperties);
         Lumberjack.info(
                 "Created a new repo",
                 {
+                    ...lumberjackBaseProperties,
                     repoOwner: params.repoOwner,
                     repoName: params.repoName,
                     directoryPath,
@@ -372,6 +383,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         const repoPath = helpers.getRepoPath(
             params.repoName,
             this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
+        const lumberjackBaseProperties = getLumberjackBasePropertiesFromRepoManagerParams(params);
 
         if (!(repoPath in this.repositoryPCache)) {
             const directory = helpers.getGitDirectory(
@@ -381,7 +393,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
             const repoExists = await helpers.exists(
                 this.fileSystemManagerFactory.create(params.fileSystemManagerParams), directory);
             if (!repoExists) {
-                Lumberjack.error(`Repo does not exist ${directory}`);
+                Lumberjack.error(`Repo does not exist ${directory}`, lumberjackBaseProperties);
                 // services-client/getOrCreateRepository depends on a 400 response code
                 throw new NetworkError(400, `Repo does not exist ${directory}`);
             }
@@ -394,7 +406,8 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
             params.repoOwner,
             params.repoName,
             repository,
-            this.externalStorageManager);
+            this.externalStorageManager,
+            lumberjackBaseProperties);
         return repoManager;
     }
 }

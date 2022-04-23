@@ -8,6 +8,7 @@ import * as path from "path";
 import { Request } from "express";
 import { IGetRefParamsExternal, IWholeFlatSummary, NetworkError } from "@fluidframework/server-services-client";
 import { Constants, IExternalWriterConfig, IFileSystemManager, IRepoManagerParams, IStorageRoutingId } from "./definitions";
+import { BaseTelemetryProperties, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 
 /**
  * Validates that the input encoding is valid
@@ -36,8 +37,8 @@ export function getExternalWriterParams(params: string | undefined): IExternalWr
 
 export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerParams {
     const storageName: string | undefined = request.get(Constants.StorageNameHeader);
-    const storageRoutingId: IStorageRoutingId = parseStorageRoutingId(request.get(Constants.StorageRoutingIdHeader)); // Historian sends storage routing id, but what about getOrCreateRepository, when there is only tenant ID?
-    return {
+    const storageRoutingId: IStorageRoutingId = parseStorageRoutingId(request.get(Constants.StorageRoutingIdHeader));
+    const result = {
         repoOwner: request.params.owner,
         repoName: request.params.repo,
         storageRoutingId,
@@ -45,6 +46,8 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
             storageName,
         },
     };
+    console.log(`[DEBUG] Here are the params: ${JSON.stringify(result)}`);
+    return result;
 }
 
 export async function exists(
@@ -130,4 +133,16 @@ export function parseStorageRoutingId(storageRoutingId: string): IStorageRouting
         tenantId,
         documentId,
     }
+}
+
+export function getLumberjackBasePropertiesFromRepoManagerParams(params: IRepoManagerParams) {
+    if (params.storageRoutingId) {
+        return getLumberBaseProperties(
+            params.storageRoutingId.documentId,
+            params.storageRoutingId.tenantId
+        );
+    }
+    return {
+        [BaseTelemetryProperties.tenantId]:  params.repoName,
+    };
 }
