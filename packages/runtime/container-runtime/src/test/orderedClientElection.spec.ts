@@ -204,9 +204,11 @@ describe("Ordered Client Collection", () => {
                 assertOrderedEligibleClientIds();
             });
 
-            it("Should not log error with empty quorum and initially elected client", () => {
+            it("Should log error with empty quorum and initially elected client", () => {
+                const clientId = "x";
                 createOrderedClientElection(undefined, emptySerializedElection);
                 assertElectionState(0, 0, undefined, 101);
+                mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId }]);
                 assertOrderedEligibleClientIds();
             });
 
@@ -262,6 +264,7 @@ describe("Ordered Client Collection", () => {
                     ["c", 9, true],
                 ], { electedClientId: "x", electedParentId: "x", electionSequenceNumber: 4321 });
                 assertElectionState(4, 3, undefined, 4321);
+                mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId: "x" }]);
                 assertOrderedEligibleClientIds("a", "b", "c");
             });
         });

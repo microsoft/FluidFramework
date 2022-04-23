@@ -6,7 +6,6 @@ import { strict as assert } from "assert";
 import { IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
-    IDocumentServiceCapabilities,
     LocalResolver,
     LocalDocumentServiceFactory,
 } from "@fluidframework/local-driver";
@@ -106,13 +105,11 @@ function createLocalLoader(
     deltaConnectionServer: ILocalDeltaConnectionServer,
     urlResolver: IUrlResolver,
     options?: ILoaderOptions,
-    docFactoryCapabilities?: IDocumentServiceCapabilities,
 ): IHostLoader {
     const documentServiceFactory = new LocalDocumentServiceFactory(
         deltaConnectionServer,
         undefined,
         undefined,
-        docFactoryCapabilities,
     );
 
     return createLoader(
@@ -131,15 +128,12 @@ describe("Container Hydration", () => {
     let urlResolver: LocalResolver;
     let loaderContainerTracker: LoaderContainerTracker;
 
-    function buildTestLoader(
-        docFactoryCapabilities?: IDocumentServiceCapabilities,
-    ): IHostLoader {
+    function buildTestLoader(): IHostLoader {
         const loader = createLocalLoader(
             [[codeDetails, factory]],
             deltaConnectionServer,
             urlResolver,
             undefined,
-            docFactoryCapabilities,
         );
         loaderContainerTracker.add(loader);
         return loader;
@@ -163,22 +157,8 @@ describe("Container Hydration", () => {
         await assert.doesNotReject(loader.rehydrateDetachedContainerFromSnapshot(summaryString));
     });
 
-    it("does not load snapshot if starts with seq that is not #0", async () => {
+    it("does load snapshot if starts with seq that is not #0", async () => {
         const loader = buildTestLoader();
-        const attr = {
-            ...baseAttributes,
-            sequenceNumber: 5,
-        };
-        const summaryTree = buildSummaryTree(attr, baseQuorum, baseSummarizer);
-        const summaryString = JSON.stringify(summaryTree);
-
-        await assert.rejects(loader.rehydrateDetachedContainerFromSnapshot(summaryString));
-    });
-
-    it("does load snapshot starts with seq that is not #0 if doc service allows it", async () => {
-        const loader = buildTestLoader({
-            acceptsNonZeroSeqStartNum: true,
-        });
         const attr = {
             ...baseAttributes,
             sequenceNumber: 5,

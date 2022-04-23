@@ -1265,15 +1265,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._storage.loadSnapshotForRehydratingContainer(snapshotTree);
         const attributes = await this.getDocumentAttributes(this._storage, snapshotTree);
 
-        // Needs driver definitions. To be resolved via #9833.
-        const acceptsNonZeroSeqStartNum: boolean =
-            (this.serviceFactory as any).capabilities
-                ?.acceptsNonZeroSeqStartNum === true;
-        assert(
-            acceptsNonZeroSeqStartNum || attributes.sequenceNumber === 0,
-            0x0db /* "Seq number in detached container should be 0!!" */,
-        );
-
         await this.attachDeltaManagerOpHandler(attributes);
 
         // Initialize the protocol handler
