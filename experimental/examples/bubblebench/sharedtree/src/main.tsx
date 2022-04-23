@@ -13,7 +13,7 @@ import { SharedTree, WriteFormat } from "@fluid-experimental/tree";
 import { TreeObjectProxy } from "./proxy";
 import { AppState } from "./state";
 
-interface IApp { clients: IArrayish<IClient>; }
+interface IApp { clients: IArrayish<IClient> }
 
 export class Bubblebench extends DataObject {
     public static get Name() { return "@fluid-experimental/bubblebench-sharedtree"; }

@@ -61,7 +61,7 @@ export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment 
         return maybeSegment.ordinal;
     }
 
-    private findOrdinalPosition(ordinal: string, start?: number, end?: number): { exists: boolean, index: number } {
+    private findOrdinalPosition(ordinal: string, start?: number, end?: number): { exists: boolean; index: number } {
         if (this.ordinalSortedItems.length === 0) {
             return { exists: false, index: 0 };
         }

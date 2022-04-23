@@ -118,8 +118,7 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
 export const TaskManagerDiceRollerInstantiationFactory =
-    new DataObjectFactory
-(
+    new DataObjectFactory(
     "@fluid-example/task-manager-dice-roller",
     TaskManagerDiceRoller,
     // Since TaskManager is a DDS, we need to register it for creation.

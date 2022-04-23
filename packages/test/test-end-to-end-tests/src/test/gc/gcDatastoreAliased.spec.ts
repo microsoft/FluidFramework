@@ -62,7 +62,7 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
 
      async function summarizeOnContainer(container: IContainer) {
         const dataStore = await requestFluidObject<TestDataObject>(container, "default");
-        return dataStore.containerRuntime.summarize({runGC: true, trackState: false});
+        return dataStore.containerRuntime.summarize({ runGC: true, trackState: false });
     }
 
     const createContainer = async (): Promise<IContainer> => {
@@ -109,7 +109,10 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
 
         // Should be able to retrieve root datastore from remote
         const containerRuntime2 = mainDataStore2.containerRuntime;
-        assert.doesNotThrow(async () => containerRuntime2.getRootDataStore(alias), "Aliased datastore should be root!");
+        const aliasableDataStore2 = await containerRuntime2.getRootDataStore(alias);
+        const aliasedDataStoreResponse2 = await aliasableDataStore2.request({ url:"/" });
+        const aliasedDataStore2 = aliasedDataStoreResponse2.value as TestDataObject;
+        assert(aliasedDataStore2._context.baseSnapshot?.unreferenced !== true, "datastore should be referenced");
 
         await summarizeOnContainer(container2);
         // TODO: Check GC is notified

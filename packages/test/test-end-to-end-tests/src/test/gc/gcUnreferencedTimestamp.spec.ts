@@ -107,7 +107,7 @@ describeFullCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
      * @returns a map of nodePath to its unreferenced timestamp.
      */
     async function getUnreferencedTimestamps(
-        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
+        summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
     ) {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger, true /* fullTree */);
         latestAckedSummary = summaryResult.ackedSummary;

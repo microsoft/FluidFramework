@@ -134,7 +134,7 @@ export class Caret {
     };
 
     private positionToNodeOffset(ref: LocalReference) {
-        let result: { node: Node, nodeOffset: number };
+        let result: { node: Node; nodeOffset: number };
 
         const position = this.doc.localRefToPosition(ref);
         const { segment: rightSegment, offset: rightOffset } = this.doc.getSegmentAndOffset(position);

@@ -726,7 +726,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // Driver need to ensure all caches are cleared on critical errors
                 this.service?.dispose(error);
             } catch (exception) {
-                this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
+                this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, exception);
             }
 
             this.mc.logger.sendTelemetryEvent(
@@ -885,7 +885,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (!this.closed) {
                     this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
                 }
-            } catch(error) {
+            } catch (error) {
                 // add resolved URL on error object so that host has the ability to find this document and delete it
                 const newError = normalizeError(error);
                 const resolvedUrl = this.resolvedUrl;
@@ -956,11 +956,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public connect() {
         if (this.closed) {
             throw new UsageError(`The Container is closed and cannot be connected`);
-        }
-        else if (this._attachState !== AttachState.Attached) {
+        } else if (this._attachState !== AttachState.Attached) {
             throw new UsageError(`The Container is not attached and cannot be connected`);
-        }
-        else if (!this.connected) {
+        } else if (!this.connected) {
             // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
             // If there is gap, we will learn about it once connected, but the gap should be small (if any),
             // assuming that connect() is called quickly after initial container boot.
@@ -984,8 +982,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public disconnect() {
         if (this.closed) {
             throw new UsageError(`The Container is closed and cannot be disconnected`);
-        }
-        else {
+        } else {
             this.disconnectInternal();
         }
     }
@@ -1304,8 +1301,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._storageService =
             new RetriableDocumentStorageService(storageService, this.mc.logger);
 
-        if(this.options.summarizeProtocolTree === true) {
-            this.mc.logger.sendTelemetryEvent({eventName:"summarizeProtocolTreeEnabled"});
+        if (this.options.summarizeProtocolTree === true) {
+            this.mc.logger.sendTelemetryEvent({ eventName:"summarizeProtocolTreeEnabled" });
             this._storageService =
                 new ProtocolTreeStorageService(this._storageService, ()=>this.captureProtocolSummary());
         }
@@ -1561,8 +1558,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async attachDeltaManagerOpHandler(
         attributes: IDocumentAttributes,
-        prefetchType?: "cached" | "all" | "none")
-    {
+        prefetchType?: "cached" | "all" | "none") {
         return this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
@@ -1668,7 +1664,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // this can be removed once all clients send
                 // protocol tree by default
                 const summary = contents as ISummaryContent;
-                if(summary.details === undefined) {
+                if (summary.details === undefined) {
                     summary.details = {};
                 }
                 summary.details.includesProtocolTree =
@@ -1760,8 +1756,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
      */
     private async fetchSnapshotTree(specifiedVersion: string | undefined):
-        Promise<{snapshot?: ISnapshotTree; versionId?: string}>
-    {
+        Promise<{ snapshot?: ISnapshotTree; versionId?: string }> {
         const version = await this.getVersion(specifiedVersion ?? null);
 
         if (version === undefined && specifiedVersion !== undefined) {

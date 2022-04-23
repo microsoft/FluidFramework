@@ -204,14 +204,14 @@ export interface ICreateFileResponse {
     itemUrl: string;
     sequenceNumber: number;
     sharingLink?: string;
-    sharingLinkErrorReason?: string
+    sharingLinkErrorReason?: string;
 }
 
 export interface IVersionedValueWithEpoch {
     value: any;
-    fluidEpoch: string,
+    fluidEpoch: string;
     // This is same as "persistedCacheValueVersion" below. This represents the version of data stored in cache.
-    version: 3,
+    version: 3;
 }
 
 export const persistedCacheValueVersion = 3;
@@ -236,5 +236,5 @@ export interface IFlushOpsResponse {
  * Represents the cached snapshot value.
  */
 export interface ISnapshotCachedEntry extends ISnapshotContents {
-    cacheEntryTime: number,
+    cacheEntryTime: number;
 }

@@ -8,7 +8,7 @@ import { assert, Deferred, Lazy } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
 
- export class DataStoreContexts implements Iterable<[string,FluidDataStoreContext]>, IDisposable {
+ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
     private readonly notBoundContexts = new Set<string>();
 
     /** Attached and loaded context proxies */

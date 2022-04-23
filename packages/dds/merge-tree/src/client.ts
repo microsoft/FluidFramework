@@ -629,8 +629,7 @@ export class Client {
     getLongClientId(shortClientId: number) {
         if (shortClientId >= 0) {
             return this.shortClientIdMap[shortClientId];
-        }
-        else {
+        } else {
             return "original";
         }
     }
@@ -809,8 +808,7 @@ export class Client {
             };
             if (opArgs.sequencedMessage?.clientId === this.longClientId || local) {
                 this.ackPendingSegment(opArgs);
-            }
-            else {
+            } else {
                 this.applyRemoteOp(opArgs);
             }
         }
@@ -943,8 +941,7 @@ export class Client {
         const segWindow = this.getCollabWindow();
         if (segWindow.collaborating) {
             return UnassignedSequenceNumber;
-        }
-        else {
+        } else {
             return UniversalSequenceNumber;
         }
     }
@@ -999,8 +996,7 @@ export class Client {
         if (op) {
             clientId = this.getOrAddShortClientId(op.clientId);
             seq = op.sequenceNumber;
-        }
-        else {
+        } else {
             const segWindow = this.mergeTree.getCollabWindow();
             seq = segWindow.currentSeq;
             clientId = segWindow.clientId;

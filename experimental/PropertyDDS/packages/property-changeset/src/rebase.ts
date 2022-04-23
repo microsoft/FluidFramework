@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {copy as cloneDeep} from "fastest-json-copy";
+import { copy as cloneDeep } from "fastest-json-copy";
 import isEqual from "lodash/isEqual";
 
 import { ChangeSet } from "./changeset";
@@ -11,19 +11,19 @@ import { ChangeSet } from "./changeset";
 class SyncPromise {
     value: any;
 
-    constructor(x: { value: any; }) {
+    constructor(x: { value: any }) {
         if (!(this instanceof SyncPromise)) { return new SyncPromise(x); }
         if (x instanceof SyncPromise) { x = x.value; }
         this.value = x;
     }
 
-    then(fn: (arg0: any) => { value: any; }): SyncPromise {
+    then(fn: (arg0: any) => { value: any }): SyncPromise {
         this.value = new SyncPromise(fn(this.value)).value;
         return this;
     }
 }
 
-const loop = (promise: Promise<any>, fn: { (currentChange: any): any; (currentRebasedChange: any): any; }, makePromise: (arg0: any) => any) => promise.then(fn).then((result) => result === null ? result : loop(makePromise(result), fn, makePromise));
+const loop = (promise: Promise<any>, fn: { (currentChange: any): any; (currentRebasedChange: any): any }, makePromise: (arg0: any) => any) => promise.then(fn).then((result) => result === null ? result : loop(makePromise(result), fn, makePromise));
 
 export function rebaseToRemoteChanges(
     change: any,

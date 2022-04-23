@@ -113,7 +113,7 @@ export class ClientReplayTool {
 
     private async mainCycle() {
         const clients = new Map<string, Map<string, TestClient>>();
-        const mergeTreeAttachTrees = new Map<string, { tree: ITree, specToSeg(segment: IJSONSegment): ISegment }>();
+        const mergeTreeAttachTrees = new Map<string, { tree: ITree; specToSeg(segment: IJSONSegment): ISegment }>();
         const mergeTreeMessages = new Array<IFullPathSequencedDocumentMessage>();
         const chunkMap = new Map<string, string[]>();
         for (const message of this.deltaStorageService.getFromWebSocket(0, this.args.to)) {
@@ -204,7 +204,7 @@ export class ClientReplayTool {
                 }
                 const pendingMessages = new Array<IFullPathSequencedDocumentMessage>();
                 const reconnectClients =
-                    new Array<{ client: Map<string, TestClient>, messages: IFullPathSequencedDocumentMessage[] }>();
+                    new Array<{ client: Map<string, TestClient>; messages: IFullPathSequencedDocumentMessage[] }>();
                 reconnectClients.push({ client, messages: mergeTreeMessages });
                 for (const message of mergeTreeMessages) {
                     if (message.clientId !== clientId) {
@@ -262,7 +262,7 @@ export class ClientReplayTool {
 
     private processAttachMessage(
         attachMessage: IAttachMessage,
-        mergeTreeAttachTrees: Map<string, { tree: ITree, specToSeg(segment: IJSONSegment): ISegment }>) {
+        mergeTreeAttachTrees: Map<string, { tree: ITree; specToSeg(segment: IJSONSegment): ISegment }>) {
         const ddsTrees = this.getDssTreesFromAttach(attachMessage);
         const mergeTreeTypes = [
             {

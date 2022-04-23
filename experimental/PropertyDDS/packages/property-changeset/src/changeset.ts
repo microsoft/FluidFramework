@@ -8,7 +8,7 @@
 
 import isObject from "lodash/isObject";
 import isString from "lodash/isString";
-import {copy as cloneDeep} from "fastest-json-copy";
+import { copy as cloneDeep } from "fastest-json-copy";
 import isEmpty from "lodash/isEmpty";
 import extend from "lodash/extend";
 import each from "lodash/each";
@@ -37,16 +37,16 @@ export interface ApplyChangeSetOptions {
     /**
      * Additional meta information which help later to obtain more compact changeset during the apply operation.
      */
-    applyAfterMetaInformation?: Map<any, any>,
+    applyAfterMetaInformation?: Map<any, any>;
 
     /**
      * Throw error for template definition mismatches.
      */
-    throwOnTemplateMismatch?: boolean
+    throwOnTemplateMismatch?: boolean;
 }
 
 export interface RebaseChangeSetOptions extends ApplyChangeSetOptions {
-    rebaseMetaInformation?: object
+    rebaseMetaInformation?: object;
 }
 
 /**
@@ -274,7 +274,7 @@ export class ChangeSet {
     public performApplyAfterOnPropertyWithTypeid(
         in_changedKey: string,
         in_baseChanges: SerializedChangeSet,
-        in_appliedPropertyChanges: { [x: string]: any; },
+        in_appliedPropertyChanges: { [x: string]: any },
         in_typeid: string,
         in_removeEmpty: boolean,
         in_options?: ApplyChangeSetOptions) {

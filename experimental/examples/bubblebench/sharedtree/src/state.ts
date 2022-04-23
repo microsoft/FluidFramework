@@ -7,7 +7,7 @@ import { Change, SharedTree } from "@fluid-experimental/tree";
 import { IAppState, IClient, IArrayish, makeBubble, makeClient } from "@fluid-experimental/bubblebench-common";
 import { fromJson, TreeArrayProxy, TreeObjectProxy } from "./proxy";
 
-interface IApp { clients: IArrayish<IClient>; }
+interface IApp { clients: IArrayish<IClient> }
 
 export class AppState implements IAppState {
     private readonly update: (...change: Change[]) => void;

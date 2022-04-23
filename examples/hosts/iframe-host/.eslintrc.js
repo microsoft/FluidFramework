@@ -8,5 +8,6 @@ module.exports = {
         "@fluidframework/eslint-config-fluid/formatting"
     ],
     "rules": {
+        "no-void": "off"
     }
 }

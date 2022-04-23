@@ -18,8 +18,8 @@ import * as React from "react";
 // ---- Fluid Object w/ Functional React View using the useSyncedCounter hook ----
 
 interface ICounterReactHookProps {
-    syncedDataObject: SyncedDataObject,
-    syncedStateId: string,
+    syncedDataObject: SyncedDataObject;
+    syncedStateId: string;
 }
 
 function CounterWithHook(

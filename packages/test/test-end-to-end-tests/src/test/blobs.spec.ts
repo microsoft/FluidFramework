@@ -194,7 +194,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     // this test relies on an internal function that has been renamed (snapshot -> summarize)
     it("loads from snapshot", async function() {
         // GitHub Issue: #9534
-        if(provider.driver.type === "odsp") {
+        if (provider.driver.type === "odsp") {
             this.skip();
         }
         const container1 = await provider.makeTestContainer(testContainerConfig);
@@ -241,11 +241,11 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
         // GitHub issue: #9534
-        if(provider.driver.type === "tinylicious") {
+        if (provider.driver.type === "tinylicious") {
             this.skip();
         }
         const detachedBlobStorage = new MockDetachedBlobStorage();
-        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: { detachedBlobStorage } });
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -275,7 +275,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
     it("serialize/rehydrate container with blobs", async function() {
         const loader = provider.makeTestLoader(
-            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
+            { ...testContainerConfig, loaderProps: { detachedBlobStorage: new MockDetachedBlobStorage() } });
         const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -292,14 +292,14 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await rehydratedDataStore._root.get("my blob").get(), "utf-8"), text);
     });
 
-    itExpects("redirect table saved in snapshot",[
+    itExpects("redirect table saved in snapshot", [
         { eventName: "fluid:telemetry:Container:ContainerClose", message: "0x202" },
     ], async function() {
-        if(provider.driver.type === "tinylicious") {
+        if (provider.driver.type === "tinylicious") {
             this.skip();
         }
         const detachedBlobStorage = new MockDetachedBlobStorage();
-        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: { detachedBlobStorage } });
         const detachedContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -333,11 +333,11 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
         // GitHub issue: #9534
-        if(provider.driver.type === "tinylicious") {
+        if (provider.driver.type === "tinylicious") {
             this.skip();
         }
         const loader = provider.makeTestLoader(
-            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
+            { ...testContainerConfig, loaderProps: { detachedBlobStorage: new MockDetachedBlobStorage() } });
         const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -367,11 +367,11 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "0x202" },
     ], async function() {
         // GitHub issue: #9534
-        if(provider.driver.type === "tinylicious") {
+        if (provider.driver.type === "tinylicious") {
             this.skip();
         }
         const loader = provider.makeTestLoader(
-            {...testContainerConfig, loaderProps: {detachedBlobStorage: new MockDetachedBlobStorage()}});
+            { ...testContainerConfig, loaderProps: { detachedBlobStorage: new MockDetachedBlobStorage() } });
         let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -402,7 +402,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
     it("rehydrating without detached blob storage results in error", async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
-        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: {detachedBlobStorage}});
+        const loader = provider.makeTestLoader({ ...testContainerConfig, loaderProps: { detachedBlobStorage } });
         const serializeContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -483,7 +483,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
                 this.skip();
             }
             const detachedBlobStorage = new MockDetachedBlobStorage();
-            const loader = provider.makeTestLoader({ ...gcContainerConfig, loaderProps: {detachedBlobStorage}});
+            const loader = provider.makeTestLoader({ ...gcContainerConfig, loaderProps: { detachedBlobStorage } });
             container = await loader.createDetachedContainer(provider.defaultCodeDetails);
             defaultDataStore = await requestFluidObject<ITestDataObject>(container, "/");
             containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;

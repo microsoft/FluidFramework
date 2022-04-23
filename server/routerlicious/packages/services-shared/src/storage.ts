@@ -251,7 +251,7 @@ export class DocumentStorage implements IDocumentStorage {
         return gitManager.getCommit(sha);
     }
 
-    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }> {
+    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string }> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const versions = await tenant.gitManager.getCommits(documentId, 1);
         if (versions.length === 0) {

@@ -9,7 +9,7 @@ import { IBlob, ITree } from "@fluidframework/protocol-definitions";
 import { gcBlobPrefix, getNormalizedSnapshot, ISnapshotNormalizerConfig } from "../snapshotNormalizer";
 
 describe("Snapshot Normalizer", () => {
-    it ("can normalize tree entries", () => {
+    it("can normalize tree entries", () => {
         // Snapshot tree with entries whose paths are not sorted.
         const snapshot: ITree = {
             id: "root",
@@ -28,7 +28,7 @@ describe("Snapshot Normalizer", () => {
         assert.strictEqual(normalizedSnapshot.entries[2].path, "entry3", "Snapshot tree entries not sorted");
     });
 
-    it ("can normalize GC blobs", () => {
+    it("can normalize GC blobs", () => {
         const gcDetails = {
             isRootNode: true,
             gcNodes: {
@@ -68,7 +68,7 @@ describe("Snapshot Normalizer", () => {
         assert.deepStrictEqual(JSON.parse(innerGCBlob.contents), normalizedGCDetails, "Inner blob not normalized");
     });
 
-    it ("can normalize custom blobs with array of objects", () => {
+    it("can normalize custom blobs with array of objects", () => {
         // Blob content which is an array of objects within objects.
         const blobContents = [
             { id: "2", content: { key: "2", value: "two" } },
@@ -103,7 +103,7 @@ describe("Snapshot Normalizer", () => {
         assert.deepStrictEqual(JSON.parse(normalizedBlob.contents), normalizedBlobContents, "Normalized blob changed");
     });
 
-    it ("can normalize custom blobs with object of arrays", () => {
+    it("can normalize custom blobs with object of arrays", () => {
         // Blob content which is an object whose properties are arrays.
         const blobContents = {
             array2: [ "2", "1", "3", "4" ],
@@ -136,7 +136,7 @@ describe("Snapshot Normalizer", () => {
         assert.deepStrictEqual(JSON.parse(normalizedBlob.contents), normalizedBlobContents, "Normalized blob changed");
     });
 
-    it ("can normalize blob whose contents are not objects", () => {
+    it("can normalize blob whose contents are not objects", () => {
         const snapshot: ITree = {
             id: "root",
             entries: [

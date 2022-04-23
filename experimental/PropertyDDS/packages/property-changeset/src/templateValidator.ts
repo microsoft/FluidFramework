@@ -24,7 +24,7 @@ import includes from "lodash/includes";
 import map from "lodash/map";
 import find from "lodash/find";
 import isEmpty from "lodash/isEmpty";
-import {copy as cloneDeep} from "fastest-json-copy";
+import { copy as cloneDeep } from "fastest-json-copy";
 
 import { gt, diff, major, valid, compare } from "semver";
 import traverse from "traverse";
@@ -54,7 +54,7 @@ type PropertyType = {
     id: string;
     context: string;
     typeid: string;
-    values: ValuesType
+    values: ValuesType;
 };
 
 type PropertiesType = PropertyType[];
@@ -66,7 +66,7 @@ export interface PropertySchema {
     annotation?: { [key: string]: string };
     properties: PropertiesType;
     typeid: string;
-    values: ValuesType
+    values: ValuesType;
 }
 
 type SchemaEntityType = PropertySchema | string[] | PropertiesType;
@@ -273,7 +273,7 @@ const _stripSemverFromTypeId = function(in_typeid: string): string | null {
 const _unresolvedTypes = function(in_template: PropertySchema) {
     let first = true;
     const that = this;
-    const accSet = traverse(in_template).reduce(function(acc: { [x: string]: string; }, x: PropertySchema) {
+    const accSet = traverse(in_template).reduce(function(acc: { [x: string]: string }, x: PropertySchema) {
         if (first) {
             acc = {};
             first = false;
@@ -919,27 +919,27 @@ export interface TemplateValidatorOptions {
      * When set to true, {@link #validate} only checks the supplied templates' content
      * and fails the validation if they're not identical. Defaults to false.
      */
-    skipSemver?: boolean,
+    skipSemver?: boolean;
     /**
      * When set to true, the typeid of any schema can have '-draft' as a version. Defaults to false.
      */
-    allowDraft?: boolean,
+    allowDraft?: boolean;
     /**
      * Function that checks if a template inherits from another.
      */
-    inheritsFrom?: (source: PropertySchema, target: PropertySchema) => boolean,
+    inheritsFrom?: (source: PropertySchema, target: PropertySchema) => boolean;
     /**
      * Function that checks if we have a template matching a typeid.
      */
-    hasSchema?: (schema: PropertySchema, typeid: string) => boolean,
+    hasSchema?: (schema: PropertySchema, typeid: string) => boolean;
     /**
      * Function that checks if a template inherits from another asynchronously.
      */
-    inheritsFromAsync?: (source: PropertySchema, target: PropertySchema) => Promise<boolean>,
+    inheritsFromAsync?: (source: PropertySchema, target: PropertySchema) => Promise<boolean>;
     /**
      * Function that checks if we have a template matching a typeid asynchronously.
      */
-    hasSchemaAsync?: (schema: PropertySchema, typeid: string) => Promise<boolean>,
+    hasSchemaAsync?: (schema: PropertySchema, typeid: string) => Promise<boolean>;
 
 }
 
@@ -962,7 +962,7 @@ export class TemplateValidator {
     public _hasSchemaAsync: (schema: PropertySchema, typeid: string) => Promise<boolean>;
     private readonly _allowDraft: boolean;
     private readonly _skipSemver: boolean;
-    constructor(in_params: TemplateValidatorOptions = { skipSemver: false, allowDraft: false}) {
+    constructor(in_params: TemplateValidatorOptions = { skipSemver: false, allowDraft: false }) {
         this._skipSemver = in_params ? !!in_params.skipSemver : false;
         this._allowDraft = in_params ? !!in_params.allowDraft : false;
         // Used by validate()

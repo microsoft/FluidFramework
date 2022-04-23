@@ -14,7 +14,7 @@ const concat = (leftTokens: string, rightTokens: string) => !rightTokens
         ? rightTokens                       // If left is undefined/empty, just return right
         : `${leftTokens} ${rightTokens}`;// Otherwise concat left/right;
 
-export interface ICssProps { classList?: string; style?: string; }
+export interface ICssProps { classList?: string; style?: string }
 
 export function syncCss(element: HTMLElement, { classList, style }: ICssProps, className?: string) {
     const classes = concat(className, classList);

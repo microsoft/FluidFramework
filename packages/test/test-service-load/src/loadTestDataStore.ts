@@ -22,10 +22,10 @@ import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
 
 export interface IRunConfig {
-    runId: number,
-    testConfig: ILoadTestConfig,
-    verbose: boolean,
-    randEng: random.Engine,
+    runId: number;
+    testConfig: ILoadTestConfig;
+    verbose: boolean;
+    randEng: random.Engine;
 }
 
 export interface ILoadTest {

@@ -84,7 +84,7 @@ async function createSummary(
         repoManager,
         externalWriterConfig?.enabled ?? false,
     );
-    const {isNew, writeSummaryResponse} = await wholeSummaryManager.writeSummary(payload);
+    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload);
 
     // Waiting to pre-compute and persist latest summary would slow down document creation,
     // so skip this step if it is a new document.
@@ -108,7 +108,7 @@ async function createSummary(
                         getDocumentStorageDirectory(repoManager, documentId),
                         latestFullSummary,
                     );
-                } catch(e) {
+                } catch (e) {
                     winston.error(`Failed to persist latest full summary to storage: ${safeStringify(e)}`, {
                         documentId,
                         tenantId,
@@ -149,7 +149,7 @@ export function create(
      */
     router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
         const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
-        const [tenantId,documentId] = storageRoutingId.split(":");
+        const [tenantId, documentId] = storageRoutingId.split(":");
         if (!documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
@@ -175,7 +175,7 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
-        const [tenantId,documentId] = storageRoutingId.split(":");
+        const [tenantId, documentId] = storageRoutingId.split(":");
         if (!documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
@@ -203,7 +203,7 @@ export function create(
      */
     router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const storageRoutingId: string = request.get(Constants.StorageRoutingIdHeader);
-        const [tenantId,documentId] = storageRoutingId.split(":");
+        const [tenantId, documentId] = storageRoutingId.split(":");
         if (!documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),

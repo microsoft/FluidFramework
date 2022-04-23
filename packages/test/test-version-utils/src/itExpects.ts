@@ -17,7 +17,7 @@ function createExpectsTest(orderedExpectedEvents: ITelemetryGenericEvent[], test
         try {
             provider.logger.registerExpectedEvent(... orderedExpectedEvents);
             await test.bind(this)();
-        } catch(error) {
+        } catch (error) {
             // only use TestException if the event is provided.
             // it must be last, as the events are ordered, so all other events must come first
             if (orderedExpectedEvents[orderedExpectedEvents.length - 1]?.eventName === "TestException") {

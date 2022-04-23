@@ -31,8 +31,8 @@ export enum SummaryManagerState {
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
 type StopReason = Extract<SummarizerStopReason, "parentNotConnected" | "parentShouldNotSummarize">;
 type ShouldSummarizeState =
-    | { shouldSummarize: true; }
-    | { shouldSummarize: false; stopReason: StopReason; };
+    | { shouldSummarize: true }
+    | { shouldSummarize: false; stopReason: StopReason };
 
 export interface IConnectedEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void);
@@ -102,7 +102,7 @@ export class SummaryManager implements IDisposable {
         this.logger = ChildLogger.create(
             parentLogger,
             "SummaryManager",
-            {all:{ clientId: () => this.latestClientId }});
+            { all:{ clientId: () => this.latestClientId } });
 
         this.connectedState.on("connected", this.handleConnected);
         this.connectedState.on("disconnected", this.handleDisconnected);

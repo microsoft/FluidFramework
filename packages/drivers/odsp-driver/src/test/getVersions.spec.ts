@@ -56,7 +56,7 @@ describe("Tests for snapshot fetch", () => {
     const resolver = new OdspDriverUrlResolver();
     const nonPersistentCache = new NonPersistentCache();
     const logger = new TelemetryNullLogger();
-    const odspUrl = createOdspUrl({... newFileParams, itemId, dataStorePath: "/"});
+    const odspUrl = createOdspUrl({ ... newFileParams, itemId, dataStorePath: "/" });
 
     const odspSnapshot: IOdspSnapshot = {
         id: "id",
@@ -88,7 +88,7 @@ describe("Tests for snapshot fetch", () => {
         fluidEpoch: "epoch1",
         version: persistedCacheValueVersion };
 
-    const expectedVersion = [{ id: "id", treeId: undefined!}];
+    const expectedVersion = [{ id: "id", treeId: undefined! }];
 
     before(async () => {
         hashedDocumentId = await getHashedDocumentId(driveId, itemId);
@@ -112,7 +112,7 @@ describe("Tests for snapshot fetch", () => {
             async (_options) => "token",
             logger,
             true,
-            { ...nonPersistentCache, persistedCache: epochTracker},
+            { ...nonPersistentCache, persistedCache: epochTracker },
             hostPolicy,
             epochTracker,
             async () => { return {}; },
@@ -130,7 +130,7 @@ describe("Tests for snapshot fetch", () => {
         };
 
         const version = await mockFetchSingle(
-            async () => service.getVersions(null,1),
+            async () => service.getVersions(null, 1),
             async () => createResponse(
                 { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
                 odspSnapshot,
@@ -149,7 +149,7 @@ describe("Tests for snapshot fetch", () => {
         await localCache.put(cacheEntry, value);
 
         const version = await mockFetchSingle(
-            async () => service.getVersions(null,1),
+            async () => service.getVersions(null, 1),
             async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
         );
         assert.deepStrictEqual(version, expectedVersion, "incorrect version");
@@ -163,7 +163,7 @@ describe("Tests for snapshot fetch", () => {
 
         await assert.rejects(async () => {
             await mockFetchSingle(
-                async () => service.getVersions(null,1),
+                async () => service.getVersions(null, 1),
                 // 404 response expected so network fetch throws
                 notFound,
             );
@@ -178,7 +178,7 @@ describe("Tests for snapshot fetch", () => {
         await localCache.put(cacheEntry, value);
 
         const version = await mockFetchSingle(
-            async () => service.getVersions(null,1),
+            async () => service.getVersions(null, 1),
             // 404 response expected so network fetch throws
             notFound,
         );
@@ -188,7 +188,7 @@ describe("Tests for snapshot fetch", () => {
     it("empty cache and network fetch throws", async () => {
         await assert.rejects(async () => {
             await mockFetchSingle(
-                async () => service.getVersions(null,1),
+                async () => service.getVersions(null, 1),
                 // 404 response expected so network fetch throws
                 notFound,
             );
@@ -203,7 +203,7 @@ describe("Tests for snapshot fetch", () => {
         await localCache.put(cacheEntry, valueWithExpiredCache);
 
         const version = await mockFetchSingle(
-            async () => service.getVersions(null,1),
+            async () => service.getVersions(null, 1),
             async () => createResponse(
                 { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
                 odspSnapshot,
@@ -222,7 +222,7 @@ describe("Tests for snapshot fetch", () => {
 
         await assert.rejects(async () => {
             await mockFetchSingle(
-                async () => service.getVersions(null,1),
+                async () => service.getVersions(null, 1),
                 // 404 response expected so network fetch throws
                 notFound,
             );

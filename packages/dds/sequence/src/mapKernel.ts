@@ -54,9 +54,9 @@ interface IMapMessageHandler {
 }
 
 interface IMapMessageLocalMetadata{
-    pendingClearMessageId?: number,
-    pendingMessageId?: number,
-    lastProcessedSeq: number
+    pendingClearMessageId?: number;
+    pendingMessageId?: number;
+    lastProcessedSeq: number;
 }
 
 /**
@@ -510,7 +510,7 @@ export class MapKernel implements IValueTypeCreator {
             const mapLocalMetadata: Partial<IMapMessageLocalMetadata> = localOpMetadata;
             // we don't know how to rebase these operations, so if any other op has come in
             // we will fail.
-            if(this.lastProcessedSeq !== mapLocalMetadata?.lastProcessedSeq) {
+            if (this.lastProcessedSeq !== mapLocalMetadata?.lastProcessedSeq) {
                 throw new Error("SharedInterval does not support reconnect in presence of external changes");
             }
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -777,7 +777,7 @@ export class MapKernel implements IValueTypeCreator {
                     this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
                 },
                 submit: (op: IMapValueTypeOperation) => {
-                    this.submitMessage(op, {lastProcessedSeq: this.lastProcessedSeq});
+                    this.submitMessage(op, { lastProcessedSeq: this.lastProcessedSeq });
                 },
                 getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
                     assert(false, 0x016 /* "apply stashed op not implemented for custom value type ops" */);
@@ -799,7 +799,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     private submitMapClearMessage(op: IMapClearOperation): void {
         const pendingClearMessageId = this.getMapClearMessageLocalMetadata(op);
-        this.submitMessage(op, {pendingClearMessageId, lastProcessedSeq: this.lastProcessedSeq});
+        this.submitMessage(op, { pendingClearMessageId, lastProcessedSeq: this.lastProcessedSeq });
     }
 
     private getMapKeyMessageLocalMetadata(op: IMapKeyOperation): number {
@@ -814,7 +814,7 @@ export class MapKernel implements IValueTypeCreator {
      */
     private submitMapKeyMessage(op: IMapKeyOperation): void {
         const pendingMessageId = this.getMapKeyMessageLocalMetadata(op);
-        this.submitMessage(op, {pendingMessageId, lastProcessedSeq: this.lastProcessedSeq});
+        this.submitMessage(op, { pendingMessageId, lastProcessedSeq: this.lastProcessedSeq });
     }
 
     /**
@@ -839,7 +839,7 @@ export class MapKernel implements IValueTypeCreator {
                 },
             };
             // Send the localOpMetadata as undefined because we don't care about the ack.
-            this.submitMessage(op, {lastProcessedSeq: this.lastProcessedSeq});
+            this.submitMessage(op, { lastProcessedSeq: this.lastProcessedSeq });
 
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);

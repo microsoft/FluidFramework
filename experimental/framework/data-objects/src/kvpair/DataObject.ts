@@ -35,7 +35,7 @@ export interface IKeyValueDataObject extends EventEmitter {
      * By default, returns an object containing all key value pairs
      * Filter test function can be passed to limit keys added to object
      */
-    query: (test?: string | ((value: string) => boolean)) => any | { [key: string]: any }
+    query: (test?: string | ((value: string) => boolean)) => any | { [key: string]: any };
 }
 
 /**

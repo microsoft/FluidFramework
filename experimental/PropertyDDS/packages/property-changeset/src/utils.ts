@@ -6,7 +6,7 @@
 import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
 import { eachOfSeries, eachSeries, ErrorCallback, series, timesSeries, whilst } from "async";
 
-import {copy as cloneDeep} from "fastest-json-copy";
+import { copy as cloneDeep } from "fastest-json-copy";
 import isNumber from "lodash/isNumber";
 import isString from "lodash/isString";
 import isEmpty from "lodash/isEmpty";
@@ -39,23 +39,23 @@ export namespace Utils {
         /**
          * The(pre-order) callback function that is invoked for each property
          */
-        preCallback?: (context: TraversalContext) => any,
+        preCallback?: (context: TraversalContext) => any;
         /**
          * The (post-order) callback function that is invoked for each property
          */
-        postCallback?: (context: TraversalContext) => any,
+        postCallback?: (context: TraversalContext) => any;
         /**
          * An optional object that is passed to all invocations of the callback via the
          */
-        userData?: { [key: string]: any },
+        userData?: { [key: string]: any };
         /**
          *  The operation that has been applied to the root of the ChangeSet (either 'insert' or 'modify')
          */
-        rootOperation?: OperationType,
+        rootOperation?: OperationType;
         /**
          *  The full typeid for the Property at the root of the ChangeSet
          */
-        rootTypeid?: string,
+        rootTypeid?: string;
     }
 
     /**
@@ -1307,7 +1307,7 @@ export namespace Utils {
      *   The returned object has members key (string), corresponding to the type and value with the
      *   definition (object)
      */
-    export function enumerateSchemas(in_changeSet: SerializedChangeSet, in_callback: (arg0: { key: string; value: any; }, arg1: ErrorCallback<Error>) => void, in_finalizer: ErrorCallback<Error>): string[] {
+    export function enumerateSchemas(in_changeSet: SerializedChangeSet, in_callback: (arg0: { key: string; value: any }, arg1: ErrorCallback<Error>) => void, in_finalizer: ErrorCallback<Error>): string[] {
         const result = [];
 
         if (in_changeSet.insertTemplates) {
@@ -1395,7 +1395,7 @@ export namespace Utils {
      * @param in_excludeTypeids - Exclude all typeids from the returned ChangeSet
      * @returns Returns the applied operations to entries of the given typeid. The returned maps for insert and modify map paths to ChangeSets
      */
-    export function getChangesByType(in_typeid: string, in_changeSet: SerializedChangeSet, in_excludeTypeids: boolean): { insert?: object; modify?: object; } {
+    export function getChangesByType(in_typeid: string, in_changeSet: SerializedChangeSet, in_excludeTypeids: boolean): { insert?: object; modify?: object } {
         const result: SerializedChangeSet = {};
 
         // We search for the typeid by traversing the whole ChangeSet recursively
@@ -1581,8 +1581,8 @@ export namespace Utils {
     export function getChangesToTokenizedPaths(
         in_paths: Map<string, Map<string, any>> | { [key: string]: any },
         in_changeSet: any,
-        in_callback: { (context: TraversalContext, nestedObj: any, tokenizedPath: string[], contractedPathSegment: boolean): void; (arg0: TraversalContext, arg1: any, arg2: any[], arg3: boolean): void; },
-        in_options: { escapeLeadingDoubleUnderscore?: boolean; rootOperation?: OperationType; rootTypeid?: string; } = { escapeLeadingDoubleUnderscore: false, rootOperation: 'modify' }) {
+        in_callback: { (context: TraversalContext, nestedObj: any, tokenizedPath: string[], contractedPathSegment: boolean): void; (arg0: TraversalContext, arg1: any, arg2: any[], arg3: boolean): void },
+        in_options: { escapeLeadingDoubleUnderscore?: boolean; rootOperation?: OperationType; rootTypeid?: string } = { escapeLeadingDoubleUnderscore: false, rootOperation: 'modify' }) {
         const currentTokenizedPath = [];
 
         let paths;
@@ -1783,7 +1783,7 @@ export namespace Utils {
 
         const redundantPaths = new Map();
         Utils.getChangesToTokenizedPaths(pathsToObj, in_changeSet, function(
-            context: TraversalContext, nestedObj: { size: number; }, tokenizedPath: string[], contractedPathSegment: any,
+            context: TraversalContext, nestedObj: { size: number }, tokenizedPath: string[], contractedPathSegment: any,
         ) {
             if (context.getFullPath() === "") {
                 // skip the root
@@ -2090,7 +2090,7 @@ export namespace Utils {
      * @param in_options.includeTypeidInfo - Flag to include the typeid info
      * @returns - Flat list of paths
      */
-    export function extractPathsFromChangeSet(in_changeSet: SerializedChangeSet, in_options?: { includeOperation?: boolean; includeTypeidInfo?: boolean; }): { [key: string]: { operation: string, typeInfo: string } } {
+    export function extractPathsFromChangeSet(in_changeSet: SerializedChangeSet, in_options?: { includeOperation?: boolean; includeTypeidInfo?: boolean }): { [key: string]: { operation: string; typeInfo: string } } {
         const paths = {};
         Utils.traverseChangeSetRecursively(in_changeSet, {
             preCallback(context) {

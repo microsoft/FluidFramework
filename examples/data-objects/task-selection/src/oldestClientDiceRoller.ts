@@ -106,8 +106,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
 export const OldestClientDiceRollerInstantiationFactory =
-    new DataObjectFactory
-(
+    new DataObjectFactory(
     "@fluid-example/oldest-client-dice-roller",
     OldestClientDiceRoller,
     [],

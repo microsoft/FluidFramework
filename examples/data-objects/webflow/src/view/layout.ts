@@ -15,7 +15,7 @@ import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
 import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter";
 
-interface ILayoutCursor { parent: Node; previous: Node; }
+interface ILayoutCursor { parent: Node; previous: Node }
 
 interface IFormatInfo {
     readonly formatter: Readonly<Formatter<IFormatterState>>;

@@ -36,7 +36,7 @@ interface IOdspTestLoginInfo {
     siteUrl: string;
     username: string;
     password: string;
-    supportsBrowserAuth?: boolean
+    supportsBrowserAuth?: boolean;
 }
 
 type TokenConfig = IOdspTestLoginInfo & IClientConfig;
@@ -44,22 +44,22 @@ type TokenConfig = IOdspTestLoginInfo & IClientConfig;
 interface IOdspTestDriverConfig extends TokenConfig {
     directory: string;
     driveId: string;
-    options: HostStoragePolicy | undefined
+    options: HostStoragePolicy | undefined;
 }
 
 // specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
 interface LoginTenantRange {
-    prefix: string,
-    start: number,
-    count: number,
-    password: string,
+    prefix: string;
+    start: number;
+    count: number;
+    password: string;
 }
 
 interface LoginTenants {
     [tenant: string]: {
-        range: LoginTenantRange,
+        range: LoginTenantRange;
         // add different format here
-    }
+    };
 }
 
 /**
@@ -129,11 +129,11 @@ export class OdspTestDriver implements ITestDriver {
 
     public static async createFromEnv(
         config?: {
-            directory?: string,
-            username?: string,
-            options?: HostStoragePolicy,
-            supportsBrowserAuth?: boolean,
-            tenantIndex?: number,
+            directory?: string;
+            username?: string;
+            options?: HostStoragePolicy;
+            supportsBrowserAuth?: boolean;
+            tenantIndex?: number;
         },
         api: OdspDriverApiType = OdspDriverApi,
     ) {

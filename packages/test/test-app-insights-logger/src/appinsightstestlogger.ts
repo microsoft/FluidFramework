@@ -30,7 +30,7 @@ export class AppInsightsTestLogger implements ITelemetryBufferedLogger {
         }
     }
 
-    async flush(runInfo?: { url: string, runId?: number }): Promise<void> {
+    async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
         // await until data is posted to the server.
         await new Promise<void>((resolve) => {
             this.telemetryClient.flush({

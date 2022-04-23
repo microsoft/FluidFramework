@@ -17,12 +17,12 @@ import * as React from "react";
 // ---- Fluid Object w/ Functional React View using the useSyncedObject hook ----
 
 interface ICounterReactFunctionalProps {
-    syncedDataObject: SyncedDataObject,
-    syncedStateId: string,
+    syncedDataObject: SyncedDataObject;
+    syncedStateId: string;
 }
 
 interface ICounterReactFunctionalState {
-    value: number
+    value: number;
 }
 
 function CounterReactFunction(

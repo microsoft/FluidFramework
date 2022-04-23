@@ -7,7 +7,7 @@ import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
 import { IAppState, IClient, IArrayish, makeBubble, randomColor } from "@fluid-experimental/bubblebench-common";
 import { observe } from "./proxy";
 
-interface IApp { clients: IArrayish<IClient>; }
+interface IApp { clients: IArrayish<IClient> }
 
 export class AppState implements IAppState {
     private readonly root: IApp;

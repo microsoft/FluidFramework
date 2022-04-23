@@ -57,9 +57,9 @@ describe("Tests for Epoch Tracker", () => {
         const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };
         const cacheValue2 = { val: "val2", cacheEntryTime: Date.now() };
         const value1: IVersionedValueWithEpoch =
-            {value: cacheValue1, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+            { value: cacheValue1, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
         const value2 =
-            {value: cacheValue2, fluidEpoch: "epoch1", version: "non-existing version" };
+            { value: cacheValue2, fluidEpoch: "epoch1", version: "non-existing version" };
         await localCache.put(cacheEntry1, value1);
         await localCache.put(cacheEntry2, value2);
         // This will set the initial epoch value in epoch tracker.
@@ -80,9 +80,9 @@ describe("Tests for Epoch Tracker", () => {
         const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };
         const cacheValue2 = { val: "val2", cacheEntryTime: Date.now() };
         const value1: IVersionedValueWithEpoch =
-            {value: cacheValue1, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+            { value: cacheValue1, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
         const value2: IVersionedValueWithEpoch =
-            {value: cacheValue2, fluidEpoch: "epoch2", version: persistedCacheValueVersion };
+            { value: cacheValue2, fluidEpoch: "epoch2", version: persistedCacheValueVersion };
         await localCache.put(cacheEntry1, value1);
         await localCache.put(cacheEntry2, value2);
         // This will set the initial epoch value in epoch tracker.

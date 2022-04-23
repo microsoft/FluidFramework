@@ -120,8 +120,8 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
     }
 }
 
-interface ITagsState extends IFormatterState { root?: HTMLElement; pTag: TagName; popCount: number; }
-interface ITagsProps { tags?: TagName[]; }
+interface ITagsState extends IFormatterState { root?: HTMLElement; pTag: TagName; popCount: number }
+interface ITagsProps { tags?: TagName[] }
 
 class TagsFormatter extends Formatter<ITagsState> {
     public begin(layout: Layout, init: Readonly<Partial<ITagsState>>, prevState: Readonly<ITagsState>) {
@@ -192,7 +192,7 @@ class TagsFormatter extends Formatter<ITagsState> {
     }
 }
 
-interface IParagraphState extends IFormatterState { root?: HTMLElement; }
+interface IParagraphState extends IFormatterState { root?: HTMLElement }
 
 class ParagraphFormatter extends Formatter<IParagraphState> {
     constructor(private readonly defaultTag: TagName) { super(); }
@@ -254,7 +254,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
     }
 }
 
-interface ITextState extends IFormatterState { root?: HTMLElement; css?: ICssProps; }
+interface ITextState extends IFormatterState { root?: HTMLElement; css?: ICssProps }
 
 class TextFormatter extends Formatter<ITextState> {
     public begin(layout: Layout, init: Readonly<Partial<ITextState>>, prevState: Readonly<ITextState>) {

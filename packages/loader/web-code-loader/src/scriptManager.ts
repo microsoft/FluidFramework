@@ -116,7 +116,7 @@ export class ScriptManager {
 
     public async loadLibrary(
         libraryDetails: { files: string[]; library: string },
-    ): Promise<{ file: string, entryPoint: unknown }[]> {
+    ): Promise<{ file: string; entryPoint: unknown }[]> {
         return ScriptManager.protectEntrypoint(libraryDetails.library, async () => {
             return Promise.all(
                 libraryDetails.files.map(

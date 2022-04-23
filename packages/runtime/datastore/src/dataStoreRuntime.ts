@@ -183,7 +183,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         this.logger = ChildLogger.create(
             dataStoreContext.logger,
             "FluidDataStoreRuntime",
-            {all:{ dataStoreId: uuid() }},
+            { all:{ dataStoreId: uuid() } },
         );
 
         this.id = dataStoreContext.id;
@@ -958,7 +958,7 @@ export const mixinRequestHandler = (
  * @param Base - base class, inherits from FluidDataStoreRuntime
  */
 export const mixinSummaryHandler = (
-    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[], content: string } | undefined >,
+    handler: (runtime: FluidDataStoreRuntime) => Promise<{ path: string[]; content: string } | undefined >,
     Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ) => class RuntimeWithSummarizerHandler extends Base {
         private addBlob(summary: ISummaryTreeWithStats, path: string[], content: string) {

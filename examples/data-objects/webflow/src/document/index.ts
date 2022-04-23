@@ -93,7 +93,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
 const empty = Object.freeze({});
 
-export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
+export const getCss = (segment: ISegment): Readonly<{ style?: string; classList?: string }> => segment.properties || empty;
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const getComponentOptions = (segment: ISegment): IFluidHTMLOptions | undefined => (segment.properties && segment.properties.componentOptions) || empty;
@@ -419,7 +419,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         this.sharedString.annotateRange(start, end, { attr });
     }
 
-    public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition, pos: number } {
+    public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition; pos: number } {
         return this.sharedString.findTile(position, tileType as unknown as string, preceding);
     }
 
@@ -486,7 +486,7 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     }
 
     private updateCssClassList(start: number, end: number, callback: (classList: string) => string) {
-        const updates: { span: SegmentSpan, classList: string }[] = [];
+        const updates: { span: SegmentSpan; classList: string }[] = [];
 
         this.visitRange((position, segment, startOffset, endOffset) => {
             const oldList = getCss(segment).classList;

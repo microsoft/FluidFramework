@@ -271,7 +271,7 @@ export class GitWholeSummaryManager {
         summaryObject: SummaryObject,
         currentPath: string,
     ): Promise<string> {
-        switch(summaryObject.type) {
+        switch (summaryObject.type) {
             case SummaryType.Blob:
                 return this.writeSummaryBlob(
                     ((wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryBlob),

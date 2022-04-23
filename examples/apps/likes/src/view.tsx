@@ -15,7 +15,7 @@ import * as React from "react";
 // Interfaces
 
 interface ILikesViewProps {
-    syncedDataObject: SyncedDataObject,
+    syncedDataObject: SyncedDataObject;
 }
 
 // ---- Fluid Object w/ a Functional React view using a mixture of DDSes and local state ----
@@ -25,7 +25,7 @@ export function LikesView(
 ) {
     // Use synced states
     const [likes, likesReducer] = useSyncedCounter(props.syncedDataObject, "likes");
-    const [imgUrl, setImgUrl] = useSyncedString(props.syncedDataObject,"imgUrl");
+    const [imgUrl, setImgUrl] = useSyncedString(props.syncedDataObject, "imgUrl");
 
     // Render
     return (

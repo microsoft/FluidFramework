@@ -56,7 +56,7 @@ export class OdspDeltaStorageService {
 
             postBody += `_post: 1\r\n`;
             postBody += `\r\n--${formBoundary}--`;
-            const headers: {[index: string]: any} = {
+            const headers: { [index: string]: any } = {
                 "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
             };
 
@@ -139,11 +139,11 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             const length = messages.length;
             const last = messages[length - 1].sequenceNumber;
             if (start !== from) {
-                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length});
+                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length });
                 messages.length = 0;
             }
             if (last + 1 !== from + length) {
-                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length});
+                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length });
                 // we can do better here by finding consecutive sub-block and return it
                 messages.length = 0;
             }
@@ -155,8 +155,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         toTotal: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
-        fetchReason?: string)
-    {
+        fetchReason?: string) {
         // We do not control what's in the cache. Current API assumes that fetchMessages() keeps banging on
         // storage / cache until it gets ops it needs. This would result in deadlock if fixed range is asked from
         // cache and it's not there.

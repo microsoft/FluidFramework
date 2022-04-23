@@ -15,7 +15,7 @@ export class SchemaValidator {
         this.schemaMap = {};
     }
 
-    inheritsFrom(in_templateTypeid: any, in_baseTypeid: string | number, in_options: { includeSelf?: any; }) {
+    inheritsFrom(in_templateTypeid: any, in_baseTypeid: string | number, in_options: { includeSelf?: any }) {
         in_options = in_options || {};
 
         if (in_templateTypeid === in_baseTypeid &&

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 import * as crypto from "crypto";
 import { expect } from "chai";
 import { IContainer, IHostLoader, ILoaderOptions, IFluidCodeDetails } from "@fluidframework/container-definitions";
@@ -474,9 +473,12 @@ describe("PropertyDDS", () => {
                     // We expect all properties from the set to be present
                     const array = sharedPropertyTree1.root.get<ArrayProperty>("array");
                     assert(array !== undefined, "property undefined");
+
                     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                     for (const property of array.getValues() as any[]) {
+                        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                         expect(!deletedProperties.has(property.guid)).to.be.true;
+                        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                         expect(createdProperties.has(property.guid)).to.be.true;
                         createdProperties.delete(property.guid);
                     }

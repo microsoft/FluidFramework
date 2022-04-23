@@ -152,7 +152,7 @@ export interface IGarbageCollector {
     readonly writeDataAtRoot: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
-        options: { logger?: ITelemetryLogger, runGC?: boolean, runSweep?: boolean, fullGC?: boolean },
+        options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
     summarize(): ISummaryTreeWithStats | undefined;
@@ -593,11 +593,11 @@ export class GarbageCollector implements IGarbageCollector {
     public async collectGarbage(
         options: {
             /** Logger to use for logging GC events */
-            logger?: ITelemetryLogger,
+            logger?: ITelemetryLogger;
             /** True to run GC sweep phase after the mark phase */
-            runSweep?: boolean,
+            runSweep?: boolean;
             /** True to generate full GC data */
-            fullGC?: boolean,
+            fullGC?: boolean;
         },
     ): Promise<IGCStats> {
         const {

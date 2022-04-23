@@ -105,7 +105,7 @@ export const codeToBytesMap = {
     36: 8,
 };
 
-export function getValueSafely(map: {[index: number]: number}, key: number) {
+export function getValueSafely(map: { [index: number]: number }, key: number) {
     const val = map[key];
     assert(val !== undefined, 0x287 /* `key= ${key} must exist in the map` */);
     return val;
@@ -148,7 +148,7 @@ export function iteratePairs<T>(it: IterableIterator<T>) {
  * Helper function that returns iterator from an object
  * @param obj - object that supports iteration
  */
-export function iterate<T>(obj: {[Symbol.iterator]: () => IterableIterator<T>}) {
+export function iterate<T>(obj: { [Symbol.iterator]: () => IterableIterator<T> }) {
     return obj[Symbol.iterator]();
 }
 
@@ -168,7 +168,7 @@ export abstract class BlobCore {
      * @param constString - Whether it contains const string declaration.
      * @param useUtf8Code - Represents if the utf8 string marker code should be used when representing.
      */
-    constructor(public readonly constString: boolean, public readonly useUtf8Code: boolean = false) {}
+    constructor(public readonly constString: boolean, public readonly useUtf8Code: boolean = false) { }
 
     public toString() {
         return Uint8ArrayToString(this.buffer, "utf-8");
@@ -209,7 +209,7 @@ class BlobDeepCopy extends BlobCore {
  * Shallow copy blob, keeps a reference to portion of ReadBuffer
  * it was constructed from. It takes much less memory compared to BlobDeepCopy
  */
- export class BlobShallowCopy extends BlobCore {
+export class BlobShallowCopy extends BlobCore {
     /**
      * Represents a shallow copy of the blob. It is not a separate blob, just reference to original blobs.
      * @param data - Data array of the blob
@@ -238,12 +238,18 @@ class BlobDeepCopy extends BlobCore {
     }
 }
 
-export const addStringProperty = (node: NodeCore, a: string, b: string, encodeValAsConstString: boolean = false) =>
-    { node.addString(a, true); node.addString(b, encodeValAsConstString); };
-export const addNumberProperty = (node: NodeCore, a: string, b: number) =>
-    { node.addString(a, true); node.addNumber(b); };
-export const addBoolProperty = (node: NodeCore, a: string, b: boolean) =>
-    { node.addString(a, true); node.addBool(b); };
+export const addStringProperty =
+    (node: NodeCore, a: string, b: string, encodeValAsConstString: boolean = false) => {
+        node.addString(a, true); node.addString(b, encodeValAsConstString);
+    };
+export const addNumberProperty =
+    (node: NodeCore, a: string, b: number) => {
+        node.addString(a, true); node.addNumber(b);
+    };
+export const addBoolProperty =
+    (node: NodeCore, a: string, b: boolean) => {
+        node.addString(a, true); node.addBool(b);
+    };
 
 /**
  * Three leaf types supported by tree:
@@ -266,7 +272,7 @@ export class NodeCore {
         return this.children;
     }
 
-    constructor(public type: NodeCoreTypes = "set") {}
+    constructor(public type: NodeCoreTypes = "set") { }
 
     public [Symbol.iterator]() {
         return this.children[Symbol.iterator]();
@@ -293,15 +299,13 @@ export class NodeCore {
         return node;
     }
 
-    public getNode(index: number): NodeCore
-    {
+    public getNode(index: number): NodeCore {
         const node = this.children[index];
         assertNodeCoreInstance(node, "getNode should return a node");
         return node;
     }
 
-    public getNumber(index: number): number
-    {
+    public getNumber(index: number): number {
         const node = this.children[index];
         assertNumberInstance(node, "getNumber should return a number");
         return node;
@@ -342,7 +346,7 @@ export class NodeCore {
      * @param buffer - buffer to read from.
      */
     protected load(buffer: ReadBuffer, dictionary: BlobCore[]) {
-        for (;!buffer.eof;) {
+        for (; !buffer.eof;) {
             let childValue: NodeTypes | undefined;
             const code = buffer.read();
             switch (code) {
@@ -355,21 +359,21 @@ export class NodeCore {
                 }
                 case MarkerCodes.ConstStringDeclare:
                 case MarkerCodes.ConstStringDeclareBig:
-                {
-                    const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
-                    const constString = BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code), true);
-                    dictionary[stringId] = constString;
-                    break;
-                }
+                    {
+                        const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
+                        const constString = BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code), true);
+                        dictionary[stringId] = constString;
+                        break;
+                    }
                 case MarkerCodes.ConstString8Id:
                 case MarkerCodes.ConstString16Id:
                 case MarkerCodes.ConstString32Id:
-                {
-                    const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
-                    childValue = dictionary[stringId];
-                    this.children.push(childValue);
-                    break;
-                }
+                    {
+                        const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
+                        childValue = dictionary[stringId];
+                        this.children.push(childValue);
+                        break;
+                    }
                 case MarkerCodes.StringEmpty:
                 case MarkerCodes.String8Length:
                 case MarkerCodes.String16Length:
@@ -379,18 +383,18 @@ export class NodeCore {
                 case MarkerCodes.BinarySingle16:
                 case MarkerCodes.BinarySingle32:
                 case MarkerCodes.BinarySingle64:
-                {
-                    childValue = BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code), false);
-                    this.children.push(childValue);
-                    break;
-                }
+                    {
+                        childValue = BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code), false);
+                        this.children.push(childValue);
+                        break;
+                    }
                 // If integer is 0.
                 case MarkerCodes.Int0:
-                {
-                    childValue = 0;
-                    this.children.push(childValue);
-                    break;
-                }
+                    {
+                        childValue = 0;
+                        this.children.push(childValue);
+                        break;
+                    }
                 case MarkerCodes.UInt8:
                 case MarkerCodes.UInt16:
                 case MarkerCodes.UInt32:
@@ -399,11 +403,11 @@ export class NodeCore {
                 case MarkerCodes.Int16:
                 case MarkerCodes.Int32:
                 case MarkerCodes.Int64:
-                {
-                    childValue = buffer.read(getValueSafely(codeToBytesMap, code));
-                    this.children.push(childValue);
-                    break;
-                }
+                    {
+                        childValue = buffer.read(getValueSafely(codeToBytesMap, code));
+                        this.children.push(childValue);
+                        break;
+                    }
                 case MarkerCodes.BoolTrue:
                     this.children.push(true);
                     break;
@@ -420,10 +424,10 @@ export class NodeCore {
     }
 }
 
- /**
-  * TreeBuilder - Root of the tree.
-  * Provides loading and serialization capabilities.
-  */
+/**
+ * TreeBuilder - Root of the tree.
+ * Provides loading and serialization capabilities.
+ */
 export class TreeBuilder extends NodeCore {
     static load(buffer: ReadBuffer): TreeBuilder {
         const builder = new TreeBuilder();
@@ -492,7 +496,7 @@ function throwBufferParseException(
 function getNodeType(value: NodeTypes): NodeType {
     if (typeof value === "number") {
         return "Number";
-    } else if(value instanceof BlobCore) {
+    } else if (value instanceof BlobCore) {
         return "BlobCore";
     } else if (value instanceof NodeCore) {
         return "NodeCore";

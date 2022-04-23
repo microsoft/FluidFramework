@@ -706,8 +706,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         IGarbageCollectionRuntime,
         IRuntime,
         ISummarizerRuntime,
-        ISummarizerInternalsProvider
-{
+        ISummarizerInternalsProvider {
     public get IContainerRuntime() { return this; }
     public get IFluidRouter() { return this; }
 
@@ -1179,8 +1178,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if (this.summariesDisabled) {
             this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-        }
-        else {
+        } else {
             const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
             const orderedClientCollection = new OrderedClientCollection(
                 orderedClientLogger,
@@ -1216,18 +1214,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.summaryCollection,
                     async (runtime: IConnectableRuntime) => RunWhileConnectedCoordinator.create(runtime),
                 );
-            }
-            else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
+            } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
                 // Only create a SummaryManager and SummarizerClientElection
                 // if summaries are enabled and we are not the summarizer client.
                 const defaultAction = () => {
                     if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-                        this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
+                        this.logger.sendErrorEvent({ eventName: "SummaryStatus:Behind" });
                         // unregister default to no log on every op after falling behind
                         // and register summary ack handler to re-register this handler
                         // after successful summary
                         this.summaryCollection.once(MessageType.SummaryAck, () => {
-                            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+                            this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:CaughtUp" });
                             // we've caught up, so re-register the default action to monitor for
                             // falling behind, and unregister ourself
                             this.summaryCollection.on("default", defaultAction);
@@ -1880,8 +1877,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
-        rootDataStoreId: string): IFluidDataStoreContextDetached
-    {
+        rootDataStoreId: string): IFluidDataStoreContextDetached {
         return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
     }
 
@@ -2064,17 +2060,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async summarize(options: {
         /** True to generate the full tree with no handle reuse optimizations; defaults to false */
-        fullTree?: boolean,
+        fullTree?: boolean;
         /** True to track the state for this summary in the SummarizerNodes; defaults to true */
-        trackState?: boolean,
+        trackState?: boolean;
         /** Logger to use for correlated summary events */
-        summaryLogger?: ITelemetryLogger,
+        summaryLogger?: ITelemetryLogger;
         /** True to run garbage collection before summarizing; defaults to true */
-        runGC?: boolean,
+        runGC?: boolean;
         /** True to generate full GC data */
-        fullGC?: boolean,
+        fullGC?: boolean;
         /** True to run GC sweep phase after the mark phase */
-        runSweep?: boolean,
+        runSweep?: boolean;
     }): Promise<IRootSummaryTreeWithStats> {
         this.verifyNotClosed();
 
@@ -2224,11 +2220,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async collectGarbage(
         options: {
             /** Logger to use for logging GC events */
-            logger?: ITelemetryLogger,
+            logger?: ITelemetryLogger;
             /** True to run GC sweep phase after the mark phase */
-            runSweep?: boolean,
+            runSweep?: boolean;
             /** True to generate full GC data */
-            fullGC?: boolean,
+            fullGC?: boolean;
         },
     ): Promise<IGCStats> {
         return this.garbageCollector.collectGarbage(options);
@@ -2293,7 +2289,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summarizerNode.startSummary(summaryRefSeqNum, summaryLogger);
 
             // Helper function to check whether we should still continue between each async step.
-            const checkContinue = (): { continue: true; } | { continue: false; error: string } => {
+            const checkContinue = (): { continue: true } | { continue: false; error: string } => {
                 // Do not check for loss of connectivity directly! Instead leave it up to
                 // RunWhileConnectedCoordinator to control policy in a single place.
                 // This will allow easier change of design if we chose to. For example, we may chose to allow

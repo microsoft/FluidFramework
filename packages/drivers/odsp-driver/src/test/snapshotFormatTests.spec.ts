@@ -57,13 +57,13 @@ const snapshotTree: ISnapshotTree = {
 const blobs = new Map<string, ArrayBuffer>(
     [
         ["bARADgIe4qmDjJl2l2zz12IM3",
-            stringToBuffer(JSON.stringify({branch:"",minimumSequenceNumber:0,sequenceNumber:0,term:1}), "utf8")],
+            stringToBuffer(JSON.stringify({ branch:"", minimumSequenceNumber:0, sequenceNumber:0, term:1 }), "utf8")],
         ["bARBkx1nses1pHL1vKnmFUfIC", stringToBuffer(JSON.stringify([]), "utf8")],
-        ["bARD4RKvW4LL1KmaUKp6hUMSp", stringToBuffer(JSON.stringify({summaryFormatVersion:1,gcFeature:0}), "utf8")],
+        ["bARD4RKvW4LL1KmaUKp6hUMSp", stringToBuffer(JSON.stringify({ summaryFormatVersion:1, gcFeature:0 }), "utf8")],
         ["bARC6dCXlcrPxQHw3PeROtmKc",
-        stringToBuffer(JSON.stringify({pkg:"[\"@fluid-example/smde\"]",summaryFormatVersion:2,isRootDataStore:true}), "utf8")],
+        stringToBuffer(JSON.stringify({ pkg:"[\"@fluid-example/smde\"]", summaryFormatVersion:2, isRootDataStore:true }), "utf8")],
         ["bARDNMoBed+nKrsf04id52iUA", stringToBuffer(JSON.stringify(
-            {usedRoutes:[""],gcData:{gcNodes:{"/root":["/default/01b197a2-0432-413b-b2c9-83a992b804c4","/default"],"/01b197a2-0432-413b-b2c9-83a992b804c4":["/default"],"/":["/default/root","/default/01b197a2-0432-413b-b2c9-83a992b804c4"]}}}), "utf8")],
+            { usedRoutes:[""], gcData:{ gcNodes:{ "/root":["/default/01b197a2-0432-413b-b2c9-83a992b804c4", "/default"], "/01b197a2-0432-413b-b2c9-83a992b804c4":["/default"], "/":["/default/root", "/default/01b197a2-0432-413b-b2c9-83a992b804c4"] } } }), "utf8")],
     ],
 );
 

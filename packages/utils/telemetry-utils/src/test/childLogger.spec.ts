@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ChildLogger } from "../logger";
 
 describe("ChildLogger", () => {
-    it("Properties & Getters Propagate",()=>{
+    it("Properties & Getters Propagate", ()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -41,7 +41,7 @@ describe("ChildLogger", () => {
         assert(sent, "event should be sent");
     });
 
-    it("Undefined initial Properties and Getter",()=>{
+    it("Undefined initial Properties and Getter", ()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -75,7 +75,7 @@ describe("ChildLogger", () => {
         assert(sent, "event should be sent");
     });
 
-    it("Properties Are Combined",()=>{
+    it("Properties Are Combined", ()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -113,7 +113,7 @@ describe("ChildLogger", () => {
         assert(sent, "event should be sent");
     });
 
-    it("Getters Are Combined",()=>{
+    it("Getters Are Combined", ()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -152,7 +152,7 @@ describe("ChildLogger", () => {
         assert(sent, "event should be sent");
     });
 
-    it("Undefined initial namespace",()=>{
+    it("Undefined initial namespace", ()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -174,7 +174,7 @@ describe("ChildLogger", () => {
         assert(sent, "event should be sent");
     });
 
-    it("Undefined second child namespace",()=>{
+    it("Undefined second child namespace", ()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {
@@ -196,7 +196,7 @@ describe("ChildLogger", () => {
         assert(sent, "event should be sent");
     });
 
-    it("Undefined namespace",()=>{
+    it("Undefined namespace", ()=>{
         let sent = false;
         const logger: ITelemetryBaseLogger = {
             send(event: ITelemetryBaseEvent): void {

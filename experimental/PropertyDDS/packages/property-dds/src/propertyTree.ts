@@ -7,7 +7,8 @@
 import isEmpty from "lodash/isEmpty";
 import findIndex from "lodash/findIndex";
 import range from "lodash/range";
-import {copy as cloneDeep} from "fastest-json-copy";
+/* eslint-enable import/no-internal-modules */
+import { copy as cloneDeep } from "fastest-json-copy";
 import { Packr } from "msgpackr";
 
 import { AttachState } from "@fluidframework/container-definitions";
@@ -50,6 +51,7 @@ type FetchUnrebasedChangeFn = (guid: string) => IRemotePropertyTreeMessage;
 type FetchRebasedChangesFn = (startGuid: string, endGuid?: string) => IPropertyTreeMessage[];
 
 export const enum OpKind {
+
 	// eslint-disable-next-line @typescript-eslint/no-shadow
 	ChangeSet = 0,
 }
@@ -185,7 +187,7 @@ export class SharedPropertyTree extends SharedObject {
 	}
 
 	public get activeCommit(): IPropertyTreeMessage {
-		if(this.localChanges.length > 0) {
+		if (this.localChanges.length > 0) {
 			return this.localChanges[this.localChanges.length - 1];
 		} else {
 			return this.remoteChanges[this.remoteChanges.length - 1];
