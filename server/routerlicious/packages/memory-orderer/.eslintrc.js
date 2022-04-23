@@ -5,11 +5,10 @@
 
 module.exports = {
     "extends": [
-        "@fluidframework/eslint-config-fluid/formatting"
+        "@fluidframework/eslint-config-fluid"
     ],
     "rules": {
         "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
-        "no-void": "off",
     }
 }

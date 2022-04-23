@@ -5,7 +5,7 @@
 
 module.exports = {
     extends: [
-        "@fluidframework/eslint-config-fluid/formatting",
+        "@fluidframework/eslint-config-fluid",
     ],
     rules: {
         "@typescript-eslint/no-floating-promises": "off",

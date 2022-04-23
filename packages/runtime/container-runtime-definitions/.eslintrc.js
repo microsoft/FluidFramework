@@ -8,6 +8,6 @@ module.exports = {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
     "extends": [
-        "@fluidframework/eslint-config-fluid/formatting"
+        "@fluidframework/eslint-config-fluid"
     ]
 }
