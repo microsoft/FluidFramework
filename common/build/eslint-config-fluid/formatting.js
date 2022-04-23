@@ -57,6 +57,7 @@ module.exports = {
     "reportUnusedDisableDirectives": true,
     "rules": {
         "@typescript-eslint/unbound-method": "off",
+        "eslint-comments/disable-enable-pair": "off",
         "import/no-unresolved": "off",
         "no-void": "off",
 
@@ -125,38 +126,59 @@ module.exports = {
         // Require consistent spacing around type annotations.
         "@typescript-eslint/type-annotation-spacing": "error",
 
-        // Require parens around arrow function arguments
+        // Disallows spaces inside of brackets.
+        "array-bracket-spacing": "error",
+
+        // Requires consistent usage of linebreaks between array elements.
+        "array-element-newline": [
+            "error",
+            "consistent"
+        ],
+
+        // Require parens around arrow function arguments.
         "arrow-parens": [
             "error",
             "always"
         ],
 
-        // Superseded by @typescript-eslint/brace-style.
-        "brace-style": "off",
+        // Requires space before and after arrow function's arrow.
+        "arrow-spacing": "error",
 
-        // Superseded by @typescript-eslint/comma-spacing.
-        "comma-spacing": "off",
+        // Enforces spaces inside of blocks after opening blocks and before closing blocks.
+        "block-spacing": "error",
+
+        // Disallows spaces between the brackets and the values inside of them.
+        "computed-property-spacing": "error",
 
         // Requires following curly brace conventions.
         "curly": "error",
 
-        // Disabled becuase it doesn't work well for all our files.
-        "editorconfig/indent": "off",
-
-        // Requires that eslint disable comments have a start and an end, rather than being open-ended. Encourages
-        // minimal disabling of eslint rules, while still permitting whole-file exclusions.
-        "eslint-comments/disable-enable-pair": [
+        // Prevents the use of mixed newlines around the dot in a member expression.
+        "dot-location": [
             "error",
-            {
-                "allowWholeFile": true
-            }
+            "property",
         ],
 
-        // Superseded by @typescript-eslint/func-call-spacing.
-        "func-call-spacing": "off",
+        // Enforces line breaks between arguments of a function call.
+        "function-call-argument-newline": [
+            "off",
+            "consistent",
+        ],
 
-        // Superseded by @typescript-eslint/keyword-spacing.
-        "keyword-spacing": "off",
+        // Enforces consistent line breaks inside parentheses of function parameters or arguments.
+        "function-paren-newline": [
+            "off",
+            "consistent",
+        ],
+
+        // Enforce a consistent location for an arrow function containing an implicit return.
+        "implicit-arrow-linebreak": "off",
+
+        // Enforces consistent quotes in JSX attributes.
+        "jsx-quotes": "error",
+
+        // Enforces consistent spacing between keys and values in object literal properties.
+        "key-spacing": "error",
 
         // Requires parentheses when invoking a constructor with no arguments.
         "new-parens": "error",
@@ -185,8 +207,8 @@ module.exports = {
         // Disallows use of the void operator.
         "no-void": "error",
 
-        // Superseded by @typescript-eslint/object-curly-spacing.
-        "object-curly-spacing": "off",
+        // Enforces consistent line breaks after opening and before closing braces.
+        "object-curly-newline": "error",
 
         // Disallows empty lines at the beginning and ending of block statements, function bodies, class static blocks,
         // classes, and switch statements.
@@ -201,29 +223,20 @@ module.exports = {
             "consistent-as-needed"
         ],
 
-        // Superseded by @typescript-eslint/quotes.
-        "quotes": "off",
-
-        // Superseded by @typescript-eslint/semi.
-        "semi": "off",
-
         // Enforce spaces after, but not before, semicolons.
         "semi-spacing": "error",
 
         // Enforce consistent spacing before blocks.
         "space-before-blocks": "error",
 
-        // Superseded by @typescript-eslint/space-before-function-paren.
-        "space-before-function-paren": "off",
-
-        // Superseded by @typescript-eslint/space-infix-ops.
-        "space-infix-ops": "error",
-
         // Enforce consistent spacing inside parentheses.
         "space-in-parens": [
             "error",
             "never"
         ],
+
+        // Enforces consistency regarding the spaces after/before unary operators.
+        "space-unary-ops": "error",
 
         // Enforces consistent spacing after the // or /* in a comment.
         "spaced-comment": [
@@ -237,6 +250,11 @@ module.exports = {
             }
         ],
 
+        // Enforces spacing around colons of switch statements.
+        "switch-colon-spacing": "error",
+
+        // Enforces usage of spacing in template strings.
+        "template-curly-spacing": "error",
     },
     "overrides": [
         {
