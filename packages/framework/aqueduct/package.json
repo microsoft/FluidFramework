@@ -110,6 +110,10 @@
   "module:es5": "es5/index.js",
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IDataObjectProps": {
+        "backCompat": false
+      }
+    }
   }
 }

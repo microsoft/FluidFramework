@@ -110,6 +110,16 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IProvideTestFluidObject": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITestFluidObject": {
+        "backCompat": false
+      },
+      "ClassDeclaration_TestFluidObject": {
+        "backCompat": false
+      }
+    }
   }
 }
