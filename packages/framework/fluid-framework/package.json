@@ -33,7 +33,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.49.1000-62937",
+    "@fluidframework/container-definitions": "^0.49.1000-63433",
     "@fluidframework/fluid-static": "^0.60.1000",
     "@fluidframework/map": "^0.60.1000",
     "@fluidframework/sequence": "^0.60.1000"

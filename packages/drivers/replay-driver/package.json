@@ -35,7 +35,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-definitions": "^0.46.1000",
+    "@fluidframework/driver-definitions": "^0.47.1000-0",
     "@fluidframework/driver-utils": "^0.60.1000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/telemetry-utils": "^0.60.1000"
@@ -68,6 +68,22 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_FileSnapshotReader": {
+        "backCompat": false
+      },
+      "ClassDeclaration_OpStorage": {
+        "backCompat": false
+      },
+      "ClassDeclaration_ReadDocumentStorageServiceBase": {
+        "backCompat": false
+      },
+      "ClassDeclaration_ReplayController": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SnapshotStorage": {
+        "backCompat": false
+      }
+    }
   }
 }

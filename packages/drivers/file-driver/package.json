@@ -34,7 +34,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-definitions": "^0.46.1000",
+    "@fluidframework/driver-definitions": "^0.47.1000-0",
     "@fluidframework/driver-utils": "^0.60.1000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/replay-driver": "^0.60.1000"
@@ -63,6 +63,13 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_FluidFetchReader": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISnapshotWriterStorage": {
+        "backCompat": false
+      }
+    }
   }
 }

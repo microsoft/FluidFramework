@@ -65,7 +65,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.49.1000-62937",
+    "@fluidframework/container-definitions": "^0.49.1000-63433",
     "@fluidframework/container-loader": "^0.60.1000",
     "@fluidframework/container-runtime": "^0.60.1000",
     "@fluidframework/container-runtime-definitions": "^0.60.1000",
@@ -110,6 +110,10 @@
   "module:es5": "es5/index.js",
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IDataObjectProps": {
+        "backCompat": false
+      }
+    }
   }
 }
