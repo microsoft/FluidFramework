@@ -318,6 +318,10 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         );
 
         container.disconnect();
+        await timeoutPromise(
+            (resolve) => container.once("disconnected", () => resolve()),
+            {durationMs: timeoutMs, errorMsg: "container disconnection timeout"},
+        );
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
 
         container.connect();
@@ -370,6 +374,11 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(value2, "value", "value2 is not set");
 
         container2.disconnect();
+        await timeoutPromise(
+            (resolve) => container2.once("disconnected", () => resolve()),
+            {durationMs: timeoutMs, errorMsg: "container2 disconnection timeout"},
+        );
+
         directory1.set("key", "new-value");
         value1 = await directory1.get("key");
         assert.strictEqual(value1, "new-value", "value1 is not changed");

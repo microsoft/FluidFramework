@@ -50,6 +50,7 @@
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/routerlicious-driver": "^0.59.2000",
     "@fluidframework/runtime-utils": "^0.59.2000",
+    "@fluidframework/test-utils": "^0.59.2000",
     "@fluidframework/tinylicious-driver": "^0.59.2000",
     "uuid": "^8.3.1"
   },

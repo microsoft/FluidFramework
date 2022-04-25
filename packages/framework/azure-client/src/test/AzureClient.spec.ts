@@ -7,6 +7,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { timeoutPromise } from "@fluidframework/test-utils";
 import { AzureClient } from "../AzureClient";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
@@ -35,6 +36,7 @@ const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
 describe("AzureClient", () => {
     let client: AzureClient;
     let schema: ContainerSchema;
+    const timeoutMs = 500;
 
     beforeEach(() => {
         client = createAzureClient();
@@ -261,24 +263,30 @@ describe("AzureClient", () => {
      * Expected behavior: the container should be able to connect and disconnect. The connectionState
      * value should be updated accordingly. No errors should be thrown.
      */
-    it("can disconnect() and connect() a container", async () => {
+     it("can disconnect() and connect() a container", async () => {
         const container = (await client.createContainer(schema)).container;
+        assert(container.disconnect !== undefined, "container.disconnect is undefined");
+        assert(container.connect !== undefined, "container.connect is undefined");
         await container.attach();
-        await new Promise<void>((resolve) => {
-            container.once("connected", () => {
-                resolve();
-            });
-        });
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            {durationMs: timeoutMs, errorMsg: "container initial connection timeout"},
+        );
 
-        container.disconnect?.();
+        container.disconnect();
+        if (container.connectionState !== ConnectionState.Disconnected) {
+            await timeoutPromise(
+                (resolve) => container.once("disconnected", () => resolve()),
+                {durationMs: timeoutMs, errorMsg: "container disconnection timeout"},
+            );
+        }
         assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect");
 
-        container.connect?.();
-        await new Promise<void>((resolve) => {
-            container.once("connected", () => {
-                resolve();
-            });
-        });
+        container.connect();
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            {durationMs: timeoutMs, errorMsg: "container connect() timeout"},
+        );
         assert.strictEqual(
             container.connectionState, ConnectionState.Connected,
             "container can't connect after calling disconnect()",
@@ -295,11 +303,10 @@ describe("AzureClient", () => {
     it("can disconnect() to prevent processing ops and connect() to catch up", async () => {
         const containerCreate = (await client.createContainer(schema)).container;
         const containerId = await containerCreate.attach();
-        await new Promise<void>((resolve) => {
-            containerCreate.once("connected", () => {
-                resolve();
-            });
-        });
+        await timeoutPromise(
+            (resolve) => containerCreate.once("connected", () => resolve()),
+            {durationMs: timeoutMs, errorMsg: "containerCreate initial connection timeout"},
+        );
 
         const initialObjectsCreate = containerCreate.initialObjects;
         const map1Create = initialObjectsCreate.map1 as SharedMap;
@@ -307,31 +314,39 @@ describe("AzureClient", () => {
         let valueCreate = await map1Create.get("key");
 
         const containerGet = (await client.getContainer(containerId, schema)).container;
+        assert(containerGet.disconnect !== undefined, "containerGet.disconnect is undefined");
+        assert(containerGet.connect !== undefined, "containerGet.connect is undefined");
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         if (containerGet.connectionState !== ConnectionState.Connected) {
-            await new Promise<void>((resolve) => {
-                containerGet.once("connected", () => {
-                    resolve();
-                });
-            });
+            await timeoutPromise(
+                (resolve) => containerGet.once("connected", () => resolve()),
+                {durationMs: timeoutMs, errorMsg: "containerGet initial connection timeout"},
+            );
         }
 
         let valueGet = await map1Get.get("key");
         assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
 
-        containerGet.disconnect?.();
+        containerGet.disconnect();
+        if (containerGet.connectionState !== ConnectionState.Disconnected) {
+            await timeoutPromise(
+                (resolve) => containerGet.once("disconnected", () => resolve()),
+                {durationMs: timeoutMs, errorMsg: "containerGet disconnection timeout"},
+            );
+        }
+        assert.strictEqual(containerGet.connectionState, ConnectionState.Disconnected, "container can't disconnect");
+
         map1Create.set("key", "new-value");
         valueCreate = await map1Create.get("key");
 
         valueGet = await map1Get.get("key");
         assert.notStrictEqual(valueGet, valueCreate, "container continued processing ops after disconnect()");
 
-        containerGet.connect?.();
-        await new Promise<void>((resolve) => {
-            map1Get.once("valueChanged", () => {
-                resolve();
-            });
-        });
+        containerGet.connect();
+        await timeoutPromise(
+            (resolve) => map1Get.once("valueChanged", () => resolve()),
+            {durationMs: timeoutMs, errorMsg: "map1Get valueChanged timeout"},
+        );
         valueGet = await map1Get.get("key");
         assert.strictEqual(valueGet, valueCreate, "container did not catch up after connect()");
     });
