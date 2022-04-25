@@ -267,6 +267,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
         // new handle works
         assert.strictEqual(bufferToString(await (dataStore._root.get("my blob")).get(), "utf-8"), text);
+        container.close();
     });
 
     it("serialize/rehydrate container with blobs", async function() {
@@ -320,6 +321,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
         await provider.ensureSynchronized();
         assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
+        detachedContainer.close();
     });
 
     itExpects("serialize/rehydrate then attach", [
@@ -350,6 +352,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
         await provider.ensureSynchronized();
         assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
+        rehydratedContainer.close();
     });
 
     itExpects("serialize/rehydrate multiple times then attach", [
@@ -383,6 +386,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
         await provider.ensureSynchronized();
         assert.strictEqual(bufferToString(await (attachedDataStore._root.get("my blob")).get(), "utf-8"), text);
+        container.close();
     });
 
     it("rehydrating without detached blob storage results in error", async function() {
