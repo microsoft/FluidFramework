@@ -187,7 +187,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         this.incomingOp.on("set", this.handleIncomingSet);
         this.incomingOp.on("delete", this.handleIncomingDelete);
-        this.incomingOp.on("accept", this.handleIncomingAcceptOp);
+        this.incomingOp.on("accept", this.handleIncomingAccept);
 
         this.runtime.getQuorum().on("removeMember", this.handleQuorumRemoveMember);
 
@@ -399,7 +399,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         }
     };
 
-    private readonly handleIncomingAcceptOp = (
+    private readonly handleIncomingAccept = (
         key: string,
         pendingSeq: number,
         clientId: string,
@@ -411,6 +411,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
             || !pending.expectedSignoffs.includes(clientId)) {
             // Drop unexpected accepts on the ground.  This can happen normally in resubmit on reconnect cases, and
             // is benign since the client implicitly accepts on disconnect.
+            // TODO: We could filter out just the accept ops when resubmitting on reconnect to avoid this - the
+            // proposals could still be resubmitted.
             return;
         }
 
