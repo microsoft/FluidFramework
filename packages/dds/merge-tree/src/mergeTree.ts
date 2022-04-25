@@ -53,6 +53,7 @@ import {
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager } from "./segmentPropertiesManager";
 
+// GH #1009 will also support a TrackingGroupCollection
 export interface ReferencePosition {
     properties?: PropertySet;
     refType: ReferenceType;
@@ -1859,6 +1860,9 @@ export class MergeTree {
         const refOffset = referencePosition.getOffset();
         const refSegLen = this.nodeLength(refSegment, this.collabWindow.currentSeq, clientId);
         let startSeg = refSegment;
+        // GH #1009 we will need to support sliding splitting ranges used for undo-redo here
+        // to preserve ordering.
+
         // if the change isn't at a boundary, we need to split the segment
         if (refOffset !== 0 && refSegLen !== undefined && refSegLen !== 0) {
             const splitSeg = this.splitLeafSegment(refSegment, refOffset);

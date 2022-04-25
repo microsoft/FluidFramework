@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
+
 import { ISegment } from "./mergeTree";
 import { SortedSegmentSet } from "./sortedSegmentSet";
+
+// GH #1009 support reference positions in tracking groups here
+// likely all segments become ISegment | ReferencePosition
 
 export class TrackingGroup {
     private readonly segmentSet: SortedSegmentSet;
