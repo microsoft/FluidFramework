@@ -1,4 +1,4 @@
-# @fluid-experimental/property-query-service
+# @fluid-internal/property-query-service
 # Moira Service
 A service that maintains a representation of the commit history which allows random access at arbitrary commits.
 
