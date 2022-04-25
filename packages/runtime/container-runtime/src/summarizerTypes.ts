@@ -147,6 +147,12 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcTotalBlobsSize?: number;
     /** The number of gc blobs in this summary. */
     readonly gcBlobNodeCount?: number;
+    /** Sum of the sizes of all op contents since the last summary */
+    readonly opsSizesSinceLastSummary: number;
+    /** Number of non-system ops since the last summary @see isSystemMessage */
+    readonly nonSystemOpsSinceLastSummary: number;
+    /** Number of members in the quorum at when summary was generated. */
+    readonly quorumSize?: number;
 }
 
 /** Base results for all submitSummary attempts. */
@@ -156,6 +162,7 @@ export interface IBaseSummarizeResult {
     readonly error: any;
     /** Reference sequence number as of the generate summary attempt. */
     readonly referenceSequenceNumber: number;
+    readonly minimumSequenceNumber: number;
 }
 
 /** Results of submitSummary after generating the summary tree. */

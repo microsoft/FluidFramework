@@ -21,6 +21,44 @@ import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
+        describe("flushMode setting", () => {
+            let containerRuntime: ContainerRuntime;
+            const getMockContext = ((): Partial<IContainerContext> => {
+                return {
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorum(),
+                    taggedLogger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
+                    closeFn: (_error?: ICriticalContainerError): void => { },
+                    updateDirtyContainerState: (_dirty: boolean) => { },
+                };
+            });
+
+            it("Default flush mode", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext() as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                );
+
+                assert.strictEqual(containerRuntime.flushMode, FlushMode.TurnBased);
+            });
+
+            it("Override default flush mode using options", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext() as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {
+                        flushMode: FlushMode.Immediate,
+                    },
+                );
+
+                assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
+            });
+        });
+
         describe("orderSequentially", () =>
             [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
                 describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
@@ -129,9 +167,12 @@ describe("Runtime", () => {
             const sandbox = createSandbox();
             const createMockContext =
                 (attachState: AttachState, addPendingMsg: boolean): Partial<IContainerContext> => {
-                    const pendingMessage = {
-                        type: "message",
-                        content: {},
+                    const pendingState = {
+                        pending: { pendingStates: [{
+                            type: "attach",
+                            content: {},
+                        }]},
+                        savedOps: [],
                     };
 
                     return {
@@ -141,7 +182,7 @@ describe("Runtime", () => {
                         clientDetails: { capabilities: { interactive: true } },
                         updateDirtyContainerState: (dirty: boolean) => { },
                         attachState,
-                        pendingLocalState: addPendingMsg ? { pendingStates: [pendingMessage] } : undefined,
+                        pendingLocalState: addPendingMsg ? pendingState : undefined,
                     };
                 };
 
@@ -551,15 +592,17 @@ describe("Runtime", () => {
                 };
             };
             const getMockPendingStateManager = (hasPendingMessages: boolean): PendingStateManager => {
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 return {
                     replayPendingStates: () => { },
                     hasPendingMessages: () => hasPendingMessages,
-                    processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
-                        return { localAck: false, localOpMetadata: undefined };
+                    processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
+                        return undefined;
                     },
                 } as PendingStateManager;
             };
             const getMockDataStores = (): DataStores => {
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 return {
                     processFluidDataStoreOp:
                         (_message: ISequencedDocumentMessage,

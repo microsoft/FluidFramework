@@ -14,12 +14,13 @@ import {
     IThrottleMiddlewareOptions,
     getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
 import requestAPI from "request";
 import winston from "winston";
-import { Constants, handleResponse } from "../../../utils";
+import { Constants } from "../../../utils";
 import {
     craftClientJoinMessage,
     craftClientLeaveMessage,
@@ -63,6 +64,7 @@ export function create(
 
     router.patch(
         "/:tenantId/:id/root",
+        validateRequestParams("tenantId", "id"),
         throttle(throttler, winston, commonThrottleOptions),
         async (request, response) => {
             const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
@@ -72,6 +74,7 @@ export function create(
                 validP.then(() => undefined),
                 response,
                 undefined,
+                undefined,
                 200,
                 () => handlePatchRootSuccess(request, mapSetBuilder));
         },
@@ -79,6 +82,7 @@ export function create(
 
     router.post(
         "/:tenantId/:id/blobs",
+        validateRequestParams("tenantId", "id"),
         throttle(throttler, winston, commonThrottleOptions),
         async (request, response) => {
             const tenantId = getParam(request.params, "tenantId");

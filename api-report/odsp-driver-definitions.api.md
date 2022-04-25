@@ -20,6 +20,7 @@ export interface HostStoragePolicy {
     // (undocumented)
     enableRedeemFallback?: boolean;
     enableShareLinkWithCreate?: boolean;
+    // @deprecated (undocumented)
     fetchBinarySnapshotFormat?: boolean;
     isolateSocketCache?: boolean;
     // (undocumented)
@@ -207,7 +208,6 @@ export interface TokenResponse {
     fromCache?: boolean;
     token: string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

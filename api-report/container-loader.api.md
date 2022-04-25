@@ -10,7 +10,6 @@ import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { ICodeLoader } from '@fluidframework/container-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerEvents } from '@fluidframework/container-definitions';
@@ -27,6 +26,7 @@ import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
+import { IProtocolState } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IProxyLoaderFactory } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -66,12 +66,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get closed(): boolean;
     // (undocumented)
+    get closeSignal(): AbortSignal;
+    // (undocumented)
+    connect(): void;
+    // (undocumented)
     get connected(): boolean;
     // (undocumented)
     get connectionState(): ConnectionState;
     static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // (undocumented)
+    disconnect(): void;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -81,7 +87,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
-    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: unknown): Promise<Container>;
+    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
     // (undocumented)
@@ -95,13 +101,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     request(path: IRequest): Promise<IResponse>;
     // (undocumented)
     get resolvedUrl(): IResolvedUrl | undefined;
-    // (undocumented)
+    // @deprecated
     resume(): void;
     get scopes(): string[] | undefined;
     // (undocumented)
     serialize(): string;
     get serviceConfiguration(): IClientConfiguration | undefined;
-    // (undocumented)
+    // @deprecated
     setAutoReconnect(reconnect: boolean): void;
     // (undocumented)
     get storage(): IDocumentStorageService;
@@ -123,6 +129,7 @@ export interface IContainerConfig {
     clientDetailsOverride?: IClientDetails;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
+    serializedContainerState?: IPendingContainerState;
 }
 
 // @public (undocumented)
@@ -155,7 +162,7 @@ export interface ILoaderOptions extends ILoaderOptions_2 {
 
 // @public
 export interface ILoaderProps {
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
     readonly configProvider?: IConfigProviderBase;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
@@ -168,7 +175,7 @@ export interface ILoaderProps {
 
 // @public
 export interface ILoaderServices {
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
@@ -176,6 +183,20 @@ export interface ILoaderServices {
     readonly scope: FluidObject;
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
+}
+
+// @public
+export interface IPendingContainerState {
+    // (undocumented)
+    clientId?: string;
+    // (undocumented)
+    pendingRuntimeState: unknown;
+    // (undocumented)
+    protocol: IProtocolState;
+    // (undocumented)
+    term: number;
+    // (undocumented)
+    url: string;
 }
 
 // @public

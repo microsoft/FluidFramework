@@ -14,7 +14,6 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-    IFluidDataStoreChannel,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
@@ -48,7 +47,7 @@ describe("Data Store Context Tests", () => {
         let localDataStoreContext: LocalFluidDataStoreContext;
         let storage: IDocumentStorageService;
         let scope: FluidObject;
-        const attachCb = (mR: IFluidDataStoreChannel) => { };
+        const makeLocallyVisibleFn = () => {};
         let containerRuntime: ContainerRuntime;
         let summarizerNode: IRootSummarizerNodeWithGC;
 
@@ -83,6 +82,7 @@ describe("Data Store Context Tests", () => {
                 get IFluidDataStoreRegistry() { return registry; },
                 get: async (pkg) => Promise.resolve(factory),
             };
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IFluidDataStoreRegistry: registry,
                 on: (event, listener) => { },
@@ -99,7 +99,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
                     writeGCDataAtRoot: true,
@@ -141,7 +141,7 @@ describe("Data Store Context Tests", () => {
                         storage,
                         scope,
                         createSummarizerNodeFn,
-                        bindChannelFn: attachCb,
+                        makeLocallyVisibleFn,
                         snapshotTree: undefined,
                         isRootDataStore: false,
                         writeGCDataAtRoot: true,
@@ -164,6 +164,7 @@ describe("Data Store Context Tests", () => {
                 registryWithSubRegistries.instantiateDataStore =
                     async (context: IFluidDataStoreContext) => new MockFluidDataStoreRuntime();
 
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 containerRuntime = {
                     IFluidDataStoreRegistry: registryWithSubRegistries,
                     on: (event, listener) => { },
@@ -175,7 +176,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
                     writeGCDataAtRoot: true,
@@ -215,7 +216,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
                     writeGCDataAtRoot: true,
@@ -234,7 +235,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
                     writeGCDataAtRoot: true,
@@ -255,7 +256,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: true,
                     writeGCDataAtRoot: true,
@@ -274,7 +275,7 @@ describe("Data Store Context Tests", () => {
                     storage,
                     scope,
                     createSummarizerNodeFn,
-                    bindChannelFn: attachCb,
+                    makeLocallyVisibleFn,
                     snapshotTree: undefined,
                     isRootDataStore: false,
                     writeGCDataAtRoot: true,
@@ -323,6 +324,7 @@ describe("Data Store Context Tests", () => {
             registry.IFluidDataStoreRegistry = registry;
             registry.get = async (pkg) => Promise.resolve(factory);
 
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IFluidDataStoreRegistry: registry,
                 on: (event, listener) => { },

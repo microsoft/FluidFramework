@@ -88,6 +88,7 @@ describe("Runtime", () => {
         ]);
     });
 
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const batchMessage = (sequenceNumber: number): ISequencedDocumentMessage => ({
         sequenceNumber,
         referenceSequenceNumber: sequenceNumber,

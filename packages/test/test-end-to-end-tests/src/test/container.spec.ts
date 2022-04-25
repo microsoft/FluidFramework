@@ -278,7 +278,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     it("closeAndGetPendingLocalState() called on container", async () => {
         const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
             TestDataObjectType,
-            getDataStoreFactory());
+            getDataStoreFactory(),
+            { enableOfflineLoad: true });
 
         const localTestObjectProvider = new TestObjectProvider(
             Loader,

@@ -7,7 +7,7 @@
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { ICodeLoader } from '@fluidframework/container-definitions';
+import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
@@ -21,6 +21,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidModule } from '@fluidframework/container-definitions';
+import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { ILoaderProps } from '@fluidframework/container-loader';
@@ -194,9 +195,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
     }
 
 // @public
-export class LocalCodeLoader implements ICodeLoader {
+export class LocalCodeLoader implements ICodeDetailsLoader {
     constructor(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, runtimeOptions?: IContainerRuntimeOptions);
-    load(source: IFluidCodeDetails): Promise<IFluidModule>;
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
 // @public

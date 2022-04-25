@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { makeStyles } from '@material-ui/core';
-import classNames from 'classnames';
-import * as  React from 'react';
+import { makeStyles } from "@material-ui/core";
+import classNames from "classnames";
+import * as React from "react";
 
-import { iconBaseColor, iconHoverColor, iconSelectColor } from './constants';
+import { iconBaseColor, iconHoverColor, iconSelectColor } from "./constants";
 
 const useStyles = makeStyles({
   svgIcon: (props: ISvgIconProps) => ({
-    '&.hoverableSvgIcon': {
-      'cursor': 'pointer',
-      'pointer-events': 'auto',
+    "&.hoverableSvgIcon": {
+      "cursor": "pointer",
+      "pointer-events": "auto",
     },
-    '&:hover:not(.activeSvgIcon)': {
+    "&:hover:not(.activeSvgIcon)": {
       fill: iconHoverColor,
     },
-    'fill': props.fill ? props.fill : (props.active ? iconSelectColor : iconBaseColor),
-    'pointer-events': 'none',
-    'vertical-align': 'middle',
+    "fill": props.fill ? props.fill : (props.active ? iconSelectColor : iconBaseColor),
+    "pointer-events": "none",
+    "vertical-align": "middle",
   }),
-}, { name: 'SvgIcon' });
+}, { name: "SvgIcon" });
 
 export interface ISvgIconProps extends React.SVGAttributes<any> {
   /**
@@ -50,16 +50,15 @@ export interface ISvgIconProps extends React.SVGAttributes<any> {
  * A svg icon component which relies on svg file that exits in the SVGStore component
  */
 export const SvgIcon: React.FunctionComponent<ISvgIconProps> = (props) => {
-
   const classes = useStyles(props);
-  const { active, activeClassName, className, hoverable = false, svgId, transform, width = '16px', height = '16px',
+  const { active, activeClassName, className, hoverable = false, svgId, transform, width = "16px", height = "16px",
     ...otherProps } = props;
   const cx = classNames(classes.svgIcon, { hoverableSvgIcon: hoverable }, { activeSvgIcon: active },
     { [activeClassName!]: active }, className);
 
   return (
     <svg {...otherProps} className={cx} width={width} height={height}>
-      <use xlinkHref={'#' + svgId} transform={transform} />
+      <use xlinkHref={`#${ svgId }`} transform={transform} />
     </svg>
   );
 };

@@ -15,14 +15,15 @@ import {
     AttachState,
     ILoaderOptions,
     IRuntimeFactory,
-    ICodeLoader,
     IProvideRuntimeFactory,
     IFluidCodeDetails,
     IFluidCodeDetailsComparer,
     IProvideFluidCodeDetailsComparer,
+    ICodeDetailsLoader,
+    IFluidModuleWithDetails,
+    ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions";
 import {
-    IFluidObject,
     IRequest,
     IResponse,
     FluidObject,
@@ -44,7 +45,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { Container } from "./container";
-import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -52,7 +52,7 @@ export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: FluidObject,
-        codeLoader: ICodeDetailsLoader | ICodeLoader,
+        codeLoader: ICodeDetailsLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -156,10 +156,10 @@ export class ContainerContext implements IContainerContext {
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IFluidObject & FluidObject,
-        private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
+        public readonly scope: FluidObject,
+        private readonly codeLoader: ICodeDetailsLoader,
         private readonly _codeDetails: IFluidCodeDetails,
-        private readonly _baseSnapshot: ISnapshotTree | undefined,
+        private _baseSnapshot: ISnapshotTree | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         public readonly loader: ILoader,
@@ -287,7 +287,9 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
-    public notifyAttaching() {
+    public notifyAttaching(snapshot: ISnapshotTreeWithBlobContents) {
+        this._baseSnapshot = snapshot;
+        this.runtime.notifyAttaching?.(snapshot);
         this.runtime.setAttachState(AttachState.Attaching);
     }
 
@@ -329,6 +331,9 @@ export class ContainerContext implements IContainerContext {
                 details: details ?? codeDetails,
             };
         } else {
+            // If "module" is not in the result, we are using a legacy ICodeLoader.  Fix the result up with details.
+            // Once usage drops to 0 we can remove this compat path.
+            this.taggedLogger.sendTelemetryEvent({ eventName: "LegacyCodeLoader" });
             return { module: loadCodeResult, details: codeDetails };
         }
     }

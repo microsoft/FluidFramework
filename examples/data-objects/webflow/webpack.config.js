@@ -5,7 +5,7 @@
 
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 
 module.exports = env => {
     const isProduction = env && env.production;
@@ -82,8 +82,8 @@ module.exports = env => {
                 globalObject: 'self',
             },
             devServer: {
-                before: (app, server) => fluidRoute.before(app, server, env),
-                after: (app, server) => fluidRoute.after(app, server, __dirname, env),
+                onBeforeSetupMiddleware: (devServer) => fluidRoute.before(devServer.app, devServer, env),
+                onAfterSetupMiddleware: (devServer) => fluidRoute.after(devServer.app, devServer, __dirname, env),
                 watchOptions: {
                     ignored: "**/node_modules/**",
                 }

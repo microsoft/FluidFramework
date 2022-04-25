@@ -13,12 +13,10 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import {
-    ICodeLoader,
     IContainer,
     IFluidModule,
     IHostLoader,
     ILoader,
-    IPendingLocalState,
     ILoaderOptions as ILoaderOptions1,
     IProxyLoaderFactory,
     LoaderHeader,
@@ -48,7 +46,7 @@ import {
     MultiUrlResolver,
     MultiDocumentServiceFactory,
 } from "@fluidframework/driver-utils";
-import { Container } from "./container";
+import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 
@@ -187,7 +185,7 @@ export interface ILoaderProps {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
 
     /**
      * A property bag of options used by various layers
@@ -243,7 +241,7 @@ export interface ILoaderServices {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader;
 
     /**
      * A property bag of options used by various layers
@@ -295,7 +293,7 @@ export class Loader implements IHostLoader {
     private readonly mc: MonitoringContext;
 
     constructor(loaderProps: ILoaderProps) {
-        const scope = { ...loaderProps.scope as FluidObject<ILoader> };
+        const scope: FluidObject<ILoader> = { ...loaderProps.scope };
         if (loaderProps.options?.provideScopeLoader !== false) {
             scope.ILoader = this;
         }
@@ -393,7 +391,7 @@ export class Loader implements IHostLoader {
 
     private async resolveCore(
         request: IRequest,
-        pendingLocalState?: IPendingLocalState,
+        pendingLocalState?: IPendingContainerState,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
@@ -435,7 +433,7 @@ export class Loader implements IHostLoader {
                 await this.loadContainer(
                     request,
                     resolvedAsFluid,
-                    pendingLocalState?.pendingRuntimeState);
+                    pendingLocalState);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
@@ -486,7 +484,7 @@ export class Loader implements IHostLoader {
     private async loadContainer(
         request: IRequest,
         resolved: IFluidResolvedUrl,
-        pendingLocalState?: unknown,
+        pendingLocalState?: IPendingContainerState,
     ): Promise<Container> {
         return Container.load(
             this,

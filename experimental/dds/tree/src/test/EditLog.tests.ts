@@ -5,11 +5,13 @@
 
 import { expect } from 'chai';
 import { IsoBuffer } from '@fluidframework/common-utils';
-import { EditHandle, EditLog, separateEditAndId } from '../EditLog';
-import { Change } from '../default-edits';
+import { EditLog, separateEditAndId } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
-import { newEdit, Edit, EditWithoutId } from '../generic';
+import { Edit, EditChunkContents, EditWithoutId, FluidEditHandle } from '../persisted-types';
+import { newEdit } from '../EditUtilities';
+
+type DummyChange = never;
 
 /**
  * Creates an edit log with the specified number of chunks, stored as handles instead of edits.
@@ -18,15 +20,11 @@ import { newEdit, Edit, EditWithoutId } from '../generic';
  * @param editsPerChunkOnEditLog - The number of edits per chunk that gets set for future edits to the edit log.
  * @returns The edit log created with handles.
  */
-function createEditLogWithHandles(
-	numberOfChunks = 2,
-	editsPerChunk = 5,
-	editsPerChunkOnEditLog = 100
-): EditLog<Change> {
+function createEditLogWithHandles(numberOfChunks = 2, editsPerChunk = 5): EditLog<DummyChange> {
 	const editIds: EditId[] = [];
-	const editChunks: EditWithoutId<Change>[][] = [];
+	const editChunks: EditWithoutId<DummyChange>[][] = [];
 
-	let inProgessChunk: EditWithoutId<Change>[] = [];
+	let inProgessChunk: EditWithoutId<DummyChange>[] = [];
 	for (let i = 0; i < numberOfChunks * editsPerChunk; i++) {
 		const { id, editWithoutId } = separateEditAndId(newEdit([]));
 		editIds.push(id);
@@ -39,8 +37,9 @@ function createEditLogWithHandles(
 		}
 	}
 
-	const handles: EditHandle[] = editChunks.map((chunk) => {
+	const handles: FluidEditHandle[] = editChunks.map((chunk) => {
 		return {
+			absolutePath: 'test blob',
 			get: async () => {
 				return IsoBuffer.from(JSON.stringify({ edits: chunk }));
 			},
@@ -48,16 +47,25 @@ function createEditLogWithHandles(
 	});
 
 	let startRevision = 0;
-	const handlesWithKeys = handles.map((chunk) => {
+	const handlesWithKeys = handles.map((baseHandle) => {
 		const handle = {
 			startRevision,
-			chunk,
+			chunk: {
+				get: async () =>
+					(
+						JSON.parse(IsoBuffer.from(await baseHandle.get()).toString()) as Omit<
+							EditChunkContents,
+							'edits'
+						> & { edits: EditWithoutId<DummyChange>[] }
+					).edits,
+				baseHandle,
+			},
 		};
 		startRevision = startRevision + 5;
 		return handle;
 	});
 
-	const editLog = new EditLog<Change>({ editChunks: handlesWithKeys, editIds }, undefined, editsPerChunkOnEditLog);
+	const editLog = new EditLog({ editChunks: handlesWithKeys, editIds });
 
 	return editLog;
 }
@@ -265,8 +273,8 @@ describe('EditLog', () => {
 	});
 
 	it('can correctly compare equality to other edit logs', () => {
-		const edit0Copy: Edit<Change> = { ...edit0 };
-		const edit1Copy: Edit<Change> = { ...edit1 };
+		const edit0Copy: Edit<DummyChange> = { ...edit0 };
+		const edit1Copy: Edit<DummyChange> = { ...edit1 };
 		const { editWithoutId: editWithoutId0Copy } = separateEditAndId(edit0Copy);
 		const { editWithoutId: editWithoutId1Copy } = separateEditAndId(edit1Copy);
 
@@ -279,7 +287,7 @@ describe('EditLog', () => {
 
 		expect(log0.equals(log1)).to.be.true;
 
-		const log2 = new EditLog<Change>({
+		const log2 = new EditLog<DummyChange>({
 			editChunks: [{ startRevision: 0, chunk: [editWithoutId0] }],
 			editIds: [id0],
 		});
@@ -324,7 +332,7 @@ describe('EditLog', () => {
 	it('can add edits to logs with varying edit chunk sizes', async () => {
 		const numberOfChunks = 2;
 		const editsPerChunk = 5;
-		const log = createEditLogWithHandles(numberOfChunks, editsPerChunk, 100);
+		const log = createEditLogWithHandles(numberOfChunks, editsPerChunk);
 
 		// Load the edits for the last edit chunk
 		await log.getEditAtIndex(numberOfChunks * editsPerChunk - 1);

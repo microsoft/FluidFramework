@@ -57,7 +57,7 @@ export type DeserializeCallback = (properties: PropertySet) => void;
 // @public (undocumented)
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     // (undocumented)
-    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
+    (event: "addInterval" | "changeInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void): any;
 }

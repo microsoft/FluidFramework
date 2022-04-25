@@ -134,7 +134,8 @@ export class LocalReferenceCollection {
             if (!seg1.localRefs) {
                 seg1.localRefs = new LocalReferenceCollection(seg1);
             }
-            assert(seg1.localRefs.refsByOffset.length === seg1.cachedLength, "LocalReferences array contains a gap");
+            assert(seg1.localRefs.refsByOffset.length === seg1.cachedLength,
+                0x2be /* "LocalReferences array contains a gap" */);
             seg1.localRefs.append(seg2.localRefs);
         }
         else if (seg1.localRefs) {
@@ -152,7 +153,7 @@ export class LocalReferenceCollection {
         private readonly segment: ISegment,
         initialRefsByfOffset = new Array<IRefsAtOffset | undefined>(segment.cachedLength)) {
         // Since javascript arrays are sparse the above won't populate any of the
-        // indicies, but it will ensure the length property of the array matches
+        // indices, but it will ensure the length property of the array matches
         // the length of the segment.
         this.refsByOffset = initialRefsByfOffset;
     }

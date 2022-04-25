@@ -4,7 +4,7 @@
  */
 
 import {
-    ICodeLoader,
+    ICodeDetailsLoader,
     IContainer,
     IHostLoader,
     ILoaderOptions,
@@ -30,7 +30,7 @@ export function createLoader(
     logger?: ITelemetryBaseLogger,
     options?: ILoaderOptions,
 ): IHostLoader {
-    const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
+    const codeLoader: ICodeDetailsLoader = new LocalCodeLoader(packageEntries);
 
     return new Loader({
         urlResolver,

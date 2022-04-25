@@ -6,7 +6,7 @@
 import { ICreateRepoParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import nconf from "nconf";
-import { IRepositoryManagerFactory } from "../../utils";
+import { getRepoManagerParamsFromRequest, IRepositoryManagerFactory } from "../../utils";
 import { handleResponse } from "../utils";
 
 export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
@@ -21,22 +21,21 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
             return response.status(400).json("Invalid repo name");
         }
 
-        const repoManagerP = repoManagerFactory.create(
-            request.params.owner,
-            createParams.name,
-        );
+        const repoManagerParams = getRepoManagerParamsFromRequest(request);
 
-        handleResponse(repoManagerP.then(() => undefined), response, 201);
+        const repoManagerP = repoManagerFactory.create({
+            ...repoManagerParams,
+            repoName: createParams.name,
+        });
+
+        handleResponse(repoManagerP.then(() => undefined), response, undefined, undefined, 201);
     });
 
     /**
      * Retrieves an existing get repository
      */
     router.get("/repos/:owner/:repo", (request, response, next) => {
-        const repoManagerP = repoManagerFactory.open(
-            request.params.owner,
-            request.params.repo,
-        );
+        const repoManagerP = repoManagerFactory.open(getRepoManagerParamsFromRequest(request));
 
         handleResponse(repoManagerP.then(() => ({ name: request.params.repo })), response);
     });
