@@ -6,7 +6,7 @@
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 
 export { FlowDocument } from "./document";
-export { Editor, IFluidHTMLViewFactory } from "./editor";
+export { Editor } from "./editor";
 import { WebFlow, WebflowView } from "./host";
 export { htmlFormatter } from "./html/formatters";
 

@@ -40,7 +40,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
         public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
         private readonly mergeTreeClient: Client,
     ) {
-        assert(deltaArgs.deltaSegments.length > 0, "Empty change event should not be emitted.");
+        assert(deltaArgs.deltaSegments.length > 0, 0x2d8 /* "Empty change event should not be emitted." */);
         this.isEmpty = false;
         this.deltaOperation = deltaArgs.operation;
 
