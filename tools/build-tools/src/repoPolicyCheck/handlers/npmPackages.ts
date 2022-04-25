@@ -37,7 +37,7 @@ function packageShouldBePrivate(name: string): boolean {
     }
 
     return (
-        name === "root" // minirepo roots
+        name === "root" // monorepo roots
         || name.startsWith("@fluid-internal")
         || name.startsWith("@fluid-example")
         || name.startsWith("@fluid-tools")
