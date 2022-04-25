@@ -71,10 +71,14 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public async markForDestruction() {
-        // This should probably use a quorum-type data structure here.
-        // Then, when everyone sees the quorum proposal get approved they can choose to either volunteer
-        // or close themselves
-        // TODO: Update when Quorum has a promise API surface
+        // Early exit/resolve if already marked.
+        if (this.markedForDestruction) {
+            return;
+        }
+
+        // Note that the marking could come from another client (e.g. two clients try to mark simultaneously).
+        // Watching via the event listener will work regardless of whether our marking or a remote client's
+        // marking was the one that actually wrote the flag.
         return new Promise<void>((resolve, reject) => {
             const acceptedListener = (key: string) => {
                 if (key === markedForDestructionKey) {
@@ -83,6 +87,9 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
                 }
             };
             this.quorum.on("accepted", acceptedListener);
+            // Even if quorum.set() becomes a promise, this will remain fire-and-forget since we don't care
+            // whether our marking or a remote client's marking writes the flag (though maybe we'd do retry
+            // logic if a remote client rejects the local client's mark).
             this.quorum.set(markedForDestructionKey, true);
         });
     }
