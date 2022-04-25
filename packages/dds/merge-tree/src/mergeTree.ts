@@ -2374,6 +2374,11 @@ export class MergeTree {
                     existingRemovalInfo.removedClientIds.unshift(clientId);
                     existingRemovalInfo.removedSeq = seq;
                     segment.localRemovedSeq = undefined;
+                    // GH #10031: we need to re-slide references in this case
+                    // based on the removing client. as when we slide for the
+                    // local remove it may have slid else where which would
+                    // not be eventually consistent with clients receiving this op
+                    // first
                 } else {
                     // Do not replace earlier sequence number for remove
                     existingRemovalInfo.removedClientIds.push(clientId);
@@ -2384,6 +2389,8 @@ export class MergeTree {
                 segment.localRemovedSeq = localSeq;
 
                 removedSegments.push({ segment });
+                // GH #10031: we need to fundamentally change this.
+                // we will probably do nothing here
                 if (segment.localRefs && !segment.localRefs.empty) {
                     savedLocalRefs.push(segment.localRefs);
                 }
@@ -2411,10 +2418,15 @@ export class MergeTree {
             return true;
         };
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
+        // GH #1009: move this after event, so we can add sliding references in remove
         if (savedLocalRefs.length > 0) {
             const length = this.getLength(refSeq, clientId);
             let refSegment: ISegment | undefined;
             if (start < length) {
+                // GH #10031: we need to think deeply about eventual consistency
+                // and the implications for behavior across clients.
+                // this is primarily why we need to fix overlapping delete and reconnect
+                // as remote clients could get a different slide than local.
                 const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
                 refSegment = afterSegOff.segment;
                 assert(!!refSegment, 0x052 /* "Missing reference segment!" */);
@@ -2423,6 +2435,9 @@ export class MergeTree {
                 }
                 refSegment.localRefs.addBeforeTombstones(...savedLocalRefs);
             } else if (length > 0) {
+                // GH #10031: This case probably goes away and just falls thru to the below
+                // case, and we let zamboni coalescing sliding references sliding references at
+                // the end
                 const beforeSegOff = this.getContainingSegment(length - 1, refSeq, clientId);
                 refSegment = beforeSegOff.segment;
                 assert(!!refSegment, 0x053 /* "Missing reference segment!" */);
@@ -2431,14 +2446,18 @@ export class MergeTree {
                 }
                 refSegment.localRefs.addAfterTombstones(...savedLocalRefs);
             } else {
-                // TODO: The tree is empty, so there isn't anywhere to put these
-                // they should be preserved somehow
+                // GH #10031: we should just keep these on the removed segment
+                // and allow coalescing sliding references in zamboni, so if all content is deleted
+                // we eventually end up with all references on a single segment at 0
+                // but the order of the references is preserved.
                 for (const refsCollection of savedLocalRefs) {
                     refsCollection.clear();
                 }
             }
 
             if (refSegment) {
+                // GH #10031: do we need to do this? from what i can tell we don't
+                // need to dig deeper
                 this.blockUpdatePathLengths(refSegment.parent, TreeMaintenanceSequenceNumber,
                     LocalClientId);
             }

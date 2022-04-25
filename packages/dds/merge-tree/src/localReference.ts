@@ -122,6 +122,12 @@ export class LocalReference implements ReferencePosition {
     }
 }
 
+// GH #1009: We should move these to linked lists
+// the current arrays are not performance when
+// splitting and merging
+// i also plan to bi-directionally link
+// the local reference to it's node,
+// to keep remove fast as well.
 interface IRefsAtOffset {
     before?: LocalReference[];
     at?: LocalReference[];
@@ -333,6 +339,8 @@ export class LocalReferenceCollection {
         }
     }
 
+    // GH #10031: there may be implications when keeping the references
+    // on the deleted segment, so we can rebase on reconnect/overlap
     public addBeforeTombstones(...refs: Iterable<LocalReference>[]) {
         const beforeRefs: LocalReference[] = [];
 
@@ -363,6 +371,8 @@ export class LocalReferenceCollection {
         }
     }
 
+    // GH #10031: there may be implications when keeping the references
+    // on the deleted segment, so we can rebase on reconnect/overlap
     public addAfterTombstones(...refs: Iterable<LocalReference>[]) {
         const afterRefs: LocalReference[] = [];
 
