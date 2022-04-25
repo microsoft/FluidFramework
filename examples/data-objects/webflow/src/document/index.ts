@@ -312,13 +312,6 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public insertComponent(position: number, handle: IFluidHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
-        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
-            componentOptions, handle, style, classList: classList && classList.join(" "), view,
-        }));
-    }
-
     public setFormat(position: number, tag: TagName) {
         const { start } = this.findParagraph(position);
 
