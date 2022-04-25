@@ -288,6 +288,7 @@ export class LocalOrderer implements IOrderer {
                     this.documentId,
                     lastCheckpoint,
                     checkpointManager,
+                    undefined,
                     this.deltasKafka,
                     undefined,
                     this.rawDeltasKafka,

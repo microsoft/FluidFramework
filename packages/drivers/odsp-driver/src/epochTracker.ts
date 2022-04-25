@@ -423,7 +423,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 
         try {
             return await super.fetchAndParseAsJSON<T>(url, fetchOptions, fetchType, addInBody, fetchReason);
-        } catch (error) {
+        } catch (error: any) {
             // Only handling here treesLatest. If createFile failed, we should never try to do joinSession.
             // Similar, if getVersions failed, we should not do any further storage calls.
             // So treesLatest is the only call that can have parallel joinSession request.

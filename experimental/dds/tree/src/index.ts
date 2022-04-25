@@ -56,6 +56,7 @@ export {
 	ConstraintEffect,
 	Edit,
 	ChangeInternal,
+	InternalizedChange,
 	ChangeNode,
 	ChangeNode_0_0_2,
 	EditLogSummary,

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
 import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -145,7 +146,7 @@ export class MongoDb implements core.IDb {
         return this.client.close();
     }
 
-    public on(event: string, listener: (...args: any[]) => void) {
+    public on(event: core.IDbEvents, listener: (...args: any[]) => void) {
         this.client.on(event, listener);
     }
 
@@ -155,11 +156,30 @@ export class MongoDb implements core.IDb {
     }
 }
 
+interface IMongoDBConfig {
+    operationsDbEndpoint: string;
+    bufferMaxEntries: number | undefined;
+    globalDbEndpoint?: string;
+    globalDbEnabled?: boolean;
+}
+
 export class MongoDbFactory implements core.IDbFactory {
-    constructor(private readonly endpoint: string, private readonly bufferMaxEntries?: number) {
+    private readonly operationsDbEndpoint: string;
+    private readonly bufferMaxEntries?: number;
+    private readonly globalDbEndpoint?: string;
+    constructor(config: IMongoDBConfig) {
+        const {operationsDbEndpoint, bufferMaxEntries, globalDbEnabled, globalDbEndpoint} = config;
+        if (globalDbEnabled) {
+            this.globalDbEndpoint = globalDbEndpoint;
+        }
+        assert(!!operationsDbEndpoint, `No endpoint provided`);
+        this.operationsDbEndpoint = operationsDbEndpoint;
+        this.bufferMaxEntries = bufferMaxEntries;
     }
 
-    public async connect(): Promise<core.IDb> {
+    public async connect(global = false): Promise<core.IDb> {
+        assert(!global || !!this.globalDbEndpoint,`No global endpoint provided
+                 when trying to connect to global db.`);
         // Need to cast to any before MongoClientOptions due to missing properties in d.ts
         const options: MongoClientOptions = {
             autoReconnect: true,
@@ -172,7 +192,11 @@ export class MongoDbFactory implements core.IDbFactory {
             useNewUrlParser: true,
         };
 
-        const connection = await MongoClient.connect(this.endpoint, options);
+        const connection = await MongoClient.connect(
+            global ?
+                this.globalDbEndpoint :
+                this.operationsDbEndpoint,
+            options);
 
         return new MongoDb(connection);
     }
