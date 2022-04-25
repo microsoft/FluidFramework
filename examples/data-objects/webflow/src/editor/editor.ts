@@ -21,7 +21,7 @@ export class Editor {
     private get doc() { return this.layout.doc; }
 
     constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, scope?: FluidObject) {
-        this.layout = new Layout(doc, root, formatter, scope);
+        this.layout = new Layout(doc, root, formatter);
         this.caret = new Caret(this.layout);
 
         let scheduled = false;
