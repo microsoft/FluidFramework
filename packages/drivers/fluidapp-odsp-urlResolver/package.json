@@ -1,7 +1,6 @@
 {
   "name": "@fluid-tools/fluidapp-odsp-urlresolver",
   "version": "0.59.3000",
-  "private": true,
   "description": "Url Resolver for Fluid app urls.",
   "homepage": "https://fluidframework.com",
   "repository": {
