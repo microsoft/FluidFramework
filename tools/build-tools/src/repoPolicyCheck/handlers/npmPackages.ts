@@ -29,6 +29,7 @@ or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.micr
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 `;
 
+// Packages which do not publish on NPM
 function packageShouldBePrivate(name: string): boolean {
     // allow test packages to be packaged
     if (name.startsWith("@fluid-internal/test-")) {
@@ -36,14 +37,19 @@ function packageShouldBePrivate(name: string): boolean {
     }
 
     return (
-        name === "root" || // minirepo roots
-        name.startsWith("@fluid-internal"));
+        name === "root" // minirepo roots
+        || name.startsWith("@fluid-internal")
+        || name.startsWith("@fluid-example")
+        || name.startsWith("@fluid-tools")
+    );
 }
 
+// Packages which publish on NPM
 function packageShouldNotBePrivate(name: string): boolean {
     return (
-        name.startsWith("@fluidframework") ||
-        name.startsWith("@fluid-example"));
+        name.startsWith("@fluidframework")
+        || name.startsWith("@fluid-experimental")
+    );
 }
 
 type IReadmeInfo = {
