@@ -721,7 +721,7 @@ export class Client {
                 case MergeTreeDeltaType.INSERT:
                     assert(segment.seq === UnassignedSequenceNumber,
                         0x037 /* "Segment already has assigned sequence number" */);
-                    // todo: we need to re-slide local references in this case
+                    // GH #10031: we need to re-slide local references in this case
                     // to ensure that if clients also slide on receipt
                     // they end up in the same place. this is needed for
                     // shared intervals, as they need eventually consistent slide
