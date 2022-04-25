@@ -231,15 +231,19 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     public set(key: string, value: any): void {
         // If not attached, we basically pretend we got an ack immediately.
         // TODO: Should we just directly store the value rather than the full simulation?
-        // TODO: Should we defer this to the next microtask so sync callers complete before processing?
         if (!this.isAttached()) {
-            this.handleIncomingSet(
-                key,
-                value,
-                0 /* refSeq */,
-                0 /* setSequenceNumber */,
-                "detachedClient" /* clientId */,
-            );
+            // Queueing as a microtask to permit callers to complete their callstacks before the result of the set
+            // takes effect.  This more closely resembles the pattern in the attached state, where the ack will not
+            // be received synchronously.
+            queueMicrotask(() => {
+                this.handleIncomingSet(
+                    key,
+                    value,
+                    0 /* refSeq */,
+                    0 /* setSequenceNumber */,
+                    "detachedClient" /* clientId */,
+                );
+            });
             return;
         }
 
@@ -260,14 +264,18 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     public delete(key: string): void {
         // If not attached, we basically pretend we got an ack immediately.
         // TODO: Should we just directly store the value rather than the full simulation?
-        // TODO: Should we defer this to the next microtask so sync callers complete before processing?
         if (!this.isAttached()) {
-            this.handleIncomingDelete(
-                key,
-                0 /* refSeq */,
-                0 /* setSequenceNumber */,
-                "detachedClient" /* clientId */,
-            );
+            // Queueing as a microtask to permit callers to complete their callstacks before the result of the delete
+            // takes effect.  This more closely resembles the pattern in the attached state, where the ack will not
+            // be received synchronously.
+            queueMicrotask(() => {
+                this.handleIncomingDelete(
+                    key,
+                    0 /* refSeq */,
+                    0 /* setSequenceNumber */,
+                    "detachedClient" /* clientId */,
+                );
+            });
             return;
         }
 
