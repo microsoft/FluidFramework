@@ -252,7 +252,13 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         dataStore._root.set("my blob", blobHandle);
         assert.strictEqual(bufferToString(await (dataStore._root.get("my blob")).get(), "utf-8"), text);
 
-        await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
+        }
+        await attachP;
 
         // make sure we're getting the blob from actual storage
         detachedBlobStorage.blobs.clear();
@@ -299,7 +305,13 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         detachedDataStore._root.set("my other blob",
             await detachedDataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8")));
 
-        await detachedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        const attachP = detachedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
+        }
+        await attachP;
         detachedBlobStorage.blobs.clear();
 
         const url = getUrlFromItemId((detachedContainer.resolvedUrl as IOdspResolvedUrl).itemId, provider);
@@ -325,7 +337,13 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         serializeContainer.close();
         const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
 
-        await rehydratedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        const attachP = rehydratedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
+        }
+        await attachP;
 
         const url = getUrlFromItemId((rehydratedContainer.resolvedUrl as IOdspResolvedUrl).itemId, provider);
         const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
@@ -352,7 +370,13 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
             container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
         }
 
-        await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP,
+                (err) => /(0x202)|(0x204)/.test(err.message) /* "create empty file not supported" */);
+        }
+        await attachP;
 
         const url = getUrlFromItemId((container.resolvedUrl as IOdspResolvedUrl).itemId, provider);
         const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
