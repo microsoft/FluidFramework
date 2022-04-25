@@ -17,7 +17,7 @@ import { getHashedDocumentId } from "../odspPublicUtils";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
 import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache(2000);
+const createUtLocalCache = () => new LocalPersistentCache();
 
 describe("Tests for Epoch Tracker", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -42,6 +42,10 @@ describe("Tests for Epoch Tracker", () => {
                 resolvedUrl,
             },
             new TelemetryNullLogger());
+    });
+
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
     });
 
     it("Cache, old versions", async () => {
@@ -105,7 +109,7 @@ describe("Tests for Epoch Tracker", () => {
                 async () => epochTracker.fetchArray("fetchUrl", {}, "test"),
                 {},
                 { "x-fluid-epoch": "epoch2" });
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
                 "Error should be epoch error");
@@ -129,7 +133,7 @@ describe("Tests for Epoch Tracker", () => {
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 {},
                 { "x-fluid-epoch": "epoch2" });
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
                 "Error should be epoch error");
@@ -153,7 +157,7 @@ describe("Tests for Epoch Tracker", () => {
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 {},
                 { "x-fluid-epoch": "epoch2" });
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert(error.XRequestStatsHeader !== undefined, "CorrelationId should be present");
         }
@@ -236,7 +240,7 @@ describe("Tests for Epoch Tracker", () => {
             await mockFetchSingle(
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 async () => createResponse({ "x-fluid-epoch": "epoch1" }, undefined, 409));
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError, "Error should be throttling error");
         }
@@ -261,7 +265,7 @@ describe("Tests for Epoch Tracker", () => {
             await mockFetchSingle(
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 async () => createResponse({ "x-fluid-epoch": "epoch2" }, undefined, 409));
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
                 "Error should be epoch error");

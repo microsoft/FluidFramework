@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import { TextSegment } from "../textSegment";
@@ -20,7 +21,7 @@ describe("client.getPosition", () => {
         client.startOrUpdateCollaboration(localUserLongId);
 
         const segOff = client.getContainingSegment(segPos);
-        assert(TextSegment.is(segOff.segment));
+        assert(TextSegment.is(segOff.segment!));
         assert.strictEqual(segOff.offset, 0);
         assert.strictEqual(segOff.segment.text, "o");
         segment = segOff.segment;

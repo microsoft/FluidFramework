@@ -11,7 +11,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Trace } from "@fluidframework/common-utils";
+import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
@@ -163,7 +163,7 @@ export class Client {
     public annotateMarker(
         marker: Marker,
         props: PropertySet,
-        combiningOp: ICombiningOp): IMergeTreeAnnotateMsg | undefined {
+        combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined {
         const annotateOp =
             createAnnotateMarkerOp(marker, props, combiningOp)!;
 
@@ -545,6 +545,8 @@ export class Client {
             }
         }
 
+        // start and end are guaranteed to be non-null here, otherwise we throw above.
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         return { start, end } as IIntegerRange;
     }
 
@@ -704,11 +706,16 @@ export class Client {
                 case MergeTreeDeltaType.ANNOTATE:
                     assert(segment.propertyManager?.hasPendingProperties() === true,
                         0x036 /* "Segment has no pending properties" */);
-                    newOp = createAnnotateRangeOp(
-                        segmentPosition,
-                        segmentPosition + segment.cachedLength,
-                        resetOp.props,
-                        resetOp.combiningOp);
+                    // if the segment has been removed, there's no need to send the annotate op
+                    // unless the remove was local, in which case the annotate must have come
+                    // before the remove
+                    if (segment.removedSeq === undefined || segment.localRemovedSeq !== undefined) {
+                        newOp = createAnnotateRangeOp(
+                            segmentPosition,
+                            segmentPosition + segment.cachedLength,
+                            resetOp.props,
+                            resetOp.combiningOp);
+                    }
                     break;
 
                 case MergeTreeDeltaType.INSERT:
@@ -771,7 +778,27 @@ export class Client {
         }
     }
 
-    public applyMsg(msg: ISequencedDocumentMessage) {
+    public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
+    public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
+    public applyStashedOp(op: IMergeTreeOp) {
+        switch (op.type) {
+            case MergeTreeDeltaType.INSERT:
+                this.applyInsertOp({ op });
+                return this.peekPendingSegmentGroups();
+            case MergeTreeDeltaType.REMOVE:
+                this.applyRemoveRangeOp({ op });
+                return this.peekPendingSegmentGroups();
+            case MergeTreeDeltaType.ANNOTATE:
+                this.applyAnnotateRangeOp({ op });
+                return this.peekPendingSegmentGroups();
+            case MergeTreeDeltaType.GROUP:
+                return op.ops.map((o) => this.applyStashedOp(o));
+            default:
+                unreachableCase(op, "unrecognized op type");
+        }
+    }
+
+    public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
         // Ensure client ID is registered
         this.getOrAddShortClientId(msg.clientId);
         // Apply if an operation message
@@ -780,7 +807,7 @@ export class Client {
                 op: msg.contents as IMergeTreeOp,
                 sequencedMessage: msg,
             };
-            if (opArgs.sequencedMessage?.clientId === this.longClientId) {
+            if (opArgs.sequencedMessage?.clientId === this.longClientId || local) {
                 this.ackPendingSegment(opArgs);
             }
             else {
@@ -966,9 +993,19 @@ export class Client {
         }
     }
 
-    getContainingSegment<T extends ISegment>(pos: number) {
-        const segWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getContainingSegment<T>(pos, segWindow.currentSeq, segWindow.clientId);
+    getContainingSegment<T extends ISegment>(pos: number, op?: ISequencedDocumentMessage) {
+        let seq: number;
+        let clientId: number;
+        if (op) {
+            clientId = this.getOrAddShortClientId(op.clientId);
+            seq = op.sequenceNumber;
+        }
+        else {
+            const segWindow = this.mergeTree.getCollabWindow();
+            seq = segWindow.currentSeq;
+            clientId = segWindow.clientId;
+        }
+        return this.mergeTree.getContainingSegment<T>(pos, seq, clientId);
     }
 
     getPropertiesAtPosition(pos: number) {

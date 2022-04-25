@@ -9,7 +9,6 @@ import { IContainerRuntime } from '@fluidframework/container-runtime-definitions
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { RequestParser } from '@fluidframework/runtime-utils';
@@ -25,7 +24,7 @@ export const createFluidObjectResponse: (fluidObject: FluidObject) => {
 };
 
 // @public (undocumented)
-export function handleFromLegacyUri<T = IFluidObject & FluidObject & IFluidLoadable>(uri: string, runtime: IContainerRuntimeBase): IFluidHandle<T>;
+export function handleFromLegacyUri<T = FluidObject & IFluidLoadable>(uri: string, runtime: IContainerRuntimeBase): IFluidHandle<T>;
 
 // @public
 export const rootDataStoreRequestHandler: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;

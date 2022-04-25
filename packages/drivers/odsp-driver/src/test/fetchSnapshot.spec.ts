@@ -17,7 +17,7 @@ import { getHashedDocumentId } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 
-const createUtLocalCache = () => new LocalPersistentCache(2000);
+const createUtLocalCache = () => new LocalPersistentCache();
 
 describe("Tests for snapshot fetch headers", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -54,7 +54,6 @@ describe("Tests for snapshot fetch headers", () => {
         snapshotTree: {
             id: "id",
             blobs: {},
-            commits: {},
             trees: {},
         },
         blobs: new Map(),
@@ -88,6 +87,10 @@ describe("Tests for snapshot fetch headers", () => {
             epochTracker,
             async () => { return {}; },
             );
+    });
+
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
     });
 
     it("Mds limit check in fetch snapshot", async () => {

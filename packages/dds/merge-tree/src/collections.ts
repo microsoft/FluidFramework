@@ -7,6 +7,7 @@
 
 /* Remove once strictNullCheck is enabled */
 
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     ConflictAction,
     IIntegerRange,
@@ -189,6 +190,7 @@ export class Heap<T> {
         this.fixup(this.count());
     }
 
+    /* eslint-disable no-bitwise */
     private fixup(k: number) {
         let _k = k;
         while (_k > 1 && (this.comp.compare(this.L[_k >> 1], this.L[_k]) > 0)) {
@@ -215,6 +217,7 @@ export class Heap<T> {
             _k = j;
         }
     }
+    /* eslint-enable no-bitwise */
 }
 
 export const enum RBColor {
@@ -837,7 +840,7 @@ export interface IInterval {
     compare(b: IInterval): number;
     compareStart(b: IInterval): number;
     compareEnd(b: IInterval): number;
-    modify(label: string, start: number, end: number): IInterval | undefined;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
     overlaps(b: IInterval): boolean;
     union(b: IInterval): IInterval;
 }

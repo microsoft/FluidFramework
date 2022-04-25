@@ -19,9 +19,18 @@ data:
             "timestamp": false
         },
         "requestSizeLimit": "1gb",
-        "storageDir": "/home/node/documents",
+        "storageDir": {
+            "baseDir": "/home/node/documents",
+            "useRepoOwner": true
+        },
         "externalStorage": {
           "enabled": false,
           "endpoint": "http://externalStorage:3005"
+        },
+        "git": {
+            "lib": {
+                "name": "{{ .Values.gitrest.git.lib.name }}"
+            },
+            "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }}
         }
     }

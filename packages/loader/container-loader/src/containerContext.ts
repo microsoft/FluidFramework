@@ -12,20 +12,20 @@ import {
     ILoader,
     IRuntime,
     ICriticalContainerError,
-    ContainerWarning,
     AttachState,
     ILoaderOptions,
     IRuntimeFactory,
-    ICodeLoader,
     IProvideRuntimeFactory,
-} from "@fluidframework/container-definitions";
-import {
-    IFluidObject,
-    IRequest,
-    IResponse,
     IFluidCodeDetails,
     IFluidCodeDetailsComparer,
     IProvideFluidCodeDetailsComparer,
+    ICodeDetailsLoader,
+    IFluidModuleWithDetails,
+    IFluidModule,
+} from "@fluidframework/container-definitions";
+import {
+    IRequest,
+    IResponse,
     FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -45,7 +45,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { Container } from "./container";
-import { ICodeDetailsLoader, IFluidModuleWithDetails } from "./loader";
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -53,13 +52,12 @@ export class ContainerContext implements IContainerContext {
     public static async createOrLoad(
         container: Container,
         scope: FluidObject,
-        codeLoader: ICodeDetailsLoader | ICodeLoader,
+        codeLoader: ICodeDetailsLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        raiseContainerWarning: (warning: ContainerWarning) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         closeFn: (error?: ICriticalContainerError) => void,
@@ -77,7 +75,6 @@ export class ContainerContext implements IContainerContext {
             deltaManager,
             quorum,
             loader,
-            raiseContainerWarning,
             submitFn,
             submitSignalFn,
             closeFn,
@@ -159,14 +156,13 @@ export class ContainerContext implements IContainerContext {
 
     constructor(
         private readonly container: Container,
-        public readonly scope: IFluidObject & FluidObject,
-        private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
+        public readonly scope: FluidObject,
+        private readonly codeLoader: ICodeDetailsLoader,
         private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         public readonly loader: ILoader,
-        public readonly raiseContainerWarning: (warning: ContainerWarning) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
@@ -319,8 +315,12 @@ export class ContainerContext implements IContainerContext {
         });
     }
 
-    private async loadCodeModule(codeDetails: IFluidCodeDetails) {
-        const loadCodeResult = await PerformanceEvent.timedExecAsync(
+    private async loadCodeModule(codeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
+        // load may actually produce a IFluidModule if using a legacy ICodeLoader.
+        // Because the type system currently does not capture this in load,
+        // explicitly declare the type here to support both cases.
+        // See also comment about this below.
+        const loadCodeResult: IFluidModuleWithDetails | IFluidModule = await PerformanceEvent.timedExecAsync(
             this.taggedLogger,
             { eventName: "CodeLoad" },
             async () => this.codeLoader.load(codeDetails),
@@ -333,6 +333,9 @@ export class ContainerContext implements IContainerContext {
                 details: details ?? codeDetails,
             };
         } else {
+            // If "module" is not in the result, we are using a legacy ICodeLoader.  Fix the result up with details.
+            // Once usage drops to 0 we can remove this compat path.
+            this.taggedLogger.sendTelemetryEvent({ eventName: "LegacyCodeLoader" });
             return { module: loadCodeResult, details: codeDetails };
         }
     }

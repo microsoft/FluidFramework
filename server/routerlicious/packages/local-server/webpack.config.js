@@ -32,7 +32,7 @@ module.exports = {
         libraryTarget: "umd"
     },
     devServer: {
-        publicPath: '/dist',
+        devMiddleware: { publicPath: '/dist' },
         watchOptions: {
             ignored: "**/node_modules/**",
         }

@@ -57,6 +57,8 @@ export function create(
             const messageMetaData = {
                 method: tokens.method(req, res),
                 pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
+                // TODO: replace "x-driver-version" with DriverVersionHeaderName from services-client
+                driverVersion: tokens.req(req, res, "x-driver-version"),
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),

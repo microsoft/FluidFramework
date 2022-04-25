@@ -209,7 +209,7 @@ describe("Parallel Requests", () => {
         let success = true;
         try {
             await manager.run(10);
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert(error.message === "request");
         }
@@ -233,7 +233,7 @@ describe("Parallel Requests", () => {
         let success = true;
         try {
             await manager.run(10);
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert(error.message === "response");
         }

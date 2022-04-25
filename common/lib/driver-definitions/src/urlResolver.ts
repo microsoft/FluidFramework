@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
@@ -48,7 +47,7 @@ export interface IUrlResolver {
     getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
-        packageInfoSource?: IFluidCodeDetails | IContainerPackageInfo,
+        packageInfoSource?: IContainerPackageInfo,
     ): Promise<string>;
 }
 

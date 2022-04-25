@@ -47,9 +47,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 return container;
             };
         };
+        /* eslint-disable @typescript-eslint/unbound-method */
         loader.resolve = patch(loader.resolve);
         loader.createDetachedContainer = patch(loader.createDetachedContainer);
         loader.rehydrateDetachedContainerFromSnapshot = patch(loader.rehydrateDetachedContainerFromSnapshot);
+        /* eslint-enable @typescript-eslint/unbound-method */
     }
 
     /**
@@ -501,7 +503,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                         return `${address} ${JSON.stringify(contents)}`;
                     }
                     return JSON.stringify(contents);
-                } catch (e) {
+                } catch (e: any) {
                     return `${e.message}: ${e.stack}`;
                 }
             };

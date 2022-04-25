@@ -24,7 +24,7 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache(2000);
+const createUtLocalCache = () => new LocalPersistentCache();
 
 describe("Tests for snapshot fetch", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -71,7 +71,6 @@ describe("Tests for snapshot fetch", () => {
         snapshotTree: {
             id: "id",
             blobs: {},
-            commits: {},
             trees: {},
         },
         blobs: new Map(),
@@ -120,6 +119,10 @@ describe("Tests for snapshot fetch", () => {
             );
     });
 
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
+    });
+
     it("cache fetch throws and network fetch succeeds", async () => {
         // overwriting get() to make cache fetch throw
         localCache.get = async () => {
@@ -128,7 +131,11 @@ describe("Tests for snapshot fetch", () => {
 
         const version = await mockFetchSingle(
             async () => service.getVersions(null,1),
-            async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
+            async () => createResponse(
+                { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+                odspSnapshot,
+                200,
+            ),
         );
 
         assert.deepStrictEqual(version, expectedVersion, "incorrect version");
@@ -197,7 +204,11 @@ describe("Tests for snapshot fetch", () => {
 
         const version = await mockFetchSingle(
             async () => service.getVersions(null,1),
-            async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
+            async () => createResponse(
+                { "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+                odspSnapshot,
+                200,
+            ),
         );
         assert.deepStrictEqual(version, expectedVersion, "incorrect version");
     });

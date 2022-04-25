@@ -17,3 +17,6 @@ dist/*
 .nyc_output
 test-result
 test/lib
+
+# Stories files are excluded from tsconfig, we won't lint them either.
+src/**/*.stories.*

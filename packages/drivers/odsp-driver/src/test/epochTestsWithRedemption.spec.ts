@@ -49,7 +49,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
     beforeEach(() => {
         const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
         epochTracker = new EpochTrackerWithRedemption(
-            new LocalPersistentCache(2000),
+            new LocalPersistentCache(),
             {
                 docId: hashedDocumentId,
                 resolvedUrl,
@@ -57,6 +57,10 @@ describe("Tests for Epoch Tracker With Redemption", () => {
             new TelemetryUTLogger());
         epochCallback = new DeferralWithCallback();
         (epochTracker as any).treesLatestDeferral = epochCallback;
+    });
+
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
     });
 
     it.skip("joinSession call should succeed on retrying after snapshot cached read succeeds", async () => {
@@ -111,7 +115,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
                         async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
                         notFound,
                         "internal");
-                } catch (error) {
+                } catch (error: any) {
                     assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError,
                         "Error should be file not found or access denied error");
                 }
@@ -120,7 +124,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
                 async () => notFound({ "x-fluid-epoch": "epoch1" }),
                 "external");
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError,
                 "Error should be file not found or access denied error");

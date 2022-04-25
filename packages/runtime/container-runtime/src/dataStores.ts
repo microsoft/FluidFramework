@@ -18,7 +18,6 @@ import {
     CreateSummarizerNodeSource,
     IAttachMessage,
     IEnvelope,
-    IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
@@ -157,7 +156,7 @@ export class DataStores implements IDisposable {
                         key,
                         { type: CreateSummarizerNodeSource.FromSummary },
                     ),
-                    bindChannelFn: (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+                    makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(key),
                     snapshotTree,
                     isRootDataStore: undefined,
                     writeGCDataAtRoot: this.writeGCDataAtRoot,
@@ -298,14 +297,20 @@ export class DataStores implements IDisposable {
         return this.aliasMap.get(id) !== undefined || this.contexts.get(id) !== undefined;
     }
 
-    public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
-        const id = fluidDataStoreRuntime.id;
+    /**
+     * Make the data stores locally visible in the container graph by moving the data store context from unbound to
+     * bound list. This data store can now be reached from the root.
+     * @param id - The id of the data store context to make visible.
+     */
+    private makeDataStoreLocallyVisible(id: string): void {
         const localContext = this.contexts.getUnbound(id);
         assert(!!localContext, 0x15f /* "Could not find unbound context to bind" */);
 
-        // If the container is detached, we don't need to send OP or add to pending attach because
-        // we will summarize it while uploading the create new summary and make it known to other
-        // clients.
+        /**
+         * If the container is not detached, it is globally visible to all clients. This data store should also be
+         * globally visible. Move it to attaching state and send an "attach" op for it.
+         * If the container is detached, this data store will be part of the summary that makes the container attached.
+         */
         if (this.runtime.attachState !== AttachState.Detached) {
             localContext.emit("attaching");
             const message = localContext.generateAttachMessage();
@@ -315,7 +320,7 @@ export class DataStores implements IDisposable {
             this.attachOpFiredForDataStore.add(id);
         }
 
-        this.contexts.bind(fluidDataStoreRuntime.id);
+        this.contexts.bind(id);
     }
 
     public createDetachedDataStoreCore(
@@ -333,7 +338,7 @@ export class DataStores implements IDisposable {
                 id,
                 { type: CreateSummarizerNodeSource.Local },
             ),
-            bindChannelFn: (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
             isRootDataStore: isRoot,
             writeGCDataAtRoot: this.writeGCDataAtRoot,
@@ -354,7 +359,7 @@ export class DataStores implements IDisposable {
                 id,
                 { type: CreateSummarizerNodeSource.Local },
             ),
-            bindChannelFn: (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
+            makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
             isRootDataStore: isRoot,
             writeGCDataAtRoot: this.writeGCDataAtRoot,
@@ -594,7 +599,14 @@ export class DataStores implements IDisposable {
      */
     public deleteUnusedRoutes(unusedRoutes: string[]) {
         for (const route of unusedRoutes) {
-            const dataStoreId = route.split("/")[1];
+            const pathParts = route.split("/");
+            // Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
+            // store based on its DDS being unused.
+            if (pathParts.length > 2) {
+                continue;
+            }
+            const dataStoreId = pathParts[1];
+            assert(this.contexts.has(dataStoreId), 0x2d7 /* `${dataStoreId} is not a data store` */);
             // Delete the contexts of unused data stores.
             this.contexts.delete(dataStoreId);
             // Delete the summarizer node of the unused data stores.
@@ -618,15 +630,24 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Returns the package path of the node with the given path. This is used by GC to log when an inactive / deleted
-     * node is used.
+     * Called during GC to retrieve the package path of a data store node with the given path.
      */
-    public getNodePackagePath(nodePath: string): readonly string[] | undefined {
-        // Currently, only return the data store package path for the node since GC is only interested in data stores.
-        const dataStoreId = nodePath.split("/")[1];
-        const context = this.contexts.get(dataStoreId);
-        assert(context !== undefined, 0x2b9 /* "Data store with given id does not exist" */);
-        return context.isLoaded ? context.packagePath : undefined;
+    public getDataStorePackagePath(nodePath: string): readonly string[] | undefined {
+        // If the node belongs to a data store, return its package path if the data store is loaded. For DDSs, we return
+        // the package path of the data store that contains it.
+        const context = this.contexts.get(nodePath.split("/")[1]);
+        return context?.isLoaded ? context.packagePath : undefined;
+    }
+
+    /**
+     * Called by GC to know if a node is a data store or not. Data store ids are of the format "/dataStoreId".
+     */
+    public isDataStoreNode(nodePath: string): boolean {
+        const pathParts = nodePath.split("/");
+        if (pathParts.length === 2 && this.contexts.has(pathParts[1])) {
+            return true;
+        }
+        return false;
     }
 }
 

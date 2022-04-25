@@ -45,6 +45,7 @@ import { PropertySet } from '@fluidframework/merge-tree';
 import { RangeStackMap } from '@fluidframework/merge-tree';
 import { ReferencePosition } from '@fluidframework/merge-tree';
 import { ReferenceType } from '@fluidframework/merge-tree';
+import { SegmentGroup } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SummarySerializer } from '@fluidframework/shared-object-base';
@@ -57,7 +58,7 @@ export type DeserializeCallback = (properties: PropertySet) => void;
 // @public (undocumented)
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     // (undocumented)
-    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
+    (event: "addInterval" | "changeInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void): any;
 }
@@ -67,7 +68,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number, end: number, client: Client, intervalType?: IntervalType): TInterval;
+    create(label: string, start: number, end: number, client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
 }
 
 // @public (undocumented)
@@ -102,7 +103,7 @@ export class Interval implements ISerializableInterval {
     // (undocumented)
     getProperties(): PropertySet;
     // (undocumented)
-    modify(label: string, start: number, end: number): Interval;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): Interval;
     // (undocumented)
     overlaps(b: Interval): boolean;
     // (undocumented)
@@ -176,7 +177,7 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
         value: TInterval;
         done: boolean;
     };
-    }
+}
 
 // @public (undocumented)
 export enum IntervalType {
@@ -238,6 +239,8 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
 
 // @public
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
+    // (undocumented)
+    (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): any;
     // (undocumented)
@@ -357,12 +360,12 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
     // (undocumented)
     readonly deltaOperation: TOperation;
-    get first(): Readonly<ISequenceDeltaRange<TOperation>> | undefined;
-    // (undocumented)
+    get first(): Readonly<ISequenceDeltaRange<TOperation>>;
+    // @deprecated (undocumented)
     readonly isEmpty: boolean;
-    get last(): Readonly<ISequenceDeltaRange<TOperation>> | undefined;
+    get last(): Readonly<ISequenceDeltaRange<TOperation>>;
     get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[];
-    }
+}
 
 // @public (undocumented)
 export class SequenceInterval implements ISerializableInterval {
@@ -384,7 +387,7 @@ export class SequenceInterval implements ISerializableInterval {
     // (undocumented)
     intervalType: IntervalType;
     // (undocumented)
-    modify(label: string, start: number, end: number): SequenceInterval;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): SequenceInterval;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
@@ -521,7 +524,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     addLocalReference(lref: LocalReference): void;
     annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
     // (undocumented)
-    protected applyStashedOp(): void;
+    protected applyStashedOp(content: any): SegmentGroup;
     // (undocumented)
     protected client: Client;
     // (undocumented)
@@ -537,6 +540,8 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     getCurrentSeq(): number;
     // (undocumented)
     getIntervalCollection(label: string): IntervalCollection<SequenceInterval>;
+    // (undocumented)
+    getIntervalCollectionLabels(): IterableIterator<string>;
     getLength(): number;
     getPosition(segment: ISegment): number;
     // (undocumented)
@@ -742,7 +747,6 @@ export class SubSequence<T> extends BaseSegment {
     // (undocumented)
     static readonly typeString: string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 
