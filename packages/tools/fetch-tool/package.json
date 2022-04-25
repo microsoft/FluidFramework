@@ -1,6 +1,7 @@
 {
   "name": "@fluid-tools/fetch-tool",
   "version": "0.59.3000",
+  "private": true,
   "description": "Console tool to fetch Fluid data from relay service",
   "homepage": "https://fluidframework.com",
   "repository": {
