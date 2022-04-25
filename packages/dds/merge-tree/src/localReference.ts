@@ -16,6 +16,11 @@ import {
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 
+// GH #1009: i will deprecate this class and unify on the ReferencePositions interface
+// the only place it's created directly is in legacy tests. real clients cannot
+// create it as it take Client which is not available. We will move to an internal
+// class which will store the linked list node reference which we want to keep
+// private.
 export class LocalReference implements ReferencePosition {
     public static readonly DetachedPosition: number = -1;
 

@@ -54,6 +54,9 @@ import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager } from "./segmentPropertiesManager";
 
 // GH #1009 will also support a TrackingGroupCollection
+// additionally a number of methods can be deprecated as they
+// are not used or useful across implementations:
+// Marker and Local Reference
 export interface ReferencePosition {
     properties?: PropertySet;
     refType: ReferenceType;
