@@ -258,9 +258,10 @@ export class RunningSummarizer implements IDisposable {
         this.summaryCollection.unsetPendingAckTimerTimeoutCallback();
 
         if (waitStartResult.result === "done" && waitStartResult.value !== undefined) {
-            this.heuristicData.initialize({
+            this.heuristicData.updateWithPendingSummaryAckInfo({
                 refSequenceNumber: waitStartResult.value.summaryOp.referenceSequenceNumber,
-                summaryTime: waitStartResult.value.summaryOp.timestamp,
+                // This will be the Summarizer starting point so only use timestamps from client's machine.
+                summaryTime: Date.now(),
                 summarySequenceNumber: waitStartResult.value.summaryOp.sequenceNumber,
             });
         }

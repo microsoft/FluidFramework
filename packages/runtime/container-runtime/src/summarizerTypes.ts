@@ -349,10 +349,10 @@ export interface ISummarizeHeuristicData {
     readonly lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
 
     /**
-     * Initializes lastAttempt and lastSuccessfulAttempt based on the last summary.
+     * Updates lastAttempt and lastSuccessfulAttempt based on the last summary.
      * @param lastSummary - last ack summary
      */
-    initialize(lastSummary: ISummarizeAttempt): void;
+    updateWithPendingSummaryAckInfo(lastSummary: Partial<ISummarizeAttempt>): void;
 
     /**
      * Records a summary attempt. If the attempt was successfully sent,
