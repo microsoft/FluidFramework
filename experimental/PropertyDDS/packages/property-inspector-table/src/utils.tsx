@@ -630,8 +630,8 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
         property = (referencedPropertyParent as ContainerProperty).get(relativePathFromParent)!;
         if (property) {
           if (PropertyFactory.instanceOf(property as BaseProperty, "BaseProperty")) {
-            currentTypeid = getTypeid(property);
-            currentContext = property.getContext();
+            currentTypeid = getTypeid(property as BaseProperty);
+            currentContext = (property as BaseProperty).getContext();
           } else {
             currentTypeid = getCollectionTypeid(referencedPropertyParent);
           }
@@ -640,8 +640,8 @@ export const collectionChildTableRow = (collectionPropertyProxy: BaseProxifiedPr
     } else if (isEnumProperty(collectionProperty.get(propertyId)!) && collectionProperty.getContext() === "map") {
       // TODO: Temporary fix as the full typeid of enum maps is currently wrong
       property = (collectionProperty as MapProperty).get(propertyId)!;
-      currentTypeid = property.getFullTypeid();
-      currentContext = property.getContext();
+      currentTypeid = (property as BaseProperty).getFullTypeid();
+      currentContext = (property as BaseProperty).getContext();
     }
   }
 
