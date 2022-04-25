@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { htmlFormatter } from "../html/formatters";
@@ -12,8 +13,7 @@ import { debug } from "./debug";
 import * as styles from "./index.css";
 import { SearchMenuView } from "./searchmenu";
 
-export class WebflowView {
-    // TODO: how to get rid of this?
+export class WebflowView implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     private searchMenu?: SearchMenuView;

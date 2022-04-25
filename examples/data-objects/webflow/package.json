@@ -83,6 +83,7 @@
     "@fluidframework/merge-tree": "^0.59.2000",
     "@fluidframework/runtime-definitions": "^0.59.2000",
     "@fluidframework/sequence": "^0.59.2000",
+    "@fluidframework/view-interfaces": "^0.59.2000",
     "debug": "^4.1.1"
   },
   "devDependencies": {
