@@ -352,7 +352,7 @@ export interface ISummarizeHeuristicData {
      * Updates lastAttempt and lastSuccessfulAttempt based on the last summary.
      * @param lastSummary - last ack summary
      */
-    updateWithPendingSummaryAckInfo(lastSummary: Partial<ISummarizeAttempt>): void;
+    updateWithLastSummaryAckInfo(lastSummary: ISummarizeAttempt): void;
 
     /**
      * Records a summary attempt. If the attempt was successfully sent,
