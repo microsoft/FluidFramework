@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/multiview-plot-coordinate-view",
   "version": "0.59.3000",
+  "private": true,
   "description": "View for multiview sample",
   "homepage": "https://fluidframework.com",
   "repository": {
