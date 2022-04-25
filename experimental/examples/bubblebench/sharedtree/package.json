@@ -1,6 +1,7 @@
 {
-  "name": "@fluid-experimental/bubblebench-sharedtree",
+  "name": "@fluid-example/bubblebench-sharedtree",
   "version": "0.59.3000",
+  "private": true,
   "description": "Bubblemark inspired DDS benchmark",
   "homepage": "https://fluidframework.com",
   "repository": {
