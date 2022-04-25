@@ -18,7 +18,6 @@ import { AppView } from "./appView";
 const containerSchema = {
     initialObjects: {
         dataMap: SharedMap,
-        recoveryMap: SharedMap,
     },
 };
 
@@ -29,11 +28,11 @@ async function initializeData(container: IFluidContainer): Promise<void> {
 
 function createRecoveryAgent(
     containerId: string,
-    containerSchema: ContainerSchema,
+    schema: ContainerSchema,
 ): RecoveryAgent {
     return RecoveryAgent.createRecoveryAgent(
         containerId,
-        containerSchema,
+        schema,
     );
 }
 
@@ -50,7 +49,7 @@ async function start(): Promise<void> {
         <div className="d-flex justify-content-center m-5">
             <div className="spinner-border" role="status" />
         </div>,
-        div
+        div,
     );
 
     // Get or create the document depending if we are running through the create new flow
@@ -75,14 +74,14 @@ async function start(): Promise<void> {
         // collaboration session.
         ({ container } = await client.getContainer(
             containerId,
-            containerSchema
+            containerSchema,
         ));
     }
 
     const dataMap = container.initialObjects.dataMap as SharedMap;
     const dataController = new DataController(dataMap);
 
-    const recoveryAgent = await createRecoveryAgent(containerId, containerSchema);
+    const recoveryAgent = createRecoveryAgent(containerId, containerSchema);
 
     const updateCounter = async () => {
         dataController.updateData();
@@ -90,7 +89,6 @@ async function start(): Promise<void> {
 
     const recoverContainer = async () => {
         await recoveryAgent?.startRecovery();
-        console.log("recovery done.....")
     };
 
     ReactDOM.render(
@@ -100,7 +98,7 @@ async function start(): Promise<void> {
             updateCounter={updateCounter}
             recoverContainer={recoverContainer}
         />,
-        div
+        div,
     );
 }
 

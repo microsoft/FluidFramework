@@ -34,7 +34,7 @@ const azureUser = {
     additionalDetails: userDetails,
 };
 
-const connectionConfig: AzureConnectionConfig = useAzure ? {
+export const connectionConfig: AzureConnectionConfig = useAzure ? {
     tenantId: "",
     tokenProvider: new AzureFunctionTokenProvider("", azureUser),
     orderer: "",

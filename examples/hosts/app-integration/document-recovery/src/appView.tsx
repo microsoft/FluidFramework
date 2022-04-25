@@ -26,7 +26,7 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     const [data, setData] = useState<number>(dataController.value);
 
     const [recoveryInfo, setRecoveryInfo] = useState<RecoveryInfo | undefined>(
-        recoveryAgent?.getRecoveryInfo
+        recoveryAgent?.getRecoveryInfo,
     );
 
     useEffect(() => {
@@ -56,18 +56,18 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 
     const showAlert =
         recoveryInfo?.isContainerRecovered;
-    const alertVariant = recoveryInfo?.isContainerRecovered
+    const alertVariant = recoveryInfo?.isContainerRecovered === true
         ? "success"
         : "danger";
-    const alertMsg = recoveryInfo?.isContainerRecovered
+    const alertMsg = recoveryInfo?.isContainerRecovered === true
         ? "Document was recovered."
         : "Document was corrupted.";
     const newDocLink =
-        "http://localhost:8080/#" + recoveryInfo?.recoveredContainerId;
+        `http://localhost:8080/#${recoveryInfo?.recoveredContainerId}`;
 
     return (
         <div className="col-md-12 text-center">
-            {showAlert ? (
+            {showAlert === true ? (
                 <Alert variant={alertVariant} className="pe-auto">
                     {alertMsg}
                 </Alert>
@@ -139,7 +139,7 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
                             </tr>
                         </tbody>
                     </table>
-                    {recoveryInfo?.recoveredContainerId ? (
+                    {recoveryInfo?.recoveredContainerId !== undefined ? (
                         <a href={newDocLink} target="_blank">
                             View Recovered Container
                         </a>

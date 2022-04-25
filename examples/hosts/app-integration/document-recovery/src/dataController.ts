@@ -26,7 +26,7 @@ export interface IDataController extends EventEmitter {
     on(event: "dataChanged", listener: () => void): this;
 }
 
-const counterValueKey = "counterValue";
+export const counterValueKey = "counterValue";
 
 interface DataControllerProps {
     get: (key: string) => any;
@@ -54,7 +54,7 @@ export class DataController extends EventEmitter implements IDataController {
         const value = this.props.get(counterValueKey);
         if (typeof value !== "number") {
             throw new Error(
-                "Model is incorrect - did you call DataController.initializeModel() to set it up?"
+                "Model is incorrect - did you call DataController.initializeModel() to set it up?",
             );
         }
         return value;

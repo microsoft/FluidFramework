@@ -4,12 +4,13 @@
  */
 
 import { EventEmitter } from "events";
-import { ContainerSchema } from "fluid-framework";
+import { ContainerSchema, SharedMap } from "fluid-framework";
 import {
     AzureClient,
     AzureContainerVersion,
 } from "@fluidframework/azure-client";
 import { connectionConfig } from "./azureConfig";
+import { counterValueKey } from "./dataController";
 
 export type RecoveryStatus =
     | "NotStarted"
@@ -35,7 +36,7 @@ export class RecoveryAgent extends EventEmitter {
 
     constructor(
         private readonly orgContainerId: string,
-        private readonly orgContainerSchema: ContainerSchema
+        private readonly orgContainerSchema: ContainerSchema,
     ) {
         super();
         const clientProps = {
@@ -49,7 +50,7 @@ export class RecoveryAgent extends EventEmitter {
 
     public static createRecoveryAgent(
         containerId: string,
-        containerSchema: ContainerSchema
+        containerSchema: ContainerSchema,
     ): RecoveryAgent {
         return new RecoveryAgent(containerId, containerSchema);
     }
@@ -71,7 +72,7 @@ export class RecoveryAgent extends EventEmitter {
         Promise.race([
             this.recoverDoc(),
             new Promise((_resolve, reject) =>
-                setTimeout(() => reject(new Error("timeout")), 1000)
+                setTimeout(() => reject(new Error("timeout")), 1000),
             ),
         ]).then((val) => {
             this.recoveredContainerId = val as string;
@@ -96,22 +97,35 @@ export class RecoveryAgent extends EventEmitter {
         try {
             versions = await this.azureClient.getContainerVersions(
                 this.orgContainerId,
-                this.maxDocVersions
+                {
+                    maxCount: this.maxDocVersions,
+                },
             );
         } catch (e) {
             return Promise.reject(new Error("Unable to get container versions."));
         }
 
         for (const version of versions) {
-            /* Attempt to recreate doc from next available version */
+            /* Attempt to copy doc from next available version of the older doc */
             try {
                 const { container: newContainer } =
-                    await this.azureClient.recreateContainerFromVersion(
+                    await this.azureClient.copyContainer(
                         this.orgContainerId,
                         this.orgContainerSchema,
-                        version
+                        version,
                     );
-                return await newContainer.attach();
+                const id = await newContainer.attach();
+
+                // FF Data may be lazy loaded on views. Fetch it now to ensure it's
+                // not currupted.
+                const sharedMap = newContainer.initialObjects.dataMap as SharedMap;
+                const value = sharedMap.get(counterValueKey);
+                if (typeof value !== "number") {
+                    throw new Error(
+                        "Model is incorrect - invalid data",
+                    );
+                }
+                return id;
             } catch (e) {
                 this.setRecoveryStatus(
                     "Error",
