@@ -113,6 +113,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         operationsDbManager,
         collection,
         tenantManager,
+        undefined,
         combinedProducer,
         undefined,
         reverseProducer,
