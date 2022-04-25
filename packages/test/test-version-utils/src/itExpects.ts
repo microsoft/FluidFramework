@@ -9,7 +9,7 @@ import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import { Context } from "mocha";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 
-export type ExpectedEvents = ITelemetryGenericEvent[] | Record<TestDriverTypes, ITelemetryGenericEvent[]>;
+export type ExpectedEvents = ITelemetryGenericEvent[] | Partial<Record<TestDriverTypes, ITelemetryGenericEvent[]>>;
 
 function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) {
     return async function(this: Context) {
@@ -19,7 +19,7 @@ function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.As
         }
         const orderedEvents = Array.isArray(orderedExpectedEvents)
             ? orderedExpectedEvents
-            : orderedExpectedEvents[provider.driver.type];
+            : orderedExpectedEvents[provider.driver.type] ?? [];
 
         try {
             provider.logger.registerExpectedEvent(... orderedEvents);
