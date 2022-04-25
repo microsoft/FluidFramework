@@ -12,7 +12,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 import {
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
@@ -83,12 +83,7 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
     });
 
-    // TODO: fully validate that GC is notified. Currently this tests the race condition
-    // where a remote datastore is summarized before the alias op arrives when trySetAlias is called.
-    // TODO: Remove the itExpects once this issue is fixed https://github.com/microsoft/FluidFramework/issues/8859
-    itExpects("GC is notified when datastores are aliased.",
-    [{ eventName: "fluid:telemetry:ContainerRuntime:GarbageCollector:gcUnknownOutboundReferences" }],
-    async () => {
+    it("GC is notified when datastores are aliased.", async () => {
         await summarizeOnContainer(container2);
         const containerRuntime1 = mainDataStore1.containerRuntime;
         const aliasableDataStore1 = await containerRuntime1.createDataStore("TestDataObject");
@@ -110,8 +105,12 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         // Should be able to retrieve root datastore from remote
         const containerRuntime2 = mainDataStore2.containerRuntime;
         assert.doesNotThrow(async () => containerRuntime2.getRootDataStore(alias), "Aliased datastore should be root!");
+        const aliasableDataStore2 = await containerRuntime2.getRootDataStore(alias);
+        const aliasedDataStoreResponse2 = await aliasableDataStore2.request({url:"/"});
+        const aliasedDataStore2 = aliasedDataStoreResponse2.value as TestDataObject;
 
-        const gcReferences = (containerRuntime2 as any).garbageCollector.referencesSinceLastRun as Map<string,string[]>;
+        const gcReferences =
+            (containerRuntime2 as any).garbageCollector.newReferencesSinceLastRun as Map<string,string[]>;
         const references = gcReferences.get("/") as string[];
         assert(references !== undefined, "Should be able to get the root datastore");
         const reference = references.filter((ref) => ref === aliasedDataStore2.handle.absolutePath)[0];
