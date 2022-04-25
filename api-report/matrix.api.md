@@ -46,7 +46,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     // Warning: (ae-forgotten-export) The symbol "ISetOpMetadata" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
-    protected applyStashedOp(content: any): ISetOpMetadata | SegmentGroup | SegmentGroup[];
+    protected applyStashedOp(content: any): SegmentGroup | SegmentGroup[] | ISetOpMetadata;
     // (undocumented)
     closeMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): void;
     // (undocumented)

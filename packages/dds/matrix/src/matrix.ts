@@ -687,6 +687,9 @@ export class SharedMatrix<T = any>
         return `${s}\n`;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+     */
     protected applyStashedOp(content: any) {
         if (content.target === SnapshotPath.cols || content.target === SnapshotPath.rows) {
             const op = content as IMergeTreeOp;
