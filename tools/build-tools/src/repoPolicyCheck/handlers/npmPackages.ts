@@ -31,11 +31,6 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 // Packages which do not publish on NPM
 function packageShouldBePrivate(name: string): boolean {
-    // allow test packages to be published
-    if (name.startsWith("@fluid-internal/test-")) {
-        return false;
-    }
-
     return (
         name === "root" // monorepo roots
         || name.startsWith("@fluid-internal")
