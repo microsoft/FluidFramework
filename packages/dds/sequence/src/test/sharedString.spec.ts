@@ -808,7 +808,6 @@ describe("SharedString", () => {
                 containerRuntimeFactory.processAllMessages();
 
                 // Verify that the changes were correctly received by the second SharedString
-                const collection2 = sharedString2.getIntervalCollection("test");
                 assert.equal(sharedString2.getText(), "hello family its my friend");
                 assertIntervals(sharedString2, collection2, []);
                 assertIntervals(sharedString, collection1, []);
