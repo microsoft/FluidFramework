@@ -6,6 +6,7 @@
 import nodegit from "nodegit";
 import type * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IExternalStorageManager } from "../externalStorageManager";
 import * as helpers from "./helpers";
 import * as conversions from "./nodegitConversions";
@@ -18,8 +19,6 @@ import {
     IRepoManagerParams,
     IStorageDirectoryConfig,
 } from "./definitions";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { getLumberjackBasePropertiesFromRepoManagerParams } from "./helpers";
 
 export class NodegitRepositoryManager implements IRepositoryManager {
     constructor(
@@ -360,7 +359,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         this.repositoryPCache[repoPath] = repositoryP;
 
         const repository = await this.repositoryPCache[repoPath];
-        const lumberjackBaseProperties = getLumberjackBasePropertiesFromRepoManagerParams(params);
+        const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
         const repoManager = new NodegitRepositoryManager(
             params.repoOwner,
             params.repoName,
@@ -383,7 +382,7 @@ export class NodegitRepositoryManagerFactory implements IRepositoryManagerFactor
         const repoPath = helpers.getRepoPath(
             params.repoName,
             this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
-        const lumberjackBaseProperties = getLumberjackBasePropertiesFromRepoManagerParams(params);
+        const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
 
         if (!(repoPath in this.repositoryPCache)) {
             const directory = helpers.getGitDirectory(

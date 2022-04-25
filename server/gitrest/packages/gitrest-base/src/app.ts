@@ -32,7 +32,7 @@ export function create(
     const loggerFormat = store.get("logger:morganFormat");
     if (loggerFormat === "json") {
         app.use(morgan((tokens, req, res) => {
-            const { tenantId,documentId } = parseStorageRoutingId(tokens.req(req, res, Constants.StorageRoutingIdHeader));
+            const storageRoutingId = parseStorageRoutingId(tokens.req(req, res, Constants.StorageRoutingIdHeader));
             const messageMetaData = {
                 method: tokens.method(req, res),
                 pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
@@ -42,8 +42,8 @@ export function create(
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
                 responseTime: tokens["response-time"](req, res),
-                tenantId,
-                documentId,
+                tenantId: storageRoutingId?.tenantId,
+                documentId: storageRoutingId?.documentId,
                 serviceName: "gitrest",
                 eventName: "http_requests",
              };

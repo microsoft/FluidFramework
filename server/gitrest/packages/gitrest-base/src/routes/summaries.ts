@@ -9,6 +9,7 @@ import {
     IWriteSummaryResponse,
     NetworkError,
 } from "@fluidframework/server-services-client";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Router } from "express";
 import { Provider } from "nconf";
 import {
@@ -27,7 +28,6 @@ import {
     getRepoManagerParamsFromRequest,
 } from "../utils";
 import { handleResponse } from "./utils";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 function getDocumentStorageDirectory(repoManager: IRepositoryManager, documentId: string): string {
     return `${repoManager.path}/${documentId}`;
@@ -148,7 +148,8 @@ export function create(
      */
     router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        if (!repoManagerParams.storageRoutingId.documentId) {
+        if (!repoManagerParams?.storageRoutingId?.tenantId ||
+            !repoManagerParams?.storageRoutingId?.documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
                 response);
@@ -172,7 +173,8 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        if (!repoManagerParams.storageRoutingId.documentId) {
+        if (!repoManagerParams?.storageRoutingId?.tenantId ||
+            !repoManagerParams?.storageRoutingId?.documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
                 response);
@@ -198,7 +200,8 @@ export function create(
      */
     router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        if (!repoManagerParams.storageRoutingId.documentId) {
+        if (!repoManagerParams?.storageRoutingId?.tenantId ||
+            !repoManagerParams?.storageRoutingId?.documentId) {
             handleResponse(
                 Promise.reject(new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`)),
                 response);

@@ -6,6 +6,7 @@
 import * as isomorphicGit from "isomorphic-git";
 import type * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as helpers from "./helpers";
 import * as conversions from "./isomorphicgitConversions";
 import {
@@ -17,8 +18,6 @@ import {
     IRepoManagerParams,
     IStorageDirectoryConfig,
 } from "./definitions";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { getLumberjackBasePropertiesFromRepoManagerParams } from "./helpers";
 
 export class IsomorphicGitRepositoryManager implements IRepositoryManager {
     constructor(
@@ -373,7 +372,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
         });
 
         this.repositoryCache.add(repoPath);
-        const lumberjackBaseProperties = getLumberjackBasePropertiesFromRepoManagerParams(params);
+        const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
         const repoManager = new IsomorphicGitRepositoryManager(
             fileSystemManager,
             params.repoOwner,
@@ -401,7 +400,7 @@ export class IsomorphicGitManagerFactory implements IRepositoryManagerFactory {
             repoPath,
             this.storageDirectoryConfig.baseDir);
         const fileSystemManager = this.fileSystemManagerFactory.create(params.fileSystemManagerParams);
-        const lumberjackBaseProperties = getLumberjackBasePropertiesFromRepoManagerParams(params);
+        const lumberjackBaseProperties = helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
 
         if (!(this.repositoryCache.has(repoPath))) {
             const repoExists = await helpers.exists(fileSystemManager, directoryPath);

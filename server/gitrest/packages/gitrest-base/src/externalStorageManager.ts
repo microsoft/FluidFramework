@@ -7,7 +7,11 @@ import Axios, { AxiosRequestHeaders } from "axios";
 import nconf from "nconf";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import * as uuid from "uuid";
-import { BaseTelemetryProperties, getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+    BaseTelemetryProperties,
+    getLumberBaseProperties,
+    Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
 export interface IExternalStorageManager {
     read(tenantId: string, documentId: string): Promise<boolean>;

@@ -7,8 +7,14 @@ import { PathLike, Stats } from "fs";
 import * as path from "path";
 import { Request } from "express";
 import { IGetRefParamsExternal, IWholeFlatSummary, NetworkError } from "@fluidframework/server-services-client";
-import { Constants, IExternalWriterConfig, IFileSystemManager, IRepoManagerParams, IStorageRoutingId } from "./definitions";
 import { BaseTelemetryProperties, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import {
+    Constants,
+    IExternalWriterConfig,
+    IFileSystemManager,
+    IRepoManagerParams,
+    IStorageRoutingId,
+} from "./definitions";
 
 /**
  * Validates that the input encoding is valid
@@ -46,7 +52,7 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
             storageName,
         },
     };
-    console.log(`[DEBUG] Here are the params: ${JSON.stringify(result)}`);
+    console.log(`[DEBUG] Here are the params: ${JSON.stringify(result)}`); // REMOVE THIS LATER
     return result;
 }
 
@@ -127,19 +133,22 @@ export function getGitDirectory(repoPath: string, baseDir?: string): string {
     return baseDir ? `${baseDir}/${repoPath}` : repoPath;
 }
 
-export function parseStorageRoutingId(storageRoutingId: string): IStorageRoutingId {
+export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId {
+    if (!storageRoutingId) {
+        return undefined;
+    }
     const [tenantId,documentId] = storageRoutingId.split(":");
     return {
         tenantId,
         documentId,
-    }
+    };
 }
 
 export function getLumberjackBasePropertiesFromRepoManagerParams(params: IRepoManagerParams) {
     if (params.storageRoutingId) {
         return getLumberBaseProperties(
             params.storageRoutingId.documentId,
-            params.storageRoutingId.tenantId
+            params.storageRoutingId.tenantId,
         );
     }
     return {
