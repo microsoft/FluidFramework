@@ -10,7 +10,6 @@ import {
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
@@ -116,13 +115,6 @@ export class SerializedSnapshotStorage implements IDocumentStorageService {
      */
     public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return this.storage.getVersions(versionId, count);
-    }
-
-    /**
-     * Writes to the object with the given ID
-     */
-    public async write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return this.storage.write(root, parents, message, ref);
     }
 
     /**

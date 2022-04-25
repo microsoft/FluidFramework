@@ -132,6 +132,7 @@ declare function get_current_ClassDeclaration_DocumentStorageService():
 declare function use_old_ClassDeclaration_DocumentStorageService(
     use: TypeOnly<old.DocumentStorageService>);
 use_old_ClassDeclaration_DocumentStorageService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DocumentStorageService());
 
 /*
@@ -252,6 +253,7 @@ declare function get_current_ClassDeclaration_NullBlobStorageService():
 declare function use_old_ClassDeclaration_NullBlobStorageService(
     use: TypeOnly<old.NullBlobStorageService>);
 use_old_ClassDeclaration_NullBlobStorageService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_NullBlobStorageService());
 
 /*

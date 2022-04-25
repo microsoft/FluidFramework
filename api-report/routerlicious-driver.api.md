@@ -134,8 +134,6 @@ export class NullBlobStorageService implements IDocumentStorageService {
     get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: api_2.ISummaryTree, context: ISummaryContext): Promise<string>;
-    // (undocumented)
-    write(tree: api_2.ITree, parents: string[], message: string, ref: string): Promise<api_2.IVersion>;
 }
 
 // @public
