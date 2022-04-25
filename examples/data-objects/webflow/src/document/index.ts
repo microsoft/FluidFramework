@@ -42,14 +42,13 @@ export const enum DocSegmentKind {
     paragraph = "<p>",
     lineBreak = "<br>",
     beginTags = "<t>",
-    inclusion = "<?>",
     endTags = "</>",
 
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
     endOfText = "eot",
 }
 
-const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion]);
+const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags]);
 
 const enum Workaround { checkpoint = "*" }
 
@@ -149,9 +148,8 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 
     private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph, DocTile.checkpoint], tag: TagName.p });
     private static readonly lineBreakProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.lineBreak, DocTile.checkpoint] });
-    private static readonly inclusionProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint] });
     private static readonly tagsProperties = Object.freeze({
-        [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint],
+        [reservedTileLabelsKey]: [DocTile.checkpoint],
         [reservedRangeLabelsKey]: [DocSegmentKind.beginTags],
     });
 
@@ -317,7 +315,6 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
     // eslint-disable-next-line @typescript-eslint/ban-types
     public insertComponent(position: number, handle: IFluidHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
         this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
-            ...FlowDocument.inclusionProperties,
             componentOptions, handle, style, classList: classList && classList.join(" "), view,
         }));
     }
