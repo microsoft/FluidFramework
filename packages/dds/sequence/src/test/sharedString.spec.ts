@@ -745,5 +745,114 @@ describe("SharedString", () => {
             // Verify that the changes were correctly received by the second SharedString
             assert.equal(sharedString2.getText(), "hello friend");
         });
+
+        describe.skip("with interval collection changes", () => {
+            let collection1: IntervalCollection<SequenceInterval>;
+            let collection2: IntervalCollection<SequenceInterval>;
+            let interval: SequenceInterval;
+            beforeEach(async () => {
+                sharedString.insertText(0, "hello friend");
+                collection1 = sharedString.getIntervalCollection("test");
+                collection2 = sharedString2.getIntervalCollection("test");
+                containerRuntimeFactory.processAllMessages();
+
+                // Note: at the start of each test, this interval is only visible to client 1.
+                interval = collection1.add(6, 8, IntervalType.SlideOnRemove); // the "fr" in "friend"
+            });
+
+            it("addInterval resubmitted with concurrent insert", async () => {
+                containerRuntime1.connected = false;
+
+                sharedString2.insertText(7, "amily its my f");
+                containerRuntimeFactory.processAllMessages();
+
+                containerRuntime1.connected = true;
+                containerRuntimeFactory.processAllMessages();
+
+                assert.equal(sharedString2.getText(), "hello family its my friend");
+                assertIntervals(sharedString2, collection2, [
+                    { start: 6, end: 22 },
+                ]);
+                assertIntervals(sharedString, collection1, [
+                    { start: 6, end: 22 },
+                ]);
+            });
+
+            it("addInterval resubmitted with concurrent delete", async () => {
+                containerRuntime1.connected = false;
+
+                sharedString2.removeText(5, 9);
+                containerRuntimeFactory.processAllMessages();
+
+                containerRuntime1.connected = true;
+                containerRuntimeFactory.processAllMessages();
+
+                assert.equal(sharedString2.getText(), "helloend");
+                assertIntervals(sharedString2, collection2, [
+                    { start: 5, end: 5 },
+                ]);
+                assertIntervals(sharedString, collection1, [
+                    { start: 5, end: 5 },
+                ]);
+            });
+
+            it("delete resubmitted with concurrent insert", async () => {
+                containerRuntimeFactory.processAllMessages();
+                containerRuntime1.connected = false;
+
+                collection1.removeIntervalById(interval.getIntervalId());
+                sharedString2.insertText(7, "amily its my f");
+                containerRuntimeFactory.processAllMessages();
+
+                containerRuntime1.connected = true;
+                containerRuntimeFactory.processAllMessages();
+
+                // Verify that the changes were correctly received by the second SharedString
+                const collection2 = sharedString2.getIntervalCollection("test");
+                assert.equal(sharedString2.getText(), "hello family its my friend");
+                assertIntervals(sharedString2, collection2, []);
+                assertIntervals(sharedString, collection1, []);
+            });
+
+            it("change resubmitted with concurrent insert", async () => {
+                containerRuntimeFactory.processAllMessages();
+                containerRuntime1.connected = false;
+
+                collection1.change(interval.getIntervalId(), 5, 9); // " fri"
+                sharedString2.insertText(7, "amily its my f");
+                containerRuntimeFactory.processAllMessages();
+
+                containerRuntime1.connected = true;
+                containerRuntimeFactory.processAllMessages();
+
+                assert.equal(sharedString2.getText(), "hello family its my friend");
+                assertIntervals(sharedString2, collection2, [
+                    { start: 5, end: 23 },
+                ]);
+                assertIntervals(sharedString, collection1, [
+                    { start: 5, end: 23 },
+                ]);
+            });
+
+            it("change resubmitted with concurrent delete", async () => {
+                containerRuntimeFactory.processAllMessages();
+                containerRuntime1.connected = false;
+
+                collection1.change(interval.getIntervalId(), 5, 9); // " fri"
+                sharedString2.removeText(8, 10);
+                containerRuntimeFactory.processAllMessages();
+
+                containerRuntime1.connected = true;
+                containerRuntimeFactory.processAllMessages();
+
+                assert.equal(sharedString2.getText(), "hello frnd");
+                assertIntervals(sharedString2, collection2, [
+                    { start: 5, end: 8 },
+                ]);
+                assertIntervals(sharedString, collection1, [
+                    { start: 5, end: 8 },
+                ]);
+            });
+        });
     });
 });
