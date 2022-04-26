@@ -73,19 +73,11 @@
     "@fluidframework/matrix": "^0.59.2000",
     "@fluidframework/ordered-collection": "^0.59.2000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-<<<<<<< HEAD
-    "@fluidframework/register-collection": "^0.59.2000",
-    "@fluidframework/replay-driver": "^0.59.2000",
-    "@fluidframework/sequence": "^0.59.2000",
-    "@fluidframework/server-local-server": "^0.1036.1000",
-    "@fluidframework/test-utils": "^0.59.2000"
-=======
     "@fluidframework/register-collection": "^0.59.3000",
     "@fluidframework/replay-driver": "^0.59.3000",
     "@fluidframework/sequence": "^0.59.3000",
     "@fluidframework/server-local-server": "^0.1036.2000-0",
     "@fluidframework/test-utils": "^0.59.3000"
->>>>>>> 11d15ff025 (Bumping server dependencies (#10045))
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

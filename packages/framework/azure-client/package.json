@@ -51,15 +51,9 @@
     "@fluidframework/fluid-static": "^0.59.2000",
     "@fluidframework/map": "^0.59.2000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-<<<<<<< HEAD
-    "@fluidframework/routerlicious-driver": "^0.59.2000",
-    "@fluidframework/runtime-utils": "^0.59.2000",
-    "@fluidframework/server-services-client": "^0.1036.1000",
-=======
     "@fluidframework/routerlicious-driver": "^0.59.3000",
     "@fluidframework/runtime-utils": "^0.59.3000",
     "@fluidframework/server-services-client": "^0.1036.2000-0",
->>>>>>> 11d15ff025 (Bumping server dependencies (#10045))
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
   },

@@ -65,15 +65,6 @@
     "@fluidframework/odsp-driver-definitions": "^0.59.2000",
     "@fluidframework/odsp-urlresolver": "^0.59.2000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-<<<<<<< HEAD
-    "@fluidframework/routerlicious-driver": "^0.59.2000",
-    "@fluidframework/server-local-server": "^0.1036.1000",
-    "@fluidframework/test-driver-definitions": "^0.59.2000",
-    "@fluidframework/test-pairwise-generator": "^0.59.2000",
-    "@fluidframework/test-runtime-utils": "^0.59.2000",
-    "@fluidframework/tinylicious-driver": "^0.59.2000",
-    "@fluidframework/tool-utils": "^0.59.2000",
-=======
     "@fluidframework/routerlicious-driver": "^0.59.3000",
     "@fluidframework/server-local-server": "^0.1036.2000-0",
     "@fluidframework/test-driver-definitions": "^0.59.3000",
@@ -81,7 +72,6 @@
     "@fluidframework/test-runtime-utils": "^0.59.3000",
     "@fluidframework/tinylicious-driver": "^0.59.3000",
     "@fluidframework/tool-utils": "^0.59.3000",
->>>>>>> 11d15ff025 (Bumping server dependencies (#10045))
     "axios": "^0.26.0",
     "semver": "^7.3.4",
     "uuid": "^8.3.1"
