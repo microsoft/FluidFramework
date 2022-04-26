@@ -54,25 +54,23 @@ export interface IPendingLocalState {
     pendingStates: IPendingState[];
 }
 
-export interface Handler{
+export interface RuntimeStateHandler{
     connected(): boolean,
     clientId(): string | undefined,
     flushMode(): FlushMode,
-    setFlushMode(mode: FlushMode),
+    setFlushMode(mode: FlushMode): void,
     close(error?: ICriticalContainerError): void,
     applyStashedOp: (type: ContainerMessageType, content: ISequencedDocumentMessage) => Promise<unknown>,
-    flush(),
+    flush(): void,
     reSubmit(
         type: ContainerMessageType,
         content: any,
         localOpMetadata: unknown,
-        opMetadata: Record<string, unknown> | undefined,
-    ),
+        opMetadata: Record<string, unknown> | undefined): void,
     rollback(
         type: ContainerMessageType,
         content: any,
-        localOpMetadata: unknown,
-        opMetadata: Record<string, unknown> | undefined)
+        localOpMetadata: unknown): void
 }
 
 /**
@@ -132,7 +130,7 @@ export class PendingStateManager implements IDisposable {
     }
 
     constructor(
-        private readonly stateHandler: Handler,
+        private readonly stateHandler: RuntimeStateHandler,
         initialFlushMode: FlushMode,
         initialLocalState: IPendingLocalState | undefined,
     ) {
@@ -236,15 +234,16 @@ export class PendingStateManager implements IDisposable {
 
     public checkpoint() {
         const checkpointHead = this.pendingStates.peekBack();
-        return{
-            rollback:()=>{
-                try{
+        return {
+            rollback:() => {
+                try {
                     while(this.pendingStates.peekBack() !== checkpointHead) {
                         this.rollbackNextPendingState();
                     }
-                }catch(err) {
-                    this.stateHandler.close(CreateProcessingError(err, "checkpointRollback"));
-                    throw err;
+                } catch(err) {
+                    const error = DataProcessingError.wrapIfUnrecognized(err, "checkpointRollback", undefined, "RollbackError: ");
+                    this.stateHandler.close(error);
+                    throw error;
                 }
             },
         };
@@ -400,7 +399,7 @@ export class PendingStateManager implements IDisposable {
         return nextPendingState;
     }
 
-    public rollbackNextPendingState() {
+    private rollbackNextPendingState() {
         const pendingStatesCount = this.pendingStates.length;
         if (pendingStatesCount === 0) {
             return;
@@ -416,11 +415,11 @@ export class PendingStateManager implements IDisposable {
                     this.stateHandler.rollback(
                         pendingState.messageType,
                         pendingState.content,
-                        pendingState.localOpMetadata,
-                        pendingState.opMetadata);
+                        pendingState.localOpMetadata);
                 }
                 break;
             default:
+                throw new Error(`Can't rollback state ${pendingState.type}`);
         }
     }
 

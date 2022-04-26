@@ -97,29 +97,39 @@ const defaultErrorTypeForNormalize = "genericError";
  * @returns A valid Fluid Error with any provided annotations applied
  * @param error - The error to normalize
  * @param annotations - Annotations to apply to the normalized error
+ * @param messagePrefix - String to add to beginning of error message
  */
 export function normalizeError(
     error: unknown,
     annotations: IFluidErrorAnnotations = {},
+    messagePrefix?: string,
 ): IFluidErrorBase {
     // Back-compat, while IFluidErrorBase is rolled out
     if (isValidLegacyError(error)) {
         patchLegacyError(error);
     }
 
+    let existingProps: ITelemetryProperties | undefined;
     if (isFluidError(error)) {
-        // We can simply add the telemetry props to the error and return it
-        error.addTelemetryProperties(annotations.props ?? {});
-        return error;
+        if (!messagePrefix) {
+            // We can simply add the telemetry props to the error and return it
+            error.addTelemetryProperties(annotations.props ?? {});
+            return error;
+        }
+        existingProps = error.getTelemetryProperties();
     }
 
     // We have to construct a new Fluid Error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: defaultErrorTypeForNormalize,
-        message,
+        message: messagePrefix ? messagePrefix + message : message,
         stack,
     });
+
+    if (existingProps) {
+        fluidError.addTelemetryProperties(existingProps);
+    }
 
     fluidError.addTelemetryProperties({
         ...annotations.props,

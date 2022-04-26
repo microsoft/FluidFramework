@@ -51,8 +51,12 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     public reSubmit(content: any, localOpMetadata: unknown) {
         this.handler.reSubmit(content, localOpMetadata);
     }
+
     public rollback(content: any, localOpMetadata: unknown) {
-        this.handler.rollback?.(content, localOpMetadata);
+        if (this.handler.rollback === undefined) {
+            throw new Error("Handler doesn't support rollback");
+        }
+        this.handler.rollback(content, localOpMetadata);
     }
 
     public applyStashedOp(message: ISequencedDocumentMessage): unknown {

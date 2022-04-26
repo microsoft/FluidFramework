@@ -19,6 +19,7 @@ export {
     agentSchedulerId,
     ContainerRuntime,
     RuntimeHeaders,
+    OrderSequentiallyFailureMode,
 } from "./containerRuntime";
 export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
