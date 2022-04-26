@@ -122,7 +122,8 @@ export class RunningSummarizer implements IDisposable {
             this.heuristicRunner = new SummarizeHeuristicRunner(
                 heuristicData,
                 configuration,
-                (reason) => this.trySummarize(reason));
+                (reason) => this.trySummarize(reason),
+                this.logger);
         }
 
         // Cap the maximum amount of time client will wait for a summarize op ack to maxSummarizeAckWaitTime
