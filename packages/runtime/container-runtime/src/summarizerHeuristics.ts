@@ -56,7 +56,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly configuration: ISummaryConfiguration,
         private readonly trySummarize: (reason: SummarizeReason) => void,
-        private readonly minOpsForAttemptOnClose = 50,
+        private readonly minOpsForAttemptOnClose = 10,
     ) {
         this.idleTimer = new Timer(
             this.configuration.idleTime,
