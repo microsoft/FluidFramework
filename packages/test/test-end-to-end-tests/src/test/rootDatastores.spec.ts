@@ -44,7 +44,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         fluidDataObjectType: DataObjectFactoryType.Test,
         runtimeOptions: {
             summaryOptions: {
-                disableSummaries: true,
+                summaryConfigOverrides: {
+                    state: "disabled",
+                },
             },
             gcOptions: {
                 gcAllowed: true,
@@ -398,11 +400,14 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                     ...testContainerConfig,
                     runtimeOptions: {
                         summaryOptions: {
-                            generateSummaries: true,
                             initialSummarizerDelayMs: 10,
                             summaryConfigOverrides: {
+                                state: "enabled",
                                 idleTime: IdleDetectionTime,
                                 maxTime: IdleDetectionTime * 12,
+                                maxOps: 1000, // 1k ops (active)
+                                maxAckWaitTime: 120000, // 2 min
+                                maxOpsSinceLastSummary: 7000,
                             },
                         },
                         gcOptions: {

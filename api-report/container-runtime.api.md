@@ -44,7 +44,6 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
-import { ISummaryConfiguration } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryNack } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
@@ -500,7 +499,7 @@ export const ISummarizer: keyof IProvideSummarizer;
 export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer> {
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
-    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
+    run(onBehalfOf: string, disableHeuristics?: Readonly<boolean>): Promise<SummarizerStopReason>;
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
@@ -522,11 +521,6 @@ export interface ISummarizerEvents extends IEvent {
 export interface ISummarizerInternalsProvider {
     refreshLatestSummaryAck(proposalHandle: string, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
-}
-
-// @public
-export interface ISummarizerOptions {
-    disableHeuristics: boolean;
 }
 
 // @public (undocumented)
@@ -579,6 +573,19 @@ export interface ISummaryCollectionOpEvents extends IEvent {
     (event: OpActionEventName, listener: OpActionEventListener): any;
 }
 
+// Warning: (ae-forgotten-export) The symbol "ISummaryConfigurationCore" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type ISummaryConfiguration = {
+    state: "disabled";
+} | {
+    state: "disableHeuristics";
+    maxAckWaitTime: number;
+    maxOpsSinceLastSummary: number;
+} | ({
+    state: "enabled";
+} & ISummaryConfigurationCore);
+
 // @public
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
     // (undocumented)
@@ -599,16 +606,10 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 export interface ISummaryRuntimeOptions {
     // (undocumented)
     disableIsolatedChannels?: boolean;
-    disableSummaries?: boolean;
-    // @deprecated (undocumented)
-    generateSummaries?: boolean;
     // (undocumented)
     initialSummarizerDelayMs?: number;
-    // (undocumented)
-    maxOpsSinceLastSummary?: number;
     summarizerClientElection?: boolean;
-    summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
-    summaryConfigOverrides?: Partial<ISummaryConfiguration>;
+    summaryConfigOverrides?: ISummaryConfiguration;
 }
 
 // @public
@@ -681,7 +682,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     get ISummarizer(): this;
     // (undocumented)
-    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
+    run(onBehalfOf: string, disableHeuristics?: Readonly<boolean>): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];

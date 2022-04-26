@@ -457,6 +457,7 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<current.IContainerRuntimeOptions>);
 use_current_InterfaceDeclaration_IContainerRuntimeOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -469,6 +470,7 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<old.IContainerRuntimeOptions>);
 use_old_InterfaceDeclaration_IContainerRuntimeOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -1050,26 +1052,28 @@ use_old_InterfaceDeclaration_ISummarizerInternalsProvider(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummarizerOptions": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISummarizerOptions": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummarizerOptions():
     TypeOnly<old.ISummarizerOptions>;
-declare function use_current_InterfaceDeclaration_ISummarizerOptions(
+declare function use_current_RemovedInterfaceDeclaration_ISummarizerOptions(
+    // @ts-expect-error compatibility expected to be broken
     use: TypeOnly<current.ISummarizerOptions>);
-use_current_InterfaceDeclaration_ISummarizerOptions(
+use_current_RemovedInterfaceDeclaration_ISummarizerOptions(
     get_old_InterfaceDeclaration_ISummarizerOptions());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummarizerOptions": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISummarizerOptions": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISummarizerOptions():
+declare function get_current_RemovedInterfaceDeclaration_ISummarizerOptions():
+    // @ts-expect-error compatibility expected to be broken
     TypeOnly<current.ISummarizerOptions>;
 declare function use_old_InterfaceDeclaration_ISummarizerOptions(
     use: TypeOnly<old.ISummarizerOptions>);
 use_old_InterfaceDeclaration_ISummarizerOptions(
-    get_current_InterfaceDeclaration_ISummarizerOptions());
+    get_current_RemovedInterfaceDeclaration_ISummarizerOptions());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1273,6 +1277,7 @@ declare function get_old_InterfaceDeclaration_ISummaryRuntimeOptions():
 declare function use_current_InterfaceDeclaration_ISummaryRuntimeOptions(
     use: TypeOnly<current.ISummaryRuntimeOptions>);
 use_current_InterfaceDeclaration_ISummaryRuntimeOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummaryRuntimeOptions());
 
 /*
@@ -1285,6 +1290,7 @@ declare function get_current_InterfaceDeclaration_ISummaryRuntimeOptions():
 declare function use_old_InterfaceDeclaration_ISummaryRuntimeOptions(
     use: TypeOnly<old.ISummaryRuntimeOptions>);
 use_old_InterfaceDeclaration_ISummaryRuntimeOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryRuntimeOptions());
 
 /*

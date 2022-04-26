@@ -19,6 +19,7 @@ export {
     agentSchedulerId,
     ContainerRuntime,
     RuntimeHeaders,
+    ISummaryConfiguration,
 } from "./containerRuntime";
 export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -56,7 +57,6 @@ export {
     ISummarizer,
     ISummarizerEvents,
     ISummarizerInternalsProvider,
-    ISummarizerOptions,
     ISummarizerRuntime,
     ISummarizingWarning,
     ISummaryCancellationToken,

@@ -19,8 +19,9 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     ISequencedDocumentMessage,
-    ISummaryConfiguration,
+  //   ISummaryConfiguration,
 } from "@fluidframework/protocol-definitions";
+import { ISummaryConfiguration } from "./containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { summarizerClientType } from "./summarizerClientElection";
 import { SummaryCollection } from "./summaryCollection";
@@ -29,7 +30,6 @@ import { RunningSummarizer } from "./runningSummarizer";
 import {
     ISummarizer,
     ISummarizerInternalsProvider,
-    ISummarizerOptions,
     ISummarizerRuntime,
     ISummarizingWarning,
     SummarizerStopReason,
@@ -138,9 +138,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     public async run(
         onBehalfOf: string,
-        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason> {
+        disableHeuristics?: Readonly<boolean>): Promise<SummarizerStopReason> {
         try {
-            return await this.runCore(onBehalfOf, options);
+            return await this.runCore(onBehalfOf, disableHeuristics);
         } catch (error) {
             this.stop("summarizerException");
             throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
@@ -161,7 +161,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     private async runCore(
         onBehalfOf: string,
-        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason> {
+        disableHeuristics?: Readonly<boolean>): Promise<SummarizerStopReason> {
         const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(this.runtime);
 
         // Wait for either external signal to cancel, or loss of connectivity.
@@ -178,7 +178,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             return runCoordinator.waitCancelled;
         }
 
-        const runningSummarizer = await this.start(onBehalfOf, runCoordinator, options);
+        const runningSummarizer = await this.start(onBehalfOf, runCoordinator, disableHeuristics);
 
         // Wait for either external signal to cancel, or loss of connectivity.
         const stopReason = await stopP;
@@ -220,7 +220,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private async start(
         onBehalfOf: string,
         runCoordinator: ICancellableSummarizerController,
-        options?: Readonly<Partial<ISummarizerOptions>>): Promise<RunningSummarizer> {
+        disableHeuristics?: boolean): Promise<RunningSummarizer> {
         if (this.runningSummarizer) {
             if (this.runningSummarizer.disposed) {
                 throw new UsageError("Starting a disposed summarizer");
@@ -265,7 +265,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.summaryCollection,
             runCoordinator /* cancellationToken */,
             (reason) => runCoordinator.stop(reason), /* stopSummarizerCallback */
-            options,
+            disableHeuristics,
         );
         this.runningSummarizer = runningSummarizer;
         this.starting = false;
@@ -336,7 +336,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             coordinatorCreateP.then((runCoordinator) => {
                 // Successully created the cancellation token. Start the summarizer.
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const startP = this.start(this.runtime.clientId!, runCoordinator, { disableHeuristics: true });
+                const startP = this.start(this.runtime.clientId!, runCoordinator, true /* disableHeuristics */);
                 startP.then(async (runningSummarizer) => {
                     // Successfully started the summarizer. Run it.
                     runningSummarizer.summarizeOnDemand(builder, ...args);

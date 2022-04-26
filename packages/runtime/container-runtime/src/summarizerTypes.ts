@@ -66,17 +66,6 @@ export interface ISummarizerInternalsProvider {
     ): Promise<void>;
 }
 
-/** Options that control the behavior of a running summarizer. */
-export interface ISummarizerOptions {
-    /**
-     * Set to true to disable the default heuristics from running; false by default.
-     * This affects only the heuristics around when a summarizer should
-     * submit summaries. So when it is disabled, summarizer clients should
-     * not be expected to summarize unless an on-demand summary is requested.
-     */
-    disableHeuristics: boolean;
-}
-
 export interface ISummarizingWarning extends ContainerWarning {
     readonly errorType: "summarizingError";
     readonly logged: boolean;
@@ -300,7 +289,7 @@ export interface ISummarizer extends
     IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer>{
     stop(reason: SummarizerStopReason): void;
 
-    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
+    run(onBehalfOf: string, disableHeuristics?: Readonly<boolean>): Promise<SummarizerStopReason>;
 
     /**
      * Attempts to generate a summary on demand. If already running, takes no action.

@@ -38,7 +38,14 @@ const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
             initialSummarizerDelayMs: 0,
-            summaryConfigOverrides: { maxOps },
+            summaryConfigOverrides: {
+                state: "enabled",
+                idleTime: 5000, // 5 sec (idle)
+                maxTime: 5000 * 12, // 1 min (active)
+                maxOps,
+                maxAckWaitTime: 120000, // 2 min
+                maxOpsSinceLastSummary: 7000,
+             },
         },
     },
 };
@@ -55,7 +62,11 @@ async function createContainer(
     ], []);
 
     // Force generateSummaries to false.
-    const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt, disableSummaries: true };
+    const summaryOptions: ISummaryRuntimeOptions = { ...summaryOpt,
+        summaryConfigOverrides: {
+            ...summaryOpt.summaryConfigOverrides,
+            state: "disabled",
+        } };
 
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);

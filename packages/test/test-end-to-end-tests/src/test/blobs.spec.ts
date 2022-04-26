@@ -23,7 +23,17 @@ const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
             initialSummarizerDelayMs: 20,
-            summaryConfigOverrides: { maxOps: 1 },
+            summaryConfigOverrides: {
+                state: "enabled",
+                idleTime: 5000,
+                maxTime: 5000 * 12,
+                maxOps: 1,
+                // Wait 2 minutes for summary ack
+                // this is less than maxSummarizeAckWaitTime
+                // the min of the two will be chosen
+                maxAckWaitTime: 120000,
+                maxOpsSinceLastSummary: 7000,
+                },
         },
     },
     registry: [["sharedString", SharedString.getFactory()]],

@@ -115,7 +115,27 @@
   "typeValidation": {
     "version": "0.60.1000",
     "broken": {
-      "ClassDeclaration_ContainerRuntime": {"forwardCompat": false}
+      "ClassDeclaration_ContainerRuntime": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IContainerRuntimeOptions": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummarizerOptions": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISummaryRuntimeOptions": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ISummarizerOptions": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITestContainerConfig": {
+        "forwardCompat": false
+      }
     }
   }
 }

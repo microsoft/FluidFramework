@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+// import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+import { ISummaryConfiguration, ISummaryConfigurationCore } from "../containerRuntime";
 import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../summarizerHeuristics";
 import { ISummarizeHeuristicData, ISummarizeAttempt } from "../summarizerTypes";
 import { SummarizeReason } from "../summaryGenerator";
@@ -17,11 +18,12 @@ describe("Runtime", () => {
             before(() => { clock = sinon.useFakeTimers(); });
             after(() => { clock.restore(); });
 
-            const defaultSummaryConfig: ISummaryConfiguration = {
+            const defaultSummaryConfig: ISummaryConfigurationCore = {
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 maxAckWaitTime: 120000, // 2 min
+                maxOpsSinceLastSummary: 7000,
             };
             let summaryConfig: Readonly<ISummaryConfiguration>;
             let data: ISummarizeHeuristicData;
@@ -46,14 +48,16 @@ describe("Runtime", () => {
                 maxTime = defaultSummaryConfig.maxTime,
                 maxOps = defaultSummaryConfig.maxOps,
                 maxAckWaitTime = defaultSummaryConfig.maxAckWaitTime,
+                maxOpsSinceLastSummary = defaultSummaryConfig.maxOpsSinceLastSummary,
                 run = true,
-            }: Partial<ISummaryConfiguration & ISummarizeAttempt & {
+            }: Partial<ISummaryConfigurationCore & ISummarizeAttempt & {
                 lastOpSequenceNumber: number;
                 minOpsForAttemptOnClose: number;
                 run: boolean;
             }> = {}) {
                 data = new SummarizeHeuristicData(lastOpSequenceNumber, { refSequenceNumber, summaryTime });
-                summaryConfig = { idleTime, maxTime, maxOps, maxAckWaitTime } as const;
+                summaryConfig = { state: "enabled",
+                idleTime, maxTime, maxOps, maxAckWaitTime, maxOpsSinceLastSummary } as const;
                 runner = new SummarizeHeuristicRunner(data, summaryConfig, trySummarize, minOpsForAttemptOnClose);
                 if (run) {
                     runner.run();

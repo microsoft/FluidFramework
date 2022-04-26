@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Timer } from "@fluidframework/common-utils";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+import { Timer, assert } from "@fluidframework/common-utils";
+// import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+import { ISummaryConfiguration } from "./containerRuntime";
+
 import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummarizeAttempt } from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
 
@@ -58,6 +60,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         private readonly trySummarize: (reason: SummarizeReason) => void,
         private readonly minOpsForAttemptOnClose = 50,
     ) {
+        assert(this.configuration.state === "enabled", "Configuration state should be enabled");
         this.idleTimer = new Timer(
             this.configuration.idleTime,
             () => this.trySummarize("idle"));
@@ -68,6 +71,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     }
 
     public run() {
+        assert(this.configuration.state === "enabled", "Configuration state should be enabled");
         const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
         const opsSinceLastAck = this.opsSinceLastAck;
         if (timeSinceLastSummary > this.configuration.maxTime) {

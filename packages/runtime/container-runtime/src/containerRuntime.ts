@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-// See #9219
-/* eslint-disable max-lines */
 import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -62,7 +60,7 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
-    ISummaryConfiguration,
+    // ISummaryConfiguration,
     ISummaryContent,
     ISummaryTree,
     MessageType,
@@ -135,7 +133,6 @@ import {
     ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
-    ISummarizerOptions,
     ISummarizerRuntime,
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
@@ -192,10 +189,28 @@ export interface ContainerRuntimeMessage {
     type: ContainerMessageType;
 }
 
+export interface ISummaryConfigurationCore {
+    idleTime: number;
+    maxTime: number;
+    maxOps: number;
+    maxAckWaitTime: number;
+    maxOpsSinceLastSummary: number;
+}
+
+export type ISummaryConfiguration =
+{
+    state: "disabled";
+} | {
+    state: "disableHeuristics";
+    maxAckWaitTime: number;
+    maxOpsSinceLastSummary: number;
+} | ({ state: "enabled";} & ISummaryConfigurationCore);
+
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
 
 const DefaultSummaryConfiguration: ISummaryConfiguration = {
+    state: "enabled",
     idleTime: IdleDetectionTime,
 
     maxTime: IdleDetectionTime * 12,
@@ -207,6 +222,8 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     // this is less than maxSummarizeAckWaitTime
     // the min of the two will be chosen
     maxAckWaitTime: 120000,
+
+    maxOpsSinceLastSummary: 7000,
 };
 
 export interface IGCRuntimeOptions {
@@ -241,40 +258,22 @@ export interface IGCRuntimeOptions {
 }
 
 export interface ISummaryRuntimeOptions {
-    /**
-     * Flag that disables summaries if it is set to true.
-     */
-    disableSummaries?: boolean;
-
-    /**
-     * @deprecated - To disable summaries, please set disableSummaries===true.
-     * Flag that will generate summaries if connected to a service that supports them.
-     * This defaults to true and must be explicitly set to false to disable.
-     */
-    generateSummaries?: boolean;
-
     /* Delay before first attempt to spawn summarizing container. */
     initialSummarizerDelayMs?: number;
 
     /** Override summary configurations set by the server. */
-    summaryConfigOverrides?: Partial<ISummaryConfiguration>;
+    summaryConfigOverrides?: ISummaryConfiguration;
 
     // Flag that disables putting channels in isolated subtrees for each data store
     // and the root node when generating a summary if set to true.
     // Defaults to FALSE (enabled) for now.
     disableIsolatedChannels?: boolean;
 
-    // Defaults to 7000 ops
-    maxOpsSinceLastSummary?: number;
-
     /**
      * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
      * THis defaults to false (disabled) and must be explicitly set to true to enable.
      */
     summarizerClientElection?: boolean;
-
-    /** Options that control the running summarizer behavior. */
-    summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
 }
 
 /**
@@ -1026,8 +1025,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return {
             // the defaults
             ... DefaultSummaryConfiguration,
-            // the server provided values
-            ... this.context?.serviceConfiguration?.summary,
             // the runtime configuration overrides
             ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
         };
@@ -1071,8 +1068,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private get summariesDisabled(): boolean {
-        return this.runtimeOptions.summaryOptions.disableSummaries === true ||
-            this.runtimeOptions.summaryOptions.summaryConfigOverrides?.disableSummaries === true;
+        return this.runtimeOptions.summaryOptions.summaryConfigOverrides?.state === "disabled";
+    }
+
+    private get maxOpsSinceLastSummary(): number {
+        assert(this.summaryConfiguration.state !== "disabled", "Summary Configuration is invalid");
+        return this.summaryConfiguration.maxOpsSinceLastSummary;
     }
 
     private readonly createContainerMetadata: ICreateContainerMetadata;
@@ -1236,11 +1237,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             || this.pendingStateManager.hasPendingMessages();
         this.context.updateDirtyContainerState(this.dirtyContainer);
 
-        // Map the deprecated generateSummaries flag to disableSummaries.
-        if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
-            this.runtimeOptions.summaryOptions.disableSummaries = true;
-        }
-
         if (this.summariesDisabled) {
             this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         }
@@ -1261,7 +1257,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const summarizerClientElectionEnabled =
                 this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ??
                 this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
-            const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
+            const maxOpsSinceLastSummary = this.maxOpsSinceLastSummary;
             this.summarizerClientElection = new SummarizerClientElection(
                 orderedClientLogger,
                 this.summaryCollection,
@@ -1318,7 +1314,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     {
                         initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
                     },
-                    this.runtimeOptions.summaryOptions.summarizerOptions,
+                    this.runtimeOptions.summaryOptions.summaryConfigOverrides?.state === "disableHeuristics" ?? false,
                 );
                 this.summaryManager.start();
             }
@@ -2925,11 +2921,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } else if (this.summaryManager !== undefined) {
             return this.summaryManager.enqueueSummarize(...args);
         } else {
-            // If we're not the summarizer, and we don't have a summaryManager, we expect that
-            // generateSummaries is turned off. We are throwing instead of returning a failure here,
-            // because it is a misuse of the API rather than an expected failure.
-            throw new UsageError(
-                `Can't summarize, disableSummaries: ${this.summariesDisabled}`,
+            // If we're not the summarizer, and we don't have a summaryManager, we are
+            // generating an error.
+            throw new Error(
+                `Couldn't find a summarizer`,
             );
         }
     };

@@ -12,11 +12,11 @@ import {
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+// import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions, SummaryCollection, ISummaryConfiguration } from "@fluidframework/container-runtime";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -36,13 +36,16 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         []);
 
     const IdleDetectionTime = 100;
-    const summaryConfigOverrides: Partial<ISummaryConfiguration> = {
+    const summaryConfigOverrides: ISummaryConfiguration = {
+        state: "enabled",
         idleTime: IdleDetectionTime,
         maxTime: IdleDetectionTime * 12,
+        maxOps: 1000,
+        maxAckWaitTime: 600000,
+        maxOpsSinceLastSummary: 7000,
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            generateSummaries: true,
             initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },

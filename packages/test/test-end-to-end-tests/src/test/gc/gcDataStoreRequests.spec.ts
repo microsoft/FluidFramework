@@ -11,7 +11,7 @@ import {
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
+// import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
@@ -20,6 +20,7 @@ import {
     IContainerRuntimeOptions,
     RuntimeHeaders,
     SummaryCollection,
+    ISummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { TestDataObject } from "../mockSummarizerClient";
@@ -39,9 +40,13 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         []);
 
     const IdleDetectionTime = 100;
-    const summaryConfigOverrides: Partial<ISummaryConfiguration> = {
+    const summaryConfigOverrides: ISummaryConfiguration = {
+        state: "enabled",
         idleTime: IdleDetectionTime,
         maxTime: IdleDetectionTime * 12,
+        maxOps: 1000, // 1k ops (active)
+        maxAckWaitTime: 120000, // 2 min
+        maxOpsSinceLastSummary: 7000,
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
