@@ -217,7 +217,7 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
-    public async waitStop(allowLastSummary: boolean): Promise<void> {
+    public async waitStop(allowLastSummary: boolean, stopReason: SummarizerStopReason): Promise<void> {
         if (this.stopping) {
             return;
         }
@@ -227,7 +227,7 @@ export class RunningSummarizer implements IDisposable {
         this.disposeEnqueuedSummary();
 
         // This will try to run lastSummary if needed.
-        if (allowLastSummary && this.heuristicRunner?.shouldRunLastSummary()) {
+        if (allowLastSummary && this.heuristicRunner?.shouldRunLastSummary(stopReason)) {
             if (this.summarizingLock === undefined) {
                 this.trySummarizeOnce(
                     // summarizeProps

@@ -200,7 +200,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         // cons of #2 substantially.
 
         // Cleanup after running
-        await runningSummarizer.waitStop(!runCoordinator.cancelled /* allowLastSummary */);
+        await runningSummarizer.waitStop(!runCoordinator.cancelled, stopReason);
 
         // Propagate reason and ensure that if someone is waiting for cancellation token, they are moving to exit
         runCoordinator.stop(stopReason);
@@ -342,7 +342,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     runningSummarizer.summarizeOnDemand(builder, ...args);
                     // Wait for a command to stop or loss of connectivity before tearing down the summarizer and client.
                     const stopReason = await Promise.race([this.stopDeferred.promise, runCoordinator.waitCancelled]);
-                    await runningSummarizer.waitStop(false);
+                    await runningSummarizer.waitStop(false, stopReason);
                     runCoordinator.stop(stopReason);
                     this.dispose();
                     this.runtime.closeFn();

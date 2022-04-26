@@ -5,7 +5,7 @@
 
 import { Timer } from "@fluidframework/common-utils";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
-import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummarizeAttempt } from "./summarizerTypes";
+import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummarizeAttempt, SummarizerStopReason } from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
 
 /** Simple implementation of class for tracking summarize heuristic data. */
@@ -81,7 +81,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         }
     }
 
-    public shouldRunLastSummary(): boolean {
+    public shouldRunLastSummary(stopReason: SummarizerStopReason): boolean {
         const opsSinceLastAck = this.opsSinceLastAck;
         return (opsSinceLastAck > this.minOpsForAttemptOnClose);
     }
