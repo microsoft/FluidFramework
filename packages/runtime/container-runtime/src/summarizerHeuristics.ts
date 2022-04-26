@@ -82,6 +82,10 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     }
 
     public shouldRunLastSummary(stopReason: SummarizerStopReason): boolean {
+        if (stopReason === "parentNotConnected") {
+            return false;
+        }
+
         const opsSinceLastAck = this.opsSinceLastAck;
         return (opsSinceLastAck > this.minOpsForAttemptOnClose);
     }
