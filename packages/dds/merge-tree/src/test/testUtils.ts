@@ -32,7 +32,7 @@ export function insertMarker(
     refSeq: number,
     clientId: number,
     seq: number,
-    behaviors: ReferenceType, props: PropertySet, opArgs: IMergeTreeDeltaOpArgs,
+    behaviors: ReferenceType, props: PropertySet | undefined, opArgs: IMergeTreeDeltaOpArgs,
 ) {
     mergeTree.insertSegments(pos, [Marker.make(behaviors, props)], refSeq, clientId, seq, opArgs);
 }
@@ -44,8 +44,8 @@ export function insertText(
     clientId: number,
     seq: number,
     text: string,
-    props: PropertySet,
-    opArgs: IMergeTreeDeltaOpArgs,
+    props?: PropertySet,
+    opArgs?: IMergeTreeDeltaOpArgs,
 ) {
     mergeTree.insertSegments(pos, [TextSegment.make(text, props)], refSeq, clientId, seq, opArgs);
 }

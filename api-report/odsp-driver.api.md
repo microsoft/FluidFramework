@@ -100,7 +100,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     protected persistedCache: IPersistedCache;
     // (undocumented)
     readonly protocolName = "fluid-odsp:";
-    }
+}
 
 // @public (undocumented)
 export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
@@ -124,7 +124,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     static createNavParam(locator: OdspFluidDataStoreLocator): string;
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, dataStorePath: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
-    }
+}
 
 // @public (undocumented)
 export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
@@ -157,7 +157,6 @@ export enum SharingLinkHeader {
 
 // @public
 export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator): void;
-
 
 // (No @packageDocumentation comment for this package)
 

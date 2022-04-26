@@ -128,6 +128,9 @@ interface IRefsAtOffset {
     after?: LocalReference[];
 }
 
+/**
+ * Represents a collection of {@link LocalReference}s associated with one segment in a merge-tree.
+ */
 export class LocalReferenceCollection {
     public static append(seg1: ISegment, seg2: ISegment) {
         if (seg2.localRefs && !seg2.localRefs.empty) {
@@ -150,10 +153,11 @@ export class LocalReferenceCollection {
     private refCount: number = 0;
 
     constructor(
+        /** Segment this `LocalReferenceCollection` is associated to. */
         private readonly segment: ISegment,
         initialRefsByfOffset = new Array<IRefsAtOffset | undefined>(segment.cachedLength)) {
         // Since javascript arrays are sparse the above won't populate any of the
-        // indicies, but it will ensure the length property of the array matches
+        // indices, but it will ensure the length property of the array matches
         // the length of the segment.
         this.refsByOffset = initialRefsByfOffset;
     }
@@ -296,6 +300,15 @@ export class LocalReferenceCollection {
         this.refsByOffset.push(...other.refsByOffset);
     }
 
+    /**
+     * Splits this `LocalReferenceCollection` into the intervals [0, offset) and [offset, originalLength).
+     * Local references in the former half of this split will remain associated with the segment used on construction.
+     * Local references in the latter half of this split will be transferred to `splitSeg`,
+     * and its `localRefs` field will be set.
+     * @param offset - Offset into the original segment at which the collection should be split
+     * @param splitSeg - Split segment which originally corresponded to the indices [offset, originalLength)
+     * before splitting.
+     */
     public split(offset: number, splitSeg: ISegment) {
         if (!this.empty) {
             const localRefs =
@@ -314,6 +327,9 @@ export class LocalReferenceCollection {
                 this.refCount--;
                 localRefs.refCount++;
             }
+        } else {
+            // shrink the offset array when empty and splitting
+            this.refsByOffset.length = offset;
         }
     }
 

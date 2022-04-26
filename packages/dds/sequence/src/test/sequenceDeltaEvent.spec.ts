@@ -783,9 +783,9 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            const events: SequenceDeltaEvent[] = [];
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
-                event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
+                events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
             };
 
             const localRemoveMessage = client.makeOpMessage(
@@ -796,6 +796,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert.equal(events.length, 1);
+            const [event] = events;
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
@@ -813,10 +815,8 @@ describe("collab", () => {
 
             client.applyMsg(remoteRemoveMessage);
 
-            assert(!event.isLocal);
-            assert(event.isEmpty);
-            assert.strictEqual(event.first, undefined);
-            assert.strictEqual(event.last, undefined);
+            // No new event should be emitted since the delta is empty.
+            assert.equal(events.length, 1);
         });
 
         it("overlapping regions, same range, remote before local", () => {
@@ -827,9 +827,9 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            const events: SequenceDeltaEvent[] = [];
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
-                event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
+                events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
             };
 
             const localRemoveMessage = client.makeOpMessage(
@@ -838,6 +838,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert.equal(events.length, 1);
+            const [event] = events;
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
@@ -857,10 +859,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
-            assert(!event.isLocal);
-            assert(event.isEmpty);
-            assert.strictEqual(event.first, undefined);
-            assert.strictEqual(event.last, undefined);
+            // No new event should be emitted since the delta is empty.
+            assert.equal(events.length, 1);
         });
 
         it("overlapping regions, local shadows remote, local before remote", () => {
@@ -871,9 +871,9 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            const events: SequenceDeltaEvent[] = [];
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
-                event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
+                events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
             };
 
             const localRemoveMessage = client.makeOpMessage(
@@ -884,6 +884,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
+            assert.equal(events.length, 1);
+            const [event] = events;
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
@@ -901,10 +903,8 @@ describe("collab", () => {
 
             client.applyMsg(remoteRemoveMessage);
 
-            assert(!event.isLocal);
-            assert(event.isEmpty);
-            assert.strictEqual(event.first, undefined);
-            assert.strictEqual(event.last, undefined);
+            // No new event should be emitted since the delta is empty.
+            assert.equal(events.length, 1);
         });
 
         it("overlapping regions, local shadows remote, remote before local", () => {
@@ -915,9 +915,9 @@ describe("collab", () => {
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
-            let event: SequenceDeltaEvent;
+            const events: SequenceDeltaEvent[] = [];
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
-                event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
+                events.push(new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client));
             };
 
             const localRemoveMessage = client.makeOpMessage(
@@ -926,6 +926,8 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
+            assert.equal(events.length, 1);
+            const [event] = events;
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.first.position, localRemovePosStart);
@@ -945,10 +947,8 @@ describe("collab", () => {
 
             client.applyMsg(localRemoveMessage);
 
-            assert(!event.isLocal);
-            assert(event.isEmpty);
-            assert.strictEqual(event.first, undefined);
-            assert.strictEqual(event.last, undefined);
+            // No new event should be emitted since the delta is empty.
+            assert.equal(events.length, 1);
         });
 
         it("overlapping regions, local range precedes remote range, local before remote", () => {
@@ -1306,7 +1306,7 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1326,7 +1326,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1358,7 +1358,7 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1378,7 +1378,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1413,7 +1413,7 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1433,7 +1433,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1465,7 +1465,7 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1487,7 +1487,7 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1520,7 +1520,7 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1540,7 +1540,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1572,7 +1572,7 @@ describe("collab", () => {
                 currentSeqNumber, // refseqnum
             );
 
-            verifyEventForAnnotate(event, true, false, localPosStart, localPosEnd,
+            verifyEventForAnnotate(event, true, localPosStart, localPosEnd,
                 [
                     {
                         numChar: localPosEnd - localPosStart,
@@ -1592,7 +1592,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, remotePosStart, remotePosEnd,
+            verifyEventForAnnotate(event, false, remotePosStart, remotePosEnd,
                 [
                     {
                         numChar: remotePosEnd - remotePosStart,
@@ -1655,7 +1655,7 @@ describe("collab", () => {
 
             client.applyMsg(localMessage1);
 
-            verifyEventForAnnotate(event, true, false, secondWordStart, secondWordEnd,
+            verifyEventForAnnotate(event, true, secondWordStart, secondWordEnd,
                 [
                     {
                         numChar: secondWordEnd - secondWordStart,
@@ -1675,7 +1675,7 @@ describe("collab", () => {
 
             client.applyMsg(localMessage2);
 
-            verifyEventForAnnotate(event, true, false, fourthWordStart, fourthWordEnd,
+            verifyEventForAnnotate(event, true, fourthWordStart, fourthWordEnd,
                 [
                     {
                         numChar: fourthWordEnd - fourthWordStart,
@@ -1695,7 +1695,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage1);
 
-            verifyEventForAnnotate(event, false, false, thirdWordStart, thirdWordEnd,
+            verifyEventForAnnotate(event, false, thirdWordStart, thirdWordEnd,
                 [
                     {
                         numChar: thirdWordEnd - thirdWordStart,
@@ -1722,7 +1722,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, firstWordStart, fourthWordEnd,
+            verifyEventForAnnotate(event, false, firstWordStart, fourthWordEnd,
                 [
                     {
                         numChar: secondWordStart - firstWordStart,
@@ -1784,7 +1784,7 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, true, false, firstWordStart, secondWordEnd,
+            verifyEventForAnnotate(event, true, firstWordStart, secondWordEnd,
                 [
                     {
                         numChar: secondWordStart - firstWordStart,
@@ -1818,7 +1818,7 @@ describe("collab", () => {
 
             client.applyMsg(remoteMessage);
 
-            verifyEventForAnnotate(event, false, false, thirdWordStart, fourthWordEnd,
+            verifyEventForAnnotate(event, false, thirdWordStart, fourthWordEnd,
                 [
                     {
                         numChar: thirdWordEnd - thirdWordStart,
@@ -1859,7 +1859,7 @@ describe("collab", () => {
 
             client.applyMsg(localMessage);
 
-            verifyEventForAnnotate(event, true, false, secondWordStart, fourthWordEnd,
+            verifyEventForAnnotate(event, true, secondWordStart, fourthWordEnd,
                 [
                     {
                         numChar: secondWordEnd - secondWordStart,
@@ -1903,17 +1903,12 @@ describe("collab", () => {
         function verifyEventForAnnotate(
             event: SequenceDeltaEvent,
             isLocal: boolean,
-            isEmpty: boolean,
             start: number,
             end: number,
             expected: IExpectedSegmentInfo[],
         ): void {
             assert(event.isLocal === isLocal);
-            assert(event.isEmpty === isEmpty);
-            if (isEmpty) {
-                assert.equal(event.first.position, undefined);
-                return;
-            }
+            assert(!event.isEmpty);
             assert.equal(event.first.position, start);
             assert.equal(event.last.position + event.last.segment.cachedLength, end);
             assert.equal(event.ranges.length, expected.length);

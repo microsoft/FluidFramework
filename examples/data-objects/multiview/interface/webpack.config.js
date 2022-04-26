@@ -4,7 +4,7 @@
  */
 
 const path = require("path");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 
 module.exports = env => {
     const isProduction = env && env.production;
