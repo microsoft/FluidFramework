@@ -74,6 +74,7 @@
     "@fluidframework/odsp-driver": "^0.59.2000",
     "@fluidframework/odsp-driver-definitions": "^0.59.2000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
+<<<<<<< HEAD
     "@fluidframework/routerlicious-driver": "^0.59.2000",
     "@fluidframework/runtime-definitions": "^0.59.2000",
     "@fluidframework/runtime-utils": "^0.59.2000",
@@ -84,6 +85,18 @@
     "@fluidframework/view-adapters": "^0.59.2000",
     "@fluidframework/view-interfaces": "^0.59.2000",
     "@fluidframework/web-code-loader": "^0.59.2000",
+=======
+    "@fluidframework/routerlicious-driver": "^0.59.3000",
+    "@fluidframework/runtime-definitions": "^0.59.3000",
+    "@fluidframework/runtime-utils": "^0.59.3000",
+    "@fluidframework/server-local-server": "^0.1036.2000-0",
+    "@fluidframework/server-services-client": "^0.1036.2000-0",
+    "@fluidframework/test-runtime-utils": "^0.59.3000",
+    "@fluidframework/tool-utils": "^0.59.3000",
+    "@fluidframework/view-adapters": "^0.59.3000",
+    "@fluidframework/view-interfaces": "^0.59.3000",
+    "@fluidframework/web-code-loader": "^0.59.3000",
+>>>>>>> 11d15ff025 (Bumping server dependencies (#10045))
     "axios": "^0.26.0",
     "express": "^4.16.3",
     "nconf": "^0.11.4",

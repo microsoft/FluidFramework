@@ -62,8 +62,13 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
+<<<<<<< HEAD
     "@fluidframework/datastore-definitions": "^0.59.2000",
     "@fluidframework/protocol-base": "^0.1036.1000",
+=======
+    "@fluidframework/datastore-definitions": "^0.59.3000",
+    "@fluidframework/protocol-base": "^0.1036.2000-0",
+>>>>>>> 11d15ff025 (Bumping server dependencies (#10045))
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/runtime-definitions": "^0.59.2000",
     "@fluidframework/shared-object-base": "^0.59.2000"
