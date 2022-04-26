@@ -11,9 +11,11 @@ import {
     addProperties,
     Client,
     ConflictAction,
+    // createAnnotateRangeOp,
     createMap,
     ICombiningOp,
     IInterval,
+    // IMergeTreeAnnotateMsg,
     IntervalConflictResolver,
     IntervalNode,
     IntervalTree,
@@ -698,6 +700,9 @@ export class SequenceIntervalCollectionValueType
 
                         value.addInternal(params, local, op);
                     },
+                    rebase: (value, op, localOpMetadata) => {
+                        return { ...op, value: value.rebaseInternal(op.value, localOpMetadata as number) }
+                    }
                 },
             ],
             [
@@ -709,6 +714,10 @@ export class SequenceIntervalCollectionValueType
                         }
                         value.deleteInterval(params, local, op);
                     },
+                    rebase: (value, op) => {
+                        console.log(JSON.stringify(op));
+                        return op
+                    }
                 },
             ],
             [
@@ -717,6 +726,9 @@ export class SequenceIntervalCollectionValueType
                     process: (value, params, local, op) => {
                         value.changeInterval(params, local, op);
                     },
+                    rebase: (value, op, localOpMetadata) => {
+                        return { ...op, value: value.rebaseInternal(op.value, localOpMetadata as number) };
+                    }
                 },
             ]]);
 }
@@ -781,6 +793,7 @@ export class IntervalCollectionValueType
 
                         value.addInternal(params, local, op);
                     },
+                    rebase: (value, op) => op
                 },
             ],
             [
@@ -792,6 +805,7 @@ export class IntervalCollectionValueType
                         }
                         value.deleteInterval(params, local, op);
                     },
+                    rebase: (value, op) => op
                 },
             ],
             [
@@ -800,6 +814,9 @@ export class IntervalCollectionValueType
                     process: (value, params, local, op) => {
                         value.changeInterval(params, local, op);
                     },
+                    rebase: (value, op, localMetadata) => {
+                        return op;
+                    }
                 },
             ]]);
 }
@@ -1154,6 +1171,58 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             this.onDeserialize(interval);
         });
     }
+
+    public rebaseInternal(
+        serializedInterval: ISerializedInterval,
+        localSeq: number
+    ) {
+        if (!this.attached) {
+            throw new Error("attachSequence must be called");
+        }
+        const { start, end, intervalType, properties, sequenceNumber } = serializedInterval;
+
+
+        // const { pos1: startRebased, pos2: endRebased } = this.client.regeneratePendingOp(createAnnotateRangeOp(start, end, {}, undefined), this.client.peekPendingSegmentGroups()) as IMergeTreeAnnotateMsg;
+        // this.client.getOrAddShortClientId()
+        // This approach assumes the local client's minSeq hasn't been updated to match the collab window yet. Is that valid?
+
+        this.client.
+        const startRebased = this.client.resolveRemoteClientPosition(start, sequenceNumber, this.client.longClientId + "rebase"); // ewwwww
+        const endRebased = this.client.resolveRemoteClientPosition(end, sequenceNumber, this.client.longClientId + "rebase");
+
+        // TODO: Uniformize creation paths. Do we need to remove the existing interval as part of this rebase? If not, there are probably IDs we need to line up.
+        const interval = this.localCollection.createInterval(startRebased, endRebased, intervalType);
+        interval.addProperties(properties);
+        const rebased = interval.serialize(this.client);
+        if (this.hasPendingChangeStart(interval.getIntervalId())) {
+            this.removePendingChange(serializedInterval);
+            this.addPendingChange(interval.getIntervalId(), rebased);
+        }
+        return rebased;
+    }
+
+    // private rebaseLocalClientPosition(pos: number, referenceSequenceNumber: number): number {
+    //     const clientId = this.client.getOrAddShortClientId(this.client.longClientId + "rebase");
+    //     const segmentInfo = this.client.getContainingSegment(
+    //         pos,
+    //         { referenceSequenceNumber, clientId } as unknown as ISequencedDocumentMessage);
+
+    //     const segwindow = this.client.getCollabWindow();
+
+    //     if (segmentInfo && segmentInfo.segment) {
+    //         const segmentPosition = this.client.getPosition(segmentInfo.segment, segwindow.currentSeq, segwindow.clientId);
+
+    //         if (segmentInfo.segment.removedSeq !== undefined) { // should prob also check against segwindow.currentSeq
+    //             return segmentPosition;
+    //         }
+    //         return segmentPosition + segmentInfo.offset!;
+    //     } else {
+    //         if (remoteClientPosition === this.getLength(remoteClientRefSeq, remoteClientId)) {
+    //             return this.getLength(segwindow.currentSeq, segwindow.clientId);
+    //         }
+    //     }
+
+    // }
 
     public addInternal(
         serializedInterval: ISerializedInterval,

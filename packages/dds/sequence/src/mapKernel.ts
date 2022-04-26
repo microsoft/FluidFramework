@@ -50,6 +50,8 @@ interface IMapMessageHandler {
      */
     submit(op: IMapOperation): void;
 
+    tryResubmit?(op: IMapOperation, localOpMetadata: any): void;
+
     getStashedOpLocalMetadata(op: IMapOperation): unknown;
 }
 
@@ -515,10 +517,11 @@ export class MapKernel implements IValueTypeCreator {
             // we don't know how to rebase these operations, so if any other op has come in
             // we will fail.
             if(this.lastProcessedSeq !== mapLocalMetadata?.lastProcessedSeq) {
-                throw new Error("SharedInterval does not support reconnect in presence of external changes");
+                console.log("SharedInterval does not support reconnect in presence of external changes");
             }
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.messageHandlers.get(type)!.submit(op as IMapOperation);
+            const handler = this.messageHandlers.get(type)!;
+            (handler.tryResubmit ?? handler.submit)(op as IMapOperation, localOpMetadata);
             return true;
         }
         return false;
@@ -782,6 +785,13 @@ export class MapKernel implements IValueTypeCreator {
                 },
                 submit: (op: IMapValueTypeOperation) => {
                     this.submitMessage(op, {lastProcessedSeq: this.lastProcessedSeq});
+                },
+                tryResubmit: (op: IMapValueTypeOperation, localMetadata: any) => {
+                    const localValue = this.data.get(op.key) as ValueTypeLocalValue;
+                    const handler = localValue.getOpHandler(op.value.opName);
+                    // TODO: Maybe should return localMetadata? can match design of applyStashedOp perhaps
+                    // TODO: This should be on add/delete too, maybe? Or if that is unnecessary, API should be reshaped to remove degree of freedom.
+                    this.submitMessage({ ...op, value: handler.rebase(localValue.value, op.value, localMetadata.valueMetadata) }, localMetadata)
                 },
                 getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
                     assert(false, 0x016 /* "apply stashed op not implemented for custom value type ops" */);

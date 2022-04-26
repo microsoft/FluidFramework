@@ -34,7 +34,11 @@ export interface IValueOpEmitter {
      * @param localOpMetadata - JSONable local metadata which should be submitted with the op
      * @alpha
      */
+<<<<<<< Updated upstream
     emit(opName: string, previousValue: any, params: any, localOpMetadata: unknown): void;
+=======
+    emit(opName: string, previousValue: any, params: any, localOpMetadata: any): void;
+>>>>>>> Stashed changes
 }
 
 /**
@@ -83,6 +87,8 @@ export interface IValueOperation<T> {
         message: ISequencedDocumentMessage | undefined,
         localOpMetadata: unknown
     );
+
+    rebase(value: T, op: IValueTypeOperationValue, localOpMetadata: unknown): IValueTypeOperationValue;
 }
 
 /**

@@ -261,7 +261,7 @@ describe("SharedString interval collections", () => {
 
     // TODO: Enable this test suite once correctness issues with reconnect are addressed.
     // See https://github.com/microsoft/FluidFramework/issues/8739 for more context.
-    describe.skip("reconnect", () => {
+    describe.only("reconnect", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
@@ -320,6 +320,28 @@ describe("SharedString interval collections", () => {
             ]);
             assertIntervals(sharedString, collection1, [
                 { start: 6, end: 22 },
+            ]);
+        });
+
+        // This is useful to ensure rebasing reconnection ops doesn't take into local account string state that has been applied since
+        // the interval addition.
+        it.only("addInterval and string operations resubmitted with concurrent insert", async () => {
+            containerRuntime1.connected = false;
+
+            sharedString2.insertText(7, "amily its my f");
+            sharedString.removeText(0, 5);
+            sharedString.insertText(0, "hi");
+            containerRuntimeFactory.processAllMessages();
+
+            containerRuntime1.connected = true;
+            containerRuntimeFactory.processAllMessages();
+
+            assert.equal(sharedString2.getText(), "hi family its my friend");
+            assertIntervals(sharedString2, collection2, [
+                { start: 3, end: 19 },
+            ]);
+            assertIntervals(sharedString, collection1, [
+                { start: 3, end: 19 },
             ]);
         });
 

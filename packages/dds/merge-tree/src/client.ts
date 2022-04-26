@@ -648,7 +648,7 @@ export class Client {
      * @param segment - The segment to find the position for
      * @param localSeq - The localSeq to find the position of the segment at
      */
-    protected findReconnectionPosition(segment: ISegment, localSeq: number) {
+    public findReconnectionPosition(segment: ISegment, localSeq: number) {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
         let segmentPosition = 0;
         /*
@@ -998,7 +998,7 @@ export class Client {
         let clientId: number;
         if (op) {
             clientId = this.getOrAddShortClientId(op.clientId);
-            seq = op.sequenceNumber;
+            seq = op.referenceSequenceNumber;
         }
         else {
             const segWindow = this.mergeTree.getCollabWindow();

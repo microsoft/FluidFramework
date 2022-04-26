@@ -113,7 +113,7 @@ export class Client {
     cloneFromSegments(): Client;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
-    protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
+    findReconnectionPosition(segment: ISegment, localSeq: number): number;
     // (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
         tile: ReferencePosition;
