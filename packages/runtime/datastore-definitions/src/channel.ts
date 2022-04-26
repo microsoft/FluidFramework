@@ -79,6 +79,14 @@ export interface IDeltaHandler {
      */
     reSubmit(message: any, localOpMetadata: unknown): void;
 
+    /**
+     * Apply changes from an op. Used when rehydrating an attached container
+     * with pending changes. This prepares the SharedObject for seeing an ACK
+     * for the op or resubmitting the op upon reconnection.
+     * @param message - Contents of a stashed op.
+     * @returns localMetadata of the op, to be passed to process() or resubmit()
+     * when the op is ACKed or resubmitted, respectively
+     */
     applyStashedOp(message: any): unknown;
 }
 

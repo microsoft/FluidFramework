@@ -18,7 +18,6 @@ import { IMatrixWriter } from '@tiny-calc/nano';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { SegmentGroup } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SummarySerializer } from '@fluidframework/shared-object-base';
@@ -43,10 +42,8 @@ export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 // @public
 export class SharedMatrix<T = any> extends SharedObject implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
-    // Warning: (ae-forgotten-export) The symbol "ISetOpMetadata" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
-    protected applyStashedOp(content: any): SegmentGroup | SegmentGroup[] | ISetOpMetadata;
+    protected applyStashedOp(content: any): unknown;
     // (undocumented)
     closeMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): void;
     // (undocumented)

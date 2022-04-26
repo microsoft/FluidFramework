@@ -690,7 +690,7 @@ export class SharedMatrix<T = any>
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      */
-    protected applyStashedOp(content: any) {
+    protected applyStashedOp(content: any): unknown {
         if (content.target === SnapshotPath.cols || content.target === SnapshotPath.rows) {
             const op = content as IMergeTreeOp;
             const currentVector = content.target === SnapshotPath.cols ? this.cols : this.rows;
