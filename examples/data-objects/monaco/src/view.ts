@@ -73,7 +73,7 @@ export class MonacoRunnerView implements IFluidHTMLView {
         if (!this.mapHost) {
             this.mapHost = document.createElement("div");
             elm.appendChild(this.mapHost);
-            this.initializeEditorDiv().catch((error) => { console.error(error); });
+            this.initializeEditorDiv();
         } else {
             if (this.mapHost.parentElement !== elm) {
                 this.mapHost.remove();
@@ -86,7 +86,7 @@ export class MonacoRunnerView implements IFluidHTMLView {
      * Sets up the Monaco editor for use and attaches its HTML element to the mapHost element.
      * Also sets up eventing to send/receive ops as the text is changed.
      */
-    private async initializeEditorDiv(): Promise<void> {
+    private initializeEditorDiv(): void {
         // TODO make my dts
         const hostDts = null; // await platform.queryInterface<any>("dts");
 
@@ -118,20 +118,6 @@ export class MonacoRunnerView implements IFluidHTMLView {
         this.codeEditor = monaco.editor.create(
             this.mapHost,
             { model: this.codeModel, automaticLayout: true });
-        // const outputEditor = monaco.editor.create(
-        //     outputDiv,
-        //     { model: outputModel, automaticLayout: true, readOnly: true });
-
-        this.codeEditor.addCommand(
-            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            () => { this.runCode(outputModel.getValue()); },
-            null);
-
-        // outputEditor.addCommand(
-        //     monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-        //     () => { this.runCode(outputModel.getValue(), platform); },
-        //     null);
 
         let ignoreModelContentChanges = false;
         this.codeEditor.onDidChangeModelContent((e) => {
@@ -219,25 +205,5 @@ export class MonacoRunnerView implements IFluidHTMLView {
         const pos2 = (typeof offset2 === "number") ? this.codeModel.getPositionAt(offset2) : pos1;
         const range = new monaco.Range(pos1.lineNumber, pos1.column, pos2.lineNumber, pos2.column);
         return range;
-    }
-
-    /**
-     * Evals the passed string as script.  Used to allow code execution on Ctrl+Enter.
-     * @param code String of JS to eval
-     */
-    private async runCode(code: string): Promise<void> {
-        // const root = await platform.queryInterface<any>("root");
-        // const host = root ? root.entry : null;
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.exec(/* host, */ code);
-    }
-
-    /**
-     * Evals the passed string as script.
-     * @param code String of JS to eval
-     */
-    private async exec(/* host: any, */ code: string) {
-        // eslint-disable-next-line no-eval
-        eval(code);
     }
 }
