@@ -5,7 +5,7 @@
 
 import {
     IDocumentStorage,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -19,11 +19,11 @@ export interface IRoutes {
 
 export function create(
     config: Provider,
-    mongoManager: MongoManager,
+    databaseManager: DatabaseManager,
     documentStorage: IDocumentStorage,
 ) {
     return {
-        ordering: ordering.create(config, documentStorage, mongoManager),
+        ordering: ordering.create(config, documentStorage, databaseManager),
         storage: storage.create(config),
     };
 }

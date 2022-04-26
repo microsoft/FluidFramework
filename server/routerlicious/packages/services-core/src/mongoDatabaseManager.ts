@@ -2,11 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { ICollection, IDatabaseManager } from "./database";
 import { IDocument } from "./document";
 import { ISequencedOperationMessage } from "./messages";
-import { MongoManager } from "./mongo";
+import { DatabaseManager } from "./databaseManager";
 import { INode } from "./orderer";
 
 /**
@@ -15,8 +14,8 @@ import { INode } from "./orderer";
 export class MongoDatabaseManager implements IDatabaseManager {
     constructor(
         private readonly globalDbEnabled: boolean,
-        private readonly operationsDbMongoManager: MongoManager,
-        private readonly globalDbMongoManager: MongoManager,
+        private readonly operationsDbMongoManager: DatabaseManager,
+        private readonly globalDbMongoManager: DatabaseManager,
         private readonly nodeCollectionName: string,
         private readonly documentsCollectionName: string,
         private readonly deltasCollectionName: string,

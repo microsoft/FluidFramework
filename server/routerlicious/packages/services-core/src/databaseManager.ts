@@ -9,13 +9,12 @@ import { debug } from "./debug";
 
 /**
  * Helper class to manage access to database
- * @TODO: Rename the file name as it behaves now as a generic DB Manager
  */
-export class MongoManager {
+export class DatabaseManager<T extends IDbFactory = IDbFactory> {
     private databaseP: Promise<IDb>;
 
     constructor(
-        private readonly factory: IDbFactory,
+        private readonly factory: T,
         private shouldReconnect = true,
         private readonly reconnectDelayMs = 1000,
         private readonly global = false) {

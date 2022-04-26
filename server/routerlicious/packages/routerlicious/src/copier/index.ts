@@ -5,7 +5,7 @@
 
 import { CopierLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
-import { IPartitionLambdaFactory, MongoManager } from "@fluidframework/server-services-core";
+import { IPartitionLambdaFactory, DatabaseManager } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
 // Establish a connection to Mongo, get the 'rawdeltas' collection and invoke
@@ -14,7 +14,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const collectionName = config.get("mongo:collectionNames:rawdeltas");
 
     const factory = await services.getDbFactory(config);
-    const dbManager = new MongoManager(factory, false);
+    const dbManager = new DatabaseManager(factory, false);
     const db = await dbManager.getDatabase();
 
     const collection = db.collection(collectionName);

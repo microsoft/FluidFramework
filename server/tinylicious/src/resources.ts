@@ -13,13 +13,13 @@ export class TinyliciousResources implements core.IResources {
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
         public storage: core.IDocumentStorage,
-        public mongoManager: core.MongoManager,
+        public databaseManager: core.DatabaseManager,
         public port: any,
         public webServerFactory: core.IWebServerFactory,
     ) {
     }
 
     public async dispose(): Promise<void> {
-        await this.mongoManager.close();
+        await this.databaseManager.close();
     }
 }

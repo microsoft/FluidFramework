@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ICollection, MongoManager } from "@fluidframework/server-services-core";
+import { ICollection, DatabaseManager } from "@fluidframework/server-services-core";
 import { IConcreteNode, IReservationManager } from "./interfaces";
 import { NodeManager } from "./nodeManager";
 
@@ -21,7 +21,7 @@ export interface IReservation {
 export class ReservationManager extends EventEmitter implements IReservationManager {
     constructor(
         private readonly nodeTracker: NodeManager,
-        private readonly mongoManager: MongoManager,
+        private readonly databaseManager: DatabaseManager,
         private readonly reservationColletionName: string) {
         super();
     }
@@ -63,7 +63,7 @@ export class ReservationManager extends EventEmitter implements IReservationMana
     }
 
     private async getReservationsCollection(): Promise<ICollection<IReservation>> {
-        const db = await this.mongoManager.getDatabase();
+        const db = await this.databaseManager.getDatabase();
         return db.collection<IReservation>(this.reservationColletionName);
     }
 }

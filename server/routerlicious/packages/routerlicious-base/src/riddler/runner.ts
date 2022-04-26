@@ -5,7 +5,7 @@
 
 import { Deferred } from "@fluidframework/common-utils";
 import {
-    MongoManager,
+    DatabaseManager,
     IRunner,
     ISecretManager,
     IWebServerFactory,
@@ -23,7 +23,7 @@ export class RiddlerRunner implements IRunner {
         private readonly serverFactory: IWebServerFactory,
         private readonly collectionName: string,
         private readonly port: string | number,
-        private readonly mongoManager: MongoManager,
+        private readonly databaseManager: DatabaseManager,
         private readonly loggerFormat: string,
         private readonly baseOrdererUrl: string,
         private readonly defaultHistorianUrl: string,
@@ -39,7 +39,7 @@ export class RiddlerRunner implements IRunner {
         // Create the HTTP server and attach alfred to it
         const riddler = app.create(
             this.collectionName,
-            this.mongoManager,
+            this.databaseManager,
             this.loggerFormat,
             this.baseOrdererUrl,
             this.defaultHistorianUrl,

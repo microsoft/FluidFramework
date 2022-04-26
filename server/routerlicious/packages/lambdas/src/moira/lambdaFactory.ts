@@ -10,13 +10,13 @@ import {
     IPartitionLambdaConfig,
     IPartitionLambdaFactory,
     IServiceConfiguration,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import { MoiraLambda } from "./lambda";
 
 export class MoiraLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private readonly mongoManager: MongoManager,
+        private readonly databaseManager: DatabaseManager,
         private readonly serviceConfiguration: IServiceConfiguration) {
         super();
     }
@@ -28,6 +28,6 @@ export class MoiraLambdaFactory extends EventEmitter implements IPartitionLambda
     }
 
     public async dispose(): Promise<void> {
-        await this.mongoManager.close();
+        await this.databaseManager.close();
     }
 }

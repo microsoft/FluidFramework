@@ -34,7 +34,7 @@ import {
     IOrdererManager,
     IScribe,
     MongoDatabaseManager,
-    MongoManager,
+    DatabaseManager,
     RawOperationType,
 } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -80,9 +80,9 @@ describe("Routerlicious", () => {
                     testTenantManager = new TestTenantManager(url);
                     testClientManager = new TestClientManager();
                     const testDbFactory = new TestDbFactory(testData);
-                    const mongoManager = new MongoManager(testDbFactory);
+                    const databaseManager = new DatabaseManager(testDbFactory);
                     const globalDbEnabled = false;
-                    const databaseManager = new MongoDatabaseManager(
+                    const mongoManager = new MongoDatabaseManager(
                         globalDbEnabled,
                         mongoManager,
                         mongoManager,
@@ -326,7 +326,7 @@ describe("Routerlicious", () => {
 
             testTenantManager = new TestTenantManager(url);
             const testDbFactory = new TestDbFactory(testData);
-            const mongoManager = new MongoManager(testDbFactory);
+            const mongoManager = new DatabaseManager(testDbFactory);
             const globalDbEnabled = false;
             const databaseManager = new MongoDatabaseManager(
                 globalDbEnabled,

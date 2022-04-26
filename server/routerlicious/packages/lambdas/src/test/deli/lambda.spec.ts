@@ -13,7 +13,7 @@ import {
     ISequencedOperationMessage,
     ITicketedSignalMessage,
     LambdaCloseType,
-    MongoManager,
+    DatabaseManager,
     NackOperationType,
     SequencedOperationType,
 } from "@fluidframework/server-services-core";
@@ -89,8 +89,8 @@ describe("Routerlicious", () => {
 
             beforeEach(async () => {
                 const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
-                const mongoManager = new MongoManager(dbFactory);
-                const database = await mongoManager.getDatabase();
+                const databaseManager = new DatabaseManager(dbFactory);
+                const database = await databaseManager.getDatabase();
                 testCollection = database.collection("documents");
 
                 testKafka = new TestKafka();
@@ -104,7 +104,7 @@ describe("Routerlicious", () => {
                 testContext = new TestContext();
 
                 factory = new DeliLambdaFactory(
-                    mongoManager,
+                    databaseManager,
                     testCollection,
                     testTenantManager,
                     undefined,
@@ -118,7 +118,7 @@ describe("Routerlicious", () => {
                 testSignalProducer = testSignalKafka.createProducer();
 
                 factoryWithSignals = new DeliLambdaFactory(
-                    mongoManager,
+                    databaseManager,
                     testCollection,
                     testTenantManager,
                     undefined,

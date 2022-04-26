@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { MongoManager } from "@fluidframework/server-services-core";
+import { DatabaseManager } "@fluidframework/server-services-core";
 import { IConcreteNode } from "./interfaces";
 import { RemoteNode } from "./remoteNode";
 
@@ -19,7 +19,7 @@ export class NodeManager extends EventEmitter {
     private readonly pendingNodes = new Map<string, Promise<IConcreteNode>>();
 
     constructor(
-        private readonly mongoManager: MongoManager,
+        private readonly databaseManager: DatabaseManager,
         private readonly nodeCollectionName: string) {
         super();
     }
@@ -60,7 +60,7 @@ export class NodeManager extends EventEmitter {
     }
 
     private async getNode(id: string): Promise<IConcreteNode> {
-        const node = await RemoteNode.connect(id, this.mongoManager, this.nodeCollectionName);
+        const node = await RemoteNode.connect(id, this.databaseManager, this.nodeCollectionName);
         this.nodes.set(id, node);
 
         // TODO Register for node events here

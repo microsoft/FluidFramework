@@ -5,7 +5,7 @@
 
 import {
     IDocumentStorage,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import { json, urlencoded } from "body-parser";
@@ -32,7 +32,7 @@ const stream = split().on("data", (message) => {
 export function create(
     config: Provider,
     storage: IDocumentStorage,
-    mongoManager: MongoManager,
+    databaseManager: DatabaseManager,
 ) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
@@ -65,7 +65,7 @@ export function create(
     // Bind routes
     const routes = createRoutes(
         config,
-        mongoManager,
+        databaseManager,
         storage);
 
     app.use(cors());

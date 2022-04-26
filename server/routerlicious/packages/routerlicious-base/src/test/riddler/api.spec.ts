@@ -8,7 +8,7 @@ import * as crypto from "crypto";
 import express from "express";
 import request from "supertest";
 import { TestDbFactory } from "@fluidframework/server-test-utils";
-import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import { DatabaseManager, ISecretManager } from "@fluidframework/server-services-core";
 import * as riddlerApp from "../../riddler/app";
 
 const documentsCollectionName = "testDocuments";
@@ -42,7 +42,7 @@ describe("Routerlicious", () => {
                 [deltasCollectionName]: [],
                 [rawDeltasCollectionName]: [],
             });
-            const defaultMongoManager = new MongoManager(defaultDbFactory);
+            const defaultMongoManager = new DatabaseManager(defaultDbFactory);
             const testTenantId = "test-tenant-id";
             
             let app: express.Application;

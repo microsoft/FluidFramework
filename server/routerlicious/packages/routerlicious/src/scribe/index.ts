@@ -12,7 +12,7 @@ import {
     IDocument,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
@@ -44,11 +44,11 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 
     let globalDb;
     if (globalDbEnabled) {
-        const globalDbMongoManager = new MongoManager(factory, false, null, true);
+        const globalDbMongoManager = new DatabaseManager(factory, false, null, true);
         globalDb = await globalDbMongoManager.getDatabase();
     }
 
-    const operationsDbManager = new MongoManager(factory, false);
+    const operationsDbManager = new DatabaseManager(factory, false);
     const operationsDb = await operationsDbManager.getDatabase();
 
     const documentsCollectionDb: IDb = globalDbEnabled ? globalDb : operationsDb;

@@ -9,7 +9,7 @@ import request from "supertest";
 import nconf from "nconf";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import { TestTenantManager, TestThrottler, TestDocumentStorage, TestDbFactory, TestProducer, TestKafka } from "@fluidframework/server-test-utils";
-import { IDocument, MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
+import { IDocument, MongoDatabaseManager, DatabaseManager } from "@fluidframework/server-services-core";
 import * as alfredApp from "../../alfred/app";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
@@ -60,7 +60,7 @@ describe("Routerlicious", () => {
                 [deltasCollectionName]: [],
                 [rawDeltasCollectionName]: [],
             });
-            const defaultMongoManager = new MongoManager(defaultDbFactory);
+            const defaultMongoManager = new DatabaseManager(defaultDbFactory);
             const globalDbEnabled = false;
             const defaultDbManager = new MongoDatabaseManager(
                 globalDbEnabled,

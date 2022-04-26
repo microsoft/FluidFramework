@@ -6,7 +6,7 @@
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
 import { generateToken, Historian } from "@fluidframework/server-services-client";
-import { MongoDatabaseManager, MongoManager, IResourcesFactory } from "@fluidframework/server-services-core";
+import { MongoDatabaseManager, DatabaseManager, IResourcesFactory } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import { Server } from "socket.io";
@@ -34,16 +34,16 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
         const dbFactory = await getDbFactory(config);
 
         const taskMessageSender = new TaskMessageSender();
-        const mongoManager = new MongoManager(dbFactory);
-        const databaseManager = new MongoDatabaseManager(
+        const databaseManager = new DatabaseManager(dbFactory);
+        const mongoDatabaseManager = new MongoDatabaseManager(
             globalDbEnabled,
-            mongoManager,
+            databaseManager,
             null,
             collectionNames.nodes,
             collectionNames.documents,
             collectionNames.deltas,
             collectionNames.scribeDeltas);
-        const storage = new DocumentStorage(databaseManager, tenantManager, false);
+        const storage = new DocumentStorage(mongoDatabaseManager, tenantManager, false);
         const io = new Server({
             // enable compatibility with socket.io v2 clients
             // https://socket.io/docs/v4/client-installation/
@@ -72,7 +72,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
             orderManager,
             tenantManager,
             storage,
-            mongoManager,
+            databaseManager,
             port,
             webServerFactory);
     }

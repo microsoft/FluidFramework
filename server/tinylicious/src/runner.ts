@@ -9,7 +9,7 @@ import {
     ITenantManager,
     IWebServer,
     IWebServerFactory,
-    MongoManager,
+    DatabaseManager,
     DefaultMetricClient,
     IRunner,
 } from "@fluidframework/server-services-core";
@@ -32,7 +32,7 @@ export class TinyliciousRunner implements IRunner {
         private readonly orderManager: IOrdererManager,
         private readonly tenantManager: ITenantManager,
         private readonly storage: IDocumentStorage,
-        private readonly mongoManager: MongoManager,
+        private readonly databaseManager: DatabaseManager,
     ) { }
 
     public async start(): Promise<void> {
@@ -52,7 +52,7 @@ export class TinyliciousRunner implements IRunner {
             throw e;
         }
 
-        const alfred = app.create(this.config, this.storage, this.mongoManager);
+        const alfred = app.create(this.config, this.storage, this.databaseManager);
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);

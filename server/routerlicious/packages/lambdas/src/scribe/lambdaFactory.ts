@@ -21,7 +21,7 @@ import {
     IServiceConfiguration,
     ITenantManager,
     LambdaName,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import { IDocumentSystemMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
@@ -51,7 +51,7 @@ const DefaultScribe: IScribe = {
 
 export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private readonly mongoManager: MongoManager,
+        private readonly databaseManager: DatabaseManager,
         private readonly documentCollection: ICollection<IDocument>,
         private readonly messageCollection: ICollection<ISequencedOperationMessage>,
         private readonly producer: IProducer,
@@ -203,7 +203,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
     }
 
     public async dispose(): Promise<void> {
-        await this.mongoManager.close();
+        await this.databaseManager.close();
     }
 
     private async sendLambdaStartResult(

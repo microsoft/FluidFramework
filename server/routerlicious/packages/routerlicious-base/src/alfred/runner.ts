@@ -17,7 +17,7 @@ import {
     IThrottler,
     IWebServer,
     IWebServerFactory,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -44,7 +44,7 @@ export class AlfredRunner implements IRunner {
         private readonly storage: IDocumentStorage,
         private readonly clientManager: IClientManager,
         private readonly appTenants: IAlfredTenant[],
-        private readonly operationsDbMongoManager: MongoManager,
+        private readonly operationsDbMongoManager: DatabaseManager,
         private readonly producer: IProducer,
         private readonly metricClientConfig: any,
         private readonly documentsCollection: ICollection<IDocument>) {

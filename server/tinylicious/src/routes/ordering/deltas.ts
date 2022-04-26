@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@fluidframework/server-services-core";
+import { DatabaseManager } from "@fluidframework/server-services-core";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { getParam, queryParamToNumber } from "../../utils";
 
 async function getDeltas(
-    mongoManager: MongoManager,
+    databaseManager: DatabaseManager,
     collectionName: string,
     tenantId: string,
     documentId: string,
@@ -31,7 +31,7 @@ async function getDeltas(
     }
 
     // Query for the deltas and return a filtered version of just the operations field
-    const db = await mongoManager.getDatabase();
+    const db = await databaseManager.getDatabase();
     const collection = db.collection<any>(collectionName);
     const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
 
@@ -39,7 +39,7 @@ async function getDeltas(
     return dbDeltas.map((delta) => delta.operation);
 }
 
-export function create(config: Provider, mongoManager: MongoManager): Router {
+export function create(config: Provider, databaseManager: DatabaseManager): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const router: Router = Router();
 
@@ -53,7 +53,7 @@ export function create(config: Provider, mongoManager: MongoManager): Router {
 
         // Query for the deltas and return a filtered version of just the operations field
         const deltasP = getDeltas(
-            mongoManager,
+            databaseManager,
             deltasCollectionName,
             tenantId,
             getParam(request.params, "id"),

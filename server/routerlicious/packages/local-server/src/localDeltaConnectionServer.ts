@@ -23,7 +23,7 @@ import {
     IWebSocket,
     IWebSocketServer,
     MongoDatabaseManager,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import {
@@ -77,12 +77,12 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
         const pubsub: IPubSub = new PubSub();
         const webSocketServer = new LocalWebSocketServer(pubsub);
-        const mongoManager = new MongoManager(testDbFactory);
+        const databaseManager = new DatabaseManager(testDbFactory);
         const testTenantManager = new TestTenantManager(undefined, undefined, testDbFactory.testDatabase);
 
-        const databaseManager = new MongoDatabaseManager(
+        const mongoDatabaseManager = new MongoDatabaseManager(
             false,
-            mongoManager,
+            databaseManager,
             null,
             nodesCollectionName,
             documentsCollectionName,
@@ -90,7 +90,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             scribeDeltasCollectionName);
 
         const testStorage = new TestDocumentStorage(
-            databaseManager,
+            mongoDatabaseManager,
             testTenantManager);
 
         const logger = DebugLogger.create("fluid-server:LocalDeltaConnectionServer");

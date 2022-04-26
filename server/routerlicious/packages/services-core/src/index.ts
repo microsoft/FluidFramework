@@ -17,7 +17,7 @@ export * from "./http";
 export * from "./lambdas";
 export * from "./messages";
 export * from "./metricClient";
-export * from "./mongo";
+export * from "./databaseManager";
 export * from "./mongoDatabaseManager";
 export * from "./orderer";
 export * from "./pendingBoxcar";

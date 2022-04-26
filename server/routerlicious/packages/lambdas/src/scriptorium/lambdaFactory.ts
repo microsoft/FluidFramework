@@ -10,13 +10,13 @@ import {
     IPartitionLambda,
     IPartitionLambdaConfig,
     IPartitionLambdaFactory,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import { ScriptoriumLambda } from "./lambda";
 
 export class ScriptoriumLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private readonly mongoManager: MongoManager,
+        private readonly databaseManager: DatabaseManager,
         private readonly opCollection: ICollection<any>) {
         super();
     }
@@ -28,6 +28,6 @@ export class ScriptoriumLambdaFactory extends EventEmitter implements IPartition
     }
 
     public async dispose(): Promise<void> {
-        await this.mongoManager.close();
+        await this.databaseManager.close();
     }
 }

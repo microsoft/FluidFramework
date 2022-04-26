@@ -13,7 +13,7 @@ import {
     IOrdererConnection,
     IServiceConfiguration,
     IWebSocket,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { debug } from "./debug";
@@ -96,10 +96,10 @@ interface IPendingConnection {
 export class RemoteNode extends EventEmitter implements IConcreteNode {
     public static async connect(
         id: string,
-        mongoManager: MongoManager,
+        databaseManager: DatabaseManager,
         nodeCollectionName: string): Promise<RemoteNode> {
         // Connect to the given remote node
-        const db = await mongoManager.getDatabase();
+        const db = await databaseManager.getDatabase();
         const nodeCollection = db.collection<INode>(nodeCollectionName);
         const details = await nodeCollection.findOne({ _id: id });
 

@@ -5,7 +5,7 @@
 
 import { ScriptoriumLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
-import { ICollection, IDocument, IPartitionLambdaFactory, MongoManager } from "@fluidframework/server-services-core";
+import { ICollection, IDocument, IPartitionLambdaFactory, DatabaseManager } from "@fluidframework/server-services-core";
 import { deleteSummarizedOps, executeOnInterval, FluidServiceErrorCode } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 
@@ -27,11 +27,11 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     let globalDb;
     if (globalDbEnabled) {
-        const globalDbMongoManager = new MongoManager(factory, false, null, true);
+        const globalDbMongoManager = new DatabaseManager(factory, false, null, true);
         globalDb = await globalDbMongoManager.getDatabase();
     }
 
-    const operationsDbManager = new MongoManager(factory, false);
+    const operationsDbManager = new DatabaseManager(factory, false);
     const operationsDb = await operationsDbManager.getDatabase();
 
     const documentsCollectionDb = globalDbEnabled ? globalDb : operationsDb;

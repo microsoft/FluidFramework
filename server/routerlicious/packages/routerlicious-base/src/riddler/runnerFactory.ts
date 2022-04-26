@@ -7,7 +7,7 @@ import * as services from "@fluidframework/server-services";
 import { getOrCreateRepository } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
-    MongoManager,
+    DatabaseManager,
     IDb,
     ISecretManager,
     IResources,
@@ -28,7 +28,7 @@ export class RiddlerResources implements IResources {
     constructor(
         public readonly config: Provider,
         public readonly tenantsCollectionName: string,
-        public readonly mongoManager: MongoManager,
+        public readonly databaseManager: DatabaseManager,
         public readonly port: any,
         public readonly loggerFormat: string,
         public readonly baseOrdererUrl: string,
@@ -41,7 +41,7 @@ export class RiddlerResources implements IResources {
     }
 
     public async dispose(): Promise<void> {
-        await this.mongoManager.close();
+        await this.databaseManager.close();
     }
 }
 
@@ -50,7 +50,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
         // Database connection
         const factory = await services.getDbFactory(config);
 
-        const operationsDbMongoManager = new MongoManager(factory);
+        const operationsDbMongoManager = new DatabaseManager(factory);
         const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
         const secretManager = new services.SecretManager();
 
@@ -58,11 +58,11 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
         let globalDbMongoManager;
         const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
         if (globalDbEnabled) {
-            globalDbMongoManager = new MongoManager(factory, false, null, true);
+            globalDbMongoManager = new DatabaseManager(factory, false, null, true);
         }
 
-        const mongoManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
-        const db: IDb = await mongoManager.getDatabase();
+        const databaseManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
+        const db: IDb = await databaseManager.getDatabase();
 
         const collection = db.collection<ITenantDocument>(tenantsCollectionName);
         const tenants = config.get("tenantConfig") as any[];
@@ -94,7 +94,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
         return new RiddlerResources(
             config,
             tenantsCollectionName,
-            mongoManager,
+            databaseManager,
             port,
             loggerFormat,
             serverUrl,
@@ -110,7 +110,7 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
             resources.webServerFactory,
             resources.tenantsCollectionName,
             resources.port,
-            resources.mongoManager,
+            resources.databaseManager,
             resources.loggerFormat,
             resources.baseOrdererUrl,
             resources.defaultHistorianUrl,

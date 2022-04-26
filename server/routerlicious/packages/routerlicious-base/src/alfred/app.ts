@@ -8,7 +8,7 @@ import {
     IDocumentStorage,
     IProducer,
     ITenantManager,
-    MongoManager,
+    DatabaseManager,
     IThrottler,
     ICache,
     ICollection,
@@ -49,7 +49,7 @@ export function create(
     singleUseTokenCache: ICache,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
-    operationsDbMongoManager: MongoManager,
+    operationsDbMongoManager: DatabaseManager,
     producer: IProducer,
     documentsCollection: ICollection<IDocument>) {
     // Maximum REST request size

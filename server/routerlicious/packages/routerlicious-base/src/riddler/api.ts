@@ -5,7 +5,7 @@
 
 import { getRandomName } from "@fluidframework/server-services-client";
 import {
-    MongoManager,
+    DatabaseManager,
     ISecretManager,
     ITenantStorage,
     ITenantOrderer,
@@ -18,7 +18,7 @@ import { TenantManager } from "./tenantManager";
 
 export function create(
     collectionName: string,
-    mongoManager: MongoManager,
+    databaseManager: DatabaseManager,
     baseOrderUrl: string,
     defaultHistorianUrl: string,
     defaultInternalHistorianUrl: string,
@@ -26,7 +26,7 @@ export function create(
 ): Router {
     const router: Router = Router();
     const manager = new TenantManager(
-        mongoManager,
+        databaseManager,
         collectionName,
         baseOrderUrl,
         defaultHistorianUrl,

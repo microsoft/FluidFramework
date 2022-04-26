@@ -12,7 +12,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { RedisOptions } from "ioredis";
 import * as winston from "winston";
-import { IDb, MongoManager } from "@fluidframework/server-services-core";
+import { IDb, DatabaseManager } from "@fluidframework/server-services-core";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
@@ -43,11 +43,11 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     let globalDb;
     let globalDbManager;
     if (globalDbEnabled) {
-        globalDbManager = new MongoManager(factory, false, null, true);
+        globalDbManager = new DatabaseManager(factory, false, null, true);
         globalDb = await globalDbManager.getDatabase();
     }
 
-    const operationsDbManager = new MongoManager(factory, false);
+    const operationsDbManager = new DatabaseManager(factory, false);
     const operationsDb = await operationsDbManager.getDatabase();
 
     const db: IDb = globalDbEnabled ? globalDb : operationsDb;

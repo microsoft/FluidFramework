@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import { DatabaseManager, ISecretManager } from "@fluidframework/server-services-core";
 import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
@@ -28,7 +28,7 @@ const stream = split().on("data", (message) => {
 
 export function create(
     collectionName: string,
-    mongoManager: MongoManager,
+    databaseManager: DatabaseManager,
     loggerFormat: string,
     baseOrdererUrl: string,
     defaultHistorianUrl: string,
@@ -70,7 +70,7 @@ export function create(
         "/api",
         api.create(
             collectionName,
-            mongoManager,
+            databaseManager,
             baseOrdererUrl,
             defaultHistorianUrl,
             defaultInternalHistorianUrl,

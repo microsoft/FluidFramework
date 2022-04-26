@@ -90,7 +90,7 @@ export class AlfredResources implements core.IResources {
         public singleUseTokenCache: core.ICache,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
-        public mongoManager: core.MongoManager,
+        public databaseManager: core.DatabaseManager,
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any,
@@ -106,7 +106,7 @@ export class AlfredResources implements core.IResources {
 
     public async dispose(): Promise<void> {
         const producerClosedP = this.producer.close();
-        const mongoClosedP = this.mongoManager.close();
+        const mongoClosedP = this.databaseManager.close();
         await Promise.all([producerClosedP, mongoClosedP]);
     }
 }
@@ -169,11 +169,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
         const factory = await services.getDbFactory(config);
         if (globalDbEnabled) {
-            globalDbMongoManager = new core.MongoManager(factory, false, null, true);
+            globalDbMongoManager = new core.DatabaseManager(factory, false, null, true);
         }
 
         // Database connection for operations db
-        const operationsDbMongoManager = new core.MongoManager(factory);
+        const operationsDbMongoManager = new core.DatabaseManager(factory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
         // Create the index on the documents collection
@@ -369,7 +369,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.storage,
             resources.clientManager,
             resources.appTenants,
-            resources.mongoManager,
+            resources.databaseManager,
             resources.producer,
             resources.metricClientConfig,
             resources.documentsCollection);

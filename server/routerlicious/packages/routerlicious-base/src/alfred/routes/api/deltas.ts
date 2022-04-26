@@ -10,7 +10,7 @@ import {
     IRawOperationMessageBatch,
     ITenantManager,
     IThrottler,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import {
     verifyStorageToken,
@@ -26,7 +26,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../../../utils";
 
 async function getDeltas(
-    mongoManager: MongoManager,
+    databaseManager: DatabaseManager,
     collectionName: string,
     tenantId: string,
     documentId: string,
@@ -47,7 +47,7 @@ async function getDeltas(
     }
 
     // Query for the deltas and return a filtered version of just the operations field
-    const db = await mongoManager.getDatabase();
+    const db = await databaseManager.getDatabase();
     // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await db.collection<any>(collectionName);
     const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
@@ -57,7 +57,7 @@ async function getDeltas(
 }
 
 async function getDeltasFromStorage(
-    mongoManager: MongoManager,
+    databaseManager: DatabaseManager,
     collectionName: string,
     tenantId: string,
     documentId: string,
@@ -76,7 +76,7 @@ async function getDeltasFromStorage(
     if (toSeq !== undefined) {
         query["operation.sequenceNumber"].$lt = toSeq;
     }
-    const db = await mongoManager.getDatabase();
+    const db = await databaseManager.getDatabase();
     // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await db.collection<any>(collectionName);
     const dbDeltas = await collection.find(query, { "operation.term": 1, "operation.sequenceNumber": 1 });
@@ -87,7 +87,7 @@ async function getDeltasFromStorage(
 
 async function getDeltasFromSummaryAndStorage(
     tenantManager: ITenantManager,
-    mongoManager: MongoManager,
+    databaseManager: DatabaseManager,
     collectionName: string,
     tenantId: string,
     documentId: string,
@@ -98,7 +98,7 @@ async function getDeltasFromSummaryAndStorage(
 
     const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
     if (!existingRef) {
-        return getDeltasFromStorage(mongoManager, collectionName, tenantId, documentId, 1, 1, from, to);
+        return getDeltasFromStorage(databaseManager, collectionName, tenantId, documentId, 1, 1, from, to);
     } else {
         const [deliContent, opsContent] = await Promise.all([
             gitManager.getContent(existingRef.object.sha, ".serviceProtocol/deli"),
@@ -112,7 +112,7 @@ async function getDeltasFromSummaryAndStorage(
 
         const fromSeq = opsFromSummary.length > 0 ? opsFromSummary[opsFromSummary.length - 1].sequenceNumber : from;
         const opsFromStorage = await getDeltasFromStorage(
-            mongoManager,
+            databaseManager,
             collectionName,
             tenantId,
             documentId,
@@ -147,7 +147,7 @@ async function getDeltasFromSummaryAndStorage(
 }
 
 export async function getRawDeltas(
-    mongoManager: MongoManager,
+    databaseManager: DatabaseManager,
     collectionName: string,
     tenantId?: string,
     documentId?: string): Promise<IRawOperationMessage[]> {
@@ -155,7 +155,7 @@ export async function getRawDeltas(
     const query: any = { documentId, tenantId };
 
     // Query for the raw batches and sort by the index:
-    const db = await mongoManager.getDatabase();
+    const db = await databaseManager.getDatabase();
     // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await db.collection<any>(collectionName);
     const dbDump: IRawOperationMessageBatch[] =
@@ -174,7 +174,7 @@ export async function getRawDeltas(
 export function create(
     config: Provider,
     tenantManager: ITenantManager,
-    mongoManager: MongoManager,
+    databaseManager: DatabaseManager,
     appTenants: IAlfredTenant[],
     throttler: IThrottler): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
@@ -209,7 +209,7 @@ export function create(
             // Query for the deltas and return a filtered version of just the operations field
             const deltasP = getDeltasFromSummaryAndStorage(
                 tenantManager,
-                mongoManager,
+                databaseManager,
                 deltasCollectionName,
                 tenantId,
                 getParam(request.params, "id"),
@@ -233,7 +233,7 @@ export function create(
 
             // Query for the raw deltas (no from/to since we want all of them)
             const deltasP = getRawDeltas(
-                mongoManager,
+                databaseManager,
                 rawDeltasCollectionName,
                 tenantId,
                 getParam(request.params, "id"));
@@ -257,7 +257,7 @@ export function create(
 
             // Query for the deltas and return a filtered version of just the operations field
             const deltasP = getDeltas(
-                mongoManager,
+                databaseManager,
                 deltasCollectionName,
                 tenantId,
                 getParam(request.params, "id"),

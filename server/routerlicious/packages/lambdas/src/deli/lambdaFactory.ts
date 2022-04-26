@@ -21,7 +21,7 @@ import {
     IServiceConfiguration,
     ITenantManager,
     LambdaCloseType,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
@@ -170,7 +170,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             this.serviceConfiguration,
             sessionMetric,
             sessionStartMetric);
-
+DatabaseManagerDatabaseManager
         deliLambda.on("close", (closeType) => {
             const handler = async () => {
                 if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)) {

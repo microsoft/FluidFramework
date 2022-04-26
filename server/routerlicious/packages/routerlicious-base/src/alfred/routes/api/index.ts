@@ -11,7 +11,7 @@ import {
     IProducer,
     ITenantManager,
     IThrottler,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import cors from "cors";
 import { Router } from "express";
@@ -27,7 +27,7 @@ export function create(
     throttler: IThrottler,
     singleUseTokenCache: ICache,
     storage: IDocumentStorage,
-    operationsDbMongoManager: MongoManager,
+    operationsDbMongoManager: DatabaseManager,
     producer: IProducer,
     appTenants: IAlfredTenant[],
     documentsCollection: ICollection<IDocument>): Router {

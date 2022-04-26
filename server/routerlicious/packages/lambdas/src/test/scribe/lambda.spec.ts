@@ -6,7 +6,7 @@
 // import { IGitManager } from "@fluidframework/server-services-client";
 import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitresources";
 import { GitManager } from "@fluidframework/server-services-client";
-import { DefaultServiceConfiguration, ICollection, IDocument, IProducer, ITenantManager, MongoManager } from "@fluidframework/server-services-core";
+import { DefaultServiceConfiguration, ICollection, IDocument, IProducer, ITenantManager, DatabaseManager } from "@fluidframework/server-services-core";
 import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext, TestDbFactory, TestKafka, TestTenantManager } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
@@ -20,7 +20,7 @@ describe("Routerlicious", () => {
             const testTenantId = "test";
             const testDocumentId = "test";
 
-            let testMongoManager: MongoManager;
+            let testMongoManager: DatabaseManager;
             let testDocumentCollection: ICollection<IDocument>;
             let testMessageCollection: TestCollection;
             let testProducer: IProducer;
@@ -56,7 +56,7 @@ describe("Routerlicious", () => {
 
                 const testData = [{ documentId: testDocumentId, tenantId: testTenantId, sequenceNumber: 0, logOffset: undefined }];
                 const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
-                testMongoManager = new MongoManager(dbFactory);
+                testMongoManager = new DatabaseManager(dbFactory);
                 const database = await testMongoManager.getDatabase();
                 testDocumentCollection = database.collection("documents");
                 testMessageCollection = new TestCollection([]);

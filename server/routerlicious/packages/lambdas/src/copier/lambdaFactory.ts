@@ -10,13 +10,13 @@ import {
     IPartitionLambda,
     IPartitionLambdaConfig,
     IPartitionLambdaFactory,
-    MongoManager,
+    DatabaseManager,
 } from "@fluidframework/server-services-core";
 import { CopierLambda } from "./lambda";
 
 export class CopierLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private readonly mongoManager: MongoManager,
+        private readonly databaseManager: DatabaseManager,
         private readonly rawOpCollection: ICollection<any>) {
         super();
     }
@@ -26,6 +26,6 @@ export class CopierLambdaFactory extends EventEmitter implements IPartitionLambd
     }
 
     public async dispose(): Promise<void> {
-        await this.mongoManager.close();
+        await this.databaseManager.close();
     }
 }
