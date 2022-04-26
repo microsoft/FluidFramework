@@ -49,7 +49,7 @@ export class SnapshotLoader {
             this.loadBodyAndCatchupOps(headerLoadedP, services);
 
         catchupOpsP.catch(
-            (err)=>this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" }, err));
+            (err) => this.logger.sendErrorEvent({ eventName: "CatchupOpsLoadFailure" }, err));
 
         await headerLoadedP;
 
@@ -111,7 +111,7 @@ export class SnapshotLoader {
             }
             if (spec.removedClientIds !== undefined) {
                 seg.removedClientIds = spec.removedClientIds?.map(
-                    (sid)=> this.client.getOrAddShortClientId(sid));
+                    (sid) => this.client.getOrAddShortClientId(sid));
             }
         } else {
             seg = this.client.specToSegment(spec);

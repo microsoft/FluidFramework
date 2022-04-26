@@ -58,8 +58,8 @@ const summaryNack: ISummaryNackMessage = {
 };
 
 describe("Summary Collection", () => {
-    describe("latestAck", ()=>{
-        it("Ack with op", ()=>{
+    describe("latestAck", () => {
+        it("Ack with op", () => {
             const dm = new MockDeltaManager();
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.latestAck, undefined, "last ack undefined");
@@ -76,7 +76,7 @@ describe("Summary Collection", () => {
                 sc.latestAck);
         });
 
-        it("Ack without op", ()=>{
+        it("Ack without op", () => {
             const dm = new MockDeltaManager();
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.latestAck, undefined, "last ack undefined");
@@ -84,7 +84,7 @@ describe("Summary Collection", () => {
             assert.strictEqual(sc.latestAck, undefined, "last ack undefined");
         });
 
-        it("Nack with op", ()=>{
+        it("Nack with op", () => {
             const dm = new MockDeltaManager();
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.latestAck, undefined, "last ack undefined");
@@ -93,10 +93,10 @@ describe("Summary Collection", () => {
             assert.strictEqual(sc.latestAck, undefined, "last ack undefined");
         });
     });
-    describe("opsSinceLastAck", ()=>{
-        it("Ack with op", ()=>{
+    describe("opsSinceLastAck", () => {
+        it("Ack with op", () => {
             const dm = new MockDeltaManager();
-            dm.on("op", (op)=>{dm.lastSequenceNumber = op.sequenceNumber;});
+            dm.on("op", (op) => {dm.lastSequenceNumber = op.sequenceNumber;});
 
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.opsSinceLastAck, 0);
@@ -105,9 +105,9 @@ describe("Summary Collection", () => {
             dm.emit("op", summaryAck);
             assert.strictEqual(sc.opsSinceLastAck, 0);
         });
-        it("Nack with op", ()=>{
+        it("Nack with op", () => {
             const dm = new MockDeltaManager();
-            dm.on("op", (op)=>{dm.lastSequenceNumber = op.sequenceNumber;});
+            dm.on("op", (op) => {dm.lastSequenceNumber = op.sequenceNumber;});
 
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.opsSinceLastAck, 0);
@@ -116,9 +116,9 @@ describe("Summary Collection", () => {
             dm.emit("op", summaryNack);
             assert.strictEqual(sc.opsSinceLastAck, summaryNack.sequenceNumber);
         });
-        it("Ack after Nack with op", ()=>{
+        it("Ack after Nack with op", () => {
             const dm = new MockDeltaManager();
-            dm.on("op", (op)=>{dm.lastSequenceNumber = op.sequenceNumber;});
+            dm.on("op", (op) => {dm.lastSequenceNumber = op.sequenceNumber;});
 
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.opsSinceLastAck, 0);
@@ -129,7 +129,7 @@ describe("Summary Collection", () => {
         });
     });
 
-    describe("opActions", ()=>{
+    describe("opActions", () => {
         interface ISummaryCollectionWithCounters {
             summaryCollection: SummaryCollection;
             callCounts: {
@@ -155,21 +155,21 @@ describe("Summary Collection", () => {
             summaryCollection.on(MessageType.SummaryNack, () => callCounts.summaryNack++);
             return { summaryCollection, callCounts };
         }
-        it("Summary op", ()=>{
+        it("Summary op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryOp);
             assert.strictEqual(callCounts.summarize, 1);
         });
 
-        it("Summary Ack without op", ()=>{
+        it("Summary Ack without op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryAck);
             assert.strictEqual(callCounts.summaryAck, 0);
         });
 
-        it("Summary Ack with op", ()=>{
+        it("Summary Ack with op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryOp);
@@ -178,7 +178,7 @@ describe("Summary Collection", () => {
             assert.strictEqual(callCounts.summaryAck, 1);
         });
 
-        it("Double Summary Ack with op", ()=>{
+        it("Double Summary Ack with op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryOp);
@@ -188,14 +188,14 @@ describe("Summary Collection", () => {
             assert.strictEqual(callCounts.summaryAck, 1);
         });
 
-        it("Summary Nack without op", ()=>{
+        it("Summary Nack without op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryNack);
             assert.strictEqual(callCounts.summaryNack, 0);
         });
 
-        it("Summary Nack with op", ()=>{
+        it("Summary Nack with op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryOp);
@@ -204,7 +204,7 @@ describe("Summary Collection", () => {
             assert.strictEqual(callCounts.summaryNack, 1);
         });
 
-        it("Double Summary Nack with op", ()=>{
+        it("Double Summary Nack with op", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", summaryOp);
@@ -214,7 +214,7 @@ describe("Summary Collection", () => {
             assert.strictEqual(callCounts.summaryNack, 1);
         });
 
-        it("default", ()=>{
+        it("default", () => {
             const dm = new MockDeltaManager();
             const { callCounts } = createSummaryCollection(dm);
             dm.emit("op", {});

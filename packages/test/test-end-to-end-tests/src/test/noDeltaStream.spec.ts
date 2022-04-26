@@ -23,9 +23,9 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 const loadOptions: IContainerLoadMode[] =
     generatePairwiseOptions<IContainerLoadMode>({
-            deltaConnection: [undefined, "none", "delayed"],
-            opsBeforeReturn: [undefined, "cached", "all"],
-        });
+        deltaConnection: [undefined, "none", "delayed"],
+        opsBeforeReturn: [undefined, "cached", "all"],
+    });
 
 const testConfigs =
     generatePairwiseOptions({
@@ -47,7 +47,7 @@ const testContainerConfig: ITestContainerConfig = {
 
 describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
     const scenarioToContainerUrl = new Map<string, string>();
-    before(()=>{
+    before(() => {
         // clear first, so each version combination gets a new container
         scenarioToContainerUrl.clear();
     });
@@ -77,8 +77,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                 }
                 if (initContainer.isDirty) {
                     await timeoutPromise(
-                        (res)=>initContainer.once("saved", ()=>res()),
-                        { durationMs: timeout / 2, errorMsg:"Not saved before timeout" });
+                        (res) => initContainer.once("saved", () => res()),
+                        { durationMs: timeout / 2, errorMsg: "Not saved before timeout" });
                 }
                 initContainer.close();
             }
@@ -91,10 +91,10 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                 const summaryLoader = createLoader(
                     [[provider.defaultCodeDetails, provider.createFluidEntryPoint({
                         ...testContainerConfig,
-                        runtimeOptions:{
-                            ... testContainerConfig.runtimeOptions,
-                            summaryOptions:{
-                                ... testContainerConfig.runtimeOptions?.summaryOptions,
+                        runtimeOptions: {
+                            ...testContainerConfig.runtimeOptions,
+                            summaryOptions: {
+                                ...testContainerConfig.runtimeOptions?.summaryOptions,
                                 disableSummaries: false,
                             },
                         },
@@ -110,8 +110,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                     new SummaryCollection(summaryContainer.deltaManager, new TelemetryNullLogger());
 
                 await timeoutPromise(
-                    (res)=>summaryCollection.once("summaryAck", ()=>res()),
-                    { durationMs: timeout / 2, errorMsg:"Not summary acked before timeout" });
+                    (res) => summaryCollection.once("summaryAck", () => res()),
+                    { durationMs: timeout / 2, errorMsg: "Not summary acked before timeout" });
                 summaryContainer.close();
             }
         }
@@ -147,13 +147,14 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                     createContainer:
                         provider.documentServiceFactory.createContainer.bind(provider.documentServiceFactory),
                     protocolName: provider.documentServiceFactory.protocolName,
-                    createDocumentService: async (resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger)=> new Proxy(
+                    createDocumentService: async (resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger) =>
+                        new Proxy(
                             await provider.documentServiceFactory.createDocumentService(resolvedUrl, logger),
                             {
-                                get: (target, prop: keyof IDocumentService, r)=> {
+                                get: (target, prop: keyof IDocumentService, r) => {
                                     if (prop === "policies") {
                                         const policies: IDocumentService["policies"] = {
-                                            ... target.policies,
+                                            ...target.policies,
                                             storageOnly: true,
                                         };
                                         return policies;

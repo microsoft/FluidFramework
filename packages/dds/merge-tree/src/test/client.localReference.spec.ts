@@ -208,10 +208,10 @@ describe("MergeTree.Client", () => {
         // apply all the ops
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.all.forEach((c)=>c.applyMsg(msg));
+            clients.all.forEach((c) => c.applyMsg(msg));
         }
 
         // regression: would fire 0x2be on zamboni during segment append
-        clients.all.forEach((c)=>c.updateMinSeq(seq));
+        clients.all.forEach((c) => c.updateMinSeq(seq));
     });
 });

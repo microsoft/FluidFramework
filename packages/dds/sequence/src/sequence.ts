@@ -175,7 +175,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     ) {
         super(id, dataStoreRuntime, attributes);
 
-        this.loadedDeferred.promise.catch((error)=>{
+        this.loadedDeferred.promise.catch((error) => {
             this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
         });
 

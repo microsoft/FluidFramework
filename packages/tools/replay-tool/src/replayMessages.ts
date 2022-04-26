@@ -519,7 +519,7 @@ export class ReplayTool {
     private async mainCycle() {
         const originalSummaries =
             this.args.testSummaries
-            ? this.mainDocument.originalSummarySequenceNumbers.filter((s)=>s >= this.args.from)
+            ? this.mainDocument.originalSummarySequenceNumbers.filter((s) => s >= this.args.from)
             : [];
         let nextSnapPoint = -1;
         // eslint-disable-next-line no-constant-condition

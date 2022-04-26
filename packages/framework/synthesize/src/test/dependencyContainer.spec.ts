@@ -395,7 +395,7 @@ describe("Routerlicious", () => {
                 const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
-                const testGetProvider = (deps: IFluidDependencySynthesizer, scenario: string)=>{
+                const testGetProvider = (deps: IFluidDependencySynthesizer, scenario: string) => {
                     const old = deps as any as {
                         getProvider(key: "IFluidLoadable"): FluidObjectProvider<FluidObject<IFluidLoadable>>
                     };

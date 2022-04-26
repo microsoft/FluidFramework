@@ -59,7 +59,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             this.skip();
         }
     });
-    before(async ()=>{
+    before(async () => {
         const loader = new Loader({
             logger: provider.logger,
             urlResolver: provider.urlResolver,

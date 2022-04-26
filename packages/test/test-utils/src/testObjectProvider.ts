@@ -144,7 +144,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
                 "Expected events already registered.\n"
                 + "Call reportAndClearTrackedEvents to clear them before registering more");
         }
-        this.expectedEvents.push(... orderedExpectedEvents.map((event, index)=>({ index, event })));
+        this.expectedEvents.push(... orderedExpectedEvents.map((event, index) => ({ index, event })));
     }
 
     send(event: ITelemetryBaseEvent): void {

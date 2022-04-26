@@ -32,7 +32,7 @@ export function createClientsAtInitialState<TClients extends ClientMap>(
     initialState: string,
     ... clientIds: (string & keyof TClients)[]
 ): Record<keyof TClients, TestClient> & { all: TestClient[] } {
-    const setup = (c: TestClient)=>{
+    const setup = (c: TestClient) => {
         c.insertTextLocal(0, initialState);
         while (c.getText().includes("-")) {
             const index = c.getText().indexOf("-");
@@ -55,7 +55,7 @@ export function createClientsAtInitialState<TClients extends ClientMap>(
 }
 export class TestClientLogger {
     public static toString(clients: readonly TestClient[]) {
-        return clients.map((c)=>this.getSegString(c)).reduce<[string, string]>((pv, cv)=>{
+        return clients.map((c) => this.getSegString(c)).reduce<[string, string]>((pv, cv) => {
             pv[0] += `|${cv.acked.padEnd(cv.local.length, "")}`;
             pv[1] += `|${cv.local.padEnd(cv.acked.length, "")}`;
             return pv;
@@ -77,10 +77,10 @@ export class TestClientLogger {
         private readonly title?: string,
     ) {
         const logHeaders: string[] = [];
-        clients.forEach((c, i)=>{
+        clients.forEach((c, i) => {
             logHeaders.push("op");
             logHeaders.push(`client ${c.longClientId}`);
-            const callback = (op: IMergeTreeDeltaOpArgs | undefined)=>{
+            const callback = (op: IMergeTreeDeltaOpArgs | undefined) => {
                 if (this.lastOp !== op?.op) {
                     this.addNewLogLine();
                     this.lastOp = op?.op;
@@ -122,14 +122,14 @@ export class TestClientLogger {
         if (this.incrementalLog) {
             while (this.roundLogLines.length > 0) {
                 const logLine = this.roundLogLines.shift();
-                if (logLine?.some((c)=>c.trim().length > 0)) {
+                if (logLine?.some((c) => c.trim().length > 0)) {
                     console.log(logLine.map((v, i) => v.padEnd(this.paddings[i])).join(" | "));
                 }
             }
         }
         this.ackedLine = [];
         this.localLine = [];
-        this.clients.forEach((cc, clientLogIndex)=>{
+        this.clients.forEach((cc, clientLogIndex) => {
             const segStrings = TestClientLogger.getSegString(cc);
             this.ackedLine.push("", segStrings.acked);
             this.localLine.push("", segStrings.local);

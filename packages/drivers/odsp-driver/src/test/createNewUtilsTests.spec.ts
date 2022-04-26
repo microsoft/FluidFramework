@@ -112,7 +112,7 @@ describe("Create New Utils Tests", () => {
         };
 
         const odspResolvedUrl = await mockFetchOk(
-                async () =>createNewFluidFile(
+                async () => createNewFluidFile(
                     async (_options) => "token",
                     newFileParams,
                     new TelemetryNullLogger(),
@@ -162,7 +162,7 @@ describe("Create New Utils Tests", () => {
         // Test that sharing link is set appropriately when it is received in the response from ODSP
         const mockSharingLink = "mockSharingLink";
         let odspResolvedUrl = await mockFetchOk(
-                async () =>createNewFluidFile(
+                async () => createNewFluidFile(
                     async (_options) => "token",
                     newFileParams,
                     new TelemetryNullLogger(),
@@ -184,7 +184,7 @@ describe("Create New Utils Tests", () => {
         // Test that error message is set appropriately when it is received in the response from ODSP
         const mockError = "mockError";
         odspResolvedUrl = await mockFetchOk(
-            async () =>createNewFluidFile(
+            async () => createNewFluidFile(
                 async (_options) => "token",
                 newFileParams,
                 new TelemetryNullLogger(),

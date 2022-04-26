@@ -1050,8 +1050,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         return this.protocolHandler.quorum.propose("code", codeDetails)
-            .then(()=>true)
-            .catch(()=>false);
+            .then(() => true)
+            .catch(() => false);
     }
 
     private async processCodeProposal(): Promise<void> {
@@ -1304,7 +1304,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.options.summarizeProtocolTree === true) {
             this.mc.logger.sendTelemetryEvent({ eventName:"summarizeProtocolTreeEnabled" });
             this._storageService =
-                new ProtocolTreeStorageService(this._storageService, ()=>this.captureProtocolSummary());
+                new ProtocolTreeStorageService(this._storageService, () => this.captureProtocolSummary());
         }
 
         // ensure we did not lose that policy in the process of wrapping

@@ -27,7 +27,7 @@ import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
 
 const normalizeOpts: ISnapshotNormalizerConfig =
-    { excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f)=>f.type) };
+    { excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f) => f.type) };
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
  * @returns the normalized file snapshot.

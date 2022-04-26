@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 import { generatePairwiseOptions, OptionsMatrix } from "../index";
 
-describe("generatePairwiseOptions.examples", ()=>{
-    it("Testing a function", ()=>{
+describe("generatePairwiseOptions.examples", () => {
+    it("Testing a function", () => {
         const myFunction =
-            (param1: boolean, param2: "string1" | "string2", param3?: number)=>{};
+            (param1: boolean, param2: "string1" | "string2", param3?: number) => {};
 
         const options = generatePairwiseOptions<{ p1: boolean, p2: "string1" | "string2", p3?: number }>({
             p1: [true, false],
@@ -22,7 +22,7 @@ describe("generatePairwiseOptions.examples", ()=>{
         }
     });
 
-    it("Testing an object", ()=>{
+    it("Testing an object", () => {
         interface MyObject{
             prop1: boolean,
             prop2?: number,
@@ -38,13 +38,13 @@ describe("generatePairwiseOptions.examples", ()=>{
         const myObjects = generatePairwiseOptions<MyObject>(myObjectMatrix);
 
         // use the options to drive a scenario
-        const runScenario = (instance: MyObject)=>{};
+        const runScenario = (instance: MyObject) => {};
         for (const instance of myObjects) {
             runScenario(instance);
         }
     });
 
-    it("Generate a fixed length Array", ()=>{
+    it("Generate a fixed length Array", () => {
         const arrayMatrix: OptionsMatrix<ArrayLike<number>> = {
             0:[3, 6, 9, 12, 15],
             1:[7, 14, 28],
@@ -54,7 +54,7 @@ describe("generatePairwiseOptions.examples", ()=>{
         const myArrayLikes = generatePairwiseOptions<ArrayLike<number>>(arrayMatrix);
 
         // use the array to drive a scenario
-        const runScenario = (numbers: number[])=>{
+        const runScenario = (numbers: number[]) => {
             assert.strictEqual(numbers.length, 2);
             assert(numbers[0] % 3 === 0);
             assert(numbers[1] % 7 === 0);
@@ -64,7 +64,7 @@ describe("generatePairwiseOptions.examples", ()=>{
         }
     });
 
-    it("Generate an Complex object using nested options matrices", ()=>{
+    it("Generate an Complex object using nested options matrices", () => {
         const arrayMatrix: OptionsMatrix<ArrayLike<number>> = {
             0: [3, 6, 9, 12, 15],
             1: [7, 14, 28],
@@ -78,14 +78,14 @@ describe("generatePairwiseOptions.examples", ()=>{
         // in this example we generate pairwise options for keys on the main object to
         // create the values which will then be pairwise matched with eachother
         const complexObjectMatrix: OptionsMatrix<MyComplexObject> = {
-            numbers: [undefined, ... generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a)=>Array.from(a))],
+            numbers: [undefined, ... generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a) => Array.from(a))],
             subObject: generatePairwiseOptions<{ str: string }>({ str:["a", "b", "c"] }),
         };
 
         const complexObjects = generatePairwiseOptions<MyComplexObject>(complexObjectMatrix);
 
         // use the array to drive a scenario
-        const runScenario = (complexObject: MyComplexObject)=>{
+        const runScenario = (complexObject: MyComplexObject) => {
         };
         for (const complexObject of complexObjects) {
             runScenario(complexObject);

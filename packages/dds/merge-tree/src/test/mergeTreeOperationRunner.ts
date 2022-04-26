@@ -30,7 +30,7 @@ export const insertAtRefPos: TestOperation =
     (client: TestClient, opStart: number, opEnd: number, mt: random.Engine) => {
         const segs: ISegment[] = [];
         // gather all the segments at the pos, including removed segments
-        client.mergeTree.walkAllSegments(client.mergeTree.root, (seg)=>{
+        client.mergeTree.walkAllSegments(client.mergeTree.root, (seg) => {
             const pos = client.getPosition(seg);
             if (pos >= opStart) {
                 if (pos <= opStart) {
@@ -114,7 +114,7 @@ export function runMergeTreeOperationRunner(
                 minLength,
                 config.operations,
             );
-            const msgs = messageData.map((md)=>md[0]);
+            const msgs = messageData.map((md) => md[0]);
             seq = apply(seq, messageData, clients, logger);
             const resultText = logger.validate();
             results.push({

@@ -15,7 +15,7 @@ interface SimpleOptions{
 
 }
 const optionsToString = <T>(... options: T[]) =>
-    options.map((o)=>JSON.stringify(o))
+    options.map((o) => JSON.stringify(o))
     .join("\n");
 
 const simpleOptionsMatrix: OptionsMatrix<SimpleOptions> = {
@@ -106,8 +106,8 @@ function validatePairsExhaustively<T>(
     }
 }
 
-describe("generatePairwiseOptions", ()=>{
-    it("SimpleOptions", ()=>{
+describe("generatePairwiseOptions", () => {
+    it("SimpleOptions", () => {
         assert.strictEqual(simpleValues.length, 8, optionsToString(...simpleValues));
         for (const option of simpleValues) {
             validateSimpleOption(option);
@@ -115,7 +115,7 @@ describe("generatePairwiseOptions", ()=>{
         validatePairsExhaustively(simpleOptionsMatrix, simpleValues);
     });
 
-    it("ComplexOptions", ()=>{
+    it("ComplexOptions", () => {
         assert.strictEqual(complexValues.length, 24, optionsToString(...complexValues));
 
         for (const option of complexValues) {
@@ -127,12 +127,12 @@ describe("generatePairwiseOptions", ()=>{
             complexValues);
     });
 
-    it("Generate single option matrix", ()=>{
+    it("Generate single option matrix", () => {
         const optionsMatrix = { prop: ["a", "b", "c"] };
         const values = generatePairwiseOptions(optionsMatrix);
         validatePairsExhaustively(optionsMatrix, values);
     });
-    it("Generate empty option matrix", ()=>{
+    it("Generate empty option matrix", () => {
         const optionsMatrix = { prop: [undefined] };
         const values = generatePairwiseOptions(optionsMatrix);
         validatePairsExhaustively(optionsMatrix, values);

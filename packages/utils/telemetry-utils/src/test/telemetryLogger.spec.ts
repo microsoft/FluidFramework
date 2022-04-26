@@ -21,19 +21,19 @@ const errorCases: (ITelemetryLoggerPropertyBag)[] =
 
 const propertyCases: (ITelemetryLoggerPropertyBags | undefined)[] =
     allCases.reduce<ITelemetryLoggerPropertyBags[]>(
-        (pv, all)=> {
-            pv.push(... errorCases.map((error)=>({ all, error })));
+        (pv, all) => {
+            pv.push(... errorCases.map((error) => ({ all, error })));
             return pv;
         },
         []);
-propertyCases.push(...allCases.map((all)=>({ all, error: all })));
+propertyCases.push(...allCases.map((all) => ({ all, error: all })));
 propertyCases.push(...allCases);
 propertyCases.push(...errorCases);
 propertyCases.push(undefined);
 
 describe("TelemetryLogger", () => {
-    describe("Properties", ()=>{
-        it("send", ()=>{
+    describe("Properties", () => {
+        it("send", () => {
             for (const props of propertyCases) {
                 const logger = new TestTelemetryLogger("namespace", props);
                 logger.send({ category: "anything", eventName: "whatever" });
@@ -51,7 +51,7 @@ describe("TelemetryLogger", () => {
             }
         });
 
-        it("sendErrorEvent", ()=>{
+        it("sendErrorEvent", () => {
             for (const props of propertyCases) {
                 const logger = new TestTelemetryLogger("namespace", props);
                 logger.sendErrorEvent({ eventName: "whatever" });
@@ -70,7 +70,7 @@ describe("TelemetryLogger", () => {
             }
         });
 
-        it("sendTelemetryEvent", ()=>{
+        it("sendTelemetryEvent", () => {
             for (const props of propertyCases) {
                 const logger = new TestTelemetryLogger("namespace", props);
                 logger.sendTelemetryEvent({ eventName: "whatever" });

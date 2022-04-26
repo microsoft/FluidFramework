@@ -69,8 +69,8 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
     // sort keys biggest to smallest, and prune those with only an undefined option
     const matrixKeys: (keyof T)[] =
         Object.keys(optionsMatrix)
-        .filter((k)=>optionsMatrix[k].length > 1 || optionsMatrix[k][0] !== undefined)
-        .sort((a, b)=>optionsMatrix[b].length - optionsMatrix[a].length);
+        .filter((k) => optionsMatrix[k].length > 1 || optionsMatrix[k][0] !== undefined)
+        .sort((a, b) => optionsMatrix[b].length - optionsMatrix[a].length);
 
     if (matrixKeys.length === 0) {
         return [];

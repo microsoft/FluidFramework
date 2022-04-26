@@ -27,19 +27,19 @@ describe("client.getPosition", () => {
         segment = segOff.segment;
     });
 
-    it("Existing Segment", ()=>{
+    it("Existing Segment", () => {
         const pos = client.getPosition(segment);
         assert.strictEqual(pos, segPos);
     });
 
-    it("Deleted Segment", ()=>{
+    it("Deleted Segment", () => {
         client.removeRangeLocal(segPos, segPos + 1);
         assert.notStrictEqual(segment.removedSeq, undefined);
         const pos = client.getPosition(segment);
         assert.strictEqual(pos, segPos);
     });
 
-    it("Detached Segment", ()=>{
+    it("Detached Segment", () => {
         client.applyMsg(client.makeOpMessage(client.removeRangeLocal(segPos, segPos + 1), 1));
         // do some work and move the client's min seq forward, so zamboni runs
         for (const c of "hello world") {
@@ -57,7 +57,7 @@ describe("client.getPosition", () => {
         assert.strictEqual(pos, -1);
     });
 
-    it("Moved Segment", ()=>{
+    it("Moved Segment", () => {
         client.removeRangeLocal(segPos - 1, segPos);
         const pos = client.getPosition(segment);
         assert.strictEqual(pos, segPos - 1);

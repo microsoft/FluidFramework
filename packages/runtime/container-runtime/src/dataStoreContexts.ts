@@ -23,7 +23,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      */
     private readonly deferredContexts = new Map<string, Deferred<FluidDataStoreContext>>();
 
-    private readonly disposeOnce = new Lazy<void>(()=>{
+    private readonly disposeOnce = new Lazy<void>(() => {
         // close/stop all store contexts
         for (const [fluidDataStoreId, contextD] of this.deferredContexts) {
             contextD.promise.then((context) => {

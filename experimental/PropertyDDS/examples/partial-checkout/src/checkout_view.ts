@@ -61,7 +61,7 @@ function getPaths(list: HTMLUListElement): string[] {
     const paths: string[] = [];
     for (const item of list.children) {
         const path = item.getAttribute("path");
-        if (path) {paths.push(path);}
+        if (path) { paths.push(path); }
     }
     return paths;
 }
