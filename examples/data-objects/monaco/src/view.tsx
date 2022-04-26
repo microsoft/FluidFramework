@@ -12,6 +12,7 @@ import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unresolved
 import * as monaco from "monaco-editor";
+import React from "react";
 
 /**
  * Compilation options for Monaco to use on Typescript
@@ -47,6 +48,13 @@ const defaultCompilerOptions = {
     jsx: monaco.languages.typescript.JsxEmit.None,
 
     allowNonTsExtensions: true,
+};
+
+export interface IMonacoViewProps {
+}
+
+export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) => {
+    return <div></div>;
 };
 
 export class MonacoRunnerView implements IFluidHTMLView {
