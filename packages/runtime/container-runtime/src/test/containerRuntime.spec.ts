@@ -161,7 +161,7 @@ describe("Runtime", () => {
                     },
                 );
 
-                assert.strictEqual(containerRuntime.summariesDisabled, false);
+                assert.strictEqual(containerRuntime.heuristicsDisabled, true);
                 assert.strictEqual(containerRuntime.maxOpsSinceLastSummary, 9999);
                 assert.strictEqual(containerRuntime.initialSummarizerDelayMs, 10);
                 assert.strictEqual(containerRuntime.summarizerClientElectionEnabled, true);

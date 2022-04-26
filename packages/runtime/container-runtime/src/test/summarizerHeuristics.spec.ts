@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { ISummaryConfiguration, ISummaryConfigurationMainSettings } from "../containerRuntime";
+import { ISummaryConfiguration, ISummaryConfigurationHeuristicSettings } from "../containerRuntime";
 import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../summarizerHeuristics";
 import { ISummarizeHeuristicData, ISummarizeAttempt } from "../summarizerTypes";
 import { SummarizeReason } from "../summaryGenerator";
@@ -17,7 +17,7 @@ describe("Runtime", () => {
             before(() => { clock = sinon.useFakeTimers(); });
             after(() => { clock.restore(); });
 
-            const defaultSummaryConfig: ISummaryConfigurationMainSettings = {
+            const defaultSummaryConfig: ISummaryConfigurationHeuristicSettings = {
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
@@ -53,7 +53,7 @@ describe("Runtime", () => {
                 initialSummarizerDelayMs = defaultSummaryConfig.initialSummarizerDelayMs,
                 summarizerClientElection = defaultSummaryConfig.summarizerClientElection,
                 run = true,
-            }: Partial<ISummaryConfigurationMainSettings & ISummarizeAttempt & {
+            }: Partial<ISummaryConfigurationHeuristicSettings & ISummarizeAttempt & {
                 lastOpSequenceNumber: number;
                 minOpsForAttemptOnClose: number;
                 run: boolean;

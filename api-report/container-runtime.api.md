@@ -134,6 +134,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getSnapshotBlobs(): Promise<void>;
     // (undocumented)
+    get heuristicsDisabled(): boolean;
+    // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
@@ -581,19 +583,17 @@ export interface ISummaryCollectionOpEvents extends IEvent {
     (event: OpActionEventName, listener: OpActionEventListener): any;
 }
 
-// Warning: (ae-forgotten-export) The symbol "ISummaryConfigurationStartupSettings" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "ISummaryConfigurationMainSettings" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ISummaryConfigurationBaseSettings" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ISummaryConfigurationHeuristicSettings" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
 export type ISummaryConfiguration = {
     state: "disabled";
 } | ({
     state: "disableHeuristics";
-    maxAckWaitTime: number;
-    maxOpsSinceLastSummary: number;
-} & ISummaryConfigurationStartupSettings) | ({
+} & ISummaryConfigurationBaseSettings) | ({
     state: "enabled";
-} & ISummaryConfigurationMainSettings);
+} & ISummaryConfigurationHeuristicSettings);
 
 // @public
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {

@@ -187,8 +187,7 @@ export interface ContainerRuntimeMessage {
     contents: any;
     type: ContainerMessageType;
 }
-
-export interface ISummaryConfigurationStartupSettings {
+export interface ISummaryConfigurationBaseSettings {
     /* Delay before first attempt to spawn summarizing container. */
     initialSummarizerDelayMs: number;
 
@@ -197,24 +196,23 @@ export interface ISummaryConfigurationStartupSettings {
      * This defaults to false (disabled) and must be explicitly set to true to enable.
      */
     summarizerClientElection: boolean;
+
+    maxAckWaitTime: number;
+    maxOpsSinceLastSummary: number;
 }
-export interface ISummaryConfigurationMainSettings extends ISummaryConfigurationStartupSettings {
+
+export interface ISummaryConfigurationHeuristicSettings extends ISummaryConfigurationBaseSettings {
     idleTime: number;
     maxTime: number;
     maxOps: number;
-    maxAckWaitTime: number;
-    maxOpsSinceLastSummary: number;
 }
 
 export type ISummaryConfiguration =
 {
     state: "disabled";
-} | ({
-    state: "disableHeuristics";
-    maxAckWaitTime: number;
-    maxOpsSinceLastSummary: number; } & ISummaryConfigurationStartupSettings
-    )
-  | ({ state: "enabled";} & ISummaryConfigurationMainSettings);
+}
+| ({ state: "disableHeuristics"; } & ISummaryConfigurationBaseSettings)
+| ({ state: "enabled";} & ISummaryConfigurationHeuristicSettings);
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
@@ -1075,6 +1073,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.summaryConfiguration.state === "disabled";
     }
 
+    public get heuristicsDisabled(): boolean {
+        return this.summaryConfiguration.state === "disableHeuristics";
+    }
+
     public get summarizerClientElectionEnabled(): boolean {
         assert(this.summaryConfiguration.state !== "disabled", "Summary Configuration is invalid");
      return this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection")
@@ -1311,6 +1313,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.summaryCollection.on("default", defaultAction);
 
                 const currentInitialSummarizerDelayMs = this.initialSummarizerDelayMs;
+                const currentHeuristcsDisabled = this.heuristicsDisabled;
                 // Create the SummaryManager and mark the initial state
                 this.summaryManager = new SummaryManager(
                     this.summarizerClientElection,
@@ -1327,7 +1330,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     {
                         initialDelayMs: currentInitialSummarizerDelayMs,
                     },
-                    this.runtimeOptions.summaryOptions.summaryConfigOverrides?.state === "disableHeuristics" ?? false,
+                    currentHeuristcsDisabled,
                 );
                 this.summaryManager.start();
             }
