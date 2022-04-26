@@ -348,6 +348,7 @@ declare function get_current_InterfaceDeclaration_IContainer():
 declare function use_old_InterfaceDeclaration_IContainer(
     use: TypeOnly<old.IContainer>);
 use_old_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainer());
 
 /*
@@ -493,6 +494,7 @@ declare function get_current_InterfaceDeclaration_IDeltaManager():
 declare function use_old_InterfaceDeclaration_IDeltaManager(
     use: TypeOnly<old.IDeltaManager<any,any>>);
 use_old_InterfaceDeclaration_IDeltaManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltaManager());
 
 /*
