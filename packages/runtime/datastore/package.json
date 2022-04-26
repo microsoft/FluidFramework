@@ -109,6 +109,10 @@
   },
   "typeValidation": {
     "version": "0.60.1000",
-    "broken": {}
+    "broken": {
+      "0.59.1000": {
+        "ClassDeclaration_FluidDataStoreRuntime": {"forwardCompat": false}
+      }
+    }
   }
 }

@@ -14,7 +14,10 @@ import {
     ITestFluidObject,
     ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { Container } from "@fluidframework/container-loader";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { ContainerRuntime, OrderSequentiallyFailureMode } from "@fluidframework/container-runtime";
 
 const cellId = "cellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
@@ -226,5 +229,49 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
 
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell2))), cellValue, 2);
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell3))), cellValue, 3);
+    });
+});
+
+describeNoCompat("SharedCell orderSequentially", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+    });
+
+    let container: Container;
+    let dataObject: ITestFluidObject;
+    let sharedCell: SharedCell;
+    let containerRuntime: ContainerRuntime;
+
+    beforeEach(async () => {
+        container = await provider.makeTestContainer(testContainerConfig) as Container;
+        dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+        sharedCell = await dataObject.getSharedObject<SharedCell>(cellId);
+        containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+    });
+
+    itExpects("Closes container when rollback fails",
+    [
+        {
+            eventName: "fluid:telemetry:Container:ContainerClose",
+            error: "RollbackError: rollback not supported",
+            errorType: ContainerErrorType.dataProcessingError,
+        },
+    ],
+    async () => {
+        const errorMessage = "callback failure";
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedCell.set(0);
+                throw new Error(errorMessage);
+            }, OrderSequentiallyFailureMode.Rollback);
+        } catch(err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.ok((error as Error).message.startsWith("RollbackError:"), "Unexpected error message");
+        assert.equal(containerRuntime.disposed, true);
     });
 });

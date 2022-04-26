@@ -18,6 +18,7 @@ import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
+import { OrderSequentiallyFailureMode } from "..";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
@@ -159,6 +160,28 @@ describe("Runtime", () => {
                         assert.ok(error instanceof GenericError);
                         assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
                         assert.strictEqual(error.error.message, "Any");
+                    });
+
+                    it("No errors propagate to the container when callback with rollback", () => {
+                        assert.throws(
+                            () => containerRuntime.orderSequentially(
+                                () => {
+                                    throw new Error("Any");
+                                },
+                                OrderSequentiallyFailureMode.Rollback));
+
+                        assert.strictEqual(containerErrors.length, 0);
+                    });
+
+                    it("No errors propagate to the container on rollback", () => {
+                        assert.throws(
+                            () => containerRuntime.orderSequentially(
+                                () => {
+                                    throw new Error("Any");
+                                },
+                                OrderSequentiallyFailureMode.Rollback));
+
+                        assert.strictEqual(containerErrors.length, 0);
                     });
                 });
             }));

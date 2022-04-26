@@ -390,6 +390,27 @@ export class PendingStateManager implements IDisposable {
         this.isProcessingBatch = false;
     }
 
+    public checkpoint() {
+        const checkpointHead = this.pendingStates.peekBack();
+        return {
+            rollback:() => {
+                try {
+                    while(this.pendingStates.peekBack() !== checkpointHead) {
+                        this.rollbackNextPendingState();
+                    }
+                } catch(err) {
+                    const error = DataProcessingError.wrapIfUnrecognized(
+                        err,
+                        "checkpointRollback",
+                        undefined,
+                        "RollbackError: ");
+                    this.stateHandler.close(error);
+                    throw error;
+                }
+            },
+        };
+    }
+
     /**
      * Returns the next pending state from the pending state queue.
      */

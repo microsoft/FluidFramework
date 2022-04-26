@@ -153,7 +153,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)
-    orderSequentially(callback: () => void): void;
+    orderSequentially(callback: () => void, failureMode?: OrderSequentiallyFailureMode): void;
     // (undocumented)
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;
     // (undocumented)
@@ -161,8 +161,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
-    // (undocumented)
-    get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
     // (undocumented)
     get scope(): FluidObject;
     // (undocumented)
@@ -627,6 +625,14 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+
+// @public (undocumented)
+export enum OrderSequentiallyFailureMode {
+    // (undocumented)
+    Fail = 0,
+    // (undocumented)
+    Rollback = 1
+}
 
 // @public
 export enum RuntimeHeaders {
