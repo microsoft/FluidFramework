@@ -1,7 +1,8 @@
 {
   "name": "@fluid-example/table-view",
   "version": "0.59.3000",
-  "description": "Chaincode component that provides a view for a table-document.",
+  "private": true,
+  "description": "Data object that provides a view for a table-document.",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",

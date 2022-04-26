@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/clicker-reducer",
   "version": "0.59.3000",
+  "private": true,
   "description": "Minimal Fluid object sample to implement a collaborative counter using Fluid React hooks",
   "homepage": "https://fluidframework.com",
   "repository": {

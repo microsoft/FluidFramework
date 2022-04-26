@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/iframe-host",
   "version": "0.59.3000",
+  "private": true,
   "description": "IFrame Host",
   "homepage": "https://fluidframework.com",
   "repository": {

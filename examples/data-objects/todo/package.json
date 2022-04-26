@@ -1,7 +1,8 @@
 {
   "name": "@fluid-example/todo",
   "version": "0.59.3000",
-  "description": "Simple todo canvas.",
+  "private": true,
+  "description": "Simple todo app",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
