@@ -517,11 +517,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._dirtyContainer;
     }
 
-    private get serviceFactory() {return this.loader.services.documentServiceFactory;}
-    private get urlResolver() {return this.loader.services.urlResolver;}
+    private get serviceFactory() { return this.loader.services.documentServiceFactory; }
+    private get urlResolver() { return this.loader.services.urlResolver; }
     public readonly options: ILoaderOptions;
-    private get scope() { return this.loader.services.scope;}
-    private get codeLoader() { return this.loader.services.codeLoader;}
+    private get scope() { return this.loader.services.scope; }
+    private get codeLoader() { return this.loader.services.codeLoader; }
 
     constructor(
         private readonly loader: Loader,

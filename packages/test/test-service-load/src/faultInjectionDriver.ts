@@ -64,8 +64,8 @@ export class FaultInjectionDocumentService implements IDocumentService {
     constructor(private readonly internal: IDocumentService) {
     }
 
-    public get resolvedUrl() {return this.internal.resolvedUrl;}
-    public get policies() {return this.internal.policies;}
+    public get resolvedUrl() { return this.internal.resolvedUrl; }
+    public get policies() { return this.internal.policies; }
     public get documentDeltaConnection() {
         return this._currentDeltaStream;
     }

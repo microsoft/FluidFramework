@@ -544,7 +544,7 @@ export function requestOps(
 }
 
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
-    read: async () => { return { done: true };},
+    read: async () => { return { done: true }; },
 };
 
 export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessage[]>):

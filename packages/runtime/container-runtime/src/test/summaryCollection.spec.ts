@@ -96,7 +96,7 @@ describe("Summary Collection", () => {
     describe("opsSinceLastAck", () => {
         it("Ack with op", () => {
             const dm = new MockDeltaManager();
-            dm.on("op", (op) => {dm.lastSequenceNumber = op.sequenceNumber;});
+            dm.on("op", (op) => { dm.lastSequenceNumber = op.sequenceNumber; });
 
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.opsSinceLastAck, 0);
@@ -107,7 +107,7 @@ describe("Summary Collection", () => {
         });
         it("Nack with op", () => {
             const dm = new MockDeltaManager();
-            dm.on("op", (op) => {dm.lastSequenceNumber = op.sequenceNumber;});
+            dm.on("op", (op) => { dm.lastSequenceNumber = op.sequenceNumber; });
 
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.opsSinceLastAck, 0);
@@ -118,7 +118,7 @@ describe("Summary Collection", () => {
         });
         it("Ack after Nack with op", () => {
             const dm = new MockDeltaManager();
-            dm.on("op", (op) => {dm.lastSequenceNumber = op.sequenceNumber;});
+            dm.on("op", (op) => { dm.lastSequenceNumber = op.sequenceNumber; });
 
             const sc = new SummaryCollection(dm, new MockLogger());
             assert.strictEqual(sc.opsSinceLastAck, 0);
