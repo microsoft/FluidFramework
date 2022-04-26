@@ -4,23 +4,11 @@
  */
 
 import assert from "assert";
-<<<<<<< HEAD
 import { DataObject } from "@fluidframework/aqueduct";
-=======
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
->>>>>>> 60b30f829b4a9a51d870c6cf9ce4f29aa0706cf0
 import { IContainer } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-<<<<<<< HEAD
-=======
-import { MockLogger } from "@fluidframework/telemetry-utils";
->>>>>>> 60b30f829b4a9a51d870c6cf9ce4f29aa0706cf0
 import { delay } from "@fluidframework/common-utils";
 
 class TestDataObject extends DataObject {
