@@ -416,7 +416,10 @@ export class DataStores implements IDisposable {
             assert(!local, 0x163 /* "Missing datastore for local signal" */);
             this.logger.sendTelemetryEvent({
                 eventName: "SignalFluidDataStoreNotFound",
-                fluidDataStoreId: address,
+                fluidDataStoreId: {
+                    value: address,
+                    tag: TelemetryDataTag.PackageData,
+                },
             });
             return;
         }

@@ -12,7 +12,7 @@ import {
     Timer,
 } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, LoggingError, ChildLogger } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, LoggingError, ChildLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -389,7 +389,10 @@ export class SummaryGenerator {
                 duration: broadcastDuration,
                 referenceSequenceNumber: summarizeOp.referenceSequenceNumber,
                 summarySequenceNumber: summarizeOp.sequenceNumber,
-                handle: summarizeOp.contents.handle,
+                handle: {
+                    value: summarizeOp.contents.handle,
+                    tag: TelemetryDataTag.PackageData,
+                },
             });
 
             // Wait for ack/nack
