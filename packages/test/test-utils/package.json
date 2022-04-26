@@ -113,7 +113,8 @@
     "version": "0.60.1000",
     "broken": {
       "InterfaceDeclaration_ITestContainerConfig": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "InterfaceDeclaration_IProvideTestFluidObject": {
         "backCompat": false
