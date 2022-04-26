@@ -272,8 +272,8 @@ export class DataStores implements IDisposable {
             return false;
         }
 
-        const currentContext = this.contexts.get(aliasMessage.internalId);
-        if (currentContext === undefined) {
+        const context = this.contexts.get(aliasMessage.internalId);
+        if (context === undefined) {
             this.logger.sendErrorEvent({
                 eventName: "AliasFluidDataStoreNotFound",
                 fluidDataStoreId: aliasMessage.internalId,
@@ -281,15 +281,15 @@ export class DataStores implements IDisposable {
             return false;
         }
 
-        const currentHandle = new FluidObjectHandle(
-            currentContext,
+        const handle = new FluidObjectHandle(
+            context,
             aliasMessage.internalId,
             this.runtime.IFluidHandleContext,
         );
-        this.runtime.addedGCOutboundReference(this.containerRuntimeHandle, currentHandle);
+        this.runtime.addedGCOutboundReference(this.containerRuntimeHandle, handle);
 
-        this.aliasMap.set(aliasMessage.alias, currentContext.id);
-        currentContext.setInMemoryRoot();
+        this.aliasMap.set(aliasMessage.alias, context.id);
+        context.setInMemoryRoot();
         return true;
     }
 
