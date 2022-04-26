@@ -179,10 +179,17 @@ export function concatGarbageCollectionData(gcData1: IGarbageCollectionData, gcD
 }
 
 export class GCDataBuilder implements IGarbageCollectionData {
-    public readonly gcNodes: { [ id: string ]: string[] } = {};
+    private readonly gcNodesSet: { [ id: string ]: Set<string> } = {};
+    public get gcNodes(): { [ id: string ]: string[] } {
+        const gcNodes = {};
+        for (const [nodeId, outboundRoutes] of Object.entries(this.gcNodesSet)) {
+            gcNodes[nodeId] = [...outboundRoutes];
+        }
+        return gcNodes;
+    }
 
     public addNode(id: string, outboundRoutes: string[]) {
-        this.gcNodes[id] = Array.from(outboundRoutes);
+        this.gcNodesSet[id] = new Set(outboundRoutes);
     }
 
     /**
@@ -207,14 +214,14 @@ export class GCDataBuilder implements IGarbageCollectionData {
                 normalizedId = normalizedId.substr(0, normalizedId.length - 1);
             }
 
-            // Add the outbound routes against the normalized and prefixed id.
-            this.gcNodes[normalizedId] = Array.from(outboundRoutes);
+            // Add the outbound routes against the normalized and prefixed id without duplicates.
+            this.gcNodesSet[normalizedId] = new Set(outboundRoutes);
         }
     }
 
     public addNodes(gcNodes: { [ id: string ]: string[] }) {
         for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
-            this.gcNodes[id] = Array.from(outboundRoutes);
+            this.gcNodesSet[id] = new Set(outboundRoutes);
         }
     }
 
@@ -222,8 +229,8 @@ export class GCDataBuilder implements IGarbageCollectionData {
      * Adds the given outbound route to the outbound routes of all GC nodes.
      */
     public addRouteToAllNodes(outboundRoute: string) {
-        for (const outboundRoutes of Object.values(this.gcNodes)) {
-            outboundRoutes.push(outboundRoute);
+        for (const outboundRoutes of Object.values(this.gcNodesSet)) {
+            outboundRoutes.add(outboundRoute);
         }
     }
 

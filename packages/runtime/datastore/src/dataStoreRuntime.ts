@@ -677,13 +677,13 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             channelBaseGCDetails = {};
         } else if (channelBaseGCDetails.gcData?.gcNodes !== undefined) {
             const channels = Object.entries(channelBaseGCDetails.gcData.gcNodes);
-            channels.forEach(([_, outboundRoutes]) => {
-                // remove 1 route from channel to parent for each channel
-                const routeIndex = outboundRoutes.findIndex((route) => route === this.absolutePath);
-                if (routeIndex !== -1) {
-                    outboundRoutes.splice(routeIndex, 1);
-                }
-            });
+            for (const [nodeId, outboundRoutes] of channels) {
+                // Remove route from channel to parent for each channel
+                // Note: if the child channel has an explicit handle route to its parent, it will be removed here
+                const outboundRoutesSet = new Set(outboundRoutes);
+                outboundRoutesSet.delete(this.absolutePath);
+                channelBaseGCDetails.gcData.gcNodes[nodeId] = [...outboundRoutesSet];
+            }
         }
 
         // Currently, channel context's are always considered used. So, it there are no used routes for it, we still
