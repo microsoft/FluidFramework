@@ -71,9 +71,8 @@ export class MonacoRunnerView implements IFluidHTMLView {
 
     public render(elm: HTMLElement): void {
         if (!this.mapHost) {
-            this.mapHost = document.createElement("div");
+            this.mapHost = this.initializeEditorDiv();
             elm.appendChild(this.mapHost);
-            this.initializeEditorDiv();
         } else {
             if (this.mapHost.parentElement !== elm) {
                 this.mapHost.remove();
@@ -86,13 +85,15 @@ export class MonacoRunnerView implements IFluidHTMLView {
      * Sets up the Monaco editor for use and attaches its HTML element to the mapHost element.
      * Also sets up eventing to send/receive ops as the text is changed.
      */
-    private initializeEditorDiv(): void {
+    private initializeEditorDiv(): HTMLDivElement {
+        const mapHost = document.createElement("div");
+
         // TODO make my dts
         const hostDts = null; // await platform.queryInterface<any>("dts");
 
-        this.mapHost.style.minHeight = "480px";
-        this.mapHost.style.width = "100%";
-        this.mapHost.style.height = "100%";
+        mapHost.style.minHeight = "480px";
+        mapHost.style.width = "100%";
+        mapHost.style.height = "100%";
         // const outputDiv = document.createElement("div");
         // outputDiv.style.width = "50%";
         // hostWrapper.appendChild(outputDiv);
@@ -116,7 +117,7 @@ export class MonacoRunnerView implements IFluidHTMLView {
         const outputModel = monaco.editor.createModel("", "javascript");
 
         this.codeEditor = monaco.editor.create(
-            this.mapHost,
+            mapHost,
             { model: this.codeModel, automaticLayout: true });
 
         let ignoreModelContentChanges = false;
@@ -163,6 +164,8 @@ export class MonacoRunnerView implements IFluidHTMLView {
                 ignoreModelContentChanges = false;
             }
         });
+
+        return mapHost;
     }
 
     /**
