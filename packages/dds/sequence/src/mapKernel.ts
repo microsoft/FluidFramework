@@ -53,10 +53,14 @@ interface IMapMessageHandler {
     getStashedOpLocalMetadata(op: IMapOperation): unknown;
 }
 
-interface IMapMessageLocalMetadata{
+interface IMapMessageLocalMetadata {
+    lastProcessedSeq: number
     pendingClearMessageId?: number,
     pendingMessageId?: number,
-    lastProcessedSeq: number
+    /**
+     * Metadata submitted by the handler of a ValueType operation.
+     */
+    valueMetadata?: unknown
 }
 
 /**
@@ -772,7 +776,7 @@ export class MapKernel implements IValueTypeCreator {
                     const translatedValue = parseHandles(
                         op.value.value,
                         this.serializer);
-                    handler.process(previousValue, translatedValue, local, message);
+                    handler.process(previousValue, translatedValue, local, message, localOpMetadata?.valueMetadata);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
                 },
@@ -824,7 +828,7 @@ export class MapKernel implements IValueTypeCreator {
      * @returns A value op emitter for the given key
      */
     private makeMapValueOpEmitter(key: string): IValueOpEmitter {
-        const emit = (opName: string, previousValue: any, params: any) => {
+        const emit = (opName: string, previousValue: any, params: any, localOpMetadata: unknown) => {
             const translatedParams = makeHandlesSerializable(
                 params,
                 this.serializer,
@@ -838,8 +842,12 @@ export class MapKernel implements IValueTypeCreator {
                     value: translatedParams,
                 },
             };
-            // Send the localOpMetadata as undefined because we don't care about the ack.
-            this.submitMessage(op, {lastProcessedSeq: this.lastProcessedSeq});
+            const opMetadata: IMapMessageLocalMetadata = { lastProcessedSeq: this.lastProcessedSeq };
+            if (localOpMetadata !== undefined) {
+                opMetadata.valueMetadata = localOpMetadata;
+            }
+
+            this.submitMessage(op, opMetadata);
 
             const event: IValueChanged = { key, previousValue };
             this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);
