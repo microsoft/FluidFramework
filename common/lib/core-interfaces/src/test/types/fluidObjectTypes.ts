@@ -10,7 +10,7 @@ declare function useFluidObject(params: FluidObject | undefined): void;
 
 declare function useProvider<T extends FluidObject>(params: FluidObject<T> | undefined): void;
 
-declare function useProviderKey<T,TKey extends FluidObjectKeys<T> = FluidObjectKeys<T>>(key: TKey): void;
+declare function useProviderKey<T, TKey extends FluidObjectKeys<T> = FluidObjectKeys<T>>(key: TKey): void;
 
 declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): void;
 declare function getLoadable(): IFluidLoadable;

@@ -143,7 +143,7 @@ foo(new bar());
 
 // test class with complex property
 interface MapProp{
-    m: Map<string,string>
+    m: Map<string, string>
 }
 const mt: MapProp = {
     m: new Map(),

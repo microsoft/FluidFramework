@@ -187,7 +187,7 @@ describe("Errors", () => {
                 Symbol("Unique"),
                 () => {},
                 [],
-                [1,2,3],
+                [1, 2, 3],
             ];
             const coercedErrors = originalMalformations.map((value) =>
                 DataProcessingError.wrapIfUnrecognized(value, "someCodepath", undefined),

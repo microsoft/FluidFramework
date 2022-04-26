@@ -85,7 +85,7 @@ class ContainerContent {
 
         this._snapshotAsString = new Lazy(() => {
             assert(this.snapshot !== undefined, 0x1c6 /* "snapshot should be set before retrieving it" */);
-            return stringify(this.snapshot, {space: 2});
+            return stringify(this.snapshot, { space: 2 });
         });
 
         this._snapshotExpanded = new Lazy(() => {
@@ -98,7 +98,7 @@ class ContainerContent {
             for (const commit of Object.keys(this.snapshot.commits)) {
                 snapshotExpanded.commits[commit] = expandTreeForReadability(this.snapshot.commits[commit]);
             }
-            return stringify(snapshotExpanded, {space: 2});
+            return stringify(snapshotExpanded, { space: 2 });
         });
     }
 

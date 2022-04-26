@@ -41,7 +41,6 @@ describe('Forest Perf', () => {
 				[built, rootId] = buildRandomTree(testTree, count);
 			},
 			benchmarkFn: () => {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const nodes = walk(built!, rootId!);
 				assert(nodes === count);
 			},
@@ -64,7 +63,6 @@ describe('Forest Perf', () => {
 				}
 			},
 			benchmarkFn: () => {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				forest!.add(nodes);
 			},
 			after: () => {
@@ -93,7 +91,6 @@ describe('Forest Perf', () => {
 					otherForest = otherForest.add(otherNodes);
 				},
 				benchmarkFn: () => {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					forest!.delta(otherForest!);
 				},
 				after: () => {

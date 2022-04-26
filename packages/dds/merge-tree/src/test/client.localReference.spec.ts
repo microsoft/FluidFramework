@@ -176,11 +176,11 @@ describe("MergeTree.Client", () => {
     });
 
     it("Split segment with no references and append to segment with references", () => {
-        const clients = createClientsAtInitialState("","A", "B");
+        const clients = createClientsAtInitialState("", "A", "B");
 
         const messages: ISequencedDocumentMessage[] = [];
         let seq = 0;
-        messages.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "0123456789"),++seq));
+        messages.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "0123456789"), ++seq));
         // initialize the local reference collection on the segment, but keep it empty
         {
             const segInfo = clients.A.getContainingSegment(9);
@@ -193,7 +193,7 @@ describe("MergeTree.Client", () => {
             clients.A.removeLocalReference(localRef);
         }
         // split the segment
-        messages.push(clients.A.makeOpMessage(clients.A.insertTextLocal(5, "ABCD"),++seq));
+        messages.push(clients.A.makeOpMessage(clients.A.insertTextLocal(5, "ABCD"), ++seq));
 
         // add a local reference to the newly inserted segment that caused the split
         {

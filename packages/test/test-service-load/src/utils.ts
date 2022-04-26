@@ -30,7 +30,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private logs: ITelemetryBaseEvent[] = [];
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
-        super(undefined /* namespace */, {all:{testVersion: pkgVersion}});
+        super(undefined /* namespace */, { all:{ testVersion: pkgVersion } });
     }
 
     async flush(runInfo?: { url: string, runId?: number }): Promise<void> {

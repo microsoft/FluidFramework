@@ -32,7 +32,6 @@ describe('SharedTree Perf', () => {
 				assert(editLog.numberOfLocalEdits === 0);
 			},
 			benchmarkFn: () => {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				tree!.currentView;
 			},
 			after: () => {

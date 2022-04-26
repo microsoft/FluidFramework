@@ -59,7 +59,7 @@ export async function fetchSnapshot(
     fetchFullSnapshot: boolean,
     forceAccessTokenViaAuthorizationHeader: boolean,
     logger: ITelemetryLogger,
-    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<unknown>>,
+    snapshotDownloader: (url: string, fetchOptions: { [index: string]: any }) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
@@ -104,7 +104,7 @@ export async function fetchSnapshotWithRedeem(
 ): Promise<ISnapshotContents> {
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
-    if(sharingLinkToRedeem) {
+    if (sharingLinkToRedeem) {
         odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
@@ -368,14 +368,14 @@ async function fetchLatestSnapshotCore(
 interface ISnapshotRequestAndResponseOptions {
     odspSnapshotResponse: IOdspResponse<ISnapshotContents>,
     requestUrl: string,
-    requestHeaders: {[index: string]: any},
+    requestHeaders: { [index: string]: any },
 }
 
 function getFormBodyAndHeaders(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
     snapshotOptions: ISnapshotOptions | undefined,
-    headers?: {[index: string]: string},
+    headers?: { [index: string]: string },
 ) {
     const formBoundary = uuid();
     const formParams: string[] = [];
@@ -402,7 +402,7 @@ function getFormBodyAndHeaders(
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
     const postBody = formParams.join("\r\n");
-    const header: {[index: string]: any} = {
+    const header: { [index: string]: any } = {
         "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
     };
     return { body: postBody, headers: header };
@@ -453,7 +453,7 @@ export async function downloadSnapshot(
 ): Promise<ISnapshotRequestAndResponseOptions> {
     // back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
     const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
-    if(sharingLinkToRedeem) {
+    if (sharingLinkToRedeem) {
         odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
     }
 
@@ -463,7 +463,7 @@ export async function downloadSnapshot(
     // Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
     // This error thrown by server will contain the new redirect location. Look at the 404 error parsing
     // for futher reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
-    const header = {prefer: "manualredirect"};
+    const header = { prefer: "manualredirect" };
     const { body, headers } = getFormBodyAndHeaders(
         odspResolvedUrl, storageToken, snapshotOptions, header);
     const fetchOptions = {

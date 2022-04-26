@@ -153,14 +153,14 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
     public injectError(canRetry: boolean | undefined) {
         assert(!this.disposed, "cannot inject error into closed delta connection");
         // https://nodejs.org/api/events.html#events_error_events
-        assert(this.listenerCount("error") > 0,"emitting error with no listeners will crash the process");
+        assert(this.listenerCount("error") > 0, "emitting error with no listeners will crash the process");
         this.emit(
             "error",
             new FaultInjectionError("FaultInjectionError", canRetry));
     }
     public injectDisconnect() {
         assert(!this.disposed, "cannot inject disconnect into closed delta connection");
-        this.emit("disconnect","FaultInjectionDisconnect");
+        this.emit("disconnect", "FaultInjectionDisconnect");
     }
 }
 
@@ -169,6 +169,6 @@ export class FaultInjectionError extends LoggingError {
         message: string,
         public readonly canRetry: boolean | undefined,
     ) {
-        super(message, {testCategoryOverride: "generic"});
+        super(message, { testCategoryOverride: "generic" });
     }
 }

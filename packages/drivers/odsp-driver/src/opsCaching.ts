@@ -109,7 +109,7 @@ export class OpsCache {
 
             this.totalOpsToCache--;
             if (this.totalOpsToCache === 0) {
-                this.logger.sendPerformanceEvent({ eventName: "CacheOpsLimitHit"});
+                this.logger.sendPerformanceEvent({ eventName: "CacheOpsLimitHit" });
                 this.cache.remove();
                 this.dispose();
                 break;

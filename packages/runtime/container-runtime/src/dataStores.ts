@@ -319,8 +319,7 @@ export class DataStores implements IDisposable {
     public createDetachedDataStoreCore(
         pkg: Readonly<string[]>,
         isRoot: boolean,
-        id = uuid()): IFluidDataStoreContextDetached
-    {
+        id = uuid()): IFluidDataStoreContextDetached {
         const context = new LocalDetachedFluidDataStoreContext({
             id,
             pkg,

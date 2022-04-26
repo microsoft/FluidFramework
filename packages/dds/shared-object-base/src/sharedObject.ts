@@ -79,8 +79,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     constructor(
         public id: string,
         protected runtime: IFluidDataStoreRuntime,
-        public readonly attributes: IChannelAttributes)
-    {
+        public readonly attributes: IChannelAttributes) {
         super((event: EventEmitterEventType, e: any) => this.eventListenerErrorHandler(event, e));
 
         this.handle = new SharedObjectHandle(
@@ -453,8 +452,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
-        attributes: IChannelAttributes)
-    {
+        attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
         this._serializer = new FluidSerializer(

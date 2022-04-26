@@ -92,9 +92,9 @@ use_old_FunctionDeclaration_getNormalizedSnapshot(
 * "InterfaceDeclaration_IAsyncCache": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAsyncCache():
-    TypeOnly<old.IAsyncCache<any,any>>;
+    TypeOnly<old.IAsyncCache<any, any>>;
 declare function use_current_InterfaceDeclaration_IAsyncCache(
-    use: TypeOnly<current.IAsyncCache<any,any>>);
+    use: TypeOnly<current.IAsyncCache<any, any>>);
 use_current_InterfaceDeclaration_IAsyncCache(
     get_old_InterfaceDeclaration_IAsyncCache());
 
@@ -104,9 +104,9 @@ use_current_InterfaceDeclaration_IAsyncCache(
 * "InterfaceDeclaration_IAsyncCache": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IAsyncCache():
-    TypeOnly<current.IAsyncCache<any,any>>;
+    TypeOnly<current.IAsyncCache<any, any>>;
 declare function use_old_InterfaceDeclaration_IAsyncCache(
-    use: TypeOnly<old.IAsyncCache<any,any>>);
+    use: TypeOnly<old.IAsyncCache<any, any>>);
 use_old_InterfaceDeclaration_IAsyncCache(
     get_current_InterfaceDeclaration_IAsyncCache());
 

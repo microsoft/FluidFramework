@@ -150,8 +150,8 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 
     itExpects("Code Proposal",
     [
-        {eventName:"fluid:telemetry:Container:ContainerClose", error:"Existing context does not satisfy incoming proposal"},
-        {eventName:"fluid:telemetry:Container:ContainerClose", error:"Existing context does not satisfy incoming proposal"},
+        { eventName:"fluid:telemetry:Container:ContainerClose", error:"Existing context does not satisfy incoming proposal" },
+        { eventName:"fluid:telemetry:Container:ContainerClose", error:"Existing context does not satisfy incoming proposal" },
     ],
     async () => {
         const proposal: IFluidCodeDetails = { package: packageV2 };
