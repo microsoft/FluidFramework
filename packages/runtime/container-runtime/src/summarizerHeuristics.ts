@@ -29,7 +29,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
         this._lastSuccessfulSummary = { ...attemptBaseline };
     }
 
-    public initialize(lastSummary: Readonly<ISummarizeAttempt>) {
+    public updateWithLastSummaryAckInfo(lastSummary: Readonly<ISummarizeAttempt>) {
         this._lastAttempt = lastSummary;
         this._lastSuccessfulSummary = { ...lastSummary };
     }

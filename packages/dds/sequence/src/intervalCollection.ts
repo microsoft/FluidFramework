@@ -888,6 +888,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.savedSerializedIntervals = undefined;
     }
 
+    /**
+     * Gets the next local sequence number, modifying this client's collab window in doing so.
+     */
+    private getNextLocalSeq(): number {
+        return ++this.client.getCollabWindow().localSeq;
+    }
+
     public getIntervalById(id: string) {
         if (!this.attached) {
             throw new Error("attach must be called before accessing intervals");
@@ -916,7 +923,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 start,
             };
             // Local ops get submitted to the server. Remote ops have the deserializer run.
-            this.emitter.emit("add", undefined, serializedInterval);
+            this.emitter.emit("add", undefined, serializedInterval, this.getNextLocalSeq());
         }
 
         this.emit("addInterval", interval, true, undefined);
@@ -930,7 +937,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.
             if (local) {
-                this.emitter.emit("delete", undefined, interval.serialize(this.client));
+                this.emitter.emit("delete", undefined, interval.serialize(this.client), this.getNextLocalSeq());
             } else {
                 if (this.onDeserialize) {
                     this.onDeserialize(interval);
@@ -970,7 +977,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             serializedInterval.end = undefined;
             serializedInterval.properties = props;
             serializedInterval.properties[reservedIntervalIdKey] = interval.getIntervalId();
-            this.emitter.emit("change", undefined, serializedInterval);
+            this.emitter.emit("change", undefined, serializedInterval, this.getNextLocalSeq());
             this.emit("propertyChanged", interval, deltaProps);
         }
         this.emit("changeInterval", interval, true, undefined);
@@ -996,7 +1003,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 {
                     [reservedIntervalIdKey]: interval.getIntervalId(),
                 };
-            this.emitter.emit("change", undefined, serializedInterval);
+            this.emitter.emit("change", undefined, serializedInterval, this.getNextLocalSeq());
             this.addPendingChange(id, serializedInterval);
         }
         this.emit("changeInterval", interval, true, undefined);
@@ -1169,7 +1176,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             // Local ops get submitted to the server. Remote ops have the deserializer run.
             if (local) {
                 // Review: Is this case possible?
-                this.emitter.emit("add", undefined, serializedInterval);
+                this.emitter.emit("add", undefined, serializedInterval, this.getNextLocalSeq());
             } else {
                 if (this.onDeserialize) {
                     this.onDeserialize(interval);

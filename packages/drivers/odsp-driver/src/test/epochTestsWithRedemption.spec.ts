@@ -115,7 +115,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
                         async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
                         notFound,
                         "internal");
-                } catch (error) {
+                } catch (error: any) {
                     assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError,
                         "Error should be file not found or access denied error");
                 }
@@ -124,7 +124,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
                 async () => notFound({ "x-fluid-epoch": "epoch1" }),
                 "external");
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError,
                 "Error should be file not found or access denied error");

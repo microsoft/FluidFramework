@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "0.59.2000",
+  "version": "0.59.3000",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,9 +34,9 @@
   },
   "dependencies": {
     "@fluidframework/container-definitions": "^0.48.1000",
-    "@fluidframework/fluid-static": "^0.59.2000",
-    "@fluidframework/map": "^0.59.2000",
-    "@fluidframework/sequence": "^0.59.2000"
+    "@fluidframework/fluid-static": "^0.59.3000",
+    "@fluidframework/map": "^0.59.3000",
+    "@fluidframework/sequence": "^0.59.3000"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
@@ -53,8 +53,11 @@
     "eslint-plugin-editorconfig": "~3.2.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.25.4",
-    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-jest": "~26.1.3",
+    "eslint-plugin-mocha": "~10.0.3",
+    "eslint-plugin-promise": "~6.0.0",
     "eslint-plugin-react": "~7.28.0",
+    "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
     "fluid-framework-previous": "npm:fluid-framework@^0.58.0",
     "rimraf": "^2.6.2",
