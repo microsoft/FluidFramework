@@ -55,7 +55,7 @@ export class MonacoRunnerView implements IFluidHTMLView {
     /**
      * Root HTML element of the component.
      */
-    private mapHost: HTMLElement;
+    private viewElement: HTMLDivElement;
 
     /**
      * Monaco text model object.
@@ -70,13 +70,13 @@ export class MonacoRunnerView implements IFluidHTMLView {
     public constructor(private readonly sharedString: SharedString) { }
 
     public render(elm: HTMLElement): void {
-        if (!this.mapHost) {
-            this.mapHost = this.initializeEditorDiv();
-            elm.appendChild(this.mapHost);
+        if (!this.viewElement) {
+            this.viewElement = this.createViewElement();
+            elm.appendChild(this.viewElement);
         } else {
-            if (this.mapHost.parentElement !== elm) {
-                this.mapHost.remove();
-                elm.appendChild(this.mapHost);
+            if (this.viewElement.parentElement !== elm) {
+                this.viewElement.remove();
+                elm.appendChild(this.viewElement);
             }
         }
     }
@@ -85,15 +85,15 @@ export class MonacoRunnerView implements IFluidHTMLView {
      * Sets up the Monaco editor for use and attaches its HTML element to the mapHost element.
      * Also sets up eventing to send/receive ops as the text is changed.
      */
-    private initializeEditorDiv(): HTMLDivElement {
-        const mapHost = document.createElement("div");
+    private createViewElement(): HTMLDivElement {
+        const viewElement = document.createElement("div");
 
         // TODO make my dts
         const hostDts = null; // await platform.queryInterface<any>("dts");
 
-        mapHost.style.minHeight = "480px";
-        mapHost.style.width = "100%";
-        mapHost.style.height = "100%";
+        viewElement.style.minHeight = "480px";
+        viewElement.style.width = "100%";
+        viewElement.style.height = "100%";
         // const outputDiv = document.createElement("div");
         // outputDiv.style.width = "50%";
         // hostWrapper.appendChild(outputDiv);
@@ -117,7 +117,7 @@ export class MonacoRunnerView implements IFluidHTMLView {
         const outputModel = monaco.editor.createModel("", "javascript");
 
         this.codeEditor = monaco.editor.create(
-            mapHost,
+            viewElement,
             { model: this.codeModel, automaticLayout: true });
 
         let ignoreModelContentChanges = false;
@@ -165,7 +165,7 @@ export class MonacoRunnerView implements IFluidHTMLView {
             }
         });
 
-        return mapHost;
+        return viewElement;
     }
 
     /**
