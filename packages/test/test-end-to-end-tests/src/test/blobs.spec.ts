@@ -22,7 +22,6 @@ import { getGCStateFromSummary } from "./mockSummarizerClient";
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
-            initialSummarizerDelayMs: 20,
             summaryConfigOverrides: {
                 state: "enabled",
                 idleTime: 5000,
@@ -33,7 +32,9 @@ const testContainerConfig: ITestContainerConfig = {
                 // the min of the two will be chosen
                 maxAckWaitTime: 120000,
                 maxOpsSinceLastSummary: 7000,
-                },
+                initialSummarizerDelayMs: 20,
+                summarizerClientElection: false,
+            },
         },
     },
     registry: [["sharedString", SharedString.getFactory()]],

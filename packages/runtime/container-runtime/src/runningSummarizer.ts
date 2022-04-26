@@ -8,7 +8,6 @@ import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-ut
 import { UsageError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
-    // ISummaryConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";

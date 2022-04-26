@@ -96,7 +96,7 @@ export class SummaryManager implements IDisposable {
             initialDelayMs = defaultInitialDelayMs,
             opsToBypassInitialDelay = defaultOpsToBypassInitialDelay,
         }: Readonly<Partial<ISummaryManagerConfig>> = {},
-        private readonly disableHeuristics?: Readonly<boolean>,
+        private readonly disableHeuristics?: boolean,
     ) {
         this.logger = ChildLogger.create(
             parentLogger,

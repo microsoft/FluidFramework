@@ -11,7 +11,6 @@ import {
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-// import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
@@ -47,10 +46,11 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         maxOps: 1000, // 1k ops (active)
         maxAckWaitTime: 120000, // 2 min
         maxOpsSinceLastSummary: 7000,
+        initialSummarizerDelayMs: 10,
+        summarizerClientElection: false,
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },
         gcOptions: {
@@ -214,7 +214,6 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         // dataStore2 will have it marked as unreferenced.
         const gcDisabledRuntimeOptions: IContainerRuntimeOptions = {
             summaryOptions: {
-                initialSummarizerDelayMs: 10,
                 summaryConfigOverrides,
             },
             gcOptions: {

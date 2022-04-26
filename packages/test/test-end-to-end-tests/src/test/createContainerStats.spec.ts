@@ -12,7 +12,6 @@ import {
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
-// import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -43,10 +42,11 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         maxOps: 1000,
         maxAckWaitTime: 600000,
         maxOpsSinceLastSummary: 7000,
+        initialSummarizerDelayMs: 10,
+        summarizerClientElection: false,
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },
         gcOptions: {

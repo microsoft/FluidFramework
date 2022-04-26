@@ -400,7 +400,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                     ...testContainerConfig,
                     runtimeOptions: {
                         summaryOptions: {
-                            initialSummarizerDelayMs: 10,
                             summaryConfigOverrides: {
                                 state: "enabled",
                                 idleTime: IdleDetectionTime,
@@ -408,6 +407,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                                 maxOps: 1000, // 1k ops (active)
                                 maxAckWaitTime: 120000, // 2 min
                                 maxOpsSinceLastSummary: 7000,
+                                initialSummarizerDelayMs: 10,
+                                summarizerClientElection: false,
                             },
                         },
                         gcOptions: {

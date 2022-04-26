@@ -4,7 +4,6 @@
  */
 
 import { Timer, assert } from "@fluidframework/common-utils";
-// import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "./containerRuntime";
 
 import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummarizeAttempt } from "./summarizerTypes";

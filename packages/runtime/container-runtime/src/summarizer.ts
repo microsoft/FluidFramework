@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
     ISequencedDocumentMessage,
-  //   ISummaryConfiguration,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "./containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
@@ -138,7 +137,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     public async run(
         onBehalfOf: string,
-        disableHeuristics?: Readonly<boolean>): Promise<SummarizerStopReason> {
+        disableHeuristics?: boolean): Promise<SummarizerStopReason> {
         try {
             return await this.runCore(onBehalfOf, disableHeuristics);
         } catch (error) {
@@ -161,7 +160,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     private async runCore(
         onBehalfOf: string,
-        disableHeuristics?: Readonly<boolean>): Promise<SummarizerStopReason> {
+        disableHeuristics?: boolean): Promise<SummarizerStopReason> {
         const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(this.runtime);
 
         // Wait for either external signal to cancel, or loss of connectivity.

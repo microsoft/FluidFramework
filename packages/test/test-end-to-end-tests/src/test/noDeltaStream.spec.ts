@@ -38,7 +38,6 @@ const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         // strictly control summarization
         summaryOptions: {
-            initialSummarizerDelayMs: 0,
             summaryConfigOverrides: {
                 state: "enabled",
                 idleTime: 5000, // 5 sec (idle)
@@ -46,6 +45,8 @@ const testContainerConfig: ITestContainerConfig = {
                 maxOps,
                 maxAckWaitTime: 120000, // 2 min
                 maxOpsSinceLastSummary: 7000,
+                initialSummarizerDelayMs: 0,
+                summarizerClientElection: false,
             },
         },
     },
@@ -55,7 +56,6 @@ const testContainerConfigDisabled: ITestContainerConfig = {
     runtimeOptions: {
         // strictly control summarization
         summaryOptions: {
-            initialSummarizerDelayMs: 0,
             summaryConfigOverrides: {
                 state: "disabled",
             },

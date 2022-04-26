@@ -22,7 +22,18 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             public type: string,
             public dataStoreFactory: IFluidDataStoreFactory,
             public runtimeOptions: IContainerRuntimeOptions = {
-                summaryOptions: { initialSummarizerDelayMs: 0 },
+                summaryOptions: {
+                    summaryConfigOverrides:  {
+                        state: "enabled",
+                        idleTime: 5000,
+                        maxTime: 5000 * 12,
+                        maxOps: 1000, // 1k ops (active)
+                        maxAckWaitTime: 120000, // 2 min
+                        maxOpsSinceLastSummary: 7000,
+                        initialSummarizerDelayMs: 0,
+                        summarizerClientElection: false,
+                    },
+                },
             },
             public requestHandlers: RuntimeRequestHandler[] = [],
         ) {

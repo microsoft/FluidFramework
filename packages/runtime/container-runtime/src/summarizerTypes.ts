@@ -289,7 +289,7 @@ export interface ISummarizer extends
     IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer>{
     stop(reason: SummarizerStopReason): void;
 
-    run(onBehalfOf: string, disableHeuristics?: Readonly<boolean>): Promise<SummarizerStopReason>;
+    run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
 
     /**
      * Attempts to generate a summary on demand. If already running, takes no action.

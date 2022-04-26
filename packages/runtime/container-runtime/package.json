@@ -116,7 +116,8 @@
     "version": "0.60.1000",
     "broken": {
       "ClassDeclaration_ContainerRuntime": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "InterfaceDeclaration_IContainerRuntimeOptions": {
         "forwardCompat": false,

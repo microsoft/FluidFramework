@@ -59,6 +59,115 @@ describe("Runtime", () => {
             });
         });
 
+        describe("SummaryOptions settings", () => {
+            let containerRuntime: ContainerRuntime;
+            function validateException(fn: () => void) {
+                try {
+                    fn();
+                    assert.ok(false);
+                } catch (exception) {
+                    assert.ok(true);
+                }
+            }
+            const getMockContext = ((): Partial<IContainerContext> => {
+                return {
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorum(),
+                    taggedLogger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
+                    closeFn: (_error?: ICriticalContainerError): void => { },
+                    updateDirtyContainerState: (_dirty: boolean) => { },
+                };
+            });
+
+            it("Runtime SummaryOptions - default properties", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext() as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    { // runtimeOptions
+                        summaryOptions: {},
+                    },
+                );
+
+                assert.strictEqual(containerRuntime.summariesDisabled, false);
+                assert.strictEqual(containerRuntime.maxOpsSinceLastSummary, 7000);
+                assert.strictEqual(containerRuntime.initialSummarizerDelayMs, 5000);
+                assert.strictEqual(containerRuntime.summarizerClientElectionEnabled, false);
+            });
+
+            it("Runtime SummaryOptions - overrides", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext() as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {
+                        summaryOptions: { // runtimeOptions
+                            summaryConfigOverrides: {
+                                state: "enabled",
+                                idleTime: 5000,
+                                maxTime: 5000 * 12,
+                                maxOps: 1000, // 1k ops (active)
+                                maxAckWaitTime: 120000, // 2 min
+                                maxOpsSinceLastSummary: 9999,
+                                initialSummarizerDelayMs: 100,
+                                summarizerClientElection: true,
+                            },
+                        },
+                    }, // runtimeOptions
+                );
+
+                assert.strictEqual(containerRuntime.summariesDisabled, false);
+                assert.strictEqual(containerRuntime.maxOpsSinceLastSummary, 9999);
+                assert.strictEqual(containerRuntime.initialSummarizerDelayMs, 100);
+                assert.strictEqual(containerRuntime.summarizerClientElectionEnabled, true);
+            });
+
+            it("Runtime SummaryOptions - Disabling Summary", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext() as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    { // runtimeOptions
+                        summaryOptions: {
+                            summaryConfigOverrides: {
+                                state: "disabled",
+                            },
+                        },
+                    },
+                );
+
+                assert.strictEqual(containerRuntime.summariesDisabled, true);
+                validateException(() => containerRuntime.maxOpsSinceLastSummary);
+                validateException(() => containerRuntime.initialSummarizerDelayMs);
+                validateException(() => containerRuntime.summarizerClientElectionEnabled);
+            });
+
+            it("Runtime SummaryOptions - Disabling Heuristics", async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext() as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    { // runtimeOptions
+                        summaryOptions: {
+                            summaryConfigOverrides: {
+                                state: "disableHeuristics",
+                                maxAckWaitTime: 10,
+                                maxOpsSinceLastSummary: 9999,
+                                initialSummarizerDelayMs: 10,
+                                summarizerClientElection: true,
+                            },
+                        },
+                    },
+                );
+
+                assert.strictEqual(containerRuntime.summariesDisabled, false);
+                assert.strictEqual(containerRuntime.maxOpsSinceLastSummary, 9999);
+                assert.strictEqual(containerRuntime.initialSummarizerDelayMs, 10);
+                assert.strictEqual(containerRuntime.summarizerClientElectionEnabled, true);
+            });
+        });
+
         describe("orderSequentially", () =>
             [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
                 describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {

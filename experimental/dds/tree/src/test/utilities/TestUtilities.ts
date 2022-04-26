@@ -283,7 +283,6 @@ export async function setUpLocalServerTestSharedTree(
 			TestDataStoreType,
 			new TestFluidObjectFactory(registry),
 			{
-				summaryOptions: { initialSummarizerDelayMs: 0 },
 				enableOfflineLoad: true,
 			},
 			[innerRequestHandler]

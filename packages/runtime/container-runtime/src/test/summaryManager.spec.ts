@@ -119,6 +119,8 @@ describe("Summary Manager", () => {
                     maxOps: 1000, // 1k ops (active)
                     maxAckWaitTime: 120000, // 2 min
                     maxOpsSinceLastSummary: 7000,
+                    initialSummarizerDelayMs: 0,
+                    summarizerClientElection: false,
                 },
                 // submitSummaryCallback
                 async (options) => {

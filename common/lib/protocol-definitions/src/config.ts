@@ -9,27 +9,8 @@
 // * maxTime(ms) have passed with pending ops to summarize, or
 // * maxOps are waiting to summarize
 // AND
-// * state === "enabled"
-export interface ISummaryConfigurationCore {
-    idleTime: number;
-    maxTime: number;
-    maxOps: number;
-    maxAckWaitTime: number;
-    maxOpsSinceLastSummary: number;
-}
-
-export type ISummaryConfigurationV2 =
-{
-    state: "disabled";
-} | {
-    state: "disableHeuristics";
-    maxAckWaitTime: number;
-    maxOpsSinceLastSummary: number;
-} | ({ state: "enabled";} & ISummaryConfigurationCore);
-
-// We are still receiving the config from the clients.
-// For now we are simply ignoring them but they will need to be cleaned up.
-interface ISummaryConfiguration {
+// * disableSummaries !== true
+export interface ISummaryConfiguration {
     idleTime: number;
 
     maxTime: number;

@@ -21,7 +21,6 @@ import {
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
-// import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
@@ -95,10 +94,11 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
         maxOps: 1000, // 1k ops (active)
         maxAckWaitTime: 120000, // 2 min
         maxOpsSinceLastSummary: 7000,
+        initialSummarizerDelayMs: 10,
+        summarizerClientElection: false,
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },
         gcOptions: {

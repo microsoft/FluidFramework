@@ -9,7 +9,6 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-// import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
@@ -42,10 +41,11 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
         maxOps: 1000, // 1k ops (active)
         maxAckWaitTime: 120000, // 2 min
         maxOpsSinceLastSummary: 7000,
+        initialSummarizerDelayMs: 10,
+        summarizerClientElection: false,
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
-            initialSummarizerDelayMs: 10,
             summaryConfigOverrides,
         },
         gcOptions: {

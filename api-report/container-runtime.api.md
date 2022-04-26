@@ -143,10 +143,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get IFluidRouter(): this;
     // (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
+    // (undocumented)
+    get initialSummarizerDelayMs(): number;
     get isDirty(): boolean;
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    // (undocumented)
+    get maxOpsSinceLastSummary(): number;
     // (undocumented)
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     // (undocumented)
@@ -180,6 +184,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     submitDataStoreSignal(address: string, type: string, content: any): void;
     submitSignal(type: string, content: any): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
+    // (undocumented)
+    get summariesDisabled(): boolean;
     summarize(options: {
         fullTree?: boolean;
         trackState?: boolean;
@@ -190,6 +196,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }): Promise<IRootSummaryTreeWithStats>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
+    // (undocumented)
+    get summarizerClientElectionEnabled(): boolean;
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
@@ -499,7 +507,7 @@ export const ISummarizer: keyof IProvideSummarizer;
 export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer> {
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
-    run(onBehalfOf: string, disableHeuristics?: Readonly<boolean>): Promise<SummarizerStopReason>;
+    run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
@@ -573,18 +581,19 @@ export interface ISummaryCollectionOpEvents extends IEvent {
     (event: OpActionEventName, listener: OpActionEventListener): any;
 }
 
-// Warning: (ae-forgotten-export) The symbol "ISummaryConfigurationCore" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ISummaryConfigurationStartupSettings" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "ISummaryConfigurationMainSettings" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
 export type ISummaryConfiguration = {
     state: "disabled";
-} | {
+} | ({
     state: "disableHeuristics";
     maxAckWaitTime: number;
     maxOpsSinceLastSummary: number;
-} | ({
+} & ISummaryConfigurationStartupSettings) | ({
     state: "enabled";
-} & ISummaryConfigurationCore);
+} & ISummaryConfigurationMainSettings);
 
 // @public
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
@@ -606,9 +615,6 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 export interface ISummaryRuntimeOptions {
     // (undocumented)
     disableIsolatedChannels?: boolean;
-    // (undocumented)
-    initialSummarizerDelayMs?: number;
-    summarizerClientElection?: boolean;
     summaryConfigOverrides?: ISummaryConfiguration;
 }
 
@@ -682,7 +688,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     get ISummarizer(): this;
     // (undocumented)
-    run(onBehalfOf: string, disableHeuristics?: Readonly<boolean>): Promise<SummarizerStopReason>;
+    run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];

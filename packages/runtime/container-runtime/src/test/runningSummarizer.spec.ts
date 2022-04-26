@@ -9,7 +9,6 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryAck,
-  //  ISummaryConfiguration,
     ISummaryNack,
     ISummaryProposal,
     MessageType,
@@ -46,6 +45,8 @@ describe("Runtime", () => {
                 maxOps: 1000, // 1k ops (active)
                 maxAckWaitTime: 120000, // 2 min
                 maxOpsSinceLastSummary: 7000,
+                initialSummarizerDelayMs: 0,
+                summarizerClientElection: false,
             };
 
             let shouldDeferGenerateSummary: boolean = false;
@@ -129,7 +130,7 @@ describe("Runtime", () => {
             }
 
             const startRunningSummarizer = async (
-                disableHeuristics?: Readonly<boolean>,
+                disableHeuristics?: boolean,
             ): Promise<void> => {
                 summarizer = await RunningSummarizer.start(
                     mockLogger,
