@@ -24,7 +24,7 @@ export function runGarbageCollection(
 
     // This tracks the ids of referenced nodes. The nodes corresponding to rootIds are always considered
     // referenced so we start with those.
-    const referencedIds: string[] = [ ...rootIds ];
+    const referencedIds: string[] = [...rootIds];
     for (const id of referencedIds) {
         // If we have already seen this node, ignore and continue. Else, add it to visited list.
         if (visited.has(id)) {

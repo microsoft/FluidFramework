@@ -47,7 +47,7 @@ export function runPendingLocalStateTests(
 	describe(title, () => {
 		const documentId = 'documentId';
 
-		[WriteFormat.v0_0_2 /* TODO: Enable when stashed ops are supported: WriteFormat.v0_1_1 */].forEach(
+		[WriteFormat.v0_0_2].forEach(
 			(writeFormat) => {
 				it(`is applied to all connected containers (v${writeFormat})`, async () => {
 					const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({

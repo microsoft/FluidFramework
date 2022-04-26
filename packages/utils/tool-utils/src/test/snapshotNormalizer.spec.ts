@@ -32,15 +32,15 @@ describe("Snapshot Normalizer", () => {
         const gcDetails = {
             isRootNode: true,
             gcNodes: {
-                node2: [ "node1", "/" ],
-                node1: [ "node2", "/" ],
+                node2: ["node1", "/"],
+                node1: ["node2", "/"],
             },
         };
         const normalizedGCDetails = {
             isRootNode: true,
             gcNodes: {
-                node1: [ "/", "node2" ],
-                node2: [ "/", "node1"],
+                node1: ["/", "node2"],
+                node2: ["/", "node1"],
             },
         };
         const gcBlobName1 = `${gcBlobPrefix}_1`;
@@ -91,7 +91,7 @@ describe("Snapshot Normalizer", () => {
         };
 
         // Config to normalize the above blobs.
-        const config: ISnapshotNormalizerConfig = { blobsToNormalize: [ "custom", "normalized" ] };
+        const config: ISnapshotNormalizerConfig = { blobsToNormalize: ["custom", "normalized"] };
         const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
 
         assert.strictEqual(normalizedSnapshot.entries[0].path, "custom", "Snapshot tree entries not sorted");
@@ -106,12 +106,12 @@ describe("Snapshot Normalizer", () => {
     it("can normalize custom blobs with object of arrays", () => {
         // Blob content which is an object whose properties are arrays.
         const blobContents = {
-            array2: [ "2", "1", "3", "4" ],
-            array1: [ "c", "a", "d", "b" ],
+            array2: ["2", "1", "3", "4"],
+            array1: ["c", "a", "d", "b"],
         };
         const normalizedBlobContents = {
-            array1: [ "a", "b", "c", "d" ],
-            array2: [ "1", "2", "3", "4" ],
+            array1: ["a", "b", "c", "d"],
+            array2: ["1", "2", "3", "4"],
         };
 
         const snapshot: ITree = {
@@ -124,7 +124,7 @@ describe("Snapshot Normalizer", () => {
         };
 
         // Config to normalize the above blobs.
-        const config: ISnapshotNormalizerConfig = { blobsToNormalize: [ "custom", "normalized" ] };
+        const config: ISnapshotNormalizerConfig = { blobsToNormalize: ["custom", "normalized"] };
         const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
 
         assert.strictEqual(normalizedSnapshot.entries[0].path, "custom", "Snapshot tree entries not sorted");
@@ -148,7 +148,7 @@ describe("Snapshot Normalizer", () => {
         };
 
         // Config to normalize the above blobs.
-        const config: ISnapshotNormalizerConfig = { blobsToNormalize: [ "custom1", "custom2" ] };
+        const config: ISnapshotNormalizerConfig = { blobsToNormalize: ["custom1", "custom2"] };
         const normalizedSnapshot = getNormalizedSnapshot(snapshot, config);
         const customBlob1 = normalizedSnapshot.entries[0].value as IBlob;
         assert.strictEqual(customBlob1.contents, "contents", "Blob with string not as expected");

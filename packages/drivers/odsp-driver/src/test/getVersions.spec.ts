@@ -61,7 +61,7 @@ describe("Tests for snapshot fetch", () => {
     const odspSnapshot: IOdspSnapshot = {
         id: "id",
         trees: [{
-            entries:[ { path:"path", type:"tree" } ],
+            entries:[{ path:"path", type:"tree" }],
             id: "id",
             sequenceNumber: 1,
         }],

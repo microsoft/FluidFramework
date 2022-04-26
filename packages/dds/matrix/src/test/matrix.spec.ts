@@ -847,7 +847,7 @@ describe("Matrix", () => {
 
             await expect([
                 [28, 49],
-                [ 0,  1],
+                [0,  1],
             ]);
         });
 
@@ -869,8 +869,8 @@ describe("Matrix", () => {
 
             await expect([
                 [61, 57,  7, 62],
-                [ 0,  1,  2,  3],
-                [ 4,  5,  6,  7],
+                [0,  1,  2,  3],
+                [4,  5,  6,  7],
             ]);
 
             matrix1.setCells(/* row: */ 2, /* col: */ 3, /* colCount: */ 1, [65]);
@@ -880,8 +880,8 @@ describe("Matrix", () => {
             containerRuntime1.connected = true;
 
             await expect([
-                [ 0,  1,  2,  3],
-                [ 4,  5,  6, 65],
+                [0,  1,  2,  3],
+                [4,  5,  6, 65],
             ]);
         });
 

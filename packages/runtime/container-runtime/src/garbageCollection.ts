@@ -548,7 +548,7 @@ export class GarbageCollector implements IGarbageCollector {
             // each node in the summary.
             const usedRoutes = runGarbageCollection(
                 gcNodes,
-                [ "/" ],
+                ["/"],
                 this.mc.logger,
             ).referencedNodeIds;
 
@@ -616,7 +616,7 @@ export class GarbageCollector implements IGarbageCollector {
             const gcData = await this.runtime.getGCData(fullGC);
             const gcResult = runGarbageCollection(
                 gcData.gcNodes,
-                [ "/" ],
+                ["/"],
                 logger,
             );
             const gcStats = this.generateStatsAndLogEvents(gcResult);
