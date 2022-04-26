@@ -682,6 +682,38 @@ export class Client {
         return segmentPosition;
     }
 
+    public findSegOffForReconnection(pos: number, seqNumberFrom: number, seqNumberTo: number, localSeq: number): { segment: ISegment; offset: number } {
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
+        let segment: ISegment | undefined;
+        let posAccumulated = 0;
+        let offset = pos;
+        this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
+            assert(seg.seq !== undefined || seg.localSeq !== undefined, 'Either seq or localSeq should be defined');
+            segment = seg;
+
+            if (((seg.seq !== undefined && seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom) || (seg.localSeq !== undefined && seg.localSeq <= localSeq))                // Is inserted
+                && (seg.removedSeq === undefined || (seg.localRemovedSeq !== undefined && seg.localRemovedSeq! > localSeq) || (seg.removedSeq !== undefined && seg.removedSeq > seqNumberFrom))     // Not removed
+            ) {
+                posAccumulated += seg.cachedLength;
+                if (offset >= seg.cachedLength) {
+                    offset -= seg.cachedLength;
+                }
+            }
+
+            // Keep going while we've yet to reach the segment at the desired position
+            return posAccumulated < pos;
+        });
+
+        assert(segment !== undefined, 'No segment found');
+        if ((segment.removedSeq !== undefined && segment.removedSeq <= seqNumberTo) || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
+            // Segment that the position was in has been removed: null out offset.
+            offset = 0;
+        }
+
+        assert(0 <= offset && offset < segment.cachedLength, 'Invalid offset');
+        return { segment, offset };
+    }
+
     private resetPendingDeltaToOps(
         resetOp: IMergeTreeDeltaOp,
         segmentGroup: SegmentGroup): IMergeTreeDeltaOp[] {

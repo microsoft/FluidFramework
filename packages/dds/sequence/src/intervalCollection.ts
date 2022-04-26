@@ -668,6 +668,10 @@ class SequenceIntervalCollectionFactory
     }
 }
 
+interface IntervalCollectionOpMetadata {
+    localSeq: number
+}
+
 export class SequenceIntervalCollectionValueType
     implements IValueType<IntervalCollection<SequenceInterval>> {
     public static Name = "sharedStringIntervalCollection";
@@ -701,7 +705,7 @@ export class SequenceIntervalCollectionValueType
                         value.addInternal(params, local, op);
                     },
                     rebase: (value, op, localOpMetadata) => {
-                        return { ...op, value: value.rebaseInternal(op.value, localOpMetadata as number) }
+                        return { ...op, value: value.rebaseInternal(op.value, (localOpMetadata as IntervalCollectionOpMetadata).localSeq) }
                     }
                 },
             ],
@@ -727,7 +731,7 @@ export class SequenceIntervalCollectionValueType
                         value.changeInterval(params, local, op);
                     },
                     rebase: (value, op, localOpMetadata) => {
-                        return { ...op, value: value.rebaseInternal(op.value, localOpMetadata as number) };
+                        return { ...op, value: value.rebaseInternal(op.value, (localOpMetadata as IntervalCollectionOpMetadata).localSeq) };
                     }
                 },
             ]]);
@@ -940,7 +944,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 start,
             };
             // Local ops get submitted to the server. Remote ops have the deserializer run.
-            this.emitter.emit("add", undefined, serializedInterval, this.getNextLocalSeq());
+            this.emitter.emit("add", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
         }
 
         this.emit("addInterval", interval, true, undefined);
@@ -954,7 +958,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.
             if (local) {
-                this.emitter.emit("delete", undefined, interval.serialize(this.client), this.getNextLocalSeq());
+                this.emitter.emit("delete", undefined, interval.serialize(this.client), { localSeq: this.getNextLocalSeq() });
             } else {
                 if (this.onDeserialize) {
                     this.onDeserialize(interval);
@@ -994,7 +998,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             serializedInterval.end = undefined;
             serializedInterval.properties = props;
             serializedInterval.properties[reservedIntervalIdKey] = interval.getIntervalId();
-            this.emitter.emit("change", undefined, serializedInterval, this.getNextLocalSeq());
+            this.emitter.emit("change", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
             this.emit("propertyChanged", interval, deltaProps);
         }
         this.emit("changeInterval", interval, true, undefined);
@@ -1020,7 +1024,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 {
                     [reservedIntervalIdKey]: interval.getIntervalId(),
                 };
-            this.emitter.emit("change", undefined, serializedInterval, this.getNextLocalSeq());
+            this.emitter.emit("change", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
             this.addPendingChange(id, serializedInterval);
         }
         this.emit("changeInterval", interval, true, undefined);
@@ -1179,6 +1183,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (!this.attached) {
             throw new Error("attachSequence must be called");
         }
+        // somehow don't need seq number??
         const { start, end, intervalType, properties, sequenceNumber } = serializedInterval;
 
 
@@ -1186,9 +1191,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         // this.client.getOrAddShortClientId()
         // This approach assumes the local client's minSeq hasn't been updated to match the collab window yet. Is that valid?
 
-        this.client.
-        const startRebased = this.client.resolveRemoteClientPosition(start, sequenceNumber, this.client.longClientId + "rebase"); // ewwwww
-        const endRebased = this.client.resolveRemoteClientPosition(end, sequenceNumber, this.client.longClientId + "rebase");
+        const seqNumberTo = this.client.getCollabWindow().currentSeq;
+        const segOffStart = this.client.findSegOffForReconnection(start, sequenceNumber, seqNumberTo, localSeq);
+        const segOffEnd = this.client.findSegOffForReconnection(end, sequenceNumber, seqNumberTo, localSeq);
+        const startRebased = this.client.findReconnectionPosition(segOffStart.segment, localSeq) + segOffStart.offset;
+        const endRebased = this.client.findReconnectionPosition(segOffEnd.segment, localSeq) + segOffEnd.offset;
+        // const startRebased = this.client.resolveRemoteClientPosition(start, sequenceNumber, this.client.longClientId + "rebase"); // ewwwww
+        // const endRebased = this.client.resolveRemoteClientPosition(end, sequenceNumber, this.client.longClientId + "rebase");
 
         // TODO: Uniformize creation paths. Do we need to remove the existing interval as part of this rebase? If not, there are probably IDs we need to line up.
         const interval = this.localCollection.createInterval(startRebased, endRebased, intervalType);
@@ -1245,7 +1254,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             // Local ops get submitted to the server. Remote ops have the deserializer run.
             if (local) {
                 // Review: Is this case possible?
-                this.emitter.emit("add", undefined, serializedInterval, this.getNextLocalSeq());
+                this.emitter.emit("add", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
             } else {
                 if (this.onDeserialize) {
                     this.onDeserialize(interval);

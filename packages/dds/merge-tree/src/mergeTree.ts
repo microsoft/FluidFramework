@@ -1940,10 +1940,9 @@ export class MergeTree {
         remoteClientPosition: number,
         remoteClientRefSeq: number,
         remoteClientId: number): number | undefined {
-            // AHHH
-        // if(remoteClientRefSeq < this.collabWindow.minSeq) {
-        //     return undefined;
-        // }
+        if(remoteClientRefSeq < this.collabWindow.minSeq) {
+            return undefined;
+        }
 
         const segmentInfo = this.getContainingSegment(
             remoteClientPosition,
@@ -1955,7 +1954,7 @@ export class MergeTree {
         if (segmentInfo && segmentInfo.segment) {
             const segmentPosition = this.getPosition(segmentInfo.segment, segwindow.currentSeq, segwindow.clientId);
 
-            if (segmentInfo.segment.removedSeq !== undefined) { // should prob also check against segwindow.currentSeq
+            if (segmentInfo.segment.removedSeq !== undefined) {
                 return segmentPosition;
             }
             return segmentPosition + segmentInfo.offset!;
