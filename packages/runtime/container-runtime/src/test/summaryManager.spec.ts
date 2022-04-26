@@ -138,7 +138,7 @@ describe("Summary Manager", () => {
                 this.stopDeferred.promise,
                 this.runDeferred.promise,
             ]);
-            await runningSummarizer.waitStop(true);
+            await runningSummarizer.waitStop(true, "summarizerClientDisconnected");
             this.state = "stopped";
             return "summarizerClientDisconnected";
         }

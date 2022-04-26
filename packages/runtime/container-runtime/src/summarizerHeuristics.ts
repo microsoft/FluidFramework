@@ -6,7 +6,12 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Timer } from "@fluidframework/common-utils";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
-import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummarizeAttempt, SummarizerStopReason } from "./summarizerTypes";
+import {
+    ISummarizeHeuristicData,
+    ISummarizeHeuristicRunner,
+    ISummarizeAttempt,
+    SummarizerStopReason,
+} from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
 
 /** Simple implementation of class for tracking summarize heuristic data. */
@@ -97,7 +102,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
             opsSinceLastAck,
             minOpsForAttemptOnClose,
         });
-        
+
         return opsSinceLastAck > minOpsForAttemptOnClose;
     }
 

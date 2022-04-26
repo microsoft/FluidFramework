@@ -361,9 +361,9 @@ describe("Runtime", () => {
                     assertRunCounts(2, 0, 0);
                 });
 
-                it("Should summarize one last time before closing >50 ops", async () => {
-                    await emitNextOp(51); // hard-coded to 50 for now
-                    const stopP = summarizer.waitStop(true);
+                it("Should summarize one last time before closing >10 ops", async () => {
+                    await emitNextOp(11); // hard-coded to 10 for now
+                    const stopP = summarizer.waitStop(true, "summarizerClientDisconnected");
                     await flushPromises();
                     await emitAck();
                     await stopP;
@@ -371,9 +371,9 @@ describe("Runtime", () => {
                     assertRunCounts(1, 0, 0, "should perform lastSummary");
                 });
 
-                it("Should not summarize one last time before closing <=50 ops", async () => {
-                    await emitNextOp(50); // hard-coded to 50 for now
-                    const stopP = summarizer.waitStop(true);
+                it("Should not summarize one last time before closing <=10 ops", async () => {
+                    await emitNextOp(10); // hard-coded to 10 for now
+                    const stopP = summarizer.waitStop(true, "summarizerClientDisconnected");
                     await flushPromises();
                     await emitAck();
                     await stopP;
@@ -688,7 +688,7 @@ describe("Runtime", () => {
                 });
 
                 it("Should fail an on-demand summary if stopping", async () => {
-                    summarizer.waitStop(true).catch(() => {});
+                    summarizer.waitStop(true, "summarizerClientDisconnected").catch(() => {});
                     const [refreshLatestAck, fullTree] = [true, true];
                     const result1 = summarizer.summarizeOnDemand(undefined, { reason: "test1" });
                     const result2 = summarizer.summarizeOnDemand(undefined, { reason: "test2", refreshLatestAck });
@@ -891,7 +891,7 @@ describe("Runtime", () => {
                 });
 
                 it("Should fail an enqueue summarize attempt if stopping", async () => {
-                    summarizer.waitStop(true).catch(() => {});
+                    summarizer.waitStop(true, "summarizerClientDisconnected").catch(() => {});
                     const result1 = summarizer.enqueueSummarize({ reason: "test1" });
                     assert(result1.alreadyEnqueued === undefined, "should not be already enqueued");
                     const result2 = summarizer.enqueueSummarize({ reason: "test2", afterSequenceNumber: 123 });
@@ -1007,8 +1007,8 @@ describe("Runtime", () => {
                 it("Should not summarize before closing", async () => {
                     await startRunningSummarizer({ disableHeuristics: true });
 
-                    await emitNextOp(51); // hard-coded to 50 for now
-                    const stopP = summarizer.waitStop(true);
+                    await emitNextOp(11); // hard-coded to 10 for now
+                    const stopP = summarizer.waitStop(true, "summarizerClientDisconnected");
                     await flushPromises();
                     await emitAck();
                     await stopP;
