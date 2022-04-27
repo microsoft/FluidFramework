@@ -12,7 +12,7 @@ import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unresolved
 import * as monaco from "monaco-editor";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 /**
  * Compilation options for Monaco to use on Typescript
@@ -54,7 +54,11 @@ export interface IMonacoViewProps {
 }
 
 export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) => {
-    return <div></div>;
+    const viewElementRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
+    });
+    return <div style={{ minHeight: "480px", width: "100%", height: "100%" }} ref={ viewElementRef }></div>;
 };
 
 export class MonacoRunnerView implements IFluidHTMLView {
@@ -64,16 +68,6 @@ export class MonacoRunnerView implements IFluidHTMLView {
      * Root HTML element of the component.
      */
     private viewElement: HTMLDivElement;
-
-    /**
-     * Monaco text model object.
-     */
-    private codeModel: monaco.editor.ITextModel;
-
-    /**
-     * Monaco code editor object.
-     */
-    private codeEditor: monaco.editor.IStandaloneCodeEditor;
 
     public constructor(private readonly sharedString: SharedString) { }
 
@@ -96,9 +90,6 @@ export class MonacoRunnerView implements IFluidHTMLView {
     private createViewElement(): HTMLDivElement {
         const viewElement = document.createElement("div");
 
-        // TODO make my dts
-        const hostDts = null; // await platform.queryInterface<any>("dts");
-
         viewElement.style.minHeight = "480px";
         viewElement.style.width = "100%";
         viewElement.style.height = "100%";
@@ -107,33 +98,20 @@ export class MonacoRunnerView implements IFluidHTMLView {
         // hostWrapper.appendChild(outputDiv);
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
-        if (hostDts) {
-            let disposer = monaco.languages.typescript.typescriptDefaults.addExtraLib(
-                hostDts.getDefinition(),
-                "host.d.ts");
-            hostDts.on(
-                "definitionsChanged",
-                () => {
-                    disposer.dispose();
-                    disposer = monaco.languages.typescript.typescriptDefaults.addExtraLib(
-                        hostDts.getDefinition(),
-                        "host.d.ts");
-                });
-        }
 
-        this.codeModel = monaco.editor.createModel(this.sharedString.getText(), "typescript");
+        const codeModel = monaco.editor.createModel(this.sharedString.getText(), "typescript");
         const outputModel = monaco.editor.createModel("", "javascript");
 
-        this.codeEditor = monaco.editor.create(
+        const codeEditor = monaco.editor.create(
             viewElement,
-            { model: this.codeModel, automaticLayout: true });
+            { model: codeModel, automaticLayout: true });
 
         let ignoreModelContentChanges = false;
-        this.codeEditor.onDidChangeModelContent((e) => {
+        codeEditor.onDidChangeModelContent((e) => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
-                worker(this.codeModel.uri.toString()).then((client) => {
-                    client.getEmitOutput(this.codeModel.uri.toString()).then((r) => {
+                worker(codeModel.uri.toString()).then((client) => {
+                    client.getEmitOutput(codeModel.uri.toString()).then((r) => {
                         outputModel.setValue(r.outputFiles[0].text);
                     });
                 });
@@ -166,55 +144,50 @@ export class MonacoRunnerView implements IFluidHTMLView {
             }
 
             try {
+                // Attempt to merge the ranges
                 ignoreModelContentChanges = true;
-                this.mergeSequenceDelta(ev);
+
+                /**
+                 * Translate the offsets used by the MergeTree into a Range that is
+                 * interpretable by Monaco.
+                 * @param offset1 Starting offset
+                 * @param offset2 Ending offset
+                 */
+                const offsetsToRange = (offset1: number, offset2?: number): monaco.Range => {
+                    const pos1 = codeModel.getPositionAt(offset1);
+                    const pos2 = (typeof offset2 === "number") ? codeModel.getPositionAt(offset2) : pos1;
+                    const range = new monaco.Range(pos1.lineNumber, pos1.column, pos2.lineNumber, pos2.column);
+                    return range;
+                };
+
+                for (const range of ev.ranges) {
+                    const segment = range.segment;
+                    if (TextSegment.is(segment)) {
+                        switch (range.operation) {
+                            case MergeTreeDeltaType.INSERT: {
+                                const posRange = offsetsToRange(range.position);
+                                const text = segment.text || "";
+                                codeEditor.executeEdits("remote", [{ range: posRange, text }]);
+                                break;
+                            }
+
+                            case MergeTreeDeltaType.REMOVE: {
+                                const posRange = offsetsToRange(range.position, range.position + segment.text.length);
+                                const text = "";
+                                codeEditor.executeEdits("remote", [{ range: posRange, text }]);
+                                break;
+                            }
+
+                            default:
+                                break;
+                        }
+                    }
+                }
             } finally {
                 ignoreModelContentChanges = false;
             }
         });
 
         return viewElement;
-    }
-
-    /**
-     * SequenceDeltaEvent merge
-     */
-    private mergeSequenceDelta(ev: SequenceDeltaEvent): void {
-        for (const range of ev.ranges) {
-            const segment = range.segment;
-            if (TextSegment.is(segment)) {
-                switch (range.operation) {
-                    case MergeTreeDeltaType.INSERT: {
-                        const posRange = this.offsetsToRange(range.position);
-                        const text = segment.text || "";
-                        this.codeEditor.executeEdits("remote", [{ range: posRange, text }]);
-                        break;
-                    }
-
-                    case MergeTreeDeltaType.REMOVE: {
-                        const posRange = this.offsetsToRange(range.position, range.position + segment.text.length);
-                        const text = "";
-                        this.codeEditor.executeEdits("remote", [{ range: posRange, text }]);
-                        break;
-                    }
-
-                    default:
-                        break;
-                }
-            }
-        }
-    }
-
-    /**
-     * Translate the offsets used by the MergeTree into a Range that is
-     * interpretable by Monaco.
-     * @param offset1 Starting offset
-     * @param offset2 Ending offset
-     */
-    private offsetsToRange(offset1: number, offset2?: number): monaco.Range {
-        const pos1 = this.codeModel.getPositionAt(offset1);
-        const pos2 = (typeof offset2 === "number") ? this.codeModel.getPositionAt(offset2) : pos1;
-        const range = new monaco.Range(pos1.lineNumber, pos1.column, pos2.lineNumber, pos2.column);
-        return range;
     }
 }
