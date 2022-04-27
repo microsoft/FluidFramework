@@ -24,8 +24,8 @@ const testContainerConfig: ITestContainerConfig = {
         summaryOptions: {
             summaryConfigOverrides: {
                 state: "enabled",
-                idleTime: 5000,
-                maxTime: 5000 * 12,
+                idleTime: 1000,
+                maxTime: 1000 * 12,
                 maxOps: 1,
                 minOpsForAttemptOnClose: 50,
                 // Wait 2 minutes for summary ack
