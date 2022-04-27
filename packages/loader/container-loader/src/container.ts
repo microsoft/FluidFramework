@@ -179,6 +179,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
         const deltaManager = container.deltaManager;
 
         const closedCallback = (err?: ICriticalContainerError | undefined) => {
+            container.off("closed", closedCallback);
             const baseMessage = "Container closed while waiting to catch up";
             reject(
                 err !== undefined
