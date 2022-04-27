@@ -31,7 +31,7 @@ const ddsKey = "string";
 
 const testConfigs =
     generatePairwiseOptions({
-        containerAttachPoint:[ContainerCreated, DatastoreCreated, ... sharedPoints],
+        containerAttachPoint: [ContainerCreated, DatastoreCreated, ... sharedPoints],
         containerSaveAfterAttach: [true, false],
         datastoreAttachPoint: [DatastoreCreated, ... sharedPoints],
         datastoreSaveAfterAttach: [true, false],
@@ -91,7 +91,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                         && initContainer.attachState !== AttachState.Detached) {
                         await timeoutPromise(
                             (resolve) => initContainer.once("saved", () => resolve()),
-                            { durationMs: timeoutDurationMs, errorMsg:"datastoreSaveAfterAttach timeout" });
+                            { durationMs: timeoutDurationMs, errorMsg: "datastoreSaveAfterAttach timeout" });
                     }
                 };
                 if (testConfig.datastoreAttachPoint === DatastoreCreated) {
@@ -111,7 +111,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                         && initContainer.attachState !== AttachState.Detached) {
                             await timeoutPromise(
                                 (resolve) => initContainer.once("saved", () => resolve()),
-                                { durationMs: timeoutDurationMs, errorMsg:"ddsSaveAfterAttach timeout" });
+                                { durationMs: timeoutDurationMs, errorMsg: "ddsSaveAfterAttach timeout" });
                     }
                 };
                 if (testConfig.ddsAttachPoint === 2) {
@@ -140,13 +140,13 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                 while (initContainer.attachState !== AttachState.Attached) {
                     await timeoutPromise(
                         (resolve) => initContainer.once("attached", () => resolve()),
-                        { durationMs: timeoutDurationMs, errorMsg:"container attach timeout" });
+                        { durationMs: timeoutDurationMs, errorMsg: "container attach timeout" });
                 }
 
                 while (initContainer.isDirty) {
                     await timeoutPromise(
                         (resolve) => initContainer.once("saved", () => resolve()),
-                        { durationMs: timeoutDurationMs, errorMsg:"final save timeout" });
+                        { durationMs: timeoutDurationMs, errorMsg: "final save timeout" });
                 }
                 containerUrl = initContainer.resolvedUrl;
 
@@ -202,7 +202,7 @@ async function waitChar(sharedString: SharedString, pos: number, timeoutDuration
             sharedString.on("sequenceDelta", waitFunc);
         }
     },
-    { durationMs: timeoutDurationMs, errorMsg:`${pos} not available before timeout` });
+    { durationMs: timeoutDurationMs, errorMsg: `${pos} not available before timeout` });
 }
 
 async function waitKey<T>(map: ISharedMap, key: string, timeoutDurationMs: number): Promise<T> {
@@ -221,5 +221,5 @@ async function waitKey<T>(map: ISharedMap, key: string, timeoutDurationMs: numbe
             map.on("valueChanged", waitFunc);
         }
     },
-    { durationMs: timeoutDurationMs, errorMsg:`${key} not available before timeout` });
+    { durationMs: timeoutDurationMs, errorMsg: `${key} not available before timeout` });
 }

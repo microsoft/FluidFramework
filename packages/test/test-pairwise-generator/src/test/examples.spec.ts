@@ -46,8 +46,8 @@ describe("generatePairwiseOptions.examples", () => {
 
     it("Generate a fixed length Array", () => {
         const arrayMatrix: OptionsMatrix<ArrayLike<number>> = {
-            0:[3, 6, 9, 12, 15],
-            1:[7, 14, 28],
+            0: [3, 6, 9, 12, 15],
+            1: [7, 14, 28],
             length: [2],
         };
 
@@ -79,7 +79,7 @@ describe("generatePairwiseOptions.examples", () => {
         // create the values which will then be pairwise matched with eachother
         const complexObjectMatrix: OptionsMatrix<MyComplexObject> = {
             numbers: [undefined, ... generatePairwiseOptions<ArrayLike<number>>(arrayMatrix).map((a) => Array.from(a))],
-            subObject: generatePairwiseOptions<{ str: string }>({ str:["a", "b", "c"] }),
+            subObject: generatePairwiseOptions<{ str: string }>({ str: ["a", "b", "c"] }),
         };
 
         const complexObjects = generatePairwiseOptions<MyComplexObject>(complexObjectMatrix);

@@ -355,8 +355,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
         itExpects("Storage in detached container",
         [
-            { eventName:"fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
-            { eventName:"fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
+            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
+            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
         ],
         async () => {
             const { container } =

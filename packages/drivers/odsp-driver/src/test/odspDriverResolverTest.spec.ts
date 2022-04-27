@@ -194,7 +194,7 @@ describe("Odsp Driver Resolver", () => {
         const itemId = "item1";
         const testRequest: IRequest = {
             url: `${siteUrl}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}`,
-            headers: { createNew:{ fileName:`${fileName}` } },
+            headers: { createNew: { fileName: `${fileName}` } },
         };
 
         // Act

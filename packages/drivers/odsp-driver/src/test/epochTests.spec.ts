@@ -50,7 +50,7 @@ describe("Tests for Epoch Tracker", () => {
 
     it("Cache, old versions", async () => {
         const cacheEntry1: ICacheEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         const cacheEntry2: ICacheEntry = { ... cacheEntry1, key: "key2" };
@@ -73,7 +73,7 @@ describe("Tests for Epoch Tracker", () => {
 
     it("Epoch error when fetch error from cache should throw epoch error and clear cache", async () => {
         const cacheEntry1: ICacheEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         const cacheEntry2: ICacheEntry = { ... cacheEntry1, key: "key2" };
@@ -97,7 +97,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Epoch error when fetch response and should clear cache", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -121,7 +121,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Epoch error when fetch response as json and should clear cache", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -145,7 +145,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Check client correlationID on error in unsuccessful fetch case", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -166,7 +166,7 @@ describe("Tests for Epoch Tracker", () => {
 
     it("Check client correlationID on spoCommonHeaders in successful fetch case", async () => {
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -183,7 +183,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Epoch error should not occur if response does not contain epoch", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -205,7 +205,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Epoch error should not occur if response contains same epoch", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -229,7 +229,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Should differentiate between epoch and coherency 409 errors when coherency 409", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -254,7 +254,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Should differentiate between epoch and coherency 409 errors when epoch 409", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");

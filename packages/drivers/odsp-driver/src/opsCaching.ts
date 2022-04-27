@@ -47,7 +47,7 @@ export class OpsCache {
         if (remainingSlots !== 0) {
             this.batches.set(this.getBatchNumber(startingSequenceNumber), {
                 remainingSlots,
-                batchData : this.initializeNewBatchDataArray(),
+                batchData: this.initializeNewBatchDataArray(),
                 dirty: false,
             });
         }

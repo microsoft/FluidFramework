@@ -28,9 +28,9 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     const sharelink = "https://microsoft.sharepoint-df.com/site/SHARELINK";
     const urlsWithNavParams = [
         // Base64 encoded and then URI encoded string: d=driveId&f=fileId&c=dataStorePath&s=siteUrl&fluid=1&v=173.0
-        { hasVersion: true, url:"https://microsoft.sharepoint-df.com/test?nav=ZD1kcml2ZUlkJmY9ZmlsZUlkJmM9ZGF0YVN0b3JlUGF0aCZzPXNpdGVVcmwmZmx1aWQ9MSZ2PTE3My4w" },
+        { hasVersion: true, url: "https://microsoft.sharepoint-df.com/test?nav=ZD1kcml2ZUlkJmY9ZmlsZUlkJmM9ZGF0YVN0b3JlUGF0aCZzPXNpdGVVcmwmZmx1aWQ9MSZ2PTE3My4w" },
         // Base64 encoded and then URI encoded string: d=driveId&f=fileId&c=dataStorePath&s=siteUrl&fluid=1
-        { hasVersion: false, url:"https://microsoft.sharepoint-df.com/test?nav=cz0lMkZzaXRlVXJsJmQ9ZHJpdmVJZCZmPWZpbGVJZCZjPWRhdGFTdG9yZVBhdGgmZmx1aWQ9MQ%3D%3D" },
+        { hasVersion: false, url: "https://microsoft.sharepoint-df.com/test?nav=cz0lMkZzaXRlVXJsJmQ9ZHJpdmVJZCZmPWZpbGVJZCZjPWRhdGFTdG9yZVBhdGgmZmx1aWQ9MQ%3D%3D" },
     ];
     let urlResolverWithShareLinkFetcher: OdspDriverUrlResolverForShareLink;
     let urlResolverWithoutShareLinkFetcher: OdspDriverUrlResolverForShareLink;

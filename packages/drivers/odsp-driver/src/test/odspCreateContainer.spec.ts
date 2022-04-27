@@ -33,14 +33,14 @@ describe("Odsp Create Container Test", () => {
         itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
         driveId,
         itemId,
-        id : "fakeSummaryHandle",
+        id: "fakeSummaryHandle",
     };
 
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
         async (_options) => "token",
         async (_options) => "token",
         new LocalPersistentCache(2000),
-        { snapshotOptions : { timeout : 2000 } },
+        { snapshotOptions: { timeout: 2000 } },
     );
 
     const createSummary = (putAppTree: boolean, putProtocolTree: boolean) => {

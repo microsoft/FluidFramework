@@ -323,7 +323,7 @@ async function fetchLatestSnapshotCore(
                     encodedBlobsSize,
                     sequenceNumber,
                     ops: snapshot.ops?.length ?? 0,
-                    nonSysOps:  snapshot.ops?.filter((op) => !isSystemMessage(op)).length ?? 0,
+                    nonSysOps: snapshot.ops?.filter((op) => !isSystemMessage(op)).length ?? 0,
                     headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
                     // Interval between the first fetch until the last byte of the last redirect.
                     redirectTime,

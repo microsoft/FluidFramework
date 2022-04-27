@@ -267,7 +267,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     ) {
         super();
         const props: IConnectionManagerFactoryArgs = {
-            incomingOpHandler:(messages: ISequencedDocumentMessage[], reason: string) =>
+            incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) =>
                 this.enqueueMessages(messages, reason),
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
             reconnectionDelayHandler: (delayMs: number, error: unknown) =>

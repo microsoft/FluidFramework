@@ -102,7 +102,7 @@ export class SummaryManager implements IDisposable {
         this.logger = ChildLogger.create(
             parentLogger,
             "SummaryManager",
-            { all:{ clientId: () => this.latestClientId } });
+            { all: { clientId: () => this.latestClientId } });
 
         this.connectedState.on("connected", this.handleConnected);
         this.connectedState.on("disconnected", this.handleDisconnected);

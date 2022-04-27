@@ -176,7 +176,7 @@ describe("Create New Utils Tests", () => {
                 { "x-fluid-epoch": "epoch1" },
                 );
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-            type:createLinkType,
+            type: createLinkType,
             link: mockSharingLink,
             error: undefined,
         });
@@ -198,7 +198,7 @@ describe("Create New Utils Tests", () => {
             { "x-fluid-epoch": "epoch1" },
             );
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-            type:createLinkType,
+            type: createLinkType,
             link: undefined,
             error: mockError,
         });

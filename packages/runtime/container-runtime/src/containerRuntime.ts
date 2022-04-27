@@ -1286,7 +1286,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // logging hardware telemetry
         logger.sendTelemetryEvent({
-            eventName:"DeviceSpec",
+            eventName: "DeviceSpec",
             ...getDeviceSpec(),
         });
 

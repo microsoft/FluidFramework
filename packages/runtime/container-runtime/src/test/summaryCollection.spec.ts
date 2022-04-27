@@ -38,7 +38,7 @@ const summaryAck: ISummaryAckMessage = {
     type: MessageType.SummaryAck,
     contents: {
         handle: "AckHandle",
-        summaryProposal:{ summarySequenceNumber: summaryOp.sequenceNumber },
+        summaryProposal: { summarySequenceNumber: summaryOp.sequenceNumber },
     },
 };
 
@@ -53,7 +53,7 @@ const summaryNack: ISummaryNackMessage = {
     type: MessageType.SummaryNack,
     contents: {
         message: "Nack",
-        summaryProposal:{ summarySequenceNumber: summaryOp.sequenceNumber },
+        summaryProposal: { summarySequenceNumber: summaryOp.sequenceNumber },
     },
 };
 

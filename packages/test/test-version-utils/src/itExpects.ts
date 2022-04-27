@@ -28,7 +28,7 @@ function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.As
             // only use TestException if the event is provided.
             // it must be last, as the events are ordered, so all other events must come first
             if (orderedEvents[orderedEvents.length - 1]?.eventName === "TestException") {
-                provider.logger.sendErrorEvent({ eventName:"TestException" }, error);
+                provider.logger.sendErrorEvent({ eventName: "TestException" }, error);
             } else {
                 throw error;
             }

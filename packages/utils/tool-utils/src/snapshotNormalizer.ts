@@ -151,7 +151,7 @@ function normalizeEntry(
                         const parsed: { type?: string } = JSON.parse(maybeAttributes.value.contents);
                         if (parsed.type !== undefined && config.excludedChannelContentTypes.includes(parsed.type)) {
                             // remove everything to match the unknown channel
-                            return new TreeTreeEntry(entry.path, { entries:[maybeAttributes] });
+                            return new TreeTreeEntry(entry.path, { entries: [maybeAttributes] });
                         }
                     }
                 }

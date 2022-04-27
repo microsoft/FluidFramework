@@ -37,7 +37,7 @@ foo([]);
 foo([0]);
 foo([""]);
 foo({});
-foo({ a:"a" });
+foo({ a: "a" });
 
 // test simple interface
 interface IA {
@@ -93,7 +93,7 @@ interface INested {
 const nested: INested = {
     a: "a",
     b: {
-        b2:"foo",
+        b2: "foo",
     },
 };
 foo(nested);
@@ -167,7 +167,7 @@ interface ISymbol{
     [sym]: string,
 }
 const isym: ISymbol = {
-    [sym]:"foo",
+    [sym]: "foo",
 };
 // @ts-expect-error should not be jsonable
 foo(isym);

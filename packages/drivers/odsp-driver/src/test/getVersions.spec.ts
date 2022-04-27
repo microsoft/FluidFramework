@@ -61,7 +61,7 @@ describe("Tests for snapshot fetch", () => {
     const odspSnapshot: IOdspSnapshot = {
         id: "id",
         trees: [{
-            entries:[{ path:"path", type:"tree" }],
+            entries: [{ path: "path", type: "tree" }],
             id: "id",
             sequenceNumber: 1,
         }],
@@ -143,7 +143,7 @@ describe("Tests for snapshot fetch", () => {
 
     it("cache fetch succeeds and network fetch succeeds", async () => {
         const cacheEntry: ICacheEntry = {
-            key:"",
+            key: "",
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         await localCache.put(cacheEntry, value);
@@ -172,7 +172,7 @@ describe("Tests for snapshot fetch", () => {
 
     it("cache fetch succeeds and network fetch throws", async () => {
         const cacheEntry: ICacheEntry = {
-            key:"",
+            key: "",
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         await localCache.put(cacheEntry, value);
@@ -197,7 +197,7 @@ describe("Tests for snapshot fetch", () => {
 
     it("cache expires and network fetch succeeds", async () => {
         const cacheEntry: ICacheEntry = {
-            key:"",
+            key: "",
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         await localCache.put(cacheEntry, valueWithExpiredCache);
@@ -215,7 +215,7 @@ describe("Tests for snapshot fetch", () => {
 
     it("cache expires and network fetch throws", async () => {
         const cacheEntry: ICacheEntry = {
-            key:"",
+            key: "",
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         await localCache.put(cacheEntry, valueWithExpiredCache);

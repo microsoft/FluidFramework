@@ -22,14 +22,14 @@ describe("ChildLogger", () => {
             logger,
             "test1",
             {
-                all:{
+                all: {
                     testProperty: true,
                     testGetter: () => true,
                 },
             },
         );
 
-        childLogger1.send({ category:"generic", eventName:"test1" });
+        childLogger1.send({ category: "generic", eventName: "test1" });
         assert(sent, "event should be sent");
 
         sent = false;
@@ -37,7 +37,7 @@ describe("ChildLogger", () => {
             childLogger1,
             "test2");
 
-        childLogger2.send({ category:"generic", eventName:"test2" });
+        childLogger2.send({ category: "generic", eventName: "test2" });
         assert(sent, "event should be sent");
     });
 
@@ -71,7 +71,7 @@ describe("ChildLogger", () => {
             },
         );
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 
@@ -109,7 +109,7 @@ describe("ChildLogger", () => {
                 },
             });
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 
@@ -148,7 +148,7 @@ describe("ChildLogger", () => {
             },
         );
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 
@@ -170,7 +170,7 @@ describe("ChildLogger", () => {
             childLogger1,
             "test2");
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 
@@ -192,7 +192,7 @@ describe("ChildLogger", () => {
         const childLogger2 = ChildLogger.create(
             childLogger1);
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 
@@ -213,7 +213,7 @@ describe("ChildLogger", () => {
         const childLogger2 = ChildLogger.create(
             childLogger1);
 
-        childLogger2.send({ category:"generic", eventName:"testEvent" });
+        childLogger2.send({ category: "generic", eventName: "testEvent" });
         assert(sent, "event should be sent");
     });
 });

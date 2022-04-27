@@ -141,8 +141,8 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
     public injectNack(docId: string, canRetry: boolean | undefined) {
         assert(!this.disposed, "cannot inject nack into closed delta connection");
         const nack: Partial<INack> = {
-            content:{
-                code:canRetry === true ? 500 : 403,
+            content: {
+                code: canRetry === true ? 500 : 403,
                 message: "FaultInjectionNack",
                 type: NackErrorType.BadRequestError,
             },

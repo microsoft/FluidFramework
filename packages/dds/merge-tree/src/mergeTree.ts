@@ -1707,7 +1707,7 @@ export class MergeTree {
                     nodesToUpdate.push(pendingSegment.parent!);
                 }
                 deltaSegments.push({
-                    segment:pendingSegment,
+                    segment: pendingSegment,
                 });
             });
             if (this.mergeTreeMaintenanceCallback) {

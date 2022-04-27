@@ -246,7 +246,7 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
     ChildLogger.create(
         logger,
         "OdspDriver",
-        { all :
+        { all:
             {
                 driverVersion,
             },

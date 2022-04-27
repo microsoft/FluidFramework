@@ -19,11 +19,11 @@ const optionsToString = <T>(... options: T[]) =>
     .join("\n");
 
 const simpleOptionsMatrix: OptionsMatrix<SimpleOptions> = {
-    number:[undefined, 7],
+    number: [undefined, 7],
     oBoolean: [undefined, true, false],
     rBoolean: [true, false],
     string: [undefined],
-    array:[undefined, [0]],
+    array: [undefined, [0]],
 };
 
 function validateSimpleOption(option: SimpleOptions) {
