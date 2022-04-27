@@ -29,11 +29,10 @@ const testContainerConfig: ITestContainerConfig = {
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
                 ...{
-                    idleTime: 100,
-                    maxTime: 100 * 12,
+                    maxTime: 1000,
+                    maxAckWaitTime: 5000,
                     maxOps: 1,
-                    maxAckWaitTime: 1200,
-                    initialSummarizerDelayMs: 20,
+                    initialSummarizerDelayMs: 0,
                 },
             },
         },

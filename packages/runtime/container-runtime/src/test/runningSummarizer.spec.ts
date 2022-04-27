@@ -38,16 +38,23 @@ describe("Runtime", () => {
             let lastRefSeq = 0;
             let lastClientSeq: number;
             let lastSummarySeq: number;
+            const summaryCommon = {
+                maxAckWaitTime: 120000, // 2 min
+                maxOpsSinceLastSummary: 7000,
+                initialSummarizerDelayMs: 0,
+                summarizerClientElection: false,
+            };
             const summaryConfig: ISummaryConfiguration = {
                 state: "enabled",
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
-                maxAckWaitTime: 120000, // 2 min
-                maxOpsSinceLastSummary: 7000,
-                initialSummarizerDelayMs: 0,
-                summarizerClientElection: false,
                 minOpsForAttemptOnClose: 50,
+                ...summaryCommon,
+            };
+            const summaryConfigDisableHeuristics: ISummaryConfiguration = {
+                state: "disableHeuristics",
+                ...summaryCommon,
             };
 
             let shouldDeferGenerateSummary: boolean = false;
@@ -136,7 +143,7 @@ describe("Runtime", () => {
                 summarizer = await RunningSummarizer.start(
                     mockLogger,
                     summaryCollection.createWatcher(summarizerClientId),
-                    summaryConfig,
+                    disableHeuristics ? summaryConfigDisableHeuristics : summaryConfig,
                     // submitSummaryCallback
                     async (options) => {
                         runCount++;
@@ -187,7 +194,6 @@ describe("Runtime", () => {
                     neverCancelledSummaryToken,
                     // stopSummarizerCallback
                     (reason) => { stopCall++; },
-                    disableHeuristics,
                 );
             };
 

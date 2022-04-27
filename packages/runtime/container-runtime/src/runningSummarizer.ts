@@ -58,7 +58,6 @@ export class RunningSummarizer implements IDisposable {
         summaryCollection: SummaryCollection,
         cancellationToken: ISummaryCancellationToken,
         stopSummarizerCallback: (reason: SummarizerStopReason) => void,
-        disableHeuristics?: boolean,
     ): Promise<RunningSummarizer> {
         const summarizer = new RunningSummarizer(
             logger,
@@ -69,8 +68,7 @@ export class RunningSummarizer implements IDisposable {
             raiseSummarizingError,
             summaryCollection,
             cancellationToken,
-            stopSummarizerCallback,
-            disableHeuristics);
+            stopSummarizerCallback);
 
         await summarizer.waitStart();
 
@@ -108,7 +106,6 @@ export class RunningSummarizer implements IDisposable {
         private readonly summaryCollection: SummaryCollection,
         private readonly cancellationToken: ISummaryCancellationToken,
         private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
-        private readonly disableHeuristics: boolean = false,
     ) {
         this.logger = ChildLogger.create(
             baseLogger, "Running",
@@ -120,7 +117,7 @@ export class RunningSummarizer implements IDisposable {
             },
         );
 
-        if (!this.disableHeuristics) {
+        if (configuration.state !== "disableHeuristics") {
             assert(this.configuration.state === "enabled", "Configuration state should be enabled");
             const heuristics: ISummaryConfigurationHeuristicSettings = {
                     ...this.configuration,
