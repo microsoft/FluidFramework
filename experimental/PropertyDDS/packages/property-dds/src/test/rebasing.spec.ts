@@ -475,6 +475,7 @@ describe("PropertyDDS", () => {
                     const array = sharedPropertyTree1.root.get<ArrayProperty>("array");
                     assert(array !== undefined, "property undefined");
 
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                     for (const property of array.getValues() as any[]) {
                         expect(!deletedProperties.has(property.guid)).to.be.true;
                         expect(createdProperties.has(property.guid)).to.be.true;
