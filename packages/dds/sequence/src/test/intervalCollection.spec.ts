@@ -97,7 +97,7 @@ describe("SharedString interval collections", () => {
 
             containerRuntimeFactory.processAllMessages();
             assert.strictEqual(sharedString.getText(), "whaabcxyz", "different text 1");
-            assert.strictEqual(sharedString.getText(), "whaabcxyz", "different text 2");
+            assert.strictEqual(sharedString2.getText(), "whaabcxyz", "different text 2");
 
             assertIntervals(sharedString, collection1, [
                 { start: 4, end: 4 },
@@ -305,7 +305,7 @@ describe("SharedString interval collections", () => {
             interval = collection1.add(6, 8, IntervalType.SlideOnRemove); // the "fr" in "friend"
         });
 
-        it.only("addInterval resubmitted with concurrent insert", async () => {
+        it("addInterval resubmitted with concurrent insert", async () => {
             containerRuntime1.connected = false;
 
             sharedString2.insertText(7, "amily its my f");

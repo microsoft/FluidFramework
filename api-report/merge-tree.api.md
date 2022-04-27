@@ -1370,6 +1370,15 @@ export interface SegmentActions<TClientData> {
 }
 
 // @public (undocumented)
+export class SegmentAndReference {
+    constructor(segment: ISegment, reference?: LocalReference | undefined);
+    // (undocumented)
+    readonly reference?: LocalReference | undefined;
+    // (undocumented)
+    readonly segment: ISegment;
+}
+
+// @public (undocumented)
 export interface SegmentGroup {
     // (undocumented)
     localSeq: number;
@@ -1497,7 +1506,9 @@ export class TrackingGroup {
     // (undocumented)
     has(segment: ISegment): boolean;
     // (undocumented)
-    link(segment: ISegment): void;
+    link(segment: ISegment, reference?: LocalReference): void;
+    // (undocumented)
+    get segmentAndReferences(): readonly SegmentAndReference[];
     // (undocumented)
     get segments(): readonly ISegment[];
     // (undocumented)

@@ -143,4 +143,23 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
         assert.equal(sharedString.getText(), text);
     });
+
+    it("Undo and Redo Delete - Bug Repro GH #8674", () => {
+        const test = "ABC";
+        sharedString.insertText(0, test);
+        const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
+        handler.attachSequence(sharedString);
+
+        sharedString.removeText(0, 1);
+        assert.equal(sharedString.getText(), "BC");
+        undoRedoStack.closeCurrentOperation();
+        sharedString.removeText(0, 1);
+        assert.equal(sharedString.getText(), "C");
+        undoRedoStack.closeCurrentOperation();
+
+        undoRedoStack.undoOperation();
+        assert.equal(sharedString.getText(), "BC");
+        undoRedoStack.undoOperation();
+        assert.equal(sharedString.getText(), "ABC");
+    });
 });

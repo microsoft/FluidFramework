@@ -3,19 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import { LocalReference } from "./localReference";
 import { ISegment } from "./mergeTree";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 
 // GH #1009 support reference positions in tracking groups here
 // likely all segments become ISegment | ReferencePosition
+// (ransomr) The references need to be associated with segments
+export class SegmentAndReference {
+    constructor(readonly segment: ISegment, readonly reference?: LocalReference) {}
+}
+
 export class TrackingGroup {
-    private readonly segmentSet: SortedSegmentSet;
+    private readonly segmentSet: SortedSegmentSet<SegmentAndReference>;
 
     constructor() {
         this.segmentSet = new SortedSegmentSet();
     }
 
     public get segments(): readonly ISegment[] {
+        return this.segmentSet.items.map((item) => item.segment);
+    }
+
+    public get segmentAndReferences(): readonly SegmentAndReference[] {
         return this.segmentSet.items;
     }
 
@@ -24,18 +34,19 @@ export class TrackingGroup {
     }
 
     public has(segment: ISegment): boolean {
-        return this.segmentSet.has(segment);
+        return this.segmentSet.has({segment});
     }
 
-    public link(segment: ISegment) {
-        if (!this.segmentSet.has(segment)) {
-            this.segmentSet.addOrUpdate(segment);
+    public link(segment: ISegment, reference?: LocalReference) {
+        // TODO:ransomr We need to support adding reference to segment already in the group
+        if (!this.segmentSet.has({segment})) {
+            this.segmentSet.addOrUpdate({segment, reference});
             segment.trackingCollection.link(this);
         }
     }
 
     public unlink(segment: ISegment) {
-        if (this.segmentSet.remove(segment)) {
+        if (this.segmentSet.remove({segment})) {
             segment.trackingCollection.unlink(this);
         }
     }

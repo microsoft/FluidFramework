@@ -1874,6 +1874,7 @@ export class MergeTree {
             rebalanceTree(splitSeg.next);
             startSeg = splitSeg.next;
         }
+        const savedLocalRefs: LocalReferenceCollection[] = [];
         // walk back from the segment, to see if there is a previous tie break seg
         this.leftExcursion(startSeg, (backSeg) => {
             if (!backSeg.isLeaf()) {
@@ -1888,6 +1889,16 @@ export class MergeTree {
             // go near to far
             if (backLen === 0) {
                 if (this.breakTie(0, backSeg, UnassignedSequenceNumber)) {
+                    // TODO:ransomr Think more about when to move refs on insert:
+                    // 1. Do we want to move only on undo/redo or always?
+                    // 2. Do we want to move refs from the initial start segment?
+                    // 3. Do we only want to move SlideOnRemove refs?
+                    // 4. Do we want to rename SlideOnRemove?
+                    if (backSeg.localRefs && !backSeg.localRefs.empty) {
+                        savedLocalRefs.push(backSeg.localRefs);
+                    }
+                    backSeg.localRefs = undefined;
+
                     startSeg = backSeg;
                 }
                 return true;
@@ -1912,7 +1923,10 @@ export class MergeTree {
         }
 
         this.insertChildNode(startSeg.parent!, insertSegment, startSeg.index);
-
+        if (savedLocalRefs.length > 0) {
+            insertSegment.localRefs = new LocalReferenceCollection(insertSegment);
+            insertSegment.localRefs.addBeforeTombstones(...savedLocalRefs);
+        }
         rebalanceTree(insertSegment);
 
         if (this.mergeTreeDeltaCallback) {

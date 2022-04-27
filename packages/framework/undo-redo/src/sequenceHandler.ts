@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
     IJSONSegment,
     ISegment,
+    LocalReference,
     matchProperties,
     MergeTreeDeltaOperationType,
     MergeTreeDeltaType,
@@ -71,20 +73,25 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
         if (event.ranges.length > 0) {
             let current = this.tracking.length > 0 ? this.tracking[this.tracking.length - 1] : undefined;
             for (const range of event.ranges) {
+                let trackingGroup: TrackingGroup | undefined;
                 if (current !== undefined
                     && current.operation === event.deltaOperation
                     && matchProperties(current.propertyDelta, range.propertyDeltas)) {
-                    current.trackingGroup.link(range.segment);
+                    trackingGroup = current.trackingGroup;
                 } else {
-                    const tg = new TrackingGroup();
-                    tg.link(range.segment);
+                    trackingGroup = new TrackingGroup();
                     current = {
-                        trackingGroup: tg,
+                        trackingGroup,
                         propertyDelta: range.propertyDeltas,
                         operation: event.deltaOperation,
                     };
                     this.tracking.push(current);
                 }
+                let reference: LocalReference | undefined;
+                if (event.deltaOperation === MergeTreeDeltaType.REMOVE) {
+                    reference = this.sequence.createPositionReference(range.segment, 0, ReferenceType.SlideOnRemove);
+                }
+                trackingGroup.link(range.segment, reference);
             }
         }
     }
@@ -94,7 +101,8 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
             const tracked = this.tracking.pop();
             if (tracked !== undefined) {
                 while (tracked.trackingGroup.size > 0) {
-                    const sg = tracked.trackingGroup.segments[0];
+                    const segRef = tracked.trackingGroup.segmentAndReferences[0];
+                    const sg = segRef.segment;
                     sg.trackingCollection.unlink(tracked.trackingGroup);
                     switch (tracked.operation) {
                         case MergeTreeDeltaType.INSERT:
@@ -106,9 +114,9 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
 
                         case MergeTreeDeltaType.REMOVE:
                             const insertSegment = this.sequence.segmentFromSpec(sg.toJSONObject() as IJSONSegment);
-                            this.sequence.insertAtReferencePosition(
-                                this.sequence.createPositionReference(sg, 0, ReferenceType.Transient),
-                                insertSegment);
+                            assert(!!segRef.reference, "Reference must be defined");
+                            this.sequence.insertAtReferencePosition(segRef.reference, insertSegment);
+                            this.sequence.removeLocalReference(segRef.reference);
                             sg.trackingCollection.trackingGroups.forEach((tg) => {
                                 tg.link(insertSegment);
                                 tg.unlink(sg);
