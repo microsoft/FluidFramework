@@ -168,6 +168,7 @@ export enum ConnectionState {
  * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
  *          false: storage does not provide indication of how far the client is. Container processed
  *          all the ops known to it, but it maybe still behind.
+ * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
  */
 export async function waitContainerToCatchUp(container: IContainer) {
     // Make sure we stop waiting if container is closed.
