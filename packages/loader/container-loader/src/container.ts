@@ -178,7 +178,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
     return new Promise<boolean>((resolve, reject) => {
         const deltaManager = container.deltaManager;
 
-        container.on("closed", (err?: IErrorBase | undefined) => reject(err ?? containerClosedMessage));
+        container.on("closed", (err?: IErrorBase | undefined) => reject(err ?? new Error(containerClosedMessage)));
 
         const waitForOps = () => {
             assert(container.connectionState !== ConnectionState.Disconnected,
