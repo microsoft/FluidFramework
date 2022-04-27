@@ -36,6 +36,8 @@ spec:
           value: "fluid:*"
         - name: NODE_ENV
           value: production
+        - name: IS_FLUID_SERVER
+          value: true
         volumeMounts:
         - name: config
           mountPath: /usr/src/server/packages/routerlicious/config/config.json
