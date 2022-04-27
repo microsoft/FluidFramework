@@ -35,7 +35,7 @@ export class QuorumProxy extends EventForwarder<IQuorumEvents> implements IQuoru
     }
 }
 
-export function getCodeProposalFromQuorumValues(
+export function getCodeDetailsFromQuorumValues(
     quorumValues: [string, ICommittedProposal][],
 ): IFluidCodeDetails {
     const qValuesMap = new Map(quorumValues);
@@ -44,7 +44,7 @@ export function getCodeProposalFromQuorumValues(
     return proposal?.value as IFluidCodeDetails;
 }
 
-export function initQuorumCodeProposal(
+export function initQuorumValuesFromCodeDetails(
     source: IFluidCodeDetails,
 ): [string, ICommittedProposal][] {
     // Seed the base quorum to be an empty list with a code quorum set

@@ -102,7 +102,7 @@ import { RetriableDocumentStorageService } from "./retriableDocumentStorageServi
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
-import { initQuorumCodeProposal, getCodeProposalFromQuorumValues, QuorumProxy } from "./quorum";
+import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, QuorumProxy } from "./quorum";
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 
@@ -1236,7 +1236,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         await this.attachDeltaManagerOpHandler(attributes);
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
-        const qValues = initQuorumCodeProposal(source);
+        const qValues = initQuorumValuesFromCodeDetails(source);
         this._protocolHandler = await this.initializeProtocolState(
             attributes,
             [], // members
@@ -1273,12 +1273,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._storage,
             baseTree.blobs.quorumValues,
         );
-        const codeDetails = getCodeProposalFromQuorumValues(qValues);
+        const codeDetails = getCodeDetailsFromQuorumValues(qValues);
         this._protocolHandler =
-            await this.initializeProtocolStateFromCodeDetails(
+            await this.initializeProtocolState(
                 attributes,
-                codeDetails,
-            );
+                [], // members
+                [], // proposals
+                codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : []);
 
         await this.instantiateContextDetached(
             true, // existing
@@ -1337,27 +1338,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         return attributes;
-    }
-
-    private async initializeProtocolStateFromCodeDetails(
-        attributes: IDocumentAttributes,
-        codeProposal?: IFluidCodeDetails,
-    ): Promise<ProtocolOpHandler> {
-        const members: [string, ISequencedClient][] = [];
-        const proposals: [number, ISequencedProposal, string[]][] = [];
-        let values: [string, any][] = [];
-
-        if(codeProposal !== undefined) {
-            values = initQuorumCodeProposal(codeProposal);
-        }
-
-        const protocolHandler = await this.initializeProtocolState(
-            attributes,
-            members,
-            proposals,
-            values);
-
-        return protocolHandler;
     }
 
     private async initializeProtocolStateFromSnapshot(
