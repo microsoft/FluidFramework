@@ -30,6 +30,7 @@ import {
     IContainerLoadMode,
     IFluidCodeDetails,
     isFluidCodeDetails,
+    IErrorBase,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
@@ -169,14 +170,15 @@ export enum ConnectionState {
  */
 export async function waitContainerToCatchUp(container: IContainer) {
     // Make sure we stop waiting if container is closed.
+    const containerClosedMessage = "Container is closed";
     if (container.closed) {
-        throw new Error("Container is closed");
+        throw new Error(containerClosedMessage);
     }
 
     return new Promise<boolean>((resolve, reject) => {
         const deltaManager = container.deltaManager;
 
-        container.on("closed", reject);
+        container.on("closed", (err?: IErrorBase | undefined) => reject(err ?? containerClosedMessage));
 
         const waitForOps = () => {
             assert(container.connectionState !== ConnectionState.Disconnected,
