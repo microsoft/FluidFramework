@@ -49,7 +49,7 @@ function packageMustPublishToNPM(name: string): boolean {
 /**
  * Whether the package is known to be an internally published package but not to NPM.
  * Note that packages published to NPM will also be published internally, however.
- * This should be a minmal set required for legacy compat of internal partners or internal CI requirements.
+ * This should be a minimal set required for legacy compat of internal partners or internal CI requirements.
  */
 function packageMustPublishToInternalFeedOnly(name: string): boolean {
     return (
