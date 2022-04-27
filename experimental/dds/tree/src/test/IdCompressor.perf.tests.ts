@@ -114,6 +114,7 @@ describe('IdCompressor Perf', () => {
 			title: `get ${numIds} sequential IDs for a ${isLocal ? 'local' : 'remote'} range`,
 			before: isLocal ? beforeLocal : beforeRemote,
 			benchmarkFn: () => {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const ids = compressor.getIdsFromRange(range!, sessionId!);
 				for (let i = 0; i < numIds; i++) {
 					ids.get(i); // get a sequential ID
