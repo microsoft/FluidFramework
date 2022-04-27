@@ -9,8 +9,6 @@ import {
     TextSegment,
 } from "@fluidframework/merge-tree";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-// eslint-disable-next-line import/no-unresolved
 import * as monaco from "monaco-editor";
 import React, { useEffect, useRef } from "react";
 
@@ -51,101 +49,72 @@ const defaultCompilerOptions = {
 };
 
 export interface IMonacoViewProps {
+    sharedString: SharedString;
 }
 
 export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) => {
+    const { sharedString } = props;
     const viewElementRef = useRef<HTMLDivElement>(null);
+    const codeModelRef = useRef<monaco.editor.ITextModel>(null);
+    const outputModelRef = useRef<monaco.editor.ITextModel>(null);
+    const codeEditorRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
+    const ignoreModelContentChanges = useRef<boolean>(false);
+
+    // Should only need to set the compiler options once ever
     useEffect(() => {
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
-    });
-    return <div style={{ minHeight: "480px", width: "100%", height: "100%" }} ref={ viewElementRef }></div>;
-};
+    }, []);
 
-export class MonacoRunnerView implements IFluidHTMLView {
-    public get IFluidHTMLView() { return this; }
+    // If the sharedString we're using for the model is ever rebound to a different shared string, we need to throw
+    // all the monaco stuff away, recreate it, and reregister all event listeners appropriately.
+    // TODO: There is probably some cleanup that should happen on the monaco resources that we are throwing away.
+    useEffect(() => {
+        codeModelRef.current = monaco.editor.createModel(sharedString.getText(), "typescript");
+        outputModelRef.current = monaco.editor.createModel("", "javascript");
+        codeEditorRef.current = monaco.editor.create(
+            viewElementRef.current,
+            { model: codeModelRef.current, automaticLayout: true },
+        );
 
-    /**
-     * Root HTML element of the component.
-     */
-    private viewElement: HTMLDivElement;
-
-    public constructor(private readonly sharedString: SharedString) { }
-
-    public render(elm: HTMLElement): void {
-        if (!this.viewElement) {
-            this.viewElement = this.createViewElement();
-            elm.appendChild(this.viewElement);
-        } else {
-            if (this.viewElement.parentElement !== elm) {
-                this.viewElement.remove();
-                elm.appendChild(this.viewElement);
-            }
-        }
-    }
-
-    /**
-     * Sets up the Monaco editor for use and attaches its HTML element to the mapHost element.
-     * Also sets up eventing to send/receive ops as the text is changed.
-     */
-    private createViewElement(): HTMLDivElement {
-        const viewElement = document.createElement("div");
-
-        viewElement.style.minHeight = "480px";
-        viewElement.style.width = "100%";
-        viewElement.style.height = "100%";
-        // const outputDiv = document.createElement("div");
-        // outputDiv.style.width = "50%";
-        // hostWrapper.appendChild(outputDiv);
-
-        monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
-
-        const codeModel = monaco.editor.createModel(this.sharedString.getText(), "typescript");
-        const outputModel = monaco.editor.createModel("", "javascript");
-
-        const codeEditor = monaco.editor.create(
-            viewElement,
-            { model: codeModel, automaticLayout: true });
-
-        let ignoreModelContentChanges = false;
-        codeEditor.onDidChangeModelContent((e) => {
+        codeEditorRef.current.onDidChangeModelContent((e) => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
-                worker(codeModel.uri.toString()).then((client) => {
-                    client.getEmitOutput(codeModel.uri.toString()).then((r) => {
-                        outputModel.setValue(r.outputFiles[0].text);
+                worker(codeModelRef.current.uri.toString()).then((client) => {
+                    client.getEmitOutput(codeModelRef.current.uri.toString()).then((r) => {
+                        outputModelRef.current.setValue(r.outputFiles[0].text);
                     });
                 });
             });
 
-            if (ignoreModelContentChanges) {
+            if (ignoreModelContentChanges.current) {
                 return;
             }
 
             for (const change of e.changes) {
                 if (change.text) {
                     if (change.rangeLength === 0) {
-                        this.sharedString.insertText(change.rangeOffset, change.text);
+                        sharedString.insertText(change.rangeOffset, change.text);
                     } else {
-                        this.sharedString.replaceText(
+                        sharedString.replaceText(
                             change.rangeOffset,
                             change.rangeOffset + change.rangeLength,
                             change.text,
                         );
                     }
                 } else {
-                    this.sharedString.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
+                    sharedString.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
                 }
             }
         });
 
-        this.sharedString.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
+        sharedString.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
             if (ev.isLocal) {
                 return;
             }
 
             try {
                 // Attempt to merge the ranges
-                ignoreModelContentChanges = true;
+                ignoreModelContentChanges.current = true;
 
                 /**
                  * Translate the offsets used by the MergeTree into a Range that is
@@ -154,8 +123,8 @@ export class MonacoRunnerView implements IFluidHTMLView {
                  * @param offset2 Ending offset
                  */
                 const offsetsToRange = (offset1: number, offset2?: number): monaco.Range => {
-                    const pos1 = codeModel.getPositionAt(offset1);
-                    const pos2 = (typeof offset2 === "number") ? codeModel.getPositionAt(offset2) : pos1;
+                    const pos1 = codeModelRef.current.getPositionAt(offset1);
+                    const pos2 = (typeof offset2 === "number") ? codeModelRef.current.getPositionAt(offset2) : pos1;
                     const range = new monaco.Range(pos1.lineNumber, pos1.column, pos2.lineNumber, pos2.column);
                     return range;
                 };
@@ -167,14 +136,14 @@ export class MonacoRunnerView implements IFluidHTMLView {
                             case MergeTreeDeltaType.INSERT: {
                                 const posRange = offsetsToRange(range.position);
                                 const text = segment.text || "";
-                                codeEditor.executeEdits("remote", [{ range: posRange, text }]);
+                                codeEditorRef.current.executeEdits("remote", [{ range: posRange, text }]);
                                 break;
                             }
 
                             case MergeTreeDeltaType.REMOVE: {
                                 const posRange = offsetsToRange(range.position, range.position + segment.text.length);
                                 const text = "";
-                                codeEditor.executeEdits("remote", [{ range: posRange, text }]);
+                                codeEditorRef.current.executeEdits("remote", [{ range: posRange, text }]);
                                 break;
                             }
 
@@ -184,10 +153,10 @@ export class MonacoRunnerView implements IFluidHTMLView {
                     }
                 }
             } finally {
-                ignoreModelContentChanges = false;
+                ignoreModelContentChanges.current = false;
             }
         });
+    }, [sharedString]);
 
-        return viewElement;
-    }
-}
+    return <div style={{ minHeight: "480px", width: "100%", height: "100%" }} ref={ viewElementRef }></div>;
+};
