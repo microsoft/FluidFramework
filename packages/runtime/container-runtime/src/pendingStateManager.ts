@@ -232,23 +232,6 @@ export class PendingStateManager implements IDisposable {
         }
     }
 
-    public checkpoint() {
-        const checkpointHead = this.pendingStates.peekBack();
-        return {
-            rollback:() => {
-                try {
-                    while(this.pendingStates.peekBack() !== checkpointHead) {
-                        this.rollbackNextPendingState();
-                    }
-                } catch(err) {
-                    const error = DataProcessingError.wrapIfUnrecognized(err, "checkpointRollback", undefined, "RollbackError: ");
-                    this.stateHandler.close(error);
-                    throw error;
-                }
-            },
-        };
-    }
-
     /**
      * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
      * the batch information was preserved for batch messages.
@@ -390,6 +373,9 @@ export class PendingStateManager implements IDisposable {
         this.isProcessingBatch = false;
     }
 
+    /**
+     * Capture the pending state at this point
+     */
     public checkpoint() {
         const checkpointHead = this.pendingStates.peekBack();
         return {
@@ -420,6 +406,9 @@ export class PendingStateManager implements IDisposable {
         return nextPendingState;
     }
 
+    /**
+     * Undo the last pending state
+     */
     private rollbackNextPendingState() {
         const pendingStatesCount = this.pendingStates.length;
         if (pendingStatesCount === 0) {

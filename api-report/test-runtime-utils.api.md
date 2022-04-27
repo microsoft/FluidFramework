@@ -424,6 +424,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     reSubmit(content: any, localOpMetadata: unknown): void;
     // (undocumented)
+    rollback(message: any, localOpMetadata: unknown): void;
+    // (undocumented)
     get rootRoutingContext(): IFluidHandleContext;
     // (undocumented)
     save(message: string): void;

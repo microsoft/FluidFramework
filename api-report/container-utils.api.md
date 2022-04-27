@@ -38,7 +38,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryProperties): IFluidErrorBase;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataProcessingError;
-    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage): IFluidErrorBase;
+    static wrapIfUnrecognized(originalError: any, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, messagePrefix?: string): IFluidErrorBase;
 }
 
 // @public (undocumented)
@@ -75,7 +75,6 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
     // (undocumented)
     readonly errorType = "usageError";
 }
-
 
 // (No @packageDocumentation comment for this package)
 

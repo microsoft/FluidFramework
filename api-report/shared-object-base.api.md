@@ -129,10 +129,12 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): any;
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
+    protected rollback(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     abstract summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
-    }
+}
 
 // @public
 export class SummarySerializer extends FluidSerializer {
@@ -151,7 +153,6 @@ export enum ValueType {
     // @deprecated
     Shared = 0
 }
-
 
 // (No @packageDocumentation comment for this package)
 
