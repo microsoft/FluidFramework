@@ -12,7 +12,7 @@ import {
     StableRange,
     TraitLabel,
 } from "@fluid-experimental/tree";
-import { IArrayish } from "@fluid-experimental/bubblebench-common";
+import { IArrayish } from "@fluid-example/bubblebench-common";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { fromJson, NodeKind } from "./treeutils";
 
