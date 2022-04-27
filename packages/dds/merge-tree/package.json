@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/merge-tree",
-  "version": "0.59.2000",
+  "version": "0.59.2001",
   "description": "Merge tree",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -63,19 +63,19 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.48.1000",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore-definitions": "^0.59.2000",
+    "@fluidframework/datastore-definitions": "^0.59.2001",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
-    "@fluidframework/runtime-definitions": "^0.59.2000",
-    "@fluidframework/runtime-utils": "^0.59.2000",
-    "@fluidframework/shared-object-base": "^0.59.2000",
-    "@fluidframework/telemetry-utils": "^0.59.2000"
+    "@fluidframework/runtime-definitions": "^0.59.2001",
+    "@fluidframework/runtime-utils": "^0.59.2001",
+    "@fluidframework/shared-object-base": "^0.59.2001",
+    "@fluidframework/telemetry-utils": "^0.59.2001"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@^0.58.0",
-    "@fluidframework/mocha-test-setup": "^0.59.2000",
-    "@fluidframework/test-runtime-utils": "^0.59.2000",
+    "@fluidframework/mocha-test-setup": "^0.59.2001",
+    "@fluidframework/test-runtime-utils": "^0.59.2001",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
