@@ -16,7 +16,7 @@ type TypeOnly<T> = {
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAlfredUser": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAlfredUser():
@@ -28,7 +28,7 @@ use_current_InterfaceDeclaration_IAlfredUser(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAlfredUser": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IAlfredUser():
@@ -40,7 +40,7 @@ use_old_InterfaceDeclaration_IAlfredUser(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConfig": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConfig():
@@ -52,7 +52,7 @@ use_current_InterfaceDeclaration_IConfig(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IConfig": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IConfig():
@@ -64,7 +64,7 @@ use_old_InterfaceDeclaration_IConfig(
 
 /*
 * Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RouterliciousUrlResolver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RouterliciousUrlResolver():
@@ -76,7 +76,7 @@ use_current_ClassDeclaration_RouterliciousUrlResolver(
 
 /*
 * Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken.0.58.2000:
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RouterliciousUrlResolver": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_RouterliciousUrlResolver():

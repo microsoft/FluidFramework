@@ -4,7 +4,6 @@
  */
 
 const path = require("path");
-const merge = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = env => {
@@ -35,7 +34,9 @@ module.exports = env => {
             libraryTarget: "umd"
         },
         devServer: {
-            contentBase: path.join(__dirname, 'tests')
+            static: {
+                directory: path.join(__dirname, 'tests')
+            }
         },
         plugins: [
             new HtmlWebpackPlugin({

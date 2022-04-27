@@ -316,7 +316,7 @@ async function main() {
                 await writeReleaseVersions(context);
                 break;
         }
-    } catch (e) {
+    } catch (e: any) {
         if (!e.fatal) { throw e; }
         console.error(`ERROR: ${e.message}`);
         if (paramClean) {

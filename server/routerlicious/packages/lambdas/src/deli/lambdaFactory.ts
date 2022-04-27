@@ -8,6 +8,7 @@ import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
+    IClientManager,
     ICollection,
     IContext,
     IDeliState,
@@ -19,6 +20,7 @@ import {
     IProducer,
     IServiceConfiguration,
     ITenantManager,
+    LambdaCloseType,
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
@@ -41,6 +43,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         expHash1: defaultHash,
         logOffset: -1,
         sequenceNumber: 0,
+        signalClientConnectionNumber: 0,
         term: 1,
         lastSentMSN: 0,
         nackMessages: undefined,
@@ -53,10 +56,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly operationsDbMongoManager: MongoManager,
         private readonly collection: ICollection<IDocument>,
         private readonly tenantManager: ITenantManager,
+        private readonly clientManager: IClientManager | undefined,
         private readonly forwardProducer: IProducer,
+        private readonly signalProducer: IProducer | undefined,
         private readonly reverseProducer: IProducer,
-        private readonly serviceConfiguration: IServiceConfiguration,
-        globalDbMongoManager?: MongoManager) {
+        private readonly serviceConfiguration: IServiceConfiguration) {
         super();
     }
 
@@ -124,7 +128,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
                     context.log?.info(`Deli checkpoint from summary:
-                        ${ JSON.stringify(lastCheckpoint)}`, { messageMetaData });
+                        ${JSON.stringify(lastCheckpoint)}`, { messageMetaData });
                 }
             } else {
                 lastCheckpoint = JSON.parse(dbObject.deli);
@@ -152,33 +156,54 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         const checkpointManager = createDeliCheckpointManagerFromCollection(tenantId, documentId, this.collection);
 
         // Should the lambda reaize that term has flipped to send a no-op message at the beginning?
-        return new DeliLambda(
+        const deliLambda = new DeliLambda(
             context,
             tenantId,
             documentId,
             newCheckpoint,
             checkpointManager,
+            this.clientManager,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
+            this.signalProducer,
             this.reverseProducer,
             this.serviceConfiguration,
             sessionMetric,
             sessionStartMetric);
+
+        deliLambda.on("close", (closeType) => {
+            const handler = async () => {
+                if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)) {
+                    const query = { documentId, tenantId, session: { $exists: true } };
+                    const data = { "session.isSessionAlive": false };
+                    await this.collection.update(query, data, null);
+                    context.log?.info(`Marked isSessionAlive as false for closeType: ${JSON.stringify(closeType)}`,
+                        { messageMetaData });
+                }
+            };
+            handler().catch((e) => {
+                context.log?.error(`Failed to handle isSessionAlive with exception ${e}`
+                    , { messageMetaData });
+            });
+        });
+
+        return deliLambda;
     }
 
     private logSessionFailureMetrics(
         sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
         sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
         errMsg: string) {
-            sessionMetric?.error(errMsg);
-            sessionStartMetric?.error(errMsg);
+        sessionMetric?.error(errMsg);
+        sessionStartMetric?.error(errMsg);
     }
 
     public async dispose(): Promise<void> {
         const mongoClosedP = this.operationsDbMongoManager.close();
         const forwardProducerClosedP = this.forwardProducer.close();
+        const signalProducerClosedP = this.signalProducer?.close();
         const reverseProducerClosedP = this.reverseProducer.close();
-        await Promise.all([mongoClosedP, forwardProducerClosedP, reverseProducerClosedP]);
+        await Promise.all([mongoClosedP, forwardProducerClosedP, signalProducerClosedP, reverseProducerClosedP]);
     }
 
     // Fetches last durable deli state from summary. Returns undefined if not present.

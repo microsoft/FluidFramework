@@ -14,6 +14,13 @@ module.exports = env => {
         devServer: {
             port: 9000
         },
+        // This impacts which files are watched by the dev server (and likely by webpack if watch is true).
+        // This should be configurable under devServer.static.watch
+        // (see https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md) but that does not seem to work.
+        // The CLI options for disabling watching don't seem to work either, so this may be a symptom of using webpack4 with the newer webpack-cli and webpack-dev-server.
+        watchOptions: {
+            ignored: "**/node_modules/**",
+        },
         module: {
             rules: [{
                     test: /\.s?css$/,
@@ -30,7 +37,7 @@ module.exports = env => {
             ]
         },
         output: {
-            filename: "[name].[contenthash].js",
+            filename: "[name].[hash].js",
         },
         plugins: [
             new HtmlWebpackPlugin({

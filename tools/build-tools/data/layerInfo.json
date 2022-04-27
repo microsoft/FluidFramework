@@ -221,8 +221,7 @@
                 "dev": true,
                 "dot": false,
                 "dirs": [
-                    "packages/tools/",
-                    "tools/generator-fluid"
+                    "packages/tools/"
                 ]
             },
             "Tests": {

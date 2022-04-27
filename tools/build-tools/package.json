@@ -33,7 +33,7 @@
     "policy-check:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js ",
     "policy-check:fix": "npm run policy-check -- -r",
     "policy-check:fix:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
-    "test": "mocha --recursive dist/test --unhandled-rejections=strict"
+    "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000"
   },
   "dependencies": {
     "@fluidframework/bundle-size-tools": "^0.0.8505",
@@ -71,6 +71,6 @@
     "@types/shelljs": "^0.8.8",
     "@types/webpack": "^4.41.22",
     "mocha": "^8.4.0",
-    "typescript": "~4.1.3"
+    "typescript": "~4.5.5"
   }
 }

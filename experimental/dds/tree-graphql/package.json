@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/tree-graphql",
-  "version": "0.58.3000",
+  "version": "0.59.3000",
   "description": "Prototype using GraphQL to access a distributed tree",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,7 +36,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-experimental/tree": "^0.58.3000",
+    "@fluid-experimental/tree": "^0.59.3000",
     "@fluidframework/common-utils": "^0.32.1",
     "@graphql-codegen/plugin-helpers": "^1.18.2",
     "@graphql-codegen/visitor-plugin-common": "^1.18.2",
@@ -44,11 +44,11 @@
     "graphql-tools": "^7.0.2"
   },
   "devDependencies": {
-    "@fluidframework/mocha-test-setup": "^0.58.3000",
-    "@fluidframework/test-runtime-utils": "^0.58.3000",
+    "@fluidframework/mocha-test-setup": "^0.59.3000",
+    "@fluidframework/test-runtime-utils": "^0.59.3000",
     "@graphql-codegen/cli": "1.20.1",
     "@graphql-codegen/typescript": "1.20.2",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/ws": "^6.0.1",
     "@typescript-eslint/parser": "~5.9.0",
@@ -59,8 +59,11 @@
     "eslint-plugin-editorconfig": "~3.2.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.25.4",
-    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-jest": "~26.1.3",
+    "eslint-plugin-mocha": "~10.0.3",
+    "eslint-plugin-promise": "~6.0.0",
     "eslint-plugin-react": "~7.28.0",
+    "eslint-plugin-tsdoc": "~0.2.14",
     "eslint-plugin-unicorn": "~40.0.0",
     "mocha": "^8.4.0",
     "nyc": "^15.0.0",
