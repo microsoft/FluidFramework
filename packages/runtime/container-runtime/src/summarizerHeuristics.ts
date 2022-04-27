@@ -63,7 +63,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         private readonly configuration: ISummaryConfiguration,
         private readonly trySummarize: (reason: SummarizeReason) => void,
         private readonly logger: ITelemetryLogger,
-        private readonly minOpsForAttemptOnClose = 10,
+        private readonly minOpsForAttemptOnClose = 50,
     ) {
         this.idleTimer = new Timer(
             this.configuration.idleTime,
