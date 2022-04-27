@@ -89,7 +89,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     }
 
     public shouldRunLastSummary(stopReason: SummarizerStopReason): boolean {
-        if (stopReason === "parentNotConnected") {
+        if (stopReason !== "parentNotConnected") {
             return false;
         }
 

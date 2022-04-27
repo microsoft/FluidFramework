@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import { SummarizerStopReason } from "@fluidframework/container-runtime-previous";
 import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../summarizerHeuristics";
 import { ISummarizeHeuristicData, ISummarizeAttempt } from "../summarizerTypes";
 import { SummarizeReason } from "../summaryGenerator";
@@ -165,7 +166,7 @@ describe("Runtime", () => {
                 initialize({ refSequenceNumber: lastSummary, minOpsForAttemptOnClose });
 
                 data.lastOpSequenceNumber = lastSummary + minOpsForAttemptOnClose + 1;
-                assert(runner.shouldRunLastSummary("summarizerClientDisconnected") === true, "should run on close");
+                assert(runner.shouldRunLastSummary("parentNotConnected") === true, "should run on close");
             });
 
             it("Should not summarize on close if insufficient outstanding ops", () => {
@@ -174,18 +175,29 @@ describe("Runtime", () => {
                 initialize({ refSequenceNumber: lastSummary, minOpsForAttemptOnClose });
 
                 data.lastOpSequenceNumber = lastSummary + minOpsForAttemptOnClose;
-                assert(runner.shouldRunLastSummary("summarizerClientDisconnected") === false,
+                assert(runner.shouldRunLastSummary("parentNotConnected") === false,
                     "should not run on close");
             });
 
-            it("Should not summarize when parent is not connected", () => {
+            it("Should not summarize when reason is not parentNotConnected", () => {
                 const lastSummary = 1000;
                 const minOpsForAttemptOnClose = 10;
                 initialize({ refSequenceNumber: lastSummary, minOpsForAttemptOnClose });
 
                 data.lastOpSequenceNumber = lastSummary + minOpsForAttemptOnClose + 1;
-                assert(runner.shouldRunLastSummary("parentNotConnected") === false,
-                    "should not run when parent is not connected");
+
+                const stopReasons: SummarizerStopReason[] = [
+                    "failToSummarize",
+                    "parentShouldNotSummarize",
+                    "summarizerClientDisconnected",
+                    "summarizerException",
+                ];
+
+                // This doesn't prevent future stop reason additions, but it's a good baseline
+                for (const stopReason of stopReasons) {
+                    assert(runner.shouldRunLastSummary(stopReason) === false,
+                        "should not run when stop reason is not parentNotConnected");
+                }
             });
 
             it("Should not run idle timer after dispose", () => {
