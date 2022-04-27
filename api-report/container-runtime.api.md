@@ -215,6 +215,9 @@ export interface ContainerRuntimeMessage {
     type: ContainerMessageType;
 }
 
+// @public (undocumented)
+export const DefaultSummaryConfiguration: ISummaryConfiguration;
+
 // @public
 export class DeltaScheduler {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLogger);

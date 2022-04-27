@@ -20,6 +20,7 @@ import {
     RuntimeHeaders,
     SummaryCollection,
     ISummaryConfiguration,
+    DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { TestDataObject } from "../mockSummarizerClient";
@@ -40,15 +41,12 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
 
     const IdleDetectionTime = 100;
     const summaryConfigOverrides: ISummaryConfiguration = {
-        state: "enabled",
-        idleTime: IdleDetectionTime,
-        maxTime: IdleDetectionTime * 12,
-        maxOps: 1000, // 1k ops (active)
-        minOpsForAttemptOnClose: 50,
-        maxAckWaitTime: 120000, // 2 min
-        maxOpsSinceLastSummary: 7000,
-        initialSummarizerDelayMs: 10,
-        summarizerClientElection: false,
+        ...DefaultSummaryConfiguration,
+        ...{
+            idleTime: IdleDetectionTime,
+            maxTime: IdleDetectionTime * 12,
+            initialSummarizerDelayMs: 10,
+        },
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {

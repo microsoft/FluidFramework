@@ -15,7 +15,12 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { IContainerRuntimeOptions, SummaryCollection, ISummaryConfiguration } from "@fluidframework/container-runtime";
+import {
+    IContainerRuntimeOptions,
+    SummaryCollection,
+    ISummaryConfiguration,
+    DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -44,15 +49,12 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 
     const IdleDetectionTime = 100;
     const summaryConfigOverrides: ISummaryConfiguration = {
-        state: "enabled",
-        idleTime: IdleDetectionTime,
-        maxTime: IdleDetectionTime * 12,
-        maxOps: 1000, // 1k ops (active)
-        maxAckWaitTime: 120000, // 2 min
-        maxOpsSinceLastSummary: 7000,
-        initialSummarizerDelayMs: 10,
-        summarizerClientElection: false,
-        minOpsForAttemptOnClose: 50,
+        ...DefaultSummaryConfiguration,
+        ...{
+            idleTime: IdleDetectionTime,
+            maxTime: IdleDetectionTime * 12,
+            initialSummarizerDelayMs: 10,
+        },
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {

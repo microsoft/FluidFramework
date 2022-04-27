@@ -14,7 +14,7 @@ import {
     timeoutPromise,
 } from "@fluidframework/test-utils";
 import { Container } from "@fluidframework/container-loader";
-import { SummaryCollection } from "@fluidframework/container-runtime";
+import { SummaryCollection, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import {generatePairwiseOptions} from "@fluidframework/test-pairwise-generator";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
@@ -39,15 +39,11 @@ const testContainerConfig: ITestContainerConfig = {
         // strictly control summarization
         summaryOptions: {
             summaryConfigOverrides: {
-                state: "enabled",
-                idleTime: 5000, // 5 sec (idle)
-                maxTime: 5000 * 12, // 1 min (active)
-                maxOps,
-                minOpsForAttemptOnClose: 50,
-                maxAckWaitTime: 120000, // 2 min
-                maxOpsSinceLastSummary: 7000,
-                initialSummarizerDelayMs: 0,
-                summarizerClientElection: false,
+                ...DefaultSummaryConfiguration,
+                ...{
+                    initialSummarizerDelayMs: 0,
+                    maxOps,
+                },
             },
         },
     },

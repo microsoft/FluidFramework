@@ -5,7 +5,11 @@
 
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+    ContainerRuntime,
+    IContainerRuntimeOptions,
+    DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     buildRuntimeRequestHandler,
@@ -24,15 +28,10 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
             public runtimeOptions: IContainerRuntimeOptions = {
                 summaryOptions: {
                     summaryConfigOverrides:  {
-                        state: "enabled",
-                        idleTime: 5000,
-                        maxTime: 5000 * 12,
-                        maxOps: 1000, // 1k ops (active)
-                        minOpsForAttemptOnClose: 50,
-                        maxAckWaitTime: 120000, // 2 min
-                        maxOpsSinceLastSummary: 7000,
-                        initialSummarizerDelayMs: 0,
-                        summarizerClientElection: false,
+                        ...DefaultSummaryConfiguration,
+                        ...{
+                            initialSummarizerDelayMs: 0,
+                        },
                     },
                 },
             },

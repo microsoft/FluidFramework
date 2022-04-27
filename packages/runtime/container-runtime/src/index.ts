@@ -20,6 +20,7 @@ export {
     ContainerRuntime,
     RuntimeHeaders,
     ISummaryConfiguration,
+    DefaultSummaryConfiguration,
 } from "./containerRuntime";
 export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";

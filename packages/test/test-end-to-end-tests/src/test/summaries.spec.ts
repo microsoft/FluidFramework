@@ -11,7 +11,9 @@ import {
     Summarizer,
     ISummarizer,
     ISummarizeResults,
-    ISummaryRuntimeOptions} from "@fluidframework/container-runtime";
+    ISummaryRuntimeOptions,
+    DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
@@ -38,15 +40,11 @@ const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
             summaryConfigOverrides: {
-                state: "enabled",
-                idleTime: 5000, // 5 sec (idle)
-                maxTime: 5000 * 12, // 1 min (active)
-                maxOps,
-                minOpsForAttemptOnClose: 50,
-                maxAckWaitTime: 120000, // 2 min
-                maxOpsSinceLastSummary: 7000,
-                initialSummarizerDelayMs: 0,
-                summarizerClientElection: false,
+                ...DefaultSummaryConfiguration,
+                ...{
+                    maxOps,
+                    initialSummarizerDelayMs: 0,
+                },
              },
         },
     },

@@ -15,7 +15,7 @@ import {
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
-import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
+import { ContainerRuntime, ScheduleManager, DefaultSummaryConfiguration } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
@@ -104,15 +104,12 @@ describe("Runtime", () => {
                     {
                         summaryOptions: { // runtimeOptions
                             summaryConfigOverrides: {
-                                state: "enabled",
-                                idleTime: 5000,
-                                maxTime: 5000 * 12,
-                                maxOps: 1000, // 1k ops (active)
-                                minOpsForAttemptOnClose: 50,
-                                maxAckWaitTime: 120000, // 2 min
-                                maxOpsSinceLastSummary: 9999,
-                                initialSummarizerDelayMs: 100,
-                                summarizerClientElection: true,
+                                ...DefaultSummaryConfiguration,
+                                ...{
+                                    maxOpsSinceLastSummary: 9999,
+                                    initialSummarizerDelayMs: 100,
+                                    summarizerClientElection: true,
+                                },
                             },
                         },
                     }, // runtimeOptions

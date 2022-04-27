@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Timer, assert } from "@fluidframework/common-utils";
-import { ISummaryConfiguration } from "./containerRuntime";
+import { Timer } from "@fluidframework/common-utils";
+import { ISummaryConfigurationHeuristicSettings } from "./containerRuntime";
 
 import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummarizeAttempt } from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
@@ -56,12 +56,9 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 
     public constructor(
         private readonly heuristicData: ISummarizeHeuristicData,
-        private readonly configuration: ISummaryConfiguration,
+        private readonly configuration: ISummaryConfigurationHeuristicSettings,
         private readonly trySummarize: (reason: SummarizeReason) => void,
     ) {
-        assert(this.configuration.state !== "disabled" &&
-            this.configuration.state !== "disableHeuristics",
-            "Configuration state should not be disabled or disableHeuristics");
         this.idleTimer = new Timer(
             this.configuration.idleTime,
             () => this.trySummarize("idle"));
@@ -73,9 +70,6 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     }
 
     public run() {
-        assert(this.configuration.state !== "disabled" &&
-            this.configuration.state !== "disableHeuristics",
-            "Configuration state should not be disabled or disableHeuristics");
         const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
         const opsSinceLastAck = this.opsSinceLastAck;
         if (timeSinceLastSummary > this.configuration.maxTime) {

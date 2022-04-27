@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { ISummaryConfiguration, ISummaryConfigurationHeuristicSettings } from "../containerRuntime";
+import {
+    ISummaryConfiguration,
+    ISummaryConfigurationHeuristicSettings,
+} from "../containerRuntime";
 import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../summarizerHeuristics";
 import { ISummarizeHeuristicData, ISummarizeAttempt } from "../summarizerTypes";
 import { SummarizeReason } from "../summaryGenerator";

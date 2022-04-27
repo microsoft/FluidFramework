@@ -13,6 +13,7 @@ import {
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     ISummaryConfiguration,
+    ISummaryConfigurationHeuristicSettings,
 } from "./containerRuntime";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
@@ -120,9 +121,13 @@ export class RunningSummarizer implements IDisposable {
         );
 
         if (!this.disableHeuristics) {
+            assert(this.configuration.state === "enabled", "Configuration state should be enabled");
+            const heuristics: ISummaryConfigurationHeuristicSettings = {
+                    ...this.configuration,
+            };
             this.heuristicRunner = new SummarizeHeuristicRunner(
                 heuristicData,
-                configuration,
+                heuristics,
                 (reason) => this.trySummarize(reason));
         }
 

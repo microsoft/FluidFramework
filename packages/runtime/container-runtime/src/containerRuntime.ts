@@ -188,7 +188,9 @@ export interface ContainerRuntimeMessage {
     type: ContainerMessageType;
 }
 export interface ISummaryConfigurationBaseSettings {
-    /* Delay before first attempt to spawn summarizing container. */
+    /**
+     *  Delay before first attempt to spawn summarizing container.
+     * */
     initialSummarizerDelayMs: number;
 
     /**
@@ -197,14 +199,38 @@ export interface ISummaryConfigurationBaseSettings {
      */
     summarizerClientElection: boolean;
 
+    /**
+     * Defines the maximum allowed time to wait for a pending summary ack.
+     * The maximum amount of time client will wait for a summarize is the minimum of
+     * maxSummarizeAckWaitTime ( currently 10 minutes (10 * 60 * 1000) and maxAckWaitTime.
+     */
     maxAckWaitTime: number;
+    /**
+     * Defines the maximum number of Ops in between Summaries that can be
+     * allowed before forcibly electing a new summarizer client.
+     */
     maxOpsSinceLastSummary: number;
 }
 
 export interface ISummaryConfigurationHeuristicSettings extends ISummaryConfigurationBaseSettings {
-    idleTime: number;
+    /**
+     * Defines the maximum allowed time in between summarizations.
+     */
+     idleTime: number;
+    /**
+     * Defines the maximum allowed time, since the last received Ack,  before running the summary
+     * with reason maxTime.
+     */
     maxTime: number;
-    maxOps: number;
+    /**
+     * Defines the maximum number of Ops, since the last received Ack, that can be allowed
+     * before running the summary with reason maxOps.
+     */
+     maxOps: number;
+    /**
+     * Defnines the minimum number of Ops, since the last received Ack, that can be allowed
+     * before running the last summary.
+     */
     minOpsForAttemptOnClose: number;
 }
 
@@ -216,9 +242,9 @@ export type ISummaryConfiguration =
 | ({ state: "enabled";} & ISummaryConfigurationHeuristicSettings);
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
-const IdleDetectionTime = 5000;
+export const IdleDetectionTime = 5000;
 
-const DefaultSummaryConfiguration: ISummaryConfiguration = {
+export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
     idleTime: IdleDetectionTime,
 
@@ -1026,12 +1052,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private get summaryConfiguration() {
-        return {
-            // the defaults
-            ... DefaultSummaryConfiguration,
-            // the runtime configuration overrides
-            ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
-        };
+        return this.currentSummaryConfiguration;
     }
 
     private _disposed = false;
@@ -1112,6 +1133,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
+        private readonly currentSummaryConfiguration = {
+            // the defaults
+            ... DefaultSummaryConfiguration,
+            // the runtime configuration overrides
+            ... runtimeOptions.summaryOptions?.summaryConfigOverrides,
+        },
     ) {
         super();
 
@@ -2939,11 +2966,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } else if (this.summaryManager !== undefined) {
             return this.summaryManager.enqueueSummarize(...args);
         } else {
-            // If we're not the summarizer, and we don't have a summaryManager, we are
-            // generating an error.
-            throw new Error(
-                `Couldn't find a summarizer`,
-            );
+            // If we're not the summarizer, and we don't have a summaryManager, we expect that
+            // generateSummaries is turned off. We are throwing instead of returning a failure here,
+            // because it is a misuse of the API rather than an expected failure.
+            throw new UsageError(
+                `Can't summarize, disableSummaries: ${this.summariesDisabled}`,
+                );
         }
     };
 

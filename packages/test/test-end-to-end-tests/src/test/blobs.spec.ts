@@ -7,7 +7,11 @@ import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage } from "@fluidframework/container-loader";
-import { ContainerMessageType, ContainerRuntime } from "@fluidframework/container-runtime";
+import {
+    ContainerMessageType,
+    ContainerRuntime,
+    DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
@@ -23,18 +27,14 @@ const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
             summaryConfigOverrides: {
-                state: "enabled",
-                idleTime: 1000,
-                maxTime: 1000 * 12,
-                maxOps: 1,
-                minOpsForAttemptOnClose: 50,
-                // Wait 2 minutes for summary ack
-                // this is less than maxSummarizeAckWaitTime
-                // the min of the two will be chosen
-                maxAckWaitTime: 120000,
-                maxOpsSinceLastSummary: 7000,
-                initialSummarizerDelayMs: 20,
-                summarizerClientElection: false,
+                ...DefaultSummaryConfiguration,
+                ...{
+                    idleTime: 100,
+                    maxTime: 100 * 12,
+                    maxOps: 1,
+                    maxAckWaitTime: 1200,
+                    initialSummarizerDelayMs: 20,
+                },
             },
         },
     },

@@ -20,6 +20,7 @@ import {
     ContainerRuntime,
     IAckedSummary,
     SummaryCollection,
+    DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
@@ -401,15 +402,12 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                     runtimeOptions: {
                         summaryOptions: {
                             summaryConfigOverrides: {
-                                state: "enabled",
-                                idleTime: IdleDetectionTime,
-                                maxTime: IdleDetectionTime * 12,
-                                maxOps: 1000, // 1k ops (active)
-                                minOpsForAttemptOnClose: 50,
-                                maxAckWaitTime: 120000, // 2 min
-                                maxOpsSinceLastSummary: 7000,
-                                initialSummarizerDelayMs: 10,
-                                summarizerClientElection: false,
+                                ...DefaultSummaryConfiguration,
+                                ...{
+                                    idleTime: IdleDetectionTime,
+                                    maxTime: IdleDetectionTime * 12,
+                                    initialSummarizerDelayMs: 10,
+                                },
                             },
                         },
                         gcOptions: {

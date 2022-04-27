@@ -18,6 +18,7 @@ import {
     SummaryManagerState,
 } from "../summaryManager";
 import { Summarizer } from "../summarizer";
+import { DefaultSummaryConfiguration } from "../containerRuntime";
 import {
     ISummarizer,
     ISummarizerEvents,
@@ -113,15 +114,10 @@ describe("Summary Manager", () => {
                 mockLogger,
                 summaryCollection.createWatcher(summarizerClientId),
                 {
-                    state: "enabled",
-                    idleTime: 5000, // 5 sec (idle)
-                    maxTime: 5000 * 12, // 1 min (active)
-                    maxOps: 1000, // 1k ops (active)
-                    minOpsForAttemptOnClose: 50,
-                    maxAckWaitTime: 120000, // 2 min
-                    maxOpsSinceLastSummary: 7000,
-                    initialSummarizerDelayMs: 0,
-                    summarizerClientElection: false,
+                    ...DefaultSummaryConfiguration,
+                    ...{
+                        initialSummarizerDelayMs: 0,
+                    },
                 },
                 // submitSummaryCallback
                 async (options) => {
