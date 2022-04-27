@@ -195,6 +195,8 @@ export class SummaryGenerator {
         const { refreshLatestAck, fullTree } = options;
         const logger = ChildLogger.create(this.logger, undefined, { all: summarizeProps });
 
+        // Note: timeSinceLastAttempt and timeSinceLastSummary for the
+        // first summary are basically the time since the summarizer was loaded.
         const timeSinceLastAttempt = Date.now() - this.heuristicData.lastAttempt.summaryTime;
         const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
         let summarizeTelemetryProps: SummaryGeneratorTelemetry = {

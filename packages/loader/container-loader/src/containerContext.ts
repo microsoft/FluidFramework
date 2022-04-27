@@ -21,6 +21,7 @@ import {
     IProvideFluidCodeDetailsComparer,
     ICodeDetailsLoader,
     IFluidModuleWithDetails,
+    IFluidModule,
 } from "@fluidframework/container-definitions";
 import {
     IRequest,
@@ -314,8 +315,12 @@ export class ContainerContext implements IContainerContext {
         });
     }
 
-    private async loadCodeModule(codeDetails: IFluidCodeDetails) {
-        const loadCodeResult = await PerformanceEvent.timedExecAsync(
+    private async loadCodeModule(codeDetails: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
+        // load may actually produce a IFluidModule if using a legacy ICodeLoader.
+        // Because the type system currently does not capture this in load,
+        // explicitly declare the type here to support both cases.
+        // See also comment about this below.
+        const loadCodeResult: IFluidModuleWithDetails | IFluidModule = await PerformanceEvent.timedExecAsync(
             this.taggedLogger,
             { eventName: "CodeLoad" },
             async () => this.codeLoader.load(codeDetails),

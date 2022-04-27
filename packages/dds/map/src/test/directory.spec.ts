@@ -179,7 +179,7 @@ describe("Directory", () => {
                 try {
                     subDirectory.set("throw", "error");
                     assert.fail("Should throw usage error");
-                } catch (error) {
+                } catch (error: any) {
                     assert.strictEqual(error.errorType, "usageError", "Should throw usage error");
                 }
 
