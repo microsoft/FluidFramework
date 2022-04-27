@@ -22,6 +22,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
 - [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
+- [Remove IDeltaManager.close()](#remove-ideltamanagerclose)
 
 ### Remove IFluidSerializer from core-interfaces
 `IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
@@ -31,6 +32,10 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ### Remove Write Method from IDocumentStorageService
 The `IDocumentStorageService.write(...)` method within the `@fluidframework/driver-definitions` package has been removed. Please remove all usage/implementation of this method if present.
+
+### Remove IDeltaManager.close()
+The method `IDeltaManager.close()` was deprecated in 0.54 and is now removed.
+Use IContainer.close() or IContainerContext.closeFn() instead, and pass an error object if applicable.
 
 # 0.59
 

@@ -80,6 +80,12 @@
       },
       "InterfaceDeclaration_IContainerContext": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_IContainer": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IDeltaManager": {
+        "backCompat": false
       }
     }
   }
