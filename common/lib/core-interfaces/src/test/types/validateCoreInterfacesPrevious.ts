@@ -68,9 +68,9 @@ use_old_TypeAliasDeclaration_FluidObjectKeys(
 * "TypeAliasDeclaration_FluidObjectProviderKeys": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_FluidObjectProviderKeys():
-    TypeOnly<old.FluidObjectProviderKeys<any, any>>;
+    TypeOnly<old.FluidObjectProviderKeys<any,any>>;
 declare function use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
-    use: TypeOnly<current.FluidObjectProviderKeys<any, any>>);
+    use: TypeOnly<current.FluidObjectProviderKeys<any,any>>);
 use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
     get_old_TypeAliasDeclaration_FluidObjectProviderKeys());
 
@@ -80,9 +80,9 @@ use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
 * "TypeAliasDeclaration_FluidObjectProviderKeys": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_FluidObjectProviderKeys():
-    TypeOnly<current.FluidObjectProviderKeys<any, any>>;
+    TypeOnly<current.FluidObjectProviderKeys<any,any>>;
 declare function use_old_TypeAliasDeclaration_FluidObjectProviderKeys(
-    use: TypeOnly<old.FluidObjectProviderKeys<any, any>>);
+    use: TypeOnly<old.FluidObjectProviderKeys<any,any>>);
 use_old_TypeAliasDeclaration_FluidObjectProviderKeys(
     get_current_TypeAliasDeclaration_FluidObjectProviderKeys());
 
