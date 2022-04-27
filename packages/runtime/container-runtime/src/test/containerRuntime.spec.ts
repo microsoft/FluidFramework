@@ -162,7 +162,7 @@ describe("Runtime", () => {
                         assert.strictEqual(error.error.message, "Any");
                     });
 
-                    it("No errors propagate to the container when callback with rollback", () => {
+                    it("No errors propagate to the container on rollback", () => {
                         assert.throws(
                             () => containerRuntime.orderSequentially(
                                 () => {
@@ -173,13 +173,10 @@ describe("Runtime", () => {
                         assert.strictEqual(containerErrors.length, 0);
                     });
 
-                    it("No errors propagate to the container on rollback", () => {
-                        assert.throws(
-                            () => containerRuntime.orderSequentially(
-                                () => {
-                                    throw new Error("Any");
-                                },
-                                OrderSequentiallyFailureMode.Rollback));
+                    it("No errors on successful callback with rollback set", () => {
+                        containerRuntime.orderSequentially(
+                            () => {},
+                            OrderSequentiallyFailureMode.Rollback);
 
                         assert.strictEqual(containerErrors.length, 0);
                     });
