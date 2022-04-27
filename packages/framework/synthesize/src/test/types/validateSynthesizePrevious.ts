@@ -20,9 +20,9 @@ type TypeOnly<T> = {
 * "TypeAliasDeclaration_AsyncFluidObjectProvider": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_AsyncFluidObjectProvider():
-    TypeOnly<old.AsyncFluidObjectProvider<any, any>>;
+    TypeOnly<old.AsyncFluidObjectProvider<any,any>>;
 declare function use_current_TypeAliasDeclaration_AsyncFluidObjectProvider(
-    use: TypeOnly<current.AsyncFluidObjectProvider<any, any>>);
+    use: TypeOnly<current.AsyncFluidObjectProvider<any,any>>);
 use_current_TypeAliasDeclaration_AsyncFluidObjectProvider(
     get_old_TypeAliasDeclaration_AsyncFluidObjectProvider());
 
@@ -32,9 +32,9 @@ use_current_TypeAliasDeclaration_AsyncFluidObjectProvider(
 * "TypeAliasDeclaration_AsyncFluidObjectProvider": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_AsyncFluidObjectProvider():
-    TypeOnly<current.AsyncFluidObjectProvider<any, any>>;
+    TypeOnly<current.AsyncFluidObjectProvider<any,any>>;
 declare function use_old_TypeAliasDeclaration_AsyncFluidObjectProvider(
-    use: TypeOnly<old.AsyncFluidObjectProvider<any, any>>);
+    use: TypeOnly<old.AsyncFluidObjectProvider<any,any>>);
 use_old_TypeAliasDeclaration_AsyncFluidObjectProvider(
     get_current_TypeAliasDeclaration_AsyncFluidObjectProvider());
 
