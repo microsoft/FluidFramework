@@ -173,20 +173,21 @@ export enum ConnectionState {
 export async function waitContainerToCatchUp(container: IContainer) {
     // Make sure we stop waiting if container is closed.
     if (container.closed) {
-        throw new UsageError("Container closed");
+        throw new UsageError("waitContainerToCatchUp: Container closed");
     }
 
     return new Promise<boolean>((resolve, reject) => {
         const deltaManager = container.deltaManager;
 
-        container.on("closed", (err?: IErrorBase | undefined) => {
+        const closedCallback = (err?: IErrorBase | undefined) => {
             const baseMessage = "Container closed while waiting to catch up";
             reject(
                 err !== undefined
                     ? wrapError(err, (innerMessage) => new GenericError(`${baseMessage}: ${innerMessage}`))
                     : new GenericError(baseMessage),
             );
-        });
+        };
+        container.on("closed", closedCallback);
 
         const waitForOps = () => {
             assert(container.connectionState !== ConnectionState.Disconnected,
@@ -197,11 +198,13 @@ export async function waitContainerToCatchUp(container: IContainer) {
             assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
                 0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
             if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
+                container.off("closed", closedCallback);
                 resolve(hasCheckpointSequenceNumber);
                 return;
             }
             const callbackOps = (message: ISequencedDocumentMessage) => {
                 if (connectionOpSeqNumber <= message.sequenceNumber) {
+                    container.off("closed", closedCallback);
                     resolve(hasCheckpointSequenceNumber);
                     deltaManager.off("op", callbackOps);
                 }
