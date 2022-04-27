@@ -55,10 +55,6 @@ export interface IMonacoViewProps {
 export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) => {
     const { sharedString } = props;
     const viewElementRef = useRef<HTMLDivElement>(null);
-    const codeModelRef = useRef<monaco.editor.ITextModel>(null);
-    const outputModelRef = useRef<monaco.editor.ITextModel>(null);
-    const codeEditorRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
-    const ignoreModelContentChanges = useRef<boolean>(false);
 
     // Should only need to set the compiler options once ever
     useEffect(() => {
@@ -69,24 +65,25 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
     // all the monaco stuff away, recreate it, and reregister all event listeners appropriately.
     // TODO: There is probably some cleanup that should happen on the monaco resources that we are throwing away.
     useEffect(() => {
-        codeModelRef.current = monaco.editor.createModel(sharedString.getText(), "typescript");
-        outputModelRef.current = monaco.editor.createModel("", "javascript");
-        codeEditorRef.current = monaco.editor.create(
+        const codeModel = monaco.editor.createModel(sharedString.getText(), "typescript");
+        const outputModel = monaco.editor.createModel("", "javascript");
+        const codeEditor = monaco.editor.create(
             viewElementRef.current,
-            { model: codeModelRef.current, automaticLayout: true },
+            { model: codeModel, automaticLayout: true },
         );
 
-        codeEditorRef.current.onDidChangeModelContent((e) => {
+        let ignoreModelContentChanges: boolean = false;
+        codeEditor.onDidChangeModelContent((e) => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
-                worker(codeModelRef.current.uri.toString()).then((client) => {
-                    client.getEmitOutput(codeModelRef.current.uri.toString()).then((r) => {
-                        outputModelRef.current.setValue(r.outputFiles[0].text);
+                worker(codeModel.uri.toString()).then((client) => {
+                    client.getEmitOutput(codeModel.uri.toString()).then((r) => {
+                        outputModel.setValue(r.outputFiles[0].text);
                     });
                 });
             });
 
-            if (ignoreModelContentChanges.current) {
+            if (ignoreModelContentChanges) {
                 return;
             }
 
@@ -114,7 +111,7 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
 
             try {
                 // Attempt to merge the ranges
-                ignoreModelContentChanges.current = true;
+                ignoreModelContentChanges = true;
 
                 /**
                  * Translate the offsets used by the MergeTree into a Range that is
@@ -123,8 +120,8 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
                  * @param offset2 Ending offset
                  */
                 const offsetsToRange = (offset1: number, offset2?: number): monaco.Range => {
-                    const pos1 = codeModelRef.current.getPositionAt(offset1);
-                    const pos2 = (typeof offset2 === "number") ? codeModelRef.current.getPositionAt(offset2) : pos1;
+                    const pos1 = codeModel.getPositionAt(offset1);
+                    const pos2 = (typeof offset2 === "number") ? codeModel.getPositionAt(offset2) : pos1;
                     const range = new monaco.Range(pos1.lineNumber, pos1.column, pos2.lineNumber, pos2.column);
                     return range;
                 };
@@ -136,14 +133,14 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
                             case MergeTreeDeltaType.INSERT: {
                                 const posRange = offsetsToRange(range.position);
                                 const text = segment.text || "";
-                                codeEditorRef.current.executeEdits("remote", [{ range: posRange, text }]);
+                                codeEditor.executeEdits("remote", [{ range: posRange, text }]);
                                 break;
                             }
 
                             case MergeTreeDeltaType.REMOVE: {
                                 const posRange = offsetsToRange(range.position, range.position + segment.text.length);
                                 const text = "";
-                                codeEditorRef.current.executeEdits("remote", [{ range: posRange, text }]);
+                                codeEditor.executeEdits("remote", [{ range: posRange, text }]);
                                 break;
                             }
 
@@ -153,7 +150,7 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
                     }
                 }
             } finally {
-                ignoreModelContentChanges.current = false;
+                ignoreModelContentChanges = false;
             }
         });
     }, [sharedString]);
