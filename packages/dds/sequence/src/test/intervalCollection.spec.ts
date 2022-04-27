@@ -261,7 +261,7 @@ describe("SharedString interval collections", () => {
 
     // TODO: Enable this test suite once correctness issues with reconnect are addressed.
     // See https://github.com/microsoft/FluidFramework/issues/8739 for more context.
-    describe.skip("reconnect", () => {
+    describe("reconnect", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
         let containerRuntime1: MockContainerRuntimeForReconnection;
         let containerRuntime2: MockContainerRuntimeForReconnection;
@@ -305,7 +305,7 @@ describe("SharedString interval collections", () => {
             interval = collection1.add(6, 8, IntervalType.SlideOnRemove); // the "fr" in "friend"
         });
 
-        it("addInterval resubmitted with concurrent insert", async () => {
+        it.only("addInterval resubmitted with concurrent insert", async () => {
             containerRuntime1.connected = false;
 
             sharedString2.insertText(7, "amily its my f");

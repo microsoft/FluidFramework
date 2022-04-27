@@ -504,15 +504,15 @@ export class MapKernel implements IValueTypeCreator {
      * also sent if we are asked to resubmit the message.
      * @returns True if the operation was submitted, false otherwise.
      */
-    public trySubmitMessage(op: any, localOpMetadata: unknown): boolean {
+    public trySubmitMessage(op: any, _localOpMetadata: unknown): boolean {
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
-            const mapLocalMetadata: Partial<IMapMessageLocalMetadata> = localOpMetadata;
+            // const mapLocalMetadata: Partial<IMapMessageLocalMetadata> = localOpMetadata;
             // we don't know how to rebase these operations, so if any other op has come in
             // we will fail.
-            if(this.lastProcessedSeq !== mapLocalMetadata?.lastProcessedSeq) {
-                throw new Error("SharedInterval does not support reconnect in presence of external changes");
-            }
+            // if(this.lastProcessedSeq !== mapLocalMetadata?.lastProcessedSeq) {
+            //     throw new Error("SharedInterval does not support reconnect in presence of external changes");
+            // }
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.messageHandlers.get(type)!.submit(op as IMapOperation);
             return true;
