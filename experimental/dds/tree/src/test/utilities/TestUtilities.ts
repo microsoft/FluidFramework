@@ -300,7 +300,10 @@ export async function setUpLocalServerTestSharedTree(
 	};
 
 	function makeTestLoader(provider: TestObjectProvider): IHostLoader {
-		return provider.makeTestLoader({ loaderProps: { options: { maxClientLeaveWaitTime: 1000 } } });
+		const fluidEntryPoint = runtimeFactory();
+		return provider.createLoader([[defaultCodeDetails, fluidEntryPoint]], {
+			options: { maxClientLeaveWaitTime: 1000 },
+		});
 	}
 
 	let provider: TestObjectProvider;
