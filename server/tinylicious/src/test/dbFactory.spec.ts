@@ -135,7 +135,7 @@ describe("Tinylicious", () => {
                     const provider = new Provider().defaults(config.value);
                     const dbFactory = await getDbFactory(provider);
 
-                    db = await dbFactory.connect();
+                    db = await dbFactory.connect(false);
                 });
 
                 afterEach(async () => {
