@@ -91,6 +91,9 @@ export class ContainerContext implements IContainerContext {
         return this.container.clientId;
     }
 
+    /**
+     * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
+     */
     public get id(): string {
         const resolvedUrl = this.container.resolvedUrl;
         if (isFluidResolvedUrl(resolvedUrl)) {
