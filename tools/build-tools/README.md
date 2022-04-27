@@ -32,11 +32,12 @@ To run that version, just do one of:
 
 There are several also ways to use the local version of `@fluidframework/build-tools` from within the repo.
 Just build it (as in "Setup") then do one of:
-* Use (npm link)[https://docs.npmjs.com/cli/v8/commands/npm-link] with this package to override the version of it used in the root package (which is the `client` lerna package, but often used to build other as well). This will make scripts like `build:fast` use the linked version.
-* Use `--symlink:full`: Use some mechanism to run a working version of fluid-build with `--symlink:full`. This will setup the repo to use its included build tools for subsequent runs just like (npm link)[https://docs.npmjs.com/cli/v8/commands/npm-link], but also links everything else together.
+* Use [npm link](https://docs.npmjs.com/cli/v8/commands/npm-link) with this package to override the version of it used in the root package (which is the `client` lerna package, but often used to build other as well). This will make scripts like `build:fast` use the linked version.
 * use `node bin/tool-name` in this directory or `node tools/build-tools/bin/fluid-build tool-name` from the root.
 
 You can also use `npx --package "@fluidframework/build-tools" tool-name`, but exactly how versioning on this works and how it can be specified depends on the npm version and isn't super clear.
+
+Using `fluid-build`'s `--symlink:full` does **NOT** symlink the version of build tools in the repo into the root package: the root package will still use the published build-tools package.
 
 <!-- this list of arguments is duplicated in `src/common/commonOptions.ts` and they should be updated together -->
 
@@ -77,7 +78,7 @@ Options:
   -s --script <name>  npm script to execute (default:build)
      --server         Operate on the server monorepo (default: client monorepo). Overridden by `--all`
      --symlink        Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
-     --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
+     --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks more things in the repo together: exactly what additional things it links is unclear, but it is not everything. CI does not ensure this configuration is functional, so it may or may not work.
      --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
      --vscode         Output error message to work with default problem matcher in vscode
      --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
@@ -110,7 +111,7 @@ fluid-build --rebuild merge     # clean and build packages matching 'merge' in a
 fluid-build --clean common      # cleaning packages containing 'common' in any repo
 ```
 
-Symlink commands to change the symlink to either limit to single monorepo, or cross monorepo
+Symlink commands to change the symlink to either limit to single monorepo (collection of packages managed by lerna), or cross monorepo
 
 ```sh
 fluid-build --symlink:full    # switch to full link mode (cross monorepos)
