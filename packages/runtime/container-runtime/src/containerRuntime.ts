@@ -205,6 +205,7 @@ export interface ISummaryConfigurationHeuristicSettings extends ISummaryConfigur
     idleTime: number;
     maxTime: number;
     maxOps: number;
+    minOpsForAttemptOnClose: number;
 }
 
 export type ISummaryConfiguration =
@@ -226,6 +227,7 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
     // Snapshot if 1000 ops received since last snapshot.
     maxOps: 1000,
 
+    minOpsForAttemptOnClose: 50,
     // Wait 2 minutes for summary ack
     // this is less than maxSummarizeAckWaitTime
     // the min of the two will be chosen

@@ -27,6 +27,7 @@ const testContainerConfig: ITestContainerConfig = {
                 idleTime: 5000,
                 maxTime: 5000 * 12,
                 maxOps: 1,
+                minOpsForAttemptOnClose: 50,
                 // Wait 2 minutes for summary ack
                 // this is less than maxSummarizeAckWaitTime
                 // the min of the two will be chosen

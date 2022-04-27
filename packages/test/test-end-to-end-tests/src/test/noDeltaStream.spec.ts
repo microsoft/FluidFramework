@@ -43,6 +43,7 @@ const testContainerConfig: ITestContainerConfig = {
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps,
+                minOpsForAttemptOnClose: 50,
                 maxAckWaitTime: 120000, // 2 min
                 maxOpsSinceLastSummary: 7000,
                 initialSummarizerDelayMs: 0,

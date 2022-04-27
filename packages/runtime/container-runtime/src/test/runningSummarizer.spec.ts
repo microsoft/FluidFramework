@@ -47,6 +47,7 @@ describe("Runtime", () => {
                 maxOpsSinceLastSummary: 7000,
                 initialSummarizerDelayMs: 0,
                 summarizerClientElection: false,
+                minOpsForAttemptOnClose: 50,
             };
 
             let shouldDeferGenerateSummary: boolean = false;

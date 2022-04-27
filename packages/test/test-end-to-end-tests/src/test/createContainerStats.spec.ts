@@ -40,6 +40,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         idleTime: IdleDetectionTime,
         maxTime: IdleDetectionTime * 12,
         maxOps: 1000,
+        minOpsForAttemptOnClose: 50,
         maxAckWaitTime: 600000,
         maxOpsSinceLastSummary: 7000,
         initialSummarizerDelayMs: 10,

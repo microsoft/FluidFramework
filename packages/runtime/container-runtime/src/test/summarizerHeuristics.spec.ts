@@ -21,6 +21,7 @@ describe("Runtime", () => {
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
+                minOpsForAttemptOnClose: 50,
                 maxAckWaitTime: 120000, // 2 min
                 maxOpsSinceLastSummary: 7000,
                 initialSummarizerDelayMs: 0,
@@ -44,7 +45,6 @@ describe("Runtime", () => {
                 refSequenceNumber = 0,
                 lastOpSequenceNumber = refSequenceNumber,
                 summaryTime = Date.now(),
-                minOpsForAttemptOnClose = 50,
                 idleTime = defaultSummaryConfig.idleTime,
                 maxTime = defaultSummaryConfig.maxTime,
                 maxOps = defaultSummaryConfig.maxOps,
@@ -52,10 +52,10 @@ describe("Runtime", () => {
                 maxOpsSinceLastSummary = defaultSummaryConfig.maxOpsSinceLastSummary,
                 initialSummarizerDelayMs = defaultSummaryConfig.initialSummarizerDelayMs,
                 summarizerClientElection = defaultSummaryConfig.summarizerClientElection,
+                minOpsForAttemptOnClose = defaultSummaryConfig.minOpsForAttemptOnClose,
                 run = true,
             }: Partial<ISummaryConfigurationHeuristicSettings & ISummarizeAttempt & {
                 lastOpSequenceNumber: number;
-                minOpsForAttemptOnClose: number;
                 run: boolean;
             }> = {}) {
                 data = new SummarizeHeuristicData(lastOpSequenceNumber, { refSequenceNumber, summaryTime });
@@ -67,8 +67,9 @@ describe("Runtime", () => {
                     maxAckWaitTime,
                     maxOpsSinceLastSummary,
                     initialSummarizerDelayMs,
-                    summarizerClientElection } as const;
-                runner = new SummarizeHeuristicRunner(data, summaryConfig, trySummarize, minOpsForAttemptOnClose);
+                    summarizerClientElection,
+                    minOpsForAttemptOnClose } as const;
+                runner = new SummarizeHeuristicRunner(data, summaryConfig, trySummarize);
                 if (run) {
                     runner.run();
                 }

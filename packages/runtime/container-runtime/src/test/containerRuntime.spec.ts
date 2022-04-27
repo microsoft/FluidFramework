@@ -108,6 +108,7 @@ describe("Runtime", () => {
                                 idleTime: 5000,
                                 maxTime: 5000 * 12,
                                 maxOps: 1000, // 1k ops (active)
+                                minOpsForAttemptOnClose: 50,
                                 maxAckWaitTime: 120000, // 2 min
                                 maxOpsSinceLastSummary: 9999,
                                 initialSummarizerDelayMs: 100,

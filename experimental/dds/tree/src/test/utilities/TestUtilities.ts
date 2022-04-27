@@ -284,18 +284,19 @@ export async function setUpLocalServerTestSharedTree(
 			new TestFluidObjectFactory(registry),
 			{
 				enableOfflineLoad: true,
-                summaryOptions: {
-                    summaryConfigOverrides: {
-                        state: 'enabled',
-                        idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
-                        maxTime: 1000 * 12,
-                        maxOps: 1,
-                        maxAckWaitTime: 120000,
-                        maxOpsSinceLastSummary: 7000,
-                        initialSummarizerDelayMs: 0,
-                        summarizerClientElection: false,
-                    },
-                },
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: 'enabled',
+						idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
+						maxTime: 1000 * 12,
+						maxOps: 1,
+						minOpsForAttemptOnClose: 50,
+						maxAckWaitTime: 120000,
+						maxOpsSinceLastSummary: 7000,
+						initialSummarizerDelayMs: 0,
+						summarizerClientElection: false,
+					},
+				},
 			},
 			[innerRequestHandler]
 		);

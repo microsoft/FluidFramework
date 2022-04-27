@@ -28,6 +28,7 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
                         idleTime: 5000,
                         maxTime: 5000 * 12,
                         maxOps: 1000, // 1k ops (active)
+                        minOpsForAttemptOnClose: 50,
                         maxAckWaitTime: 120000, // 2 min
                         maxOpsSinceLastSummary: 7000,
                         initialSummarizerDelayMs: 0,

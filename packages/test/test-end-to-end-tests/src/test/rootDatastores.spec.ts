@@ -405,6 +405,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                                 idleTime: IdleDetectionTime,
                                 maxTime: IdleDetectionTime * 12,
                                 maxOps: 1000, // 1k ops (active)
+                                minOpsForAttemptOnClose: 50,
                                 maxAckWaitTime: 120000, // 2 min
                                 maxOpsSinceLastSummary: 7000,
                                 initialSummarizerDelayMs: 10,

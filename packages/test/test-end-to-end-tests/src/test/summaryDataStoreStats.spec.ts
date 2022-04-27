@@ -52,6 +52,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         maxOpsSinceLastSummary: 7000,
         initialSummarizerDelayMs: 10,
         summarizerClientElection: false,
+        minOpsForAttemptOnClose: 50,
     };
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
