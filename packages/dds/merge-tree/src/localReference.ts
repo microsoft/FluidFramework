@@ -16,6 +16,11 @@ import {
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 
+// GH #1009: i will deprecate this class and unify on the ReferencePositions interface
+// the only place it's created directly is in legacy tests. real clients cannot
+// create it as it take Client which is not available. We will move to an internal
+// class which will store the linked list node reference which we want to keep
+// private.
 export class LocalReference implements ReferencePosition {
     public static readonly DetachedPosition: number = -1;
 
@@ -122,6 +127,12 @@ export class LocalReference implements ReferencePosition {
     }
 }
 
+// GH #1009: We should move these to linked lists
+// the current arrays are not performance when
+// splitting and merging
+// i also plan to bi-directionally link
+// the local reference to it's node,
+// to keep remove fast as well.
 interface IRefsAtOffset {
     before?: LocalReference[];
     at?: LocalReference[];
@@ -333,6 +344,8 @@ export class LocalReferenceCollection {
         }
     }
 
+    // GH #10031: there may be implications when keeping the references
+    // on the deleted segment, so we can rebase on reconnect/overlap
     public addBeforeTombstones(...refs: Iterable<LocalReference>[]) {
         const beforeRefs: LocalReference[] = [];
 
@@ -363,6 +376,8 @@ export class LocalReferenceCollection {
         }
     }
 
+    // GH #10031: there may be implications when keeping the references
+    // on the deleted segment, so we can rebase on reconnect/overlap
     public addAfterTombstones(...refs: Iterable<LocalReference>[]) {
         const afterRefs: LocalReference[] = [];
 

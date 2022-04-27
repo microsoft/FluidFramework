@@ -236,7 +236,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         try {
             result = undefined;
             result = summarizer.summarizeOnDemand({ reason: "test" });
-        } catch(error) {
+        } catch (error: any) {
             assert(error.errorType === "summarizingError", "Should throw a summarizer error");
         }
         assert(result === undefined, "Should not have attempted summary with disposed summarizer");

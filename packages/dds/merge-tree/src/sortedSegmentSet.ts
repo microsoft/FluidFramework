@@ -16,6 +16,8 @@ import { ISegment } from "./mergeTree";
  * can be inserted into that order.
  */
 export class SortedSegmentSet<T extends ISegment | { readonly segment: ISegment } = ISegment> {
+    // GH #1009 for performance this should likely become a tree as we'll be doing may more
+    // modifications when we add support for tracking local references
     private readonly ordinalSortedItems: T[] = [];
 
     public get size(): number {
