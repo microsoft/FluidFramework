@@ -1,0 +1,12 @@
+{
+    "folders": [
+      {
+        "name": "FluidFramework",
+        "path": "../../../../"
+      },
+      {
+        "name": "@fluid-experimental/tree",
+        "path": ".."
+      }
+    ],
+  }
