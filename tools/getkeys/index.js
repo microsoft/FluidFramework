@@ -49,7 +49,8 @@ async function execAsync(command) {
 async function setEnv(name, value) {
     const shell = process.env.SHELL ? process.env.SHELL.split('/').pop() : null;
     const termProgram = process.env.TERM_PROGRAM;
-    const setString = `export ${name}="${value}"`;
+    const escapedValue = value.split('"').join('\\"');
+    const setString = `export ${name}="${escapedValue}"`;
     switch (shell) {
         case "bash":
             const destFile = termProgram === "Apple_Terminal" ? "~/.bash_profile" : "~/.bashrc";
@@ -59,7 +60,6 @@ async function setEnv(name, value) {
         case "fish":
             return execAsync(`set -xU '${name}' '${value}'`, { "shell": process.env.SHELL });
         default: // windows
-            const escapedValue = value.split('"').join('\\"');
             return execAsync(`setx ${name} "${escapedValue}"`);
     }
 }
