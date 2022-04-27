@@ -30,7 +30,6 @@ import {
     IContainerLoadMode,
     IFluidCodeDetails,
     isFluidCodeDetails,
-    IErrorBase,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
@@ -179,7 +178,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
     return new Promise<boolean>((resolve, reject) => {
         const deltaManager = container.deltaManager;
 
-        const closedCallback = (err?: IErrorBase | undefined) => {
+        const closedCallback = (err?: ICriticalContainerError | undefined) => {
             const baseMessage = "Container closed while waiting to catch up";
             reject(
                 err !== undefined
