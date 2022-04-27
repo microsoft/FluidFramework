@@ -289,7 +289,7 @@ export async function setUpLocalServerTestSharedTree(
 						state: 'enabled',
 						idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
 						maxTime: 1000 * 12,
-						maxOps: 1,
+						maxOps: 1000,
 						minOpsForAttemptOnClose: 50,
 						maxAckWaitTime: 120000,
 						maxOpsSinceLastSummary: 7000,
