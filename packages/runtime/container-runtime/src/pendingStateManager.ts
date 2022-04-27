@@ -421,12 +421,10 @@ export class PendingStateManager implements IDisposable {
         const pendingState = this.pendingStates.pop()!;
         switch (pendingState.type) {
             case "message":
-                {
-                    this.stateHandler.rollback(
-                        pendingState.messageType,
-                        pendingState.content,
-                        pendingState.localOpMetadata);
-                }
+                this.stateHandler.rollback(
+                    pendingState.messageType,
+                    pendingState.content,
+                    pendingState.localOpMetadata);
                 break;
             default:
                 throw new Error(`Can't rollback state ${pendingState.type}`);
@@ -470,23 +468,17 @@ export class PendingStateManager implements IDisposable {
             const pendingState = this.pendingStates.shift()!;
             switch (pendingState.type) {
                 case "message":
-                    {
-                        this.stateHandler.reSubmit(
-                            pendingState.messageType,
-                            pendingState.content,
-                            pendingState.localOpMetadata,
-                            pendingState.opMetadata);
-                    }
+                    this.stateHandler.reSubmit(
+                        pendingState.messageType,
+                        pendingState.content,
+                        pendingState.localOpMetadata,
+                        pendingState.opMetadata);
                     break;
                 case "flushMode":
-                    {
-                        this.stateHandler.setFlushMode(pendingState.flushMode);
-                    }
+                    this.stateHandler.setFlushMode(pendingState.flushMode);
                     break;
                 case "flush":
-                    {
-                        this.stateHandler.flush();
-                    }
+                    this.stateHandler.flush();
                     break;
                 default:
                     break;
