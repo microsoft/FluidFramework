@@ -90,6 +90,7 @@ import {
     normalizeError,
     MonitoringContext,
     loggerToMonitoringContext,
+    wrapError,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -170,15 +171,21 @@ export enum ConnectionState {
  */
 export async function waitContainerToCatchUp(container: IContainer) {
     // Make sure we stop waiting if container is closed.
-    const containerClosedMessage = "Container is closed";
     if (container.closed) {
-        throw new Error(containerClosedMessage);
+        throw new UsageError("Container closed");
     }
 
     return new Promise<boolean>((resolve, reject) => {
         const deltaManager = container.deltaManager;
 
-        container.on("closed", (err?: IErrorBase | undefined) => reject(err ?? new Error(containerClosedMessage)));
+        container.on("closed", (err?: IErrorBase | undefined) => {
+            const baseMessage = "Container closed while waiting to catch up";
+            reject(
+                err !== undefined
+                    ? wrapError(err, (innerMessage) => new GenericError(`${baseMessage}: ${innerMessage}`))
+                    : new GenericError(baseMessage),
+            );
+        });
 
         const waitForOps = () => {
             assert(container.connectionState !== ConnectionState.Disconnected,
