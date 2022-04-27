@@ -597,7 +597,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         this.loadFinished();
     }
 
-    protected applyStashedOp(content: any) {
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+     */
+    protected applyStashedOp(content: any): unknown {
         return this.client.applyStashedOp(content);
     }
 
