@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/task-selection",
   "version": "0.59.3000",
+  "private": true,
   "description": "Example demonstrating selecting a unique task amongst connected Fluid clients",
   "homepage": "https://fluidframework.com",
   "repository": {

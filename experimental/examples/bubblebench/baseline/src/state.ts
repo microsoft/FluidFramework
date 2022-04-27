@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAppState, IClient, makeBubble, makeClient } from "@fluid-experimental/bubblebench-common";
+import { IAppState, IClient, makeBubble, makeClient } from "@fluid-example/bubblebench-common";
 
 export class AppState implements IAppState {
     public readonly applyEdits = () => {};

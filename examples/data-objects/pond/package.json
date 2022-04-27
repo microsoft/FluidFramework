@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/pond",
   "version": "0.59.3000",
+  "private": true,
   "description": "Grab bag of Fluid scenarios in one Fluid Container.",
   "homepage": "https://fluidframework.com",
   "repository": {
