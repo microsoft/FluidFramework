@@ -4,7 +4,6 @@
  */
 import { strict as assert } from "assert";
 import {
-    IFluidDataStoreChannel,
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
@@ -39,7 +38,7 @@ describe("Data Store Creation Tests", () => {
 
         let storage: IDocumentStorageService;
         let scope: FluidObject;
-        const attachCb = (mR: IFluidDataStoreChannel) => { };
+        const makeLocallyVisibleFn = () => {};
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
         const dataStoreAName = "dataStoreA";
@@ -90,6 +89,7 @@ describe("Data Store Creation Tests", () => {
                 get IFluidDataStoreRegistry() { return globalRegistry; },
                 get: async (pkg) => globalRegistryEntries.get(pkg),
             };
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = {
                 IFluidDataStoreRegistry: globalRegistry,
                 on: (event, listener) => { },
@@ -118,7 +118,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                bindChannelFn: attachCb,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -145,7 +145,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                bindChannelFn: attachCb,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -172,7 +172,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                bindChannelFn: attachCb,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -199,7 +199,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                bindChannelFn: attachCb,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -226,7 +226,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreBId),
-                bindChannelFn: attachCb,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -250,7 +250,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreCId),
-                bindChannelFn: attachCb,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -277,7 +277,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                bindChannelFn: attachCb,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -304,7 +304,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                bindChannelFn: attachCb,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,
@@ -331,7 +331,7 @@ describe("Data Store Creation Tests", () => {
                 storage,
                 scope,
                 createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
-                bindChannelFn: attachCb,
+                makeLocallyVisibleFn,
                 snapshotTree: undefined,
                 isRootDataStore: false,
                 writeGCDataAtRoot: true,

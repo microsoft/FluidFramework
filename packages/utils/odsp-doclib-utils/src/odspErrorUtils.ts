@@ -26,7 +26,7 @@ export const fetchIncorrectResponse = 712;
 // and is not likely to change.
 export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
 
-export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string) => string | undefined | null}) {
+export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string) => string | undefined | null }) {
     interface LoggingHeader {
         headerName: string;
         logName: string;
@@ -87,8 +87,7 @@ export function tryParseErrorResponse(
                 return { success: true, errorResponse: parsed };
             }
         }
-    }
-    catch(e) {}
+    } catch (e) {}
     return { success: false };
 }
 
@@ -168,7 +167,7 @@ export function createOdspNetworkError(
                 errorMessage, DriverErrorType.unsupportedClientProtocolVersion, driverProps);
             break;
         case 410:
-            error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp,driverProps);
+            error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, driverProps);
             break;
         case 409:
             // This status code is sent by the server when the client and server epoch mismatches.

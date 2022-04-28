@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ITelemetryGenericEvent, ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
@@ -133,43 +133,43 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
         super();
     }
 
-    private readonly expectedEvents: ({index: number, event: ITelemetryGenericEvent | undefined} | undefined)[] = [];
+    private readonly expectedEvents: ({ index: number, event: ITelemetryGenericEvent | undefined } | undefined)[] = [];
     private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
     public registerExpectedEvent(... orderedExpectedEvents: ITelemetryGenericEvent[]) {
-        if(this.expectedEvents.length !== 0) {
+        if (this.expectedEvents.length !== 0) {
             // we don't have to error here. just no reason not to. given the events must be
             // ordered it could be tricky to figure out problems around multiple registrations.
             throw new Error(
                 "Expected events already registered.\n"
                 + "Call reportAndClearTrackedEvents to clear them before registering more");
         }
-        this.expectedEvents.push(... orderedExpectedEvents.map((event,index)=>({index, event})));
+        this.expectedEvents.push(... orderedExpectedEvents.map((event, index) => ({ index, event })));
     }
 
     send(event: ITelemetryBaseEvent): void {
         const ee = this.expectedEvents[0]?.event;
-        if(ee?.eventName === event.eventName) {
+        if (ee?.eventName === event.eventName) {
             let matches = true;
-            for(const key of Object.keys(ee)) {
-                if(ee[key] !== event[key]) {
+            for (const key of Object.keys(ee)) {
+                if (ee[key] !== event[key]) {
                     matches = false;
                     break;
                 }
             }
-            if(matches) {
+            if (matches) {
                 // we found an expected event
                 // so remove it from the list of expected events
                 // and if it is an error, change it to generic
                 // this helps keep our telemetry clear of
                 // expected errors.
                 this.expectedEvents.shift();
-                if(event.category === "error") {
+                if (event.category === "error") {
                     event.category = "generic";
                 }
             }
         }
-        if(event.category === "error") {
+        if (event.category === "error") {
             this.unexpectedErrors.push(event);
         }
 
@@ -377,7 +377,7 @@ export class TestObjectProvider implements ITestObjectProvider {
         this._urlResolver = undefined;
         this._documentIdStrategy.reset();
         const logError = getUnexpectedLogErrorException(this._logger);
-        if(logError) {
+        if (logError) {
             throw logError;
         }
         this._logger = undefined;
@@ -394,15 +394,15 @@ export class TestObjectProvider implements ITestObjectProvider {
 }
 
 export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string) {
-    if(logger === undefined) {
+    if (logger === undefined) {
         return;
     }
     const results = logger.reportAndClearTrackedEvents();
-    if(results.unexpectedErrors.length > 0) {
+    if (results.unexpectedErrors.length > 0) {
         return new Error(
             `${prefix ?? ""}Unexpected Errors in Logs:\n${JSON.stringify(results.unexpectedErrors, undefined, 2)}`);
     }
-    if(results.expectedNotFound.length > 0) {
+    if (results.expectedNotFound.length > 0) {
         return new Error(
             `${prefix ?? ""}Expected Events not found:\n${JSON.stringify(results.expectedNotFound, undefined, 2)}`);
     }

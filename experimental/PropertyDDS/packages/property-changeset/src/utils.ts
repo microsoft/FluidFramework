@@ -6,7 +6,7 @@
 import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
 import { eachOfSeries, eachSeries, ErrorCallback, series, timesSeries, whilst } from "async";
 
-import {copy as cloneDeep} from "fastest-json-copy";
+import { copy as cloneDeep } from "fastest-json-copy";
 import isNumber from "lodash/isNumber";
 import isString from "lodash/isString";
 import isEmpty from "lodash/isEmpty";

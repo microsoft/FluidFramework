@@ -25,7 +25,6 @@ import {
     normalizeError,
     logIfFalse,
     safeRaiseEvent,
-    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -78,8 +77,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     extends TypedEventEmitter<IDeltaManagerInternalEvents>
     implements
     IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-    IEventProvider<IDeltaManagerInternalEvents>
-{
+    IEventProvider<IDeltaManagerInternalEvents> {
     public readonly connectionManager: TConnectionManager;
 
     public get active(): boolean { return this._active(); }
@@ -124,7 +122,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private readonly throttlingIdSet = new Set<string>();
     private timeTillThrottling: number = 0;
 
-    private readonly closeAbortController = new AbortController();
+    public readonly closeAbortController = new AbortController();
 
     private readonly deltaStorageDelayId = uuid();
     private readonly deltaStreamDelayId = uuid();
@@ -202,11 +200,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         this.messageBuffer.push(message);
 
+        this.emit("submitOp", message);
+
         if (!batch) {
             this.flush();
         }
 
-        this.emit("submitOp", message);
         return message.clientSequenceNumber;
     }
 
@@ -268,7 +267,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     ) {
         super();
         const props: IConnectionManagerFactoryArgs = {
-            incomingOpHandler:(messages: ISequencedDocumentMessage[], reason: string) =>
+            incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) =>
                 this.enqueueMessages(messages, reason),
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
             reconnectionDelayHandler: (delayMs: number, error: unknown) =>
@@ -440,8 +439,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         from: number, // inclusive
         to: number | undefined, // exclusive
         callback: (messages: ISequencedDocumentMessage[]) => void,
-        cacheOnly: boolean)
-    {
+        cacheOnly: boolean) {
         const docService = this.serviceProvider();
         if (docService === undefined) {
             throw new Error("Delta manager is not attached");
@@ -570,21 +568,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     }
 
     private disconnectHandler(reason: string) {
-        if (this.messageBuffer.length > 0) {
-            // Behavior is not well defined here RE batches across connections / disconnect.
-            // DeltaManager overall policy - drop all ops on disconnection and rely on
-            // container runtime to deal with resubmitting any ops that did not make it through.
-            // So drop them, but also raise error event to look into details.
-            this.logger.sendTelemetryEvent({
-                eventName: "OpenBatchOnDisconnect",
-                length: this.messageBuffer.length,
-                reason: {
-                    value: reason,
-                    tag: TelemetryDataTag.PackageData,
-                },
-            });
-            this.messageBuffer.length = 0;
-        }
+        this.messageBuffer.length = 0;
         this.emit("disconnect", reason);
     }
 
@@ -725,6 +709,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                         // This looks like a data corruption but the culprit has been found instead
                         // to be the file being overwritten in storage.  See PR #5882.
                         const error = new NonRetryableError(
+                            // pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
                             "Found two messages with the same sequenceNumber but different payloads",
                             DriverErrorType.fileOverwrittenInStorage,
                             {
@@ -779,6 +764,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
+            // pre-0.58 error message: msnMovesBackwards
             throw new DataCorruptionError("Found a lower minimumSequenceNumber (msn) than previously recorded", {
                 ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
@@ -787,6 +773,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
+            // pre-0.58 error message: nonSequentialSequenceNumber
             throw new DataCorruptionError("Found a non-Sequential sequenceNumber", {
                 ...extractSafePropertiesFromMessage(message),
                 clientId: this.connectionManager.clientId,
@@ -831,8 +818,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private async fetchMissingDeltasCore(
         reason: string,
         cacheOnly: boolean,
-        to?: number)
-    {
+        to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetchReason !== undefined) {
             return;
@@ -876,7 +862,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 },
                 cacheOnly);
         } catch (error) {
-            this.logger.sendErrorEvent({eventName: "GetDeltas_Exception"}, error);
+            this.logger.sendErrorEvent({ eventName: "GetDeltas_Exception" }, error);
             this.close(normalizeError(error));
         } finally {
             this.refreshDelayInfo(this.deltaStorageDelayId);

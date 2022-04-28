@@ -7,8 +7,10 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
+    IFluidErrorBase,
     loggerToMonitoringContext,
     MonitoringContext,
+    normalizeError,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaConnection,
@@ -33,6 +35,7 @@ import {
     InstrumentedStorageTokenFetcher,
     OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
+import type { io as SocketIOClientStatic } from "socket.io-client";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
@@ -73,11 +76,12 @@ export class OdspDocumentService implements IDocumentService {
         getStorageToken: InstrumentedStorageTokenFetcher,
         getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
-        socketIoClientFactory: () => Promise<SocketIOClientStatic>,
+        socketIoClientFactory: () => Promise<typeof SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         epochTracker: EpochTracker,
         socketReferenceKeyPrefix?: string,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
             getOdspResolvedUrl(resolvedUrl),
@@ -89,6 +93,7 @@ export class OdspDocumentService implements IDocumentService {
             hostPolicy,
             epochTracker,
             socketReferenceKeyPrefix,
+            clientIsSummarizer,
         );
     }
 
@@ -123,11 +128,12 @@ export class OdspDocumentService implements IDocumentService {
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
-        private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
+        private readonly socketIoClientFactory: () => Promise<typeof SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
         private readonly socketReferenceKeyPrefix?: string,
+        private readonly clientIsSummarizer?: boolean,
     ) {
         this._policies = {
             // load in storage-only mode if a file version is specified
@@ -145,9 +151,7 @@ export class OdspDocumentService implements IDocumentService {
             }));
 
         this.hostPolicy = hostPolicy;
-        this.hostPolicy.fetchBinarySnapshotFormat ??=
-            this.mc.config.getBoolean("Fluid.Driver.Odsp.binaryFormatSnapshot");
-        if (this.odspResolvedUrl.summarizer) {
+        if (this.clientIsSummarizer) {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
     }
@@ -181,6 +185,7 @@ export class OdspDocumentService implements IDocumentService {
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
+                this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
             );
         }
 
@@ -223,6 +228,18 @@ export class OdspDocumentService implements IDocumentService {
         );
     }
 
+    /** Annotate the given error indicating which connection step failed */
+    private annotateConnectionError(
+        error: any,
+        failedConnectionStep: string,
+        separateTokenRequest: boolean,
+    ): IFluidErrorBase {
+        return normalizeError(error, { props: {
+            failedConnectionStep,
+            separateTokenRequest,
+        } });
+    }
+
     /**
      * Connects to a delta stream endpoint for emitting ops.
      *
@@ -238,23 +255,31 @@ export class OdspDocumentService implements IDocumentService {
                 ? Promise.resolve(null)
                 : this.getWebsocketToken!(options);
 
+            const annotateAndRethrowConnectionError = (step: string) => (error: any) => {
+                throw this.annotateConnectionError(error, step, !requestWebsocketTokenFromJoinSession);
+            };
+
             const joinSessionPromise = this.joinSession(requestWebsocketTokenFromJoinSession, options);
             const [websocketEndpoint, websocketToken, io] =
                 await Promise.all([
-                    joinSessionPromise,
-                    websocketTokenPromise,
-                    this.socketIoClientFactory(),
+                    joinSessionPromise.catch(annotateAndRethrowConnectionError("joinSession")),
+                    websocketTokenPromise.catch(annotateAndRethrowConnectionError("getWebsocketToken")),
+                    this.socketIoClientFactory().catch(annotateAndRethrowConnectionError("socketIoClientFactory")),
                 ]);
 
             const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
             if (finalWebsocketToken === null) {
-                throw new NonRetryableError(
-                    "Websocket token is null",
-                    OdspErrorType.fetchTokenError,
-                    { driverVersion });
+                throw this.annotateConnectionError(
+                    new NonRetryableError(
+                        "Websocket token is null",
+                        OdspErrorType.fetchTokenError,
+                        { driverVersion },
+                    ),
+                    "getWebsocketToken",
+                    !requestWebsocketTokenFromJoinSession);
             }
             try {
-                const connection = await this.connectToDeltaStreamWithRetry(
+                const connection = await this.createDeltaConnection(
                     websocketEndpoint.tenantId,
                     websocketEndpoint.id,
                     finalWebsocketToken,
@@ -278,10 +303,15 @@ export class OdspDocumentService implements IDocumentService {
                 return connection;
             } catch (error) {
                 this.cache.sessionJoinCache.remove(this.joinSessionKey);
+
+                const normalizedError = this.annotateConnectionError(
+                    error,
+                    "createDeltaConnection",
+                    !requestWebsocketTokenFromJoinSession);
                 if (typeof error === "object" && error !== null) {
-                    error.socketDocumentId = websocketEndpoint.id;
+                    normalizedError.addTelemetryProperties({ socketDocumentId: websocketEndpoint.id });
                 }
-                throw error;
+                throw normalizedError;
             }
         });
     }
@@ -321,7 +351,7 @@ export class OdspDocumentService implements IDocumentService {
                             // This document can only be opened in storage-only mode.
                             // DeltaManager will recognize this error
                             // and load without a delta stream connection.
-                            this._policies = {...this._policies,storageOnly: true};
+                            this._policies = { ...this._policies, storageOnly: true };
                             throw new DeltaStreamConnectionForbiddenError(code, { driverVersion });
                         default:
                             continue;
@@ -357,7 +387,7 @@ export class OdspDocumentService implements IDocumentService {
         };
 
         const getResponseAndRefreshAfterDeltaMs = async () => {
-            let _response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
+            const _response = await this.cache.sessionJoinCache.addOrGet(this.joinSessionKey, executeFetch);
             // If the response does not contain refreshSessionDurationSeconds, then treat it as old flow and let the
             // cache entry to be treated as expired after 1 hour.
             _response.joinSessionResponse.refreshSessionDurationSeconds =
@@ -387,16 +417,16 @@ export class OdspDocumentService implements IDocumentService {
                     .catch((error) => {
                         this.mc.logger.sendErrorEvent({
                                 eventName: "JoinSessionRefreshError",
-                                ...props,
+                                details: JSON.stringify(props),
                             },
                             error,
                         );
                     });
             } else {
                 // Logging just for informational purposes to help with debugging as this is a new feature.
-                this.mc.logger.sendErrorEvent({
+                this.mc.logger.sendTelemetryEvent({
                     eventName: "JoinSessionRefreshNotScheduled",
-                    ...props,
+                    details: JSON.stringify(props),
                 });
             }
         }
@@ -409,21 +439,20 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     /**
-     * Connects to a delta stream endpoint
-     * If url #1 fails to connect, tries url #2 if applicable
+     * Creats a connection to the given delta stream endpoint
      *
      * @param tenantId - the ID of the tenant
      * @param documentId - document ID
-     * @param token - authorization token for storage service
+     * @param token - authorization token for delta service
      * @param io - websocket library
      * @param client - information about the client
      * @param webSocketUrl - websocket URL
      */
-    private async connectToDeltaStreamWithRetry(
+    private async createDeltaConnection(
         tenantId: string,
         documentId: string,
         token: string | null,
-        io: SocketIOClientStatic,
+        io: typeof SocketIOClientStatic,
         client: IClient,
         webSocketUrl: string,
     ): Promise<OdspDocumentDeltaConnection> {
@@ -486,9 +515,9 @@ export class OdspDocumentService implements IDocumentService {
             // ICache
             {
                 write: async (key: string, opsData: string) => {
-                    return this.cache.persistedCache.put({...opsKey, key}, opsData);
+                    return this.cache.persistedCache.put({ ...opsKey, key }, opsData);
                 },
-                read: async (key: string) => this.cache.persistedCache.get({...opsKey, key}),
+                read: async (key: string) => this.cache.persistedCache.get({ ...opsKey, key }),
                 remove: () => { this.cache.persistedCache.removeEntries().catch(() => {}); },
             },
             batchSize,

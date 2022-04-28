@@ -38,7 +38,7 @@ import { ChannelStorageService } from "./channelStorageService";
  */
 export abstract class LocalChannelContextBase implements IChannelContext {
     public channel: IChannel | undefined;
-    private attached = false;
+    private globallyVisible = false;
     protected readonly pending: ISequencedDocumentMessage[] = [];
     protected factory: IChannelFactory | undefined;
     constructor(
@@ -62,14 +62,14 @@ export abstract class LocalChannelContextBase implements IChannelContext {
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
-        // Connection events are ignored if the data store is not yet attached or loaded
-        if (this.attached && this.isLoaded) {
+        // Connection events are ignored if the data store is not yet globallyVisible or loaded
+        if (this.globallyVisible && this.isLoaded) {
             this.servicesGetter().value.deltaConnection.setConnectionState(connected);
         }
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
-        assert(this.attached, 0x188 /* "Local channel must be attached when processing op" */);
+        assert(this.globallyVisible, 0x2d3 /* "Local channel must be globally visible when processing op" */);
 
         // A local channel may not be loaded in case where we rehydrate the container from a snapshot because of
         // delay loading. So after the container is attached and some other client joins which start generating
@@ -85,7 +85,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
     public reSubmit(content: any, localOpMetadata: unknown) {
         assert(this.isLoaded, 0x18a /* "Channel should be loaded to resubmit ops" */);
-        assert(this.attached, 0x18b /* "Local channel must be attached when resubmitting op" */);
+        assert(this.globallyVisible, 0x2d4 /* "Local channel must be globally visible when resubmitting op" */);
         this.servicesGetter().value.deltaConnection.reSubmit(content, localOpMetadata);
     }
 
@@ -108,16 +108,16 @@ export abstract class LocalChannelContextBase implements IChannelContext {
         return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
     }
 
-    public markAttached(): void {
-        if (this.attached) {
-            throw new Error("Channel is already attached");
+    public makeVisible(): void {
+        if (this.globallyVisible) {
+            throw new Error("Channel is already globally visible");
         }
 
         if (this.isLoaded) {
             assert(!!this.channel, 0x192 /* "Channel should be there if loaded!!" */);
             this.channel.connect(this.servicesGetter().value);
         }
-        this.attached = true;
+        this.globallyVisible = true;
     }
 
     /**
@@ -232,7 +232,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         blobMap: Map<string, ArrayBufferLike>,
     ): boolean {
         let sanitize = false;
-        const blobsContents: {[path: string]: ArrayBufferLike} = (snapshotTree as any).blobsContents;
+        const blobsContents: { [path: string]: ArrayBufferLike } = (snapshotTree as any).blobsContents;
         Object.entries(blobsContents).forEach(([key, value]) => {
             blobMap.set(key, value);
             if (snapshotTree.blobs[key] !== undefined) {

@@ -99,7 +99,7 @@ export abstract class SnapshotExtractor {
                     let subTree = snapshot;
                     for (const subPath of pathSplit.slice(0, pathSplit.length - 1)) {
                         if (subTree.trees[subPath] === undefined) {
-                            subTree.trees[subPath] = { blobs: {}, commits: {}, trees: {}};
+                            subTree.trees[subPath] = { blobs: {}, trees: {} };
                         }
                         subTree = subTree.trees[subPath];
                     }
@@ -207,8 +207,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         private readonly logger: ITelemetryLogger,
         private readonly allowPacking: boolean,
         private readonly packingLevel: number,
-        private readonly blobCutOffSize?: number)
-    {
+        private readonly blobCutOffSize?: number) {
         super();
     }
 
@@ -289,8 +288,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         summary: ISummaryTree,
         path = "",
         level = 0,
-        aggregatorArg?: BlobAggregator): Promise<ISummaryTree>
-    {
+        aggregatorArg?: BlobAggregator): Promise<ISummaryTree> {
         if (this.blobCutOffSize === undefined || this.blobCutOffSize < 0) {
             return summary;
         }
@@ -308,8 +306,8 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
             assert(level !== this.packingLevel, 0x23c /* "we are not packing at the right level" */);
         }
 
-        const newSummary: ISummaryTree = {...summary};
-        newSummary.tree = { ...newSummary.tree};
+        const newSummary: ISummaryTree = { ...summary };
+        newSummary.tree = { ...newSummary.tree };
         for (const key of Object.keys(summary.tree)) {
             const obj = summary.tree[key];
             // Get path relative to root of data store (where we do aggregation)

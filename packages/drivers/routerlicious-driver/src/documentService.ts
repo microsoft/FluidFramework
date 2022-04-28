@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
-import { IClient} from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -74,6 +74,12 @@ export class DocumentService implements api.IDocumentService {
             false,
             storageRestWrapper);
         const gitManager = new GitManager(historian);
+        const noCacheHistorian = new Historian(
+            this.gitUrl,
+            true,
+            true,
+            storageRestWrapper);
+        const noCacheGitManager = new GitManager(noCacheHistorian);
         const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
             caching: this.driverPolicies.enablePrefetch
                 ? api.LoaderCachingPolicy.Prefetch
@@ -88,7 +94,8 @@ export class DocumentService implements api.IDocumentService {
             documentStorageServicePolicies,
             this.driverPolicies,
             this.blobCache,
-            this.snapshotTreeCache);
+            this.snapshotTreeCache,
+            noCacheGitManager);
         return this.documentStorageService;
     }
 
@@ -142,7 +149,7 @@ export class DocumentService implements api.IDocumentService {
         try {
             const connection = await connect();
             return connection;
-        } catch (error) {
+        } catch (error: any) {
             if (error?.statusCode === 401) {
                 // Fetch new token and retry once,
                 // otherwise 401 will be bubbled up as non-retriable AuthorizationError.

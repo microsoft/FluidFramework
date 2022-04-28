@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { BaseProxifiedProperty } from '@fluid-experimental/property-proxy';
-import { IRepoExpiryGetter, IRepoExpirySetter } from './CommonTypes';
-import { BaseProperty } from '@fluid-experimental/property-properties'
-import { IInspectorSearchState } from './utils';
+import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
+import { BaseProperty } from "@fluid-experimental/property-properties";
+import { IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes";
+import { IInspectorSearchState } from "./utils";
 
 export interface IColumns {
   dataGetter?: (params: IDataGetterParameter) => React.ReactNode | null;
@@ -59,7 +59,7 @@ export interface IDataCreationOptions {
   options?: any;
 }
 
-export type IInspectorColumnsKeys = 'context' | 'name' | 'type' | 'value';
+export type IInspectorColumnsKeys = "context" | "name" | "type" | "value";
 
 export interface IInspectorTableProps {
   /**
@@ -175,7 +175,7 @@ export interface IInspectorSearchMatch {
 }
 
 export type IInspectorSearchCallback = (foundMatches: IInspectorSearchMatch[], matchesMap: IInspectorSearchMatchMap,
-                                        done: boolean, childToParentMap: {[key: string]: string}) => void;
+                                        done: boolean, childToParentMap: { [key: string]: string }) => void;
 
 export type IInspectorSearchAbortHandler = () => void;
 
@@ -188,7 +188,7 @@ export interface IExpandedMap {
 }
 
 export interface IInspectorTableState {
-  childToParentMap: {[key: string]: string};
+  childToParentMap: { [key: string]: string };
   commitHistoryVisible: boolean;
   currentResult?: number;
   foundMatches: IInspectorSearchMatch[];
@@ -196,13 +196,13 @@ export interface IInspectorTableState {
   editReferenceRowData: IInspectorRow | null;
   expanded: IExpandedMap;
   expandedRepoGuid: string | undefined;
-  expandedRepoMap: {[key: string]: IExpandedMap};
+  expandedRepoMap: { [key: string]: IExpandedMap };
   searchAbortHandler?: IInspectorSearchAbortHandler;
   searchExpression: string;
   searchDone: boolean;
   searchInProgress: boolean;
   searchState?: IInspectorSearchState;
   showFormRowID: string;
-  sortBy: {[key: string]: string};
+  sortBy: { [key: string]: string };
   tableRows: IInspectorRow[];
 }

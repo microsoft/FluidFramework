@@ -63,6 +63,7 @@ const DefaultDeli: IDeliState = {
     expHash1: defaultHash,
     logOffset: -1,
     sequenceNumber: 0,
+    signalClientConnectionNumber: 0,
     term: 1,
     lastSentMSN: 0,
     nackMessages: undefined,
@@ -247,7 +248,8 @@ export class LocalOrderer implements IOrderer {
             this.deltasKafka,
             this.setup,
             this.broadcasterContext,
-            async (_, context) => new BroadcasterLambda(this.socketPublisher, context));
+            async (_, context) =>
+                new BroadcasterLambda(this.socketPublisher, context, this.serviceConfiguration, undefined));
 
         this.foremanLambda = new LocalLambdaController(
             this.deltasKafka,
@@ -286,7 +288,9 @@ export class LocalOrderer implements IOrderer {
                     this.documentId,
                     lastCheckpoint,
                     checkpointManager,
+                    undefined,
                     this.deltasKafka,
+                    undefined,
                     this.rawDeltasKafka,
                     this.serviceConfiguration,
                     undefined,

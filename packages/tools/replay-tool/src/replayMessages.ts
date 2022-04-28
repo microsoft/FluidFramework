@@ -30,6 +30,7 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
+import stringify from "json-stable-stringify";
 import {
     compareWithReferenceSnapshot,
     getNormalizedFileSnapshot,
@@ -84,7 +85,7 @@ class ContainerContent {
 
         this._snapshotAsString = new Lazy(() => {
             assert(this.snapshot !== undefined, 0x1c6 /* "snapshot should be set before retrieving it" */);
-            return JSON.stringify(this.snapshot, undefined, 2);
+            return stringify(this.snapshot, { space: 2 });
         });
 
         this._snapshotExpanded = new Lazy(() => {
@@ -97,7 +98,7 @@ class ContainerContent {
             for (const commit of Object.keys(this.snapshot.commits)) {
                 snapshotExpanded.commits[commit] = expandTreeForReadability(this.snapshot.commits[commit]);
             }
-            return JSON.stringify(snapshotExpanded, undefined, 2);
+            return stringify(snapshotExpanded, { space: 2 });
         });
     }
 
@@ -133,7 +134,7 @@ class Logger implements ITelemetryBaseLogger {
             const stack: string | undefined = event.stack as string | undefined;
             delete event.stack;
             const error = new Error(`An error has been logged from ${this.containerDescription}!\n
-                        ${JSON.stringify(event)}`);
+                        ${stringify(event)}`);
             error.stack = stack;
             // throw instead of printing an error to fail tests
             throw error;
@@ -196,6 +197,7 @@ class Document {
         this.container = await loadContainer(
             documentServiceFactory,
             FileStorageDocumentName,
+            this.args.strictChannels,
             this.docLogger,
         );
 
@@ -335,7 +337,7 @@ export class ReplayTool {
     }
 
     private errorHandler(event: ITelemetryBaseEvent): boolean {
-        const errorString = JSON.stringify(event);
+        const errorString = stringify(event);
         // Snapshots errors are both reported to telemetry and propagated to caller
         // So if we d not filter them out, we report them twice.
         // Avoid that, but have a safety net - increase error count, so that tool
@@ -517,7 +519,7 @@ export class ReplayTool {
     private async mainCycle() {
         const originalSummaries =
             this.args.testSummaries
-            ? this.mainDocument.originalSummarySequenceNumbers.filter((s)=>s >= this.args.from)
+            ? this.mainDocument.originalSummarySequenceNumbers.filter((s) => s >= this.args.from)
             : [];
         let nextSnapPoint = -1;
         // eslint-disable-next-line no-constant-condition
@@ -690,7 +692,7 @@ export class ReplayTool {
             // FluidFetchReaderFileSnapshotWriter.write()
             const summaryTree = await container.summarize(true);
             const file = `${dir}/summary.json`;
-            fs.writeFileSync(file, JSON.stringify(summaryTree, undefined, 2));
+            fs.writeFileSync(file, stringify(summaryTree, undefined, 2));
         }
         */
     }

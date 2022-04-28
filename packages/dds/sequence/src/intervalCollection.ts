@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import {
     addProperties,
@@ -59,7 +59,7 @@ export interface ISerializableInterval extends IInterval {
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     compareEnds(a: TInterval, b: TInterval): number;
     create(label: string, start: number, end: number,
-        client: Client, intervalType?: IntervalType): TInterval;
+        client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
 }
 
 export class Interval implements ISerializableInterval {
@@ -130,8 +130,7 @@ export class Interval implements ISerializableInterval {
                     return 0;
                 }
                 return 0;
-            }
-            else {
+            } else {
                 return endResult;
             }
         } else {
@@ -148,7 +147,7 @@ export class Interval implements ISerializableInterval {
     }
 
     public overlaps(b: Interval) {
-        const result = (this.start < b.end) &&
+        const result = (this.start <= b.end) &&
             (this.end >= b.start);
         return result;
     }
@@ -179,7 +178,7 @@ export class Interval implements ISerializableInterval {
         }
     }
 
-    public modify(label: string, start: number, end: number) {
+    public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
         const startPos = start ?? this.start;
         const endPos = end ?? this.end;
         if (this.start === startPos && this.end === endPos) {
@@ -237,8 +236,7 @@ export class SequenceInterval implements ISerializableInterval {
                     return 0;
                 }
                 return 0;
-            }
-            else {
+            } else {
                 return endResult;
             }
         } else {
@@ -255,7 +253,7 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     public overlaps(b: SequenceInterval) {
-        const result = (this.start.compare(b.end) < 0) &&
+        const result = (this.start.compare(b.end) <= 0) &&
             (this.end.compare(b.start) >= 0);
         return result;
     }
@@ -294,16 +292,17 @@ export class SequenceInterval implements ISerializableInterval {
         return (endPos > bstart) && (startPos < bend);
     }
 
-    public modify(label: string, start: number, end: number) {
-        const startPos = start ?? this.start.getOffset();
-        const endPos = end ?? this.end.getOffset();
+    public modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage) {
+        const startPos = start ?? this.start.toPosition();
+        const endPos = end ?? this.end.toPosition();
 
-        if (this.start.getOffset() === startPos && this.end.getOffset() === endPos) {
+        if (this.start.toPosition() === startPos && this.end.toPosition() === endPos) {
             // Return undefined to indicate that no change is necessary.
             return;
         }
 
-        const newInterval = createSequenceInterval(label, startPos, endPos, this.start.getClient(), this.intervalType);
+        const newInterval =
+            createSequenceInterval(label, startPos, endPos, this.start.getClient(), this.intervalType, op);
         if (this.properties) {
             newInterval.addProperties(this.properties);
         }
@@ -314,8 +313,9 @@ export class SequenceInterval implements ISerializableInterval {
 function createPositionReference(
     client: Client,
     pos: number,
-    refType: ReferenceType): LocalReference {
-    const segoff = client.getContainingSegment(pos);
+    refType: ReferenceType,
+    op?: ISequencedDocumentMessage): LocalReference {
+    const segoff = client.getContainingSegment(pos, op);
     if (segoff && segoff.segment) {
         const lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
         if (refType !== ReferenceType.Transient) {
@@ -331,7 +331,8 @@ function createSequenceInterval(
     start: number,
     end: number,
     client: Client,
-    intervalType: IntervalType): SequenceInterval {
+    intervalType: IntervalType,
+    op?: ISequencedDocumentMessage): SequenceInterval {
     let beginRefType = ReferenceType.RangeBegin;
     let endRefType = ReferenceType.RangeEnd;
     if (intervalType === IntervalType.Nest) {
@@ -348,8 +349,8 @@ function createSequenceInterval(
         endRefType |= ReferenceType.SlideOnRemove;
     }
 
-    const startLref = createPositionReference(client, start, beginRefType);
-    const endLref = createPositionReference(client, end, endRefType);
+    const startLref = createPositionReference(client, start, beginRefType, op);
+    const endLref = createPositionReference(client, end, endRefType, op);
     if (startLref && endLref) {
         startLref.pairedRef = endLref;
         endLref.pairedRef = startLref;
@@ -394,9 +395,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     constructor(
         private readonly client: Client,
         private readonly label: string,
-        private readonly helpers: IIntervalHelpers<TInterval>) {
-        this.endIntervalTree =
-            new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
+        private readonly helpers: IIntervalHelpers<TInterval>,
+    ) {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.endIntervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
     }
 
     public addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>) {
@@ -457,14 +459,12 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                 this.intervalTree.map((interval: TInterval) => {
                     results.push(interval);
                 });
-            }
-            else {
+            } else {
                 this.intervalTree.mapBackward((interval: TInterval) => {
                     results.push(interval);
                 });
             }
-        }
-        else {
+        } else {
             const transientInterval: TInterval = this.helpers.create(
                 "transient",
                 start,
@@ -482,16 +482,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                             results.push(interval);
                         }
                     });
-                }
-                else {
+                } else {
                     this.intervalTree.mapBackward((interval: TInterval) => {
                         if (transientInterval.compareEnd(interval) === 0) {
                             results.push(interval);
                         }
                     });
                 }
-            }
-            else {
+            } else {
                 // Start and (possibly) end provided. Walk the subtrees that may contain
                 // this start position.
                 const compareFn =
@@ -512,8 +510,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                     this.intervalTree.intervals.walkExactMatchesForward(
                         compareFn, actionFn, continueLeftFn, continueRightFn,
                     );
-                }
-                else {
+                } else {
                     this.intervalTree.intervals.walkExactMatchesBackward(
                         compareFn, actionFn, continueLeftFn, continueRightFn,
                     );
@@ -570,16 +567,21 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         this.endIntervalTree.remove(interval);
     }
 
-    public createInterval(start: number, end: number, intervalType: IntervalType): TInterval {
-        return this.helpers.create(this.label, start, end, this.client, intervalType);
+    public createInterval(
+        start: number,
+        end: number,
+        intervalType: IntervalType,
+        op?: ISequencedDocumentMessage): TInterval {
+        return this.helpers.create(this.label, start, end, this.client, intervalType, op);
     }
 
     public addInterval(
         start: number,
         end: number,
         intervalType: IntervalType,
-        props?: PropertySet) {
-        const interval: TInterval = this.createInterval(start, end, intervalType);
+        props?: PropertySet,
+        op?: ISequencedDocumentMessage) {
+        const interval: TInterval = this.createInterval(start, end, intervalType, op);
         if (interval) {
             if (!interval.properties) {
                 interval.properties = createMap<any>();
@@ -591,18 +593,20 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                 // Create a new ID.
                 interval.properties[reservedIntervalIdKey] = uuid();
             }
-            // Make the ID immutable.
-            Object.defineProperty(interval.properties, reservedIntervalIdKey, {
-                configurable: false,
-                enumerable: true,
-                writable: false,
-            });
             this.add(interval);
         }
         return interval;
     }
 
     public add(interval: TInterval) {
+        assert(Object.prototype.hasOwnProperty.call(interval.properties, reservedIntervalIdKey),
+            0x2c0 /* "ID must be created before adding interval to collection" */);
+        // Make the ID immutable.
+        Object.defineProperty(interval.properties, reservedIntervalIdKey, {
+            configurable: false,
+            enumerable: true,
+            writable: false,
+        });
         this.intervalTree.put(interval, this.conflictResolver);
         this.endIntervalTree.put(interval, interval, this.endConflictResolver);
     }
@@ -619,8 +623,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return result;
     }
 
-    public changeInterval(interval: TInterval, start: number, end: number) {
-        const newInterval = interval.modify(this.label, start, end) as TInterval | undefined;
+    public changeInterval(interval: TInterval, start: number, end: number, op?: ISequencedDocumentMessage) {
+        const newInterval = interval.modify(this.label, start, end, op) as TInterval | undefined;
         if (newInterval) {
             this.removeExistingInterval(interval);
             this.add(newInterval);
@@ -827,7 +831,7 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 }
 
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
-    (event: "addInterval" | "deleteInterval",
+    (event: "addInterval" | "changeInterval" | "deleteInterval",
         listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void);
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void);
 }
@@ -962,7 +966,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             this.emitter.emit("change", undefined, serializedInterval);
             this.emit("propertyChanged", interval, deltaProps);
         }
-        this.emit("change", interval, true, undefined);
+        this.emit("changeInterval", interval, true, undefined);
     }
 
     public change(id: string, start?: number, end?: number): TInterval | undefined {
@@ -988,7 +992,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             this.emitter.emit("change", undefined, serializedInterval);
             this.addPendingChange(id, serializedInterval);
         }
-        this.emit("change", interval, true, undefined);
+        this.emit("changeInterval", interval, true, undefined);
         return interval;
     }
 
@@ -1064,11 +1068,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             throw new Error("Attach must be called before accessing intervals");
         }
 
+        let interval: TInterval | undefined;
+
         if (local) {
             // This is an ack from the server. Remove the pending change.
             this.removePendingChange(serializedInterval);
             const id: string = serializedInterval.properties[reservedIntervalIdKey];
-            const interval: TInterval = this.getIntervalById(id);
+            interval = this.getIntervalById(id);
             if (interval) {
                 // Let the propertyManager prune its pending change-properties set.
                 interval.propertyManager?.ackPendingProperties(
@@ -1077,12 +1083,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                         props: serializedInterval.properties,
                     });
             }
-        }
-        else {
+        } else {
             // If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
             // should be the winning change.
-            const id: string = serializedInterval.properties[reservedIntervalIdKey];
-            let interval: TInterval = this.getIntervalById(id);
+            // Note that the ID is in the property bag only to allow us to find the interval.
+            // This API cannot change the ID, and writing to the ID property will result in an exception. So we
+            // strip it out of the properties here.
+            const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties;
+            interval = this.getIntervalById(id);
             if (interval) {
                 let start: number | undefined;
                 let end: number | undefined;
@@ -1096,14 +1104,16 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 if (start !== undefined || end !== undefined) {
                     // If changeInterval gives us a new interval, work with that one. Otherwise keep working with
                     // the one we originally found in the tree.
-                    interval = this.localCollection.changeInterval(interval, start, end) ?? interval;
+                    interval = this.localCollection.changeInterval(interval, start, end, op) ?? interval;
                 }
-                const deltaProps = interval.addProperties(serializedInterval.properties, true, op.sequenceNumber);
+                const deltaProps = interval.addProperties(newProps, true, op.sequenceNumber);
                 if (this.onDeserialize) {
                     this.onDeserialize(interval);
                 }
                 this.emit("propertyChanged", interval, deltaProps);
             }
+        }
+        if (interval) {
             this.emit("changeInterval", interval, local, op);
         }
     }
@@ -1144,7 +1154,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             serializedInterval.start,
             serializedInterval.end,
             serializedInterval.intervalType,
-            serializedInterval.properties);
+            serializedInterval.properties,
+            op);
 
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.

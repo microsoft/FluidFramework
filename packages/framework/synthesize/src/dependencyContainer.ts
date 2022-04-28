@@ -82,18 +82,21 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
      * @deprecated - Needed for back compat
      */
     private getProvider(provider: string & keyof TMap) {
-        if(this.has(provider)) {
-            if(this.providers.has(provider)) {
+        // this was removed, but some partners have trouble with back compat where they
+        // use invalid patterns with FluidObject and IFluidDependencySynthesizer
+        // this is just for back compat until those are removed
+        if (this.has(provider)) {
+            if (this.providers.has(provider)) {
                 return this.providers.get(provider);
             }
-            for(const parent of this.parents) {
-                if(parent instanceof DependencyContainer) {
+            for (const parent of this.parents) {
+                if (parent instanceof DependencyContainer) {
                     return parent.getProvider(provider);
-                }else{
-                    // eslint-disable-next-line @typescript-eslint/dot-notation
-                    const maybeGetProvider = parent["getProvider"];
-                    if(typeof maybeGetProvider === "function") {
-                        return maybeGetProvider(provider);
+                } else {
+                    // older implementations of the IFluidDependencySynthesizer exposed getProvider
+                    const maybeGetProvider: { getProvider?(provider: string & keyof TMap) } = parent as any;
+                    if (maybeGetProvider?.getProvider !== undefined) {
+                        return maybeGetProvider.getProvider(provider);
                     }
                 }
             }
@@ -107,7 +110,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
         if (types === undefined) { return; }
         for (const key of Object.keys(types) as unknown as (keyof TMap)[]) {
             const provider = this.resolveProvider(key);
-            if(provider === undefined) {
+            if (provider === undefined) {
                 throw new Error(`Object attempted to be created without registered required provider ${key}`);
             }
             Object.defineProperty(
@@ -143,7 +146,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
             for (const parent of this.parents) {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 const sp = { [t]: t } as FluidObjectSymbolProvider<Pick<TMap, T>>;
-                const syn = parent.synthesize<Pick<TMap, T>,{}>(
+                const syn = parent.synthesize<Pick<TMap, T>, Record<string, unknown>>(
                     sp,
                     {});
                 const descriptor = Object.getOwnPropertyDescriptor(syn, t);

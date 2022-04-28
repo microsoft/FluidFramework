@@ -61,6 +61,7 @@ export async function createNewFluidFile(
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throw new NonRetryableError(
+            // pre-0.58 error message: Invalid filename
             "Invalid filename for createNew", OdspErrorType.invalidFileNameError, { driverVersion });
     }
 
@@ -86,13 +87,13 @@ export async function createNewFluidFile(
         sharingLinkErrorReason = content.sharingLinkErrorReason;
     }
 
-    const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
+    const odspUrl = createOdspUrl({ ... newFileInfo, itemId, dataStorePath: "/" });
     const resolver = new OdspDriverUrlResolver();
     const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
     fileEntry.docId = odspResolvedUrl.hashedDocumentId;
     fileEntry.resolvedUrl = odspResolvedUrl;
 
-    if(sharingLink || sharingLinkErrorReason) {
+    if (sharingLink || sharingLinkErrorReason) {
         odspResolvedUrl.shareLinkInfo = {
             createLink: {
                 type: newFileInfo.createLinkType,
@@ -154,6 +155,7 @@ export async function createNewEmptyFluidFile(
                 const content = fetchResponse.content;
                 if (!content || !content.id) {
                     throw new NonRetryableError(
+                        // pre-0.58 error message: ODSP CreateFile call returned no item ID
                         "ODSP CreateFile call returned no item ID (for empty file)",
                         DriverErrorType.incorrectServerResponse,
                         { driverVersion });

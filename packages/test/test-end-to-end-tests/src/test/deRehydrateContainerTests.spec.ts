@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { compare } from "semver";
 import { bufferToString } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
@@ -18,7 +18,7 @@ import {
     ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
+import { IDocumentAttributes, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IntervalType, SharedString, SparseMatrix } from "@fluidframework/sequence";
@@ -27,7 +27,7 @@ import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
-import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat, itExpects } from "@fluidframework/test-version-utils";
 import {
@@ -38,12 +38,87 @@ import {
 
 const detachedContainerRefSeqNumber = 0;
 
+const fluidCodeDetails: IFluidCodeDetails = {
+    package: "detachedContainerTestPackage1",
+    config: {},
+};
+
+// Quorum val transormations
+const quorumKey = "code";
+const baseQuorum = [
+    [
+        quorumKey,
+        {
+            key: quorumKey,
+            value: fluidCodeDetails,
+            approvalSequenceNumber: 0,
+            commitSequenceNumber: 0,
+            sequenceNumber: 0,
+        },
+    ],
+];
+
+const baseAttributes = {
+    minimumSequenceNumber: 0,
+    sequenceNumber: 0,
+    term: 1,
+};
+
+const baseSummarizer = {
+    electionSequenceNumber: 0,
+};
+
+function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
+    return {
+        type: SummaryType.Tree,
+        tree: {
+            ".metadata": {
+                type: 2,
+                content: "{}",
+            },
+            ".electedSummarizer": {
+                type: 2,
+                content: JSON.stringify(summarizer),
+            },
+            ".protocol": {
+                type: 1,
+                tree: {
+                    quorumMembers: {
+                        type: SummaryType.Blob,
+                        content: "[]",
+                    },
+                    quorumProposals: {
+                        type: SummaryType.Blob,
+                        content: "[]",
+                    },
+                    quorumValues: {
+                        type: SummaryType.Blob,
+                        content: JSON.stringify(quorumVal),
+                    },
+                    attributes: {
+                        type: SummaryType.Blob,
+                        content: JSON.stringify(attr),
+                    },
+                },
+            },
+            ".app": {
+                type: 1,
+                tree: {
+                    [".channels"]: {
+                        type: SummaryType.Tree,
+                        tree: {},
+                    },
+                },
+            },
+        },
+    };
+}
+
 describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
     let disableIsolatedChannels = false;
 
     function assertSubtree(tree: ISnapshotTreeWithBlobContents, key: string, msg?: string):
-        ISnapshotTreeWithBlobContents
-    {
+        ISnapshotTreeWithBlobContents {
         const subTree = tree.trees[key];
         assert(subTree, msg ?? `${key} subtree not present`);
         return subTree;
@@ -356,8 +431,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
         itExpects("Storage in detached container",
         [
-            {eventName:"fluid:telemetry:Container:NoRealStorageInDetachedContainer"},
-            {eventName:"fluid:telemetry:Container:NoRealStorageInDetachedContainer"},
+            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
+            { eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer" },
         ],
         async () => {
             const { container } =
@@ -698,6 +773,24 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
+        });
+
+        it("can rehydrate from arbitrary summary that is not generated from serialized container", async () => {
+            const summaryTree = buildSummaryTree(baseAttributes, baseQuorum, baseSummarizer);
+            const summaryString = JSON.stringify(summaryTree);
+
+            await assert.doesNotReject(loader.rehydrateDetachedContainerFromSnapshot(summaryString));
+        });
+
+        it("can rehydrate from summary that does not start with seq. #0", async () => {
+            const attr = {
+                ...baseAttributes,
+                sequenceNumber: 5,
+            };
+            const summaryTree = buildSummaryTree(attr, baseQuorum, baseSummarizer);
+            const summaryString = JSON.stringify(summaryTree);
+
+            await assert.doesNotReject(loader.rehydrateDetachedContainerFromSnapshot(summaryString));
         });
     };
 

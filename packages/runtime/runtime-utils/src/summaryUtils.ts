@@ -4,7 +4,6 @@
  */
 
 import {
-    assert,
     bufferToString,
     fromBase64ToUtf8,
     IsoBuffer,
@@ -151,8 +150,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     public addHandle(
         key: string,
         handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
-        handle: string): void
-    {
+        handle: string): void {
         this.summaryTree[key] = {
             type: SummaryType.Handle,
             handleType,
@@ -259,9 +257,6 @@ export function convertToSummaryTree(
 export function convertSnapshotTreeToSummaryTree(
     snapshot: ISnapshotTree,
 ): ISummaryTreeWithStats {
-    assert(Object.keys(snapshot.commits).length === 0,
-        0x19e /* "There should not be commit tree entries in snapshot" */);
-
     const builder = new SummaryTreeBuilder();
     for (const [path, id] of Object.entries(snapshot.blobs)) {
         let decoded: string | undefined;

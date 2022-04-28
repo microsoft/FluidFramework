@@ -3,37 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { PropertyProxy } from '@fluid-experimental/property-proxy';
-import { ItemMenu } from './ItemMenu';
-import { BaseProperty, ArrayProperty, NodeProperty, MapProperty } from '@fluid-experimental/property-properties';
-import { createStyles, withStyles, WithStyles } from '@material-ui/core/styles';
-import classNames from 'classnames';
-import * as React from 'react';
-import { iconMarginRight, iconWidth, unit } from './constants';
-import { IInspectorRow } from './InspectorTableTypes';
-import { OverflowableCell } from './OverflowableCell';
+import { PropertyProxy } from "@fluid-experimental/property-proxy";
+import { BaseProperty, ArrayProperty, NodeProperty, MapProperty } from "@fluid-experimental/property-properties";
+import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
+import classNames from "classnames";
+import * as React from "react";
+import { ItemMenu } from "./ItemMenu";
+import { iconMarginRight, iconWidth, unit } from "./constants";
+import { IInspectorRow } from "./InspectorTableTypes";
+import { OverflowableCell } from "./OverflowableCell";
 
 const styles = () => createStyles({
   iconContainer: {
     height: iconWidth,
-    marginRight: iconMarginRight + unit, width: iconWidth,
+    marginRight: `${iconMarginRight}${unit}`, width: iconWidth,
   },
   menuGravity: {
-    visibility: 'hidden',
-    width: '56px',
+    visibility: "hidden",
+    width: "56px",
   },
   rowContainer: {
-    '&:hover $menuGravity': {
-      visibility: 'visible',
+    "&:hover $menuGravity": {
+      visibility: "visible",
     },
-    'display': 'flex',
-    'justify-content': 'space-between',
-    'width': '100%',
+    "display": "flex",
+    "justify-content": "space-between",
+    "width": "100%",
   },
   textAndIconContainer: {
-    alignItems: 'center',
-    display: 'flex',
-    width: '100%',
+    alignItems: "center",
+    display: "flex",
+    width: "100%",
   },
 });
 
@@ -60,7 +60,7 @@ const deletionHandler = (rowData: IInspectorRow) => {
     (rowData!.parent! as MapProperty).remove(rowData.name);
   } else if (parent instanceof Set) {
     (rowData!.parent! as any).remove(rowData.name); // TODO: Should be SetProperty, once the types package is fixed.
-  } else  {
+  } else {
     (rowData!.parent! as NodeProperty).remove(rowData.name);
   }
   return (parent as any).getProperty().getRoot().getWorkspace().commit();
@@ -69,40 +69,40 @@ const deletionHandler = (rowData: IInspectorRow) => {
 const copyHandler = (rowData: IInspectorRow, ref: React.MutableRefObject<HTMLTextAreaElement>) => {
   const prop = (rowData.parent! as BaseProperty);
   let path = prop.getAbsolutePath();
-  if (prop.getContext() === 'single') {
-    path += (!prop.isRoot() ? '.' : '') + rowData.propertyId;
+  if (prop.getContext() === "single") {
+    path += (!prop.isRoot() ? "." : "") + rowData.propertyId;
   } else {
-    path += '[' + rowData.propertyId + ']';
+    path += `[${ rowData.propertyId }]`;
   }
 
   const el = ref.current;
   el.value = path;
   el.focus();
   el.select();
-  document.execCommand('copy');
+  document.execCommand("copy");
 };
 
 const isStaticProperty = (parent: BaseProperty, rowName: string) => {
-  if (typeof (parent as NodeProperty).getDynamicIds === 'function') {
+  if (typeof (parent as NodeProperty).getDynamicIds === "function") {
     const dynamicIds = (parent as NodeProperty).getDynamicIds();
     if (dynamicIds.indexOf(rowName) > -1) {
       return false;
     }
-  } else if (parent.getContext() !== 'single') {
+  } else if (parent.getContext() !== "single") {
     return false;
   }
   return true;
 };
 
 // Class names that are relevant to fake a hover style on the table row.
-const BaseTableRowClass = 'BaseTable__row';
-const NameCellHoveredClass = 'NameCell__hovered';
+const BaseTableRowClass = "BaseTable__row";
+const NameCellHoveredClass = "NameCell__hovered";
 
 /**
  * Inspector table name column cell. Displays the property name for which the row represents.
  */
 const NameCell: React.FunctionComponent<WithStyles<typeof styles> & INameCellProps & ICellProps> =
-({rowData, iconRenderer, classes, className, editReferenceHandler, ...restProps}) => {
+({ rowData, iconRenderer, classes, className, editReferenceHandler, ...restProps }) => {
   const icon = iconRenderer(rowData);
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -152,7 +152,7 @@ const NameCell: React.FunctionComponent<WithStyles<typeof styles> & INameCellPro
               { handler: editReferenceHandler } : undefined,
           }}
           modalTextParameters={{
-            modalCallingSource: 'property',
+            modalCallingSource: "property",
             modalHeader: `Delete Property`,
           }}
         />
@@ -161,5 +161,5 @@ const NameCell: React.FunctionComponent<WithStyles<typeof styles> & INameCellPro
   );
 };
 
-const StyledNameCell = withStyles(styles, {name: 'NameCell'})(NameCell);
+const StyledNameCell = withStyles(styles, { name: "NameCell" })(NameCell);
 export { StyledNameCell as NameCell };

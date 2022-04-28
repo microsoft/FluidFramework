@@ -20,8 +20,8 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { channelsTreeName, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { loadSummarizer, TestDataObject, submitAndAckSummary } from "../mockSummarizerClient";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
 /**
  * Validates that unchanged Fluid objects are not resummarized again. Basically, only objects that have changed since
@@ -110,7 +110,7 @@ describeNoCompat("GC resummarization state", (getTestObjectProvider) => {
 
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
         const channelsTree = (latestUploadedSummary.tree[channelsTreeName] as ISummaryTree).tree;
-        for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
+        for (const [id, summaryObject] of Object.entries(channelsTree)) {
             if (changedDataStoreIds.includes(id)) {
                 assert(summaryObject.type === SummaryType.Tree, `Data store ${id}'s entry should be a tree`);
             } else {

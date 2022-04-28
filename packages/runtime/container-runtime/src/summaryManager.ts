@@ -102,7 +102,7 @@ export class SummaryManager implements IDisposable {
         this.logger = ChildLogger.create(
             parentLogger,
             "SummaryManager",
-            {all:{ clientId: () => this.latestClientId }});
+            { all: { clientId: () => this.latestClientId } });
 
         this.connectedState.on("connected", this.handleConnected);
         this.connectedState.on("disconnected", this.handleDisconnected);
@@ -137,9 +137,15 @@ export class SummaryManager implements IDisposable {
         state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
 
     private getShouldSummarizeState(): ShouldSummarizeState {
+        // Note that if we're in the Running state, the electedClient may be a summarizer client, so we can't
+        // enforce connectedState.clientId === clientElection.electedClientId. But once we're Running, we should
+        // only transition to Stopping when the electedParentId changes. Stopping the summarizer without
+        // changing the electedParent will just cause us to transition to Starting again.
         if (!this.connectedState.connected) {
             return { shouldSummarize: false, stopReason: "parentNotConnected" };
-        } else if (this.connectedState.clientId !== this.clientElection.electedClientId) {
+        } else if (this.connectedState.clientId !== this.clientElection.electedParentId ||
+            (this.state !== SummaryManagerState.Running &&
+                this.connectedState.clientId !== this.clientElection.electedClientId)) {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
             assert(false, 0x260 /* "Disposed should mean disconnected!" */);
@@ -187,8 +193,6 @@ export class SummaryManager implements IDisposable {
 
         assert(this.summarizer === undefined, 0x262 /* "Old summarizer is still working!" */);
 
-        let reason = "unknown";
-
         this.delayBeforeCreatingSummarizer().then(async (startWithInitialDelay: boolean) => {
             // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
             // but only if creation was delayed. If it was not, then we want to ensure we always create
@@ -196,32 +200,48 @@ export class SummaryManager implements IDisposable {
             // document out of broken state if it has too many ops and ordering service keeps nacking main
             // container (and thus it goes into cycle of reconnects)
             if (startWithInitialDelay && this.getShouldSummarizeState().shouldSummarize === false) {
-                return;
+                return "early exit";
             }
 
+            // We transition to Running before requesting the summarizer, because after requesting we can't predict
+            // when the electedClient will be replaced with the new summarizer client.
+            // The alternative would be to let connectedState.clientId !== clientElection.electedClientId when
+            // state === Starting || state === Running.
+            assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
+            this.state = SummaryManagerState.Running;
+
             const summarizer = await this.requestSummarizerFn();
+            this.summarizer = summarizer;
 
             // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
             const shouldSummarizeState = this.getShouldSummarizeState();
             if (shouldSummarizeState.shouldSummarize === false) {
+                this.state = SummaryManagerState.Starting;
                 summarizer.stop(shouldSummarizeState.stopReason);
-                return;
+                return "early exit after starting summarizer";
             }
-
-            assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
-            this.state = SummaryManagerState.Running;
-
-            this.summarizer = summarizer;
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const clientId = this.latestClientId!;
 
-            reason = await PerformanceEvent.timedExecAsync(
+            return PerformanceEvent.timedExecAsync(
                 this.logger,
                 { eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
                 async () => summarizer.run(clientId, this.summarizerOptions),
             );
+        }).then((reason: string) => {
+            this.logger.sendTelemetryEvent({
+                eventName: "EndingSummarizer",
+                reason,
+            });
         }).catch((error) => {
+            this.logger.sendTelemetryEvent(
+                {
+                    eventName: "EndingSummarizer",
+                    reason: "exception",
+                },
+                error);
+
             // Most of exceptions happen due to container being closed while loading it, due to
             // summarizer container loosing connection while load.
             // Not worth reporting such errors as errors. That said, we might miss some real errors if
@@ -241,24 +261,13 @@ export class SummaryManager implements IDisposable {
                         category,
                     },
                     error);
-
-                // Note that summarizer may keep going (like doing last summary).
-                // Ideally we await stopping process, but this code path is due to a bug
-                // that needs to be fixed either way.
-                if (SummaryManager.isStartingOrRunning(this.state)) {
-                    this.stop("summarizerException");
-                }
             }
         }).finally(() => {
             assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
             this.state = SummaryManagerState.Off;
 
+            this.summarizer?.close();
             this.summarizer = undefined;
-
-            this.logger.sendTelemetryEvent({
-                eventName: "EndingSummarizer",
-                reason,
-            });
 
             if (this.getShouldSummarizeState().shouldSummarize) {
                 this.startSummarization();
@@ -329,7 +338,7 @@ export class SummaryManager implements IDisposable {
             // Create a Promise that will resolve if the ops count passes the threshold.
             const opPromise = new Promise<void>((resolve) => { resolveOpPromiseFn = resolve; });
             this.summaryCollection.addOpListener(opsListenerFn);
-            await Promise.race([ delayPromise, opPromise ]);
+            await Promise.race([delayPromise, opPromise]);
             this.summaryCollection.removeOpListener(opsListenerFn);
         }
         return startWithInitialDelay;

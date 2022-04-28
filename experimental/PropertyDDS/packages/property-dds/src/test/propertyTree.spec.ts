@@ -6,8 +6,7 @@
 import _ from "lodash";
 
 import { expect } from "chai";
-import { IContainer, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IContainer, IHostLoader, ILoaderOptions, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -119,27 +118,27 @@ describe("PropertyTree", () => {
 				expect((sharedPropertyTree1.root.get("test") as StringProperty).getValue()).to.equal("Magic");
 				expect(sharedPropertyTree2.root.get("test")).to.equal(undefined);
 
-				sharedPropertyTree1.commit({someKey: "some data"});
-                expect(sharedPropertyTree1.activeCommit.metadata).to.deep.equal({someKey: "some data"});
+				sharedPropertyTree1.commit({ someKey: "some data" });
+                expect(sharedPropertyTree1.activeCommit.metadata).to.deep.equal({ someKey: "some data" });
 
 				await opProcessingController.ensureSynchronized();
 
 				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal("Magic");
-                expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({someKey: "some data"});
+                expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({ someKey: "some data" });
 			});
 
             it("Can commit with metadata, with empty changeset, when commit behaviour is unspecified", async () => {
 				await opProcessingController.pauseProcessing();
-				sharedPropertyTree1.commit({someKey: "some data"});
-                expect(sharedPropertyTree1.activeCommit.metadata).to.deep.equal({someKey: "some data"});
+				sharedPropertyTree1.commit({ someKey: "some data" });
+                expect(sharedPropertyTree1.activeCommit.metadata).to.deep.equal({ someKey: "some data" });
 
 				await opProcessingController.ensureSynchronized();
-                expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({someKey: "some data"});
+                expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({ someKey: "some data" });
 			});
 
             it("Cannot commit with metadata, with empty changeset, behaviour is specified to false", async () => {
 				await opProcessingController.pauseProcessing();
-				sharedPropertyTree1.commit({someKey: "some data"}, false);
+				sharedPropertyTree1.commit({ someKey: "some data" }, false);
                 expect(sharedPropertyTree1.activeCommit).to.equal(undefined);
 
 				await opProcessingController.ensureSynchronized();
@@ -148,11 +147,11 @@ describe("PropertyTree", () => {
 
             it("Can commit with metadata, with empty changeset, behaviour is specified to true", async () => {
 				await opProcessingController.pauseProcessing();
-				sharedPropertyTree1.commit({someKey: "some data"}, true);
-                expect(sharedPropertyTree1.activeCommit.metadata).to.deep.equal({someKey: "some data"});
+				sharedPropertyTree1.commit({ someKey: "some data" }, true);
+                expect(sharedPropertyTree1.activeCommit.metadata).to.deep.equal({ someKey: "some data" });
 
 				await opProcessingController.ensureSynchronized();
-                expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({someKey: "some data"});
+                expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({ someKey: "some data" });
 			});
 
             it("Should not commit empty change by default", async () => {

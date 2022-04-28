@@ -8,13 +8,13 @@ import path from "path";
 import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
+import { IFluidPackage } from "@fluidframework/container-definitions";
 import {
     getMicrosoftConfiguration,
     OdspTokenManager,
     odspTokensCache,
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
-import { IFluidPackage } from "@fluidframework/core-interfaces";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils";
 import Axios from "axios";
 import { RouteOptions } from "./loader";
@@ -27,16 +27,39 @@ let odspAuthLock: Promise<void> | undefined;
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
-export const before = async (app: express.Application) => {
+/**
+ * @returns A portion of a webpack config needed to add support for the
+ * webpack-dev-server to use the webpack-fluid-loader.
+ */
+export function devServerConfig(baseDir: string, env: RouteOptions) {
+    return {
+        devServer: {
+            static: {
+                directory: path.join(
+                    baseDir,
+                    "/node_modules/@fluid-tools/webpack-fluid-loader/dist/fluid-loader.bundle.js",
+                ),
+                publicPath: "/fluid-loader.bundle.js",
+            },
+            devMiddleware: {
+                publicPath: "/dist",
+            },
+            onBeforeSetupMiddleware: (devServer) => before(devServer.app),
+            onAfterSetupMiddleware: (devServer) => after(devServer.app, devServer, baseDir, env),
+        },
+    };
+}
+
+export const before = (app: express.Application) => {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
-    app.get("/", (req, res) => res.redirect(`/new`));
+    app.get("/", (req, res) => res.redirect("/new"));
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
     const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
     const config: nconf.Provider = nconf
-        .env({ parseValules: true, inputSeparator: "__"})
+        .env({ parseValules: true, inputSeparator: "__" })
         .file(path.join(baseDir, "config.json"));
     const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
         type: "browserLogin",
@@ -86,6 +109,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
             }
             if (options.mode === "r11s") {
+                options.discoveryEndpoint = options.discoveryEndpoint || config.get("fluid:webpack:discoveryEndpoint");
                 options.fluidHost = options.fluidHost || config.get("fluid:webpack:fluidHost");
             }
         }
@@ -239,6 +263,9 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         }
     });
 
+    // Ignore favicon.ico urls.
+    app.get("/favicon.ico", (req: express.Request, res) => res.end());
+
     /**
      * For urls of format - http://localhost:8080/<id>.
      * If the `id` is "new" or "manualAttach", the user is trying to create a new document.
@@ -247,12 +274,6 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
      */
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get("/:id*", async (req: express.Request, res) => {
-        // Ignore favicon.ico urls.
-        if (req.url === "/favicon.ico") {
-            res.end();
-            return;
-        }
-
         const documentId = req.params.id;
         // For testing orderer, we use the path: http://localhost:8080/testorderer. This will use the local storage
         // instead of using actual storage service to which the connection is made. This will enable testing
@@ -290,7 +311,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     <div id="content" style="min-height: 100%;">
     </div>
 
-    <script src="/node_modules/@fluid-tools/webpack-fluid-loader/dist/fluid-loader.bundle.js"></script>
+    <script src="/fluid-loader.bundle.js"></script>
     ${packageJson.fluid.browser.umd.files.map((file) => `<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};

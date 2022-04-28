@@ -43,7 +43,7 @@ export class Square {
 
     public isPointWithin(point: IPoint2D): Square | undefined {
         const { x, y } = this.position;
-        const {x: _x, y: _y} = point;
+        const { x: _x, y: _y } = point;
         if ((_x >= x && _x <= x + this.length) && (_y >= y && _y <= y + this.length)) {
             return this;
         }
@@ -57,7 +57,7 @@ export class Square {
         ctx?.clearRect(this.position.x, this.position.y, this.length, this.length);
     }
 
-    public updatePosition(position: {x: number, y: number}) {
+    public updatePosition(position: { x: number, y: number }) {
         this.board.clean();
         this.position = position;
         this.board.draw();

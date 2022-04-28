@@ -66,8 +66,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         testDbFactory: ITestDbFactory = new TestDbFactory({}),
         serviceConfiguration?: Partial<IServiceConfiguration>,
     ): ILocalDeltaConnectionServer {
-        if (!Lumberjack.isSetupCompleted())
-        {
+        if (!Lumberjack.isSetupCompleted()) {
             Lumberjack.setup([new TestEngine1()]);
         }
 
@@ -82,7 +81,9 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         const testTenantManager = new TestTenantManager(undefined, undefined, testDbFactory.testDatabase);
 
         const databaseManager = new MongoDatabaseManager(
+            false,
             mongoManager,
+            null,
             nodesCollectionName,
             documentsCollectionName,
             deltasCollectionName,

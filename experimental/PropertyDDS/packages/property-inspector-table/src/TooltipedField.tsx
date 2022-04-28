@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import Tooltip from '@material-ui/core/Tooltip';
-import * as React from 'react';
-import { IEditableValueCellProps } from './EditableValueCell';
-import { Field } from './Field';
+import Tooltip from "@material-ui/core/Tooltip";
+import * as React from "react";
+import { IEditableValueCellProps } from "./EditableValueCell";
+import { Field } from "./Field";
 
 export const TooltipedField: React.FunctionComponent<IEditableValueCellProps & {
   message: string,
-  classes: Record<'container' | 'tooltip' | 'info' | 'input' | 'textField', string>,
-}> = ({message, ...props}) => {
-  const {classes} = props;
+  classes: Record<"container" | "tooltip" | "info" | "input" | "textField", string>,
+}> = ({ message, ...props }) => {
+  const { classes } = props;
 
   return (
     <Tooltip
@@ -23,7 +23,7 @@ export const TooltipedField: React.FunctionComponent<IEditableValueCellProps & {
       placement='left'
       title={message}
     >
-      <span style={{width: '100%'}}>
+      <span style={{ width: "100%" }}>
         <Field {...props} />
       </span>
     </Tooltip>

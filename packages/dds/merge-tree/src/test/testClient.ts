@@ -78,6 +78,7 @@ export class TestClient extends Client {
         specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
         const client2 = new TestClient(undefined, specToSeg);
         const { catchupOpsP } = await client2.load(
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
@@ -127,7 +128,7 @@ export class TestClient extends Client {
     public enqueueMsg(msg: ISequencedDocumentMessage) {
         this.q.enqueue(msg);
     }
-    public dequeueMsg(): ISequencedDocumentMessage {
+    public dequeueMsg(): ISequencedDocumentMessage | undefined {
         return this.q.dequeue();
     }
     public applyMessages(msgCount: number) {
@@ -210,7 +211,7 @@ export class TestClient extends Client {
         refSeq: number,
         longClientId: string,
     ) {
-        const segment = new Marker(markerDef.refType);
+        const segment = new Marker(markerDef.refType ?? ReferenceType.Tile);
         if (props) {
             segment.addProperties(props);
         }
@@ -226,18 +227,20 @@ export class TestClient extends Client {
     }
 
     public makeOpMessage(
-        op: IMergeTreeOp,
+        op: IMergeTreeOp | undefined,
         seq: number = UnassignedSequenceNumber,
         refSeq: number = this.getCurrentSeq(),
         longClientId?: string,
         minSeqNumber = 0) {
+        if (op === undefined) {
+            throw new Error("op cannot be undefined");
+        }
         const msg: ISequencedDocumentMessage = {
-            clientId: longClientId === undefined ? this.longClientId : longClientId,
+            clientId: longClientId ?? this.longClientId ?? "",
             clientSequenceNumber: 1,
             contents: op,
             metadata: undefined,
             minimumSequenceNumber: minSeqNumber,
-            origin: null,
             referenceSequenceNumber: refSeq,
             sequenceNumber: seq,
             timestamp: Date.now(),
@@ -259,7 +262,7 @@ export class TestClient extends Client {
             chunk = this.getText(start, start + TestClient.searchChunkSize);
 
             const result = chunk.match(target);
-            if (result !== null) {
+            if (result !== null && result.index) {
                 return { text: result[0], pos: (result.index + start) };
             }
             start += TestClient.searchChunkSize;

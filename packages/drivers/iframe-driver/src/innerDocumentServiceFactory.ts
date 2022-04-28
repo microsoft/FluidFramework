@@ -41,6 +41,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         const outerDocumentServiceProxyId = await this.outerProxy.createDocumentService(MakeThinProxy(resolvedUrl));
 
@@ -52,6 +53,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         const outerDocumentServiceProxyId = await this.outerProxy.createContainer(
             MakeThinProxy(createNewSummary),

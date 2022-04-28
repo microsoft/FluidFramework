@@ -10,9 +10,10 @@ declare function useFluidObject(params: FluidObject | undefined): void;
 
 declare function useProvider<T extends FluidObject>(params: FluidObject<T> | undefined): void;
 
-declare function useProviderKey<T,TKey extends FluidObjectKeys<T> = FluidObjectKeys<T>>(key: TKey): void;
+declare function useProviderKey<T, TKey extends FluidObjectKeys<T> = FluidObjectKeys<T>>(key: TKey): void;
 
 declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): void;
+declare function getLoadable(): IFluidLoadable;
 
 declare function use(obj: any);
 // test implicit conversions between FluidObject and a FluidObject with a provides interface
@@ -100,4 +101,57 @@ declare function getIFluidObject(): IFluidObject;
     useProvider(fluidObject);
     useProvider<IFluidLoadable>(legacy);
     useProvider<IFluidLoadable>(fluidObject);
+}
+
+// validate nested property is FluidObject too
+{
+    interface IFoo {
+        z: { z: { z: boolean } };
+      }
+
+    const foo: FluidObject<IFoo> = getFluidObject();
+    // @ts-expect-error "Property 'z' does not exist on type 'FluidObject<IFoo>'."
+    useProvider(foo.z);
+}
+
+// validate provider inheritance
+{
+    interface IProvideFooParent{
+        IFooParent: IFooParent
+    }
+
+    interface IFooParent extends Partial<IProvideFooParent>{
+        parent();
+    }
+
+    interface IFooProvideChild {
+        IFooChild: IFooChild
+    }
+
+    interface IFooChild extends IFooParent, Partial<IFooProvideChild>{
+        child();
+    }
+
+    const p: FluidObject<IProvideFooParent> = getFluidObject();
+    useProvider(p.IFooParent?.parent());
+
+    const c: FluidObject<IFooProvideChild> = getFluidObject();
+    // @ts-expect-error Property 'IFooParent' does not exist on type 'FluidObject<IFooProvideChild>'.
+    useProvider(c.IFooParent?.parent());
+    useProvider(c.IFooChild?.child());
+    useProvider(c.IFooChild?.parent());
+    useProvider(c.IFooChild?.IFooParent?.parent());
+}
+
+// validate usage as builder
+{
+    const builder: FluidObject<IFluidLoadable> = {};
+    builder.IFluidLoadable = getLoadable();
+}
+
+// validate readonly prevents modification
+{
+    const builder: Readonly<FluidObject<IFluidLoadable>> = {};
+    // @ts-expect-error Cannot assign to 'IFluidLoadable' because it is a read-only property.
+    builder.IFluidLoadable = getLoadable();
 }

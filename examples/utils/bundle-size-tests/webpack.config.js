@@ -6,7 +6,7 @@
 const path = require('path');
 const { BundleComparisonPlugin } = require('@mixer/webpack-bundle-compare/dist/plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-const DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin');
+const DuplicatePackageCheckerPlugin = require('@cerner/duplicate-package-checker-webpack-plugin');
 const { BannedModulesPlugin } = require('@fluidframework/bundle-size-tools')
 
 module.exports = {

@@ -46,15 +46,14 @@ export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
  * Proxy over PureDataObject
  * Does delayed creation & initialization of PureDataObject
 */
-async function createDataObject<TObj extends PureDataObject,I extends DataObjectTypes = DataObjectTypes>(
+async function createDataObject<TObj extends PureDataObject, I extends DataObjectTypes = DataObjectTypes>(
     ctor: new (props: IDataObjectProps<I>) => TObj,
     context: IFluidDataStoreContext,
     sharedObjectRegistry: ISharedObjectRegistry,
     optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
     runtimeClassArg: typeof FluidDataStoreRuntime,
     existing: boolean,
-    initProps?: I["InitialState"])
-{
+    initProps?: I["InitialState"]) {
     // base
     let runtimeClass = runtimeClassArg;
 
@@ -77,7 +76,7 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
     // becomes globally available. But it's not full initialization - constructor can't
     // access DDSs or other services of runtime as objects are not fully initialized.
     // In order to use object, we need to go through full initialization by calling finishInitialization().
-    const scope = context.scope as FluidObject<IFluidDependencySynthesizer>;
+    const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
     const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
     const providers = dependencyContainer.synthesize<I["OptionalProviders"]>(optionalProviders, {});
     const instance = new ctor({ runtime, context, providers, initProps });
@@ -107,8 +106,7 @@ async function createDataObject<TObj extends PureDataObject,I extends DataObject
  * @typeParam I - The input types for the DataObject
  */
 export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes>
-    implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>, IRootDataObjectFactory
-{
+    implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>, IRootDataObjectFactory {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IFluidDataStoreRegistry | undefined;
 

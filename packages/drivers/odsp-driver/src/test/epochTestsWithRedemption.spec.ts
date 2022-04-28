@@ -49,7 +49,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
     beforeEach(() => {
         const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
         epochTracker = new EpochTrackerWithRedemption(
-            new LocalPersistentCache(2000),
+            new LocalPersistentCache(),
             {
                 docId: hashedDocumentId,
                 resolvedUrl,
@@ -59,11 +59,15 @@ describe("Tests for Epoch Tracker With Redemption", () => {
         (epochTracker as any).treesLatestDeferral = epochCallback;
     });
 
+    afterEach(async () => {
+        await epochTracker.removeEntries().catch(() => {});
+    });
+
     it.skip("joinSession call should succeed on retrying after snapshot cached read succeeds", async () => {
         epochTracker.setEpoch("epoch1", true, "test");
         const cacheEntry1: IEntry = {
             type: snapshotKey,
-            key:"key1",
+            key: "key1",
         };
         await epochTracker.put(cacheEntry1, { val: "val1" });
 
@@ -81,7 +85,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
         epochTracker.setEpoch("epoch1", true, "test");
         const cacheEntry1: IEntry = {
             type: snapshotKey,
-            key:"key1",
+            key: "key1",
         };
         await epochTracker.put(cacheEntry1, { val: "val1" });
 
@@ -111,7 +115,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
                         async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "treesLatest"),
                         notFound,
                         "internal");
-                } catch (error) {
+                } catch (error: any) {
                     assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError,
                         "Error should be file not found or access denied error");
                 }
@@ -120,7 +124,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "joinSession"),
                 async () => notFound({ "x-fluid-epoch": "epoch1" }),
                 "external");
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError,
                 "Error should be file not found or access denied error");

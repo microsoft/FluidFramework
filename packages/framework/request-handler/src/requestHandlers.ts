@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
     IResponse,
     IRequest,
     IFluidHandle,
@@ -51,11 +50,11 @@ export const rootDataStoreRequestHandler = async (request: IRequest, runtime: IC
 };
 
 export const createFluidObjectResponse = (fluidObject: FluidObject):
-    {status: 200, mimeType: "fluid/object", value: FluidObject} => {
+    { status: 200, mimeType: "fluid/object", value: FluidObject } => {
     return { status: 200, mimeType: "fluid/object", value: fluidObject };
 };
 
-class LegacyUriHandle<T = IFluidObject & FluidObject & IFluidLoadable> implements IFluidHandle<T> {
+class LegacyUriHandle<T = FluidObject & IFluidLoadable> implements IFluidHandle<T> {
     public readonly isAttached = true;
 
     public get IFluidHandle(): IFluidHandle { return this; }
@@ -81,7 +80,7 @@ class LegacyUriHandle<T = IFluidObject & FluidObject & IFluidLoadable> implement
     }
 }
 
-export function handleFromLegacyUri<T = IFluidObject & FluidObject & IFluidLoadable>(
+export function handleFromLegacyUri<T = FluidObject & IFluidLoadable>(
     uri: string,
     runtime: IContainerRuntimeBase,
 ): IFluidHandle<T> {

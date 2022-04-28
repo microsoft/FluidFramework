@@ -19,7 +19,7 @@ import { FluidObjectHandle } from "@fluidframework/datastore";
 
 import { DependencyContainer } from "..";
 import { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer";
-import { FluidObjectProvider } from "../types";
+import { AsyncFluidObjectProvider, FluidObjectProvider, FluidObjectSymbolProvider } from "../types";
 
 const mockHandleContext: IFluidHandleContext = {
     absolutePath: "",
@@ -361,16 +361,17 @@ describe("Routerlicious", () => {
                 dc.register(IFluidRouter, routerMock);
 
                 assert(dc.has(IFluidLoadable), "has includes parent registered");
-                assert(!dc.has(IFluidLoadable, true),"has does not include excluded parent registered");
-                assert(dc.has(IFluidRouter),"has includes registered");
-                assert(!dc.has(IFluidHandle),"does not include not registered");
+                assert(!dc.has(IFluidLoadable, true), "has does not include excluded parent registered");
+                assert(dc.has(IFluidRouter), "has includes registered");
+                assert(!dc.has(IFluidHandle), "does not include not registered");
             });
 
             it(`Parent Resolved from Child`, async () => {
                 const parentDc = new DependencyContainer<FluidObject<IFluidHandle>>();
                 const loadableToHandle: FluidObjectProvider<IProvideFluidHandle> =
                     async (fds: IFluidDependencySynthesizer) => {
-                        const loadable = fds.synthesize<undefined, IProvideFluidLoadable>(undefined,{IFluidLoadable});
+                        const loadable =
+                            fds.synthesize<undefined, IProvideFluidLoadable>(undefined, { IFluidLoadable });
                         return (await loadable.IFluidLoadable).handle;
                     };
                 parentDc.register(IFluidHandle, loadableToHandle);
@@ -379,16 +380,54 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
 
-                const deps = dc.synthesize<IFluidHandle>({IFluidHandle}, undefined);
+                const deps = dc.synthesize<IFluidHandle>({ IFluidHandle }, undefined);
                 assert(await deps.IFluidHandle !== undefined, "handle undefined");
             });
 
             it(`Undefined Provider is not Undefined`, async () => {
                 const dc = new DependencyContainer();
-                const deps = dc.synthesize<IFluidLoadable>({IFluidLoadable}, {});
+                const deps = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, {});
                 assert(deps.IFluidLoadable !== undefined, "handle undefined");
                 assert(await deps.IFluidLoadable === undefined, "handle undefined");
+            });
+
+            it(`test getProvider backcompat`, async () => {
+                const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
+                const loadableMock = new MockLoadable();
+                dc.register(IFluidLoadable, loadableMock);
+                const testGetProvider = (deps: IFluidDependencySynthesizer, scenario: string) => {
+                    const old = deps as any as {
+                        getProvider(key: "IFluidLoadable"): FluidObjectProvider<FluidObject<IFluidLoadable>>
+                    };
+                    const provider = old.getProvider("IFluidLoadable");
+                    assert.equal(provider, loadableMock, scenario);
+                };
+                testGetProvider(dc, "direct");
+                testGetProvider(new DependencyContainer(dc), "parent");
+                testGetProvider(new PassThru<FluidObject<IFluidLoadable>>(dc), "pass thru");
+                testGetProvider(new DependencyContainer(new PassThru<FluidObject<IFluidLoadable>>(dc)),
+                    "pass thru as child");
             });
         });
     });
 });
+
+class PassThru<TMap> implements IFluidDependencySynthesizer {
+    constructor(private readonly parent: IFluidDependencySynthesizer) {}
+    synthesize<O, R = Record<string, never> | undefined>(
+        optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: Required<FluidObjectSymbolProvider<R>>,
+    ): AsyncFluidObjectProvider<O, R> {
+        return this.parent.synthesize(optionalTypes, requiredTypes);
+    }
+    has(type: string): boolean {
+        return this.parent.has(type);
+    }
+    readonly IFluidDependencySynthesizer = this;
+
+    getProvider<K extends keyof TMap>(key: K): FluidObjectProvider<TMap[K]> | undefined {
+        const maybe = this.parent as any as Partial<this>;
+        if (maybe.getProvider) {
+            return maybe.getProvider(key);
+        }
+    }
+}

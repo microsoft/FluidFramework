@@ -18,6 +18,7 @@ export enum R11sErrorType {
 
 /**
  * Interface for error responses for the WebSocket connection
+ * Intended to be compatible with output from {@link NetworkError.toJSON}
  */
 export interface IR11sSocketError {
     /**
@@ -35,6 +36,12 @@ export interface IR11sSocketError {
     /**
      * Optional Retry-After time in seconds.
      * The client should wait this many seconds before retrying its request.
+     */
+    retryAfter?: number;
+
+    /**
+     * Optional Retry-After time in milliseconds.
+     * The client should wait this many milliseconds before retrying its request.
      */
     retryAfterMs?: number;
 }
@@ -61,6 +68,8 @@ export function createR11sNetworkError(
             return new GenericNetworkError(
                 errorMessage, errorMessage.startsWith("NetworkError"), props);
         case 401:
+            // The first 401 is manually retried in RouterliciousRestWrapper with a refreshed token,
+            // so we treat repeat 401s the same as 403.
         case 403:
             return new AuthorizationError(
                 errorMessage, undefined, undefined, props);
@@ -71,6 +80,7 @@ export function createR11sNetworkError(
             return createGenericNetworkError(
                 errorMessage, { canRetry: true, retryAfterMs }, props);
         case 500:
+        case 502:
             return new GenericNetworkError(errorMessage, true, props);
         default:
             const retryInfo = { canRetry: retryAfterMs !== undefined, retryAfterMs };
@@ -96,6 +106,7 @@ export function throwR11sNetworkError(
  * Returns network error based on error object from R11s socket (IR11sSocketError)
  */
 export function errorObjectFromSocketError(socketError: IR11sSocketError, handler: string): R11sError {
+    // pre-0.58 error message prefix: R11sSocketError
     const message = `R11s socket error (${handler}): ${socketError.message}`;
     return createR11sNetworkError(
         message,

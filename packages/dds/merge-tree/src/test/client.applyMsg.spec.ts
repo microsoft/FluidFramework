@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UnassignedSequenceNumber } from "../constants";
 import { SegmentGroup } from "../mergeTree";
+import { MergeTreeDeltaType } from "../ops";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -22,7 +25,7 @@ describe("client.applyMsg", () => {
 
     it("Interleaved inserts, annotates, and deletes", () => {
         const changes = new Map<number, { msg: ISequencedDocumentMessage, segmentGroup: SegmentGroup }>();
-        assert.equal(client.mergeTree.pendingSegments.count(), 0);
+        assert.equal(client.mergeTree.pendingSegments?.count(), 0);
         for (let i = 0; i < 100; i++) {
             const len = client.getLength();
             const pos1 = Math.floor(len / 2);
@@ -34,7 +37,7 @@ describe("client.applyMsg", () => {
                     const msg = client.makeOpMessage(
                         client.removeRangeLocal(pos1, pos2),
                         i + 1);
-                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last() });
+                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last()! });
                     break;
                 }
 
@@ -42,7 +45,7 @@ describe("client.applyMsg", () => {
                 case 4: {
                     const str = `${i}`.repeat(imod6 + 5);
                     const msg = client.makeOpMessage(client.insertTextLocal(pos1, str), i + 1);
-                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last() });
+                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last()! });
                     break;
                 }
 
@@ -57,7 +60,7 @@ describe("client.applyMsg", () => {
                         },
                         undefined);
                     const msg = client.makeOpMessage(op, i + 1);
-                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last() });
+                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last()! });
                     break;
                 }
                 default:
@@ -65,9 +68,9 @@ describe("client.applyMsg", () => {
             }
         }
         for (let i = 0; i < 100; i++) {
-            const msg = changes.get(i).msg;
+            const msg = changes.get(i)!.msg;
             client.applyMsg(msg);
-            const segments = changes.get(i).segmentGroup.segments;
+            const segments = changes.get(i)!.segmentGroup.segments;
             for (const seg of segments) {
                 switch (i % 6) {
                     case 0:
@@ -84,12 +87,12 @@ describe("client.applyMsg", () => {
                 }
             }
         }
-        assert.equal(client.mergeTree.pendingSegments.count(), 0);
+        assert.equal(client.mergeTree.pendingSegments?.count(), 0);
         for (let i = 0; i < client.getText().length; i++) {
             const segmentInfo = client.getContainingSegment(i);
 
-            assert.notEqual(segmentInfo.segment.seq, UnassignedSequenceNumber, "all segments should be acked");
-            assert(segmentInfo.segment.segmentGroups.empty, "there should be no outstanding segmentGroups");
+            assert.notEqual(segmentInfo.segment?.seq, UnassignedSequenceNumber, "all segments should be acked");
+            assert(segmentInfo.segment?.segmentGroups.empty, "there should be no outstanding segmentGroups");
         }
     });
 
@@ -98,11 +101,11 @@ describe("client.applyMsg", () => {
 
         const segmentInfo = client.getContainingSegment(0);
 
-        assert.equal(segmentInfo.segment.seq, UnassignedSequenceNumber);
+        assert.equal(segmentInfo.segment?.seq, UnassignedSequenceNumber);
 
         client.applyMsg(client.makeOpMessage(op, 17));
 
-        assert.equal(segmentInfo.segment.seq, 17);
+        assert.equal(segmentInfo.segment?.seq, 17);
     });
 
     it("removeRangeLocal", () => {
@@ -110,11 +113,11 @@ describe("client.applyMsg", () => {
 
         const removeOp = client.removeRangeLocal(0, 1);
 
-        assert.equal(segmentInfo.segment.removedSeq, UnassignedSequenceNumber);
+        assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
 
         client.applyMsg(client.makeOpMessage(removeOp, 17));
 
-        assert.equal(segmentInfo.segment.removedSeq, 17);
+        assert.equal(segmentInfo.segment?.removedSeq, 17);
     });
 
     it("annotateSegmentLocal", () => {
@@ -127,11 +130,11 @@ describe("client.applyMsg", () => {
             props,
             undefined);
 
-        assert.equal(client.mergeTree.pendingSegments.count(), 1);
+        assert.equal(client.mergeTree.pendingSegments?.count(), 1);
 
         client.applyMsg(client.makeOpMessage(op, 17));
 
-        assert.equal(client.mergeTree.pendingSegments.count(), 0);
+        assert.equal(client.mergeTree.pendingSegments?.count(), 0);
     });
 
     it("annotateSegmentLocal then removeRangeLocal", () => {
@@ -150,22 +153,22 @@ describe("client.applyMsg", () => {
             props,
             undefined);
 
-        assert.equal(client.mergeTree.pendingSegments.count(), 1);
+        assert.equal(client.mergeTree.pendingSegments?.count(), 1);
 
         const removeOp = client.removeRangeLocal(start, end);
 
-        assert.equal(segmentInfo.segment.removedSeq, UnassignedSequenceNumber);
-        assert.equal(client.mergeTree.pendingSegments.count(), 2);
+        assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
+        assert.equal(client.mergeTree.pendingSegments?.count(), 2);
 
         client.applyMsg(client.makeOpMessage(annotateOp, 17));
 
-        assert.equal(segmentInfo.segment.removedSeq, UnassignedSequenceNumber);
-        assert.equal(client.mergeTree.pendingSegments.count(), 1);
+        assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
+        assert.equal(client.mergeTree.pendingSegments?.count(), 1);
 
         client.applyMsg(client.makeOpMessage(removeOp, 18));
 
-        assert.equal(segmentInfo.segment.removedSeq, 18);
-        assert.equal(client.mergeTree.pendingSegments.count(), 0);
+        assert.equal(segmentInfo.segment?.removedSeq, 18);
+        assert.equal(client.mergeTree.pendingSegments?.count(), 0);
     });
 
     it("multiple interleaved annotateSegmentLocal", () => {
@@ -190,12 +193,12 @@ describe("client.applyMsg", () => {
 
             annotateEnd = Math.floor(annotateEnd / 2);
         }
-        assert.equal(client.mergeTree.pendingSegments.count(), messages.length);
+        assert.equal(client.mergeTree.pendingSegments?.count(), messages.length);
 
         for (const msg of messages) {
             client.applyMsg(msg);
         }
-        assert.equal(client.mergeTree.pendingSegments.count(), 0);
+        assert.equal(client.mergeTree.pendingSegments?.count(), 0);
     });
 
     it("overlapping deletes", () => {
@@ -206,26 +209,26 @@ describe("client.applyMsg", () => {
         const intialText = client.getText();
         const initialLength = intialText.length;
 
-        assert.equal(segmentInfo.segment.removedSeq, undefined);
-        assert(segmentInfo.segment.segmentGroups.empty);
+        assert.equal(segmentInfo.segment?.removedSeq, undefined);
+        assert(segmentInfo.segment?.segmentGroups.empty);
 
         const removeOp = client.removeRangeLocal(start, end);
 
-        assert.equal(segmentInfo.segment.removedSeq, UnassignedSequenceNumber);
-        assert.equal(segmentInfo.segment.segmentGroups.size, 1);
+        assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
+        assert.equal(segmentInfo.segment?.segmentGroups.size, 1);
 
         const remoteMessage = client.makeOpMessage(removeOp, 17);
         remoteMessage.clientId = "remoteClient";
 
         client.applyMsg(remoteMessage);
 
-        assert.equal(segmentInfo.segment.removedSeq, remoteMessage.sequenceNumber);
-        assert.equal(segmentInfo.segment.segmentGroups.size, 1);
+        assert.equal(segmentInfo.segment?.removedSeq, remoteMessage.sequenceNumber);
+        assert.equal(segmentInfo.segment?.segmentGroups.size, 1);
 
         client.applyMsg(client.makeOpMessage(removeOp, 18));
 
-        assert.equal(segmentInfo.segment.removedSeq, remoteMessage.sequenceNumber);
-        assert(segmentInfo.segment.segmentGroups.empty);
+        assert.equal(segmentInfo.segment?.removedSeq, remoteMessage.sequenceNumber);
+        assert(segmentInfo.segment?.segmentGroups.empty);
         assert.equal(client.getLength(), initialLength - (end - start));
         assert.equal(client.getText(), intialText.substring(0, start) + intialText.substring(end));
     });
@@ -239,7 +242,7 @@ describe("client.applyMsg", () => {
         let seq = 0;
         const initialMsg = client.makeOpMessage(client.insertTextLocal(0, "-"), ++seq);
 
-        clients.forEach((c)=>c.applyMsg(initialMsg));
+        clients.forEach((c) => c.applyMsg(initialMsg));
         logger.validate();
 
         const messages = [
@@ -250,8 +253,8 @@ describe("client.applyMsg", () => {
         ];
 
         while (messages.length > 0) {
-            const msg = messages.shift();
-            clients.forEach((c)=>c.applyMsg(msg));
+            const msg = messages.shift()!;
+            clients.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
@@ -278,8 +281,8 @@ describe("client.applyMsg", () => {
 
         const logger = new TestClientLogger(clients);
         while (messages.length > 0) {
-            const msg = messages.shift();
-            clients.forEach((c)=>c.applyMsg(msg));
+            const msg = messages.shift()!;
+            clients.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
@@ -307,8 +310,8 @@ describe("client.applyMsg", () => {
 
         const logger = new TestClientLogger(clients);
         while (messages.length > 0) {
-            const msg = messages.shift();
-            clients.forEach((c)=>c.applyMsg(msg));
+            const msg = messages.shift()!;
+            clients.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
@@ -334,8 +337,8 @@ describe("client.applyMsg", () => {
 
         const logger = new TestClientLogger(clients);
         while (messages.length > 0) {
-            const msg = messages.shift();
-            clients.forEach((c)=>c.applyMsg(msg));
+            const msg = messages.shift()!;
+            clients.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
@@ -359,8 +362,8 @@ describe("client.applyMsg", () => {
 
         const logger = new TestClientLogger(clients);
         while (messages.length > 0) {
-            const msg = messages.shift();
-            clients.forEach((c)=>c.applyMsg(msg));
+            const msg = messages.shift()!;
+            clients.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
@@ -383,7 +386,7 @@ describe("client.applyMsg", () => {
 
         ];
         while (messages.length > 0) {
-            const msg = messages.shift();
+            const msg = messages.shift()!;
             clients.forEach((c) => {
                 c.applyMsg(msg);
             });
@@ -397,9 +400,30 @@ describe("client.applyMsg", () => {
             clientB.makeOpMessage(clientB.insertTextLocal(1, "BBB"), ++seq),
         );
         while (messages.length > 0) {
-            const msg = messages.shift();
-            clients.forEach((c)=>c.applyMsg(msg));
+            const msg = messages.shift()!;
+            clients.forEach((c) => c.applyMsg(msg));
         }
         logger.validate();
+    });
+
+    it("regenerate annotate op over removed range", () => {
+        const clientA = new TestClient();
+        clientA.startOrUpdateCollaboration("A");
+        const clientB = new TestClient();
+        clientB.startOrUpdateCollaboration("B");
+
+        let seq = 0;
+        const insertOp = clientA.makeOpMessage(clientA.insertTextLocal(0, "AAA"), ++seq);
+        [clientA, clientB].map((c) => c.applyMsg(insertOp));
+
+        const annotateOp = clientA.annotateRangeLocal(0, clientA.getLength(), { client: "A" }, undefined)!;
+        const seg = clientA.peekPendingSegmentGroups()!;
+
+        const removeOp = clientB.makeOpMessage(clientB.removeRangeLocal(0, clientB.getLength()), ++seq);
+        [clientA, clientB].map((c) => c.applyMsg(removeOp));
+
+        const regeneratedOp = clientA.regeneratePendingOp(annotateOp, seg);
+        assert(regeneratedOp.type === MergeTreeDeltaType.GROUP);
+        assert.strictEqual(regeneratedOp.ops.length, 0);
     });
 });

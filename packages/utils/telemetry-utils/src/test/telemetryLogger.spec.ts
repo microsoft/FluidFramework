@@ -15,28 +15,28 @@ class TestTelemetryLogger extends TelemetryLogger {
 }
 
 const allCases: (ITelemetryLoggerPropertyBag)[] =
-    [{}, {allProp: 1}, {allGetter: () => 1}, {allProp: 1, allGetter: () => 1}];
+    [{}, { allProp: 1 }, { allGetter: () => 1 }, { allProp: 1, allGetter: () => 1 }];
 const errorCases: (ITelemetryLoggerPropertyBag)[] =
-    [{}, {errorProp: 2}, {errorGetter: () => 2}, {errorProp: 2, errorGetter: () => 2}];
+    [{}, { errorProp: 2 }, { errorGetter: () => 2 }, { errorProp: 2, errorGetter: () => 2 }];
 
 const propertyCases: (ITelemetryLoggerPropertyBags | undefined)[] =
     allCases.reduce<ITelemetryLoggerPropertyBags[]>(
-        (pv, all)=> {
-            pv.push(... errorCases.map((error)=>({all, error})));
+        (pv, all) => {
+            pv.push(... errorCases.map((error) => ({ all, error })));
             return pv;
         },
         []);
-propertyCases.push(...allCases.map((all)=>({all, error: all})));
+propertyCases.push(...allCases.map((all) => ({ all, error: all })));
 propertyCases.push(...allCases);
 propertyCases.push(...errorCases);
 propertyCases.push(undefined);
 
 describe("TelemetryLogger", () => {
-    describe("Properties", ()=>{
-        it("send", ()=>{
-            for(const props of propertyCases) {
+    describe("Properties", () => {
+        it("send", () => {
+            for (const props of propertyCases) {
                 const logger = new TestTelemetryLogger("namespace", props);
-                logger.send({category: "anything", eventName: "whatever"});
+                logger.send({ category: "anything", eventName: "whatever" });
                 assert.strictEqual(logger.events.length, 1);
                 const event = logger.events[0];
                 assert.strictEqual(event.category, "anything");
@@ -51,17 +51,17 @@ describe("TelemetryLogger", () => {
             }
         });
 
-        it("sendErrorEvent",()=>{
-            for(const props of propertyCases) {
+        it("sendErrorEvent", () => {
+            for (const props of propertyCases) {
                 const logger = new TestTelemetryLogger("namespace", props);
-                logger.sendErrorEvent({eventName: "whatever"});
+                logger.sendErrorEvent({ eventName: "whatever" });
                 assert.strictEqual(logger.events.length, 1);
                 const event = logger.events[0];
                 assert.strictEqual(event.category, "error");
                 assert.strictEqual(event.eventName, "namespace:whatever");
                 const eventKeys = Object.keys(event);
                 // should include error props too
-                const propsKeys = Object.keys({... props?.all, ... props?.error});
+                const propsKeys = Object.keys({ ... props?.all, ... props?.error });
                 // +2 for category and event name
                 assert.strictEqual(
                     eventKeys.length,
@@ -70,10 +70,10 @@ describe("TelemetryLogger", () => {
             }
         });
 
-        it("sendTelemetryEvent",()=>{
-            for(const props of propertyCases) {
+        it("sendTelemetryEvent", () => {
+            for (const props of propertyCases) {
                 const logger = new TestTelemetryLogger("namespace", props);
-                logger.sendTelemetryEvent({eventName: "whatever"});
+                logger.sendTelemetryEvent({ eventName: "whatever" });
                 assert.strictEqual(logger.events.length, 1);
                 const event = logger.events[0];
                 assert.strictEqual(event.category, "generic");

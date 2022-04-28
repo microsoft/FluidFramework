@@ -125,6 +125,7 @@ export async function getChildrenByDriveItem(
     do {
         const response = await getAsync(url, authRequestInfo);
         if (response.status !== 200) {
+            // pre-0.58 error message: unableToGetChildren
             throwOdspNetworkError("Unable to get driveItem children", response.status, response);
         }
         const getChildrenResult = await response.json();
@@ -143,6 +144,7 @@ async function getDriveItem(
     let response = await getAsync(getDriveItemUrl, authRequestInfo);
     if (response.status !== 200) {
         if (!create) {
+            // pre-0.58 error message: unableToGetDriveItemIdFromPath
             throwOdspNetworkError("Unable to get drive/item id from path", response.status, response);
         }
 
@@ -150,11 +152,13 @@ async function getDriveItem(
         const contentUri = `${getDriveItemUrl}/content`;
         const createResultResponse = await putAsync(contentUri, authRequestInfo);
         if (createResultResponse.status !== 201) {
+            // pre-0.58 error message: failedToCreateFile
             throwOdspNetworkError("Failed to create file", createResultResponse.status, createResultResponse);
         }
 
         response = await getAsync(getDriveItemUrl, authRequestInfo);
         if (response.status !== 200) {
+            // pre-0.58 error message: unableToGetDriveItemIdFromPath
             throwOdspNetworkError("Unable to get drive/item id from path after creating", response.status, response);
         }
     }
@@ -213,6 +217,7 @@ async function getDriveResponse(
     const response = await getAsync(getDriveUrl, authRequestInfo);
     if (response.status !== 200) {
         throwOdspNetworkError(
+            // pre-0.58 error message: failedToGetDriveResponse
             `Failed to get response from /${routeTail} endpoint`,
             response.status,
             response,

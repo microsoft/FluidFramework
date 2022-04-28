@@ -57,6 +57,32 @@ export enum FlushMode {
     TurnBased,
 }
 
+/**
+ * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
+ * locally within the container only or visible globally to all clients.
+ */
+export const VisibilityState = {
+    /** Indicates that the object is not visible. This is the state when an object is first created. */
+    NotVisible: "NotVisible",
+
+    /**
+     * Indicates that the object is visible locally within the container. This is the state when an object is attached
+     * to the container's graph but the container itself isn't globally visible. The object's state goes from not
+     * visible to locally visible.
+     */
+    LocallyVisible: "LocallyVisible",
+
+    /**
+     * Indicates that the object is visible globally to all clients. This is the state of an object in 2 scenarios:
+     * 1. It is attached to the container's graph when the container is globally visible. The object's state goes from
+     *    not visible to globally visible.
+     * 2. When a container becomes globally visible, all locally visible objects go from locally visible to globally
+     *    visible.
+     */
+    GloballyVisible: "GloballyVisible",
+};
+export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
+
 export interface IContainerRuntimeBaseEvents extends IEvent{
     (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
@@ -101,6 +127,7 @@ export interface IContainerRuntimeBase extends
 
     /**
      * Sets the flush mode for operations on the document.
+     * @deprecated - Will be removed in 0.60. See #9480.
      */
     setFlushMode(mode: FlushMode): void;
 
@@ -179,17 +206,26 @@ export interface IFluidDataStoreChannel extends
      */
     readonly attachState: AttachState;
 
+    readonly visibilityState?: VisibilityState;
+
     /**
      * @deprecated - This is an internal method that should not be exposed.
      * Called to bind the runtime to the container.
      * If the container is not attached to storage, then this would also be unknown to other clients.
      */
-     bindToContext(): void;
+    bindToContext(): void;
 
     /**
+     * @deprecated - This will be removed in favor of makeVisibleAndAttachGraph.
      * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
      */
     attachGraph(): void;
+
+    /**
+     * Makes the data store channel visible in the container. Also, runs through its graph and attaches all
+     * bound handles that represent its dependencies in the container's graph.
+     */
+    makeVisibleAndAttachGraph?(): void;
 
     /**
      * Retrieves the summary used as part of the initial summary message
@@ -334,13 +370,20 @@ export interface IFluidDataStoreContext extends
     submitSignal(type: string, content: any): void;
 
     /**
+     * @deprecated - To be removed in favor of makeVisible.
      * Register the runtime to the container
      */
     bindToContext(): void;
 
     /**
+     * Called to make the data store locally visible in the container. This happens automatically for root data stores
+     * when they are marked as root. For non-root data stores, this happens when their handle is added to a visible DDS.
+     */
+    makeLocallyVisible?(): void;
+
+    /**
      * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
-     * @param address - The address of the channe that is dirty.
+     * @param address - The address of the channel that is dirty.
      */
     setChannelDirty(address: string): void;
 

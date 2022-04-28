@@ -12,7 +12,7 @@ import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 
 function getOpString(msg: ISequencedDocumentMessage | undefined) {
-    if(msg === undefined) {
+    if (msg === undefined) {
         return "";
     }
     const op = msg.contents as IMergeTreeOp;
@@ -31,35 +31,35 @@ type ClientMap = Partial<Record<"A" | "B" | "C" | "D" | "E", TestClient>>;
 export function createClientsAtInitialState<TClients extends ClientMap>(
     initialState: string,
     ... clientIds: (string & keyof TClients)[]
-): Record<keyof TClients, TestClient> & {all: TestClient[]}
-{
-    const setup = (c: TestClient)=>{
+): Record<keyof TClients, TestClient> & { all: TestClient[] } {
+    const setup = (c: TestClient) => {
         c.insertTextLocal(0, initialState);
-        while(c.getText().includes("-")) {
+        while (c.getText().includes("-")) {
             const index = c.getText().indexOf("-");
             c.removeRangeLocal(index, index + 1);
         }
     };
     const all: TestClient[] = [];
     const clients: Partial<Record<keyof TClients, TestClient>> = {};
-    for(const id of clientIds) {
-        if(clients[id] === undefined) {
-            clients[id] = new TestClient();
-            all.push(clients[id]);
-            setup(clients[id]);
-            clients[id].startOrUpdateCollaboration(id);
+    for (const id of clientIds) {
+        if (clients[id] === undefined) {
+            const client = new TestClient();
+            clients[id] = client;
+            all.push(client);
+            setup(client);
+            client.startOrUpdateCollaboration(id);
         }
     }
 
-    return {...clients, all};
+    return { ...clients as Record<keyof TClients, TestClient>, all };
 }
 export class TestClientLogger {
     public static toString(clients: readonly TestClient[]) {
-        return clients.map((c)=>this.getSegString(c)).reduce<[string,string]>((pv,cv)=>{
-            pv[0] += `|${cv.acked.padEnd(cv.local.length,"")}`;
-            pv[1] += `|${cv.local.padEnd(cv.acked.length,"")}`;
+        return clients.map((c) => this.getSegString(c)).reduce<[string, string]>((pv, cv) => {
+            pv[0] += `|${cv.acked.padEnd(cv.local.length, "")}`;
+            pv[1] += `|${cv.local.padEnd(cv.acked.length, "")}`;
             return pv;
-        },["",""]).join("\n");
+        }, ["", ""]).join("\n");
     }
 
     private readonly incrementalLog = false;
@@ -67,8 +67,8 @@ export class TestClientLogger {
     private readonly paddings: number[] = [];
     private readonly roundLogLines: string[][] = [];
 
-    private ackedLine: string[];
-    private localLine: string[];
+    private ackedLine: string[] = [];
+    private localLine: string[] = [];
     // initialize to private instance, so first real edit will create a new line
     private lastOp: any | undefined = {};
 
@@ -76,18 +76,20 @@ export class TestClientLogger {
         private readonly clients: readonly TestClient[],
         private readonly title?: string,
     ) {
-        const logHeaders = [];
-        clients.forEach((c,i)=>{
+        const logHeaders: string[] = [];
+        clients.forEach((c, i) => {
             logHeaders.push("op");
             logHeaders.push(`client ${c.longClientId}`);
-            const callback = (op: IMergeTreeDeltaOpArgs)=>{
-                if(this.lastOp !== op.op) {
+            const callback = (op: IMergeTreeDeltaOpArgs | undefined) => {
+                if (this.lastOp !== op?.op) {
                     this.addNewLogLine();
-                    this.lastOp = op.op;
+                    this.lastOp = op?.op;
                 }
                 const clientLogIndex = i * 2;
 
-                this.ackedLine[clientLogIndex] = getOpString(op.sequencedMessage ?? c.makeOpMessage(op.op));
+                this.ackedLine[clientLogIndex] = op === undefined
+                    ? ""
+                    : getOpString(op.sequencedMessage ?? c.makeOpMessage(op.op));
                 const segStrings = TestClientLogger.getSegString(c);
                 this.ackedLine[clientLogIndex + 1] = segStrings.acked;
                 this.localLine[clientLogIndex + 1] = segStrings.local;
@@ -105,8 +107,8 @@ export class TestClientLogger {
                         this.paddings[clientLogIndex + 1]);
             };
             c.mergeTreeDeltaCallback = callback;
-            c.mergeTreeMaintenanceCallback = (main,op) => {
-                if(main.operation === MergeTreeMaintenanceType.ACKNOWLEDGED) {
+            c.mergeTreeMaintenanceCallback = (main, op) => {
+                if (main.operation === MergeTreeMaintenanceType.ACKNOWLEDGED) {
                     callback(op);
                 }
             };
@@ -117,17 +119,17 @@ export class TestClientLogger {
     }
 
     private addNewLogLine() {
-        if(this.incrementalLog) {
-            while(this.roundLogLines.length > 0) {
+        if (this.incrementalLog) {
+            while (this.roundLogLines.length > 0) {
                 const logLine = this.roundLogLines.shift();
-                if(logLine.some((c)=>c.trim().length > 0)) {
+                if (logLine?.some((c) => c.trim().length > 0)) {
                     console.log(logLine.map((v, i) => v.padEnd(this.paddings[i])).join(" | "));
                 }
             }
         }
         this.ackedLine = [];
         this.localLine = [];
-        this.clients.forEach((cc, clientLogIndex)=>{
+        this.clients.forEach((cc, clientLogIndex) => {
             const segStrings = TestClientLogger.getSegString(cc);
             this.ackedLine.push("", segStrings.acked);
             this.localLine.push("", segStrings.local);
@@ -165,9 +167,13 @@ export class TestClientLogger {
         return baseText;
     }
 
+    static validate(clients: readonly TestClient[], title?: string) {
+        return new TestClientLogger(clients, title).validate();
+    }
+
     public toString(excludeHeader: boolean = false) {
         let str = "";
-        if(!excludeHeader) {
+        if (!excludeHeader) {
             str +=
                 `_: Local State\n`
                 + `-: Deleted\n`

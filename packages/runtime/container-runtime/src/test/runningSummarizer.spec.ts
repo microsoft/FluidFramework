@@ -62,7 +62,7 @@ describe("Runtime", () => {
             }
 
             function emitBroadcast(timestamp = Date.now()) {
-                mockDeltaManager.emit("op",{
+                mockDeltaManager.emit("op", {
                     type: MessageType.Summarize,
                     clientId: summarizerClientId,
                     referenceSequenceNumber: lastRefSeq,
@@ -155,6 +155,7 @@ describe("Runtime", () => {
                         return {
                             stage: "submit",
                             referenceSequenceNumber: lastRefSeq,
+                            minimumSequenceNumber: 0,
                             generateDuration: 0,
                             uploadDuration: 0,
                             submitOpDuration: 0,
@@ -167,6 +168,8 @@ describe("Runtime", () => {
                                 dataStoreCount: 0,
                                 summarizedDataStoreCount: 0,
                                 unreferencedBlobSize: 0,
+                                opsSizesSinceLastSummary: 0,
+                                nonSystemOpsSinceLastSummary: 0,
                             },
                             handle: "test-handle",
                             clientSequenceNumber: lastClientSeq,
@@ -636,8 +639,7 @@ describe("Runtime", () => {
                     try {
                         summarizer.summarizeOnDemand(undefined, { reason: "test" });
                         resolved = true;
-                    }
-                    catch {}
+                    } catch {}
 
                     await flushPromises();
                     assert(resolved === false, "already running promise should not resolve yet");
@@ -977,7 +979,7 @@ describe("Runtime", () => {
                             eventName: "Running:Summarize_end",
                             summarizeCount: runCount,
                             summarizerSuccessfulAttempts: runCount,
-                            summarizeReason: "maxOps",
+                            reason: "maxOps",
                         },
                     ]), "unexpected log sequence 3");
                 });

@@ -2,42 +2,42 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { createStyles, withStyles, WithStyles } from '@material-ui/core/styles';
-import classNames from 'classnames';
-import * as React from 'react';
-import { iconMarginRight, iconWidth, InspectorMessages, unit } from './constants';
-import { Field } from './Field';
-import { IInspectorRow } from './InspectorTableTypes';
-import { TooltipedField } from './TooltipedField';
+import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
+import classNames from "classnames";
+import * as React from "react";
+import { iconMarginRight, iconWidth, InspectorMessages, unit } from "./constants";
+import { Field } from "./Field";
+import { IInspectorRow } from "./InspectorTableTypes";
+import { TooltipedField } from "./TooltipedField";
 
 const styles = () => createStyles({
   container: {
-    alignItems: 'center',
-    display: 'flex',
+    alignItems: "center",
+    display: "flex",
     flexGrow: 1,
-    height: '100%',
-    width: '100%',
+    height: "100%",
+    width: "100%",
   },
   info: {
-    color: '#3C3C3C',
-    fontFamily: 'ArtifaktElement, Helvetica, Arial',
-    fontSize: '11px',
-    fontStyle: 'normal',
-    fontWeight: 'normal',
-    lineHeight: '13px',
+    color: "#3C3C3C",
+    fontFamily: "ArtifaktElement, Helvetica, Arial",
+    fontSize: "11px",
+    fontStyle: "normal",
+    fontWeight: "normal",
+    lineHeight: "13px",
   },
   input: {
     flexShrink: 0,
     height: iconWidth,
-    marginLeft: iconMarginRight + unit,
-    marginRight: iconMarginRight + unit,
+    marginLeft: `${iconMarginRight}${unit}`,
+    marginRight: `${iconMarginRight}${unit}`,
     width: iconWidth,
   },
   textField: {
-    width: '100%',
+    width: "100%",
   },
   tooltip: {
-    'background-color': 'black',
+    "background-color": "black",
   },
 });
 
@@ -89,5 +89,5 @@ const EditableValueCell: React.FunctionComponent<WithStyles<typeof styles> & IEd
   );
 };
 
-const StyledEditableValueCell = withStyles(styles, {name: 'EditableValueCell'})(EditableValueCell);
+const StyledEditableValueCell = withStyles(styles, { name: "EditableValueCell" })(EditableValueCell);
 export { StyledEditableValueCell as EditableValueCell };
