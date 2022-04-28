@@ -70,7 +70,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 
     it("should fetch from cache when second client loads the container", async function() {
         // GitHub issue: #9534
-        if(provider.driver.type === "odsp") {
+        if (provider.driver.type === "odsp") {
             this.skip();
         }
 
@@ -106,7 +106,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 
     it("should fetch from cache when second client loads the container in offline mode", async function() {
         // GitHub issue: #9534
-        if(provider.driver.type === "odsp") {
+        if (provider.driver.type === "odsp") {
             this.skip();
         }
         mockLogger = new MockLogger();

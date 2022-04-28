@@ -83,8 +83,7 @@ function getNackReconnectInfo(nackContent: INackContent) {
  */
 class NoDeltaStream
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection, IDisposable
-{
+    implements IDocumentDeltaConnection, IDisposable {
     clientId: string = "storage-only client";
     claims: ITokenClaims = {
         scopes: [ScopeType.DocRead],
@@ -854,7 +853,7 @@ export class ConnectionManager implements IConnectionManager {
                     "read", // connectionMode
                     "Switch to read", // message
                 ).catch((error) => {
-                    this.logger.sendErrorEvent({ eventName: "SwitchToReadConnection"}, error);
+                    this.logger.sendErrorEvent({ eventName: "SwitchToReadConnection" }, error);
                 });
             }
         }

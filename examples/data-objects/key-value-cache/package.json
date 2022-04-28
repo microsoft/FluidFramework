@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/key-value-cache",
   "version": "0.59.3000",
+  "private": true,
   "description": "Key-value cache that runs in the node.js service",
   "homepage": "https://fluidframework.com",
   "repository": {

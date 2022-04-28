@@ -292,8 +292,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
         const worker = this.locallyRunnableTasks.get(key);
         if (worker === undefined) {
             this.sendErrorEvent("AgentScheduler_UnwantedChange", undefined, key);
-        }
-        else {
+        } else {
             this.emit("picked", key);
             worker().catch((error) => {
                 this.sendErrorEvent("AgentScheduler_FailedWork", error, key);

@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/simple-fluidobject-embed",
   "version": "0.59.3000",
+  "private": true,
   "description": "Simple Fluid object embed container",
   "homepage": "https://fluidframework.com",
   "repository": {

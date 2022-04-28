@@ -27,7 +27,7 @@ export const ModalContext = React.createContext<IModalContext>({
   component: null,
   hideModal: () => { return; },
   props: {},
-  showModal : () => { return; },
+  showModal: () => { return; },
 });
 
 // eslint-disable-next-line @typescript-eslint/ban-types

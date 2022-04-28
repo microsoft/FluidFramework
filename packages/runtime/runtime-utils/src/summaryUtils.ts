@@ -150,8 +150,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
     public addHandle(
         key: string,
         handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment,
-        handle: string): void
-    {
+        handle: string): void {
         this.summaryTree[key] = {
             type: SummaryType.Handle,
             handleType,

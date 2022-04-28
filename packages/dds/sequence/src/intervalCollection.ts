@@ -130,8 +130,7 @@ export class Interval implements ISerializableInterval {
                     return 0;
                 }
                 return 0;
-            }
-            else {
+            } else {
                 return endResult;
             }
         } else {
@@ -237,8 +236,7 @@ export class SequenceInterval implements ISerializableInterval {
                     return 0;
                 }
                 return 0;
-            }
-            else {
+            } else {
                 return endResult;
             }
         } else {
@@ -461,14 +459,12 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                 this.intervalTree.map((interval: TInterval) => {
                     results.push(interval);
                 });
-            }
-            else {
+            } else {
                 this.intervalTree.mapBackward((interval: TInterval) => {
                     results.push(interval);
                 });
             }
-        }
-        else {
+        } else {
             const transientInterval: TInterval = this.helpers.create(
                 "transient",
                 start,
@@ -486,16 +482,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                             results.push(interval);
                         }
                     });
-                }
-                else {
+                } else {
                     this.intervalTree.mapBackward((interval: TInterval) => {
                         if (transientInterval.compareEnd(interval) === 0) {
                             results.push(interval);
                         }
                     });
                 }
-            }
-            else {
+            } else {
                 // Start and (possibly) end provided. Walk the subtrees that may contain
                 // this start position.
                 const compareFn =
@@ -516,8 +510,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                     this.intervalTree.intervals.walkExactMatchesForward(
                         compareFn, actionFn, continueLeftFn, continueRightFn,
                     );
-                }
-                else {
+                } else {
                     this.intervalTree.intervals.walkExactMatchesBackward(
                         compareFn, actionFn, continueLeftFn, continueRightFn,
                     );
@@ -1090,8 +1083,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                         props: serializedInterval.properties,
                     });
             }
-        }
-        else {
+        } else {
             // If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
             // should be the winning change.
             // Note that the ID is in the property bag only to allow us to find the interval.

@@ -79,8 +79,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     extends TypedEventEmitter<IDeltaManagerInternalEvents>
     implements
     IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-    IEventProvider<IDeltaManagerInternalEvents>
-{
+    IEventProvider<IDeltaManagerInternalEvents> {
     public readonly connectionManager: TConnectionManager;
 
     public get active(): boolean { return this._active(); }
@@ -272,7 +271,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     ) {
         super();
         const props: IConnectionManagerFactoryArgs = {
-            incomingOpHandler:(messages: ISequencedDocumentMessage[], reason: string) =>
+            incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) =>
                 this.enqueueMessages(messages, reason),
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
             reconnectionDelayHandler: (delayMs: number, error: unknown) =>
@@ -444,8 +443,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         from: number, // inclusive
         to: number | undefined, // exclusive
         callback: (messages: ISequencedDocumentMessage[]) => void,
-        cacheOnly: boolean)
-    {
+        cacheOnly: boolean) {
         const docService = this.serviceProvider();
         if (docService === undefined) {
             throw new Error("Delta manager is not attached");
@@ -824,8 +822,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private async fetchMissingDeltasCore(
         reason: string,
         cacheOnly: boolean,
-        to?: number)
-    {
+        to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetchReason !== undefined) {
             return;
@@ -869,7 +866,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 },
                 cacheOnly);
         } catch (error) {
-            this.logger.sendErrorEvent({eventName: "GetDeltas_Exception"}, error);
+            this.logger.sendErrorEvent({ eventName: "GetDeltas_Exception" }, error);
             this.close(normalizeError(error));
         } finally {
             this.refreshDelayInfo(this.deltaStorageDelayId);

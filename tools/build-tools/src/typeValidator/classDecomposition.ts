@@ -4,7 +4,14 @@
  */
 
 import { ClassDeclaration, DiagnosticCategory, Node, Project, Scope, TypeChecker } from "ts-morph";
-import { decomposeType, decomposeTypes, GenericsInfo, typeToString } from "./typeDecomposition";
+import {
+    getConstructorReplacements,
+    getGetterReplacement,
+    getMethodReplacement,
+    getPropertyReplacement,
+    getSetterReplacement,
+} from "./memberDecomposition";
+import { decomposeType, GenericsInfo, typeToString } from "./typeDecomposition";
 import { BreakingIncrement, IValidator, log } from "./validatorUtils";
 
 /**
@@ -55,7 +62,7 @@ export class ClassValidator implements IValidator {
      */
     private decompose(typeChecker: TypeChecker, node: ClassDeclaration): ClassData {
         const replacedTypes = new Set<string>();
-        const replacedProperties: string[] = [];
+        const replacedMembers: string[] = [];
         const requiredGenerics = new GenericsInfo();
         const typeParameters: string[] = [];
 
@@ -70,15 +77,17 @@ export class ClassValidator implements IValidator {
             const result = decomposeType(typeChecker, extendsExpr.getType());
             mergeIntoSet(replacedTypes, result.replacedTypes);
             requiredGenerics.merge(result.requiredGenerics);
+            // replace characters that can't be used in a method name e.g. brackets from type params
+            // any types affected are handled earlier in the decomposeType call
             const typeName = typeToString(typeChecker, extendsExpr.getType()).replace(/[^\w]/g, "_");
-            replacedProperties.push(`__extends__${typeName}: ${result.typeAsString};`);
+            replacedMembers.push(`__extends__${typeName}: ${result.typeAsString};`);
         }
         node.getImplements().forEach((ex) => {
             const result = decomposeType(typeChecker, ex.getType());
             mergeIntoSet(replacedTypes, result.replacedTypes);
             requiredGenerics.merge(result.requiredGenerics);
             const typeName = typeToString(typeChecker, ex.getType()).replace(/[^\w]/g, "_");
-            replacedProperties.push(`__implements__${typeName}: ${result.typeAsString};`);
+            replacedMembers.push(`__implements__${typeName}: ${result.typeAsString};`);
         });
 
         for (const member of node.getMembers()) {
@@ -88,125 +97,53 @@ export class ClassValidator implements IValidator {
                 continue;
             }
 
-            let propNamePrefix = "";
-            const modifiers = modifierList.filter((modifier) => {
-                switch (modifier) {
-                    case Scope.Protected:
-                    case "static": {
-                        propNamePrefix += `__${modifier}__`;
-                        return false;
-                    }
-                    case "async":
-                        return false;
-                    default:
-                        return true;
-                }
-            }).join(" ");
             if (Node.isMethodDeclaration(member)) {
-                // Handle type params/generics
-                let typeArgsString = "";
-                if (member.getTypeParameters().length > 0) {
-                    const typeArgsResult = decomposeTypes(
-                        typeChecker,
-                        member.getTypeParameters().map((tp) => tp.getType()),
-                        ", ",
-                    );
-                    mergeIntoSet(replacedTypes, typeArgsResult.replacedTypes);
-                    requiredGenerics.merge(typeArgsResult.requiredGenerics);
-                    typeArgsString = `<${typeArgsResult.typeAsString}>`;
-                }
-
-                // cases where param default value causes breaking changes:
-                // 1. default value is added in the new version but not present in the old
-                // version (param now optional, method signature changed)
-                // 2. default value type changed (code behavior will differ)
-
-                // Handle parameters
-                let paramsString = "";
-                paramsString = member.getParameters().map((p) => {
-                    const subResult = decomposeType(typeChecker, p.getType());
-                    mergeIntoSet(replacedTypes, subResult.replacedTypes);
-                    requiredGenerics.merge(subResult.requiredGenerics);
-
-                    // pass in param as optional (with ? token)
-                    if(p.hasInitializer()){
-                        return `${p.getName()}?: ${subResult.typeAsString}`;
-                    }
-
-                    return `${p.getName()}: ${subResult.typeAsString}`;
-                }).join(", ");
-
-                // Handle return type
-                const returnResult = decomposeType(typeChecker, member.getReturnType());
-                mergeIntoSet(replacedTypes, returnResult.replacedTypes);
-                requiredGenerics.merge(returnResult.requiredGenerics);
-
-                // Other stuff
-                const qToken = member.hasQuestionToken() ? "?" : "";
-
-                const method = `${modifiers} ${propNamePrefix}${member.getName()}${qToken}${typeArgsString}(${paramsString}): ${returnResult.typeAsString};`;
-
-                replacedProperties.push(method);
+                const replacement = getMethodReplacement(
+                    typeChecker,
+                    requiredGenerics,
+                    replacedTypes,
+                    member,
+                );
+                replacedMembers.push(replacement);
             } else if (Node.isConstructorDeclaration(member)) {
-                // Handle parameters
-                let paramsString = "";
-                paramsString = member.getParameters().map((p) => {
-                    const subResult = decomposeType(typeChecker, p.getType());
-                    mergeIntoSet(replacedTypes, subResult.replacedTypes);
-                    requiredGenerics.merge(subResult.requiredGenerics);
-
-                    // Handle inline property declarations
-                    const paramModifiers = p.getModifiers().map((val) => val.getText());
-                    if (paramModifiers.length > 0 && paramModifiers.indexOf(Scope.Private) === -1) {
-                        let prefix = "__ctorProp__";
-                        const protectedIndex = paramModifiers.indexOf(Scope.Protected);
-                        if (protectedIndex !== -1) {
-                            paramModifiers.splice(protectedIndex, 1);
-                            prefix += "__protected__";
-                        }
-                        const qToken = p.hasQuestionToken() ? "?" : "";
-                        const ctorProperty = `${paramModifiers.join(" ")} ${prefix}${p.getName()}${qToken}: ${subResult.typeAsString};`;
-                        replacedProperties.push(ctorProperty);
-                    }
-
-                    return `${p.getName()}: ${subResult.typeAsString}`;
-                }).join(", ");
-
-                const method = `${modifiers} __ctorDecl__(${paramsString}): void;`;
-
-                replacedProperties.push(method);
+                const replacements = getConstructorReplacements(
+                    typeChecker,
+                    requiredGenerics,
+                    replacedTypes,
+                    member,
+                );
+                replacedMembers.push(...replacements);
             } else if (Node.isPropertyDeclaration(member)) {
-                const result = decomposeType(typeChecker, member.getType());
-                mergeIntoSet(replacedTypes, result.replacedTypes);
-                requiredGenerics.merge(result.requiredGenerics);
-                const qToken = member.hasQuestionToken() ? "?" : "";
-                const property = `${modifiers} ${propNamePrefix}${member.getName()}${qToken}: ${result.typeAsString};`;
-
-                replacedProperties.push(property);
+                const replacement = getPropertyReplacement(
+                    typeChecker,
+                    requiredGenerics,
+                    replacedTypes,
+                    member,
+                );
+                replacedMembers.push(replacement);
             } else if (Node.isGetAccessorDeclaration(member)) {
-                // return type should always exist for a getter
-                const result = decomposeType(typeChecker, member.getReturnType());
-                mergeIntoSet(replacedTypes, result.replacedTypes);
-                requiredGenerics.merge(result.requiredGenerics);
-                const getter = `${modifiers} get ${propNamePrefix}${member.getName()}(): ${result.typeAsString}`;
-
-                replacedProperties.push(getter);
+                const replacement = getGetterReplacement(
+                    typeChecker,
+                    requiredGenerics,
+                    replacedTypes,
+                    member,
+                );
+                replacedMembers.push(replacement);
             } else if (Node.isSetAccessorDeclaration(member)) {
-                // setter always has exactly one param
-                const param = member.getParameters()[0];
-                const paramResult = decomposeType(typeChecker, param.getType());
-                mergeIntoSet(replacedTypes, paramResult.replacedTypes);
-                requiredGenerics.merge(paramResult.requiredGenerics);
-                const setter = `${modifiers} set ${propNamePrefix}${member.getName()}(${param.getName()}: ${paramResult.typeAsString});`;
-
-                replacedProperties.push(setter);
+                const replacement = getSetterReplacement(
+                    typeChecker,
+                    requiredGenerics,
+                    replacedTypes,
+                    member,
+                );
+                replacedMembers.push(replacement);
             }
         }
 
         return {
             name: node.getName()!,
             typeParameters,
-            properties: replacedProperties,
+            properties: replacedMembers,
             replacedTypes,
             requiredGenerics,
         };

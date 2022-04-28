@@ -171,7 +171,7 @@ describeFullCompat("GC state reset in summaries", (getTestObjectProvider) => {
             }
         }
 
-        for (const [ id, summaryObject ] of Object.entries(channelsTree)) {
+        for (const [id, summaryObject] of Object.entries(channelsTree)) {
             if (summaryObject.type !== SummaryType.Tree) {
                 assert(!shouldRegenerateSummary, `DataStore ${id}'s entry should be a tree if summary was regenerated`);
                 continue;
