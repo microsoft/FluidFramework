@@ -28,9 +28,9 @@ const testContainerConfig: ITestContainerConfig = {
     },
 };
 
-// This is a regression test for #9163
+// This is a regression test for https://github.com/microsoft/FluidFramework/issues/9163
 describeNoCompat("t9s issue regression test", (getTestObjectProvider) => {
-    it("test which fails", async function() {
+    it("handles long logtail", async function() {
         const provider = getTestObjectProvider();
         const loader1 = provider.makeTestLoader(testContainerConfig);
         const container1 = await createAndAttachContainer(
