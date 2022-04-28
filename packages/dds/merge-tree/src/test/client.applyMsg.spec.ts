@@ -242,7 +242,7 @@ describe("client.applyMsg", () => {
         let seq = 0;
         const initialMsg = client.makeOpMessage(client.insertTextLocal(0, "-"), ++seq);
 
-        clients.forEach((c)=>c.applyMsg(initialMsg));
+        clients.forEach((c) => c.applyMsg(initialMsg));
         logger.validate();
 
         const messages = [
@@ -254,7 +254,7 @@ describe("client.applyMsg", () => {
 
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c)=>c.applyMsg(msg));
+            clients.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
@@ -282,7 +282,7 @@ describe("client.applyMsg", () => {
         const logger = new TestClientLogger(clients);
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c)=>c.applyMsg(msg));
+            clients.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
@@ -311,7 +311,7 @@ describe("client.applyMsg", () => {
         const logger = new TestClientLogger(clients);
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c)=>c.applyMsg(msg));
+            clients.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
@@ -338,7 +338,7 @@ describe("client.applyMsg", () => {
         const logger = new TestClientLogger(clients);
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c)=>c.applyMsg(msg));
+            clients.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
@@ -363,7 +363,7 @@ describe("client.applyMsg", () => {
         const logger = new TestClientLogger(clients);
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c)=>c.applyMsg(msg));
+            clients.forEach((c) => c.applyMsg(msg));
         }
 
         logger.validate();
@@ -401,7 +401,7 @@ describe("client.applyMsg", () => {
         );
         while (messages.length > 0) {
             const msg = messages.shift()!;
-            clients.forEach((c)=>c.applyMsg(msg));
+            clients.forEach((c) => c.applyMsg(msg));
         }
         logger.validate();
     });

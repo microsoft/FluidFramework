@@ -169,8 +169,11 @@ class ComponentArray extends Array {
         } else {
             popped = this.property.pop();
         }
-        if (PropertyFactory.instanceOf(popped, "BaseProperty")) { return PropertyProxy.proxify(popped); }
-        else { return popped; }
+        if (PropertyFactory.instanceOf(popped, "BaseProperty")) {
+            return PropertyProxy.proxify(popped);
+        } else {
+            return popped;
+        }
     }
 
     /**
@@ -201,8 +204,11 @@ class ComponentArray extends Array {
         } else {
             first = this.property.shift();
         }
-        if (PropertyFactory.instanceOf(first, "BaseProperty")) { return PropertyProxy.proxify(first); }
-        else { return first; }
+        if (PropertyFactory.instanceOf(first, "BaseProperty")) {
+            return PropertyProxy.proxify(first);
+        } else {
+            return first;
+        }
     }
 
     /**

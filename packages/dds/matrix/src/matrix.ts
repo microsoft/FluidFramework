@@ -78,8 +78,7 @@ export class SharedMatrix<T = any>
     extends SharedObject
     implements IMatrixProducer<MatrixItem<T>>,
     IMatrixReader<MatrixItem<T>>,
-    IMatrixWriter<MatrixItem<T>>
-{
+    IMatrixWriter<MatrixItem<T>> {
     private readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
 
     public static getFactory() { return new SharedMatrixFactory(); }
