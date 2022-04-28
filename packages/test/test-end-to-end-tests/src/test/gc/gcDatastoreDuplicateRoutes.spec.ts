@@ -29,7 +29,8 @@ import { mockConfigProvider } from "./mockConfigProivder";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 
 /**
- * Validates this scenario: When a datastore is aliased that it is considered a root datastore and always referenced
+ * Validates this scenario: When two DDSs in the same datastore has one change, gets summarized, and then gc is called
+ * from loading a new container. We do not want to allow duplicate GC routes to be created in this scenario.
  */
 describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -64,7 +65,6 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
         "Fluid.GarbageCollection.WriteDataAtRoot": "true",
     };
     const configProvider = mockConfigProvider(settings);
-    settings["Fluid.GarbageCollection.UseDataStoreAliasing"] = "false";
 
     let mainContainer: IContainer;
     let mainDataStore: TestDataObject;
@@ -103,18 +103,26 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
         const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger, false /* fullTree */);
         latestAckedSummary = summaryResult.ackedSummary;
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
-        return getGCContentFromTree(latestUploadedSummary);
+
+        const gcTree: ISummaryTree = latestUploadedSummary.tree[gcTreeKey] as ISummaryTree;
+        const gcBlob = gcTree.tree[`${gcBlobPrefix}_root`] as ISummaryBlob;
+        const content = JSON.parse(gcBlob.content as string) as IGarbageCollectionState;
+        return content;
+    }
+
+    // TODO: potentially use this as a check for duplicate routes on all tests
+    function validateGCStateHasNoDuplicateRoutes(gcState: IGarbageCollectionState) {
+        for (const [_, gcData] of Object.entries(gcState.gcNodes)) {
+            const seenRoutes = new Set<string>();
+            gcData.outboundRoutes.forEach((route) => {
+                assert(!seenRoutes.has(route), `There should be no duplicate routes! Duplicate Route: ${route}`);
+                seenRoutes.add(route);
+            });
+        }
     }
 
     const createContainer = async (): Promise<IContainer> => {
         return provider.createContainer(runtimeFactory, { configProvider });
-    };
-
-    const getGCContentFromTree = (summary: ISummaryTree): IGarbageCollectionState => {
-        const gcTree: ISummaryTree = summary.tree[gcTreeKey] as ISummaryTree;
-        const gcBlob = gcTree.tree[`${gcBlobPrefix}_root`] as ISummaryBlob;
-        const content = JSON.parse(gcBlob.content as string) as IGarbageCollectionState;
-        return content;
     };
 
     beforeEach(async () => {
@@ -144,11 +152,6 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
         assert(latestAckedSummary !== undefined, "Ack'd summary isn't available as expected");
         const gcTree = await summarizeOnNewContainerAndGetGCTree(latestAckedSummary.summaryAck.contents.handle);
         assert(gcTree !== undefined, "Expected a gc tree!");
-        const routes = gcTree.gcNodes[`/${mainDataStore.id}/${mainDataStore._root.id}`].outboundRoutes;
-        const seenRoutes = new Set<string>();
-        routes.forEach((route) => {
-            assert(!seenRoutes.has(route), `There should be no duplicate routes! Duplicate Route: ${route}`);
-            seenRoutes.add(route);
-        });
+        validateGCStateHasNoDuplicateRoutes(gcTree);
     });
 });

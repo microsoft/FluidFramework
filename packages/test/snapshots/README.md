@@ -20,8 +20,8 @@ For submitting changes to the snapshot test content, follow these steps:
 - Submitting the changes to the test content:
   - Sync the content for the snapshot tests as mentioned [here](#Syncing-snapshot-tests-content).
   - Go to the `content` subdirectory, create a new branch and update the snapshot content. Ideally, you should not update the content manually but follow one of these:
-    - [Adding new snapshots](#Adding-new-snapshots) - If you are adding new snapshots.
-    - [Updating existing snapshots](#Updating-existing-snapshots) - If you updating existing snapshots.
+    - [Adding new snapshots](#Adding-new-snapshots-to-the-repo) - If you are adding new snapshots.
+    - [Updating existing snapshots](#Updating-existing-snapshots-in-the-repo) - If you updating existing snapshots.
   - Create a commit and push the new branch.
   - Create a PR against `main` branch in the [FluidFrameworkTestData](https://github.com/microsoft/FluidFrameworkTestData) repo. Get the changes approved and merge the PR.
   - Checkout `main` branch and run `git pull` to ensure it has your new changes.
@@ -29,8 +29,8 @@ For submitting changes to the snapshot test content, follow these steps:
   - Go to the FluidFramework repo root. `git status` should show changes under `packages/test/snapshots/content`. For example:
   ```
   D:\FluidFramework>git status
-  On branch updateTestSnasphots
-  Your branch is up to date with 'origin/updateTestSnasphots'.
+  On branch updateTestSnapshots
+  Your branch is up to date with 'origin/updateTestSnapshots'.
 
   Changes not staged for commit:
     (use "git add <file>..." to update what will be committed)
@@ -89,6 +89,7 @@ To add new reference snapshots to the repo for a document, follow tests steps:
   npm run test:new
   ```
   This will generate the snapshots for this based on the current version of the runtime. These new snapshots will be under `current_snapshots` directory.
+- Scrub the snapshots of PII using this tool `packages\drivers\debugger\src\sanitize.ts`
 - Run the tests to validate that all the tests pass with the new snapshots.
 - Submit the changes by following the steps [here](#Submit-changes-to-test-content).
 
