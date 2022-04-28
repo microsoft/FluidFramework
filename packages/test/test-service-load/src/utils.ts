@@ -190,7 +190,7 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
 
 export async function createTestDriver(
     driver: TestDriverTypes,
-    endpoint: RouterliciousEndpoint | undefined,
+    r11sEndpointName: RouterliciousEndpoint | undefined,
     seed: number,
     runId: number | undefined,
     supportsBrowserAuth?: true,
@@ -205,7 +205,7 @@ export async function createTestDriver(
                 supportsBrowserAuth,
             },
             r11s: {
-                endpoint,
+                r11sEndpointName,
             },
         });
 }

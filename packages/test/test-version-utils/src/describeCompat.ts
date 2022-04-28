@@ -33,7 +33,7 @@ function createCompatSuite(
                             type: driver,
                             version: config.driver,
                             config: {
-                                r11s: { endpoint: r11sEndpointName },
+                                r11s: { r11sEndpointName },
                                 odsp: { tenantIndex },
                             },
                         },
