@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import { expect } from 'chai';
-import Prando from 'prando';
+import Random from 'random-js';
 import { compareStrings } from '../Common';
 import {
 	numericUuidEquals,
@@ -132,10 +132,10 @@ describe('NumericUuid', () => {
 	];
 
 	describe('incrementing', () => {
-		const prando = new Prando('incrementing');
+		const rand = new Random(Random.engines.mt19937().seedWithArray([0xdeadbeef, 0xfeedbed]));
 		const incrementAmounts = [
 			...[...new Array(53).keys()].map((n) => 2 ** n - 1),
-			...[...new Array(10).keys()].map((_) => prando.nextInt(0, Number.MAX_SAFE_INTEGER)),
+			...[...new Array(10).keys()].map((_) => rand.integer(0, Number.MAX_SAFE_INTEGER)),
 		];
 		stableIds.forEach((stableId) => {
 			it(`can increment ${stableId}`, () => {

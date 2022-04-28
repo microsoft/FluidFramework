@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import Prando from 'prando';
+import Random from 'random-js';
 import { v5 } from 'uuid';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -30,8 +30,8 @@ import {
 	TreeLeave,
 } from './Types';
 
-function uuid(rand: Prando): string {
-	return v5(rand.nextString(16), '33f960ec-f1e4-4fca-8dcd-223c6647fcc7');
+function uuid(rand: Random): string {
+	return v5(rand.string(16), '33f960ec-f1e4-4fca-8dcd-223c6647fcc7');
 }
 
 const defaultJoinConfig: Required<JoinGenerationConfig> = {
@@ -48,7 +48,7 @@ function makeJoinGenerator(passedConfig: JoinGenerationConfig): AsyncGenerator<O
 		const passiveAllowed = passiveCollaborators.length < config.maximumPassiveCollaborators;
 		const isObserver =
 			activeAllowed && passiveAllowed
-				? rand.nextBoolean()
+				? rand.bool()
 				: activeAllowed
 				? false
 				: passiveAllowed
@@ -58,8 +58,8 @@ function makeJoinGenerator(passedConfig: JoinGenerationConfig): AsyncGenerator<O
 				  );
 		return {
 			type: 'join',
-			summarizeHistory: rand.nextArrayItem(config.summarizeHistory),
-			writeFormat: rand.nextArrayItem(config.writeFormat),
+			summarizeHistory: rand.pick(config.summarizeHistory),
+			writeFormat: rand.pick(config.writeFormat),
 			isObserver,
 		};
 	};
@@ -70,13 +70,13 @@ async function leaveGenerator({ rand, activeCollaborators, passiveCollaborators 
 	const canUseActive = activeCollaborators.length > 0;
 	const isObserver =
 		canUsePassive && canUseActive
-			? rand.nextBoolean()
+			? rand.bool()
 			: canUsePassive
 			? true
 			: canUseActive
 			? false
 			: fail('Cannot generate a leave op when there are no clients.');
-	const index = rand.nextInt(0, (isObserver ? passiveCollaborators : activeCollaborators).length - 1);
+	const index = rand.integer(0, (isObserver ? passiveCollaborators : activeCollaborators).length - 1);
 	return { type: 'leave', isObserver, index };
 }
 
@@ -98,25 +98,25 @@ const defaultEditConfig: Required<EditGenerationConfig> = {
 const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<Operation, FuzzTestState> => {
 	const config = { ...defaultEditConfig, ...passedConfig };
 	const insertConfig = { ...defaultInsertConfig, ...config.insertConfig };
-	const poolRand = new Prando(0);
+	const poolRand = new Random(/* mathNative engine */);
 	const traitLabelPool = Array.from({ length: config.traitLabelPoolSize }, () => uuid(poolRand) as TraitLabel);
-	const traitLabelGenerator = ({ rand }: FuzzTestState) => rand.nextArrayItem(traitLabelPool);
+	const traitLabelGenerator = ({ rand }: FuzzTestState) => rand.pick(traitLabelPool);
 
 	const definitionPool = Array.from({ length: insertConfig.definitionPoolSize }, () => uuid(poolRand) as Definition);
-	const definitionGenerator = ({ rand }: FuzzTestState) => rand.nextArrayItem(definitionPool);
+	const definitionGenerator = ({ rand }: FuzzTestState) => rand.pick(definitionPool);
 	type EditState = FuzzTestState & TreeContext;
 
 	function traitGenerator(state: EditState): TraitLocation {
 		const { idList, rand, view } = state;
-		const id = rand.nextArrayItem(idList);
+		const id = rand.pick(idList);
 		return view.tryGetTraitLocation(id) ?? { parent: id, label: traitLabelGenerator(state) };
 	}
 
 	function placeGenerator(state: EditState): StablePlace {
 		const { idList, rand, view } = state;
 		// Note: this gives a 50% chance of adding to a new trait; we may want to tune this at some point
-		if (rand.nextBoolean()) {
-			const parent = rand.nextArrayItem(idList);
+		if (rand.bool()) {
+			const parent = rand.pick(idList);
 			return StablePlace.atStartOf({ parent, label: traitLabelGenerator(state) });
 		}
 		const traitLocation = traitGenerator(state);
@@ -128,8 +128,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		// For a trait of length N, there are 2N + 2valid places: start, before index 1, after index 1, etc.
 		// index === trait.length is treated as either the start or end of the trait.
 		const makeDescriptor = (): Descriptor => ({
-			index: rand.nextInt(0, trait.length),
-			side: rand.nextBoolean() ? Side.Before : Side.After,
+			index: rand.integer(0, trait.length),
+			side: rand.bool() ? Side.Before : Side.After,
 		});
 		const descriptor = makeDescriptor();
 
@@ -149,8 +149,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		// For a trait of length N, there are 2N + 2valid places: start, before index 1, after index 1, etc.
 		// index === trait.length is treated as either the start or end of the trait.
 		const makeDescriptor = (): Descriptor => ({
-			index: rand.nextInt(0, trait.length),
-			side: rand.nextBoolean() ? Side.Before : Side.After,
+			index: rand.integer(0, trait.length),
+			side: rand.bool() ? Side.Before : Side.After,
 		});
 		const descriptor1 = makeDescriptor();
 		let descriptor2: Descriptor;
@@ -190,7 +190,7 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 
 	function treeGenerator(state: EditState): BuildNode {
 		const { rand, idGenerator } = state;
-		const treeType = rand.nextArrayItem(['leaf', 'stick', 'balanced']);
+		const treeType = rand.pick(['leaf', 'stick', 'balanced']);
 		const makeNode = (traits?: TraitMap<BuildNode>): BuildNode => ({
 			identifier: idGenerator.generateNodeId(),
 			definition: definitionGenerator(state),
@@ -236,7 +236,7 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 			build: {
 				type: ChangeType.Build,
 				destination: id,
-				source: Array.from({ length: state.rand.nextInt(1, maxTreeSequenceSize) }, () => treeGenerator(state)),
+				source: Array.from({ length: state.rand.integer(1, maxTreeSequenceSize) }, () => treeGenerator(state)),
 			},
 			insert: {
 				type: ChangeType.Insert,
@@ -319,26 +319,22 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 	}
 
 	async function setPayloadGenerator({ dataStoreRuntime, idList, rand, view }: EditState): Promise<FuzzChange> {
-		const nodeToModify = rand.nextArrayItem(idList);
-		const getPayloadContents = async (rand: Prando): Promise<string | { blob: IFluidHandle<ArrayBufferLike> }> => {
-			if (rand.nextBoolean()) {
-				return rand.nextString(4);
+		const nodeToModify = rand.pick(idList);
+		const getPayloadContents = async (rand: Random): Promise<string | { blob: IFluidHandle<ArrayBufferLike> }> => {
+			if (rand.bool()) {
+				return rand.string(4);
 			}
-			const handle = await dataStoreRuntime.uploadBlob(IsoBuffer.from(rand.nextString(10)));
+			const handle = await dataStoreRuntime.uploadBlob(IsoBuffer.from(rand.string(10)));
 			return { blob: handle };
 		};
 
 		const viewNode = view.getViewNode(nodeToModify);
 		const payload =
-			viewNode.payload !== undefined
-				? rand.nextBoolean()
-					? await getPayloadContents(rand)
-					: undefined
-				: undefined;
+			viewNode.payload !== undefined ? (rand.bool() ? await getPayloadContents(rand) : undefined) : undefined;
 		return {
 			fuzzType: 'setPayload',
 			type: ChangeType.SetValue,
-			nodeToModify: rand.nextArrayItem(idList),
+			nodeToModify: rand.pick(idList),
 			payload,
 		};
 	}
@@ -352,7 +348,7 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 
 	return async (state: FuzzTestState): Promise<Operation | typeof done> => {
 		const { rand, activeCollaborators } = state;
-		const index = rand.nextInt(0, activeCollaborators.length - 1);
+		const index = rand.integer(0, activeCollaborators.length - 1);
 		const { tree } = activeCollaborators[index];
 		const view = tree.currentView;
 		const idList = getIdList(view);
@@ -419,7 +415,7 @@ type AcceptanceCondition<TState> = (state: TState) => boolean;
  */
 type Weights<T, TState> = [T | AsyncGenerator<T, TState>, number, AcceptanceCondition<TState>?][];
 
-function createWeightedGenerator<T, TState extends { rand: Prando }>(
+function createWeightedGenerator<T, TState extends { rand: Random }>(
 	weights: Weights<T, TState>
 ): AsyncGenerator<T, TState> {
 	const cumulativeSums: [T | AsyncGenerator<T, TState>, number, AcceptanceCondition<TState>?][] = [];
@@ -433,7 +429,7 @@ function createWeightedGenerator<T, TState extends { rand: Prando }>(
 	return async (state) => {
 		const { rand } = state;
 		const sample = () => {
-			const weightSelected = rand.nextInt(1, totalWeight);
+			const weightSelected = rand.integer(1, totalWeight);
 
 			let opIndex = 0;
 			while (cumulativeSums[opIndex][1] < weightSelected) {

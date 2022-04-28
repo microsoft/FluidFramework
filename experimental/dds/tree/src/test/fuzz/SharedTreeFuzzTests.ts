@@ -5,13 +5,12 @@
 
 import { promises as fs, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import Prando from 'prando';
+import Random from 'random-js';
 import { expect } from 'chai';
 import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilities/TestUtilities';
-import { ChangeInternal, WriteFormat } from '../../persisted-types';
+import { WriteFormat } from '../../persisted-types';
 import { fail } from '../../Common';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
-import { EditLog } from '../../EditLog';
 import { FuzzTestState, done, EditGenerationConfig, AsyncGenerator, Operation } from './Types';
 import { chain, makeOpGenerator, take } from './Generators';
 
@@ -35,7 +34,7 @@ export async function performFuzzActions(
 	synchronizeAtEnd: boolean = true,
 	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string }
 ): Promise<Required<FuzzTestState>> {
-	const rand = new Prando(seed);
+	const rand = new Random(Random.engines.mt19937().seed(seed));
 
 	// Note: the direct fields of `state` aren't mutated, but it is mutated transitively.
 	const state: FuzzTestState = { rand, passiveCollaborators: [], activeCollaborators: [] };
