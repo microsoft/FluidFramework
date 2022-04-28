@@ -40,7 +40,6 @@ export async function generateTests(packageDetails: PackageDetails) {
             const oldType: TestCaseTypeData = {
                 prefix: "old",
                 ... oldTypeData,
-                removed: false
             }
             const currentTypeData = currentTypeMap.get(getFullTypeName(oldTypeData));
             // if the current package is missing a type, we will use the old type data.
@@ -51,13 +50,11 @@ export async function generateTests(packageDetails: PackageDetails) {
             ?{
                 prefix: "current",
                 ... oldTypeData,
-                kind:`Removed${oldTypeData.kind}`,
-                removed: true
+                modified: "removed"
             }
             :{
                 prefix: "current",
                 ... currentTypeData,
-                removed: false
             };
             const broken = currentProjectData.packageDetails.broken;
             // look for settings not under version, then fall back to version for back compat
@@ -103,27 +100,28 @@ export async function generateTests(packageDetails: PackageDetails) {
 
 interface TestCaseTypeData extends TypeData{
     prefix: "old" | "current",
-    removed: boolean
+    modified?: "removed" | "changed",
 }
 
 function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData, isCompatible: boolean){
+
     const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType).replace(".","_")}`;
     const useSig =`use_${useType.prefix}_${getFullTypeName(useType).replace(".","_")}`;
     const expectErrorString = "    // @ts-expect-error compatibility expected to be broken";
     const testString: string[] =[];
 
     testString.push(`declare function ${getSig}():`);
-    if (!isCompatible && getAsType.removed) {
+    if (!isCompatible && getAsType.modified) {
         testString.push(expectErrorString);
     }
     testString.push(`    ${toTypeString(getAsType.prefix, getAsType)};`);
     testString.push(`declare function ${useSig}(`);
-    if (!isCompatible && useType.removed) {
+    if (!isCompatible && useType.modified) {
         testString.push(expectErrorString);
     }
     testString.push(`    use: ${toTypeString(useType.prefix, useType)});`);
     testString.push(`${useSig}(`);
-    if(!isCompatible && !getAsType.removed && !useType.removed) {
+    if(!isCompatible && !getAsType.modified && !useType.modified) {
         testString.push(expectErrorString);
     }
     testString.push(`    ${getSig}());`);
