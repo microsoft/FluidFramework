@@ -229,6 +229,12 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      */
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     public set(key: string, value: any): void {
+        const currentValue = this.values.get(key);
+        // Early-exit if we can't submit a valid proposal (there's already a pending proposal)
+        if (currentValue !== undefined && currentValue.pending !== undefined) {
+            return;
+        }
+
         // If not attached, we basically pretend we got an ack immediately.
         // TODO: Should we just directly store the value rather than the full simulation?
         if (!this.isAttached()) {
@@ -262,6 +268,12 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * {@inheritDoc IQuorum.delete}
      */
     public delete(key: string): void {
+        const currentValue = this.values.get(key);
+        // Early-exit if we can't submit a valid proposal (there's nothing to delete or already a pending proposal).
+        if (currentValue === undefined || currentValue.pending !== undefined) {
+            return;
+        }
+
         // If not attached, we basically pretend we got an ack immediately.
         // TODO: Should we just directly store the value rather than the full simulation?
         if (!this.isAttached()) {
@@ -309,8 +321,9 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         clientId: string,
     ): void => {
         const currentValue = this.values.get(key);
-        // A proposal is valid if the value is unknown or if it was made with knowledge of the most recently accepted
-        // value.  We'll drop invalid proposals on the ground.
+        // We use a consensus-like approach here, so a proposal is valid if the value is unset or if there is no
+        // pending change and it was made with knowledge of the most recently accepted value.  We'll drop invalid
+        // proposals on the ground.
         const proposalValid =
             currentValue === undefined
             || (currentValue.pending === undefined && currentValue.accepted.sequenceNumber <= refSeq);
@@ -366,11 +379,14 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         clientId: string,
     ): void => {
         const currentValue = this.values.get(key);
-        // A proposal is valid if the value is unknown or if it was made with knowledge of the most recently accepted
-        // value.  We'll drop invalid proposals on the ground.
+        // We use a consensus-like approach here, so a proposal is valid if there's a value to delete, there's no
+        // other pending change, and the delete was made with knowledge of the most recently accepted value.  Note
+        // this differs slightly from set because delete of an unset value is a no-op - these no-ops should also
+        // be prevented on the sending side but we'll guard here too.  We'll drop invalid proposals on the ground.
         const proposalValid =
-            currentValue === undefined
-            || (currentValue.pending === undefined && currentValue.accepted.sequenceNumber <= refSeq);
+            currentValue !== undefined
+            && currentValue.pending === undefined
+            && currentValue.accepted.sequenceNumber <= refSeq;
         if (!proposalValid) {
             // TODO: If delete() returns a promise we will need to resolve it false for invalid proposals.
             return;
