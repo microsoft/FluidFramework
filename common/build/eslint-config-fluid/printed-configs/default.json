@@ -51,7 +51,7 @@
             "error"
         ],
         "@typescript-eslint/brace-style": [
-            "warn",
+            "error",
             "1tbs",
             {
                 "allowSingleLine": true
