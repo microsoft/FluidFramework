@@ -176,7 +176,7 @@ async function getClient() {
     await rcTools.saveRC(rc);
     await saveEnv(rc.secrets);
 
-    console.warn(`\nFor the new environment to take effect, please restart your terminal or dev container.\n`)
+    console.warn(`\nFor the new environment to take effect, please restart your terminal.\n`)
 })().catch(e => {
     console.error(`FATAL ERROR: ${e}`);
     process.exit(-1);
