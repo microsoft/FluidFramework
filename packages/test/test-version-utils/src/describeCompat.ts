@@ -40,7 +40,7 @@ function createCompatSuite(
                         config.containerRuntime,
                         config.dataRuntime,
                     );
-                    Object.defineProperty(this,"__fluidTestProvider",{get: ()=>provider});
+                    Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
                 });
                 tests.bind(this)((reset: boolean = true) => {
                     if (reset) {

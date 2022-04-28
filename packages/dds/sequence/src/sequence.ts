@@ -175,7 +175,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     ) {
         super(id, dataStoreRuntime, attributes);
 
-        this.loadedDeferred.promise.catch((error)=>{
+        this.loadedDeferred.promise.catch((error) => {
             this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
         });
 
@@ -539,12 +539,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                             || m.sequenceNumber <= collabWindow.currentSeq) {
                             throw new Error(`Invalid catchup operations in snapshot: ${
                                 JSON.stringify({
-                                    op:{
+                                    op: {
                                         seq: m.sequenceNumber,
                                         minSeq: m.minimumSequenceNumber,
-                                        refSeq:m.referenceSequenceNumber,
+                                        refSeq: m.referenceSequenceNumber,
                                     },
-                                    collabWindow:{
+                                    collabWindow: {
                                         seq: collabWindow.currentSeq,
                                         minSeq: collabWindow.minSeq,
                                     },

@@ -284,7 +284,7 @@ function generate(
 
         it("Events", async function() {
             // GitHub issue: #9534
-            if(provider.driver.type === "odsp") {
+            if (provider.driver.type === "odsp") {
                 this.skip();
             }
 

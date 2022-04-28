@@ -669,13 +669,13 @@ describe("SharedString", () => {
             };
             verifyCreateEvents(sharedString, createInfo1, [
                 { label: "intervalCollections/test1", local: true },
-                { label: "intervalCollections/test2", local: false},
-                { label: "intervalCollections/test3", local: false},
+                { label: "intervalCollections/test2", local: false },
+                { label: "intervalCollections/test3", local: false },
             ]);
             verifyCreateEvents(sharedString2, createInfo2, [
                 { label: "intervalCollections/test2", local: true },
                 { label: "intervalCollections/test3", local: true },
-                { label: "intervalCollections/test1", local: false},
+                { label: "intervalCollections/test1", local: false },
             ]);
         });
     });

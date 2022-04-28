@@ -50,61 +50,61 @@ describe("Garbage Collector", () => {
     }
 
     it("should not collect nodes when all nodes are referenced", () => {
-        const gcNode1: IGCNode = { id: "/", outboundRoutes: [ "/ds1" ] };
-        const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: [ "/ds1/dds1" ] };
+        const gcNode1: IGCNode = { id: "/", outboundRoutes: ["/ds1"] };
+        const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: ["/ds1/dds1"] };
         const gcNode3: IGCNode = { id: "/ds2", outboundRoutes: [] };
-        const gcNode4: IGCNode = { id: "/ds1/dds1", outboundRoutes: [ "/ds2" ] };
+        const gcNode4: IGCNode = { id: "/ds1/dds1", outboundRoutes: ["/ds2"] };
 
-        const gcNodes = [ gcNode1, gcNode2, gcNode3, gcNode4 ];
+        const gcNodes = [gcNode1, gcNode2, gcNode3, gcNode4];
         const deletedNodes = [];
 
-        runGCAndValidateResults(gcNodes, [ "/" ], deletedNodes);
+        runGCAndValidateResults(gcNodes, ["/"], deletedNodes);
     });
 
     it("should collect nodes that are not referenced", () => {
-        const gcNode1: IGCNode = { id: "/", outboundRoutes: [ "/ds1" ] };
-        const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: [ "/ds1/dds1" ] };
+        const gcNode1: IGCNode = { id: "/", outboundRoutes: ["/ds1"] };
+        const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: ["/ds1/dds1"] };
         const gcNode3: IGCNode = { id: "/ds1/dds1", outboundRoutes: [] };
         // The following nodes are not referenced by any of the nodes above.
-        const gcNode4: IGCNode = { id: "/ds2", outboundRoutes: [ "/ds2/dds1" ] };
+        const gcNode4: IGCNode = { id: "/ds2", outboundRoutes: ["/ds2/dds1"] };
         const gcNode5: IGCNode = { id: "/ds2/dds1", outboundRoutes: [] };
 
-        const gcNodes = [ gcNode1, gcNode2, gcNode3, gcNode4, gcNode5 ];
-        const deletedNodes = [ gcNode4, gcNode5 ];
+        const gcNodes = [gcNode1, gcNode2, gcNode3, gcNode4, gcNode5];
+        const deletedNodes = [gcNode4, gcNode5];
 
-        runGCAndValidateResults(gcNodes, [ "/" ], deletedNodes);
+        runGCAndValidateResults(gcNodes, ["/"], deletedNodes);
     });
 
     it("should collect nodes with cycles in the graph", () => {
-        const gcNode1: IGCNode = { id: "/", outboundRoutes: [ "/ds1" ] };
-        const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: [ "/ds1/dds1" ] };
-        const gcNode3: IGCNode = { id: "/ds2", outboundRoutes: [ "/ds2/dds1" ] };
-        const gcNode4: IGCNode = { id: "/ds1/dds1", outboundRoutes: [ "/ds2", "/ds1" ] };
-        const gcNode5: IGCNode = { id: "/ds2/dds1", outboundRoutes: [ "/ds1", "/ds2"] };
+        const gcNode1: IGCNode = { id: "/", outboundRoutes: ["/ds1"] };
+        const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: ["/ds1/dds1"] };
+        const gcNode3: IGCNode = { id: "/ds2", outboundRoutes: ["/ds2/dds1"] };
+        const gcNode4: IGCNode = { id: "/ds1/dds1", outboundRoutes: ["/ds2", "/ds1"] };
+        const gcNode5: IGCNode = { id: "/ds2/dds1", outboundRoutes: ["/ds1", "/ds2"] };
         // The following node is not referenced by any of the nodes above.
         const gcNode6: IGCNode = { id: "/ds3", outboundRoutes: [] };
 
-        const gcNodes = [ gcNode1, gcNode2, gcNode3, gcNode4, gcNode5, gcNode6 ];
-        const deletedNodes = [ gcNode6 ];
+        const gcNodes = [gcNode1, gcNode2, gcNode3, gcNode4, gcNode5, gcNode6];
+        const deletedNodes = [gcNode6];
 
-        runGCAndValidateResults(gcNodes, [ "/" ], deletedNodes);
+        runGCAndValidateResults(gcNodes, ["/"], deletedNodes);
     });
 
     it("should collect nodes with multiple starting ids", () => {
-        const gcNode1: IGCNode = { id: "/", outboundRoutes: [ "/ds1" ] };
-        const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: [ "/ds1/dds1" ] };
+        const gcNode1: IGCNode = { id: "/", outboundRoutes: ["/ds1"] };
+        const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: ["/ds1/dds1"] };
         const gcNode3: IGCNode = { id: "/ds1/dds1", outboundRoutes: [] };
         // The following node is not referenced by any of the nodes above. But its id will be given as starting id to
         // GC, so it will be referenced.
-        const gcNode4: IGCNode = { id: "/ds2", outboundRoutes: [ "/ds2/dds1" ] };
+        const gcNode4: IGCNode = { id: "/ds2", outboundRoutes: ["/ds2/dds1"] };
         const gcNode5: IGCNode = { id: "/ds2/dds1", outboundRoutes: [] };
         // The following node is not referenced by any of the nodes above.
         const gcNode6: IGCNode = { id: "/ds3", outboundRoutes: [] };
 
-        const gcNodes = [ gcNode1, gcNode2, gcNode3, gcNode4, gcNode5, gcNode6 ];
-        const deletedNodes = [ gcNode6 ];
+        const gcNodes = [gcNode1, gcNode2, gcNode3, gcNode4, gcNode5, gcNode6];
+        const deletedNodes = [gcNode6];
 
-        runGCAndValidateResults(gcNodes, [ "/", "/ds2" ], deletedNodes);
+        runGCAndValidateResults(gcNodes, ["/", "/ds2"], deletedNodes);
     });
 
     /**
@@ -112,19 +112,19 @@ describe("Garbage Collector", () => {
      * Enable it once the telemetry is enabled. See - https://github.com/microsoft/FluidFramework/issues/4939
      */
     it.skip("should log error when a referenced node is missing from the graph", () => {
-        const gcNode1: IGCNode = { id: "/", outboundRoutes: [ "/ds1" ] };
-        const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: [ "/ds1/dds1" ] };
+        const gcNode1: IGCNode = { id: "/", outboundRoutes: ["/ds1"] };
+        const gcNode2: IGCNode = { id: "/ds1", outboundRoutes: ["/ds1/dds1"] };
         const gcNode3: IGCNode = { id: "/ds2", outboundRoutes: [] };
-        const gcNode4: IGCNode = { id: "/ds1/dds1", outboundRoutes: [ "/ds2", "/ds3" ] };
+        const gcNode4: IGCNode = { id: "/ds1/dds1", outboundRoutes: ["/ds2", "/ds3"] };
         // The following node is not referenced by any of the nodes above.
         const gcNode5: IGCNode = { id: "/ds2/dds1", outboundRoutes: [] };
 
-        const gcNodes = [ gcNode1, gcNode2, gcNode3, gcNode4, gcNode5 ];
-        const deletedNodes = [ gcNode5 ];
+        const gcNodes = [gcNode1, gcNode2, gcNode3, gcNode4, gcNode5];
+        const deletedNodes = [gcNode5];
 
-        runGCAndValidateResults(gcNodes, [ "/" ], deletedNodes);
+        runGCAndValidateResults(gcNodes, ["/"], deletedNodes);
 
         const telemetryEvent = { eventName: "MissingGCNode", missingNodeId: "/ds3" };
-        assert.deepStrictEqual(telemetryEvents, [ telemetryEvent ], "GC did not generate event as expected");
+        assert.deepStrictEqual(telemetryEvents, [telemetryEvent], "GC did not generate event as expected");
     });
 });

@@ -62,7 +62,7 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
 
      async function summarizeOnContainer(container: IContainer) {
         const dataStore = await requestFluidObject<TestDataObject>(container, "default");
-        return dataStore.containerRuntime.summarize({runGC: true, trackState: false});
+        return dataStore.containerRuntime.summarize({ runGC: true, trackState: false });
     }
 
     const createContainer = async (): Promise<IContainer> => {

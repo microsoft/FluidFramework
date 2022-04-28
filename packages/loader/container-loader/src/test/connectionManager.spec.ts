@@ -133,7 +133,7 @@ describe("connectionManager", () => {
         assert.equal(connectionCount, 3, "Expected 3 connections after the two disconnects");
 
         // Act III - nonretryable nack
-        const nack: Partial<INack> = { content: { code: 403, type: NackErrorType.BadRequestError, message: "fatalNack"} };
+        const nack: Partial<INack> = { content: { code: 403, type: NackErrorType.BadRequestError, message: "fatalNack" } };
         oldConnection = connection;
         connection.emitNack("docId", [nack]);
 

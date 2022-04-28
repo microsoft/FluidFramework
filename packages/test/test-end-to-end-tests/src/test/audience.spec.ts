@@ -39,7 +39,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
         undefined,
         [innerRequestHandler],
         // Disable summaries so the summarizer client doesn't interfere with the audience
-        { summaryOptions: { disableSummaries: true }},
+        { summaryOptions: { disableSummaries: true } },
     );
 
     const createContainer = async (): Promise<Container> => await provider.createContainer(runtimeFactory) as Container;

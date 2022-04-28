@@ -237,7 +237,7 @@ export class OdspDocumentService implements IDocumentService {
         return normalizeError(error, { props: {
             failedConnectionStep,
             separateTokenRequest,
-        }});
+        } });
     }
 
     /**
@@ -309,7 +309,7 @@ export class OdspDocumentService implements IDocumentService {
                     "createDeltaConnection",
                     !requestWebsocketTokenFromJoinSession);
                 if (typeof error === "object" && error !== null) {
-                    normalizedError.addTelemetryProperties({socketDocumentId: websocketEndpoint.id});
+                    normalizedError.addTelemetryProperties({ socketDocumentId: websocketEndpoint.id });
                 }
                 throw normalizedError;
             }
@@ -351,7 +351,7 @@ export class OdspDocumentService implements IDocumentService {
                             // This document can only be opened in storage-only mode.
                             // DeltaManager will recognize this error
                             // and load without a delta stream connection.
-                            this._policies = {...this._policies,storageOnly: true};
+                            this._policies = { ...this._policies, storageOnly: true };
                             throw new DeltaStreamConnectionForbiddenError(code, { driverVersion });
                         default:
                             continue;
@@ -515,9 +515,9 @@ export class OdspDocumentService implements IDocumentService {
             // ICache
             {
                 write: async (key: string, opsData: string) => {
-                    return this.cache.persistedCache.put({...opsKey, key}, opsData);
+                    return this.cache.persistedCache.put({ ...opsKey, key }, opsData);
                 },
-                read: async (key: string) => this.cache.persistedCache.get({...opsKey, key}),
+                read: async (key: string) => this.cache.persistedCache.get({ ...opsKey, key }),
                 remove: () => { this.cache.persistedCache.removeEntries().catch(() => {}); },
             },
             batchSize,

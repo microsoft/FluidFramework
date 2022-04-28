@@ -359,8 +359,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             });
 
             return builder.build();
-        }
-        catch (error) {
+        } catch (error) {
             throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
         }
     };
