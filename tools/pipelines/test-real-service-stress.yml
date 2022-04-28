@@ -24,7 +24,7 @@ variables:
   value: $(Pipeline.Workspace)/test
 
 stages:
-    # Run Stress Tests
+    # stress tests odsp
   - stage:
     displayName:  Stress tests - Odsp
     dependsOn: []
@@ -42,7 +42,7 @@ stages:
           login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-  # end-to-end tests tinylicious
+  # stress tests tinylicious
   - stage:
     displayName: Stress tests - tinylicious
     dependsOn: []
@@ -57,7 +57,7 @@ stages:
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-  # end-to-end tests frs
+  # stress tests frs
   - stage:
     displayName: Stress tests - frs
     dependsOn: []
@@ -70,6 +70,5 @@ stages:
         timeoutInMinutes: 120
         testCommand: start:frs
         env:
-          r11sEndpointName: "frs"
           fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject

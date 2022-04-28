@@ -40,8 +40,8 @@ async function main() {
         .requiredOption("-r, --runId <runId>",
             "run a child process with the given id. Requires --url option.", parseIntArg)
         .requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
+        .option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
-        .option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?", "frs")
         .option("-v, --verbose", "Enables verbose logging")
         .option("-m, --enableOpsMetrics", "Enable capturing ops metrics")
         .parse(process.argv);
