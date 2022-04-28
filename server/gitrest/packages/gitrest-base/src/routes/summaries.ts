@@ -9,6 +9,7 @@ import {
     IWriteSummaryResponse,
     NetworkError,
 } from "@fluidframework/server-services-client";
+import { handleResponse } from "@fluidframework/server-services-shared";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -26,8 +27,8 @@ import {
     IFileSystemManagerFactory,
     Constants,
     getRepoManagerParamsFromRequest,
+    logApiError,
 } from "../utils";
-import { handleResponse } from "./utils";
 
 function getDocumentStorageDirectory(repoManager: IRepositoryManager, documentId: string): string {
     return `${repoManager.path}/${documentId}`;
@@ -83,6 +84,12 @@ async function createSummary(
         repoManager,
         externalWriterConfig?.enabled ?? false,
     );
+    const lumberjackProperties = {
+        ...getLumberBaseProperties(documentId, tenantId),
+        summaryType: payload?.type,
+    };
+    Lumberjack.info("Creating summary", lumberjackProperties);
+
     const {isNew, writeSummaryResponse} = await wholeSummaryManager.writeSummary(payload);
 
     // Waiting to pre-compute and persist latest summary would slow down document creation,
@@ -94,7 +101,7 @@ async function createSummary(
             // This read is for Historian caching purposes, so it should be ignored on failure.
             Lumberjack.error(
                 "Failed to read latest summary after writing container summary",
-                getLumberBaseProperties(documentId, tenantId),
+                lumberjackProperties,
                 err);
             return undefined;
         });
@@ -110,7 +117,7 @@ async function createSummary(
                 } catch(e) {
                     Lumberjack.error(
                         "Failed to persist latest full summary to storage",
-                        getLumberBaseProperties(documentId, tenantId),
+                        lumberjackProperties,
                         e);
                     // TODO: Find and add more information about this failure so that Scribe can retry as necessary.
                     throw new NetworkError(500, "Failed to persist latest full summary to storage");
@@ -164,7 +171,10 @@ export function create(
                 repoManagerParams.storageRoutingId.tenantId,
                 getExternalWriterParams(request.query?.config as string | undefined),
                 persistLatestFullSummary,
-            ));
+            )).catch((error) => {
+                logApiError(error, request, repoManagerParams);
+                throw error;
+            });
         handleResponse(resultP, response);
     });
 
@@ -190,7 +200,10 @@ export function create(
                 repoManagerParams.storageRoutingId.tenantId,
                 getExternalWriterParams(request.query?.config as string | undefined),
                 persistLatestFullSummary,
-            ));
+            )).catch((error) => {
+                logApiError(error, request, repoManagerParams);
+                throw error;
+            });
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 
@@ -217,7 +230,10 @@ export function create(
                 softDelete,
                 getExternalWriterParams(request.query?.config as string | undefined),
                 persistLatestFullSummary,
-            ));
+            )).catch((error) => {
+                logApiError(error, request, repoManagerParams);
+                throw error;
+            });
         handleResponse(resultP, response, undefined, undefined, 204);
     });
 

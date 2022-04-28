@@ -9,10 +9,16 @@ import express, { Express } from "express";
 import morgan from "morgan";
 import nconf from "nconf";
 import split from "split";
+import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
 import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import * as routes from "./routes";
-import { Constants, IFileSystemManagerFactory, IRepositoryManagerFactory, parseStorageRoutingId } from "./utils";
+import {
+    getRepoManagerParamsFromRequest,
+    getRequestPathCategory,
+    IFileSystemManagerFactory,
+    IRepositoryManagerFactory,
+} from "./utils";
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to
@@ -32,18 +38,17 @@ export function create(
     const loggerFormat = store.get("logger:morganFormat");
     if (loggerFormat === "json") {
         app.use(morgan((tokens, req, res) => {
-            const storageRoutingId = parseStorageRoutingId(tokens.req(req, res, Constants.StorageRoutingIdHeader));
+            const params = getRepoManagerParamsFromRequest(req);
             const messageMetaData = {
                 method: tokens.method(req, res),
-                pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
-                // TODO: replace "x-driver-version" with DriverVersionHeaderName from services-client
-                driverVersion: tokens.req(req, res, "x-driver-version"),
+                pathCategory: getRequestPathCategory(req),
+                driverVersion: tokens.req(req, res, DriverVersionHeaderName),
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
                 responseTime: tokens["response-time"](req, res),
-                tenantId: storageRoutingId?.tenantId,
-                documentId: storageRoutingId?.documentId,
+                tenantId: params?.storageRoutingId?.tenantId ?? params?.repoName,
+                documentId: params?.storageRoutingId?.documentId,
                 serviceName: "gitrest",
                 eventName: "http_requests",
              };

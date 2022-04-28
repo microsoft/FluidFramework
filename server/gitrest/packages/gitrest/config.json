@@ -1,7 +1,7 @@
 {
     "logger": {
         "colorize": true,
-        "morganFormat": "dev",
+        "morganFormat": "json",
         "json": false,
         "level": "info",
         "timestamp": true
@@ -17,7 +17,7 @@
     },
     "git": {
         "lib": {
-            "name": "nodegit"
+            "name": "isomorphic-git"
         },
         "persistLatestFullSummary": false
     }

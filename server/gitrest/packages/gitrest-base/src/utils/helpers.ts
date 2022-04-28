@@ -7,7 +7,7 @@ import { PathLike, Stats } from "fs";
 import * as path from "path";
 import { Request } from "express";
 import { IGetRefParamsExternal, IWholeFlatSummary, NetworkError } from "@fluidframework/server-services-client";
-import { BaseTelemetryProperties, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
     Constants,
     IExternalWriterConfig,
@@ -44,7 +44,7 @@ export function getExternalWriterParams(params: string | undefined): IExternalWr
 export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerParams {
     const storageName: string | undefined = request.get(Constants.StorageNameHeader);
     const storageRoutingId: IStorageRoutingId = parseStorageRoutingId(request.get(Constants.StorageRoutingIdHeader));
-    const result = {
+    return {
         repoOwner: request.params.owner,
         repoName: request.params.repo,
         storageRoutingId,
@@ -52,8 +52,6 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
             storageName,
         },
     };
-    console.log(`[DEBUG] Here are the params: ${JSON.stringify(result)}`); // REMOVE THIS LATER
-    return result;
 }
 
 export async function exists(
@@ -145,13 +143,23 @@ export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutin
 }
 
 export function getLumberjackBasePropertiesFromRepoManagerParams(params: IRepoManagerParams) {
-    if (params.storageRoutingId) {
-        return getLumberBaseProperties(
-            params.storageRoutingId.documentId,
-            params.storageRoutingId.tenantId,
-        );
-    }
     return {
-        [BaseTelemetryProperties.tenantId]:  params.repoName,
+        [BaseTelemetryProperties.tenantId]: params?.storageRoutingId?.tenantId ?? params?.repoName,
+        [BaseTelemetryProperties.documentId]: params?.storageRoutingId?.documentId,
+        storageName: params?.fileSystemManagerParams?.storageName,
     };
+}
+
+export function getRequestPathCategory(request: Request) {
+    return `${request.baseUrl}${request?.route?.path ?? "PATH_UNAVAILABLE"}`;
+}
+
+export function logApiError(error: any, request: Request, params: IRepoManagerParams) {
+    const pathCategory = getRequestPathCategory(request);
+    const lumberjackProperties = {
+        ...getLumberjackBasePropertiesFromRepoManagerParams(params),
+        method: request.method,
+        pathCategory,
+    };
+    Lumberjack.error(`${request.method} request to ${pathCategory} failed`, lumberjackProperties, error);
 }
