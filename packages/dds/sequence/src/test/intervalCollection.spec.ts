@@ -131,6 +131,47 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
+        it.only("conflicting remove and add interval consistency", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "abcde");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            collection1.add(1, 3, IntervalType.SlideOnRemove);
+            containerRuntimeFactory.processAllMessages();
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 3 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 3 },
+            ]);
+
+            sharedString.removeRange(1,4);
+            assert.strictEqual(sharedString.getText(), "ae", "different text 1");
+            assertIntervals(sharedString, collection1, [
+                { start: 1, end: 1 },
+            ]);
+
+            sharedString2.insertText(2, "x");
+            sharedString2.removeRange(1,2);
+            sharedString2.removeRange(2,4);
+            assert.strictEqual(sharedString2.getText(), "axe", "different text 2");
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 2 },
+            ]);
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "axe", "different text 1");
+            assert.strictEqual(sharedString2.getText(), "axe", "different text 2");
+
+            assertIntervals(sharedString, collection1, [
+                { start: 2, end: 2 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 1, end: 2 },
+            ]);
+        });
+
         it("can maintain consistency of LocalReference's when segments are packed", async () => {
             // sharedString.insertMarker(0, ReferenceType.Tile, { nodeType: "Paragraph" });
 
