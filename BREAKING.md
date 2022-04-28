@@ -37,6 +37,10 @@ The `IDocumentStorageService.write(...)` method within the `@fluidframework/driv
 The method `IDeltaManager.close()` was deprecated in 0.54 and is now removed.
 Use IContainer.close() or IContainerContext.closeFn() instead, and pass an error object if applicable.
 
+### Require enableOfflineLoad to use IContainer.closeAndGetPendingLocalState()
+Offline load functionality has been placed behind a feature flag as part of [ongoing offline work](https://github.com/microsoft/FluidFramework/pull/9557).
+In order to use `IContainer.closeAndGetPendingLocalState`, pass a set of options to the container runtime including `{ enableOfflineLoad: true }`.
+
 # 0.59
 
 ## 0.59 Upcoming changes
