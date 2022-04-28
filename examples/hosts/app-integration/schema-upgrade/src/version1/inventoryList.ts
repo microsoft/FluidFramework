@@ -9,26 +9,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedString } from "@fluidframework/sequence";
 
-export interface IInventoryItem extends EventEmitter {
-    readonly id: string;
-    readonly name: SharedString;
-    quantity: number;
-}
-
-/**
- * IInventoryList describes the public API surface for our inventory list object.
- */
-export interface IInventoryList extends EventEmitter {
-    readonly addItem: (name: string, quantity: number) => void;
-
-    readonly getItems: () => InventoryItem[];
-    readonly getItem: (id: string) => InventoryItem | undefined;
-
-    /**
-     * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
-     */
-    on(event: "itemAdded" | "itemDeleted", listener: (item: InventoryItem) => void): this;
-}
+import type { IInventoryItem, IInventoryList } from "../interfaces";
 
 class InventoryItem extends EventEmitter implements IInventoryItem {
     public get id() {

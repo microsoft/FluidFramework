@@ -5,28 +5,16 @@
 
 import { TaskManager } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 // import { IFluidHandle } from "@fluidframework/core-interfaces";
+
+import type { IContainerKillBit } from "./interfaces";
 
 const crcKey = "crc";
 const taskManagerKey = "task-manager";
 const markedForDestructionKey = "marked";
 const destroyTaskName = "destroy";
 const deadKey = "dead";
-
-export interface IContainerKillBitEvents extends IEvent {
-    (event: "markedForDestruction" | "dead", listener: () => void);
-}
-
-export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvents> {
-    dead: boolean;
-    setDead(): Promise<void>;
-    markedForDestruction: boolean;
-    markForDestruction(): Promise<void>;
-    volunteerForDestruction(): Promise<void>;
-    haveDestructionTask(): boolean;
-}
 
 export class ContainerKillBit extends DataObject implements IContainerKillBit {
     private _crc: ConsensusRegisterCollection<boolean> | undefined;

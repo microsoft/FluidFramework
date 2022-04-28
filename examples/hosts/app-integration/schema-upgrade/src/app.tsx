@@ -13,11 +13,10 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { AppView } from "./appView";
-import { containerKillBitId, InventoryListContainerRuntimeFactory } from "./containerCode";
-import { IContainerKillBit } from "./containerKillBit";
 import { extractStringData, fetchData, applyStringData, writeData } from "./dataHelpers";
-import { IInventoryList } from "./inventoryList";
+import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
+import { containerKillBitId, InventoryListContainerRuntimeFactory } from "./version1";
 
 async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
