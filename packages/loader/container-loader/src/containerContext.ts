@@ -21,6 +21,7 @@ import {
     IProvideFluidCodeDetailsComparer,
     ICodeDetailsLoader,
     IFluidModuleWithDetails,
+    ISnapshotTreeWithBlobContents,
 } from "@fluidframework/container-definitions";
 import {
     IRequest,
@@ -160,7 +161,7 @@ export class ContainerContext implements IContainerContext {
         public readonly scope: FluidObject,
         private readonly codeLoader: ICodeDetailsLoader,
         private readonly _codeDetails: IFluidCodeDetails,
-        private readonly _baseSnapshot: ISnapshotTree | undefined,
+        private _baseSnapshot: ISnapshotTree | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         public readonly loader: ILoader,
@@ -288,7 +289,9 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
-    public notifyAttaching() {
+    public notifyAttaching(snapshot: ISnapshotTreeWithBlobContents) {
+        this._baseSnapshot = snapshot;
+        this.runtime.notifyAttaching?.(snapshot);
         this.runtime.setAttachState(AttachState.Attaching);
     }
 

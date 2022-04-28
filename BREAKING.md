@@ -14,6 +14,33 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 1.0
+
+## 1.0 Upcoming changes
+
+## 1.0 Breaking changes
+- [Remove IFluidSerializer from core-interfaces](#Remove-IFluidSerializer-from-core-interfaces)
+- [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
+- [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
+- [Remove IDeltaManager.close()](#remove-ideltamanagerclose)
+
+### Remove IFluidSerializer from core-interfaces
+`IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
+
+### Remove IFluidSerializer from IFluidObject
+`IFluidSerializer` in `IFluidObject` was deprecated in 0.52 and is now removed. Use `FluidObject` instead of `IFluidObject`.
+
+### Remove Write Method from IDocumentStorageService
+The `IDocumentStorageService.write(...)` method within the `@fluidframework/driver-definitions` package has been removed. Please remove all usage/implementation of this method if present.
+
+### Remove IDeltaManager.close()
+The method `IDeltaManager.close()` was deprecated in 0.54 and is now removed.
+Use IContainer.close() or IContainerContext.closeFn() instead, and pass an error object if applicable.
+
+### Require enableOfflineLoad to use IContainer.closeAndGetPendingLocalState()
+Offline load functionality has been placed behind a feature flag as part of [ongoing offline work](https://github.com/microsoft/FluidFramework/pull/9557).
+In order to use `IContainer.closeAndGetPendingLocalState`, pass a set of options to the container runtime including `{ enableOfflineLoad: true }`.
+
 # 0.59
 
 ## 0.59 Upcoming changes
@@ -32,7 +59,6 @@ ICodeLoader interface was deprecated a while ago and will be removed in the next
 - [Scope is no longer an IFluidObject](#scope-is-no-longer-an-IFluidObject)
 - [IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject](#IFluidHandle-and-requestFluidObject-generics-default-no-longer-includes-IFluidObject)
 - [LazyLoadedDataObjectFactory.create no longer returns an IFluidObject](#LazyLoadedDataObjectFactory.create-no-longer-returns-an-IFluidObject)
-
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
@@ -677,7 +703,7 @@ The `createCreateNewRequest()` is removed and replaced with `createOdspCreateCon
 
 ### Deprecate IFluidObject and introduce FluidObject
 This release deprecates the interface `IFluidObject` and introduces the utility type [`FluidObject`](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts). The primary reason for this change is that the module augmentation used by `IFluidObject` creates excessive type coupling where a small breaking change in any type exposed off `IFluidObject` can lead to type error in all usages of `IFluidObject`.
-On investigation we also found that the uber type `IFluidObject` wasn't genenerally necessary, as consumers generally only used a small number of specific types that they knew in advance.
+On investigation we also found that the uber type `IFluidObject` wasn't generally necessary, as consumers generally only used a small number of specific types that they knew in advance.
 
 Given these points, we've introduced [`FluidObject`](https://github.com/microsoft/FluidFramework/blob/main/common/lib/core-interfaces/src/provider.ts). `FluidObject` is a utility type that is used in both its generic and non-generic forms.
 

@@ -72,6 +72,7 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>);
 use_current_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -84,6 +85,7 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*

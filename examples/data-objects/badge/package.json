@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/badge",
-  "version": "0.59.2000",
+  "version": "0.60.1000",
   "description": "Badge Fluid example component",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -38,19 +38,19 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/example-utils": "^0.59.2000",
-    "@fluidframework/aqueduct": "^0.59.2000",
-    "@fluidframework/cell": "^0.59.2000",
+    "@fluid-example/example-utils": "^0.60.1000",
+    "@fluidframework/aqueduct": "^0.60.1000",
+    "@fluidframework/cell": "^0.60.1000",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/datastore-definitions": "^0.59.2000",
-    "@fluidframework/map": "^0.59.2000",
+    "@fluidframework/datastore-definitions": "^0.60.1000",
+    "@fluidframework/map": "^0.60.1000",
     "@uifabric/fluent-theme": "^7.1.3",
     "office-ui-fabric-react": "^7.28.1",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.59.2000",
+    "@fluid-tools/webpack-fluid-loader": "^0.60.1000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@rushstack/eslint-config": "^2.5.1",

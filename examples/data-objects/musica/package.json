@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/musica",
-  "version": "0.59.2000",
+  "version": "0.60.1000",
   "description": "Play music collaboratively",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -36,10 +36,10 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.59.2000",
+    "@fluidframework/aqueduct": "^0.60.1000",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/map": "^0.59.2000",
-    "@fluidframework/view-interfaces": "^0.59.2000",
+    "@fluidframework/map": "^0.60.1000",
+    "@fluidframework/view-interfaces": "^0.60.1000",
     "rc-slider": "^8.6.9",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
@@ -49,7 +49,7 @@
   "devDependencies": {
     "@babel/core": "^7.12.10",
     "@babel/plugin-proposal-class-properties": "^7.4.4",
-    "@fluid-tools/webpack-fluid-loader": "^0.59.2000",
+    "@fluid-tools/webpack-fluid-loader": "^0.60.1000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@rushstack/eslint-config": "^2.5.1",

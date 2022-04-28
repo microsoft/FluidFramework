@@ -24,7 +24,7 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError } from "./error";
-import { ILoader, ILoaderOptions } from "./loader";
+import { ILoader, ILoaderOptions, ISnapshotTreeWithBlobContents } from "./loader";
 import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
@@ -102,6 +102,12 @@ export interface IRuntime extends IDisposable {
      * Get pending local state in a serializable format to be given back to a newly loaded container
      */
     getPendingLocalState(): unknown;
+
+    /**
+     * Notify runtime that container is moving to "Attaching" state
+     * @param snapshot - snapshot created at attach time
+     */
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
 }
 
 /**

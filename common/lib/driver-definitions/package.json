@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-definitions",
-  "version": "0.46.2000",
+  "version": "0.47.1000",
   "description": "Fluid driver definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -45,9 +45,9 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.61804",
-    "@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@0.46.1000",
+    "@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@^0.46.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
@@ -65,7 +65,11 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.46.2000",
-    "broken": {}
+    "version": "0.47.1000",
+    "broken": {
+      "InterfaceDeclaration_IDocumentStorageService": {
+        "backCompat": false
+      }
+    }
   }
 }

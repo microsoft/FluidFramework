@@ -26,6 +26,7 @@ import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
+import { IProtocolState } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IProxyLoaderFactory } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -86,7 +87,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
-    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: unknown): Promise<Container>;
+    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
     // (undocumented)
@@ -128,6 +129,7 @@ export interface IContainerConfig {
     clientDetailsOverride?: IClientDetails;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
+    serializedContainerState?: IPendingContainerState;
 }
 
 // @public (undocumented)
@@ -181,6 +183,20 @@ export interface ILoaderServices {
     readonly scope: FluidObject;
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
+}
+
+// @public
+export interface IPendingContainerState {
+    // (undocumented)
+    clientId?: string;
+    // (undocumented)
+    pendingRuntimeState: unknown;
+    // (undocumented)
+    protocol: IProtocolState;
+    // (undocumented)
+    term: number;
+    // (undocumented)
+    url: string;
 }
 
 // @public
