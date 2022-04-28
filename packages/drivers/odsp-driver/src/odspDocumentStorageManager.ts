@@ -45,6 +45,8 @@ import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
+export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
+
 /* eslint-disable max-len */
 
 // An implementation of Promise.race that gives you the winner of the promise race
@@ -180,7 +182,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private firstVersionCall = true;
     private _snapshotSequenceNumber: number | undefined;
-    private readonly defaultFirstSummaryCacheExpiryTimeout = 60 * 1000; // 60 seconds.
 
     private readonly documentId: string;
     private readonly snapshotUrl: string | undefined;
@@ -415,12 +416,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                         (Date.now() - 30 * 24 * 60 * 60 * 1000));
 
                                     // In order to decrease the number of times we have to execute a snapshot refresh,
-                                    // if this is the summarizer and we have a cache entry but it is past the defaultFirstSummaryCacheExpiryTimeout,
+                                    // if this is the summarizer and we have a cache entry but it is past the defaultSummarizerCacheExpiryTimeout,
                                     // force the network retrieval instead as there might be a more recent snapshot available.
                                     if (this.hostPolicy.summarizerClient &&
-                                        age > this.defaultFirstSummaryCacheExpiryTimeout) {
+                                        age > defaultSummarizerCacheExpiryTimeout) {
                                         // eslint-disable-next-line @typescript-eslint/dot-notation
-                                        props["cacheSummarizerExpired"] = 1;
+                                        props["cacheSummarizerExpired"] = true;
                                         return undefined;
                                     }
 
