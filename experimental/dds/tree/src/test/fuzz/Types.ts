@@ -66,13 +66,9 @@ export type Operation = TreeEdit | TreeJoin | TreeLeave | Synchronize;
 export const done = Symbol('GeneratorDone');
 
 /**
- * TAdditionalState can be used to compose generators (see treatment of how fuzzed edit changes pass in
- * the tree to which they apply to sub-generators)
+ * Given some input state, asynchronously generates outputs.
  */
-export type AsyncGenerator<T, TAdditionalState> = (
-	state: FuzzTestState,
-	additionalState: TAdditionalState
-) => Promise<T | typeof done>;
+export type AsyncGenerator<T, TState> = (state: TState) => Promise<T | typeof done>;
 
 export interface FuzzInsert {
 	fuzzType: 'insert';

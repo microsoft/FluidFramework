@@ -30,7 +30,7 @@ const adjustSeed = 2;
  * This can be useful for debugging why a fuzz test may have failed.
  */
 export async function performFuzzActions(
-	generator: AsyncGenerator<Operation, undefined>,
+	generator: AsyncGenerator<Operation, FuzzTestState>,
 	seed: number,
 	synchronizeAtEnd: boolean = true,
 	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string }
@@ -41,11 +41,7 @@ export async function performFuzzActions(
 	const state: FuzzTestState = { rand, passiveCollaborators: [], activeCollaborators: [] };
 	const { activeCollaborators, passiveCollaborators } = state;
 	const operations: Operation[] = [];
-	for (
-		let operation = await generator(state, undefined);
-		operation !== done;
-		operation = await generator(state, undefined)
-	) {
+	for (let operation = await generator(state); operation !== done; operation = await generator(state)) {
 		operations.push(operation);
 		if (saveInfo !== undefined && operations.length === saveInfo.saveAt) {
 			await fs.writeFile(saveInfo.filepath, JSON.stringify(operations));
@@ -152,7 +148,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 	// - Different shared-tree instances can be distinguished (e.g. in logs) by using `tree.getRuntime().clientId`
 	describe(title, () => {
 		function runTest(
-			generatorFactory: () => AsyncGenerator<Operation, undefined>,
+			generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
 			seed: number,
 			saveOnFailure?: boolean
 		): void {
