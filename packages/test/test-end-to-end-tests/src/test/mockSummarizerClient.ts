@@ -21,12 +21,46 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionState } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, IGarbageCollectionState } from "@fluidframework/runtime-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
+import { ISharedDirectory } from "@fluidframework/map";
+
+export interface ITestFluidDataObject {
+    _root: ISharedDirectory;
+    _context: IFluidDataStoreContext;
+    dataStoreRuntime: IFluidDataStoreRuntime;
+    containerRuntime: ContainerRuntime;
+}
+
+// Creates a test fluid object class type from the given data object type. This is used for creating data objects
+// from different versions for compatibility testing.
+export function getTestFluidObjectType(
+    BaseDataObject: typeof DataObject = DataObject,
+) {
+    class TestFluidDataObject extends BaseDataObject implements ITestFluidDataObject {
+        public get _root(): ISharedDirectory {
+            return this.root;
+        }
+
+        public get dataStoreRuntime(): IFluidDataStoreRuntime {
+            return this.runtime;
+        }
+
+        public get containerRuntime(): ContainerRuntime {
+            return this.context.containerRuntime as ContainerRuntime;
+        }
+
+        public get _context(): IFluidDataStoreContext {
+            return this.context;
+        }
+    }
+
+    return TestFluidDataObject;
+}
 
 // data store that exposes container runtime for testing.
-export class TestDataObject extends DataObject {
-    public get _root() {
+export class TestDataObject extends DataObject implements ITestFluidDataObject {
+    public get _root(): ISharedDirectory {
         return this.root;
     }
 
@@ -38,7 +72,7 @@ export class TestDataObject extends DataObject {
         return this.context.containerRuntime as ContainerRuntime;
     }
 
-    public get _context() {
+    public get _context(): IFluidDataStoreContext {
         return this.context;
     }
 }
