@@ -874,18 +874,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                                 Lumberjack.info(deliCacheMsg, getLumberBaseProperties(this.documentId, this.tenantId));
                             }
 
-                            this.durableSequenceNumber = dsn;
-
-                            this.checkNackMessagesState();
-
-                            this.emit("updatedDurableSequenceNumber", dsn);
-
-                            if (this.serviceConfiguration.deli.opEvent.enable) {
-                                // ops were reliably stored
-                                // ensure op event timers & last sequenced op counters are reset
-                                // that will make the MaxTime & MaxOps op events accurate
-                                this.emitOpEvent(OpEventType.UpdatedDurableSequenceNumber, true);
-                            }
+                            this.updateDurableSequenceNumber(dsn);
                         }
 
                         break;
@@ -982,7 +971,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
              */
             case MessageType.SummaryAck: {
                 if (this.serviceConfiguration.deli.enableAutoDSNUpdate) {
-                    this.durableSequenceNumber = (dataContent as ISummaryAck).summaryProposal.summarySequenceNumber;
+                    const dsn = (dataContent as ISummaryAck).summaryProposal.summarySequenceNumber;
+                    if (dsn >= this.durableSequenceNumber) {
+                        this.updateDurableSequenceNumber(dsn);
+                    }
                 }
 
                 break;
@@ -1610,6 +1602,25 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         if (this.checkpointInfo.idleTimer !== undefined) {
             clearTimeout(this.checkpointInfo.idleTimer);
             this.checkpointInfo.idleTimer = undefined;
+        }
+    }
+
+    /**
+     * Updates the durable sequence number
+     * @param dsn New durable sequence number
+     */
+    private updateDurableSequenceNumber(dsn: number) {
+        this.durableSequenceNumber = dsn;
+
+        this.checkNackMessagesState();
+
+        this.emit("updatedDurableSequenceNumber", dsn);
+
+        if (this.serviceConfiguration.deli.opEvent.enable) {
+            // ops were reliably stored
+            // ensure op event timers & last sequenced op counters are reset
+            // that will make the MaxTime & MaxOps op events accurate
+            this.emitOpEvent(OpEventType.UpdatedDurableSequenceNumber, true);
         }
     }
 }
