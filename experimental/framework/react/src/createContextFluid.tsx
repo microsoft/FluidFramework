@@ -15,7 +15,7 @@ import { useStateFluid } from "./useStateFluid";
 export function createContextFluid<
     SV extends IViewState,
     SF extends IFluidState,
-    C
+    C,
 >(props: IFluidContextProps<SV, SF, C>, initialViewState: SV): FluidContext<SV, C> {
     const [state, setState] = useStateFluid(props, initialViewState);
     const PrimedFluidContext = React.createContext({

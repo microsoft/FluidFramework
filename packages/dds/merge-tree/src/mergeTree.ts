@@ -1206,7 +1206,7 @@ export class MergeTree {
                                     operation: MergeTreeMaintenanceType.UNLINK,
                                     deltaSegments: [{ segment }],
                                 },
-                                undefined);
+                                    undefined);
                             }
 
                             segment.parent = undefined;
@@ -1227,7 +1227,7 @@ export class MergeTree {
                                         operation: MergeTreeMaintenanceType.APPEND,
                                         deltaSegments: [{ segment: prevSegment! }, { segment }],
                                     },
-                                    undefined);
+                                        undefined);
                                 }
                                 segment.parent = undefined;
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
@@ -2001,9 +2001,9 @@ export class MergeTree {
         const saveIfLocal = (locSegment: ISegment) => {
             // Save segment so can assign sequence number when acked by server
             if (this.collabWindow.collaborating) {
-                if ((locSegment.seq === UnassignedSequenceNumber) &&
-                    (clientId === this.collabWindow.clientId)) {
+                if ((locSegment.seq === UnassignedSequenceNumber) && (clientId === this.collabWindow.clientId)) {
                     segmentGroup = this.addToPendingList(locSegment, segmentGroup, localSeq);
+                    // eslint-disable-next-line @typescript-eslint/brace-style
                 }
                 // LocSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
                 // In all other cases this has to be true (checked by addToLRUSet):
@@ -2070,7 +2070,7 @@ export class MergeTree {
                 operation: MergeTreeMaintenanceType.SPLIT,
                 deltaSegments: [{ segment }, { segment: next }],
             },
-            undefined);
+                undefined);
         }
 
         return { next };

@@ -37,7 +37,7 @@ import { syncState } from "./syncState";
  */
 export const updateStateAndFluidObjectMap = async <
     SV extends IViewState,
-    SF extends IFluidState
+    SF extends IFluidState,
 >(
     newHandleList: IFluidHandle[],
     fluidObjectMap: FluidObjectMap,
