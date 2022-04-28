@@ -92,7 +92,7 @@
     "webpack-dev-server": "4.0.0"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader-previous": "npm:@fluid-tools/webpack-fluid-loader@0.59.1000",
+    "@fluid-tools/webpack-fluid-loader-previous": "npm:@fluid-tools/webpack-fluid-loader@0.59.2000",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
@@ -127,7 +127,7 @@
     "webpack-cli": "^4.9.2"
   },
   "typeValidation": {
-    "version": "0.59.2000",
+    "version": "0.59.3000",
     "broken": {}
   }
 }
