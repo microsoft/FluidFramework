@@ -288,6 +288,19 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.submitLocalMessage(deleteOp);
     }
 
+    /**
+     * Get a point-in-time list of clients who must sign off on values coming in for them to move from "pending" to
+     * "accepted" state.  This list is finalized for a value at the moment it goes pending (i.e. if more clients
+     * join later, they are not added to the list of signoffs).
+     * @returns The list of clientIds for clients who must sign off to accept the incoming pending value
+     */
+    private getSignoffClients(): string[] {
+        // If detached, we don't need anyone to sign off.  Otherwise, we need all currently connected clients.
+        return this.isAttached()
+            ? [...this.runtime.getQuorum().getMembers().keys()]
+            : [];
+    }
+
     private readonly handleIncomingSet = (
         key: string,
         value: any,
@@ -310,8 +323,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         // We expect signoffs from all connected clients at the time the set was sequenced, except for the client
         // who issued the set (that client implicitly signs off).
-        const connectedClientIds = [...this.runtime.getQuorum().getMembers().keys()];
-        const expectedSignoffs = connectedClientIds.filter((quorumMemberId) => quorumMemberId !== clientId);
+        const expectedSignoffs = this.getSignoffClients().filter((quorumMemberId) => quorumMemberId !== clientId);
 
         const newQuorumValue: QuorumValue = {
             accepted,
@@ -368,8 +380,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
         // We expect signoffs from all connected clients at the time the delete was sequenced, except for the client
         // who issued the delete (that client implicitly signs off).
-        const connectedClientIds = [...this.runtime.getQuorum().getMembers().keys()];
-        const expectedSignoffs = connectedClientIds.filter((quorumMemberId) => quorumMemberId !== clientId);
+        const expectedSignoffs = this.getSignoffClients().filter((quorumMemberId) => quorumMemberId !== clientId);
 
         const newQuorumValue: QuorumValue = {
             accepted,
