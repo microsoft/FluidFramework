@@ -283,7 +283,7 @@ export class PermutationVector extends Client {
         // have not yet been submitted.
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.findReconnectionPosition(containingSegment, localSeq) + containingOffset!;
+        return this.findReconnectionPosition(containingSegment, localSeq) + containingOffset;
     }
 
     // Constructs an ISummaryTreeWithStats for the cell data.
