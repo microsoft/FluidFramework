@@ -147,6 +147,9 @@
       },
       "InterfaceDeclaration_IRootSummaryTreeWithStats": {
         "forwardCompat": false
+      },
+      "ClassDeclaration_Summarizer": {
+        "backCompat": false
       }
     }
   }
