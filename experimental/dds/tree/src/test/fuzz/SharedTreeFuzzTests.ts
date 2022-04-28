@@ -18,7 +18,7 @@ const directory = join(testDocumentsPathBase, 'fuzz-tests');
 
 // TODO: Kludge: Use this to change the seed such that the tests avoid hitting bugs in the Fluid Framework.
 // Should be removed once fuzz tests pass reliably with any seed.
-const adjustSeed = 2;
+const adjustSeed = 0;
 
 /**
  * Performs random actions on a set of clients.
