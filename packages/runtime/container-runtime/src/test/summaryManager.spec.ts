@@ -104,6 +104,7 @@ describe("Summary Manager", () => {
             // Approximation, as ideally it should become cancelled immediately after stop() call
             return this.state !== "running";
         }
+        public close() {}
         public stop(reason?: string): void {
             this.stopDeferred.resolve(reason);
         }

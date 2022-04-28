@@ -249,8 +249,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     idleTime: IdleDetectionTime * 3,
 
     maxTime: IdleDetectionTime * 12,
-
-    // Snapshot if 1000 ops received since last snapshot.
+    // Summarize if 1000 ops received since last snapshot.
     maxOps: 1000,
 
     minOpsForAttemptOnClose: 50,
@@ -260,7 +259,9 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     maxAckWaitTime: 600000,
 
     maxOpsSinceLastSummary: 7000,
+
     initialSummarizerDelayMs: 5000,
+
     summarizerClientElection: false,
 };
 

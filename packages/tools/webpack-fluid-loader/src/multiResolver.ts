@@ -39,6 +39,14 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                 options.bearerSecret);
 
         case "r11s":
+            if (options.discoveryEndpoint !== undefined) {
+                return new InsecureUrlResolver(
+                    "",
+                    options.discoveryEndpoint,
+                    "https://dummy-historian",
+                    options.tenantId,
+                    options.bearerSecret);
+            }
             return new InsecureUrlResolver(
                 options.fluidHost,
                 options.fluidHost.replace("www", "alfred"),
