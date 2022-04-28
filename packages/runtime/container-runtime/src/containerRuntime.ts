@@ -246,7 +246,7 @@ export const IdleDetectionTime = 5000;
 
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
-    idleTime: IdleDetectionTime,
+    idleTime: IdleDetectionTime * 3,
 
     maxTime: IdleDetectionTime * 12,
 
@@ -257,7 +257,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     // Wait 2 minutes for summary ack
     // this is less than maxSummarizeAckWaitTime
     // the min of the two will be chosen
-    maxAckWaitTime: 120000,
+    maxAckWaitTime: 600000,
 
     maxOpsSinceLastSummary: 7000,
     initialSummarizerDelayMs: 5000,
