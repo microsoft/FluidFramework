@@ -71,6 +71,8 @@
   },
   "typeValidation": {
     "version": "0.48.2000",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IContainerContext": {"forwardCompat": false}
+    }
   }
 }
