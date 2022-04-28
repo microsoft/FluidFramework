@@ -159,14 +159,15 @@ export enum ConnectionState {
 
 /** Invoke the callback once deltaManager has processed all ops known at the time this function is called */
 function waitForOps(container: IContainer, resolve: (hasCheckpointSequenceNumber: boolean) => void) {
-    const deltaManager = container.deltaManager;
     assert(container.connectionState !== ConnectionState.Disconnected,
         0x0cd /* "Container disconnected while waiting for ops!" */);
-    const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
+    const deltaManager = container.deltaManager;
+    const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
     const targetSeqNumber = deltaManager.lastKnownSeqNumber;
-    assert(deltaManager.lastSequenceNumber <= targetSeqNumber,
-        0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
+
+    assert(targetSeqNumber >= deltaManager.lastSequenceNumber,
+        0x266 /* "Cannot wait for seqNumber below last processed sequence number" */);
     if (deltaManager.lastSequenceNumber === targetSeqNumber) {
         resolve(hasCheckpointSequenceNumber);
         return;
@@ -178,7 +179,7 @@ function waitForOps(container: IContainer, resolve: (hasCheckpointSequenceNumber
         }
     };
     deltaManager.on("op", callbackOps);
-};
+}
 
 /**
  * Waits until container connects to delta storage and gets up-to-date
@@ -615,9 +616,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.propagateConnectionState();
                     }
                 },
-                onCaughtUp: (callback: () => {}) => {
+                onCaughUpToKnownOps: (callback: () => void) => {
                     waitForOps(this, callback);
-                }
+                },
             },
             this.mc.logger,
         );
