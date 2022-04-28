@@ -389,10 +389,7 @@ export class SummaryGenerator {
                 duration: broadcastDuration,
                 referenceSequenceNumber: summarizeOp.referenceSequenceNumber,
                 summarySequenceNumber: summarizeOp.sequenceNumber,
-                handle: {
-                    value: summarizeOp.contents.handle,
-                    tag: TelemetryDataTag.PackageData,
-                },
+                handle: summarizeOp.contents.handle,
             });
 
             // Wait for ack/nack
