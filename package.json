@@ -133,6 +133,7 @@
     "@nrwl/tao": "^13.10.2",
     "@nrwl/workspace": "^13.10.2",
     "c8": "^7.7.1",
+    "commander": "^6.2.1",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "eslint": "~8.6.0",
