@@ -163,8 +163,8 @@ export interface IContainerContext extends IDisposable {
     updateDirtyContainerState(dirty: boolean): void;
     /**
      * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
-     * This id is not supposed to be exposed anywhere else. It is not the same with document id as this is
-     * dependant on usage or drivers and scenarios change in the future.
+     * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
+     * and scenarios which can change in the future.
      */
     readonly id: string;
 }
