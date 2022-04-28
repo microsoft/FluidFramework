@@ -180,6 +180,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private firstVersionCall = true;
     private _snapshotSequenceNumber: number | undefined;
+    private lastCacheEntryTime: number | undefined;
+    private readonly defaultFirstSummaryCacheExpiryTimeout = 60 * 1000; // 60 seconds.
 
     private readonly documentId: string;
     private readonly snapshotUrl: string | undefined;
@@ -409,6 +411,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl))
                             .then(async (snapshotCachedEntry: ISnapshotCachedEntry) => {
                                 if (snapshotCachedEntry !== undefined) {
+                                    this.lastCacheEntryTime = snapshotCachedEntry.cacheEntryTime;
                                     // If the cached entry does not contain the entry time, then assign it a default of 30 days old.
                                     const age = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
                                         (Date.now() - 30 * 24 * 60 * 60 * 1000));
@@ -456,6 +459,21 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         // while the first caller is awaiting later async code in this block.
 
                         retrievedSnapshot = await cachedSnapshotP;
+
+                        // In order to decrease the number of times we have to execute a snapshot refresh,
+                        // if this is the summarizer and we have a cache entry but it is past the defaultFirstSummaryCacheExpiryTimeout,
+                        // force the network retrieval instead as there might be a more recent snapshot available.
+                        if (retrievedSnapshot !== undefined &&
+                            this.hostPolicy.summarizerClient &&
+                            this.lastCacheEntryTime !== undefined) {
+                            const cacheAge = Date.now() - this.lastCacheEntryTime;
+                            if (cacheAge > this.defaultFirstSummaryCacheExpiryTimeout) {
+                                // eslint-disable-next-line @typescript-eslint/dot-notation
+                                props["cacheSummarizerExpired"] = cacheAge;
+                                retrievedSnapshot = undefined;
+                                this.lastCacheEntryTime = undefined;
+                            }
+                        }
 
                         method = retrievedSnapshot !== undefined ? "cache" : "network";
 
