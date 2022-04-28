@@ -368,6 +368,10 @@
         "default-case": [
             "error"
         ],
+        "dot-location": [
+            "error",
+            "property"
+        ],
         "dot-notation": [
             "off"
         ],
@@ -464,6 +468,9 @@
             "error"
         ],
         "import/order": [
+            "error"
+        ],
+        "jsx-quotes": [
             "error"
         ],
         "key-spacing": [
