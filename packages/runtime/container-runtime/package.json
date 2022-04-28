@@ -116,11 +116,11 @@
     "version": "0.60.1000",
     "broken": {
       "ClassDeclaration_Summarizer": {
-        "backCompat": false,
+        "backCompat": false
       },
       "ClassDeclaration_ContainerRuntime": {
         "forwardCompat": false,
-        "backCompat": false,
+        "backCompat": false
       }
     }
   }
