@@ -11,8 +11,9 @@ import { setUpLocalServerTestSharedTree, testDocumentsPathBase } from '../utilit
 import { WriteFormat } from '../../persisted-types';
 import { fail } from '../../Common';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
-import { FuzzTestState, done, EditGenerationConfig, AsyncGenerator, Operation } from './Types';
-import { chain, makeOpGenerator, take } from './Generators';
+import { FuzzTestState, EditGenerationConfig, Operation } from './Types';
+import { makeOpGenerator } from './Generators';
+import { AsyncGenerator, chain, done, take } from '../../stochastic-test-utilities';
 
 const directory = join(testDocumentsPathBase, 'fuzz-tests');
 
