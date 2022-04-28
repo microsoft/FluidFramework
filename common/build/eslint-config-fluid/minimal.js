@@ -131,7 +131,7 @@ module.exports = {
 
         // FORMATTING RULES
         "@typescript-eslint/brace-style": [
-            "warn",
+            "error",
             "1tbs",
             {
                 "allowSingleLine": true,
