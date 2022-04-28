@@ -93,11 +93,11 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         // We run the summary so await this.getInitialSnapshotDetails() is called before the datastore is aliased
-        // and after the datastore is attached. This sets the isRootDataStore to a value.
+        // and after the datastore is attached. This sets the isRootDataStore to false.
         let summaryWithStats = await summarizeOnContainer(container2);
         let gcState = getGCStateFromSummary(summaryWithStats.summary);
         assert(gcState?.gcNodes[ds1.handle.absolutePath].unreferencedTimestampMs !== undefined,
-            "AliasableDataStore1 should be unreferenced!");
+            "AliasableDataStore1 should be unreferenced as it is not aliased and not root!");
 
         // Alias a datastore
         const alias = "alias";
@@ -107,10 +107,11 @@ describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
 
         // Should be able to retrieve root datastore from remote
         const containerRuntime2 = mainDataStore2.containerRuntime;
-        assert.doesNotThrow(async () => containerRuntime2.getRootDataStore(alias), "Aliased datastore should be root!");
+        assert.doesNotThrow(async () => containerRuntime2.getRootDataStore(alias),
+            "Aliased datastore should be root as it is aliased!");
         summaryWithStats = await summarizeOnContainer(container2);
         gcState = getGCStateFromSummary(summaryWithStats.summary);
         assert(gcState?.gcNodes[ds1.handle.absolutePath].unreferencedTimestampMs === undefined,
-            "AliasableDataStore1 should be referenced!");
+            "AliasableDataStore1 should be referenced as it is aliased and thus a root datastore!");
     });
 });
