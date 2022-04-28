@@ -128,6 +128,12 @@ module.exports = {
         "require-atomic-updates": "off",
         "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
         "no-unused-expressions": "off", // Superseded by @typescript-eslint/no-unused-expressions
+
+        "dot-location": [
+            "error",
+            "property",
+        ],
+        "jsx-quotes": "error",
     },
     "overrides": [
         {
