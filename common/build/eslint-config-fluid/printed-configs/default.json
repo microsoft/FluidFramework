@@ -51,14 +51,18 @@
             "error"
         ],
         "@typescript-eslint/brace-style": [
-            "off"
+            "error",
+            "1tbs",
+            {
+                "allowSingleLine": true
+            }
         ],
         "@typescript-eslint/comma-dangle": [
             "error",
             "always-multiline"
         ],
         "@typescript-eslint/comma-spacing": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/consistent-type-assertions": [
             "error",
@@ -83,7 +87,7 @@
             "off"
         ],
         "@typescript-eslint/func-call-spacing": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/indent": [
             "off"
@@ -92,7 +96,7 @@
             "off"
         ],
         "@typescript-eslint/keyword-spacing": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/member-delimiter-style": [
             "off"
@@ -238,7 +242,8 @@
             "error"
         ],
         "@typescript-eslint/object-curly-spacing": [
-            "off"
+            "error",
+            "always"
         ],
         "@typescript-eslint/prefer-as-const": [
             "error"
@@ -311,12 +316,21 @@
         "@typescript-eslint/unified-signatures": [
             "error"
         ],
+        "array-bracket-spacing": [
+            "error"
+        ],
         "arrow-body-style": [
             "off"
         ],
         "arrow-parens": [
             "error",
             "always"
+        ],
+        "arrow-spacing": [
+            "error"
+        ],
+        "block-spacing": [
+            "error"
         ],
         "brace-style": [
             "off"
@@ -441,6 +455,9 @@
             "error"
         ],
         "import/order": [
+            "error"
+        ],
+        "key-spacing": [
             "error"
         ],
         "keyword-spacing": [
