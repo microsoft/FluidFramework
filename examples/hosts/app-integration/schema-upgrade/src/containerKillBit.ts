@@ -109,7 +109,18 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         this.root.set(quorumKey, quorum.handle);
         this.root.set(crcKey, crc.handle);
         this.root.set(taskManagerKey, taskManager.handle);
+        // TODO: Update if/when .set() returns a promise.
+        const initialSetP = new Promise<void>((resolve) => {
+            const watchForInitialSet = (key: string) => {
+                if (key === markedForDestructionKey) {
+                    resolve();
+                    quorum.off("accepted", watchForInitialSet);
+                }
+            };
+            quorum.on("accepted", watchForInitialSet);
+        });
         quorum.set(markedForDestructionKey, false);
+        await initialSetP;
         await crc.write(deadKey, false);
     }
 
