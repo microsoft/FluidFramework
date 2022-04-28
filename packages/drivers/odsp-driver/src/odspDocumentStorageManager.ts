@@ -414,10 +414,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                     const age = Date.now() - (snapshotCachedEntry.cacheEntryTime ??
                                         (Date.now() - 30 * 24 * 60 * 60 * 1000));
 
-                                    // Record the cache age
-                                    // eslint-disable-next-line @typescript-eslint/dot-notation
-                                    props["cacheEntryAge"] = age;
-
                                     // In order to decrease the number of times we have to execute a snapshot refresh,
                                     // if this is the summarizer and we have a cache entry but it is past the defaultFirstSummaryCacheExpiryTimeout,
                                     // force the network retrieval instead as there might be a more recent snapshot available.
@@ -427,6 +423,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                                         props["cacheSummarizerExpired"] = 1;
                                         return undefined;
                                     }
+
+                                    // Record the cache age
+                                    // eslint-disable-next-line @typescript-eslint/dot-notation
+                                    props["cacheEntryAge"] = age;
                                 }
 
                                 return snapshotCachedEntry;
