@@ -77,7 +77,7 @@
   "devDependencies": {
     "@fluid-internal/test-dds-utils": "^0.59.3000",
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/eslint-config-fluid": "^0.28.1000",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000-0",
     "@fluidframework/gitresources": "^0.1036.2000-0",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@^0.58.0",
