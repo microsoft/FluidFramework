@@ -157,6 +157,11 @@ module.exports = {
         "array-bracket-spacing": "error",
         "arrow-spacing": "error",
         "block-spacing": "error",
+        "dot-location": [
+            "error",
+            "property",
+        ],
+        "jsx-quotes": "error",
         "key-spacing": "error",
     },
     "overrides": [
