@@ -19,7 +19,6 @@ import {
     ISnapshotTree,
     ISummaryHandle,
     ISummaryTree,
-    ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -142,10 +141,6 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
     }
 
     public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-        throw new Error("NOT IMPLEMENTED!");
-    }
-
-    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         throw new Error("NOT IMPLEMENTED!");
     }
 

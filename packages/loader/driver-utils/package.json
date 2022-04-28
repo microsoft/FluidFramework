@@ -63,7 +63,7 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/driver-definitions": "^0.46.1000",
+    "@fluidframework/driver-definitions": "^0.47.1000-0",
     "@fluidframework/gitresources": "^0.1036.1000",
     "@fluidframework/protocol-base": "^0.1036.1000",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
@@ -73,11 +73,11 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@^0.58.0",
+    "@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@^0.59.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.60.1000",
     "@fluidframework/runtime-utils": "^0.60.1000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.18.0",
@@ -100,7 +100,20 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.1000",
-    "broken": {}
+    "version": "0.60.1000",
+    "broken": {
+      "ClassDeclaration_BlobAggregationStorage": {
+        "backCompat": false
+      },
+      "ClassDeclaration_BlobCacheStorageService": {
+        "backCompat": false
+      },
+      "ClassDeclaration_DocumentStorageServiceProxy": {
+        "backCompat": false
+      },
+      "ClassDeclaration_PrefetchDocumentStorageService": {
+        "backCompat": false
+      }
+    }
   }
 }

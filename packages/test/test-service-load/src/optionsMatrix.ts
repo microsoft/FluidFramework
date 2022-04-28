@@ -80,6 +80,7 @@ export function generateRuntimeOptions(
         summaryOptions: [undefined, ...summaryOptions],
         loadSequenceNumberVerification: [undefined],
         useDataStoreAliasing: [undefined],
+        enableOfflineLoad: [undefined],
         flushMode: [undefined],
     };
 

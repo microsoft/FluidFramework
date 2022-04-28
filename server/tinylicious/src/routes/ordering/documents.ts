@@ -47,6 +47,8 @@ export function create(storage: IDocumentStorage): Router {
             sequenceNumber,
             1,
             defaultHash,
+            "",
+            "",
             values);
 
         createP.then(

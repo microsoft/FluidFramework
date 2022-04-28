@@ -4,6 +4,8 @@
 
 ```ts
 
+/// <reference types="node" />
+
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitter } from 'events';
@@ -39,6 +41,8 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryConfiguration } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -123,11 +127,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(): IPendingLocalState | undefined;
+    getPendingLocalState(): IPendingRuntimeState;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
+    // (undocumented)
+    getSnapshotBlobs(): Promise<void>;
     // (undocumented)
     get IContainerRuntime(): this;
     // (undocumented)
@@ -142,6 +148,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    // (undocumented)
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     // (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)
@@ -188,7 +196,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
-    }
+}
 
 // @public (undocumented)
 export interface ContainerRuntimeMessage {
@@ -207,7 +215,7 @@ export class DeltaScheduler {
     batchEnd(message: ISequencedDocumentMessage): void;
     // (undocumented)
     static readonly processingTime = 50;
-    }
+}
 
 // @public (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
@@ -227,7 +235,7 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
     // (undocumented)
     get IFluidDataStoreRegistry(): this;
-    }
+}
 
 // @public (undocumented)
 export const gcBlobPrefix = "__gc";
@@ -317,6 +325,7 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    readonly enableOfflineLoad?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
@@ -374,6 +383,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcTotalBlobsSize?: number;
     readonly nonSystemOpsSinceLastSummary: number;
     readonly opsSizesSinceLastSummary: number;
+    readonly quorumSize?: number;
     readonly summarizedDataStoreCount: number;
 }
 
@@ -416,7 +426,6 @@ export interface IPendingFlushMode {
 
 // @public (undocumented)
 export interface IPendingLocalState {
-    clientId?: string;
     pendingStates: IPendingState[];
 }
 
@@ -436,6 +445,15 @@ export interface IPendingMessage {
     referenceSequenceNumber: number;
     // (undocumented)
     type: "message";
+}
+
+// @public
+export interface IPendingRuntimeState {
+    baseSnapshot: ISnapshotTree;
+    pending?: IPendingLocalState;
+    savedOps: ISequencedDocumentMessage[];
+    // Warning: (ae-forgotten-export) The symbol "ISerializedBaseSnapshotBlobs" needs to be exported by the entry point index.d.ts
+    snapshotBlobs: ISerializedBaseSnapshotBlobs;
 }
 
 // @public (undocumented)
@@ -642,7 +660,7 @@ export class ScheduleManager {
     afterOpProcessing(error: any | undefined, message: ISequencedDocumentMessage): void;
     // (undocumented)
     beforeOpProcessing(message: ISequencedDocumentMessage): void;
-    }
+}
 
 // @public
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
@@ -670,7 +688,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     // (undocumented)
     readonly summaryCollection: SummaryCollection;
-    }
+}
 
 // @public (undocumented)
 export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
@@ -689,16 +707,16 @@ export type SummarizerStopReason =
 /** Summarizer client failed to summarize in all 3 consecutive attempts. */
 "failToSummarize"
 /** Parent client reported that it is no longer connected. */
- | "parentNotConnected"
+| "parentNotConnected"
 /**
- * Parent client reported that it is no longer elected the summarizer.
- * This is the normal flow; a disconnect will always trigger the parent
- * client to no longer be elected as responsible for summaries. Then it
- * tries to stop its spawned summarizer client.
- */
- | "parentShouldNotSummarize"
+* Parent client reported that it is no longer elected the summarizer.
+* This is the normal flow; a disconnect will always trigger the parent
+* client to no longer be elected as responsible for summaries. Then it
+* tries to stop its spawned summarizer client.
+*/
+| "parentShouldNotSummarize"
 /** Summarizer client was disconnected */
- | "summarizerClientDisconnected" | "summarizerException";
+| "summarizerClientDisconnected" | "summarizerException";
 
 // @public
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
@@ -726,7 +744,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 
 // @public (undocumented)
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage;
-
 
 // (No @packageDocumentation comment for this package)
 

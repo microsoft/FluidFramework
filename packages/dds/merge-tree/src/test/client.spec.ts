@@ -182,7 +182,7 @@ describe("TestClient", () => {
             assert.equal(tile1.pos, 0, "Tile with label not at expected position");
         });
 
-        it("Should be able to find only preceding but not non preceeding tile with index out of bound", () => {
+        it("Should be able to find only preceding but not non preceding tile with index out of bound", () => {
             const tileLabel = "EOP";
             client.insertMarkerLocal(
                 0,

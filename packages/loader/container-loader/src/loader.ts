@@ -17,7 +17,6 @@ import {
     IFluidModule,
     IHostLoader,
     ILoader,
-    IPendingLocalState,
     ILoaderOptions as ILoaderOptions1,
     IProxyLoaderFactory,
     LoaderHeader,
@@ -47,7 +46,7 @@ import {
     MultiUrlResolver,
     MultiDocumentServiceFactory,
 } from "@fluidframework/driver-utils";
-import { Container } from "./container";
+import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 
@@ -392,7 +391,7 @@ export class Loader implements IHostLoader {
 
     private async resolveCore(
         request: IRequest,
-        pendingLocalState?: IPendingLocalState,
+        pendingLocalState?: IPendingContainerState,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
         const resolvedAsFluid = await this.services.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
@@ -434,7 +433,7 @@ export class Loader implements IHostLoader {
                 await this.loadContainer(
                     request,
                     resolvedAsFluid,
-                    pendingLocalState?.pendingRuntimeState);
+                    pendingLocalState);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
@@ -485,7 +484,7 @@ export class Loader implements IHostLoader {
     private async loadContainer(
         request: IRequest,
         resolved: IFluidResolvedUrl,
-        pendingLocalState?: unknown,
+        pendingLocalState?: IPendingContainerState,
     ): Promise<Container> {
         return Container.load(
             this,

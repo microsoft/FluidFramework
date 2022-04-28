@@ -47,7 +47,7 @@
     "@fluidframework/build-tools": "^0.2.61804",
     "@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@^0.46.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
-    "@microsoft/api-extractor": "^7.16.1",
+    "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
@@ -66,6 +66,10 @@
   },
   "typeValidation": {
     "version": "0.47.1000",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IDocumentStorageService": {
+        "backCompat": false
+      }
+    }
   }
 }
