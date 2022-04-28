@@ -364,7 +364,7 @@ export class RunningSummarizer implements IDisposable {
                 }
 
                 // We only want to attempt 1 summary when reason is "lastSummary"
-                if (++summaryAttempts > 1 && summarizeReason === "lastSummary") {
+                if (++summaryAttempts > 1 && reason === "lastSummary") {
                     return;
                 }
 
