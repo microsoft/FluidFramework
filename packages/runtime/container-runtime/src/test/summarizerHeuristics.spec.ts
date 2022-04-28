@@ -164,7 +164,7 @@ describe("Runtime", () => {
                 const minOpsForAttemptOnClose = 10;
                 initialize({ refSequenceNumber: lastSummary, minOpsForAttemptOnClose });
 
-                data.lastOpSequenceNumber = lastSummary + minOpsForAttemptOnClose + 1;
+                data.lastOpSequenceNumber = lastSummary + minOpsForAttemptOnClose;
                 assert(runner.shouldRunLastSummary() === true, "should run on close");
             });
 
