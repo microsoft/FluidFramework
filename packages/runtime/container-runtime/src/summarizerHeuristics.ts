@@ -97,7 +97,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
             minOpsForAttemptOnClose,
         });
 
-        return opsSinceLastAck > minOpsForAttemptOnClose;
+        return opsSinceLastAck >= minOpsForAttemptOnClose;
     }
 
     public dispose() {
