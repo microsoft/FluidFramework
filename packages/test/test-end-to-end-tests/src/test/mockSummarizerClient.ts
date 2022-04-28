@@ -32,7 +32,7 @@ export interface ITestFluidDataObject {
     containerRuntime: ContainerRuntime;
 }
 
-// Creates a test fluid object class type from the given data object type. This is used for creating data objects
+// Creates a test Fluid object class type from the given data object type. This is used for creating data objects
 // from different versions for compatibility testing.
 export function getTestFluidObjectType(
     BaseDataObject: typeof DataObject = DataObject,
