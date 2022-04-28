@@ -803,8 +803,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         IGarbageCollectionRuntime,
         IRuntime,
         ISummarizerRuntime,
-        ISummarizerInternalsProvider
-{
+        ISummarizerInternalsProvider {
     public get IContainerRuntime() { return this; }
     public get IFluidRouter() { return this; }
 
@@ -1361,8 +1360,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         if (this.summariesDisabled) {
             this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-        }
-        else {
+        } else {
             const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
             const orderedClientCollection = new OrderedClientCollection(
                 orderedClientLogger,
@@ -1395,18 +1393,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.summaryCollection,
                     async (runtime: IConnectableRuntime) => RunWhileConnectedCoordinator.create(runtime),
                 );
-            }
-            else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
+            } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
                 // Only create a SummaryManager and SummarizerClientElection
                 // if summaries are enabled and we are not the summarizer client.
                 const defaultAction = () => {
-                    if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
-                        this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
+                    if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
+                        this.logger.sendErrorEvent({ eventName: "SummaryStatus:Behind" });
                         // unregister default to no log on every op after falling behind
                         // and register summary ack handler to re-register this handler
                         // after successful summary
                         this.summaryCollection.once(MessageType.SummaryAck, () => {
-                            this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
+                            this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:CaughtUp" });
                             // we've caught up, so re-register the default action to monitor for
                             // falling behind, and unregister ourself
                             this.summaryCollection.on("default", defaultAction);
@@ -1464,7 +1461,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // logging hardware telemetry
         logger.sendTelemetryEvent({
-            eventName:"DeviceSpec",
+            eventName: "DeviceSpec",
             ...getDeviceSpec(),
         });
 
@@ -2040,8 +2037,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
-        rootDataStoreId: string): IFluidDataStoreContextDetached
-    {
+        rootDataStoreId: string): IFluidDataStoreContextDetached {
         return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
     }
 

@@ -131,7 +131,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         // @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
         // is sufficient to determine if the token will be undefined or not.
         if (token && this.tokenProvider.documentPostCreateCallback !== undefined) {
-            await this.tokenProvider.documentPostCreateCallback (documentId, token);
+            await this.tokenProvider.documentPostCreateCallback(documentId, token);
         }
 
         parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
@@ -179,7 +179,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             throw new Error(
                 `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
-        const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion }});
+        const logger2 = ChildLogger.create(logger, "RouterliciousDriver", { all: { driverVersion } });
 
         let fluidResolvedUrl: IResolvedUrl;
         if (!isCreateContainer && this.driverPolicies.enableDiscovery) {

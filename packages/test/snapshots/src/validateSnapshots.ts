@@ -70,7 +70,7 @@ export async function validateSnapshots(
         const sourceDir = `${srcDir}/${file.name}`;
         const srcContent = fs.readFileSync(sourceDir, "utf-8");
 
-        try{
+        try {
             // This function will be called by the storage service when the container is snapshotted. When that happens,
             // validate that snapshot with the destination snapshot.
             const onSnapshotCb =
@@ -89,8 +89,8 @@ export async function validateSnapshots(
             );
 
             await uploadSummary(container);
-        }catch(e) {
-            if(e instanceof Error) {
+        } catch (e) {
+            if (e instanceof Error) {
                 e.message = JSON.stringify({
                     sourceDir, referenceDir, snapshotFileName, message: e.message,
                 }, undefined, 2);

@@ -249,7 +249,7 @@ describe("Summarizer Client Election", () => {
                 ["s2", 4, false],
                 ["b", 7, true],
             ], { electedClientId: "s2", electedParentId: "s2", electionSequenceNumber: 432 });
-            assertState("b", "b" ,432, "auto-elect next eligible client");
+            assertState("b", "b", 432, "auto-elect next eligible client");
         });
 
         it("Should remain unelected with empty quorum", () => {
@@ -265,7 +265,7 @@ describe("Summarizer Client Election", () => {
             currentSequenceNumber = 678;
             createElection([
             ], { electedClientId: "x", electedParentId: "x", electionSequenceNumber: 432 });
-            assertState(undefined, undefined,432, "no client to elect");
+            assertState(undefined, undefined, 432, "no client to elect");
         });
 
         it("Should reelect during add/remove clients", async () => {
@@ -433,11 +433,11 @@ describe("Summarizer Client Election", () => {
     describe("No initial state", () => {
         it("Should reelect during add/remove clients", () => {
             createElection();
-            assertState(undefined, undefined,0, "no clients, should initially be undefined");
+            assertState(undefined, undefined, 0, "no clients, should initially be undefined");
 
             // Add non-interactive client, no effect
             addClient("s1", 1, false);
-            assertState(undefined, undefined,0, "only non-interactive client in quorum");
+            assertState(undefined, undefined, 0, "only non-interactive client in quorum");
 
             // Add interactive client, should elect
             addClient("a", 2, true);

@@ -72,7 +72,7 @@ export class DdsCollection extends DataObject {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
  export const DdsCollectionFactory =
-    new DataObjectFactory (
+    new DataObjectFactory(
         DdsCollectionName,
         DdsCollection,
         [

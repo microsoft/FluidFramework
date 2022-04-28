@@ -217,7 +217,7 @@ export class RemoteChannelContext implements IChannelContext {
                 this.subLogger.sendTelemetryEvent(
                     {
                         eventName: "ChannelAttributesVersionMismatch",
-                        channelType: {value: attributes.type, tag: TelemetryDataTag.PackageData},
+                        channelType: { value: attributes.type, tag: TelemetryDataTag.PackageData },
                         channelSnapshotVersion: {
                             value: `${attributes.snapshotFormatVersion}@${attributes.packageVersion}`,
                             tag: TelemetryDataTag.PackageData,
