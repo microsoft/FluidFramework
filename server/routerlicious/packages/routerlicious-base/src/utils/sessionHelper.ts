@@ -76,6 +76,7 @@ export async function getSession(ordererUrl: string,
 
     // The tempSession.isSessionAlive would be updated as whether the session was alive before the request came.
     tempSession.isSessionAlive = isSessionAlive;
-    Lumberjack.info(`Returning the session: ${JSON.stringify(tempSession)}`, lumberjackProperties);
+    Lumberjack.info(`Returning the session with enableDiscovery flag as true: ${JSON.stringify(tempSession)}`,
+        lumberjackProperties);
     return tempSession;
 }

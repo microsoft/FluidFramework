@@ -121,6 +121,7 @@ export class DocumentStorage implements IDocumentStorage {
         ordererUrl: string,
         historianUrl: string,
         values: [string, ICommittedProposal][],
+        enableDiscovery: boolean = false,
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
@@ -197,8 +198,10 @@ export class DocumentStorage implements IDocumentStorage {
             isSessionAlive: true,
         };
 
-        winston.info(`Session: ${JSON.stringify(session)}`, { messageMetaData });
-        Lumberjack.info(`Session: ${JSON.stringify(session)}`, lumberjackProperties);
+        winston.info(`Create session with enableDiscovery flag as ${enableDiscovery}: ${JSON.stringify(session)}`,
+            { messageMetaData });
+        Lumberjack.info(`Create session with enableDiscovery flag as ${enableDiscovery}: ${JSON.stringify(session)}`,
+            lumberjackProperties);
 
         const collection = await this.databaseManager.getDocumentCollection();
         const result = await collection.findOrCreate(
