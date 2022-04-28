@@ -264,12 +264,12 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     /**
      * Attempts to connect the container to the delta stream and process ops
      */
-    connect?(): void;
+    connect(): void;
 
     /**
      * Disconnects the container from the delta stream and stops processing ops
      */
-    disconnect?(): void;
+    disconnect(): void;
 
     /**
      * Dictates whether or not the current container will automatically attempt to reconnect to the delta stream

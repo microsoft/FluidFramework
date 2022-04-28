@@ -23,6 +23,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove IFluidSerializer from IFluidObject](#Remove-IFluidSerializer-from-IFluidObject)
 - [Remove write method from IDocumentStorageService](#Remove-Write-Method-from-IDocumentStorageService)
 - [Remove IDeltaManager.close()](#remove-ideltamanagerclose)
+- [connect() and disconnect() made mandatory on IContainer and IFluidContainer](#connect-and-disconnect-made-mandatory-on-icontainer-and-ifluidcontainer)
 
 ### Remove IFluidSerializer from core-interfaces
 `IFluidSerializer` was deprecated from core-interfaces in 0.55 and is now removed. Use `IFluidSerializer` in shared-object-base instead.
@@ -40,6 +41,9 @@ Use IContainer.close() or IContainerContext.closeFn() instead, and pass an error
 ### Require enableOfflineLoad to use IContainer.closeAndGetPendingLocalState()
 Offline load functionality has been placed behind a feature flag as part of [ongoing offline work](https://github.com/microsoft/FluidFramework/pull/9557).
 In order to use `IContainer.closeAndGetPendingLocalState`, pass a set of options to the container runtime including `{ enableOfflineLoad: true }`.
+
+### connect() and disconnect() made mandatory on IContainer and IFluidContainer
+The functions `IContainer.connect()`, `IContainer.disconnect()`, `IFluidContainer.connect()`, and `IFluidContainer.disconnect()` have all been changed from optional to mandatory functions.
 
 # 0.59
 
