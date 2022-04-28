@@ -131,7 +131,7 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
-        it.only("conflicting remove and add interval consistency", () => {
+        it("conflicting remove and add interval consistency", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "abcde");
             containerRuntimeFactory.processAllMessages();
@@ -169,6 +169,29 @@ describe("SharedString interval collections", () => {
             ]);
             assertIntervals(sharedString2, collection2, [
                 { start: 1, end: 2 },
+            ]);
+        });
+
+        it.only("slide on remove issue", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            sharedString.insertText(0, "ABC");
+            containerRuntimeFactory.processAllMessages();
+            const collection2 = sharedString2.getIntervalCollection("test");
+
+            sharedString.insertText(2, "X");
+            sharedString.removeRange(1, 2);
+            sharedString.insertText(1, "Y");
+            assert.strictEqual(sharedString.getText(), "AYXC", "different text 1");
+
+            collection2.add(1, 1, IntervalType.SlideOnRemove);
+
+            containerRuntimeFactory.processAllMessages();
+            assert.strictEqual(sharedString.getText(), "AYXC", "different text 1");
+            assertIntervals(sharedString, collection1, [
+                { start: 2, end: 2 },
+            ]);
+            assertIntervals(sharedString2, collection2, [
+                { start: 2, end: 2 },
             ]);
         });
 
