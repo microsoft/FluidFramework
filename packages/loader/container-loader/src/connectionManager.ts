@@ -32,6 +32,7 @@ import {
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
     logNetworkFailure,
+    IProgress,
 } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
@@ -404,14 +405,14 @@ export class ConnectionManager implements IConnectionManager {
         }
     }
 
-    public connect(connectionMode?: ConnectionMode) {
-        this.connectCore(connectionMode).catch((error) => {
+    public connect(connectionMode?: ConnectionMode, progress?: IProgress) {
+        this.connectCore(connectionMode, progress).catch((error) => {
             const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
             this.props.closeHandler(normalizedError);
         });
     }
 
-    private async connectCore(connectionMode?: ConnectionMode): Promise<void> {
+    private async connectCore(connectionMode?: ConnectionMode, progress?: IProgress): Promise<void> {
         assert(!this.closed, 0x26a /* "not closed" */);
 
         if (this.connection !== undefined || this.pendingConnection) {
@@ -455,6 +456,9 @@ export class ConnectionManager implements IConnectionManager {
         while (connection === undefined) {
             if (this.closed) {
                 throw new Error("Attempting to connect a closed DeltaManager");
+            }
+            if ((progress?.cancel?.aborted) ?? false) {
+                return;
             }
             connectRepeatCount++;
 
@@ -501,6 +505,9 @@ export class ConnectionManager implements IConnectionManager {
                 if (retryDelayFromError !== undefined) {
                     this.props.reconnectionDelayHandler(retryDelayFromError, origError);
                 }
+                if (progress?.onRetry) {
+                    progress.onRetry(delayMs, origError);
+                }
                 await waitForConnectedState(delayMs);
             }
         }
@@ -518,6 +525,9 @@ export class ConnectionManager implements IConnectionManager {
             );
         }
 
+        if ((progress?.cancel?.aborted) ?? false) {
+            return;
+        }
         this.setupNewSuccessfulConnection(connection, requestedMode);
     }
 

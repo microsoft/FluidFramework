@@ -40,6 +40,7 @@ import {
     ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
+    IProgress,
     NonRetryableError,
 } from "@fluidframework/driver-utils";
 import {
@@ -58,6 +59,7 @@ export interface IConnectionArgs {
     mode?: ConnectionMode;
     fetchOpsFromStorage?: boolean;
     reason: string;
+    progress?: IProgress;
 }
 
 /**
@@ -124,6 +126,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private timeTillThrottling: number = 0;
 
     public readonly closeAbortController = new AbortController();
+
+    public connectAbortController = new AbortController();
 
     private readonly deltaStorageDelayId = uuid();
     private readonly deltaStreamDelayId = uuid();
@@ -433,7 +437,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             this.fetchMissingDeltas(args.reason);
         }
 
-        this.connectionManager.connect(args.mode);
+        this.connectionManager.connect(args.mode, args.progress);
     }
 
     private async getDeltas(

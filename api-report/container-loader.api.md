@@ -5,6 +5,7 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
+import { default as default_2 } from 'abort-controller';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
@@ -69,6 +70,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     connect(): void;
     // (undocumented)
+    get connectAbortController(): default_2;
+    // (undocumented)
     get connected(): boolean;
     // (undocumented)
     get connectionState(): ConnectionState;
@@ -114,7 +117,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     subLogger: TelemetryLogger;
     // (undocumented)
     static version: string;
-    }
+}
 
 // @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
@@ -213,7 +216,6 @@ export class RelativeLoader implements ILoader {
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
-
 
 // (No @packageDocumentation comment for this package)
 

@@ -23,6 +23,7 @@ import {
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { IContainerPackageInfo } from "@fluidframework/driver-definitions";
+import { IProgress } from "@fluidframework/driver-utils";
 
 export enum ReconnectMode {
     Never = "Never",
@@ -95,7 +96,7 @@ export interface IConnectionManager {
     /**
      * Initiates connection to relay service (noop if already connected).
      */
-    connect(connectionMode?: ConnectionMode): void;
+    connect(connectionMode?: ConnectionMode, progress?: IProgress): void;
 
     /**
      * Disposed connection manager
