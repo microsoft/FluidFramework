@@ -860,7 +860,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         this.serviceSummaryGenerated = !controlContents.isClientSummary;
                         const dsn = controlContents.durableSequenceNumber;
                         if (dsn >= this.durableSequenceNumber) {
-                            // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred
+                            // Deli cache is only cleared when no clients have
+                            // joined since last noClient was sent to alfred
                             if (controlContents.clearCache && this.noActiveClients) {
                                 instruction = InstructionType.ClearCache;
                                 this.canClose = true;
