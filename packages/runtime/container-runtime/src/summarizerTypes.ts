@@ -372,7 +372,7 @@ export interface ISummarizeHeuristicRunner {
     run(): void;
 
     /** Runs a different heuristic to check if it should summarize before closing */
-    shouldRunLastSummary(stopReason: SummarizerStopReason): boolean;
+    shouldRunLastSummary(): boolean;
 
     /** Disposes of resources */
     dispose(): void;

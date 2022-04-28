@@ -10,7 +10,6 @@ import {
     ISummarizeHeuristicData,
     ISummarizeHeuristicRunner,
     ISummarizeAttempt,
-    SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
 
@@ -88,17 +87,12 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         }
     }
 
-    public shouldRunLastSummary(stopReason: SummarizerStopReason): boolean {
-        if (stopReason !== "parentNotConnected") {
-            return false;
-        }
-
+    public shouldRunLastSummary(): boolean {
         const opsSinceLastAck = this.opsSinceLastAck;
         const minOpsForAttemptOnClose = this.minOpsForAttemptOnClose;
 
         this.logger.sendTelemetryEvent({
             eventName: "ShouldRunLastSummary",
-            stopReason,
             opsSinceLastAck,
             minOpsForAttemptOnClose,
         });
