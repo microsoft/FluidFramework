@@ -71,7 +71,7 @@
     "@fluidframework/driver-definitions": "^0.47.1000-0",
     "@fluidframework/driver-utils": "^0.60.1000",
     "@fluidframework/garbage-collector": "^0.60.1000",
-    "@fluidframework/protocol-base": "^0.1036.1000",
+    "@fluidframework/protocol-base": "^0.1036.2000-0",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/runtime-definitions": "^0.60.1000",
     "@fluidframework/runtime-utils": "^0.60.1000",
@@ -116,7 +116,13 @@
     "version": "0.60.1000",
     "broken": {
       "ClassDeclaration_Summarizer": {
-        "backCompat": false
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IProvideSummarizer": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISummarizer": {
+        "forwardCompat": false
       },
       "ClassDeclaration_ContainerRuntime": {
         "forwardCompat": false,

@@ -32,7 +32,7 @@
     "start": "npm run build:md-magic && hugo server"
   },
   "dependencies": {
-    "@tylerbu/custom-api-documenter": "0.3.3-tylerbu-6-prerelease",
+    "@tylerbu/custom-api-documenter": "~0.3.4-1",
     "@tylerbu/dl-cli": "1.1.2-tylerbu-0",
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
     "@vscode/codicons": "0.0.28",

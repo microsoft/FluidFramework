@@ -27,6 +27,7 @@ import {
     ISummaryCancellationToken,
     ISummarizeResults,
     ISummarizeTelemetryProperties,
+    ISummarizeRunnerTelemetry,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -108,13 +109,15 @@ export class RunningSummarizer implements IDisposable {
         private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
         { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
     ) {
+        const telemetryProps: ISummarizeRunnerTelemetry = {
+            summarizeCount: () => this.summarizeCount,
+            summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
+        };
+
         this.logger = ChildLogger.create(
             baseLogger, "Running",
             {
-                all: {
-                    summarizeCount: () => this.summarizeCount,
-                    summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
-                },
+                all: telemetryProps,
             },
         );
 
@@ -232,7 +235,7 @@ export class RunningSummarizer implements IDisposable {
             if (this.summarizingLock === undefined) {
                 this.trySummarizeOnce(
                     // summarizeProps
-                    { summarizeReason: "lastSummary" },
+                    { reason: "lastSummary" },
                     // ISummarizeOptions, using defaults: { refreshLatestAck: false, fullTree: false }
                     {});
             }
@@ -259,9 +262,10 @@ export class RunningSummarizer implements IDisposable {
         this.summaryCollection.unsetPendingAckTimerTimeoutCallback();
 
         if (waitStartResult.result === "done" && waitStartResult.value !== undefined) {
-            this.heuristicData.initialize({
+            this.heuristicData.updateWithLastSummaryAckInfo({
                 refSequenceNumber: waitStartResult.value.summaryOp.referenceSequenceNumber,
-                summaryTime: waitStartResult.value.summaryOp.timestamp,
+                // This will be the Summarizer starting point so only use timestamps from client's machine.
+                summaryTime: Date.now(),
                 summarySequenceNumber: waitStartResult.value.summaryOp.sequenceNumber,
             });
         }
@@ -331,7 +335,7 @@ export class RunningSummarizer implements IDisposable {
 
     /** Heuristics summarize attempt. */
     private trySummarize(
-        summarizeReason: SummarizeReason,
+        reason: SummarizeReason,
         cancellationToken = this.cancellationToken): void
     {
         if (this.summarizingLock !== undefined) {
@@ -370,7 +374,7 @@ export class RunningSummarizer implements IDisposable {
                 const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
 
                 const summarizeProps: ISummarizeTelemetryProperties = {
-                    summarizeReason,
+                    reason,
                     summaryAttempts,
                     summaryAttemptsPerPhase,
                     summaryAttemptPhase: summaryAttemptPhase + 1, // make everything 1-based
@@ -381,7 +385,7 @@ export class RunningSummarizer implements IDisposable {
                     this.logger.sendPerformanceEvent({
                         eventName: "SummarizeAttemptDelay",
                         duration: delaySeconds,
-                        reason: overrideDelaySeconds !== undefined ? "nack with retryAfter" : undefined,
+                        summaryNackDelay: overrideDelaySeconds !== undefined,
                         ...summarizeProps,
                     });
                     await delay(delaySeconds * 1000);
@@ -407,7 +411,7 @@ export class RunningSummarizer implements IDisposable {
             // If all attempts failed, log error (with last attempt info) and close the summarizer container
             this.logger.sendErrorEvent({
                 eventName: "FailToSummarize",
-                summarizeReason,
+                reason,
                 message: lastResult?.message,
             }, lastResult?.error);
 
@@ -435,7 +439,7 @@ export class RunningSummarizer implements IDisposable {
             throw new UsageError("Attempted to run an already-running summarizer on demand");
         }
         const result = this.trySummarizeOnce(
-            { summarizeReason: `onDemand/${reason}` },
+            { reason: `onDemand/${reason}` },
             options,
             this.cancellationToken,
             resultsBuilder);
@@ -495,7 +499,7 @@ export class RunningSummarizer implements IDisposable {
         // Set to undefined first, so that subsequent enqueue attempt while summarize will occur later.
         this.enqueuedSummary = undefined;
         this.trySummarizeOnce(
-            { summarizeReason: `enqueuedSummary/${reason}` },
+            { reason: `enqueuedSummary/${reason}` },
             options,
             this.cancellationToken,
             resultsBuilder);

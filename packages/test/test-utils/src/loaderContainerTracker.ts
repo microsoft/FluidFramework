@@ -503,7 +503,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
                         return `${address} ${JSON.stringify(contents)}`;
                     }
                     return JSON.stringify(contents);
-                } catch (e) {
+                } catch (e: any) {
                     return `${e.message}: ${e.stack}`;
                 }
             };

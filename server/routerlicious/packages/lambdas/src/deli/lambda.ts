@@ -47,7 +47,8 @@ import {
     SignalOperationType,
     ITicketedMessage,
     IExtendClientControlMessageContents,
-    ITimedClient,
+    ISequencedSignalClient,
+    IClientManager,
 } from "@fluidframework/server-services-core";
 import {
     CommonProperties,
@@ -220,13 +221,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         private readonly documentId: string,
         readonly lastCheckpoint: IDeliState,
         checkpointManager: IDeliCheckpointManager,
+        private readonly clientManager: IClientManager | undefined,
         private readonly deltasProducer: IProducer,
         private readonly signalsProducer: IProducer | undefined,
         private readonly rawDeltasProducer: IProducer,
         private readonly serviceConfiguration: IServiceConfiguration,
         private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
         private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
-        private readonly readClients: Map<string, ITimedClient> = new Map()) {
+        private readonly readClients: Map<string, ISequencedSignalClient> = new Map()) {
         super();
 
         // Instantiate existing clients
@@ -651,30 +653,40 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 `Op not allowed`);
         }
 
-        let isReadClient = false;
-
         // Handle client join/leave messages.
         if (!message.clientId) {
             if (message.operation.type === MessageType.ClientLeave) {
-                isReadClient = this.readClients.has(dataContent);
-                if (!isReadClient && !this.clientSeqManager.removeClient(dataContent)) {
+                const readClient = this.readClients.get(dataContent);
+                if (readClient) {
+                    this.readClients.delete(dataContent);
+                    return this.createSignalMessage(message, this.sequenceNumber, dataContent);
+                } else if (!this.clientSeqManager.removeClient(dataContent)) {
                     // Return if the client has already been removed due to a prior leave message.
                     return;
                 }
             } else if (message.operation.type === MessageType.ClientJoin) {
                 const clientJoinMessage = dataContent as IClientJoin;
 
-                isReadClient = clientJoinMessage.detail.mode === "read";
-                if (isReadClient) {
+                if (clientJoinMessage.detail.mode === "read") {
                     if (this.readClients.has(clientJoinMessage.clientId)) {
                         // Return if the client has already been added due to a prior join message.
                         return;
                     }
 
-                    this.readClients.set(clientJoinMessage.clientId, {
-                        ...clientJoinMessage.detail,
-                        lastKeepAlive: Date.now(),
-                    });
+                    // create the signal message
+                    const signalMessage = this.createSignalMessage(message, this.sequenceNumber, dataContent);
+
+                    // store the read client in-memory, including the signal sequence numbers
+                    const readClient: ISequencedSignalClient = {
+                        client: clientJoinMessage.detail,
+                        referenceSequenceNumber: (signalMessage.message.operation as any).referenceSequenceNumber,
+                        clientConnectionNumber: (signalMessage.message.operation as any).clientConnectionNumber,
+                        exp: Date.now() + this.serviceConfiguration.deli.clientTimeout,
+                    };
+
+                    this.readClients.set(clientJoinMessage.clientId, readClient);
+
+                    return signalMessage;
                 } else {
                     const isNewClient = this.clientSeqManager.upsertClient(
                         clientJoinMessage.clientId,
@@ -737,11 +749,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         }
 
         let sequenceNumber = this.sequenceNumber;
-
-        if (isReadClient) {
-            // create the signal message
-            return this.createSignalMessage(message, sequenceNumber, dataContent);
-        }
 
         // Get the current sequence number and increment it if appropriate.
         // We don't increment sequence number for noops sent by client since they will
@@ -894,10 +901,52 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 case ControlMessageType.ExtendClient: {
                     const controlContents = controlMessage.contents as IExtendClientControlMessageContents;
 
-                    const readClient = this.readClients.get(controlContents.clientId);
-                    if (readClient) {
-                        // extend the clients livelihood
-                        readClient.lastKeepAlive = Date.now();
+                    const clientsToExtend: Map<string, ISequencedSignalClient> = new Map();
+
+                    const clientIds = controlContents.clientIds ??
+                        (controlContents.clientId ? [controlContents.clientId] : []);
+                    for (const clientId of clientIds) {
+                        const client = this.readClients.get(clientId);
+                        if (client) {
+                            clientsToExtend.set(clientId, client);
+                        }
+                    }
+
+                    if (clientsToExtend.size > 0) {
+                        if (this.clientManager) {
+                            this.clientManager.extendSequencedClients(
+                                this.tenantId,
+                                this.documentId,
+                                clientsToExtend,
+                                this.serviceConfiguration.deli.clientTimeout)
+                                .catch((error) => {
+                                    const errorMsg = "Could not extend clients";
+                                    this.context.log?.error(
+                                        `${errorMsg}: ${JSON.stringify(error)}`,
+                                        {
+                                            messageMetaData: {
+                                                documentId: this.documentId,
+                                                tenantId: this.tenantId,
+                                            },
+                                        });
+                                    Lumberjack.error(
+                                        errorMsg,
+                                        getLumberBaseProperties(this.documentId, this.tenantId), error);
+                                });
+                        } else {
+                            const errorMsg = "Could not extend clients. Missing client manager";
+                            this.context.log?.error(
+                                `${errorMsg}`,
+                                {
+                                    messageMetaData: {
+                                        documentId: this.documentId,
+                                        tenantId: this.tenantId,
+                                    },
+                                });
+                            Lumberjack.error(
+                                errorMsg,
+                                getLumberBaseProperties(this.documentId, this.tenantId));
+                        }
                     }
 
                     break;
@@ -1065,14 +1114,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     /**
-     * Check if there are any old/idle read clients.
+     * Check if there are any expired read clients.
+     * The read client will expire if alfred has not sent
+     * an ExtendClient control message within the time for 'clientTimeout'.
      * Craft and send a leave message for each one found.
      */
     private checkIdleReadClients() {
         const currentTime = Date.now();
 
-        for (const [clientId, { lastKeepAlive }] of this.readClients) {
-            if ((currentTime - lastKeepAlive) > this.serviceConfiguration.deli.clientTimeout) {
+        for (const [clientId, { exp }] of this.readClients) {
+            if (exp < currentTime) {
                 const leaveMessage = this.createLeaveMessage(clientId);
                 void this.sendToRawDeltas(leaveMessage);
             }
