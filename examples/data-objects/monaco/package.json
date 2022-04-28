@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/monaco",
   "version": "0.59.3000",
+  "private": true,
   "description": "Monaco code editor",
   "homepage": "https://fluidframework.com",
   "repository": {

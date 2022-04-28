@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/focus-tracker",
   "version": "0.59.3000",
+  "private": true,
   "description": "Example Data Object that tracks page focus for Audience members using signals.",
   "homepage": "https://fluidframework.com",
   "repository": {

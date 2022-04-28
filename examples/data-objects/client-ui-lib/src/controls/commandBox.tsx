@@ -35,7 +35,7 @@ export const CommandBox: React.FC<ICommandBoxProps> = (props: ICommandBoxProps) 
 
     React.useEffect(() => {
         registerShowListener(() => { setShow(true); });
-    }, [ registerShowListener ]);
+    }, [registerShowListener]);
 
     React.useEffect(() => {
         if (filterRef.current !== null) {

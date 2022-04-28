@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/shared-text",
   "version": "0.59.3000",
+  "private": true,
   "description": "Shared text",
   "homepage": "https://fluidframework.com",
   "repository": {

@@ -281,8 +281,7 @@ export class ConsensusRegisterCollection<T>
             } else {
                 data.atomic = atomicUpdate;
             }
-        }
-        else {
+        } else {
             assert(!!data, 0x06f /* "data missing for non-atomic inbound update!" */);
         }
 
@@ -300,8 +299,7 @@ export class ConsensusRegisterCollection<T>
         if (!this.isAttached()) {
             assert(refSeq === 0 && sequenceNumber === 0,
                 0x070 /* "sequence numbers are expected to be 0 when unattached" */);
-        }
-        else if (data.versions.length > 0) {
+        } else if (data.versions.length > 0) {
             assert(sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
                 0x071 /* "Versions should naturally be ordered by sequenceNumber" */);
         }

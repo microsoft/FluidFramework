@@ -80,7 +80,7 @@ export class RelativeLoader implements ILoader {
                     {
                         canReconnect: request.headers?.[LoaderHeader.reconnect],
                         clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-                        resolvedUrl: {...resolvedUrl},
+                        resolvedUrl: { ...resolvedUrl },
                         version: request.headers?.[LoaderHeader.version] ?? undefined,
                         loadMode: request.headers?.[LoaderHeader.loadMode],
                     },

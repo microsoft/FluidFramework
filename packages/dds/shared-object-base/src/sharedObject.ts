@@ -79,8 +79,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     constructor(
         public id: string,
         protected runtime: IFluidDataStoreRuntime,
-        public readonly attributes: IChannelAttributes)
-    {
+        public readonly attributes: IChannelAttributes) {
         super((event: EventEmitterEventType, e: any) => this.eventListenerErrorHandler(event, e));
 
         this.handle = new SharedObjectHandle(
@@ -413,6 +412,14 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         this.reSubmitCore(content, localOpMetadata);
     }
 
+    /**
+     * Apply changes from an op. Used when rehydrating an attached container
+     * with pending changes. This prepares the SharedObject for seeing an ACK
+     * for the op or resubmitting the op upon reconnection.
+     * @param content - Contents of a stashed op.
+     * @returns localMetadata of the op, to be passed to process() or resubmit()
+     * when the op is ACKed or resubmitted, respectively
+     */
     protected abstract applyStashedOp(content: any): unknown;
 }
 
@@ -453,8 +460,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
-        attributes: IChannelAttributes)
-    {
+        attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
         this._serializer = new FluidSerializer(

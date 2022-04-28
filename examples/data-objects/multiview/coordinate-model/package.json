@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/multiview-coordinate-model",
   "version": "0.59.3000",
+  "private": true,
   "description": "Coordinate model for multiview sample",
   "homepage": "https://fluidframework.com",
   "repository": {

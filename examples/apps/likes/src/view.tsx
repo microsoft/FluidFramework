@@ -25,7 +25,7 @@ export function LikesView(
 ) {
     // Use synced states
     const [likes, likesReducer] = useSyncedCounter(props.syncedDataObject, "likes");
-    const [imgUrl, setImgUrl] = useSyncedString(props.syncedDataObject,"imgUrl");
+    const [imgUrl, setImgUrl] = useSyncedString(props.syncedDataObject, "imgUrl");
 
     // Render
     return (

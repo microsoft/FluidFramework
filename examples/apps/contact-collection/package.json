@@ -1,6 +1,7 @@
 {
   "name": "@fluid-example/contact-collection",
   "version": "0.59.3000",
+  "private": true,
   "description": "Example of using a Fluid Object as a collection of items",
   "homepage": "https://fluidframework.com",
   "repository": {

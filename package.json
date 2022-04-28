@@ -47,6 +47,7 @@
     "dedup": "yarn-deduplicate",
     "install-strict": "npx midgard-yarn install",
     "layer-check": "fluid-layer-check --info tools/build-tools/data/layerInfo.json",
+    "lerna": "lerna",
     "lint": "lerna run lint --no-sort --stream -- -- -- --color",
     "lint:fix": "lerna run lint:fix --no-sort --stream -- -- -- --color",
     "policy-check": "fluid-repo-policy-check",
@@ -123,7 +124,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.61804",
+    "@fluidframework/build-tools": "^0.2.63777",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
