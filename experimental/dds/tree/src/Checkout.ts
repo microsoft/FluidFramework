@@ -323,7 +323,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	public revert(editId: EditId): void {
 		assert(this.currentEdit !== undefined);
 		const index = this.tree.edits.getIndexOfId(editId);
-		const edit = this.tree.editsInternal.getEditInSessionAtIndex(index);
+		const edit = this.tree.edits.getEditInSessionAtIndex(index);
 		const before = this.tree.logViewer.getRevisionViewInSession(index);
 		const changes = this.tree.revertChanges(edit.changes, before);
 		if (changes !== undefined) {

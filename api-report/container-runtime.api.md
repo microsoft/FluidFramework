@@ -498,6 +498,8 @@ export const ISummarizer: keyof IProvideSummarizer;
 
 // @public (undocumented)
 export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer> {
+    // (undocumented)
+    close(): void;
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
@@ -670,6 +672,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(url: string,
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
+    // (undocumented)
+    close(): void;
     static create(loader: ILoader, url: string): Promise<ISummarizer>;
     dispose(): void;
     // (undocumented)

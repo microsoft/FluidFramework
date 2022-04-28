@@ -7,8 +7,8 @@
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 require("jsdom-global")("", { url: "http://localhost" });
-window.performance.mark = window.performance.mark || (() => { });
-window.performance.measure = window.performance.measure || (() => { });
+window.performance.mark ??= (() => undefined as PerformanceMark);
+window.performance.measure ??= (() => undefined as PerformanceMeasure);
 
 import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";

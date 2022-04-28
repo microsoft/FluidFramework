@@ -250,5 +250,6 @@ export interface ILambdaStartControlMessageContents {
 }
 
 export interface IExtendClientControlMessageContents {
-    clientId: string;
+    clientId?: string;
+    clientIds?: string[];
 }

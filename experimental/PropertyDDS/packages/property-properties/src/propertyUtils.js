@@ -8,7 +8,7 @@ export class PropertyUtils {
      * Gather all properties that pass an arbitrary predicate function
      * @param {property-properties.NodeProperty} in_rootProperty The root property to traverse from
      * @param {function} in_predicate The predicate function
-     * @return {Array.<property-properties.BasePropertyy>} The list of properties that passed the predicate
+     * @return {Array.<property-properties.BaseProperty>} The list of properties that passed the predicate
      * function
      */
     static gatherProperties = function(in_rootProperty, in_predicate) {

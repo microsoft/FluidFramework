@@ -36,7 +36,7 @@ async function messageHandler(msg: WorkerMessage): Promise<WorkerExecResult> {
         } else {
             throw new Error(`Invalid workerName ${msg.workerName}`);
         }
-    } catch (e) {
+    } catch (e: any) {
         // any unhandled exception thrown is going to rerun on main thread.
         res = {
             error: {
