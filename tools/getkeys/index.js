@@ -43,7 +43,7 @@ async function saveEnv(env) {
     // However, the environment will be inherited when their preferred shell is
     // launched from the login shell.
     const shell = process.env.SHELL;
-    const shellName = path.basename(shell);
+    const shellName = shell && path.basename(shell);
     switch (shellName) {
         case "bash":
             return exportToShellRc(
@@ -54,10 +54,20 @@ async function saveEnv(env) {
                 entries);
         case "zsh":
             return exportToShellRc(".zshrc", entries);
+        case "fish":
+            console.log("Writing '~/.config/fish/fish_variables'.");
+
+            // For 'fish' we use 'set -xU', which dedupes and performs its own escaping.
+            // Note that we must pass the 'shell' option, otherwise node will spawn '/bin/sh'.
+            return Promise.all(
+                entries.map(([key, value]) => execAsync(`set -xU '${key}' '${value}'`, { shell }))
+            );
         default:
             if (!process.platform === "win32") {
-                console.error(`Unsupported shell: '${shellName}'.`);
+                throw new Error(`Unsupported shell: '${shellName}'.`);
             } else {
+                console.log("Writing 'HKEY_CURRENT_USER\\Environment'.");
+
                 // On Windows, invoke 'setx' to update the user's persistent environment variables.
                 return Promise.all(
                     entries.map(([key, value]) => execAsync(`setx ${key} ${quote(value)}`))
@@ -88,9 +98,9 @@ async function getKeys(keyVaultClient, rc, vaultName) {
     return Promise.all(p);
 }
 
-async function execAsync(command) {
+async function execAsync(command, options) {
     return new Promise((res, rej) => {
-        exec(command,  (err, stdout, stderr) => {
+        exec(command, options, (err, stdout, stderr) => {
             if (err) {
                 rej(err);
                 return;
@@ -178,6 +188,6 @@ async function getClient() {
 
     console.warn(`\nFor the new environment to take effect, please restart your terminal.\n`)
 })().catch(e => {
-    console.error(`FATAL ERROR: ${e}`);
+    console.error(`FATAL ERROR: ${e.stack}`);
     process.exit(-1);
 });
