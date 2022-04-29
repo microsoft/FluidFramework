@@ -32,6 +32,7 @@ import { getGCStateFromSummary } from "./mockSummarizerClient";
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
         summaryOptions: {
+            initialSummarizerDelayMs: 20, // Previous Containers had this property under SummaryOptions.
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
                 ...{
