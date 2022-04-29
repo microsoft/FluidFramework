@@ -33,7 +33,7 @@ async function createNonRootDataObject(
     const dataObject = await requestTestObjectWithoutWait(dataStore, "");
     // Non-root data stores are not visible (unreachable) from the root unless their handles are stored in a
     // visible DDS.
-    await assert.rejects(requestTestObjectWithoutWait(container,dataObject._context.id),
+    await assert.rejects(requestTestObjectWithoutWait(container, dataObject._context.id),
         "Non root data object must not be visible from root after creation",
     );
     return dataObject;

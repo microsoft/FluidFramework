@@ -261,9 +261,10 @@ export class RunningSummarizer implements IDisposable {
         this.summaryCollection.unsetPendingAckTimerTimeoutCallback();
 
         if (waitStartResult.result === "done" && waitStartResult.value !== undefined) {
-            this.heuristicData.initialize({
+            this.heuristicData.updateWithLastSummaryAckInfo({
                 refSequenceNumber: waitStartResult.value.summaryOp.referenceSequenceNumber,
-                summaryTime: waitStartResult.value.summaryOp.timestamp,
+                // This will be the Summarizer starting point so only use timestamps from client's machine.
+                summaryTime: Date.now(),
                 summarySequenceNumber: waitStartResult.value.summaryOp.sequenceNumber,
             });
         }
@@ -277,7 +278,7 @@ export class RunningSummarizer implements IDisposable {
      * @returns - result of action.
      */
     private async lockedSummaryAction<T>(action: () => Promise<T>) {
-        assert (this.summarizingLock === undefined, 0x25b /* "Caller is responsible for checking lock" */);
+        assert(this.summarizingLock === undefined, 0x25b /* "Caller is responsible for checking lock" */);
 
         const summarizingLock = new Deferred<void>();
         this.summarizingLock = summarizingLock.promise;
@@ -311,8 +312,7 @@ export class RunningSummarizer implements IDisposable {
         summarizeProps: ISummarizeTelemetryProperties,
         options: ISummarizeOptions,
         cancellationToken = this.cancellationToken,
-        resultsBuilder = new SummarizeResultBuilder()): ISummarizeResults
-    {
+        resultsBuilder = new SummarizeResultBuilder()): ISummarizeResults {
         this.lockedSummaryAction(async () => {
             const summarizeResult = this.generator.summarize(
                 summarizeProps,
@@ -334,8 +334,7 @@ export class RunningSummarizer implements IDisposable {
     /** Heuristics summarize attempt. */
     private trySummarize(
         reason: SummarizeReason,
-        cancellationToken = this.cancellationToken): void
-    {
+        cancellationToken = this.cancellationToken): void {
         if (this.summarizingLock !== undefined) {
             // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
             // if it's still needed
@@ -379,7 +378,7 @@ export class RunningSummarizer implements IDisposable {
                     this.logger.sendPerformanceEvent({
                         eventName: "SummarizeAttemptDelay",
                         duration: delaySeconds,
-                        reason: overrideDelaySeconds !== undefined ? "nack with retryAfter" : undefined,
+                        summaryNackDelay: overrideDelaySeconds !== undefined,
                         ...summarizeProps,
                     });
                     await delay(delaySeconds * 1000);

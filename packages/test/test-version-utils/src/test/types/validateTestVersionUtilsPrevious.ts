@@ -161,6 +161,30 @@ use_old_VariableDeclaration_ensurePackageInstalled(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ExpectedEvents": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ExpectedEvents():
+    TypeOnly<old.ExpectedEvents>;
+declare function use_current_TypeAliasDeclaration_ExpectedEvents(
+    use: TypeOnly<current.ExpectedEvents>);
+use_current_TypeAliasDeclaration_ExpectedEvents(
+    get_old_TypeAliasDeclaration_ExpectedEvents());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ExpectedEvents": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ExpectedEvents():
+    TypeOnly<current.ExpectedEvents>;
+declare function use_old_TypeAliasDeclaration_ExpectedEvents(
+    use: TypeOnly<old.ExpectedEvents>);
+use_old_TypeAliasDeclaration_ExpectedEvents(
+    get_current_TypeAliasDeclaration_ExpectedEvents());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ExpectsTest": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ExpectsTest():

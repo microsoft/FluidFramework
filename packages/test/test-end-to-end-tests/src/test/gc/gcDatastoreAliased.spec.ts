@@ -12,18 +12,18 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 import {
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { TestDataObject } from "../mockSummarizerClient";
+import { getGCStateFromSummary, TestDataObject } from "../mockSummarizerClient";
 import { mockConfigProvider } from "./mockConfigProivder";
 
 /**
  * Validates this scenario: When a datastore is aliased that it is considered a root datastore and always referenced
  */
-describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
+describeNoCompat("GC Data Store Aliased", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
@@ -51,7 +51,8 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         runtimeOptions,
     );
 
-    const settings = { "Fluid.GarbageCollection.LogUnknownOutboundRoutes": "true" };
+    // Enable config provider setting to write GC data at the root.
+    const settings = { "Fluid.GarbageCollection.LogUnknownOutboundReferences": "true" };
     const configProvider = mockConfigProvider(settings);
 
     let container1: IContainer;
@@ -61,7 +62,7 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
 
      async function summarizeOnContainer(container: IContainer) {
         const dataStore = await requestFluidObject<TestDataObject>(container, "default");
-        return dataStore.containerRuntime.summarize({runGC: true, trackState: false});
+        return dataStore.containerRuntime.summarize({ runGC: true, trackState: false });
     }
 
     const createContainer = async (): Promise<IContainer> => {
@@ -82,20 +83,21 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
     });
 
-    // TODO: fully validate that GC is notified. Currently this tests the race condition
-    // where a remote datastore is summarized before the alias op arrives when trySetAlias is called.
     it("GC is notified when datastores are aliased.", async () => {
-        await summarizeOnContainer(container2);
         const containerRuntime1 = mainDataStore1.containerRuntime;
         const aliasableDataStore1 = await containerRuntime1.createDataStore("TestDataObject");
+        const response = await aliasableDataStore1.request({url: "/"});
+        const ds1 = response.value as TestDataObject;
 
         (aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
         await provider.ensureSynchronized();
 
         // We run the summary so await this.getInitialSnapshotDetails() is called before the datastore is aliased
-        // and after the datastore is attached. This sets the isRootDataStore. This should be passing as there is
-        // further GC work that will require this test to pass https://github.com/microsoft/FluidFramework/issues/8859
-        await summarizeOnContainer(container2);
+        // and after the datastore is attached. This sets the isRootDataStore to false.
+        let summaryWithStats = await summarizeOnContainer(container2);
+        let gcState = getGCStateFromSummary(summaryWithStats.summary);
+        assert(gcState?.gcNodes[ds1.handle.absolutePath].unreferencedTimestampMs !== undefined,
+            "AliasableDataStore1 should be unreferenced as it is not aliased and not root!");
 
         // Alias a datastore
         const alias = "alias";
@@ -105,12 +107,11 @@ describeFullCompat("GC Data Store Aliased", (getTestObjectProvider) => {
 
         // Should be able to retrieve root datastore from remote
         const containerRuntime2 = mainDataStore2.containerRuntime;
-        const aliasableDataStore2 = await containerRuntime2.getRootDataStore(alias);
-        const aliasedDataStoreResponse2 = await aliasableDataStore2.request({url:"/"});
-        const aliasedDataStore2 = aliasedDataStoreResponse2.value as TestDataObject;
-        assert(aliasedDataStore2._context.baseSnapshot?.unreferenced !== true, "datastore should be referenced");
-
-        await summarizeOnContainer(container2);
-        // TODO: Check GC is notified
+        assert.doesNotThrow(async () => containerRuntime2.getRootDataStore(alias),
+            "Aliased datastore should be root as it is aliased!");
+        summaryWithStats = await summarizeOnContainer(container2);
+        gcState = getGCStateFromSummary(summaryWithStats.summary);
+        assert(gcState?.gcNodes[ds1.handle.absolutePath].unreferencedTimestampMs === undefined,
+            "AliasableDataStore1 should be referenced as it is aliased and thus a root datastore!");
     });
 });

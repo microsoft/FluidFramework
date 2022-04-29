@@ -173,7 +173,10 @@ export class RemoteChannelContext implements IChannelContext {
             if (this.attachMessageType === undefined) {
                 // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError("channelTypeNotAvailable", {
-                    channelId: this.id,
+                    channelId: {
+                        value: this.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
                         tag: TelemetryDataTag.PackageData,
@@ -185,7 +188,10 @@ export class RemoteChannelContext implements IChannelContext {
             if (factory === undefined) {
                 // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError("channelFactoryNotRegisteredForAttachMessageType", {
-                    channelId: this.id,
+                    channelId: {
+                        value: this.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
                         tag: TelemetryDataTag.PackageData,
@@ -200,7 +206,10 @@ export class RemoteChannelContext implements IChannelContext {
             if (factory === undefined) {
                 // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
-                    channelId: this.id,
+                    channelId: {
+                        value: this.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
                         tag: TelemetryDataTag.PackageData,
@@ -217,7 +226,7 @@ export class RemoteChannelContext implements IChannelContext {
                 this.subLogger.sendTelemetryEvent(
                     {
                         eventName: "ChannelAttributesVersionMismatch",
-                        channelType: {value: attributes.type, tag: TelemetryDataTag.PackageData},
+                        channelType: { value: attributes.type, tag: TelemetryDataTag.PackageData },
                         channelSnapshotVersion: {
                             value: `${attributes.snapshotFormatVersion}@${attributes.packageVersion}`,
                             tag: TelemetryDataTag.PackageData,

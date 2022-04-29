@@ -83,7 +83,7 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
     const factory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
-        [ SharedMatrix.getFactory(), SharedString.getFactory() ],
+        [SharedMatrix.getFactory(), SharedString.getFactory()],
         []);
 
     const IdleDetectionTime = 100;

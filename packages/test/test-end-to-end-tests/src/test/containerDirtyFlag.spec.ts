@@ -130,7 +130,7 @@ describeNoCompat("Container dirty flag", (getTestObjectProvider) => {
 
         it("handles container with pending ops not to be sent out", async function() {
             // GitHub issue: #9534
-            if(provider.driver.type === "tinylicious") {
+            if (provider.driver.type === "tinylicious") {
                 this.skip();
             }
             const pendingOps = await getPendingOps(provider, true, (c, d, map) => {

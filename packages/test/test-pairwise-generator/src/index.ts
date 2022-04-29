@@ -17,42 +17,42 @@ export type OptionsMatrix<T extends Record<string, any>> =
 export const booleanCases: readonly (boolean)[] = [true, false];
 export const numberCases: readonly (number | undefined)[] = [undefined];
 
-type PartialWithKeyCount<T extends Record<string, any>> = (Partial<T> & {__partialKeyCount?: number});
+type PartialWithKeyCount<T extends Record<string, any>> = (Partial<T> & { __partialKeyCount?: number });
 
 function applyPairToPartial<T extends Record<string, any>>(
     randEng: random.Engine,
     keyCount: number,
     partials: PartialWithKeyCount<T>[],
-    pair: {iKey: keyof T, jKey: keyof T, iVal: any, jVal: any},
+    pair: { iKey: keyof T, jKey: keyof T, iVal: any, jVal: any },
 ) {
     const matchingPartials: PartialWithKeyCount<T>[] = [];
-    for(const partial of partials) {
+    for (const partial of partials) {
         // the pair exists, so nothing to do
-        if(pair.iKey in partial
+        if (pair.iKey in partial
             && pair.jKey in partial
             && partial[pair.iKey] === pair.iVal
             && partial[pair.jKey] === pair.jVal) {
             return;
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        if(partial.__partialKeyCount! < keyCount) {
-            if((pair.iKey in partial && !(pair.jKey in partial) && partial[pair.iKey] === pair.iVal)
+        if (partial.__partialKeyCount! < keyCount) {
+            if ((pair.iKey in partial && !(pair.jKey in partial) && partial[pair.iKey] === pair.iVal)
                 || (pair.jKey in partial && !(pair.iKey in partial) && partial[pair.jKey] === pair.jVal)) {
                 matchingPartials.push(partial);
             }
         }
     }
-    if(matchingPartials.length === 0) {
+    if (matchingPartials.length === 0) {
         const partial: PartialWithKeyCount<T> = {};
         partial.__partialKeyCount = 2;
         partial[pair.iKey] = pair.iVal;
         partial[pair.jKey] = pair.jVal;
         partials.push(partial);
-    }else{
+    } else {
         const found = random.pick(randEng, matchingPartials);
-        if(pair.iKey in found) {
+        if (pair.iKey in found) {
             found[pair.jKey] = pair.jVal;
-        }else{
+        } else {
             found[pair.iKey] = pair.iVal;
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -69,44 +69,44 @@ export function generatePairwiseOptions<T extends Record<string, any>>(
     // sort keys biggest to smallest, and prune those with only an undefined option
     const matrixKeys: (keyof T)[] =
         Object.keys(optionsMatrix)
-        .filter((k)=>optionsMatrix[k].length > 1 || optionsMatrix[k][0] !== undefined)
-        .sort((a,b)=>optionsMatrix[b].length - optionsMatrix[a].length);
+        .filter((k) => optionsMatrix[k].length > 1 || optionsMatrix[k][0] !== undefined)
+        .sort((a, b) => optionsMatrix[b].length - optionsMatrix[a].length);
 
-    if(matrixKeys.length === 0) {
+    if (matrixKeys.length === 0) {
         return [];
     }
 
-    if(matrixKeys.length === 1) {
+    if (matrixKeys.length === 1) {
         const values = optionsMatrix[matrixKeys[0]];
         return values.map<T>((v) => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            return {[matrixKeys[0]]: v} as T;
+            return { [matrixKeys[0]]: v } as T;
         });
     }
 
     // compute all pairs, and apply them
     const partials: PartialWithKeyCount<T>[] = [];
-    for(let i = 0; i < matrixKeys.length - 1; i++) {
+    for (let i = 0; i < matrixKeys.length - 1; i++) {
         const iKey = matrixKeys[i];
-        for(let j = i + 1; j < matrixKeys.length; j++) {
+        for (let j = i + 1; j < matrixKeys.length; j++) {
             const jKey = matrixKeys[j];
-            for(const iVal of optionsMatrix[iKey]) {
-                for(const jVal of optionsMatrix[jKey]) {
+            for (const iVal of optionsMatrix[iKey]) {
+                for (const jVal of optionsMatrix[jKey]) {
                     applyPairToPartial(
                         randEng,
                         matrixKeys.length,
                         partials,
-                        {iKey, iVal, jKey, jVal});
+                        { iKey, iVal, jKey, jVal });
                 }
             }
         }
     }
 
     // fix up any incomplete outputs
-    for(const partial of partials) {
-        if(partial.__partialKeyCount !== matrixKeys.length) {
-            for(const key of matrixKeys) {
-                if(!(key in partial)) {
+    for (const partial of partials) {
+        if (partial.__partialKeyCount !== matrixKeys.length) {
+            for (const key of matrixKeys) {
+                if (!(key in partial)) {
                     partial[key] = random.pick(randEng, optionsMatrix[key] as any[]);
                 }
             }

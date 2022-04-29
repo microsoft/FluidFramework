@@ -11,7 +11,7 @@ import {
     Summarizer,
     ISummarizer,
     ISummarizeResults,
-    ISummaryRuntimeOptions} from "@fluidframework/container-runtime";
+    ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
@@ -129,8 +129,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         try {
             negResult = undefined;
             negResult = summarizer.summarizeOnDemand({ reason: "negative test" });
-        }
-        catch(reason) {}
+        } catch (reason) {}
         assert(negResult === undefined, "Should not have attempted to summarize while summarizing");
 
         submitResult = await result.summarySubmitted;
@@ -236,7 +235,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         try {
             result = undefined;
             result = summarizer.summarizeOnDemand({ reason: "test" });
-        } catch(error) {
+        } catch (error: any) {
             assert(error.errorType === "summarizingError", "Should throw a summarizer error");
         }
         assert(result === undefined, "Should not have attempted summary with disposed summarizer");

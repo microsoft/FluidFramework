@@ -5,11 +5,9 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { FluidObject } from "@fluidframework/core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
 import { SequenceEvent } from "@fluidframework/sequence";
 import { FlowDocument } from "../document";
-import { IFluidHTMLViewFactory } from "../editor";
 import { clamp, Dom, done, emptyObject, getSegmentRange, hasTagName, isTextNode, TagName } from "../util";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
@@ -92,7 +90,7 @@ export class Layout extends EventEmitter {
     private renderPromise = done;
     private renderResolver: () => void;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, public readonly viewFactoryRegistry: Map<string, IFluidHTMLViewFactory> = new Map(), public readonly scope?: FluidObject) {
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>) {
         super();
 
         let scheduled = false;

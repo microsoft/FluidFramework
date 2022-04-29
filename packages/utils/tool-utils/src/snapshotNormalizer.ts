@@ -145,13 +145,13 @@ function normalizeEntry(
             return new BlobTreeEntry(entry.path, contents);
         }
         case TreeEntry.Tree: {
-            if(config?.excludedChannelContentTypes !== undefined) {
-                for(const maybeAttributes of entry.value.entries) {
-                    if(maybeAttributes.type === TreeEntry.Blob && maybeAttributes.path === ".attributes") {
-                        const parsed: {type?: string} = JSON.parse(maybeAttributes.value.contents);
-                        if(parsed.type !== undefined && config.excludedChannelContentTypes.includes(parsed.type)) {
+            if (config?.excludedChannelContentTypes !== undefined) {
+                for (const maybeAttributes of entry.value.entries) {
+                    if (maybeAttributes.type === TreeEntry.Blob && maybeAttributes.path === ".attributes") {
+                        const parsed: { type?: string } = JSON.parse(maybeAttributes.value.contents);
+                        if (parsed.type !== undefined && config.excludedChannelContentTypes.includes(parsed.type)) {
                             // remove everything to match the unknown channel
-                            return new TreeTreeEntry(entry.path, {entries:[maybeAttributes]});
+                            return new TreeTreeEntry(entry.path, { entries: [maybeAttributes] });
                         }
                     }
                 }

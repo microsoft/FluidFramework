@@ -361,16 +361,17 @@ describe("Routerlicious", () => {
                 dc.register(IFluidRouter, routerMock);
 
                 assert(dc.has(IFluidLoadable), "has includes parent registered");
-                assert(!dc.has(IFluidLoadable, true),"has does not include excluded parent registered");
-                assert(dc.has(IFluidRouter),"has includes registered");
-                assert(!dc.has(IFluidHandle),"does not include not registered");
+                assert(!dc.has(IFluidLoadable, true), "has does not include excluded parent registered");
+                assert(dc.has(IFluidRouter), "has includes registered");
+                assert(!dc.has(IFluidHandle), "does not include not registered");
             });
 
             it(`Parent Resolved from Child`, async () => {
                 const parentDc = new DependencyContainer<FluidObject<IFluidHandle>>();
                 const loadableToHandle: FluidObjectProvider<IProvideFluidHandle> =
                     async (fds: IFluidDependencySynthesizer) => {
-                        const loadable = fds.synthesize<undefined, IProvideFluidLoadable>(undefined,{IFluidLoadable});
+                        const loadable =
+                            fds.synthesize<undefined, IProvideFluidLoadable>(undefined, { IFluidLoadable });
                         return (await loadable.IFluidLoadable).handle;
                     };
                 parentDc.register(IFluidHandle, loadableToHandle);
@@ -379,13 +380,13 @@ describe("Routerlicious", () => {
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
 
-                const deps = dc.synthesize<IFluidHandle>({IFluidHandle}, undefined);
+                const deps = dc.synthesize<IFluidHandle>({ IFluidHandle }, undefined);
                 assert(await deps.IFluidHandle !== undefined, "handle undefined");
             });
 
             it(`Undefined Provider is not Undefined`, async () => {
                 const dc = new DependencyContainer();
-                const deps = dc.synthesize<IFluidLoadable>({IFluidLoadable}, {});
+                const deps = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, {});
                 assert(deps.IFluidLoadable !== undefined, "handle undefined");
                 assert(await deps.IFluidLoadable === undefined, "handle undefined");
             });
@@ -394,12 +395,12 @@ describe("Routerlicious", () => {
                 const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
                 const loadableMock = new MockLoadable();
                 dc.register(IFluidLoadable, loadableMock);
-                const testGetProvider = (deps: IFluidDependencySynthesizer, scenario: string)=>{
+                const testGetProvider = (deps: IFluidDependencySynthesizer, scenario: string) => {
                     const old = deps as any as {
                         getProvider(key: "IFluidLoadable"): FluidObjectProvider<FluidObject<IFluidLoadable>>
                     };
                     const provider = old.getProvider("IFluidLoadable");
-                    assert.equal(provider,loadableMock, scenario);
+                    assert.equal(provider, loadableMock, scenario);
                 };
                 testGetProvider(dc, "direct");
                 testGetProvider(new DependencyContainer(dc), "parent");
@@ -425,7 +426,7 @@ class PassThru<TMap> implements IFluidDependencySynthesizer {
 
     getProvider<K extends keyof TMap>(key: K): FluidObjectProvider<TMap[K]> | undefined {
         const maybe = this.parent as any as Partial<this>;
-        if(maybe.getProvider) {
+        if (maybe.getProvider) {
             return maybe.getProvider(key);
         }
     }
