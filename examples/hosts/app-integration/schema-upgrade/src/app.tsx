@@ -38,6 +38,7 @@ async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
     const load = async (): Promise<IFluidModuleWithDetails> => {
+        // TODO: Use some reasonable logic to select the appropriate container code to load from.
         const useNewVersion = false;
         const containerRuntimeFactory = useNewVersion
             ? new InventoryListContainerRuntimeFactory2()
