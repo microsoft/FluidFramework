@@ -214,7 +214,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
         }
         assert(success, "Loader pause flags doesn't pause container op processing");
 
-        (container2 as Container).resume();
+        (container2 as Container).connect();
 
         // Flush all the ops
         await provider.ensureSynchronized();

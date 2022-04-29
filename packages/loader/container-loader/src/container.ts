@@ -166,7 +166,7 @@ export enum ConnectionState {
  * Useful when resolving URIs and hitting 404, due to container being loaded from (stale) snapshot and not being
  * up to date. Host may chose to wait in such case and retry resolving URI.
  * Warning: Will wait infinitely for connection to establish if there is no connection.
- * May result in deadlock if Container.setAutoReconnect(false) is called and never switched back to auto-reconnect.
+ * May result in deadlock if Container.disconnect() is called and never switched back to auto-reconnect.
  * @returns true: container is up to date, it processed all the ops that were know at the time of first connection
  *          false: storage does not provide indication of how far the client is. Container processed
  *          all the ops known to it, but it maybe still behind.
@@ -218,9 +218,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
         };
         container.on(connectedEventName, callback);
 
-        // TODO: Remove null check after next release #8523
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        container.resume!();
+        container.connect();
     });
 }
 
@@ -1036,7 +1034,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private resumeInternal(args: IConnectionArgs) {
-        assert(!this.closed, 0x0d9 /* "Attempting to setAutoReconnect() a closed DeltaManager" */);
+        assert(!this.closed, 0x0d9 /* "Attempting to connect() a closed DeltaManager" */);
 
         // Resume processing ops
         if (!this.resumedOpProcessingAfterLoad) {
@@ -1239,7 +1237,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             switch (loadMode.deltaConnection) {
                 case undefined:
-                    this.resume();
+                    this.connect();
                     break;
                 case "delayed":
                     this.resumedOpProcessingAfterLoad = true;

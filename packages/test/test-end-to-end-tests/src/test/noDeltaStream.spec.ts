@@ -176,7 +176,7 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
                     headers: {[LoaderHeader.loadMode]: testConfig.loadOptions},
                 }) as Container;
 
-                storageOnlyContainer.resume();
+                storageOnlyContainer.connect();
                 const deltaManager = storageOnlyContainer.deltaManager;
                 assert.strictEqual(deltaManager.active, false, "deltaManager.active");
                 assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");

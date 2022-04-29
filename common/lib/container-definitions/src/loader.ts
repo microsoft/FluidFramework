@@ -296,7 +296,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
     /**
      * The server provided ID of the client.
-     * Set once this.connected is true, otherwise undefined
+     * Set once this.connectionState === ConnectionState.Connected is true, otherwise undefined
      * @alpha
      */
     readonly clientId?: string | undefined;
@@ -446,12 +446,12 @@ export interface IContainerLoadMode {
         | "all"
     deltaConnection?:
         /*
-         * Connection to delta stream is made only when Container.resume() call is made. Op processing
-         * is paused (when container is returned from Loader.resolve()) until Container.resume() call is made.
+         * Connection to delta stream is made only when Container.connect() call is made. Op processing
+         * is paused (when container is returned from Loader.resolve()) until Container.connect() call is made.
          */
         | "none"
         /*
-         * Connection to delta stream is made only when Container.resume() call is made.
+         * Connection to delta stream is made only when Container.connect() call is made.
          * Op fetching from storage is performed and ops are applied as they come in.
          * This is useful option if connection to delta stream is expensive and thus it's beneficial to move it
          * out from critical boot sequence, but it's beneficial to allow catch up to happen as fast as possible.
