@@ -171,6 +171,11 @@ export class ConnectionStateHandler {
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
+    /**
+     * The "connect" event indicates the connection to the Relay Service is live.
+     * However, some additional conditions must be met before we can fully transition to
+     * "Connected" state. This function handles that interim period, known as "Connecting" state.
+     */
     public receivedConnectEvent(
         connectionMode: ConnectionMode,
         details: IConnectionDetails,
@@ -182,7 +187,7 @@ export class ConnectionStateHandler {
         // (have received the join message for the client ID)
         // This is especially important in the reconnect case. It's possible there could be outstanding
         // ops sent by this client, so we should keep the old client id until we see our own client's
-        // join message. after we see the join message for out new connection with our new client id,
+        // join message. after we see the join message for our new connection with our new client id,
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         this._pendingClientId = details.clientId;
 
@@ -194,20 +199,21 @@ export class ConnectionStateHandler {
         const quorumClients: IQuorumClients | undefined = this.handler.quorumClients();
 
         // Check if this pending clientId is already in the quorum (i.e. join op already processed).
-        // which could be the case since we are fetching ops from storage in parallel to connecting to ordering service.
+        // which could be the case since we are fetching ops from storage in parallel to connecting to Relay Service.
         // Given async processes, it's possible that we have already processed our own join message before
         // connection was fully established.
         const pendingClientAlreadyInQuorum = quorumClients?.getMember(this._pendingClientId) !== undefined;
         const writeConnection = connectionMode === "write";
         if (writeConnection && !pendingClientAlreadyInQuorum) {
-            // We are waiting for our own join op (at which point we'll be added to the quorum)
+            // We are waiting for our own join op. When it is processed we'll join the quorum
+            // and code elsewhere in this class will transition us to Connected state.
             this.startJoinOpTimer();
         } else {
             // There should be no timer for 'read' connections,
             // and if we processed our Join op we would have processed our previous Leave op prior to that
             assert(!this.prevClientLeftTimer.hasTimer, 0x2a6 /* "Unexpected timer state" */);
 
-            // Wait to file "connected" event until we are caught up to known ops at the time the "connect" event fired
+            // Wait to fire "connected" event until we are caught up to known ops at the time the "connect" event fired
             this.handler.onCaughUpToKnownOps(() => this.setConnectionState(ConnectionState.Connected));
         }
     }

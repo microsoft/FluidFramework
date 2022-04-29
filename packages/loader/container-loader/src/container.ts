@@ -158,7 +158,7 @@ export enum ConnectionState {
 }
 
 /** Invoke the callback once deltaManager has processed all ops known at the time this function is called */
-function waitForOps(container: IContainer, resolve: (hasCheckpointSequenceNumber: boolean) => void) {
+function waitForKnownOps(container: IContainer, resolve: (hasCheckpointSequenceNumber: boolean) => void) {
     assert(container.connectionState !== ConnectionState.Disconnected,
         0x0cd /* "Container disconnected while waiting for ops!" */);
 
@@ -200,20 +200,17 @@ export async function waitContainerToCatchUp(container: IContainer) {
     return new Promise<boolean>((resolve, reject) => {
         container.on("closed", reject);
 
-        //* I don't fully understand this comment
+        const usedCheckpointSequenceNumber = container.deltaManager.hasCheckpointSequenceNumber;
 
-        // We can leverage DeltaManager's "connect" event here and test for ConnectionState.Disconnected
-        // But that works only if service provides us checkPointSequenceNumber
-        // Our internal testing is based on R11S that does not, but almost all tests connect as "write" and
-        // use this function to catch up, so leveraging our own join op as a fence/barrier
+        // Transition to "connected" state includes the guarantee that all known ops have been processed.
         if (container.connectionState === ConnectionState.Connected) {
-            waitForOps(container, resolve);
+            resolve(usedCheckpointSequenceNumber);
             return;
         }
 
         const callback = () => {
             container.off(connectedEventName, callback);
-            waitForOps(container, resolve);
+            resolve(usedCheckpointSequenceNumber);
         };
         container.on(connectedEventName, callback);
 
@@ -617,7 +614,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     }
                 },
                 onCaughUpToKnownOps: (callback: () => void) => {
-                    waitForOps(this, callback);
+                    waitForKnownOps(this, callback);
                 },
             },
             this.mc.logger,
