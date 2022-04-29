@@ -13,7 +13,7 @@ import { IFluidUserInformation } from "../interfaces";
 /**
  * Basic example that takes a container provider
  */
-export class ExampleUsingProviders extends DataObject<{OptionalProviders: IFluidUserInformation}> {
+export class ExampleUsingProviders extends DataObject<{ OptionalProviders: IFluidUserInformation }> {
     private _userInformation: IFluidUserInformation | undefined;
     public get userInformation(): IFluidUserInformation {
         if (this._userInformation === undefined) {
@@ -50,8 +50,7 @@ interface ExampleUsingProvidersViewState {
 }
 
 export class ExampleUsingProvidersView
-    extends React.Component<ExampleUsingProvidersViewProps, ExampleUsingProvidersViewState>
-{
+    extends React.Component<ExampleUsingProvidersViewProps, ExampleUsingProvidersViewState> {
     constructor(props: ExampleUsingProvidersViewProps) {
         super(props);
 

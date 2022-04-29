@@ -68,7 +68,7 @@
     "@fluidframework/core-interfaces": "^0.43.1000",
     "@fluidframework/driver-definitions": "^0.46.1000",
     "@fluidframework/driver-utils": "^0.59.3000",
-    "@fluidframework/protocol-base": "^0.1036.1000",
+    "@fluidframework/protocol-base": "^0.1036.2000-0",
     "@fluidframework/protocol-definitions": "^0.1028.1000",
     "@fluidframework/telemetry-utils": "^0.59.3000",
     "abort-controller": "^3.0.0",
@@ -78,7 +78,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@0.59.1000",
+    "@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@0.59.2000",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
     "@fluidframework/test-loader-utils": "^0.59.3000",
@@ -112,7 +112,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.2000",
+    "version": "0.59.3000",
     "broken": {}
   }
 }

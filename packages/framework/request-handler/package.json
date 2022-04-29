@@ -70,7 +70,7 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.1000",
     "@fluidframework/mocha-test-setup": "^0.59.3000",
-    "@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@0.59.1000",
+    "@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@0.59.2000",
     "@fluidframework/test-runtime-utils": "^0.59.3000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
@@ -101,7 +101,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.2000",
+    "version": "0.59.3000",
     "broken": {}
   }
 }

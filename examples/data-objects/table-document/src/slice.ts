@@ -22,7 +22,7 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
-export class TableSlice extends DataObject<{InitialState: ITableSliceConfig}> implements ITable {
+export class TableSlice extends DataObject<{ InitialState: ITableSliceConfig }> implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
     private static readonly factory = new DataObjectFactory(

@@ -110,6 +110,8 @@ export class Client {
     // (undocumented)
     applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
     // (undocumented)
+    applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
+    // (undocumented)
     cloneFromSegments(): Client;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;

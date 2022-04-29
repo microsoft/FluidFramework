@@ -143,7 +143,7 @@ export const createWriteError = (message: string, props: DriverErrorTelemetryPro
 
 export function createGenericNetworkError(
     message: string,
-    retryInfo: {canRetry: boolean, retryAfterMs?: number },
+    retryInfo: { canRetry: boolean, retryAfterMs?: number },
     props: DriverErrorTelemetryProps,
 ): ThrottlingError | GenericNetworkError {
     if (retryInfo.retryAfterMs !== undefined && retryInfo.canRetry) {

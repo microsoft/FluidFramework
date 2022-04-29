@@ -82,7 +82,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                     { driverVersion: pkgVersion });
             }
             let shareLinkInfo: ShareLinkInfoType | undefined;
-            if(createLinkType && createLinkType in ShareLinkTypes) {
+            if (createLinkType && createLinkType in ShareLinkTypes) {
                 shareLinkInfo = {
                     createLink: {
                         type: ShareLinkTypes[createLinkType],

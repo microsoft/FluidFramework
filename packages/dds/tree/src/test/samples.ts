@@ -34,8 +34,8 @@ export namespace SwapParentChild {
 	export const e1: Original.ChangeFrame = {
 		moves: [
 			{ src: { foo: 0 }, dst: { foo: { 0: { bar: 0 } } } }, // B
-			{ src: { foo: { 0: { bar: 0 } } }, dst: { foo: 0 }}, // C
-			{ src: { foo: { 0: { bar: { 0: { baz: 0 } } } } }, dst: { foo: { 0: { bar: { 0: { baz: 0 } } } } }}, // D
+			{ src: { foo: { 0: { bar: 0 } } }, dst: { foo: 0 } }, // C
+			{ src: { foo: { 0: { bar: { 0: { baz: 0 } } } } }, dst: { foo: { 0: { bar: { 0: { baz: 0 } } } } } }, // D
 		],
 		marks: [{
 			modify: {
@@ -134,7 +134,7 @@ export namespace ScenarioA1 {
 		ref: 0,
 		seq: 2,
 		frames: [{
-			moves: [{src: { foo: 1 }, dst: { bar: 0 }}],
+			moves: [{ src: { foo: 1 }, dst: { bar: 0 } }],
 			marks: [{
 				modify: {
 					foo: [
@@ -171,7 +171,7 @@ export namespace ScenarioA1 {
 		ref: 0,
 		newRef: 1,
 		frames: [{
-			moves: [{src: { foo: 1 }, dst: { bar: 0 }}],
+			moves: [{ src: { foo: 1 }, dst: { bar: 0 } }],
 			marks: [{
 				modify: {
 					foo: [
@@ -256,7 +256,7 @@ export namespace ScenarioA2 {
 		ref: 0,
 		seq: 2,
 		frames: [{
-			moves: [{src: { foo: 2 }, dst: { bar: 0 }}],
+			moves: [{ src: { foo: 2 }, dst: { bar: 0 } }],
 			marks: [{
 				modify: {
 					foo: [
@@ -287,7 +287,7 @@ export namespace ScenarioA2 {
 		ref: 0,
 		newRef: 1,
 		frames: [{
-			moves: [{src: { foo: 2 }, dst: { bar: 0 }}],
+			moves: [{ src: { foo: 2 }, dst: { bar: 0 } }],
 			marks: [{
 				modify: {
 					foo: [
@@ -365,7 +365,7 @@ export namespace ScenarioC {
 		ref: 0,
 		seq: 2,
 		frames: [{
-			moves: [{ src: { foo: 1 }, dst: { bar: 0 }}],
+			moves: [{ src: { foo: 1 }, dst: { bar: 0 } }],
 			marks: [{
 				modify: {
 					foo: [
@@ -400,7 +400,7 @@ export namespace ScenarioC {
 		ref: 0,
 		newRef: 2,
 		frames: [{
-			priorMoves: { 2: [{ src: { foo: 1 }, dst: { bar: 0 }}]},
+			priorMoves: { 2: [{ src: { foo: 1 }, dst: { bar: 0 } }] },
 			marks: [{
 				modify: {
 					foo: [
@@ -431,7 +431,7 @@ export namespace ScenarioD {
 		seq: 1,
 		ref: 0,
 		frames: [{
-			moves: [{ src: { foo: 1 }, dst: { bar: 0 }}],
+			moves: [{ src: { foo: 1 }, dst: { bar: 0 } }],
 			marks: [{
 				modify: {
 					foo: [
@@ -454,7 +454,7 @@ export namespace ScenarioD {
 		frames: [{
 			moves: [
 				{ src: { foo: 0 }, dst: { baz: 0 } },
-				{ src: { foo: 2 }, dst: { baz: 3 }},
+				{ src: { foo: 2 }, dst: { baz: 3 } },
 			],
 			marks: [{
 				modify: {
@@ -493,9 +493,9 @@ export namespace ScenarioD {
 		frames: [{
 			moves: [
 				{ src: { foo: 0 }, dst: { baz: 0 } },
-				{ src: { foo: 2 }, dst: { baz: 3 }},
+				{ src: { foo: 2 }, dst: { baz: 3 } },
 			],
-			priorMoves: { 1: [{ src: { foo: 1 }, dst: { bar: 0 }}] },
+			priorMoves: { 1: [{ src: { foo: 1 }, dst: { bar: 0 } }] },
 			marks: [{
 				modify: {
 					foo: [
@@ -545,7 +545,7 @@ export namespace ScenarioE {
 		seq: 1,
 		ref: 0,
 		frames: [{
-			moves: [{ src: { foo: 1 }, dst: { bar: 0 }}],
+			moves: [{ src: { foo: 1 }, dst: { bar: 0 } }],
 			marks: [{
 				modify: {
 					foo: [
@@ -583,7 +583,7 @@ export namespace ScenarioE {
 		ref: 0,
 		newRef: 1,
 		frames: [{
-			priorMoves: { 1: [{ src: { foo: 1 }, dst: { bar: 0 }}] },
+			priorMoves: { 1: [{ src: { foo: 1 }, dst: { bar: 0 } }] },
 			marks: [{
 				modify: {
 					foo: [
@@ -1010,7 +1010,7 @@ export namespace ScenarioG {
 		ref: 0,
 		minSeq: -2,
 		maxSeq: 2,
-		moves: [{ src: { foo: 0 }, dst: { bar: 0 }}],
+		moves: [{ src: { foo: 0 }, dst: { bar: 0 } }],
 		marks: [{
 			modify: {
 				foo: [
@@ -1029,7 +1029,7 @@ export namespace ScenarioG {
 		ref: 0,
 		minSeq: -3,
 		maxSeq: 3,
-		moves: [{ src: { foo: 0 }, dst: { bar: 0 }}],
+		moves: [{ src: { foo: 0 }, dst: { bar: 0 } }],
 		marks: [{
 			modify: {
 				foo: [
@@ -1054,7 +1054,7 @@ export namespace ScenarioG {
 		ref: 0,
 		minSeq: -4,
 		maxSeq: 4,
-		moves: [{ src: { foo: 0 }, dst: { bar: 0 }}],
+		moves: [{ src: { foo: 0 }, dst: { bar: 0 } }],
 		marks: [{
 			modify: {
 				foo: [
