@@ -202,3 +202,9 @@ The changeset format also needs to represent the new kind of edits supported by 
 ### Change Application Logic
 
 While there is no imperative to do so, the change application logic of SharedTree, as an implementation detail, may be factored in a way that resembles the primitive operations defined by the format.
+
+### Cost of Tombstone Data
+
+By allowing some usage patterns to leverage fixed-sized fields, we are able to offer adequate merge semantics without incurring the cost of managing a potentially unbounded number of tombstones.
+This is particularly welcome because we conjecture that fixed-sized fields are more likely to see a lot of repeated overwrites.
+Dynamically sized fields typically contain more data, but the amount of deleted content tends to remain proportional to the amount of tip-state content.
