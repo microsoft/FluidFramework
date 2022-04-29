@@ -24,7 +24,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit
         super(
             getStorageToken,
             getWebsocketToken,
-            async () => Promise.resolve(io.getSocketIo()),
+            async () => import("./getSocketIo").then((m) => m.getSocketIo()),
             persistedCache,
             hostPolicy,
         );
