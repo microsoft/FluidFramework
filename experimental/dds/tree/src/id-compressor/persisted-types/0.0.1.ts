@@ -76,11 +76,6 @@ export interface SerializedLocalState {
 	overrides?: SerializedLocalOverrides;
 
 	/**
-	 * Boolean to track whether attribution has been sent with an ID range yet.
-	 */
-	sentAttributionInfo: boolean;
-
-	/**
 	 * The most recent local ID in a range returned by `takeNextCreationRange`.
 	 */
 	lastTakenLocalId: LocalCompressedId | undefined;
@@ -124,7 +119,7 @@ export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCo
 	readonly _hasLocalState: '1281acae-6d14-47e7-bc92-71c8ee0819cb';
 	/** The session ID of the local session, by index into `sessions`. */
 	readonly localSessionIndex: number;
-	/** This is only present if the local session made any IDs. */
+	/** This is only present if the local session sent any `IdCreationRange`s. */
 	readonly localState?: SerializedLocalState;
 }
 

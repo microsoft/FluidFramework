@@ -123,7 +123,7 @@ export async function performFuzzActions(
 								expect(tree.attributeNodeId(node.identifier)).to.equal(
 									first.attributeNodeId(
 										first.convertToNodeId(tree.convertToStableNodeId(node.identifier))
-									)
+                                    )
 								);
 							}
 						}
