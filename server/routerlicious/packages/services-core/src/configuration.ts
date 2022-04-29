@@ -171,7 +171,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         readClientIdleTimer: 60 * 1000,
         noOpConsolidationTimeout: 250,
         checkpointHeuristics: {
-            enable: true,
+            enable: false,
             idleTime: 10 * 1000,
             maxTime: 1 * 60 * 1000,
             maxMessages: 500,
