@@ -6,6 +6,7 @@
 import { resolve } from 'path';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
+import Random from 'random-js';
 import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
 import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
@@ -626,4 +627,13 @@ export async function waitForSummary(mainContainer: IContainer): Promise<string>
 	const summaryCollection = new SummaryCollection(deltaManager, new TelemetryNullLogger());
 	const ackedSummary = await summaryCollection.waitSummaryAck(deltaManager.lastSequenceNumber);
 	return ackedSummary.summaryAck.contents.handle;
+}
+
+/**
+ * Returns a random-js `Random` instance, optionally seeded to make it deterministic.
+ * @param seed Optional seed to make the randomness source deterministic.
+ * If not provided, this leverages Math.random() as an engine which is *not* deterministic.
+ */
+export function makeRandom(seed?: number): Random {
+	return seed === undefined ? new Random() : new Random(Random.engines.mt19937().seed(seed));
 }
