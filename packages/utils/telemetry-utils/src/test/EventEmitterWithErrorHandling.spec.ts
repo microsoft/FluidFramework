@@ -17,7 +17,7 @@ describe("EventEmitterWithErrorHandling", () => {
         errorHandlerCalled = false;
     });
 
-    it("forwards events", ()=> {
+    it("forwards events", () => {
         const emitter = new EventEmitterWithErrorHandling(defaultErrorHandler);
         let passedArg: number | undefined;
         emitter.on("foo", (arg) => { passedArg = arg; });
@@ -26,7 +26,7 @@ describe("EventEmitterWithErrorHandling", () => {
         assert.strictEqual(passedArg, 3);
         assert.strictEqual(errorHandlerCalled, false);
     });
-    it("forwards error event", ()=> {
+    it("forwards error event", () => {
         const emitter = new EventEmitterWithErrorHandling(defaultErrorHandler);
         let passedArg: number | undefined;
         emitter.on("error", (arg) => { passedArg = arg; });
@@ -35,7 +35,7 @@ describe("EventEmitterWithErrorHandling", () => {
         assert.strictEqual(passedArg, 3);
         assert.strictEqual(errorHandlerCalled, false);
     });
-    it("error thrown from listener is handled, some other listeners succeed", ()=> {
+    it("error thrown from listener is handled, some other listeners succeed", () => {
         const emitter = new EventEmitterWithErrorHandling((event, error: any) => {
             passedErrorMsg = error.message;
             passedEventArg = error.eventArg;
@@ -65,14 +65,14 @@ describe("EventEmitterWithErrorHandling", () => {
         assert.strictEqual(earlyListenerCallCount, 1);
         assert.strictEqual(lateListenerCallCount, 0);
     });
-    it("emitting error event when unhandled will invoke handler", ()=> {
+    it("emitting error event when unhandled will invoke handler", () => {
         const emitter = new EventEmitterWithErrorHandling(defaultErrorHandler);
         try {
             const error = new Error("No one is listening");
             Object.assign(error, { prop: 4 });
             emitter.emit("error", error, 3);  // the extra args (e.g. 3 here) are dropped
             assert.fail("previous line should throw");
-        } catch (error) {
+        } catch (error: any) {
             assert.strictEqual(error.message, "No one is listening");
             assert.strictEqual(error.prop, 4);
             assert.strictEqual(errorHandlerCalled, true);

@@ -59,7 +59,7 @@ export const before = (app: express.Application) => {
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
     const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
     const config: nconf.Provider = nconf
-        .env({ parseValules: true, inputSeparator: "__"})
+        .env({ parseValules: true, inputSeparator: "__" })
         .file(path.join(baseDir, "config.json"));
     const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
         type: "browserLogin",
@@ -109,6 +109,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
             }
             if (options.mode === "r11s") {
+                options.discoveryEndpoint = options.discoveryEndpoint || config.get("fluid:webpack:discoveryEndpoint");
                 options.fluidHost = options.fluidHost || config.get("fluid:webpack:fluidHost");
             }
         }

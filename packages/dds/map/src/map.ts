@@ -349,6 +349,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     }
 
     /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
     protected applyStashedOp(content: any): unknown {

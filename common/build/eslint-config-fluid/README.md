@@ -32,8 +32,6 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
 | Script | Description |
 |--------|-------------|
-| `build` | Build the package. |
-| `build:ci` | Build the package -- called as part of CI. |
 | `cleanup-printed-configs` | Clean up the printed configs. Removes the `parser` property and sorts the JSON. |
 | `print-config` | Print all the eslint configs. |
 | `print-config:default` | Print the eslint config for regular TypeScript files (`eslint --config index.js --print-config src/file.ts`). |

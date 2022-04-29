@@ -145,8 +145,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.stop("summarizerException");
             throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
         } finally {
-            this.dispose();
-            this.runtime.closeFn();
+            this.close();
         }
     }
 
@@ -157,6 +156,13 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      */
     public stop(reason: SummarizerStopReason) {
         this.stopDeferred.resolve(reason);
+    }
+
+    public close() {
+        // This will result in "summarizerClientDisconnected" stop reason recorded in telemetry,
+        // unless stop() was called earlier
+        this.dispose();
+        this.runtime.closeFn();
     }
 
     private async runCore(
@@ -236,6 +242,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             eventName: "RunningSummarizer",
             onBehalfOf,
             initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
+            config: JSON.stringify(this.configurationGetter()),
         });
 
         // Summarizing container ID (with clientType === "summarizer")
@@ -344,8 +351,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     const stopReason = await Promise.race([this.stopDeferred.promise, runCoordinator.waitCancelled]);
                     await runningSummarizer.waitStop(false);
                     runCoordinator.stop(stopReason);
-                    this.dispose();
-                    this.runtime.closeFn();
+                    this.close();
                 }).catch((reason) => {
                     builder.fail("Failed to start summarizer", reason);
                 });
@@ -354,8 +360,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             });
 
             return builder.build();
-        }
-        catch (error) {
+        } catch (error) {
             throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
         }
     };

@@ -50,16 +50,16 @@ describe("Tests for Epoch Tracker", () => {
 
     it("Cache, old versions", async () => {
         const cacheEntry1: ICacheEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         const cacheEntry2: ICacheEntry = { ... cacheEntry1, key: "key2" };
         const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };
         const cacheValue2 = { val: "val2", cacheEntryTime: Date.now() };
         const value1: IVersionedValueWithEpoch =
-            {value: cacheValue1, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+            { value: cacheValue1, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
         const value2 =
-            {value: cacheValue2, fluidEpoch: "epoch1", version: "non-existing version" };
+            { value: cacheValue2, fluidEpoch: "epoch1", version: "non-existing version" };
         await localCache.put(cacheEntry1, value1);
         await localCache.put(cacheEntry2, value2);
         // This will set the initial epoch value in epoch tracker.
@@ -73,16 +73,16 @@ describe("Tests for Epoch Tracker", () => {
 
     it("Epoch error when fetch error from cache should throw epoch error and clear cache", async () => {
         const cacheEntry1: ICacheEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
             file: { docId: hashedDocumentId, resolvedUrl } };
         const cacheEntry2: ICacheEntry = { ... cacheEntry1, key: "key2" };
         const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };
         const cacheValue2 = { val: "val2", cacheEntryTime: Date.now() };
         const value1: IVersionedValueWithEpoch =
-            {value: cacheValue1, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+            { value: cacheValue1, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
         const value2: IVersionedValueWithEpoch =
-            {value: cacheValue2, fluidEpoch: "epoch2", version: persistedCacheValueVersion };
+            { value: cacheValue2, fluidEpoch: "epoch2", version: persistedCacheValueVersion };
         await localCache.put(cacheEntry1, value1);
         await localCache.put(cacheEntry2, value2);
         // This will set the initial epoch value in epoch tracker.
@@ -97,7 +97,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Epoch error when fetch response and should clear cache", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -109,7 +109,7 @@ describe("Tests for Epoch Tracker", () => {
                 async () => epochTracker.fetchArray("fetchUrl", {}, "test"),
                 {},
                 { "x-fluid-epoch": "epoch2" });
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
                 "Error should be epoch error");
@@ -121,7 +121,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Epoch error when fetch response as json and should clear cache", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -133,7 +133,7 @@ describe("Tests for Epoch Tracker", () => {
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 {},
                 { "x-fluid-epoch": "epoch2" });
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
                 "Error should be epoch error");
@@ -145,7 +145,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Check client correlationID on error in unsuccessful fetch case", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -157,7 +157,7 @@ describe("Tests for Epoch Tracker", () => {
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 {},
                 { "x-fluid-epoch": "epoch2" });
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert(error.XRequestStatsHeader !== undefined, "CorrelationId should be present");
         }
@@ -166,7 +166,7 @@ describe("Tests for Epoch Tracker", () => {
 
     it("Check client correlationID on spoCommonHeaders in successful fetch case", async () => {
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -183,7 +183,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Epoch error should not occur if response does not contain epoch", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -205,7 +205,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Epoch error should not occur if response contains same epoch", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -229,7 +229,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Should differentiate between epoch and coherency 409 errors when coherency 409", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -240,7 +240,7 @@ describe("Tests for Epoch Tracker", () => {
             await mockFetchSingle(
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 async () => createResponse({ "x-fluid-epoch": "epoch1" }, undefined, 409));
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError, "Error should be throttling error");
         }
@@ -254,7 +254,7 @@ describe("Tests for Epoch Tracker", () => {
     it("Should differentiate between epoch and coherency 409 errors when epoch 409", async () => {
         let success: boolean = true;
         const cacheEntry1: IEntry = {
-            key:"key1",
+            key: "key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
@@ -265,7 +265,7 @@ describe("Tests for Epoch Tracker", () => {
             await mockFetchSingle(
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
                 async () => createResponse({ "x-fluid-epoch": "epoch2" }, undefined, 409));
-        } catch (error) {
+        } catch (error: any) {
             success = false;
             assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage,
                 "Error should be epoch error");

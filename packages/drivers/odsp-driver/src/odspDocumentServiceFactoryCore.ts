@@ -14,7 +14,10 @@ import {
     TelemetryLogger,
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import {
+    getDocAttributesFromProtocolSummary,
+    ensureFluidResolvedUrl,
+} from "@fluidframework/driver-utils";
 import {
     TokenFetchOptions,
     OdspResourceTokenFetchOptions,
@@ -72,6 +75,15 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         if (filePath === undefined || filePath === null) {
             throw new Error("File path should be provided!!");
         }
+
+        const protocolSummary = createNewSummary?.tree[".protocol"];
+        if (protocolSummary) {
+            const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary as ISummaryTree);
+            if (documentAttributes?.sequenceNumber !== 0) {
+                throw new Error("Seq number in detached ODSP container should be 0");
+            }
+        }
+
         const newFileInfo: INewFileInfo = {
             driveId: odspResolvedUrl.driveId,
             siteUrl: odspResolvedUrl.siteUrl,
