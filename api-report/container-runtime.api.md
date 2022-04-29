@@ -588,17 +588,42 @@ export interface ISummaryCollectionOpEvents extends IEvent {
     (event: OpActionEventName, listener: OpActionEventListener): any;
 }
 
-// Warning: (ae-forgotten-export) The symbol "ISummaryConfigurationBaseSettings" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "ISummaryConfigurationHeuristicSettings" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
-export type ISummaryConfiguration = {
-    state: "disabled";
-} | ({
+export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationeHeuristics;
+
+// @public (undocumented)
+export interface ISummaryConfigurationBaseSettings {
+    initialSummarizerDelayMs: number;
+    maxAckWaitTime: number;
+    maxOpsSinceLastSummary: number;
+    summarizerClientElection: boolean;
+}
+
+// @public (undocumented)
+export interface ISummaryConfigurationDisableHeuristics extends ISummaryConfigurationBaseSettings {
+    // (undocumented)
     state: "disableHeuristics";
-} & ISummaryConfigurationBaseSettings) | ({
+}
+
+// @public (undocumented)
+export interface ISummaryConfigurationDisableSummarizer {
+    // (undocumented)
+    state: "disabled";
+}
+
+// @public (undocumented)
+export interface ISummaryConfigurationeHeuristics extends ISummaryConfigurationHeuristicSettings {
+    // (undocumented)
     state: "enabled";
-} & ISummaryConfigurationHeuristicSettings);
+}
+
+// @public (undocumented)
+export interface ISummaryConfigurationHeuristicSettings extends ISummaryConfigurationBaseSettings {
+    idleTime: number;
+    maxOps: number;
+    maxTime: number;
+    minOpsForAttemptOnClose: number;
+}
 
 // @public
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {

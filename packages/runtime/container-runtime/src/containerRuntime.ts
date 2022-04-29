@@ -191,7 +191,7 @@ export interface ContainerRuntimeMessage {
 export interface ISummaryConfigurationBaseSettings {
     /**
      *  Delay before first attempt to spawn summarizing container.
-     * */
+     */
     initialSummarizerDelayMs: number;
 
     /**
@@ -235,12 +235,22 @@ export interface ISummaryConfigurationHeuristicSettings extends ISummaryConfigur
     minOpsForAttemptOnClose: number;
 }
 
-export type ISummaryConfiguration =
-{
+export interface ISummaryConfigurationDisableSummarizer {
     state: "disabled";
 }
-| ({ state: "disableHeuristics"; } & ISummaryConfigurationBaseSettings)
-| ({ state: "enabled";} & ISummaryConfigurationHeuristicSettings);
+
+export interface ISummaryConfigurationDisableHeuristics extends ISummaryConfigurationBaseSettings {
+    state: "disableHeuristics";
+}
+
+export interface ISummaryConfigurationeHeuristics extends ISummaryConfigurationHeuristicSettings {
+    state: "enabled";
+}
+
+export type ISummaryConfiguration =
+| ISummaryConfigurationDisableSummarizer
+| ISummaryConfigurationDisableHeuristics
+| ISummaryConfigurationeHeuristics;
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 export const IdleDetectionTime = 5000;
@@ -1142,11 +1152,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this.runtimeOptions.summaryOptions.summarizerClientElection === true) {
             return this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection") ?? true;
         }
-        else {
-            assert(this.summaryConfiguration.state !== "disabled", "Summary Configuration is invalid");
-            return this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection")
-                ?? this.summaryConfiguration.summarizerClientElection === true;
-        }
+        assert(this.summaryConfiguration.state !== "disabled", "Summary Configuration is invalid");
+        return this.mc.config.getBoolean("Fluid.ContainerRuntime.summarizerClientElection")
+            ?? this.summaryConfiguration.summarizerClientElection === true;
     }
 
     public get maxOpsSinceLastSummary(): number {
