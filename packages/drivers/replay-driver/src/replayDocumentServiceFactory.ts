@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -39,13 +39,15 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
     public async createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         // Always include isReplay: true on events for the Replay Driver.
         // It's used in testing/debugging scenarios, so we want to be able to filter these events out sometimes.
-        const replayLogger = ChildLogger.create(logger, undefined /* namespace */, { isReplay: true } /* properties */);
+        const replayLogger = ChildLogger.create(
+            logger, undefined /* namespace */, { all: { isReplay: true } } /* properties */);
 
         return ReplayDocumentService.create(
-            await this.documentServiceFactory.createDocumentService(resolvedUrl, replayLogger),
+            await this.documentServiceFactory.createDocumentService(resolvedUrl, replayLogger, clientIsSummarizer),
             this.controller);
     }
 
@@ -54,6 +56,7 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
+        clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
         throw new Error("Not implemented");
     }

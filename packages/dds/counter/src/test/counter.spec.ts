@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -73,7 +73,7 @@ describe("SharedCounter", () => {
                 testCounter.increment(-10);
 
                 // Load a new SharedCounter from the snapshot of the first one.
-                const services = MockSharedObjectServices.createFromSummary(testCounter.summarize().summary);
+                const services = MockSharedObjectServices.createFromSummary(testCounter.getAttachSummary().summary);
                 const testCounter2 = factory.create(dataStoreRuntime, "counter2") as SharedCounter;
                 await testCounter2.load(services);
 

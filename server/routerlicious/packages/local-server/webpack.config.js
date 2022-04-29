@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -17,7 +17,7 @@ module.exports = {
         rules: [
             {
                 test: /\.tsx?$/,
-                use: 'ts-loader',
+                use: require.resolve('ts-loader'),
                 exclude: /node_modules/
             },
         ]
@@ -32,7 +32,7 @@ module.exports = {
         libraryTarget: "umd"
     },
     devServer: {
-        publicPath: '/dist',
+        devMiddleware: { publicPath: '/dist' },
         watchOptions: {
             ignored: "**/node_modules/**",
         }

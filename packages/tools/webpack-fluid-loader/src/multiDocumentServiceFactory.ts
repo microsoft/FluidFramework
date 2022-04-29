@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,6 +7,7 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
 import { LocalDocumentServiceFactory, LocalSessionStorageDbFactory } from "@fluidframework/local-driver";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { getRandomName } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
@@ -15,7 +16,12 @@ import { IDevServerUser, IRouterliciousRouteOptions, RouteOptions } from "./load
 
 export const deltaConns = new Map<string, ILocalDeltaConnectionServer>();
 
-export function getDocumentServiceFactory(documentId: string, options: RouteOptions) {
+export function getDocumentServiceFactory(
+    documentId: string,
+    options: RouteOptions,
+    odspPersistantCache: IPersistedCache,
+    odspHostStoragePolicy?: HostStoragePolicy,
+) {
     const deltaConn = deltaConns.get(documentId) ??
         LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
     deltaConns.set(documentId, deltaConn);
@@ -31,8 +37,7 @@ export function getDocumentServiceFactory(documentId: string, options: RouteOpti
         routerliciousTokenProvider = new InsecureTokenProvider(
             "12345",
             getUser());
-    }
-    else {
+    } else {
         routerliciousTokenProvider = new InsecureTokenProvider(
             (options as IRouterliciousRouteOptions).tenantSecret,
             getUser());
@@ -44,7 +49,16 @@ export function getDocumentServiceFactory(documentId: string, options: RouteOpti
         new OdspDocumentServiceFactory(
             async () => options.mode === "spo" || options.mode === "spo-df" ? options.odspAccessToken : undefined,
             async () => options.mode === "spo" || options.mode === "spo-df" ? options.pushAccessToken : undefined,
+            odspPersistantCache,
+            odspHostStoragePolicy,
         ),
-        new RouterliciousDocumentServiceFactory(routerliciousTokenProvider),
+        new RouterliciousDocumentServiceFactory(
+            routerliciousTokenProvider,
+            {
+                enableWholeSummaryUpload: options.mode === "r11s" || options.mode === "docker"
+                    ? options.enableWholeSummaryUpload
+                    : undefined,
+                enableDiscovery: options.mode === "r11s" && options.discoveryEndpoint !== undefined,
+            }),
     ]);
 }

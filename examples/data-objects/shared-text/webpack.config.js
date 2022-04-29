@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const fluidRoute = require("@fluidframework/webpack-fluid-loader");
+const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 const pkg = require("./package.json");
 // var Visualizer = require('webpack-visualizer-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
@@ -25,7 +25,7 @@ module.exports = env => {
                     {
                         test: /\.tsx?$/,
                         use: [{
-                            loader: 'ts-loader',
+                            loader: require.resolve("ts-loader"),
                             options: {
                                 compilerOptions: {
                                     module: "esnext"
@@ -36,7 +36,7 @@ module.exports = env => {
                     },
                     {
                         test: /\.js$/,
-                        use: ["source-map-loader"],
+                        use: [require.resolve("source-map-loader")],
                         enforce: "pre"
                     },
                     {
@@ -56,14 +56,14 @@ module.exports = env => {
                     },
                     {
                         test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-                        loader: 'url-loader',
+                        loader: require.resolve('url-loader'),
                         options: {
                             limit: 10000
                         }
                     },
                     {
                         test: /\.html$/,
-                        loader: 'html-loader'
+                        loader: require.resolve('html-loader')
                     }
                 ]
             },
@@ -74,21 +74,7 @@ module.exports = env => {
                 tls: 'empty',
                 child_process: 'empty',
             },
-            devServer: {
-                publicPath: '/dist',
-                stats: "minimal",
-                before: (app, server) => fluidRoute.before(app, server, env),
-                after: (app, server) => fluidRoute.after(app, server, __dirname, env),
-                watchOptions: {
-                    ignored: "**/node_modules/**",
-                }
-            },
-            resolveLoader: {
-                alias: {
-                    'blob-url-loader': require.resolve('./loaders/blobUrl'),
-                    'compile-loader': require.resolve('./loaders/compile'),
-                },
-            },
+            devServer: { devMiddleware: { stats: "minimal" }},
             output: {
                 filename: '[name].bundle.js',
                 chunkFilename: '[name].async.js',
@@ -106,5 +92,6 @@ module.exports = env => {
                 // new BundleAnalyzerPlugin()
             ]
         },
-        isProduction ? require("./webpack.prod") : require("./webpack.dev"));
+        isProduction ? require("./webpack.prod") : require("./webpack.dev"),
+        fluidRoute.devServerConfig(__dirname, env));
 };

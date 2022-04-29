@@ -1,15 +1,15 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { EventEmitter } from "events";
-import { Layout } from "react-grid-layout";
 import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { AsSerializable } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions";
+import { Layout } from "react-grid-layout";
 import { v4 as uuid } from "uuid";
 import { ISpacesItem } from "../index";
 
@@ -20,13 +20,13 @@ export interface ISpacesStorage<T> extends EventEmitter {
     /**
      * The list of items being stored.
      */
-    readonly itemList: Map<string, ISpacesStoredItem<AsSerializable<T>>>;
+    readonly itemList: Map<string, ISpacesStoredItem<T>>;
     /**
      * Adds a item to the storage using the given data.
      * @param serializableItemData - The data of the item to add.
      * @returns A unique key corresponding to the added item.
      */
-    addItem(serializableItemData: AsSerializable<T>, layout?: Layout): string
+    addItem(serializableItemData: Serializable<T>, layout?: Layout): string
     /**
      * Removes the item specified by the given key.
      * @param key - The key referring to the item to remove.
@@ -44,7 +44,7 @@ export interface ISpacesStorage<T> extends EventEmitter {
  * Spaces collects serializable formats of items and stores them with grid-based layout information.
  */
 export interface ISpacesStoredItem<T> {
-    serializableItemData: AsSerializable<T>;
+    serializableItemData: Serializable<T>;
     layout: Layout;
 }
 
@@ -55,23 +55,24 @@ export interface ISpacesStoredItem<T> {
 export class SpacesStorage extends DataObject implements ISpacesStorage<ISpacesItem> {
     public static get ComponentName() { return "@fluid-example/spaces-storage"; }
 
-    private static readonly factory = new DataObjectFactory(
-        SpacesStorage.ComponentName,
-        SpacesStorage,
-        [],
-        {},
-        [],
-    );
+    private static readonly factory =
+        new DataObjectFactory(
+            SpacesStorage.ComponentName,
+            SpacesStorage,
+            [],
+            {},
+            [],
+        );
 
     public static getFactory() {
         return SpacesStorage.factory;
     }
 
-    public get itemList(): Map<string, ISpacesStoredItem<AsSerializable<ISpacesItem>>> {
+    public get itemList(): Map<string, ISpacesStoredItem<ISpacesItem>> {
         return this.root;
     }
 
-    public addItem(serializableItemData: AsSerializable<ISpacesItem>, layout?: Layout): string {
+    public addItem(serializableItemData: Serializable<ISpacesItem>, layout?: Layout): string {
         const model: ISpacesStoredItem<ISpacesItem> = {
             serializableItemData,
             layout: layout ?? { x: 0, y: 0, w: 6, h: 2 },

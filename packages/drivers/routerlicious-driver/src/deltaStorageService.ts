@@ -1,19 +1,23 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { OutgoingHttpHeaders } from "http";
-import querystring from "querystring";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { IDeltaStorageService, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
-import Axios from "axios";
-import * as uuid from "uuid";
+import {
+    IDeltaStorageService,
+    IDocumentDeltaStorageService,
+    IDeltasFetchResult,
+    IStream,
+} from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse, requestOps, emptyMessageStream } from "@fluidframework/driver-utils";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ITokenProvider } from "./tokens";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { RestWrapper } from "@fluidframework/server-services-client";
 import { DocumentStorageService } from "./documentStorageService";
+
+const MaxBatchDeltas = 2000; // Maximum number of ops we can fetch at a time
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
@@ -28,15 +32,42 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 
     private logtailSha: string | undefined = this.documentStorageService.logTailSha;
 
-    public async get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]> {
-        const opsFromLogTail = this.logtailSha ? await readAndParse<ISequencedDocumentMessage[]>
-            (this.documentStorageService, this.logtailSha) : [];
+    fetchMessages(from: number,
+        to: number | undefined,
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
+        fetchReason?: string,
+    ): IStream<ISequencedDocumentMessage[]> {
+        if (cachedOnly) {
+            return emptyMessageStream;
+        }
+        return requestOps(
+            this.getCore.bind(this),
+            // Staging: starting with no concurrency, listening for feedback first.
+            // In future releases we will switch to actual concurrency
+            1, // concurrency
+            from, // inclusive
+            to, // exclusive
+            MaxBatchDeltas,
+            new TelemetryNullLogger(),
+            abortSignal,
+            fetchReason,
+        );
+    }
+
+    private async getCore(from: number, to: number): Promise<IDeltasFetchResult> {
+        const opsFromLogTail = this.logtailSha
+            ? await readAndParse<ISequencedDocumentMessage[]>(this.documentStorageService, this.logtailSha)
+            : [];
 
         this.logtailSha = undefined;
-        if (opsFromLogTail.length > 0 && from !== undefined) {
-            return opsFromLogTail.filter((op) =>
-                op.sequenceNumber > from,
+        if (opsFromLogTail.length > 0) {
+            const messages = opsFromLogTail.filter((op) =>
+                op.sequenceNumber >= from,
             );
+            if (messages.length > 0) {
+                return { messages, partialResult: true };
+            }
         }
 
         return this.storageService.get(this.tenantId, this.id, from, to);
@@ -49,40 +80,36 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 export class DeltaStorageService implements IDeltaStorageService {
     constructor(
         private readonly url: string,
-        private readonly tokenProvider: ITokenProvider,
-        private readonly logger: ITelemetryLogger | undefined) {
+        private readonly restWrapper: RestWrapper,
+        private readonly logger: ITelemetryLogger) {
     }
 
     public async get(
         tenantId: string,
         id: string,
-        from?: number,
-        to?: number): Promise<ISequencedDocumentMessage[]> {
-        const query = querystring.stringify({ from, to });
-
-        const headers: OutgoingHttpHeaders = {
-            "x-correlation-id": uuid.v4(),
-        };
-
-        const storageToken = await this.tokenProvider.fetchStorageToken(
-            tenantId,
-            id,
+        from: number, // inclusive
+        to: number, // exclusive
+    ): Promise<IDeltasFetchResult> {
+        const ops = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            {
+                eventName: "getDeltas",
+                from,
+                to,
+            },
+            async (event) => {
+                const response = await this.restWrapper.get<ISequencedDocumentMessage[]>(
+                    this.url,
+                    { from: from - 1, to });
+                event.end({
+                    count: response.length,
+                });
+                return response;
+            },
         );
 
-        if (storageToken) {
-            headers.Authorization = `Basic ${fromUtf8ToBase64(`${tenantId}:${storageToken.jwt}`)}`;
-        }
-
-        const ops = await Axios.get<ISequencedDocumentMessage[]>(
-            `${this.url}?${query}`, { headers });
-
-        if (this.logger) {
-            this.logger.sendTelemetryEvent({
-                eventName: "R11sDriverToServer",
-                correlationId: headers["x-correlation-id"] as string,
-            });
-        }
-
-        return ops.data;
+        // It is assumed that server always returns all the ops that it has in the range that was requested.
+        // This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
+        return { messages: ops, partialResult: false };
     }
 }

@@ -1,14 +1,18 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { EpochTracker } from "../epochTracker";
-import { LocalPersistentCache, LocalPersistentCacheAdapter } from "../odspCache";
+import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDeltaStorageService } from "../odspDeltaStorageService";
-import { mockFetch } from "./mockFetch";
+import { LocalPersistentCache } from "../odspCache";
+import { EpochTracker } from "../epochTracker";
+import { mockFetchOk } from "./mockFetch";
+
+const createUtLocalCache = () => new LocalPersistentCache(2000);
+const createUtEpochTracker = (fileEntry, logger) => new EpochTracker(createUtLocalCache(), fileEntry, logger);
 
 describe("DeltaStorageService", () => {
     /*
@@ -18,14 +22,22 @@ describe("DeltaStorageService", () => {
     const deltaStorageBasePath = "https://fake.microsoft.com";
     const deltaStorageRelativePath = "/drives/testdrive/items/testitem/opStream";
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
+    const siteUrl = "https://fake.microsoft.com";
+    const driveId = "testdrive";
+    const itemId = "testitem";
+    const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
+    const fileEntry = { docId: "docId", resolvedUrl };
 
     it("Should build the correct sharepoint delta url with auth", async () => {
-        const deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-            undefined, async (_refresh) => "?access_token=123",
-            new EpochTracker(new LocalPersistentCacheAdapter(new LocalPersistentCache()), new TelemetryNullLogger()));
-        const actualDeltaUrl = await deltaStorageService.buildUrl(2, 8);
+        const logger = new TelemetryUTLogger();
+        const deltaStorageService = new OdspDeltaStorageService(
+            testDeltaStorageUrl,
+            async (_refresh) => "?access_token=123",
+            createUtEpochTracker(fileEntry, logger),
+            logger);
+        const actualDeltaUrl = deltaStorageService.buildUrl(3, 8);
         // eslint-disable-next-line max-len
-        const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
+        const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?ump=1&filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
     });
 
@@ -67,23 +79,26 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-                undefined, async (_refresh) => "",
-                new EpochTracker(
-                    new LocalPersistentCacheAdapter(new LocalPersistentCache()),
-                    new TelemetryNullLogger()));
+            const logger = new TelemetryUTLogger();
+            deltaStorageService = new OdspDeltaStorageService(
+                testDeltaStorageUrl,
+                async (_refresh) => "",
+                createUtEpochTracker(fileEntry, logger),
+                logger);
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const actualDeltaFeedResponse = await mockFetch(expectedDeltaFeedResponse, async () => {
-                return deltaStorageService.get(2, 8);
-            });
-            assert.equal(actualDeltaFeedResponse.length, 2, "Deserialized feed response is not of expected length");
-            assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
+            const { messages, partialResult } = await mockFetchOk(
+                async () => deltaStorageService.get(2, 8, {}),
+                expectedDeltaFeedResponse,
+            );
+            assert(!partialResult, "partialResult === false");
+            assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
+            assert.equal(messages[0].sequenceNumber, 1,
                 "First element of feed response has invalid sequence number");
-            assert.equal(actualDeltaFeedResponse[1].sequenceNumber, 2,
+            assert.equal(messages[1].sequenceNumber, 2,
                 "Second element of feed response has invalid sequence number");
-            assert.equal(actualDeltaFeedResponse[1].type, "noop",
+            assert.equal(messages[1].type, "noop",
                 "Second element of feed response has invalid op type");
         });
     });
@@ -120,23 +135,26 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            deltaStorageService = new OdspDeltaStorageService(async () => testDeltaStorageUrl,
-                undefined, async (_refresh) => "",
-                new EpochTracker(
-                    new LocalPersistentCacheAdapter(new LocalPersistentCache()),
-                    new TelemetryNullLogger()));
+            const logger = new TelemetryUTLogger();
+            deltaStorageService = new OdspDeltaStorageService(
+                testDeltaStorageUrl,
+                async (_refresh) => "",
+                createUtEpochTracker(fileEntry, logger),
+                logger);
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const actualDeltaFeedResponse = await mockFetch(expectedDeltaFeedResponse, async () => {
-                return deltaStorageService.get(2, 8);
-            });
-            assert.equal(actualDeltaFeedResponse.length, 2, "Deserialized feed response is not of expected length");
-            assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
+            const { messages, partialResult } = await mockFetchOk(
+                async () => deltaStorageService.get(2, 8, {}),
+                expectedDeltaFeedResponse,
+            );
+            assert(!partialResult, "partialResult === false");
+            assert.equal(messages.length, 2, "Deserialized feed response is not of expected length");
+            assert.equal(messages[0].sequenceNumber, 1,
                 "First element of feed response has invalid sequence number");
-            assert.equal(actualDeltaFeedResponse[1].sequenceNumber, 2,
+            assert.equal(messages[1].sequenceNumber, 2,
                 "Second element of feed response has invalid sequence number");
-            assert.equal(actualDeltaFeedResponse[1].type, "noop",
+            assert.equal(messages[1].type, "noop",
                 "Second element of feed response has invalid op type");
         });
     });

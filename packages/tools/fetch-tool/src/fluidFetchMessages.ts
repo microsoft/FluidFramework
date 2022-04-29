@@ -1,12 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
 import {
-    IDocumentDeltaStorageService,
     IDocumentService,
 } from "@fluidframework/driver-definitions";
 import {
@@ -20,6 +19,8 @@ import {
     connectToWebSocket,
     dumpMessages,
     dumpMessageStats,
+    overWrite,
+    paramActualFormatting,
     messageTypeFilter,
 } from "./fluidFetchArgs";
 
@@ -27,36 +28,14 @@ function filenameFromIndex(index: number): string {
     return index === 0 ? "" : index.toString(); // support old tools...
 }
 
-async function loadChunk(from: number, to: number, deltaStorage: IDocumentDeltaStorageService) {
-    console.log(`Loading ops at ${from}`);
-    for (let iter = 0; iter < 3; iter++) {
-        try {
-            const messages = await deltaStorage.get(from, to);
-            // This parsing of message contents happens in delta manager. But when we analyze messages
-            // for message stats, we skip that path. So parsing of json contents needs to happen here.
-            for (const message of messages) {
-                if (typeof message.contents === "string"
-                    && message.contents !== ""
-                    && message.type !== MessageType.ClientLeave
-                ) {
-                    message.contents = JSON.parse(message.contents);
-                }
-            }
-            return messages;
-        } catch (error) {
-            console.error("Hit error while downloading ops. Retrying");
-            console.error(error);
-        }
-    }
-    throw new Error("Giving up after 3 attempts to download chunk.");
-}
-
+let firstAvailableDelta = 1;
 async function* loadAllSequencedMessages(
     documentService?: IDocumentService,
     dir?: string,
     files?: string[]) {
-    const batch = 2000;
     let lastSeq = 0;
+    // flag for mismatch between last sequence number read and new one to be read
+    let seqNumMismatch = false;
 
     // If we have local save, read ops from there first
     if (files !== undefined) {
@@ -66,13 +45,32 @@ async function* loadAllSequencedMessages(
                 console.log(`reading messages${file}.json`);
                 const fileContent = fs.readFileSync(`${dir}/messages${file}.json`, { encoding: "utf-8" });
                 const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
-                assert(messages[0].sequenceNumber === lastSeq + 1);
-                yield messages;
+                // check if there is mismatch
+                seqNumMismatch = messages[0].sequenceNumber !== lastSeq + 1;
+                assert(!seqNumMismatch, 0x1b9 /* "Unexpected value for sequence number of first message in file" */);
                 lastSeq = messages[messages.length - 1].sequenceNumber;
+                yield messages;
             } catch (e) {
-                console.error(`Error reading / parsing messages from ${file}`);
-                console.error(e);
-                return;
+                if (seqNumMismatch) {
+                    if (overWrite) {
+                        // with overWrite option on, we will delete all exisintg message.json files
+                        for (let index = 0; index < files.length; index++) {
+                            const name = filenameFromIndex(index);
+                            fs.unlinkSync(`${dir}/messages${name}.json`);
+                        }
+                        break;
+                    }
+                    // prompt user to back up and delete existing files
+                    console.error("There are deleted ops in the document being requested," +
+                        " please back up the existing messages.json file and delete it from its directory." +
+                        " Then try fetch tool again.");
+                    console.error(e);
+                    return;
+                } else {
+                    console.error(`Error reading / parsing messages from ${files}`);
+                    console.error(e);
+                    return;
+                }
             }
         }
         if (lastSeq !== 0) {
@@ -89,21 +87,67 @@ async function* loadAllSequencedMessages(
     let timeStart = Date.now();
     let requests = 0;
     let opsStorage = 0;
-    while (true) {
-        requests++;
-        const messages = await loadChunk(lastSeq, lastSeq + batch, deltaStorage);
-        if (messages.length === 0) {
-            break;
+
+    // reading only 1 op to test if there is mismatch
+    const teststream = deltaStorage.fetchMessages(
+        lastSeq + 1,
+        lastSeq + 2);
+
+    let statusCode;
+    let innerMostErrorCode;
+    let response;
+
+    try {
+        await teststream.read();
+    } catch (error: any) {
+        statusCode = error.getTelemetryProperties().statusCode;
+        innerMostErrorCode = error.getTelemetryProperties().innerMostErrorCode;
+        // if there is gap between ops, catch the error and check it is the error we need
+        if (statusCode !== 410 || innerMostErrorCode !== "fluidDeltaDataNotAvailable") {
+            throw error;
         }
-        yield messages;
-        opsStorage += messages.length;
-        lastSeq = messages[messages.length - 1].sequenceNumber;
+        // get firstAvailableDelta from the error response, and set current sequence number to that
+        response = JSON.parse(error.getTelemetryProperties().response);
+        firstAvailableDelta = response.error.firstAvailableDelta;
+        lastSeq = firstAvailableDelta - 1;
     }
 
-    if (requests > 0) {
-        // eslint-disable-next-line max-len
-        console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
+    // continue reading rest of the ops
+    const stream = deltaStorage.fetchMessages(
+        lastSeq + 1, // inclusive left
+        undefined, // to
+    );
+
+    while (true) {
+        const result = await stream.read();
+        if (result.done) {
+            break;
+        }
+        requests++;
+        const messages = result.value;
+
+        // Empty buckets should never be returned
+        assert(messages.length !== 0, 0x1ba /* "should not return empty buckets" */);
+        // console.log(`Loaded ops at ${messages[0].sequenceNumber}`);
+
+        // This parsing of message contents happens in delta manager. But when we analyze messages
+        // for message stats, we skip that path. So parsing of json contents needs to happen here.
+        for (const message of messages) {
+            if (typeof message.contents === "string"
+                && message.contents !== ""
+                && message.type !== MessageType.ClientLeave
+            ) {
+                message.contents = JSON.parse(message.contents);
+            }
+        }
+
+        opsStorage += messages.length;
+        lastSeq = messages[messages.length - 1].sequenceNumber;
+        yield messages;
     }
+
+    // eslint-disable-next-line max-len
+    console.log(`\n${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${opsStorage} ops in ${requests} requests`);
 
     if (connectToWebSocket) {
         let logMsg = "";
@@ -120,7 +164,7 @@ async function* loadAllSequencedMessages(
         timeStart = Date.now();
         const deltaStream = await documentService.connectToDeltaStream(client);
         const initialMessages = deltaStream.initialMessages;
-        deltaStream.close();
+        deltaStream.dispose();
         console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to connect to web socket`);
 
         if (initialMessages) {
@@ -143,16 +187,24 @@ async function* saveOps(
     // Split into 100K ops
     const chunk = 100 * 1000;
 
+    let sequencedMessages: ISequencedDocumentMessage[] = [];
+
     // Figure out first file we want to write to
     let index = 0;
+    let curr: number = 1;
     if (files.length !== 0) {
-        index = (files.length - 1);
+        index = files.length - 1;
+        const name = filenameFromIndex(index);
+        const fileContent = fs.readFileSync(`${dir}/messages${name}.json`, { encoding: "utf-8" });
+        const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
+        curr = messages[0].sequenceNumber;
     }
-    let curr = index * chunk + 1;
 
-    let sequencedMessages: ISequencedDocumentMessage[] = [];
     while (true) {
         const result: IteratorResult<ISequencedDocumentMessage[]> = await gen.next();
+        if (files.length === 0) {
+            curr = firstAvailableDelta;
+        }
         if (!result.done) {
             let messages = result.value;
             yield messages;
@@ -164,9 +216,11 @@ async function* saveOps(
                 messages = messages.filter((msg) => msg.sequenceNumber >= curr);
             }
             sequencedMessages = sequencedMessages.concat(messages);
-            assert(sequencedMessages[0].sequenceNumber === curr);
+            assert(sequencedMessages[0].sequenceNumber === curr,
+                0x1bb /* "Unexpected sequence number on first of messages to save" */);
             assert(sequencedMessages[sequencedMessages.length - 1].sequenceNumber
-                === curr + sequencedMessages.length - 1);
+                === curr + sequencedMessages.length - 1,
+                0x1bc /* "Unexpected sequence number on last of messages to save" */);
         }
 
         // Time to write it out?
@@ -174,9 +228,13 @@ async function* saveOps(
             const name = filenameFromIndex(index);
             const write = sequencedMessages.splice(0, chunk);
             console.log(`writing messages${name}.json`);
-            fs.writeFileSync(`${dir}/messages${name}.json`, JSON.stringify(write, undefined, 2));
+            fs.writeFileSync(
+                `${dir}/messages${name}.json`,
+                JSON.stringify(write, undefined, paramActualFormatting ? 0 : 2));
+            // increment curr by chunk
             curr += chunk;
-            assert(sequencedMessages.length === 0 || sequencedMessages[0].sequenceNumber === curr);
+            assert(sequencedMessages.length === 0 || sequencedMessages[0].sequenceNumber === curr,
+                0x1bd /* "Stopped writing at unexpected sequence number" */);
             index++;
         }
 

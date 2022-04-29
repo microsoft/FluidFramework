@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,7 +7,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils";
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 export class ChannelStorageService implements IChannelStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
@@ -26,8 +26,9 @@ export class ChannelStorageService implements IChannelStorageService {
 
     constructor(
         private readonly tree: ISnapshotTree | undefined,
-        private readonly storage: Pick<IDocumentStorageService, "read" | "readBlob">,
-        private readonly extraBlobs?: Map<string, string>,
+        private readonly storage: Pick<IDocumentStorageService, "readBlob">,
+        private readonly logger: ITelemetryLogger,
+        private readonly extraBlobs?: Map<string, ArrayBufferLike>,
     ) {
         this.flattenedTree = {};
         // Create a map from paths to blobs
@@ -40,22 +41,19 @@ export class ChannelStorageService implements IChannelStorageService {
         return this.flattenedTree[path] !== undefined;
     }
 
-    public async read(path: string): Promise<string> {
-        const id = await this.getIdForPath(path);
-        const blob = this.extraBlobs !== undefined
-            ? this.extraBlobs.get(id)
-            : undefined;
-
-        return blob ?? this.storage.read(id);
-    }
-
     public async readBlob(path: string): Promise<ArrayBufferLike> {
         const id = await this.getIdForPath(path);
         const blob = this.extraBlobs !== undefined
             ? this.extraBlobs.get(id)
             : undefined;
 
-        return blob !== undefined ? stringToBuffer(blob,"base64") : this.storage.readBlob(id);
+        if (blob !== undefined) {
+            return blob;
+        }
+        const blobP = this.storage.readBlob(id);
+        blobP.catch((error) => this.logger.sendErrorEvent({ eventName: "ChannelStorageBlobError" }, error));
+
+        return blobP;
     }
 
     public async list(path: string): Promise<string[]> {

@@ -1,24 +1,26 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
     createTinyliciousCreateNewRequest,
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
+    defaultTinyliciousPort,
 } from "@fluidframework/tinylicious-driver";
-import { ITestDriver } from "./interfaces";
-import { pkgVersion } from "./packageVersion";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
 export class TinyliciousTestDriver implements ITestDriver {
     public readonly type = "tinylicious";
-    public readonly version = pkgVersion;
+    public get version() { return this.api.version; }
 
-    createDocumentServiceFactory(): RouterliciousDocumentServiceFactory {
-        return new RouterliciousDocumentServiceFactory(
+    constructor(private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi) {}
+    createDocumentServiceFactory(): IDocumentServiceFactory {
+        return new this.api.RouterliciousDocumentServiceFactory(
             new InsecureTinyliciousTokenProvider());
     }
     createUrlResolver(): InsecureTinyliciousUrlResolver {
@@ -27,7 +29,8 @@ export class TinyliciousTestDriver implements ITestDriver {
     createCreateNewRequest(testId: string): IRequest {
         return createTinyliciousCreateNewRequest(testId);
     }
-    createContainerUrl(testId: string): string {
-        return `http://localhost:3000/${testId}`;
+    async createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string> {
+        const containerId = containerUrl && "id" in containerUrl ? containerUrl.id : testId;
+        return `http://localhost:${defaultTinyliciousPort}/${containerId}`;
     }
 }

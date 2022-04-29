@@ -1,18 +1,23 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
-import { MergeTree, MergeTreeDeltaType, MergeTreeMaintenanceType, ReferenceType, TextSegment } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
+import { MergeTree } from "../mergeTree";
+import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
+import {
+    MergeTreeDeltaType,
+    ReferenceType,
+} from "../ops";
+import { TextSegment } from "../textSegment";
 import { countOperations, insertMarker, insertText } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
     const localClientId = 17;
     let currentSequenceNumber: number;
-    const branchId = 0;
     beforeEach(() => {
         mergeTree = new MergeTree();
         mergeTree.insertSegments(
@@ -27,8 +32,7 @@ describe("MergeTree", () => {
         mergeTree.startCollaboration(
             localClientId,
             /* minSeq: */ currentSequenceNumber,
-            /* currentSeq: */ currentSequenceNumber,
-            branchId);
+            /* currentSeq: */ currentSequenceNumber);
     });
 
     describe("insertText", () => {

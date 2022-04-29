@@ -1,15 +1,16 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
 import morgan from "morgan";
 import * as winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
-import { getTenantIdFromRequest } from "../utils";
+import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as api from "./api";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -21,6 +22,7 @@ const split = require("split");
 const stream = split().on("data", (message) => {
     if (message !== undefined) {
         winston.info(message);
+        Lumberjack.info(message);
     }
 });
 
@@ -39,12 +41,11 @@ export function create(
     // Running behind iisnode
     app.set("trust proxy", 1);
 
-    // View engine setup.
-    app.set("view engine", "hjs");
     if (loggerFormat === "json") {
         app.use(morgan((tokens, req, res) => {
             const messageMetaData = {
                 method: tokens.method(req, res),
+                pathCategory: `${req.baseUrl}${req.route ? req.route.path : "PATH_UNAVAILABLE"}`,
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
@@ -53,6 +54,7 @@ export function create(
                 serviceName: "riddler",
                 eventName: "http_requests",
             };
+            logRequestMetric(messageMetaData);
             winston.info("request log generated", { messageMetaData });
             return undefined;
         }));
@@ -75,35 +77,11 @@ export function create(
             secretManager));
 
     // Catch 404 and forward to error handler
-    app.use((req, res, next) => {
-        const err = new Error("Not Found");
-        (err as any).status = 404;
-        next(err);
-    });
+    app.use(catch404());
 
     // Error handlers
 
-    // development error handler
-    // will print stacktrace
-    if (app.get("env") === "development") {
-        app.use((err, req, res, next) => {
-            res.status(err.status || 500);
-            res.render("error", {
-                error: err,
-                message: err.message,
-            });
-        });
-    }
-
-    // Production error handler
-    // no stacktraces leaked to user
-    app.use((err, req, res, next) => {
-        res.status(err.status || 500);
-        res.render("error", {
-            error: {},
-            message: err.message,
-        });
-    });
+    app.use(handleError(app.get("env") === "development"));
 
     return app;
 }

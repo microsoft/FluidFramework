@@ -1,13 +1,20 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
-import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import Deque from "double-ended-queue";
 
-export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> implements IDeltaQueue<T> {
+export interface IDeltaQueueWriter<T> {
+    push(task: T): void;
+    clear(): void;
+}
+
+export class DeltaQueue<T>
+    extends TypedEventEmitter<IDeltaQueueEvents<T>>
+    implements IDeltaQueue<T>, IDeltaQueueWriter<T> {
     private isDisposed: boolean = false;
     private readonly q = new Deque<T>();
 
@@ -42,6 +49,12 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
 
     public get idle(): boolean {
         return this.processingDeferred === undefined && this.q.length === 0;
+    }
+
+    public async waitTillProcessingDone(): Promise<void> {
+        if (this.processingDeferred !== undefined) {
+            return this.processingDeferred.promise;
+        }
     }
 
     /**
@@ -81,27 +94,13 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         this.pauseCount++;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
-        if (this.processingDeferred !== undefined) {
-            return this.processingDeferred.promise;
-        }
+        return this.waitTillProcessingDone();
     }
 
     public resume(): void {
-        assert(this.pauseCount > 0);
+        assert(this.pauseCount > 0, 0x0f4 /* "Nonzero pause-count on resume()" */);
         this.pauseCount--;
-        if (!this.paused) {
-            this.ensureProcessing();
-        }
-    }
-
-    // back-compat: usage removed in 0.33, remove in future versions
-    public async systemPause(): Promise<void> {
-        return this.pause();
-    }
-
-    // back-compat: usage removed in 0.33, remove in future versions
-    public systemResume(): void {
-        this.resume();
+        this.ensureProcessing();
     }
 
     /**
@@ -110,7 +109,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
      * not already started.
      */
     private ensureProcessing() {
-        if (this.processingDeferred === undefined) {
+        if (!this.paused && this.processingDeferred === undefined) {
             this.processingDeferred = new Deferred<void>();
             // Use a resolved promise to start the processing on a separate stack.
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -128,11 +127,15 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
      * Executes the delta processing loop until a stop condition is reached.
      */
     private processDeltas() {
+        const start = performance.now();
+        let count = 0;
+
         // For grouping to work we must process all local messages immediately and in the single turn.
         // So loop over them until no messages to process, we have become paused, or hit an error.
         while (!(this.q.length === 0 || this.paused || this.error !== undefined)) {
             // Get the next message in the queue
             const next = this.q.shift();
+            count++;
             // Process the message.
             try {
                 // We know next is defined since we did a length check just prior to shifting.
@@ -146,7 +149,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         }
 
         if (this.q.length === 0) {
-            this.emit("idle");
+            this.emit("idle", count, performance.now() - start);
         }
     }
 }

@@ -1,9 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import {
+    IDocumentDeltaStorageService,
+    IStream,
+} from "@fluidframework/driver-definitions";
+import { streamFromMessages } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
@@ -14,20 +18,30 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
         this.messages = messages.sort((a, b) => b.sequenceNumber - a.sequenceNumber);
     }
 
-    public async get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]> {
-        const ret: ISequencedDocumentMessage[] = [];
-        let index: number = -1;
+    public fetchMessages(
+        from: number, // inclusive
+        to: number | undefined, // exclusive
+        abortSignal?: AbortSignal,
+        cachedOnly?: boolean,
+    ): IStream<ISequencedDocumentMessage[]> {
+        return streamFromMessages(this.getCore(from, to));
+    }
+
+    private async getCore(from: number, to?: number) {
+        const messages: ISequencedDocumentMessage[] = [];
+        let index: number = 0;
 
         // Find first
-        if (from !== undefined) {
-            while (this.messages[++index].sequenceNumber <= from) { }
+        while (index < this.messages.length && this.messages[index].sequenceNumber < from) {
+            index++;
         }
 
         // start reading
-        while (++index < this.messages.length && (to === undefined || this.messages[++index].sequenceNumber < to)) {
-            ret.push(this.messages[index]);
+        while (index < this.messages.length && (to === undefined || this.messages[index].sequenceNumber < to)) {
+            messages.push(this.messages[index]);
+            index++;
         }
 
-        return ret;
+        return messages;
     }
 }

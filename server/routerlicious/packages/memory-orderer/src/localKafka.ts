@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -24,6 +24,14 @@ export class LocalKafka implements IProducer {
     constructor(private messageOffset = 0) {
     }
 
+    public get length() {
+        return this.qeueue.length;
+    }
+
+    public isConnected() {
+        return true;
+    }
+
     public subscribe(kafakaSubscriber: IKafkaSubscriber) {
         const kafkaSubscription = new LocalKafkaSubscription(kafakaSubscriber, this.qeueue);
         kafkaSubscription.on("processed", (queueOffset) => {
@@ -39,7 +47,7 @@ export class LocalKafka implements IProducer {
             }
 
             const diff = queueOffset - this.minimumQueueOffset;
-            this.minimumQueueOffset = queueOffset;
+            this.minimumQueueOffset = queueOffset - 1;
 
             // Remove items before min queue offset
             for (let i = 0; i < diff; i++) {
@@ -71,7 +79,7 @@ export class LocalKafka implements IProducer {
         }
 
         for (const subscription of this.subscriptions) {
-            subscription.process();
+            void subscription.process();
         }
     }
 

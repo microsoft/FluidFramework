@@ -1,13 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IFluidObject, IRequest, IRequestHeader, IResponse } from "@fluidframework/core-interfaces";
+import { FluidObject, IRequest, IRequestHeader, IResponse } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidMountableViewClass } from "@fluidframework/view-interfaces";
 import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 
 /**
  * A mountable view is only required if the view needs to be mounted across a bundle boundary.  Mounting across
@@ -68,14 +68,15 @@ export const defaultRouteRequestHandler = (defaultRootId: string) => {
 
 /**
  * Default request handler for a Fluid object that returns the object itself if:
- *  1. the request url is a "/"
- *  2. the request url is empty
+ *  1. the request url is empty
+ *  2. the request url is "/"
+ *  3. the request url starts with "/" and is followed by a query param, such as /?key=value
  * Returns a 404 error for any other url.
  */
-export function defaultFluidObjectRequestHandler(fluidObject: IFluidObject, request: IRequest): IResponse {
-    if (request.url === "/" || request.url === "") {
+export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, request: IRequest): IResponse {
+    if (request.url === "" || request.url === "/" || request.url.startsWith("/?")) {
         return { mimeType: "fluid/object", status: 200, value: fluidObject };
     } else {
-        return { mimeType: "text/plain", status: 404, value: `unknown request url: ${request.url}` };
+        return create404Response(request);
     }
 }

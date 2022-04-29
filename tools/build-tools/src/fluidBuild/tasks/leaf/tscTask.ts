@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -16,7 +16,7 @@ const isEqual = require("lodash.isequal");
 interface ITsBuildInfo {
     program: {
         fileInfos: { [key: string]: { version: string, signature: string } },
-        semanticDiagnosticsPerFile: any[],
+        semanticDiagnosticsPerFile?: any[],
         options: any
     }
 }
@@ -31,17 +31,21 @@ export class TscTask extends LeafTask {
     private _tsConfig: ts.ParsedCommandLine | undefined;
     private _tsConfigFullPath: string | undefined;
     private _projectReference: TscTask | undefined;
-    private _sourceStats: fs.Stats[] | undefined;
+    private _sourceStats: (fs.Stats | fs.BigIntStats)[] | undefined;
 
     public matchTask(command: string, options?: TscTaskMatchOptions): LeafTask | undefined {
         if (!options?.tsConfig) { return super.matchTask(command); }
         if (command !== "tsc") { return undefined; }
         const configFile = this.configFileFullPath;
         if (!configFile) { return undefined; }
-        return isSameFileOrDir(configFile, options.tsConfig)? this : undefined;
+        return isSameFileOrDir(configFile, options.tsConfig) ? this : undefined;
     }
 
     protected addDependentTasks(dependentTasks: LeafTask[]) {
+        if (this.addChildTask(dependentTasks, this.node, "npm run build:gen")) {
+            this.logVerboseDependency(this.node, "build:gen");
+        }
+
         if (this.addChildTask(dependentTasks, this.node, "npm run build:genver")) {
             this.logVerboseDependency(this.node, "build:genver");
         }
@@ -67,14 +71,14 @@ export class TscTask extends LeafTask {
         if (config?.projectReferences) {
             // TODO: make less assumptions
             if (config.projectReferences.length !== 1) {
-                throw new Error("Only one project references is supported");
+                throw new Error(`${this.node.pkg.nameColored}: Only one project references is supported`);
             }
             if (!isSameFileOrDir(config.projectReferences[0].path, this.node.pkg.directory)) {
-                throw new Error("Only package root project is supported for project references");
+                throw new Error(`${this.node.pkg.nameColored}: Only package root project is supported for project references`);
             }
             this._projectReference = this.addChildTask(dependentTasks, this.node, "tsc") as TscTask | undefined;
             if (!this._projectReference) {
-                throw new Error("tsc not found for project reference");
+                throw new Error(`${this.node.pkg.nameColored}: tsc not found for project reference`);
             }
             this.logVerboseDependency(this.node, "tsc");
         }
@@ -94,8 +98,8 @@ export class TscTask extends LeafTask {
         }
 
         // Check previous build errors
-        const diag: any[] = tsBuildInfo.program.semanticDiagnosticsPerFile;
-        if (diag.some(item => Array.isArray(item))) {
+        const diag = tsBuildInfo.program.semanticDiagnosticsPerFile;
+        if (diag?.some(item => Array.isArray(item))) {
             this.logVerboseTrigger("previous build error");
             return false;
         }
@@ -115,7 +119,7 @@ export class TscTask extends LeafTask {
                     this.logVerboseTrigger(`version mismatch for ${key}, ${hash}, ${fileInfos[key].version}`);
                     return false;
                 }
-            } catch (e) {
+            } catch (e: any) {
                 this.logVerboseTrigger(`exception generating hash for ${key}`);
                 logVerbose(e.stack);
                 return false;
@@ -129,7 +133,7 @@ export class TscTask extends LeafTask {
     private remapSrcDeclFile(fullPath: string) {
         if (!this._sourceStats) {
             const config = this.readTsConfig();
-            this._sourceStats = config ? config.fileNames.map(fs.lstatSync) : [];
+            this._sourceStats = config ? config.fileNames.map(v => fs.lstatSync(v)) : [];
         }
 
         const parsed = path.parse(fullPath);
@@ -141,29 +145,20 @@ export class TscTask extends LeafTask {
         return fullPath;
     }
 
-    private patchOptionPaths(object: any, dir: string) {
-        for (const key of ["configFilePath", "declarationDir", "outDir", "rootDir", "project"]) {
-            const value = object[key];
-            if (value !== undefined) {
-                object[key] = path.resolve(dir, value);
-            }
-        }
-    }
-
     private checkTsConfig(tsBuildInfoFileDirectory: string, tsBuildInfo: ITsBuildInfo) {
         const options = this.readTsConfig();
         if (!options) {
             return false;
         }
 
-        const configOptions = { ...options.options };
-        const tsBuildInfoOptions = { ...tsBuildInfo.program.options };
         const configFileFullPath = this.configFileFullPath;
         if (!configFileFullPath) { assert.fail(); };
 
         // Patch relative path based on the file directory where the config comes from
-        this.patchOptionPaths(configOptions, path.dirname(configFileFullPath));
-        this.patchOptionPaths(tsBuildInfoOptions, tsBuildInfoFileDirectory);
+        const configOptions =
+            TscUtils.convertToOptionsWithAbsolutePath(options.options, path.dirname(configFileFullPath));
+        const tsBuildInfoOptions =
+            TscUtils.convertToOptionsWithAbsolutePath(tsBuildInfo.program.options, tsBuildInfoFileDirectory);
 
         if (!isEqual(configOptions, tsBuildInfoOptions)) {
             logVerbose(`${this.node.pkg.nameColored}: ts option changed ${configFileFullPath}`);
@@ -191,8 +186,8 @@ export class TscTask extends LeafTask {
             }
 
             // Fix up relative path from the command line based on the package directory
-            const commandOptions = { ...parsedCommand.options };
-            this.patchOptionPaths(commandOptions, this.node.pkg.directory);
+            const commandOptions =
+                TscUtils.convertToOptionsWithAbsolutePath(parsedCommand.options, this.node.pkg.directory);
 
             // Parse the config file relative to the config file directory
             const configDir = path.parse(configFileFullPath).dir;
@@ -305,8 +300,12 @@ export class TscTask extends LeafTask {
             const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
             if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
                 try {
-                    this._tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
-                    return this._tsBuildInfo;
+                    const tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
+                    if (tsBuildInfo.program) {
+                        this._tsBuildInfo = tsBuildInfo;
+                    } else {
+                        logVerbose(`${this.node.pkg.nameColored}: Missing program property ${tsBuildInfoFileFullPath}`);
+                    }
                 } catch {
                     logVerbose(`${this.node.pkg.nameColored}: Unable to load ${tsBuildInfoFileFullPath}`);
                 }
@@ -319,6 +318,14 @@ export class TscTask extends LeafTask {
 
     protected async markExecDone() {
         this._tsBuildInfo = undefined;
+    }
+
+    protected get useWorker() {
+        // TODO: Worker doesn't implement all mode.  This is not comprehensive filtering yet.
+        const parsed = this.parsedCommandLine;
+        return parsed !== undefined
+            && (parsed.fileNames.length === 0 || parsed.options.project === undefined)
+            && !parsed.watchOptions;
     }
 };
 
@@ -358,16 +365,16 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) {
         if (this.tscTasks.length === 0) {
             // derived class didn't populate it.
-           this.addTscTask(dependentTasks);
+            this.addTscTask(dependentTasks);
         }
     }
     protected addTscTask(dependentTasks: LeafTask[], options?: any) {
         const tscTask = this.addChildTask(dependentTasks, this.node, "tsc", options);
         if (!tscTask) {
             if (options) {
-                throw new Error(`Unable to find tsc task matching ${options.tsConfig} for dependent task ${this.command}`);
+                throw new Error(`${this.node.pkg.nameColored}: Unable to find tsc task matching ${options.tsConfig} for dependent task ${this.command}`);
             } else {
-                throw new Error(`Unable to find tsc task for dependent task ${this.command}`);
+                throw new Error(`${this.node.pkg.nameColored}: Unable to find tsc task for dependent task ${this.command}`);
             }
         }
         this.tscTasks.push(tscTask as TscTask);

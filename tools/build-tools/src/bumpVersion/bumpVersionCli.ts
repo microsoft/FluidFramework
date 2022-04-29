@@ -1,46 +1,53 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import * as semver from "semver";
+import { bumpDependencies, cleanPrereleaseDependencies } from "./bumpDependencies";
+import { bumpVersionCommand } from "./bumpVersion";
 import { commonOptionString, parseOption } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { MonoRepoKind } from "../common/monoRepo";
-import { GitRepo, fatal } from "./utils";
-import { Context, VersionBumpType, VersionChangeType } from "./context";
-import { bumpVersion } from "./bumpVersion";
-import { createReleaseBranch } from "./createBranch";
-import { releaseVersion, getPackageShortName } from "./releaseVersion";
+import { Context, isVersionBumpType, VersionBumpType, VersionChangeType } from "./context";
+import { createReleaseBump } from "./createReleaseBump";
+import { GitRepo } from "./gitRepo";
+import { releaseVersion } from "./releaseVersion";
 import { showVersions } from "./showVersions";
-import { bumpDependencies } from "./bumpDependencies";
-import * as semver from "semver";
+import { fatal } from "./utils";
+import { writeReleaseVersions } from "./writeReleaseVersions";
 
 function printUsage() {
     console.log(
         `
 Usage: fluid-bump-version <options>
 Options:
-     --branch                    Create release branch and bump the version that would be released on main branch
   -b --bump [<pkg>[=<type>]]     Bump the package version of specified package or monorepo (default: client)
   -d --dep [<pkg>[=<version>]]   Bump the dependencies version of specified package or monorepo (default: client)
   -r --release [<pkg>[=<type>]]  Release and bump version of specified package or monorepo and dependencies (default: client)
+     --releaseBump <type>        Bump the versions that would be released on the current main/next branch
+  -u --update                    Update prerelease dependencies for released packages
      --version [<pkg>[=<type>]]  Collect and show version of specified package or monorepo and dependencies (default: client)
+     --virtualPatch              Use a virtual patch number for beta versioning (0.<major>.<minor>00<patch>)
+     --writeReleaseVersions      Write out the latest versions of packages if the repo were to be released in its current state to versions.json
 ${commonOptionString}
 `);
 }
 
 const paramBumpDepPackages = new Map<string, string | undefined>();
-let paramBranch = false;
-let paramPush = true;
-let paramPublishCheck = true;
+let paramReleaseBump = false;
+let paramLocal = true;
 let paramReleaseName: string | undefined;
 let paramReleaseVersion: VersionBumpType | undefined;
 let paramClean = false;
-let paramCommit = false;
+let paramCommit = true;
 let paramVersionName: string | undefined;
 let paramVersion: semver.SemVer | undefined;
 let paramBumpName: string | undefined;
 let paramBumpVersion: VersionChangeType | undefined;
+let paramUpdate = false;
+let paramVirtualPatch = false;
+let paramWriteReleaseVersions = false;
 
 function parseNameVersion(arg: string | undefined) {
     let name = arg;
@@ -64,13 +71,12 @@ function parseNameVersion(arg: string | undefined) {
 
     let version: VersionChangeType | undefined;
     if (v !== undefined) {
-        if (v === "minor" || v === "patch") {
+        if (isVersionBumpType(v)) {
             version = v;
         } else {
             const parsedVersion = semver.parse(v);
             if (!parsedVersion) {
                 fatal(`Invalid version ${v}`);
-
             }
             version = parsedVersion;
         }
@@ -118,20 +124,18 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "--branch") {
-            paramBranch = true;
+        if (arg === "--releaseBump") {
+            paramReleaseBump = true;
             paramClean = true;
-            break;
-        }
-        if (arg === "--local") {
-            paramPush = false;
-            paramPublishCheck = false;
+            const nextArg = process.argv[i + 1];
+            if (nextArg !== undefined && isVersionBumpType(nextArg)) {
+                i++;
+                paramReleaseVersion = nextArg;
+            }
             continue;
         }
-
-        if (arg === "--test") {
-            paramPush = false;
-            // still do publish check assuming it is already published even when we don't push
+        if (arg === "--local") {
+            paramLocal = false;
             continue;
         }
 
@@ -140,8 +144,8 @@ function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "--commit") {
-            paramCommit = true;
+        if (arg === "--nocommit") {
+            paramCommit = false;
             continue;
         }
 
@@ -196,6 +200,22 @@ function parseOptions(argv: string[]) {
             if (extra) { i++; }
             continue;
         }
+
+        if (arg === "-u" || arg === "--update") {
+            paramUpdate = true;
+            continue;
+        }
+
+        if (arg === "--virtualPatch") {
+            paramVirtualPatch = true;
+            continue;
+        }
+
+        if (arg === "--writeReleaseVersions") {
+            paramWriteReleaseVersions = true;
+            continue;
+        }
+
         console.error(`ERROR: Invalid arguments ${arg}`);
         error = true;
         break;
@@ -207,6 +227,53 @@ function parseOptions(argv: string[]) {
     }
 }
 
+function checkFlagsConflicts() {
+    let command = undefined;
+    if (paramReleaseBump) {
+        command = "releaseBump";
+    }
+    if (paramBumpDepPackages.size) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --dep and --${command}`);
+        }
+        command = "dep";
+    }
+    if (paramReleaseName) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --release and --${command}`);
+        }
+        command = "release";
+    }
+    if (paramVersionName) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --version and --${command}`);
+        }
+        command = "version";
+    }
+    if (paramBumpName) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --bump and --${command}`);
+        }
+        command = "bump";
+    }
+    if (paramUpdate) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --update and --${command}`);
+        }
+        command = "update";
+    }
+    if (paramWriteReleaseVersions) {
+        if (command !== undefined) {
+            fatal(`Conflicting switches --currentVersions and --${command}`);
+        }
+        command = "writeReleaseVersions";
+    }
+    if (command === undefined) {
+        fatal("Missing command flags --branch/--release/--dep/--bump/--version");
+    }
+    return command;
+}
+
 /**
  * Load the repo and either do version bump or dependencies bump
  */
@@ -215,55 +282,41 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot();
     console.log(`Repo: ${resolvedRoot}`);
     const gitRepo = new GitRepo(resolvedRoot);
-    const context = new Context(gitRepo, await gitRepo.getCurrentBranchName());
-
+    const context = new Context(gitRepo, "github.com/microsoft/FluidFramework", await gitRepo.getCurrentBranchName());
     try {
-        if (paramBranch) {
-            if (paramBumpDepPackages.size) {
-                fatal("Conflicting switches --dep and --branch");
-            }
-            if (paramReleaseName) {
-                fatal("Conflicting switches --release and --branch");
-            }
-            if (paramVersionName) {
-                fatal("Conflicting switches --version and --branch");
-            }
-            if (paramBumpName) {
-                fatal("Conflicting switches --bump and --branch");
-            }
-            await createReleaseBranch(context, "github.com/microsoft/FluidFramework");
-        } else if (paramBumpDepPackages.size) {
-            if (paramReleaseName) {
-                fatal("Conflicting switches --release and --dep");
-            }
-            if (paramVersionName) {
-                fatal("Conflicting switches --version and --dep");
-            }
-            if (paramBumpName) {
-                fatal("Conflicting switches --bump and --dep");
-            }
-            console.log("Bumping dependencies");
+        const command = checkFlagsConflicts();
 
-            await bumpDependencies(context, "Bump dependencies version", paramBumpDepPackages, paramPublishCheck, paramCommit);
-        } else if (paramReleaseName) {
-            if (paramVersionName) {
-                fatal("Conflicting switches --release and --version");
-            }
-            if (paramBumpName) {
-                fatal("Conflicting switches --release and --bump");
-            }
-            await releaseVersion(context, paramReleaseName, paramPublishCheck, paramReleaseVersion);
-        } else if (paramVersionName) {
-            if (paramBumpName) {
-                fatal("Conflicting switches --version and --bump");
-            }
-            await showVersions(context, paramVersionName, paramVersion);
-        } else if (paramBumpName) {
-            await bumpVersion(context, [paramBumpName], paramBumpVersion ?? "patch", getPackageShortName(paramBumpName), paramCommit ? "" : undefined);
-        } else {
-            fatal("Missing command flags --release/--dep/--bump/--version");
+        // Make sure we are operating on a clean repo
+        const status = await context.gitRepo.getStatus();
+        if (status !== "") {
+            fatal(`Local repo is dirty\n${status}`);
         }
-    } catch (e) {
+
+        switch (command) {
+            case "releaseBump":
+                await createReleaseBump(context, paramReleaseVersion, paramVirtualPatch);
+                break;
+            case "dep":
+                console.log("Bumping dependencies");
+                await bumpDependencies(context, "Bump dependencies version", paramBumpDepPackages, paramLocal, paramCommit);
+                break;
+            case "release":
+                await releaseVersion(context, paramReleaseName!, paramLocal, paramVirtualPatch, paramReleaseVersion);
+                break;
+            case "version":
+                await showVersions(context, paramVersionName!, paramVersion);
+                break;
+            case "bump":
+                await bumpVersionCommand(context, paramBumpName!, paramBumpVersion ?? "patch", paramCommit, paramVirtualPatch);
+                break;
+            case "update":
+                await cleanPrereleaseDependencies(context, paramLocal, paramCommit);
+                break;
+            case "writeReleaseVersions":
+                await writeReleaseVersions(context);
+                break;
+        }
+    } catch (e: any) {
         if (!e.fatal) { throw e; }
         console.error(`ERROR: ${e.message}`);
         if (paramClean) {

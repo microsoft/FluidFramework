@@ -1,96 +1,132 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# test-real-service pipeline
+# test-real-service-e2e pipeline
 
 name: $(Build.BuildId)
-
-parameters:
-- name: buildDirectory
-  type: string
-  default: .
-
-- name: taskBuild
-  type: string
-  default: ci:build
-
-- name: poolBuild
-  type: object
-  default: Lite
-
-- name: checkoutSubmodules
-  type: boolean
-  default: false
 
 trigger: none
 pr: none
 
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    trigger:
+      branches:
+      - release/*
+      - main
+      - next
+
 variables:
-  # We use 'chalk' to colorize output, which auto-detects color support in the
-  # running terminal.  The log output shown in Azure DevOps job runs only has
-  # basic ANSI color support though, so force that in the pipeline
-  - name: FORCE_COLOR
-    value: 1
-  - template: templates/include-vars.yml
-    parameters:
-      buildNumberInPatch: true
+- group: prague-key-vault
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
 
 stages:
-  # Install / Build / Test Stage
-  - stage: build
-    displayName: Build Stage
+  # end-to-end tests local server
+  - stage:
+    displayName: e2e - local server
+    dependsOn: []
     jobs:
-      # Job - Build
-      - job: build
-        displayName: Build
-        pool: ${{ parameters.poolBuild }}
-        steps:
-        # Setup
-        - checkout: self
-          clean: true
-          lfs: ${{ parameters.checkoutSubmodules }}
-          submodules: ${{ parameters.checkoutSubmodules }}
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:realsvc:local:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-        # Install
-        - task: UseNode@1
-          displayName: Use Node 12.x
-          inputs:
-            version: 12.x
-        - task: Npm@1
-          displayName: npm ci
-          inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'ci --unsafe-perm'
-            customRegistry: 'useNpmrc'
+  # end-to-end tests tinylicious
+  - stage:
+    displayName: e2e - tinylicious
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:realsvc:tinylicious:report
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-        # Build
-        - task: Npm@1
-          displayName: npm run ${{ parameters.taskBuild }}
-          inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'run ${{ parameters.taskBuild }}'
+  # end-to-end tests routerlicious
+  - stage:
+    displayName: e2e - routerlicious
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testCommand: test:realsvc:routerlicious:report
+        continueOnError: true
+        splitTestVariants:
+          - name: Non-compat
+            flags: --compatVersion=0
+          - name: N-1
+            flags: --compatVersion=-1
+          - name: N-2
+            flags: --compatVersion=-2
+          - name: LTS
+            flags: --compatVersion=LTS
+        env:
+          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-        # Test
-        - task: Npm@1
-          displayName: '[end-to-end tests] npm run ci:test:realsvc'
-          env:
-            fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
-            fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
-            fluid__webpack__tenantId: $(fluid-webpack-tenantId)
-            fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
-          inputs:
-            command: 'custom'
-            workingDir: packages/test/end-to-end-tests
-            customCommand: 'run ci:test:realsvc' # This script ends with 'exit 0' so this task should never fail
+  # end-to-end tests frs
+  - stage:
+    displayName: e2e - frs
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        timeoutInMinutes: 360
+        continueOnError: true
+        testCommand: test:realsvc:frs:report
+        # splitTestVariants:
+        #   - name: Non-compat
+        #     flags: --compatVersion=0
+        #   - name: N-1
+        #     flags: --compatVersion=-1
+        #   - name: N-2
+        #     flags: --compatVersion=-2
+        #   - name: LTS
+        #     flags: --compatVersion=LTS
+        env:
+          fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-        # Test - Upload results
-        - task: PublishTestResults@2
-          displayName: Publish Test Results
-          inputs:
-            testResultsFormat: 'JUnit'
-            testResultsFiles: '**/*junit-report.xml'
-            searchFolder: ${{ parameters.buildDirectory }}/nyc
-            mergeTestResults: true
-          condition: succeededOrFailed()
+  # end-to-end tests odsp
+  - stage:
+    displayName:  e2e - odsp
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        timeoutInMinutes: 360
+        continueOnError: true
+        testCommand: test:realsvc:odsp:report
+        splitTestVariants:
+          - name: Non-compat
+            flags: --compatVersion=0 --tenantIndex=0
+          - name: N-1
+            flags: --compatVersion=-1 --tenantIndex=1
+          - name: N-2
+            flags: --compatVersion=-2 --tenantIndex=2
+          - name: LTS
+            flags: --compatVersion=LTS --tenantIndex=3
+        env:
+          login__microsoft__clientId: $(login-microsoft-clientId)
+          login__microsoft__secret: $(login-microsoft-secret)
+          login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject

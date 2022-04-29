@@ -1,12 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import fs from "fs";
 import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
-import * as nconf from "nconf";
+import nconf from "nconf";
 import * as utils from "../utils";
 
 export async function createCommit(
@@ -23,7 +24,7 @@ export async function createCommit(
         timezoneOffset: 0,
     };
 
-    const commitDescription: git.CommitDescription = {
+    const commitObject: git.CommitObject = {
         message: params.message,
         parent: params.parents,
         tree: params.tree,
@@ -31,10 +32,10 @@ export async function createCommit(
         committer: author,
     };
 
-    const sha = await git.writeObject({
+    const sha = await git.writeCommit({
+        fs,
         dir: utils.getGitDir(store, tenantId),
-        type: "commit",
-        object: commitDescription,
+        commit: commitObject,
     });
 
     return {
@@ -55,8 +56,8 @@ export async function getCommit(
     sha: string,
     useCache: boolean,
 ): Promise<ICommit> {
-    const commit = await git.readObject({ dir: utils.getGitDir(store, tenantId), oid: sha });
-    const description = commit.object as git.CommitDescription;
+    const commit = await git.readCommit({ fs, dir: utils.getGitDir(store, tenantId), oid: sha });
+    const description = commit.commit;
 
     return {
         author: {

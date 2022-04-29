@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -39,13 +39,5 @@ export class TelemetryNullLogger implements ITelemetryLogger {
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
     }
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
-    }
-    public logGenericError(eventName: string, error: any) {
-    }
-    public logException(event: ITelemetryErrorEvent, exception: any): void {
-    }
-    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
-    }
-    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
     }
 }

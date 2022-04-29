@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -16,16 +16,24 @@ class TestInterval implements IInterval {
     }
 
     public compare(b: TestInterval) {
-        const startResult = this.start - b.start;
+        const startResult = this.compareStart(b);
         if (startResult === 0) {
-            return (this.end - b.end);
+            return this.compareEnd(b);
         } else {
             return startResult;
         }
     }
 
+    public compareStart(b: TestInterval) {
+        return this.start - b.start;
+    }
+
+    public compareEnd(b: TestInterval) {
+        return this.end - b.end;
+    }
+
     public overlaps(b: TestInterval) {
-        const result = (this.start < b.end) &&
+        const result = (this.start <= b.end) &&
             (this.end >= b.start);
         return result;
     }
@@ -33,6 +41,16 @@ class TestInterval implements IInterval {
     public union(b: TestInterval) {
         return new TestInterval(Math.min(this.start, b.start),
             Math.max(this.end, b.end));
+    }
+
+    public modify(label: string, start: number, end: number) {
+        const startPos = start ?? this.start;
+        const endPos = end ?? this.end;
+        if (this.start === startPos && this.end === endPos) {
+            // Return undefined to indicate that no change is necessary.
+            return;
+        }
+        return new TestInterval(startPos, endPos);
     }
 }
 

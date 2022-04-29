@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -13,6 +13,10 @@ export interface ITenantConfig {
     orderer: ITenantOrderer;
 
     customData: ITenantCustomData;
+
+    // Timestamp of when this tenant will be hard deleted.
+    // The tenant is soft deleted if a deletion timestamp is present.
+    scheduledDeletionTime?: string;
 }
 
 export interface ITenantStorage {
@@ -53,6 +57,16 @@ export interface ITenantCustomData {
     [key: string]: any;
 }
 
+export interface ITenantKeys {
+    key1: string,
+    key2: string,
+}
+
+export enum KeyName {
+    key1 = "key1",
+    key2 = "key2",
+}
+
 export interface ITenant {
     gitManager: IGitManager;
 
@@ -70,7 +84,7 @@ export interface ITenantManager {
     /**
      * Retrieves details for the given tenant
      */
-    getTenant(tenantId: string): Promise<ITenant>;
+    getTenant(tenantId: string, documentId: string): Promise<ITenant>;
 
     /**
      * Verifies that the given auth token is valid. A rejected promise indicates an invalid token.

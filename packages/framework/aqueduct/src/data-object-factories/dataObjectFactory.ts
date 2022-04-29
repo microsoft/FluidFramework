@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,7 +9,6 @@ import {
     SharedDirectory,
     SharedMap,
 } from "@fluidframework/map";
-import { IEvent } from "@fluidframework/common-definitions";
 import {
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
@@ -17,7 +16,7 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
-import { DataObject, IDataObjectProps } from "../data-objects";
+import { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects";
 import { PureDataObjectFactory } from "./pureDataObjectFactory";
 
 /**
@@ -25,18 +24,16 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory";
  * It facilitates DataObject's features (such as its shared directory) by
  * ensuring relevant shared objects etc are available to the factory.
  *
- * Generics:
- * O - represents a type that will define optional providers that will be injected
- * S - the initial state type that the produced data object may take during creation
+ * @typeParam TObj - DataObject (concrete type)
+ * @typeParam I - The input types for the DataObject
  */
-export class DataObjectFactory<TObj extends DataObject<O, S, E>, O, S, E extends IEvent = IEvent>
-    extends PureDataObjectFactory<TObj, O, S, E>
-{
+export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes>
+    extends PureDataObjectFactory<TObj, I> {
     constructor(
         type: string,
-        ctor: new (props: IDataObjectProps<O, S>) => TObj,
+        ctor: new (props: IDataObjectProps<I>) => TObj,
         sharedObjects: readonly IChannelFactory[] = [],
-        optionalProviders: FluidObjectSymbolProvider<O>,
+        optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
         registryEntries?: NamedFluidDataStoreRegistryEntries,
         runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
     ) {

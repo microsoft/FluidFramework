@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 module.exports = {
-	extends: ['@fluidframework/eslint-config-fluid/eslint7'],
+	extends: ['@fluidframework/eslint-config-fluid'],
 	root: true,
 	rules: {
 		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
@@ -23,14 +23,14 @@ module.exports = {
 
 		// Prettier
 		'comma-dangle': 'off',
+		'@typescript-eslint/comma-dangle': 'off',
 		'max-len': 'off',
+		'no-mixed-spaces-and-tabs': 'off',
 
 		// Rules which could be re-enabled (by dropping these overrides, as they are enabled in base config) with some minor fixes:
-		'@typescript-eslint/strict-boolean-expressions': 'off',
+		'@typescript-eslint/no-shadow': 'off',
 		'no-shadow': 'off',
-		'prefer-arrow/prefer-arrow-functions': 'off',
-		'no-null/no-null': 'off', // Payloads use null
-		'no-redeclare': 'off', // Persisted type factories need to be classes to pass the typescript version of this rule
+		'@typescript-eslint/no-unsafe-return': 'off',
 	},
 	overrides: [
 		{

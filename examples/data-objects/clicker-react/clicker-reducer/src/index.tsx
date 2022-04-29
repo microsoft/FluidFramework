@@ -1,8 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -15,10 +16,9 @@ import {
     IFluidState,
     IFluidReducer,
     SyncedDataObject,
-} from "@fluidframework/react";
+} from "@fluid-experimental/react";
 import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
 // ---- Fluid Object w/ Functional React View using the useReducer hook ----
 
@@ -38,9 +38,9 @@ interface IActionReducer
     IFluidDataProps
     > {
     increment: FluidStateUpdateFunction<
-    ICounterReducerViewState,
-    ICounterReducerFluidState,
-    IFluidDataProps
+        ICounterReducerViewState,
+        ICounterReducerFluidState,
+        IFluidDataProps
     >;
 }
 
@@ -60,12 +60,12 @@ export const ActionReducer: IActionReducer = {
 
 function CounterReactFunctionalReducer(
     props: IFluidReducerProps<
-    ICounterReducerViewState,
-    ICounterReducerFluidState,
-    IActionReducer,
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    {},
-    IFluidDataProps
+        ICounterReducerViewState,
+        ICounterReducerFluidState,
+        IActionReducer,
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        {},
+        IFluidDataProps
     >,
 ) {
     const [state, dispatch] = useReducerFluid(props, { value: 0 });
@@ -100,11 +100,11 @@ export class ClickerReducer extends SyncedDataObject {
     constructor(props) {
         super(props);
 
-        this.setFluidConfig<ICounterReducerViewState,ICounterReducerFluidState>(
+        this.setFluidConfig<ICounterReducerViewState, ICounterReducerFluidState>(
             "counter-reducer",
             {
                 syncedStateId: "counter-reducer",
-                fluidToView:  new Map([
+                fluidToView: new Map([
                     [
                         "counter", {
                             type: SharedCounter.name,
@@ -134,32 +134,24 @@ export class ClickerReducer extends SyncedDataObject {
             },
         );
     }
-    /**
-     * Will return a new ClickerReducer view
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div>
-                <CounterReactFunctionalReducer
-                    syncedStateId={"counter-reducer"}
-                    syncedDataObject={this}
-                    reducer={ActionReducer}
-                    selector={{}}
-                />
-            </div>,
-            div,
-        );
-        return div;
-    }
-
-    // #endregion IFluidHTMLView
 }
 
 // ----- FACTORY SETUP -----
-export const ClickerReducerInstantiationFactory = new DataObjectFactory(
-    "clicker-reducer",
-    ClickerReducer,
-    [SharedCounter.getFactory()],
-    {},
-);
-export const fluidExport = ClickerReducerInstantiationFactory;
+export const ClickerReducerInstantiationFactory =
+    new DataObjectFactory(
+        "clicker-reducer",
+        ClickerReducer,
+        [SharedCounter.getFactory()],
+        {},
+    );
+
+const clickerViewCallback = (clicker: ClickerReducer) =>
+    <CounterReactFunctionalReducer
+        syncedStateId={ "counter-reducer" }
+        syncedDataObject={ clicker }
+        reducer={ ActionReducer }
+        selector={{}}
+    />;
+
+export const fluidExport =
+    new ContainerViewRuntimeFactory<ClickerReducer>(ClickerReducerInstantiationFactory, clickerViewCallback);

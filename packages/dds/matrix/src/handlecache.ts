@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -21,7 +21,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
     private handles: Handle[] = [];
     private start = 0;
 
-    constructor (public readonly vector: PermutationVector) { }
+    constructor(public readonly vector: PermutationVector) { }
 
     /**
      * Returns the index of the given position in the 'handles' array as a Uint32.
@@ -56,11 +56,12 @@ export class HandleCache implements IVectorConsumer<Handle> {
 
     /** Update the cache when a handle has been allocated for a given position. */
     public addHandle(position: number, handle: Handle) {
-        assert(isHandleValid(handle));
+        assert(isHandleValid(handle), 0x017 /* "Trying to add invalid handle!" */);
 
         const index = this.getIndex(position);
         if (index < this.handles.length) {
-            assert(!isHandleValid(this.handles[index]));
+            assert(!isHandleValid(this.handles[index]),
+                0x018 /* "Trying to insert handle into position with already valid handle!" */);
             this.handles[index] = handle;
         }
     }
@@ -76,7 +77,8 @@ export class HandleCache implements IVectorConsumer<Handle> {
         for (let pos = start; pos < end; pos++) {
             const { segment, offset } = vector.getContainingSegment(pos);
             const asPerm = segment as PermutationSegment;
-            handles.push(asPerm.start + offset);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            handles.push(asPerm.start + offset!);
         }
 
         return handles;
@@ -85,7 +87,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
     private cacheMiss(position: number) {
         // Coercing 'position' to an Uint32 allows us to handle a negative 'position' value
         // with the same logic that handles 'position' >= length.
-        position >>>= 0;        // eslint-disable-line no-param-reassign
+        const _position = position >>> 0;
 
         // TODO: To bound memory usage, there should be a limit on the maximum size of
         //       handle[].
@@ -94,14 +96,14 @@ export class HandleCache implements IVectorConsumer<Handle> {
         //       the cache to the next MergeTree segment boundary (within the limits of
         //       the handle cache).
 
-        if (position < this.start) {
-            this.handles = this.getHandles(position, this.start).concat(this.handles);
-            this.start = position;
+        if (_position < this.start) {
+            this.handles = this.getHandles(_position, this.start).concat(this.handles);
+            this.start = _position;
             return this.handles[0];
         } else {
-            ensureRange(position, this.vector.getLength());
+            ensureRange(_position, this.vector.getLength());
 
-            this.handles = this.handles.concat(this.getHandles(this.start + this.handles.length, position + 1));
+            this.handles = this.handles.concat(this.getHandles(this.start + this.handles.length, _position + 1));
             return this.handles[this.handles.length - 1];
         }
     }
@@ -123,7 +125,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 
         const index = this.getIndex(start);
         if (index < this.handles.length) {
-            this.handles.length =  index;
+            this.handles.length = index;
         }
     }
 

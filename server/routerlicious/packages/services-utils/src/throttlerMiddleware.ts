@@ -1,11 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { RequestHandler, Request, Response, NextFunction } from "express";
 import safeStringify from "json-stringify-safe";
 import { IThrottler, ILogger, ThrottlingError } from "@fluidframework/server-services-core";
+import { CommonProperties, Lumberjack, ThrottlingTelemetryProperties } from "@fluidframework/server-services-telemetry";
 
 export interface IThrottleMiddlewareOptions {
     /**
@@ -66,31 +67,49 @@ export function throttle(
         };
 
         if (throttleOptions.weight === 0) {
-            logger?.info("Throttle middleware created with 0 weight: Replacing with no-op middleware.");
+            const messageMetaData = {
+                weight: 0,
+                eventName: "throttling",
+            };
+            logger?.info(
+                "Throttle middleware created with 0 weight: Replacing with no-op middleware.",
+                { messageMetaData },
+            );
+            Lumberjack.info(
+                "Throttle middleware created with 0 weight: Replacing with no-op middleware.",
+                {
+                    [CommonProperties.telemetryGroupName]: "throttling",
+                    [ThrottlingTelemetryProperties.weight]: 0,
+                },
+            );
             return noopMiddleware;
         }
 
         return (req, res, next) => {
             const throttleId = getThrottleId(req, throttleOptions);
-            const messageMetaData = {
-                key: throttleId,
-                weight: throttleOptions.weight,
-                eventName: "throttling",
-            };
 
-            logger?.info(`Incrementing throttle count: ${throttleId}`, { messageMetaData });
             try {
                 throttler.incrementCount(throttleId, throttleOptions.weight);
             } catch (e) {
                 if (e instanceof ThrottlingError) {
-                    logger?.info(`Throttled: ${throttleId}`, { messageMetaData: {
-                        ...messageMetaData,
-                        reason: e.message,
-                        retryAfterInSeconds: e.retryAfter,
-                    } });
                     return res.status(e.code).json(e);
                 } else {
-                    logger?.error(`Throttle increment failed: ${safeStringify(e, undefined, 2)}`, { messageMetaData });
+                    logger?.error(
+                        `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
+                        {
+                            messageMetaData: {
+                                key: throttleId,
+                                eventName: "throttling",
+                            },
+                        });
+                    Lumberjack.error(
+                        `Throttle increment failed`,
+                        {
+                            [CommonProperties.telemetryGroupName]: "throttling",
+                            [ThrottlingTelemetryProperties.key]: throttleId,
+                        },
+                        e,
+                    );
                 }
             }
 

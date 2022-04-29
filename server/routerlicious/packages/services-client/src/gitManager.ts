@@ -1,14 +1,15 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { assert } from "@fluidframework/common-utils";
 import * as resources from "@fluidframework/gitresources";
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { ICreateRefParamsExternal, IPatchRefParamsExternal, IGitManager, IHistorian } from "./storage";
+import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
 
 export class GitManager implements IGitManager {
     private readonly blobCache = new Map<string, resources.IBlob>();
@@ -112,13 +113,13 @@ export class GitManager implements IGitManager {
     /**
      * Retrieves the object at the given revision number
      */
-    /* eslint-disable @typescript-eslint/promise-function-async */
-    public getContent(commit: string, path: string): Promise<resources.IBlob> {
+
+    public async getContent(commit: string, path: string): Promise<resources.IBlob> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.historian.getContent(path, commit);
     }
 
-    public createBlob(content: string, encoding: string): Promise<resources.ICreateBlobResponse> {
+    public async createBlob(content: string, encoding: "utf-8" | "base64"): Promise<resources.ICreateBlobResponse> {
         const blob: resources.ICreateBlobParams = {
             content,
             encoding,
@@ -126,30 +127,40 @@ export class GitManager implements IGitManager {
         return this.historian.createBlob(blob);
     }
 
-    public createGitTree(params: resources.ICreateTreeParams): Promise<resources.ITree> {
+    public async createGitTree(params: resources.ICreateTreeParams): Promise<resources.ITree> {
         const treeP = this.historian.createTree(params);
         return treeP;
     }
 
-    public createTree(files: api.ITree): Promise<resources.ITree> {
+    public async createTree(files: api.ITree): Promise<resources.ITree> {
         return this.createTreeCore(files, 0);
     }
-    /* eslint-enable @typescript-eslint/promise-function-async */
 
     public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
         return this.historian.createCommit(commit);
     }
 
+    public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+        return this.historian.createSummary(summary);
+    }
+
+    public async deleteSummary(softDelete: boolean): Promise<void> {
+        return this.historian.deleteSummary(softDelete);
+    }
+
+    public async getSummary(sha: string): Promise<IWholeFlatSummary> {
+        return this.historian.getSummary(sha);
+    }
+
     public async getRef(ref: string): Promise<resources.IRef> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.historian
             .getRef(`heads/${ref}`)
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
             .catch((error) => {
                 if (error === 400 || error === 404) {
-                    // eslint-disable-next-line no-null/no-null
                     return null;
                 } else {
-                    return Promise.reject(error);
+                    throw error;
                 }
             });
     }
@@ -237,9 +248,8 @@ export class GitManager implements IGitManager {
         // Kick off the work to create all the tree values
         const entriesP: Promise<resources.ICreateBlobResponse | resources.ITree>[] = [];
         for (const entry of files.entries) {
-            /* eslint-disable no-case-declarations */
             switch (api.TreeEntry[entry.type]) {
-                case api.TreeEntry.Blob:
+                case api.TreeEntry.Blob: {
                     const entryAsBlob = entry.value as api.IBlob;
 
                     // Symlinks currently directly references a folder off the root of the tree. We adjust
@@ -251,27 +261,24 @@ export class GitManager implements IGitManager {
                     const blobP = this.createBlob(entryAsBlob.contents, entryAsBlob.encoding);
                     entriesP.push(blobP);
                     break;
+                }
 
-                case api.TreeEntry.Tree:
+                case api.TreeEntry.Tree: {
                     const entryAsTree = entry.value as api.ITree;
                     const treeBlobP = this.createTreeCore(entryAsTree, depth + 1);
                     entriesP.push(treeBlobP);
                     break;
-
-                case api.TreeEntry.Commit:
-                    entriesP.push(Promise.resolve({ sha: entry.value as string, url: "" }));
-                    break;
+                }
 
                 default:
-                    return Promise.reject(new Error("Unknown entry type"));
+                    throw new Error("Unknown entry type");
             }
-            /* eslint-enable no-case-declarations */
         }
 
         // Wait for them all to resolve
         const entries = await Promise.all(entriesP);
         const tree: resources.ICreateTreeEntry[] = [];
-        assert(entries.length === files.entries.length);
+        assert(entries.length === files.entries.length, "File entries length is not correct");
 
         // Construct a new tree from the collection of hashes
         for (let i = 0; i < files.entries.length; i++) {

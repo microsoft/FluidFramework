@@ -1,20 +1,27 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import * as moniker from "moniker";
+import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { Deferred } from "@fluidframework/common-utils";
+import { assert, BaseTelemetryNullLogger, Deferred } from "@fluidframework/common-utils";
 import {
     AttachState,
-    IFluidModule,
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidBrowserPackage,
+    IProvideRuntimeFactory,
+    IContainer,
+    IFluidPackage,
+    IFluidCodeDetails,
+    IFluidModuleWithDetails,
+    IFluidModule,
 } from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader";
+import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
+import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
@@ -23,21 +30,24 @@ import {
     resolveFluidPackageEnvironment,
     WebCodeLoader,
 } from "@fluidframework/web-code-loader";
-import { IFluidObject, IFluidPackage, IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { Port } from "webpack-dev-server";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
+import { OdspPersistentCache } from "./odspPersistantCache";
 
 export interface IDevServerUser extends IUser {
     name: string;
 }
 
 export interface IBaseRouteOptions {
-    port: number;
+    port: Port;
     npm?: string;
-    hotSwapContext?: "true" | "false";
 }
 
 export interface ILocalRouteOptions extends IBaseRouteOptions {
@@ -50,19 +60,23 @@ export interface IDockerRouteOptions extends IBaseRouteOptions {
     tenantId?: string;
     tenantSecret?: string;
     bearerSecret?: string;
+    enableWholeSummaryUpload?: boolean;
 }
 
 export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
     mode: "r11s";
+    discoveryEndpoint?: string;
     fluidHost?: string;
     tenantId?: string;
     tenantSecret?: string;
     bearerSecret?: string;
+    enableWholeSummaryUpload?: boolean;
 }
 
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
     mode: "tinylicious";
     bearerSecret?: string;
+    tinyliciousPort?: number;
 }
 
 export interface IOdspRouteOptions extends IBaseRouteOptions {
@@ -81,9 +95,12 @@ export type RouteOptions =
     | ITinyliciousRouteOptions
     | IOdspRouteOptions;
 
-function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
-    if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
-        const dataStoreFactory = fluidModule.fluidExport.IFluidDataStoreFactory;
+function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule):
+    IFluidModuleWithDetails {
+    const fluidModuleExport: FluidObject<IProvideRuntimeFactory & IFluidDataStoreFactory> =
+        fluidModule.fluidExport;
+    if (fluidModuleExport.IRuntimeFactory === undefined) {
+        const dataStoreFactory = fluidModuleExport.IFluidDataStoreFactory;
 
         const defaultFactory = createDataStoreFactory(packageJson.name, dataStoreFactory);
 
@@ -94,13 +111,19 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
             ]),
         );
         return {
-            fluidExport: {
-                IRuntimeFactory: runtimeFactory,
-                IFluidDataStoreFactory: dataStoreFactory,
+            module: {
+                fluidExport: {
+                    IRuntimeFactory: runtimeFactory,
+                },
             },
+            details: { package: packageJson.name, config: { } },
         };
     }
-    return fluidModule;
+
+    return {
+        module: fluidModule,
+        details: { package: packageJson.name, config: { } },
+    };
 }
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
@@ -154,15 +177,28 @@ async function createWebLoader(
     urlResolver: MultiUrlResolver,
     codeDetails: IFluidCodeDetails,
     testOrderer: boolean = false,
+    odspPersistantCache?: IPersistedCache,
 ): Promise<Loader> {
-    let documentServiceFactory: IDocumentServiceFactory = getDocumentServiceFactory(documentId, options);
+    const odspHostStoragePolicy: HostStoragePolicy = {};
+    if (window.location.hash === "#binarySnapshot") {
+        assert(options.mode === "spo-df" || options.mode === "spo",
+            0x240 /* "Binary format snapshot only for odsp driver!!" */);
+        odspHostStoragePolicy.fetchBinarySnapshotFormat = true;
+    }
+    let documentServiceFactory: IDocumentServiceFactory =
+        getDocumentServiceFactory(documentId, options, odspPersistantCache, odspHostStoragePolicy);
     // Create the inner document service which will be wrapped inside local driver. The inner document service
     // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
     if (testOrderer) {
         const resolvedUrl = await urlResolver.resolve(await urlResolver.createRequestForCreateNew(documentId));
-        const innerDocumentService = await documentServiceFactory.createDocumentService(resolvedUrl);
+        const innerDocumentService = await documentServiceFactory.createDocumentService(
+            resolvedUrl,
+            undefined, // logger
+            false, // clientIsSummarizer
+        );
         documentServiceFactory = new LocalDocumentServiceFactory(
             deltaConns.get(documentId),
+            undefined,
             innerDocumentService);
     }
 
@@ -178,8 +214,15 @@ async function createWebLoader(
             new MultiUrlResolver(documentId, window.location.origin, options, true) : urlResolver,
         documentServiceFactory,
         codeLoader,
-        options: { hotSwapContext: options.hotSwapContext === "true" },
     });
+}
+
+const containers: IContainer[] = [];
+// A function for testing to make sure the containers are not dirty and in sync (at the same seq num)
+export function isSynchronized() {
+    if (containers.length === 0) { return true; }
+    const seqNum = containers[0].deltaManager.lastSequenceNumber;
+    return containers.every((c) => !c.isDirty && c.deltaManager.lastSequenceNumber === seqNum);
 }
 
 export async function start(
@@ -201,7 +244,7 @@ export async function start(
     const manualAttach: boolean = id === "manualAttach";
     const testOrderer = id === "testorderer";
     if (autoAttach || manualAttach) {
-        documentId = moniker.choose();
+        documentId = (sillyname() as string).toLowerCase().split(" ").join("-");
         url = url.replace(id, `doc/${documentId}`);
     }
 
@@ -210,35 +253,44 @@ export async function start(
         config: {},
     };
 
-    let urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
+    const urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
+    const odspPersistantCache = new OdspPersistentCache();
 
     // Create the loader that is used to load the Container.
-    let loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
+    const loader1 = await createWebLoader(
+        documentId,
+        fluidModule,
+        options,
+        urlResolver,
+        codeDetails,
+        testOrderer,
+        odspPersistantCache);
 
-    let container1: Container;
+    let container1: IContainer;
     if (autoAttach || manualAttach) {
         // For new documents, create a detached container which will be attached later.
         container1 = await loader1.createDetachedContainer(codeDetails);
+        containers.push(container1);
     } else {
         // For existing documents, we try to load the container with the given documentId.
         const documentUrl = `${window.location.origin}/${documentId}`;
-        container1 = await loader1.resolve({ url: documentUrl });
-
-        /**
-         * For existing documents, the container should already exist. If it doesn't, we treat this as the new
-         * document scenario.
-         * Create a new `documentId`, a new Loader and a new detached container.
-         */
-        if (!container1.existing) {
-            console.warn(`Document with id ${documentId} not found. Falling back to creating a new document.`);
-            container1.close();
-
-            documentId = moniker.choose();
-            url = url.replace(id, documentId);
-            urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
-            loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
-            container1 = await loader1.createDetachedContainer(codeDetails);
+        // This functionality is used in odsp driver to prefetch the latest snapshot and cache it so
+        // as to avoid the network call to fetch trees latest.
+        if (window.location.hash === "#prefetch") {
+            assert(options.mode === "spo-df" || options.mode === "spo",
+                0x1ea /* "Prefetch snapshot only available for odsp!" */);
+            const prefetched = await prefetchLatestSnapshot(
+                await urlResolver.resolve({ url: documentUrl }),
+                async () => options.odspAccessToken,
+                odspPersistantCache,
+                false /** forceAccessTokenViaAuthorizationHeader */,
+                new BaseTelemetryNullLogger(),
+                undefined,
+            );
+            assert(prefetched, 0x1eb /* "Snapshot should be prefetched!" */);
         }
+        container1 = await loader1.resolve({ url: documentUrl });
+        containers.push(container1);
     }
 
     let leftDiv: HTMLDivElement = div;
@@ -275,6 +327,8 @@ export async function start(
             rightDiv,
             manualAttach,
             testOrderer,
+            // odsp-backed containers require special treatment
+            !options.mode.startsWith("spo"),
         );
     }
 
@@ -286,6 +340,7 @@ export async function start(
         // Create a new request url from the resolvedUrl of the first container.
         const requestUrl2 = await urlResolver.getAbsoluteUrl(container1.resolvedUrl, "");
         const container2 = await loader2.resolve({ url: requestUrl2 });
+        containers.push(container2);
 
         await getFluidObjectAndRender(container2, fluidObjectUrl, rightDiv);
         // Handle the code upgrade scenario (which fires contextChanged)
@@ -295,7 +350,7 @@ export async function start(
     }
 }
 
-async function getFluidObjectAndRender(container: Container, url: string, div: HTMLDivElement) {
+async function getFluidObjectAndRender(container: IContainer, url: string, div: HTMLDivElement) {
     const response = await container.request({
         headers: {
             mountableView: true,
@@ -310,7 +365,7 @@ async function getFluidObjectAndRender(container: Container, url: string, div: H
         return false;
     }
 
-    const fluidObject = response.value as IFluidObject;
+    const fluidObject: FluidObject<IFluidMountableView> = response.value;
     if (fluidObject === undefined) {
         return;
     }
@@ -339,7 +394,7 @@ async function getFluidObjectAndRender(container: Container, url: string, div: H
  */
 async function attachContainer(
     loader: Loader,
-    container: Container,
+    container: IContainer,
     fluidObjectUrl: string,
     urlResolver: MultiUrlResolver,
     documentId: string,
@@ -348,16 +403,28 @@ async function attachContainer(
     rightDiv: HTMLDivElement | undefined,
     manualAttach: boolean,
     testOrderer: boolean,
+    shouldUseContainerId: boolean,
 ) {
     // This is called once loading is complete to replace the url in the address bar with the new `url`.
-    const replaceUrl = () => {
-        window.history.replaceState({}, "", url);
-        document.title = documentId;
+    const replaceUrl = (resolvedUrl: IResolvedUrl) => {
+        let [docUrl, title] = [url, documentId];
+        if (shouldUseContainerId) {
+            // for a r11s and t9s container we need to use the actual ID
+            // generated by the backend and encoded in the resolved URL,
+            // as opposed to the ID requested on the client prior to attaching the container.
+            // NOTE: in case of an odsp container, the ID in the resolved URL cannot be used for
+            // referring/opening the attached container.
+            ensureFluidResolvedUrl(resolvedUrl);
+            docUrl = url.replace(documentId, resolvedUrl.id);
+            title = resolvedUrl.id;
+        }
+        window.history.replaceState({}, "", docUrl);
+        document.title = title;
     };
 
     let currentContainer = container;
     let currentLeftDiv = leftDiv;
-    const attached = new Deferred();
+    const attached = new Deferred<void>();
     // To test orderer, we use local driver as wrapper for actual document service. So create request
     // using local resolver.
     const attachUrl = testOrderer ? new LocalResolver().createCreateNewRequest(documentId)
@@ -415,7 +482,7 @@ async function attachContainer(
             currentContainer.attach(attachUrl)
                 .then(() => {
                     attachDiv.remove();
-                    replaceUrl();
+                    replaceUrl(currentContainer.resolvedUrl);
 
                     if (rightDiv) {
                         rightDiv.innerText = "";
@@ -433,7 +500,7 @@ async function attachContainer(
         }
     } else {
         await currentContainer.attach(attachUrl);
-        replaceUrl();
+        replaceUrl(currentContainer.resolvedUrl);
         attached.resolve();
     }
     await attached.promise;

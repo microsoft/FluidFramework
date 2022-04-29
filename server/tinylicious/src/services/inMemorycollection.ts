@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -12,6 +12,17 @@ export class Collection<T> implements ICollection<T> {
     private readonly collection = new Array<T>();
 
     constructor() {
+    }
+
+    public aggregate(group: any, options?: any): any {
+        throw new Error("Method Not Implemented");
+    }
+
+    public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
+        throw new Error("Method Not Implemented");
+    }
+    public async distinct(key: any, query: any): Promise<any> {
+        throw new Error("Method Not Implemented");
     }
 
     public async find(query: any, sort?: any): Promise<T[]> {
@@ -82,7 +93,6 @@ export class Collection<T> implements ICollection<T> {
 
     private insertOneInternal(value: any): any {
         this.collection.push(value);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value;
     }
 
@@ -94,7 +104,6 @@ export class Collection<T> implements ICollection<T> {
             const found = this.findInternal(query);
             returnValue = found[0];
         }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return returnValue === undefined ? null : returnValue;
     }
 

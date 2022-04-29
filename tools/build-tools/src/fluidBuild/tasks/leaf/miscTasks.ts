@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { LeafTask } from "./leafTask";
+import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
 import { logVerbose } from "../../../common/logging";
 import * as path from "path";
@@ -33,7 +33,7 @@ export class LesscTask extends LeafTask {
                 this.logVerboseNotUpToDate();
             }
             return result;
-        } catch (e) {
+        } catch (e: any) {
             logVerbose(`${this.node.pkg.nameColored}: ${e.message}`);
             this.logVerboseTrigger("failed to get file stats");
             return false;
@@ -92,7 +92,7 @@ export class CopyfilesTask extends LeafTask {
         }
 
         const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg!);
-        const srcFiles = await globFn(srcGlob);
+        const srcFiles = await globFn(srcGlob, { nodir: true });
         const directory = toPosixPath(this.node.pkg.directory);
         const dstPath = directory + "/" + this.copyDstArg;
         const dstFiles = srcFiles.map(match => {
@@ -105,7 +105,7 @@ export class CopyfilesTask extends LeafTask {
                 }
                 currRelPath = currRelPath.substring(index + 1);
             }
-            
+
             return path.join(dstPath, currRelPath);
         });
         return this.isFileSame(srcFiles, dstFiles);
@@ -129,7 +129,7 @@ export class CopyfilesTask extends LeafTask {
                 }
             }
             return true;
-        } catch (e) {
+        } catch (e: any) {
             logVerbose(`${this.node.pkg.nameColored}: ${e.message}`);
             this.logVerboseTrigger("failed to get file stats");
             return false;
@@ -150,3 +150,17 @@ export class GenVerTask extends LeafTask {
         return false;
     }
 };
+
+export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
+    protected get doneFile(): string {
+        return "package.json.done.build.log"
+    }
+    protected async getDoneFileContent(): Promise<string | undefined> {
+        return JSON.stringify(this.package.packageJson);
+    }
+}
+
+export class TypeValidationTask extends PackageJsonChangedTask {
+    protected addDependentTasks(dependentTasks: LeafTask[]): void {
+    }
+}

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -87,6 +87,7 @@ function getSimpleVersion(file_version, arg_build_num, arg_release, patch) {
 
 function main() {
     let arg_build_num;
+    let arg_test_build = false;
     let arg_patch = false;
     let arg_release = false;
     let file_version;
@@ -94,6 +95,10 @@ function main() {
     for (let i = 2; i < process.argv.length; i++) {
         if (process.argv[i] === "--build") {
             arg_build_num = process.argv[++i];
+            continue;
+        }
+        if (process.argv[i] === "--testBuild") {
+            arg_test_build = true;
             continue;
         }
         if (process.argv[i] === "--release") {
@@ -124,16 +129,25 @@ function main() {
         }
     }
 
+    if (!arg_test_build) {
+        arg_test_build = process.env["TEST_BUILD"] && (process.env["TEST_BUILD"].toLowerCase() === "true");
+    }
+
     if (!arg_patch) {
-        arg_patch = (process.env["VERSION_PATCH"] === "true");
+        arg_patch = process.env["VERSION_PATCH"] && (process.env["VERSION_PATCH"].toLowerCase() === "true");
     }
 
     if (!arg_release) {
-        arg_release = (process.env["VERSION_RELEASE"] === "release");
+        arg_release = process.env["VERSION_RELEASE"] && (process.env["VERSION_RELEASE"].toLowerCase() === "release");
     }
 
     if (!arg_tag) {
         arg_tag = process.env["VERSION_TAGNAME"];
+    }
+
+    if (arg_test_build && arg_release) {
+        console.error("ERROR: Test build shouldn't be released");
+        process.exit(2);
     }
 
     if (!file_version) {
@@ -157,9 +171,16 @@ function main() {
     }
 
     // Generate and print the version to console
-    const version = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
+    const simpleVersion = getSimpleVersion(file_version, arg_build_num, arg_release, arg_patch);
+    const version = arg_test_build ? `0.0.0-${arg_build_num}-test` : simpleVersion;
     console.log(`version=${version}`);
     console.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
+    // Output the code version for test build
+    if (arg_test_build) {
+        const codeVersion = `${simpleVersion}-test`;
+        console.log(`codeVersion=${codeVersion}`);
+        console.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
+    }
     if (arg_release) {
         let isLatest = true;
         if (arg_tag) {

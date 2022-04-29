@@ -1,20 +1,24 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IMergeTreeGroupMsg } from "./ops";
+import {
+    IMergeTreeGroupMsg,
+    IMergeTreeOp,
+    MergeTreeDeltaType,
+} from "./ops";
 import { PropertySet } from "./properties";
-import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from "./";
+import { ISegment } from "./mergeTree";
 
 export type MergeTreeDeltaOperationType =
     MergeTreeDeltaType.ANNOTATE | MergeTreeDeltaType.INSERT | MergeTreeDeltaType.REMOVE;
 
 // Note: Assigned negative integers to avoid clashing with MergeTreeDeltaType
 export const enum MergeTreeMaintenanceType {
-    APPEND  = -1,
-    SPLIT   = -2,
+    APPEND = -1,
+    SPLIT = -2,
     /**
      * Notification that a segment has been unlinked from the MergeTree.  This occurs during
      * Zamboni when:
@@ -24,7 +28,12 @@ export const enum MergeTreeMaintenanceType {
      *
      *    b) The segment's tracking collection is empty (e.g., not being tracked for undo/redo).
      */
-    UNLINK  = -3,
+    UNLINK = -3,
+    /**
+     * Notification that a local change has been acknowledged by the server.
+     * This means that it has made the round trip to the server and has had a sequence number assigned.
+     */
+    ACKNOWLEDGED = -4,
 }
 
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
@@ -70,4 +79,4 @@ export type MergeTreeDeltaCallback =
 export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> { }
 
 export type MergeTreeMaintenanceCallback =
-    (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs) => void;
+    (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs, opArgs: IMergeTreeDeltaOpArgs | undefined) => void;

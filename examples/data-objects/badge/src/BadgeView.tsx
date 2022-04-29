@@ -1,18 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import React, { useState, useMemo } from "react";
 import {
-    ActivityItem,
     DefaultButton,
     PrimaryButton,
-    DirectionalHint,
     Dialog,
     DialogFooter,
-    HoverCard,
-    HoverCardType,
-    Icon,
     initializeIcons,
     ColorPicker,
     getColorFromString,
@@ -25,7 +20,6 @@ import { MotionAnimations } from "@uifabric/fluent-theme";
 import { IBadgeViewProps, IBadgeType } from "./Badge.types";
 import {
     getItemsFromOptionsMap,
-    getRelativeDate,
     getButtonStyles,
 } from "./helpers";
 
@@ -38,25 +32,27 @@ initializeIcons();
 export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => {
     const {
         options,
-        historyItems,
         selectedOption,
         addOption,
         changeSelectedOption,
     } = props;
 
-    const currentOption = options.find((option) => option.key === selectedOption);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const currentOption = options.find((option) => option.key === selectedOption)!;
 
     // Set up local state for our custom status creator
 
     const [isCustomStatusVisible, setIsCustomStatusVisible] = useState<boolean>(false);
     const [customStatusColor, setCustomStatusColor] = useState<IColor>(
-        getColorFromString("#fff"),
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        getColorFromString("#fff")!,
     );
     const [customStatusText, setCustomStatusText] = useState<string>("");
 
     // Set up event handlers
-    const onStatusClick = (_, item: IContextualMenuItem): void => {
-        switch (item.key) {
+    const onStatusClick = (_, item: IContextualMenuItem | undefined): void => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        switch (item!.key) {
             case "new":
                 setIsCustomStatusVisible(true);
                 break;
@@ -82,24 +78,8 @@ export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => 
         setCustomStatusColor(colorObj);
     };
 
-    const updateCustomStatusText = (_, newValue: string) => {
-        setCustomStatusText(newValue);
-    };
-
-    // Create the content for the history card
-    const historyCardContent = (): JSX.Element => {
-        const history = historyItems.map((x, i) => {
-            return (
-                <ActivityItem
-                    key={i}
-                    activityDescription={`Set to ${x.value.text}`}
-                    timeStamp={getRelativeDate(x.timestamp)}
-                    activityIcon={<Icon {...x.value.iconProps} />}
-                />
-            );
-        });
-
-        return <div style={{ padding: "16px 24px" }}>{history}</div>;
+    const updateCustomStatusText = (_, newValue: string | undefined) => {
+        setCustomStatusText(newValue ?? "");
     };
 
     // Only recompute button styles when current option changes
@@ -116,27 +96,19 @@ export const BadgeView: React.FC<IBadgeViewProps> = (props: IBadgeViewProps) => 
                 display: "inline-block",
             }}
         >
-            <HoverCard
-                plainCardProps={{
-                    onRenderPlainCard: historyCardContent,
-                    directionalHint: DirectionalHint.rightTopEdge,
+            <DefaultButton
+                text={currentOption.text}
+                iconProps={{
+                    iconName: currentOption.iconProps.iconName,
                 }}
-                type={HoverCardType.plain}
-            >
-                <DefaultButton
-                    text={currentOption.text}
-                    iconProps={{
-                        iconName: currentOption.iconProps.iconName,
-                    }}
-                    menuProps={{
-                        isBeakVisible: false,
-                        shouldFocusOnMount: true,
-                        items: getItemsFromOptionsMap(options),
-                        onItemClick: onStatusClick,
-                    }}
-                    styles={buttonStyles}
-                />
-            </HoverCard>
+                menuProps={{
+                    isBeakVisible: false,
+                    shouldFocusOnMount: true,
+                    items: getItemsFromOptionsMap(options),
+                    onItemClick: onStatusClick,
+                }}
+                styles={buttonStyles}
+            />
 
             <Dialog
                 hidden={!isCustomStatusVisible}

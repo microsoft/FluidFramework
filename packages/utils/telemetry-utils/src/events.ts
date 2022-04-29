@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -7,6 +7,9 @@ import { EventEmitter } from "events";
 import {
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
+
+export const connectedEventName = "connected";
+export const disconnectedEventName = "disconnected";
 
 export function safeRaiseEvent(
     emitter: EventEmitter,
@@ -27,11 +30,11 @@ export function raiseConnectedEvent(
     clientId?: string) {
     try {
         if (connected) {
-            emitter.emit("connected", clientId);
+            emitter.emit(connectedEventName, clientId);
         } else {
-            emitter.emit("disconnected");
+            emitter.emit(disconnectedEventName);
         }
     } catch (error) {
-        logger.sendErrorEvent({ eventName: "RaiseConnectedEventError", clientId }, error);
+        logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
     }
 }

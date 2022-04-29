@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,13 +8,13 @@ import path from "path";
 import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
+import { IFluidPackage } from "@fluidframework/container-definitions";
 import {
     getMicrosoftConfiguration,
     OdspTokenManager,
     odspTokensCache,
     OdspTokenConfig,
 } from "@fluidframework/tool-utils";
-import { IFluidPackage } from "@fluidframework/core-interfaces";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils";
 import Axios from "axios";
 import { RouteOptions } from "./loader";
@@ -27,15 +27,40 @@ let odspAuthLock: Promise<void> | undefined;
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
-export const before = async (app: express.Application) => {
+/**
+ * @returns A portion of a webpack config needed to add support for the
+ * webpack-dev-server to use the webpack-fluid-loader.
+ */
+export function devServerConfig(baseDir: string, env: RouteOptions) {
+    return {
+        devServer: {
+            static: {
+                directory: path.join(
+                    baseDir,
+                    "/node_modules/@fluid-tools/webpack-fluid-loader/dist/fluid-loader.bundle.js",
+                ),
+                publicPath: "/fluid-loader.bundle.js",
+            },
+            devMiddleware: {
+                publicPath: "/dist",
+            },
+            onBeforeSetupMiddleware: (devServer) => before(devServer.app),
+            onAfterSetupMiddleware: (devServer) => after(devServer.app, devServer, baseDir, env),
+        },
+    };
+}
+
+export const before = (app: express.Application) => {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
-    app.get("/", (req, res) => res.redirect(`/new`));
+    app.get("/", (req, res) => res.redirect("/new"));
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
     const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
-    const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
+    const config: nconf.Provider = nconf
+        .env({ parseValules: true, inputSeparator: "__" })
+        .file(path.join(baseDir, "config.json"));
     const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
         type: "browserLogin",
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -50,11 +75,14 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             break;
         }
         case "tinylicious": {
-            Axios.get(tinyliciousUrls.hostUrl).then().catch((err) => {
-                throw new Error(`
+            const hostUrl = tinyliciousUrls(options).hostUrl;
+            Axios.get(hostUrl).then().catch((err) => {
+                throw new Error(`${err.message}
 
-                You're running the Webpack-Fluid-Loader with Tinylicious.
-                Tinylicious isn't running. Start the Fluid Framework Tinylicious server.
+                ERROR: Cannot connect to Tinylicious service at URL: ${hostUrl}
+
+                Please ensure the Fluid Framework Tinylicious service is running.
+                (See https://www.npmjs.com/package/tinylicious for details.)
                 `);
             });
             break;
@@ -68,6 +96,11 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         options.bearerSecret = options.bearerSecret || config.get("fluid:webpack:bearerSecret");
         if (options.mode !== "tinylicious") {
             options.tenantId = options.tenantId || config.get("fluid:webpack:tenantId") || "fluid";
+            options.enableWholeSummaryUpload =
+                options.enableWholeSummaryUpload ?? config.get("fluid:webpack:enableWholeSummaryUpload") ?? false;
+            if (typeof options.enableWholeSummaryUpload === "string") {
+                options.enableWholeSummaryUpload = options.enableWholeSummaryUpload === "true";
+            }
             if (options.mode === "docker") {
                 options.tenantSecret = options.tenantSecret
                     || config.get("fluid:webpack:docker:tenantSecret")
@@ -76,6 +109,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
             }
             if (options.mode === "r11s") {
+                options.discoveryEndpoint = options.discoveryEndpoint || config.get("fluid:webpack:discoveryEndpoint");
                 options.fluidHost = options.fluidHost || config.get("fluid:webpack:fluidHost");
             }
         }
@@ -100,6 +134,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 return false;
             }
 
+            // eslint-disable-next-line no-unmodified-loop-condition
             while (odspAuthLock !== undefined) {
                 await odspAuthLock;
             }
@@ -228,6 +263,9 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         }
     });
 
+    // Ignore favicon.ico urls.
+    app.get("/favicon.ico", (req: express.Request, res) => res.end());
+
     /**
      * For urls of format - http://localhost:8080/<id>.
      * If the `id` is "new" or "manualAttach", the user is trying to create a new document.
@@ -235,13 +273,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
      * http://localhost:8080/doc/<id>.
      */
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    app.get("/:id*", async (req, res) => {
-        // Ignore favicon.ico urls.
-        if (req.url === "/favicon.ico") {
-            res.end();
-            return;
-        }
-
+    app.get("/:id*", async (req: express.Request, res) => {
         const documentId = req.params.id;
         // For testing orderer, we use the path: http://localhost:8080/testorderer. This will use the local storage
         // instead of using actual storage service to which the connection is made. This will enable testing
@@ -279,7 +311,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     <div id="content" style="min-height: 100%;">
     </div>
 
-    <script src="/node_modules/@fluidframework/webpack-fluid-loader/dist/fluid-loader.bundle.js"></script>
+    <script src="/fluid-loader.bundle.js"></script>
     ${packageJson.fluid.browser.umd.files.map((file) => `<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};

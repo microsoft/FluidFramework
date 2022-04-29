@@ -1,12 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { ISubscriber, IPubSub } from "@fluidframework/server-memory-orderer";
+import { Server } from "socket.io";
 
 export class PubSubPublisher implements IPubSub {
-    constructor(private readonly io: SocketIO.Server) {}
+    constructor(private readonly io: Server) {}
 
     // Publish to all sockets subscribed to this topic in the SocketIO server.
     public publish(topic: string, event: string, ...args: any[]): void {

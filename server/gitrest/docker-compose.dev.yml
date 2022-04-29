@@ -1,0 +1,10 @@
+version: '3'
+services:
+    gitrest:
+        volumes:
+            - .:/home/node/server
+            - /home/node/server/node_modules/nodegit
+networks:
+  default:
+      external:
+          name: routerlicious_default

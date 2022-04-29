@@ -1,9 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IFluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { launchCLI } from "./cli";
 
@@ -17,7 +17,7 @@ async function fetchCore(loader: Loader, url: string) {
         return;
     }
 
-    const fluidObject = response.value as IFluidObject;
+    const fluidObject: FluidObject = response.value;
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     launchCLI(fluidObject);

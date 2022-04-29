@@ -1,19 +1,21 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MergeTree, MergeTreeDeltaType, MergeTreeMaintenanceType, TextSegment } from "../";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
+import { MergeTree } from "../mergeTree";
+import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
+import { MergeTreeDeltaType } from "../ops";
+import { TextSegment } from "../textSegment";
 import { countOperations } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
     const localClientId = 17;
     let currentSequenceNumber: number;
-    const branchId = 0;
     beforeEach(() => {
         mergeTree = new MergeTree();
         mergeTree.insertSegments(
@@ -27,8 +29,7 @@ describe("MergeTree", () => {
         mergeTree.startCollaboration(
             localClientId,
             /* minSeq: */ currentSequenceNumber,
-            /* currentSeq: */ currentSequenceNumber,
-            branchId);
+            /* currentSeq: */ currentSequenceNumber);
     });
 
     describe("markRangeRemoved", () => {
@@ -42,7 +43,7 @@ describe("MergeTree", () => {
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
@@ -64,7 +65,7 @@ describe("MergeTree", () => {
                 /* clientId: */ localClientId,
                 /* seq: */ UnassignedSequenceNumber,
                 /* overwrite: */ false,
-                /* opArgs */ undefined);
+                /* opArgs */ undefined as any);
 
             // In order for the removed segment to unlinked by zamboni, we need to ACK the segment
             // and advance the collaboration window's minSeq past the removedSeq.
@@ -88,6 +89,7 @@ describe("MergeTree", () => {
                 [MergeTreeDeltaType.REMOVE]: 1,
                 [MergeTreeMaintenanceType.SPLIT]: 2,
                 [MergeTreeMaintenanceType.UNLINK]: 1,
+                [MergeTreeMaintenanceType.ACKNOWLEDGED]: 1,
             });
         });
 
@@ -102,7 +104,7 @@ describe("MergeTree", () => {
                 remoteClientId,
                 ++remoteSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             const count = countOperations(mergeTree);
 
@@ -113,7 +115,7 @@ describe("MergeTree", () => {
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
@@ -132,7 +134,7 @@ describe("MergeTree", () => {
                 localClientId,
                 UnassignedSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             const count = countOperations(mergeTree);
 
@@ -143,10 +145,40 @@ describe("MergeTree", () => {
                 remoteClientId,
                 ++remoteSequenceNumber,
                 false,
-                undefined);
+                undefined as any);
 
             assert.deepStrictEqual(count, {
                 [MergeTreeDeltaType.REMOVE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
+        });
+
+        it("Local delete shadows remote", () => {
+            const remoteClientId: number = 35;
+            let remoteSequenceNumber = currentSequenceNumber;
+
+            mergeTree.markRangeRemoved(
+                3,
+                6,
+                currentSequenceNumber,
+                localClientId,
+                UnassignedSequenceNumber,
+                false,
+                undefined as any);
+
+            const count = countOperations(mergeTree);
+
+            mergeTree.markRangeRemoved(
+                4,
+                5,
+                remoteSequenceNumber,
+                remoteClientId,
+                ++remoteSequenceNumber,
+                false,
+                undefined as any);
+
+            assert.deepStrictEqual(count, {
+                /* MergeTreeDeltaType.REMOVE is absent as it should not be fired. */
                 [MergeTreeMaintenanceType.SPLIT]: 2,
             });
         });

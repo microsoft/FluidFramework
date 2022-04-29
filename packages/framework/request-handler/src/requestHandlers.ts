@@ -1,15 +1,16 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    IFluidObject,
     IResponse,
     IRequest,
     IFluidHandle,
     IFluidLoadable,
+    FluidObject,
+    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -25,23 +26,35 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IContainer
     => Promise<IResponse | undefined>;
 
 /**
- * @deprecated - please avoid adding new references to this API!
- * It exposes internal container guts to external world, which is not ideal.
- * It also relies heavily on internal routing schema (formation of handle URIs) which will change in future
- * And last, but not least, it does not allow any policy to be implemented around GC of data stores exposed
- * through internal URIs. I.e. if there are no other references to such objects, they will be GC'd and
- * external links would get broken. Maybe that's what is needed in some cases, but better, more centralized
- * handling of external URI to internal handle is required (in future, we will support weak handle references,
- * that will allow any GC policy to be implemented by container authors.)
+ * A request handler to expose access to all root data stores in the container by id.
+ * @param request - the request for the root data store.  The first path part must be the data store's ID.
+ * @param runtime - the container runtime
+ * @returns the result of the request
  */
-export const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-    runtime.IFluidHandleContext.resolveHandle(request);
+export const rootDataStoreRequestHandler = async (request: IRequest, runtime: IContainerRuntime) => {
+    const requestParser = RequestParser.create(request);
+    const id = requestParser.pathParts[0];
+    const wait = typeof request.headers?.wait === "boolean" ? request.headers.wait : undefined;
+    let rootDataStore: IFluidRouter;
+    try {
+        // getRootDataStore currently throws if the data store is not found
+        rootDataStore = await runtime.getRootDataStore(id, wait);
+    } catch (error) {
+        return undefined; // continue search
+    }
+    try {
+        return rootDataStore.IFluidRouter.request(requestParser.createSubRequest(1));
+    } catch (error) {
+        return { status: 500, mimeType: "fluid/object", value: error };
+    }
+};
 
-export const createFluidObjectResponse = (fluidObject: IFluidObject) => {
+export const createFluidObjectResponse = (fluidObject: FluidObject):
+    { status: 200, mimeType: "fluid/object", value: FluidObject } => {
     return { status: 200, mimeType: "fluid/object", value: fluidObject };
 };
 
-class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle<T> {
+class LegacyUriHandle<T = FluidObject & IFluidLoadable> implements IFluidHandle<T> {
     public readonly isAttached = true;
 
     public get IFluidHandle(): IFluidHandle { return this; }
@@ -50,7 +63,7 @@ class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle
     }
 
     public attachGraph() {
-        assert(false);
+        assert(false, 0x0ca /* "Trying to use legacy graph attach!" */);
     }
 
     public async get(): Promise<any> {
@@ -67,8 +80,7 @@ class LegacyUriHandle<T = IFluidObject & IFluidLoadable> implements IFluidHandle
     }
 }
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function handleFromLegacyUri<T = IFluidObject & IFluidLoadable>(
+export function handleFromLegacyUri<T = FluidObject & IFluidLoadable>(
     uri: string,
     runtime: IContainerRuntimeBase,
 ): IFluidHandle<T> {

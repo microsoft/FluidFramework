@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -84,7 +84,7 @@ export async function getResolvedFluidRoot() {
 
     const resolvedRoot = path.resolve(root);
     if (!existsSync(resolvedRoot)) {
-        console.error(`ERROR: Repo root '${resolvedRoot}' not exist.`);
+        console.error(`ERROR: Repo root '${resolvedRoot}' does not exist.`);
         process.exit(-102);
     }
 

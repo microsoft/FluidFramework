@@ -1,11 +1,16 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
-import { IHistorian } from "@fluidframework/server-services-client";
+import {
+    IHistorian,
+    IWholeFlatSummary,
+    IWholeSummaryPayload,
+    IWriteSummaryResponse,
+} from "@fluidframework/server-services-client";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 import { TestDb } from "./testCollection";
@@ -74,7 +79,7 @@ export class TestHistorian implements IHistorian {
 
     public async createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
         const _id = await gitHashFile(IsoBuffer.from(blob.content, blob.encoding));
-        await this.blobs.insertOne({
+        await this.blobs.findOrCreate({ _id }, {
             _id,
             ...blob,
             value: blob,
@@ -140,6 +145,18 @@ export class TestHistorian implements IHistorian {
         const _id = commit.tree;
         await this.commits.insertOne({ _id, ...commit, value: commit });
         return this.getCommit(_id);
+    }
+
+    public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+        throw new Error("Not Supported");
+    }
+
+    public async deleteSummary(softDelete: boolean): Promise<void> {
+        throw new Error("Not Supported");
+    }
+
+    public async getSummary(sha: string): Promise<IWholeFlatSummary> {
+        throw new Error("Not Supported");
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -215,7 +232,7 @@ export class TestHistorian implements IHistorian {
                 url: "",
                 tree: [],
             };
-            for (const entry of tree.tree ?? tree.value?.tree) {
+            for (const entry of tree.tree ?? tree.value?.tree ?? []) {
                 const entryPath: string = path === "" ? entry.path : `${path}/${entry.path}`;
                 const treeEntry: git.ITreeEntry = {
                     mode: entry.mode,

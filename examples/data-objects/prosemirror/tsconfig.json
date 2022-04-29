@@ -8,7 +8,6 @@
         "target": "es6",
         "outDir": "dist",
         "jsx": "react",
-        "strictNullChecks": false,
         "types": [
             "node"
         ]

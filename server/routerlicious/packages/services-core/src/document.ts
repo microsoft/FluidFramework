@@ -1,12 +1,13 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IRangeTrackerSnapshot } from "@fluidframework/common-utils";
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IProtocolState, ISummaryTree, ICommittedProposal } from "@fluidframework/protocol-definitions";
-import { IGitCache } from "@fluidframework/server-services-client";
+import { IGitCache, ISession } from "@fluidframework/server-services-client";
+import { LambdaName } from "./lambdas";
+import { INackMessagesControlMessageContents, NackMessagesType } from "./messages";
 
 export interface IDocumentDetails {
     existing: boolean;
@@ -14,7 +15,7 @@ export interface IDocumentDetails {
 }
 
 export interface IDocumentStorage {
-    getDocument(tenantId: string, documentId: string): Promise<any>;
+    getDocument(tenantId: string, documentId: string): Promise<IDocument>;
 
     getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails>;
 
@@ -32,26 +33,27 @@ export interface IDocumentStorage {
         summary: ISummaryTree,
         sequenceNumber: number,
         term: number,
+        initialHash: string,
+        ordererUrl: string,
+        historianUrl: string,
         values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
 }
 
 export interface IClientSequenceNumber {
     // Whether or not the client can expire
     canEvict: boolean;
-    clientId: string;
+    clientId: string | undefined;
     lastUpdate: number;
     nack: boolean;
     referenceSequenceNumber: number;
     clientSequenceNumber: number;
     scopes: string[];
+    serverMetadata?: any;
 }
 
 export interface IDeliState {
-    // Branch related mapping
-    branchMap: IRangeTrackerSnapshot;
-
     // List of connected clients
-    clients: IClientSequenceNumber[];
+    clients: IClientSequenceNumber[] | undefined;
 
     // Durable sequence number at logOffset
     durableSequenceNumber: number;
@@ -62,11 +64,27 @@ export interface IDeliState {
     // Sequence number at logOffset
     sequenceNumber: number;
 
+    // Signal number for the deli client at logOffset
+    signalClientConnectionNumber: number;
+
+    // Rolling hash at sequenceNumber
+    expHash1: string;
+
     // Epoch of stream provider
     epoch: number;
 
     // Term at logOffset
     term: number;
+
+    // Last sent minimum sequence number
+    lastSentMSN: number | undefined;
+
+    // Nack messages state
+    nackMessages: [NackMessagesType, INackMessagesControlMessageContents][] |
+    INackMessagesControlMessageContents | undefined;
+
+    // List of successfully started lambdas at session start
+    successfullyStartedLambdas: LambdaName[];
 }
 
 // TODO: We should probably rename this to IScribeState
@@ -85,7 +103,10 @@ export interface IScribe {
     protocolState: IProtocolState;
 
     // Ref of the last client generated summary
-    lastClientSummaryHead: string;
+    lastClientSummaryHead: string | undefined;
+
+    // Sequence number of the last operation that was part of latest summary
+    lastSummarySequenceNumber: number | undefined;
 }
 
 export interface IDocument {
@@ -99,9 +120,15 @@ export interface IDocument {
 
     tenantId: string;
 
+    session: ISession;
+
     // Scribe state
     scribe: string;
 
     // Deli state
     deli: string;
+
+    // Timestamp of when this document and related data will be hard deleted.
+    // The document is soft deleted if a scheduled deletion timestamp is present.
+    scheduledDeletionTime?: string;
 }

@@ -14,7 +14,7 @@ If mocha tests wish to not run or only run on specific servers in a mocha test t
 
 ``` typescript
   before(function() {
-        const driver = getTestDriver();
+        const driver = getFluidTestDriver();
         if (driver.type !== "local") {
             this.skip();
         }

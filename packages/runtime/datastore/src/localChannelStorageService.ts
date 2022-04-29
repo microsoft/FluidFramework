@@ -1,26 +1,15 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { fromBase64ToUtf8, stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluidframework/common-utils";
 import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
 
 export class LocalChannelStorageService implements IChannelStorageService {
     constructor(private readonly tree: ITree) {
-    }
-
-    public async read(path: string): Promise<string> {
-        const blob = this.readBlobSync(path);
-        if (blob === undefined) {
-            throw new Error("Blob Not Found");
-        }
-        if (blob.encoding === "utf8") {
-            return blob.contents;
-        }
-        return fromBase64ToUtf8(blob.contents);
     }
 
     public async readBlob(path: string): Promise<ArrayBufferLike> {

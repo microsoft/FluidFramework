@@ -1,15 +1,6 @@
 {
  "entries": [
   {
-   "path": "header",
-   "mode": "100644",
-   "type": "Blob",
-   "value": {
-    "contents": "{}",
-    "encoding": "utf-8"
-   }
-  },
-  {
    "path": "content",
    "value": {
     "entries": [

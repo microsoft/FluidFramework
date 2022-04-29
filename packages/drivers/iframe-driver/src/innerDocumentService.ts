@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -43,13 +43,14 @@ export class InnerDocumentService implements IDocumentService {
         private readonly outerProxy: ICombinedDriver,
         public readonly resolvedUrl: IResolvedUrl,
         public clientId: string,
-        logger?: ITelemetryBaseLogger)
-    {
+        logger?: ITelemetryBaseLogger) {
         // Use a combined logger with the provided and the outer proxy's
         this.logger = new MultiSinkLogger("InnerIFrameDriver");
         this.logger.addLogger(logger);
         this.logger.addLogger(outerProxy.logger);
     }
+
+    public dispose() {}
 
     /**
      * Connects to a storage endpoint for snapshot service.
@@ -67,7 +68,7 @@ export class InnerDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         return {
-            get: async (from?: number, to?: number) => this.outerProxy.deltaStorage.get(from, to),
+            fetchMessages: (...args) => this.outerProxy.deltaStorage.fetchMessages(...args),
         };
     }
 
@@ -80,10 +81,5 @@ export class InnerDocumentService implements IDocumentService {
         const stream = this.outerProxy.stream;
         const connection = await stream.getDetails();
         return InnerDocumentDeltaConnection.create(connection, stream);
-    }
-
-    public getErrorTrackingService() {
-        throw new Error("Inner Document Service: getErrorTrackingService not implemented");
-        return null;
     }
 }

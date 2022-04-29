@@ -1,16 +1,17 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
+import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { CellRange } from "./cellrange";
+import { TableSliceType } from "./componentTypes";
 import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";
 import { ITable, TableDocumentItem } from "./table";
-import { TableSliceType } from "./componentTypes";
 
 export interface ITableSliceConfig {
     docId: string;
@@ -21,8 +22,7 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITable {
+export class TableSlice extends DataObject<{ InitialState: ITableSliceConfig }> implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
     private static readonly factory = new DataObjectFactory(
@@ -45,6 +45,8 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
 
     public getCellValue(row: number, col: number): TableDocumentItem {
         this.validateInSlice(row, col);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.doc.getCellValue(row, col);
     }
 
@@ -108,7 +110,8 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
 
         this.root.set(ConfigKey.docId, initialState.docId);
         this.root.set(ConfigKey.name, initialState.name);
-        this.maybeDoc = await this.requestFluidObject_UNSAFE(initialState.docId);
+        this.maybeDoc =
+            await handleFromLegacyUri<TableDocument>(`/${initialState.docId}`, this.context.containerRuntime).get();
         this.root.set(initialState.docId, this.maybeDoc.handle);
         await this.ensureDoc();
         this.createValuesRange(
@@ -127,7 +130,7 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
         this.maybeValues = await this.doc.getRange(this.root.get(ConfigKey.valuesKey));
 
         this.root.on("op", this.emitOp);
-        this.doc.on("op", this.emitOp);
+        this.doc.on("sequenceDelta", this.emitSequenceDelta);
     }
 
     private async ensureDoc() {
@@ -160,5 +163,9 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
 
     private readonly emitOp = (...args: any[]) => {
         this.emit("op", ...args);
+    };
+
+    private readonly emitSequenceDelta = (...args: any[]) => {
+        this.emit("sequenceDelta", ...args);
     };
 }

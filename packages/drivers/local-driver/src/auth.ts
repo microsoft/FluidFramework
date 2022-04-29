@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -20,11 +20,9 @@ export function generateToken(
     user?: IUser,
     lifetime: number = 60 * 60,
     ver: string = "1.0"): string {
-    // eslint-disable-next-line no-param-reassign
-    user = (user) ? user : generateUser();
-    if (user.id === "" || user.id === undefined) {
-        // eslint-disable-next-line no-param-reassign
-        user = generateUser();
+    let userClaim = (user) ? user : generateUser();
+    if (userClaim.id === "" || userClaim.id === undefined) {
+        userClaim = generateUser();
     }
 
     // Current time in seconds
@@ -34,15 +32,14 @@ export function generateToken(
         documentId,
         scopes,
         tenantId,
-        user,
+        user: userClaim,
         iat: now,
         exp: now + lifetime,
         ver,
     };
 
     const utf8Key = { utf8: key };
-    // eslint-disable-next-line no-null/no-null
-    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
+    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 }
 
 export function generateUser(): IUser {

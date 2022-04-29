@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { EventEmitter } from "events";
-import { IKeyValueDataObject } from "./kvpair-dataobject";
+import { IValueChanged } from "fluid-framework";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
@@ -29,13 +29,32 @@ export interface IDiceRollerController extends EventEmitter {
 // The data is stored in a key-value pair data object, so we'll use this key for storing the value.
 const diceValueKey = "diceValue";
 
+interface DiceRollerControllerProps {
+    get: (key: string) => any;
+    set: (key: string, value: any) => void;
+    on(event: "valueChanged", listener: (args: IValueChanged) => void): this;
+    off(event: "valueChanged", listener: (args: IValueChanged) => void): this;
+}
+
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
 export class DiceRollerController extends EventEmitter implements IDiceRollerController {
-    constructor(private readonly kvPairDataObject: IKeyValueDataObject) {
+    /**
+     * Initialize a new model for its first use with this controller.
+     * The model must be initialized before trying to use it in a DiceRollerController instance.
+     */
+    public static initializeModel(props: DiceRollerControllerProps) {
+        props.set(diceValueKey, 1);
+    }
+
+    constructor(private readonly props: DiceRollerControllerProps) {
         super();
-        this.kvPairDataObject.on("changed", (changed) => {
+        const value = this.props.get(diceValueKey);
+        if (typeof value !== "number") {
+            throw new Error("Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?");
+        }
+        this.props.on("valueChanged", (changed) => {
             if (changed.key === diceValueKey) {
                 // When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
                 this.emit("diceRolled");
@@ -43,48 +62,16 @@ export class DiceRollerController extends EventEmitter implements IDiceRollerCon
         });
     }
 
-    /**
-     * When we create the dice roller for the first time (with respect to the document's lifetime), we need to
-     * initialize its value.  This should only be called once over the document's lifetime.
-     */
-    private initializeFirstTime(): void {
-        this.kvPairDataObject.set(diceValueKey, 1);
-    }
-
-    private async initializeFromExisting(): Promise<void> {
-        // If the value is already there, we are initialized enough.
-        if (this.kvPairDataObject.get(diceValueKey) !== undefined) {
-            return;
-        }
-
-        // Otherwise, we expect the value will be set by the client that is creating the dice roller.
-        // The set should be on the way, in the pending ops.
-        return new Promise((resolve) => {
-            const resolveIfKeySet = () => {
-                if (this.kvPairDataObject.get(diceValueKey) !== undefined) {
-                    resolve();
-                    this.kvPairDataObject.off("changed", resolveIfKeySet);
-                }
-            };
-            this.kvPairDataObject.on("changed", resolveIfKeySet);
-        });
-    }
-
-    public async initialize(firstTime: boolean): Promise<void> {
-        if (firstTime) {
-            this.initializeFirstTime();
-        } else {
-            return this.initializeFromExisting();
-        }
-    }
-
     public get value() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.kvPairDataObject.get(diceValueKey);
+        const value = this.props.get(diceValueKey);
+        if (typeof value !== "number") {
+            throw new Error("Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?");
+        }
+        return value;
     }
 
     public readonly roll = () => {
         const rollValue = Math.floor(Math.random() * 6) + 1;
-        this.kvPairDataObject.set(diceValueKey, rollValue);
+        this.props.set(diceValueKey, rollValue);
     };
 }

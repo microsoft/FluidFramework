@@ -1,11 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IServiceConfiguration } from "./configuration";
-import { IDocumentDetails } from "./document";
 import { IWebSocket } from "./http";
 
 /**
@@ -33,13 +32,6 @@ export interface IOrdererConnection {
 
     readonly documentId: string;
 
-    // TODO - this can probably be phased out in favor of an explicit create of the ordering context
-    // For now it maps to whether the connection is to an existing ordering context or a new one
-    readonly existing: boolean;
-
-    // Back-compat, removal tracked with issue #4346
-    readonly parentBranch: null;
-
     readonly maxMessageSize: number;
 
     readonly serviceConfiguration: IServiceConfiguration;
@@ -63,15 +55,14 @@ export interface IOrdererConnection {
     /**
      * Sends the client leave op for this connection
      */
-    disconnect(): Promise<void>;
+    disconnect(clientLeaveMessageServerMetadata?: any): Promise<void>;
 }
 
 export interface IOrderer {
     connect(
         socket: IWebSocket,
         clientId: string,
-        client: IClient,
-        details: IDocumentDetails): Promise<IOrdererConnection>;
+        client: IClient): Promise<IOrdererConnection>;
 
     close(): Promise<void>;
 }

@@ -1,10 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IDocumentStorage } from "@fluidframework/server-services-core";
+import { defaultHash } from "@fluidframework/server-services-client";
 import { Router } from "express";
+import { v4 as uuid } from "uuid";
 import { getParam } from "../../utils";
 
 export function create(storage: IDocumentStorage): Router {
@@ -29,7 +31,7 @@ export function create(storage: IDocumentStorage): Router {
     router.post("/:tenantId", (request, response, next) => {
         // Tenant and document
         const tenantId = getParam(request.params, "tenantId");
-        const id = request.body.id;
+        const id = request.body.id || uuid();
 
         // Summary information
         const summary = request.body.summary;
@@ -44,6 +46,9 @@ export function create(storage: IDocumentStorage): Router {
             summary,
             sequenceNumber,
             1,
+            defaultHash,
+            `http://${request.hostname}`,
+            `http://${request.hostname}`,
             values);
 
         createP.then(

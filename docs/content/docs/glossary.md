@@ -1,12 +1,14 @@
 ---
 title: Glossary
+aliases:
+  - "/start/glossary/"
+
 ---
 
-## Aqueduct
+## Attached
 
-The `@fluidframework/aqueduct` package is a library for building Fluid objects and Fluid containers within the Fluid
-Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers
-to get started quickly. [Learn more.](https://fluidframework.com/apis/aqueduct/)
+A Fluid container can be *attached* or *detached*. An attached container is connected to a Fluid service and can be
+loaded by other clients. Also see [Detached](#detached).
 
 ## Code loader
 
@@ -16,16 +18,23 @@ and load the container code bundle dynamically.
 ## Container
 
 The container is your application's entry point to the Fluid Framework. It runs your container code and is
-the object through which you'll retrieve your data objects.
+the object through which you'll retrieve your shared objects.
 
 ## Container code
 
-You'll write container code to define which Fluid objects your scenario uses and how you'll access them.
+You'll write container code to define which shared objects your scenario uses and how you'll access them.
 
-## DataObject
+## Data Object
 
-Aqueduct's implementation of a Fluid object. Designed to organize distributed data structures into
-semantically meaningful groupings for your scenario, as well as, providing an API surface to your data.
+Data Objects are higher-level shared objects, compared to distributed data structures, which are low-level shared objects.
+Data Objects are used to organize distributed data structures into semantically meaningful groupings for your scenario,
+as well as providing an API surface to your data.
+
+## Detached
+
+A Fluid container can be *attached* or *detached*. A detached container is not connected to a Fluid service and cannot
+be loaded by other clients. Newly created containers begin in a detached state, which allows developers to add initial
+data if needed before attaching the container. Also see [Attached](#attached).
 
 ## Distributed data structures (DDSes)
 
@@ -47,6 +56,10 @@ A service endpoint that is responsible for receiving, processing, storing, and b
 ## Fluid service driver
 
 Client code responsible for connecting to the Fluid service.
+
+## Shared object
+
+A distributed data structure (DDS) or Data Object.
 
 ## URL resolver
 

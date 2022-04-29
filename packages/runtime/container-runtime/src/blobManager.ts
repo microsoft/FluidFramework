@@ -1,13 +1,17 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { AttachmentTreeEntry } from "@fluidframework/protocol-base";
-import { ISnapshotTree, ITree } from "@fluidframework/protocol-definitions";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { assert, Deferred } from "@fluidframework/common-utils";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 /**
  * This class represents blob (long string)
@@ -17,10 +21,12 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
  * and loads blob.
  */
 export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
+    private attached: boolean = false;
+
     public get IFluidHandle(): IFluidHandle { return this; }
 
     public get isAttached(): boolean {
-        return true;
+        return this.attached;
     }
 
     public readonly absolutePath: string;
@@ -29,9 +35,12 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
         public readonly path: string,
         public readonly routeContext: IFluidHandleContext,
         public get: () => Promise<any>,
-        public attachGraph: () => void,
     ) {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
+    }
+
+    public attachGraph() {
+        this.attached = true;
     }
 
     public bind(handle: IFluidHandle) {
@@ -39,40 +48,132 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
     }
 }
 
+/**
+ * Information from a snapshot needed to load BlobManager
+ */
+export interface IBlobManagerLoadInfo {
+    ids?: string[],
+    redirectTable?: [string, string][],
+}
+
 export class BlobManager {
     public static readonly basePath = "_blobs";
+    private static readonly redirectTableBlobName = ".redirectTable";
+    // uploaded blob IDs
     private readonly blobIds: Set<string> = new Set();
+    // blobs for which upload is pending. maps to a promise that will resolve once the blob has been uploaded and a
+    // BlobAttach op has round-tripped.
+    private readonly pendingBlobIds: Map<string, Deferred<void>> = new Map();
+    // blobs uploaded while detached; cleared upon attach
+    private readonly detachedBlobIds: Set<string> = new Set();
+    // map of detached blob IDs to IDs used by storage. used to support blob handles given out while detached
+    private redirectTable: Map<string, string> | undefined;
 
     constructor(
         private readonly routeContext: IFluidHandleContext,
+        snapshot: IBlobManagerLoadInfo,
         private readonly getStorage: () => IDocumentStorageService,
-        private readonly sendBlobAttachOp: (blobId: string) => void,
-    ) { }
+        private readonly attachBlobCallback: (blobId: string) => void,
+        private readonly runtime: IContainerRuntime,
+        private readonly logger: ITelemetryLogger,
+    ) {
+        this.runtime.once("dispose", () => {
+            for (const promise of this.pendingBlobIds.values()) {
+                promise.reject(new Error("runtime disposed while blobAttach op in flight"));
+            }
+        });
+        this.load(snapshot);
+    }
+
+    private hasBlob(id: string): boolean {
+        return this.blobIds.has(id) || this.detachedBlobIds.has(id);
+    }
 
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
+        const storageId = this.redirectTable?.get(blobId) ?? blobId;
+        assert(this.hasBlob(storageId), 0x11f /* "requesting unknown blobs" */);
+
         return new BlobHandle(
-            `${BlobManager.basePath}/${blobId}`,
+            `${BlobManager.basePath}/${storageId}`,
             this.routeContext,
-            async () => this.getStorage().readBlob(blobId),
-            () => null,
+            async () => {
+                return this.getStorage().readBlob(storageId).catch((error) => {
+                    this.logger.sendErrorEvent(
+                        {
+                            eventName: "AttachmentReadBlobError",
+                            id: storageId,
+                        },
+                        error,
+                    );
+                    throw error;
+                });
+            },
         );
     }
 
     public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-        const response = await this.getStorage().createBlob(blob);
+        if (this.runtime.attachState === AttachState.Attaching) {
+            // blob upload is not supported in "Attaching" state
+            this.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
+            await new Promise<void>((resolve) => this.runtime.once("attached", resolve));
+        }
 
+        const response = await this.getStorage().createBlob(blob);
         const handle = new BlobHandle(
             `${BlobManager.basePath}/${response.id}`,
             this.routeContext,
-            async () => this.getStorage().readBlob(response.id),
-            () => this.sendBlobAttachOp(response.id),
+            // get() should go through BlobManager.getBlob() so handles created while detached can be redirected
+            // to the correct storage id after they are uploaded
+            async () => this.getBlob(response.id).then(async (h) => h.get()),
         );
+
+        if (this.runtime.attachState === AttachState.Detached) {
+            this.detachedBlobIds.add(response.id);
+            return handle;
+        }
+
+        // Note - server will de-dup blobs, so we might get existing blobId!
+        if (this.pendingBlobIds.has(response.id)) {
+            await this.pendingBlobIds.get(response.id)?.promise;
+        } else if (!this.blobIds.has(response.id)) {
+            this.pendingBlobIds.set(response.id, new Deferred<void>());
+
+            // send blob attach op and wait until we see it to return the handle
+            this.attachBlobCallback(response.id);
+            await this.pendingBlobIds.get(response.id)?.promise;
+        }
 
         return handle;
     }
 
-    public addBlobId(blobId: string) {
+    public processBlobAttachOp(blobId: string, local: boolean) {
+        if (local) {
+            const pendingBlobP = this.pendingBlobIds.get(blobId);
+            assert(pendingBlobP !== undefined, 0x1f8 /* "local BlobAttach op with no pending blob" */);
+            pendingBlobP.resolve();
+            this.pendingBlobIds.delete(blobId);
+        }
         this.blobIds.add(blobId);
+    }
+
+    /**
+     * Reads blobs needed to load BlobManager from storage.
+     */
+    public static async load(
+        blobsTree: ISnapshotTree | undefined,
+        tryFetchBlob: (id: string) => Promise<[string, string][]>,
+    ): Promise<IBlobManagerLoadInfo> {
+        if (!blobsTree) {
+            return {};
+        }
+        let redirectTable;
+        const tableId = blobsTree.blobs[this.redirectTableBlobName];
+        if (tableId) {
+            redirectTable = await tryFetchBlob(tableId);
+        }
+        const ids = Object.entries(blobsTree.blobs)
+            .filter(([k, _]) => k !== this.redirectTableBlobName).map(([_, v]) => v);
+        return { ids, redirectTable };
     }
 
     /**
@@ -89,14 +190,109 @@ export class BlobManager {
      * of the tree since the both the r11s and SPO drivers replace the
      * attachment types returned in snapshot() with blobs.
      */
-    public load(blobsTree?: ISnapshotTree): void {
-        if (blobsTree) {
-            Object.values(blobsTree.blobs).map((entry) => this.addBlobId(entry));
+    private load(snapshot: IBlobManagerLoadInfo): void {
+        if (snapshot.ids) {
+            const detached = this.runtime.attachState === AttachState.Detached;
+            snapshot.ids.map((entry) => detached ? this.detachedBlobIds.add(entry) : this.blobIds.add(entry));
+        }
+        if (snapshot.redirectTable) {
+            this.redirectTable = new Map(snapshot.redirectTable);
+        }
+        this.logger.sendTelemetryEvent({
+            eventName: "AttachmentBlobsLoaded",
+            count: snapshot.ids?.length ?? 0,
+            redirectTable: snapshot.redirectTable?.length,
+        });
+    }
+
+    /**
+     * Generates data used for garbage collection. Each blob uploaded represents a node in the GC graph as it can be
+     * individually referenced by storing its handle in a referenced DDS. Returns the list of blob ids as GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data. BlobManager doesn't care
+     * about this for now because the data is a simple list of blob ids.
+     */
+    public getGCData(fullGC: boolean = false): IGarbageCollectionData {
+        const getGCNodePath = (blobId: string) => { return `/${BlobManager.basePath}/${blobId}`; };
+        const gcData: IGarbageCollectionData = { gcNodes: {} };
+        /**
+          * The node path is of the format `/_blobs/blobId`. This path must match the path of the blob handle returned
+          * by the createBlob API because blobs are marked referenced by storing these handles in a referenced DDS.
+          */
+        this.blobIds.forEach((blobId: string) => {
+            gcData.gcNodes[getGCNodePath(blobId)] = [];
+        });
+
+        /**
+         * For all blobs in the redirect table, the handle returned on creation is based off of the localId. So, these
+         * nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
+         * must also be marked referenced. So, we add a route from the localId node to the storageId node.
+         * Note that because of de-duping, there can be multiple localIds that all redirect to the same storageId or
+         * a blob may be referenced via its storageId handle.
+         */
+        if (this.redirectTable !== undefined) {
+            for (const [localId, storageId] of this.redirectTable) {
+                // Add node for the localId and add a route to the storageId node. The storageId node will have been
+                // added above when adding nodes for this.blobIds.
+                gcData.gcNodes[getGCNodePath(localId)] = [getGCNodePath(storageId)];
+            }
+        }
+
+        return gcData;
+    }
+
+    /**
+     * When running GC in test mode, this is called to delete blobs that are unused.
+     * @param unusedRoutes - These are the blob node ids that are unused and should be deleted.
+     */
+    public deleteUnusedRoutes(unusedRoutes: string[]): void {
+        // The routes or blob node paths are in the same format as returned in getGCData - `/_blobs/blobId`.
+        for (const route of unusedRoutes) {
+            const pathParts = route.split("/");
+            assert(
+                pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+                0x2d5 /* "Invalid blob node id in unused routes." */,
+            );
+            const blobId = pathParts[2];
+
+            // The unused blobId could be a localId. If so, remove it from the redirect table and continue. The
+            // corresponding storageId may still be used either directly or via other localIds.
+            if (this.redirectTable?.has(blobId)) {
+                this.redirectTable.delete(blobId);
+                continue;
+            }
+            this.blobIds.delete(blobId);
         }
     }
 
-    public snapshot(): ITree {
-        const entries = [...this.blobIds].map((id) => new AttachmentTreeEntry(id, id));
-        return { entries };
+    public summarize(): ISummaryTreeWithStats {
+        // If we have a redirect table it means the container is about to transition to "Attaching" state, so we need
+        // to return an actual snapshot containing all the real storage IDs we know about.
+        const attachingOrAttached = !!this.redirectTable || this.runtime.attachState !== AttachState.Detached;
+        const blobIds = attachingOrAttached ? this.blobIds : this.detachedBlobIds;
+        const builder = new SummaryTreeBuilder();
+        blobIds.forEach((blobId) => {
+            builder.addAttachment(blobId);
+        });
+
+        if (this.redirectTable && this.redirectTable.size > 0) {
+            builder.addBlob(
+                BlobManager.redirectTableBlobName,
+                JSON.stringify(Array.from(this.redirectTable.entries())),
+            );
+        }
+
+        return builder.getSummaryTree();
+    }
+
+    public setRedirectTable(table: Map<string, string>) {
+        assert(this.runtime.attachState === AttachState.Detached,
+            0x252 /* "redirect table can only be set in detached container" */);
+        assert(!this.redirectTable, 0x253 /* "redirect table already exists" */);
+        for (const [localId, storageId] of table) {
+            assert(this.detachedBlobIds.delete(localId), 0x254 /* "unrecognized id in redirect table" */);
+            this.blobIds.add(storageId);
+        }
+        assert(this.detachedBlobIds.size === 0, 0x255 /* "detached blob id absent in redirect table" */);
+        this.redirectTable = table;
     }
 }

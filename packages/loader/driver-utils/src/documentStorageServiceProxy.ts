@@ -1,10 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import {
     IDocumentStorageService,
+    IDocumentStorageServicePolicies,
     ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -17,6 +18,16 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
+    private _policies: IDocumentStorageServicePolicies | undefined;
+
+    public set policies(policies: IDocumentStorageServicePolicies | undefined) {
+        this._policies = policies;
+    }
+
+    public get policies() {
+        return this._policies ?? this.internalStorageService.policies;
+    }
+
     public get repositoryUrl(): string {
         return this.internalStorageService.repositoryUrl;
     }
@@ -27,12 +38,8 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.getSnapshotTree(version);
     }
 
-    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
         return this.internalStorageService.getVersions(versionId, count);
-    }
-
-    public async read(blobId: string): Promise<string> {
-        return this.internalStorageService.read(blobId);
     }
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {

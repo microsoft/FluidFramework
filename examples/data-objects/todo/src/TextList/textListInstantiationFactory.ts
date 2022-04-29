@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -8,10 +8,12 @@ import { SharedString } from "@fluidframework/sequence";
 import { TextListName } from "./TextList";
 import { TextList } from "./index";
 
-export const TextListInstantiationFactory = new DataObjectFactory(
-    TextListName,
-    TextList,
-    [
-        SharedString.getFactory(),
-    ],
-    {});
+export const TextListInstantiationFactory =
+    new DataObjectFactory(
+        TextListName,
+        TextList,
+        [
+            SharedString.getFactory(),
+        ],
+        {},
+    );

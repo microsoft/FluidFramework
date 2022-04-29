@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -57,10 +57,41 @@ interface IRunningTimerState extends ITimeout {
     restart?: ITimeout;
 }
 
+const maxSetTimeoutMs = 0x7FFFFFFF; // setTimeout limit is MAX_INT32=(2^31-1).
+
+/**
+ * Sets timeouts like the setTimeout function allowing timeouts to exceed the setTimeout's max timeout limit.
+ * Timeouts may not be exactly accurate due to browser implementations and the OS.
+ * https://stackoverflow.com/questions/21097421/what-is-the-reason-javascript-settimeout-is-so-inaccurate
+ * @param timeoutFn - executed when the timeout expires
+ * @param timeoutMs - duration of the timeout in milliseconds
+ * @param setTimeoutIdFn - executed to update the timeout if multiple timeouts are required when
+ *  timeoutMs greater than maxTimeout
+ * @returns the initial timeout
+ */
+export function setLongTimeout(
+    timeoutFn: () => void,
+    timeoutMs: number,
+    setTimeoutIdFn?: (timeoutId: ReturnType<typeof setTimeout>) => void,
+): ReturnType<typeof setTimeout> {
+    // The setTimeout max is 24.8 days before looping occurs.
+    let timeoutId: ReturnType<typeof setTimeout>;
+    if (timeoutMs > maxSetTimeoutMs) {
+        const newTimeoutMs = timeoutMs - maxSetTimeoutMs;
+        timeoutId = setTimeout(() => setLongTimeout(timeoutFn, newTimeoutMs, setTimeoutIdFn), maxSetTimeoutMs);
+    } else {
+        timeoutId = setTimeout(() => timeoutFn(), timeoutMs);
+    }
+
+    setTimeoutIdFn?.(timeoutId);
+    return timeoutId;
+}
+
 /**
  * This class is a thin wrapper over setTimeout and clearTimeout which
  * makes it simpler to keep track of recurring timeouts with the same
- * or similar handlers and timeouts.
+ * or similar handlers and timeouts. This class supports long timeouts
+ * or timeouts exceeding (2^31)-1 ms or approximately 24.8 days.
  */
 export class Timer implements ITimer {
     /**
@@ -143,12 +174,20 @@ export class Timer implements ITimer {
             duration,
             intendedDuration,
             handler,
-            timeout: setTimeout(() => this.handler(), duration),
+            timeout: setLongTimeout(
+                () => this.handler(),
+                duration,
+                (timer: number) => {
+                    if(this.runningState !== undefined) {
+                        this.runningState.timeout = timer;
+                    }
+                },
+            ),
         };
     }
 
     private handler() {
-        assert(!!this.runningState, "Running timer missing handler");
+        assert(!!this.runningState, 0x00a /* "Running timer missing handler" */);
         const restart = this.runningState.restart;
         if (restart !== undefined) {
             // Restart with remaining time
@@ -207,7 +246,7 @@ export class PromiseTimer implements IPromiseTimer {
 
     public async start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult> {
         this.clear();
-        this.deferred = new Deferred();
+        this.deferred = new Deferred<IPromiseTimerResult>();
         this.timer.start(ms, handler ? () => this.wrapHandler(handler) : undefined);
         return this.deferred.promise;
     }
@@ -222,7 +261,7 @@ export class PromiseTimer implements IPromiseTimer {
 
     protected wrapHandler(handler: () => void) {
         handler();
-        assert(!!this.deferred, "Handler executed without deferred");
+        assert(!!this.deferred, 0x00b /* "Handler executed without deferred" */);
         this.deferred.resolve({ timerResult: "timeout" });
         this.deferred = undefined;
     }

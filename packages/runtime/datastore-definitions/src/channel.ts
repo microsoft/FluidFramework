@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
@@ -20,10 +20,17 @@ export interface IChannel extends IFluidLoadable {
     readonly attributes: IChannelAttributes;
 
     /**
-     * Generates summary of the channel.
+     * Generates summary of the channel synchronously.
      * @returns A tree representing the summary of the channel.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult;
+    getAttachSummary(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
+
+    /**
+     * Generates summary of the channel asynchronously.
+     * This should not be called where the channel can be modified while summarization is in progress.
+     * @returns A tree representing the summary of the channel.
+     */
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * True if the data structure is attached to storage.
@@ -38,8 +45,9 @@ export interface IChannel extends IFluidLoadable {
     /**
      * Returns the GC data for this channel. It contains a list of GC nodes that contains references to
      * other GC nodes.
+     * @param fullGC - true to bypass optimizations and force full generation of GC data.
      */
-    getGCData(): IGarbageCollectionData;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
 /**
@@ -70,6 +78,16 @@ export interface IDeltaHandler {
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     reSubmit(message: any, localOpMetadata: unknown): void;
+
+    /**
+     * Apply changes from an op. Used when rehydrating an attached container
+     * with pending changes. This prepares the SharedObject for seeing an ACK
+     * for the op or resubmitting the op upon reconnection.
+     * @param message - Contents of a stashed op.
+     * @returns localMetadata of the op, to be passed to process() or resubmit()
+     * when the op is ACKed or resubmitted, respectively
+     */
+    applyStashedOp(message: any): unknown;
 }
 
 /**
@@ -97,6 +115,14 @@ export interface IDeltaConnection {
      * that needs to be part of the summary but does not generate ops.
      */
     dirty(): void;
+
+    /**
+     * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+     * all references added in the system.
+     * @param srcHandle - The handle of the node that added the reference.
+     * @param outboundHandle - The handle of the outbound node that is referenced.
+     */
+    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
 }
 
 /**
@@ -104,11 +130,10 @@ export interface IDeltaConnection {
  */
 export interface IChannelStorageService {
     /**
-     * Reads the object contained at the given path. Returns a base64 string representation for the object.
+     * Reads the object contained at the given path. Returns a buffer representation for the object.
      */
-    read(path: string): Promise<string>;
-
     readBlob(path: string): Promise<ArrayBufferLike>;
+
     /**
      * Determines if there is an object contained at the given path.
      */

@@ -20,7 +20,8 @@
             },
             "Driver-Definitions": {
                 "packages": [
-                    "@fluidframework/driver-definitions"
+                    "@fluidframework/driver-definitions",
+                    "@fluidframework/odsp-driver-definitions"
                 ],
                 "deps": [
                     "Protocol-Definitions",
@@ -79,11 +80,13 @@
             "Other-Utils": {
                 "dot": false,
                 "packages": [
-                    "@fluidframework/odsp-doclib-utils"
+                    "@fluidframework/odsp-doclib-utils",
+                    "@fluidframework/azure-service-utils"
                 ],
                 "deps": [
                     "Driver-Definitions",
-                    "Driver-Utils"
+                    "Driver-Utils",
+                    "Server-Shared-Utils"
                 ]
             },
             "Tool-Utils": {
@@ -139,19 +142,13 @@
                     "Container-Utils"
                 ]
             },
-            "Hosts": {
+            "HostUtils": {
+                "dev": true,
                 "packages": [
-                    "@fluidframework/base-host"
-                ],
-                "deps": [
-                    "Loader",
-                    "Framework-Utils"
+                    "@fluid-experimental/get-container"
                 ]
             },
             "Runtime": {
-                "packages": [
-                    "@fluidframework/agent-scheduler"
-                ],
                 "dirs": [
                     "experimental/dds/",
                     "packages/dds/",
@@ -165,14 +162,40 @@
             },
             "Framework": {
                 "packages": [
-                    "@fluid-internal/client-api",
-                    "@fluid-experimental/experimental-fluidframework"
+                    "@fluid-experimental/data-objects",
+                    "@fluidframework/fluid-static"
                 ],
                 "dirs": [
+                    "experimental/framework/",
+                    "experimental/PropertyDDS/packages/",
                     "packages/framework/"
                 ],
                 "deps": [
-                    "Hosts",
+                    "Framework-Utils",
+                    "Loader",
+                    "Runtime"
+                ]
+            },
+            "ServiceClients": {
+                "packages": [
+                    "@fluidframework/azure-client",
+                    "@fluidframework/tinylicious-client"
+                ],
+                "deps": [
+                    "Framework",
+                    "Loader",
+                    "Routerlicious-Driver",
+                    "Server-Libs",
+                    "Server-Shared-Utils",
+                    "Test-Utils"
+                ]
+            },
+            "UberPackage": {
+                "packages": [
+                    "fluid-framework"
+                ],
+                "deps": [
+                    "Framework",
                     "Runtime"
                 ]
             },
@@ -181,45 +204,40 @@
                 "dev": true,
                 "dirs": [
                     "examples/",
-                    "packages/agents/"
-                ],
-                "deps": [
-                    "Framework",
-                    "Driver",
-                    "Routerlicious-Driver",
-                    "Test"
+                    "experimental/examples/",
+                    "experimental/PropertyDDS/examples/",
+                    "experimental/PropertyDDS/services/"
                 ]
             },
             "Build": {
                 "dev": true,
                 "packages": [
                     "@fluidframework/build-common",
-                    "@fluidframework/eslint-config-fluid"
+                    "@fluidframework/eslint-config-fluid",
+                    "@fluid-tools/benchmark"
                 ]
             },
             "Tools": {
+                "dev": true,
                 "dot": false,
                 "dirs": [
-                    "packages/tools/",
-                    "tools/generator-fluid"
-                ],
-                "deps": [
-                    "Framework",
-                    "Routerlicious-Driver",
-                    "Other-Utils",
-                    "Tool-Utils"
+                    "packages/tools/"
                 ]
             },
-            "Test": {
+            "Tests": {
+                "dev": true,
+                "dirs": [
+                    "packages/test/"
+                ]
+            },
+            "Test-Utils": {
                 "dev": true,
                 "packages": [
                     "@fluid-internal/test-dds-utils",
                     "@fluidframework/local-driver",
+                    "@fluidframework/test-client-utils",
                     "@fluidframework/test-runtime-utils",
-                    "@fluidframework/webpack-fluid-loader"
-                ],
-                "dirs": [
-                    "packages/test/"
+                    "@fluid-tools/webpack-fluid-loader"
                 ]
             }
         }
@@ -245,6 +263,7 @@
             },
             "Server-Tools": {
                 "packages": [
+                    "@fluidframework/azure-local-service",
                     "tinylicious"
                 ],
                 "deps": [

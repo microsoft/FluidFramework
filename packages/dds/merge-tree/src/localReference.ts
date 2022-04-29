@@ -1,8 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { Client } from "./client";
 import {
     ISegment,
@@ -77,19 +78,19 @@ export class LocalReference implements ReferencePosition {
         return !!this.getRangeLabels();
     }
 
-    public hasTileLabel(label: string) {
+    public hasTileLabel(label: string): boolean {
         return refHasTileLabel(this, label);
     }
 
-    public hasRangeLabel(label: string) {
+    public hasRangeLabel(label: string): boolean {
         return refHasRangeLabel(this, label);
     }
 
-    public getTileLabels() {
+    public getTileLabels(): string[] | undefined {
         return refGetTileLabels(this);
     }
 
-    public getRangeLabels() {
+    public getRangeLabels(): string[] | undefined {
         return refGetRangeLabels(this);
     }
 
@@ -101,12 +102,16 @@ export class LocalReference implements ReferencePosition {
         this.properties = addProperties(this.properties, newProps, op);
     }
 
+    public getClient() {
+        return this.client;
+    }
+
     public getSegment() {
         return this.segment;
     }
 
     public getOffset() {
-        if (this.segment.removedSeq) {
+        if (this.segment?.removedSeq) {
             return 0;
         }
         return this.offset;
@@ -117,31 +122,41 @@ export class LocalReference implements ReferencePosition {
     }
 }
 
-interface IRefsAtOffest {
+interface IRefsAtOffset {
     before?: LocalReference[];
     at?: LocalReference[];
     after?: LocalReference[];
 }
 
+/**
+ * Represents a collection of {@link LocalReference}s associated with one segment in a merge-tree.
+ */
 export class LocalReferenceCollection {
     public static append(seg1: ISegment, seg2: ISegment) {
         if (seg2.localRefs && !seg2.localRefs.empty) {
             if (!seg1.localRefs) {
                 seg1.localRefs = new LocalReferenceCollection(seg1);
             }
+            assert(seg1.localRefs.refsByOffset.length === seg1.cachedLength,
+                0x2be /* "LocalReferences array contains a gap" */);
             seg1.localRefs.append(seg2.localRefs);
+        } else if (seg1.localRefs) {
+            // Since creating the LocalReferenceCollection, we may have appended
+            // segments that had no local references. Account for them now by padding the array.
+            seg1.localRefs.refsByOffset.length += seg2.cachedLength;
         }
     }
 
     public hierRefCount: number = 0;
-    private readonly refsByOffset: (IRefsAtOffest | undefined)[];
+    private readonly refsByOffset: (IRefsAtOffset | undefined)[];
     private refCount: number = 0;
 
     constructor(
+        /** Segment this `LocalReferenceCollection` is associated to. */
         private readonly segment: ISegment,
-        initialRefsByfOffset = new Array<IRefsAtOffest | undefined>(segment.cachedLength)) {
+        initialRefsByfOffset = new Array<IRefsAtOffset | undefined>(segment.cachedLength)) {
         // Since javascript arrays are sparse the above won't populate any of the
-        // indicies, but it will ensure the length property of the array matches
+        // indices, but it will ensure the length property of the array matches
         // the length of the segment.
         this.refsByOffset = initialRefsByfOffset;
     }
@@ -215,6 +230,9 @@ export class LocalReferenceCollection {
             this.refsByOffset[lref.offset] = {
                 at: [lref],
             };
+        } else if (refsAtOffset.at === undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.refsByOffset[lref.offset]!.at = [lref];
         } else {
             refsAtOffset.at.push(lref);
         }
@@ -281,6 +299,15 @@ export class LocalReferenceCollection {
         this.refsByOffset.push(...other.refsByOffset);
     }
 
+    /**
+     * Splits this `LocalReferenceCollection` into the intervals [0, offset) and [offset, originalLength).
+     * Local references in the former half of this split will remain associated with the segment used on construction.
+     * Local references in the latter half of this split will be transferred to `splitSeg`,
+     * and its `localRefs` field will be set.
+     * @param offset - Offset into the original segment at which the collection should be split
+     * @param splitSeg - Split segment which originally corresponded to the indices [offset, originalLength)
+     * before splitting.
+     */
     public split(offset: number, splitSeg: ISegment) {
         if (!this.empty) {
             const localRefs =
@@ -299,6 +326,9 @@ export class LocalReferenceCollection {
                 this.refCount--;
                 localRefs.refCount++;
             }
+        } else {
+            // shrink the offset array when empty and splitting
+            this.refsByOffset.length = offset;
         }
     }
 

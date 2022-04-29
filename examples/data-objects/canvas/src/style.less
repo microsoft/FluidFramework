@@ -26,20 +26,37 @@
     width: 100%;
     height: 50px;
     background-color: #222;
+    display: inline-flex;
 }
 
 .ink-toolbar-button {
     width: 50px;
     height: 50px;
-    background-color: #333;
+    background-color: white;
     background-size: 50%;
     background-repeat: no-repeat;
     background-position: center;
     border: none;
+    border-radius: 0;
+    position: relative;
 }
 
 .ink-toolbar-button:hover {
     background-color: orangered;
+}
+
+.ink-toolbar-button:focus {
+    outline: none;
+}
+
+.ink-toolbar-button:focus:before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    right: 2px;
+    border: 2px solid black;
 }
 
 .fluid-icon-pencil {

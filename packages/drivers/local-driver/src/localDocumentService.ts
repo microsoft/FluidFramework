@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,6 +9,7 @@ import * as socketStorage from "@fluidframework/routerlicious-driver";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { LocalDeltaStorageService, LocalDocumentDeltaConnection } from ".";
 
 /**
@@ -28,14 +29,24 @@ export class LocalDocumentService implements api.IDocumentService {
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
+        public readonly policies: api.IDocumentServicePolicies = {},
         private readonly innerDocumentService?: api.IDocumentService,
     ) { }
+
+    public dispose() { }
 
     /**
      * Creates and returns a document storage service for local use.
      */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
-        return new socketStorage.DocumentStorageService(this.documentId,
+        return new socketStorage.DocumentStorageService(
+            this.documentId,
+            new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)),
+            new TelemetryNullLogger(),
+            { minBlobSize: 2048 }, // Test blob aggregation.
+            undefined,
+            undefined,
+            undefined,
             new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)));
     }
 
@@ -57,6 +68,9 @@ export class LocalDocumentService implements api.IDocumentService {
      * @param client - client data
      */
     public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
+        if (this.policies.storageOnly === true) {
+            throw new Error("can't connect to delta stream in storage-only mode");
+        }
         if (this.innerDocumentService) {
             return this.innerDocumentService.connectToDeltaStream(client);
         }
@@ -83,14 +97,6 @@ export class LocalDocumentService implements api.IDocumentService {
 
         return documentDeltaConnection;
     }
-
-    /**
-     * Returns null
-     */
-    public getErrorTrackingService(): any {
-        // eslint-disable-next-line no-null/no-null
-        return null;
-    }
 }
 
 /**
@@ -100,7 +106,6 @@ export class LocalDocumentService implements api.IDocumentService {
  * @param tenantId - ID of tenant
  * @param documentId - ID of document
  */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function createLocalDocumentService(
     resolvedUrl: api.IResolvedUrl,
     localDeltaConnectionServer: ILocalDeltaConnectionServer,
@@ -108,6 +113,7 @@ export function createLocalDocumentService(
     tenantId: string,
     documentId: string,
     documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
+    policies?: api.IDocumentServicePolicies,
     innerDocumentService?: api.IDocumentService): api.IDocumentService {
     return new LocalDocumentService(
         resolvedUrl,
@@ -116,6 +122,7 @@ export function createLocalDocumentService(
         tenantId,
         documentId,
         documentDeltaConnectionsMap,
+        policies,
         innerDocumentService,
     );
 }

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -71,17 +71,20 @@ export class FluidPackageCheck {
         const testScript = testMochaScript ?? pkg.getScript(testScriptName);
         if (testScript && /(ts-)?mocha/.test(testScript)) {
             const isClient = pkg.monoRepo?.kind === MonoRepoKind.Client;
+            const hasConfig = testScript.includes(" --config ");
             if (isClient) {
-                const pkgstring = "@fluidframework/mocha-test-setup"
-                const requireString = `node_modules/${pkgstring}`;
+                const pkgstring = "@fluidframework/mocha-test-setup";
                 if (this.ensureDevDependency(pkg, fix, pkgstring)) {
                     fixed = true;
                 }
-                if (!testScript.includes(requireString)) {
-                    this.logWarn(pkg, `no ${requireString} require in test script`, fix);
-                    if (fix) {
-                        pkg.packageJson.scripts[testScriptName] += " -r " + requireString;
-                        fixed = true;
+                if (!hasConfig) {
+                    const requireString = `node_modules/${pkgstring}`;
+                    if (!testScript.includes(requireString)) {
+                        this.logWarn(pkg, `no ${requireString} require in test script`, fix);
+                        if (fix) {
+                            pkg.packageJson.scripts[testScriptName] += " -r " + requireString;
+                            fixed = true;
+                        }
                     }
                 }
 
@@ -101,13 +104,15 @@ export class FluidPackageCheck {
                 }
             }
 
-            // Make sure --unhandled-rejections=strict switch used
-            const unhandledRejectionsSwitch = "--unhandled-rejections=strict";
-            if (!testScript.includes(unhandledRejectionsSwitch)) {
-                this.logWarn(pkg, `missing --unhandled-rejection switch in test script`, fix);
-                if (fix) {
-                    pkg.packageJson.scripts[testScriptName] += ` ${unhandledRejectionsSwitch}`;
-                    fixed = true;
+            if (!hasConfig) {
+                // Make sure --unhandled-rejections=strict switch used
+                const unhandledRejectionsSwitch = "--unhandled-rejections=strict";
+                if (!testScript.includes(unhandledRejectionsSwitch)) {
+                    this.logWarn(pkg, `missing --unhandled-rejection switch in test script`, fix);
+                    if (fix) {
+                        pkg.packageJson.scripts[testScriptName] += ` ${unhandledRejectionsSwitch}`;
+                        fixed = true;
+                    }
                 }
             }
         }
@@ -150,7 +155,7 @@ export class FluidPackageCheck {
         const expectedTestScripts: string[] = [];
         if (testMochaScript) {
             if (pkg.getScript("start:tinylicious:test") !== undefined) {
-                expectedTestScripts.push("start-server-and-test start:tinylicious:test 3000 test:mocha")
+                expectedTestScripts.push("start-server-and-test start:tinylicious:test 7070 test:mocha")
             } else {
                 expectedTestScripts.push("npm run test:mocha");
             }
@@ -158,7 +163,12 @@ export class FluidPackageCheck {
         if (testJestScript) {
             expectedTestScripts.push("npm run test:jest");
         }
-        const expectedTestScript = expectedTestScripts.length > 0 ? expectedTestScripts.join(" && ") : undefined;
+        let expectedTestScript = expectedTestScripts.length > 0 ? expectedTestScripts.join(" && ") : undefined;
+
+        // Allow packages that wants to have coverage by default.
+        if (testScript?.startsWith("nyc ")) {
+            expectedTestScript = `nyc ${expectedTestScript}`;
+        }
 
         if (pkg.monoRepo?.kind === MonoRepoKind.Client && testScript && /^(ts-)?mocha/.test(testScript)) {
             this.logWarn(pkg, `"mocha" in "test" script instead of "test:mocha" script`, fix);
@@ -250,7 +260,13 @@ export class FluidPackageCheck {
 
             let concurrentBuildCompile = true;
 
-            const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
+            const buildPrefix = pkg.getScript("build:gen") ? "npm run build:gen && " : (pkg.getScript("build:genver") ? "npm run build:genver && " : "");
+
+            // if build:docs script exist, we require it in to be called in the build script for @fluidframework packages
+            // otherwise, it is optional
+            const buildSuffix = (pkg.getScript("build:docs")
+                && (pkg.name.startsWith("@fluidframework") || pkg.getScript("build")?.endsWith(" && npm run build:docs"))) ?
+                " && npm run build:docs" : "";
             // tsc should be in build:commonjs if it exists, otherwise, it should be in build:compile
             if (pkg.getScript("tsc")) {
                 if (pkg.getScript("build:commonjs")) {
@@ -260,15 +276,36 @@ export class FluidPackageCheck {
                 }
             }
 
+            if(pkg.getScript("typetests:gen")){
+                // typetests:gen should be in build:commonjs if it exists, otherwise, it should be in build:compile
+                const buildTargetScripts =
+                    pkg.getScript("build:commonjs") ? buildCommonJs : buildCompile;
+                if(pkg.getScript("build:test")){
+                    // if there is a test target put test type gen after tsc
+                    // as the type test will build with the tests
+                    buildTargetScripts.push("typetests:gen");
+                }else{
+                    // if there is no test target put it before tsc
+                    // so type test build with tsc
+                    buildTargetScripts.unshift("typetests:gen");
+                }
+            }
+
+            const splitTestBuild = this.splitTestBuild(pkg, true);
             // build:test should be in build:commonjs if it exists, otherwise, it should be in build:compile
-            if (pkg.getScript("build:test") || this.splitTestBuild(pkg)) {
+            if (pkg.getScript("build:test") || splitTestBuild) {
                 if (pkg.getScript("build:commonjs")) {
                     buildCommonJs.push("build:test");
+                    // build common js is not concurrent by default
                 } else {
                     buildCompile.push("build:test");
                     // test is depended on tsc, so we can't do it concurrently for build:compile
-                    concurrentBuildCompile = false;
+                    concurrentBuildCompile = !splitTestBuild;
                 }
+            }
+
+            if (pkg.getScript("build:realsvctest")) {
+                buildCompile.push("build:realsvctest");
             }
 
             // build:commonjs build:es5 and build:esnext should be in build:compile if they exist
@@ -315,14 +352,14 @@ export class FluidPackageCheck {
                 }
             }
 
-            const check = (scriptName: string, parts: string[], concurrently = true, prefix = "") => {
+            const check = (scriptName: string, parts: string[], concurrently = true, prefix = "", suffix = "") => {
                 const expected = parts.length === 0 ? undefined :
-                    prefix + (parts.length > 1 && concurrently ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts.join(" && npm run ")}`);
+                    prefix + (parts.length > 1 && concurrently ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts.join(" && npm run ")}`) + suffix;
                 if (this.checkScript(pkg, scriptName, expected, fix)) {
                     fixed = true;
                 }
             }
-            check("build", build, true, buildPrefix);
+            check("build", build, true, buildPrefix, buildSuffix);
             if (buildCompile.length === 0) {
                 if (this.checkScript(pkg, "build:compile", "tsc", fix)) {
                     fixed = true;
@@ -337,15 +374,21 @@ export class FluidPackageCheck {
                 check("prepack", prepack);
             }
 
-            if (this.splitTestBuild(pkg)) {
-                if (!existsSync(path.join(this.getTestDir(pkg), "mocha"))) {
-                    const expectedBuildTest = "tsc --project ./src/test/tsconfig.json";
-                    if (this.checkScript(pkg, "build:test", expectedBuildTest, fix)) {
+            const testDirs = this.getTestDirs(pkg);
+            if (testDirs.length === 1) {
+                const expectedBuildTest = `tsc --project ./src/test/${testDirs[0] ? testDirs[0] + "/" : ""}tsconfig.json`;
+                if (this.checkScript(pkg, "build:test", expectedBuildTest, fix)) {
+                    fixed = true;
+                }
+            } else if (testDirs.length !== 0) {
+                check("build:test", testDirs.map((dir) => {
+                    const script = `build:test:${dir}`;
+                    const expectedBuildTest = `tsc --project ./src/test/${dir}/tsconfig.json`;
+                    if (this.checkScript(pkg, script, expectedBuildTest, fix)) {
                         fixed = true;
                     }
-                } else {
-                    check("build:test", ["build:test:mocha", "build:test:jest"]);
-                }
+                    return script;
+                }));
             }
         }
         return fixed;
@@ -389,14 +432,17 @@ export class FluidPackageCheck {
             // TODO: for now, some jest test at the root isn't linted yet
             const eslintScript = pkg.getScript("eslint");
             const hasFormatStylish = eslintScript && eslintScript.search("--format stylish") >= 0;
-            const command = hasFormatStylish? "eslint --format stylish" : "eslint";
+            const command = hasFormatStylish ? "eslint --format stylish" : "eslint";
             const lintOnlySrc = eslintScript === `${command} src`;
             const dirs = !lintOnlySrc && existsSync(path.join(pkg.directory, "tests")) ? "src tests" : "src";
             const expectedEslintScript = `${command} ${dirs}`;
             if (this.checkScript(pkg, "eslint", expectedEslintScript, fix)) {
                 fixed = true;
             }
-            if (this.checkScript(pkg, "eslint:fix", `${expectedEslintScript} --fix`, fix)) {
+
+            const eslintFixScript = pkg.getScript("eslint:fix");
+            const hasFixType = eslintFixScript && eslintFixScript.search("--fix-type problem,suggestion,layout") >= 0;
+            if (this.checkScript(pkg, "eslint:fix", `${expectedEslintScript} --fix${hasFixType ? " --fix-type problem,suggestion,layout" : ""}`, fix)) {
                 fixed = true;
             }
         }
@@ -408,16 +454,26 @@ export class FluidPackageCheck {
             return;
         }
         const filename = path.join(pkg.directory, ".npmignore");
-        const expected = [
+        const expectedCommon = [
             "nyc",
             "*.log",
             "**/*.tsbuildinfo",
-            "src/test",
-            "dist/test",
-            "**/_api-extractor-temp/**",
         ];
+
+        if (pkg.getScript("build:docs")) {
+            expectedCommon.push("**/_api-extractor-temp/**");
+        }
+
+        const testPackage = pkg.name.startsWith("@fluidframework/test-")
+            || pkg.name.startsWith("@fluid-internal/test-")
+        const expected = testPackage ?
+            expectedCommon :
+            [...expectedCommon,
+                "src/test",
+                "dist/test",
+            ];
         if (!existsSync(filename)) {
-            this.logWarn(pkg, `.npmignore not exist`, fix);
+            this.logWarn(pkg, `.npmignore does not exist`, fix);
             if (fix) {
                 await writeFileAsync(filename, expected.join("\n"), "utf8");
             }
@@ -449,10 +505,10 @@ export class FluidPackageCheck {
 
     private static readonly commonConfig = "@fluidframework/build-common/ts-common-config.json";
 
-    private static async checkTsConfigExtend(pkg: Package, fix: boolean, configJson: any) {
+    private static async checkTsConfigExtend(pkg: Package, fix: boolean, configJson: any, configFile: string) {
         let changed = false;
         if (configJson.extends !== this.commonConfig) {
-            this.logWarn(pkg, `tsc config not extending ts-common-config.json`, fix);
+            this.logWarn(pkg, `${configFile}: tsc config not extending ts-common-config.json`, fix);
             if (fix) {
                 configJson.extends = this.commonConfig;
                 changed = true;
@@ -468,7 +524,7 @@ export class FluidPackageCheck {
                     loaded = true;
                     for (const option in configJson.compilerOptions) {
                         if (configJson.compilerOptions[option] === commonConfigJson.compilerOptions[option]) {
-                            this.logWarn(pkg, `duplicate compilerOptions ${option}: ${configJson.compilerOptions[option]}`, fix);
+                            this.logWarn(pkg, `${configFile}: duplicate compilerOptions - ${option}: ${configJson.compilerOptions[option]}`, fix);
                             if (fix) {
                                 delete configJson.compilerOptions[option];
                                 changed = true;
@@ -479,7 +535,7 @@ export class FluidPackageCheck {
             }
 
             if (!loaded) {
-                this.logWarn(pkg, `can't find ${this.commonConfig}`, false);
+                this.logWarn(pkg, `${configFile}: can't find ${this.commonConfig}`, false);
             }
         }
         return changed;
@@ -489,14 +545,18 @@ export class FluidPackageCheck {
         const command = pkg.getScript("tsc");
         if (command) {
             const parsedCommand = TscUtils.parseCommandLine(command);
-            if (!parsedCommand) { return undefined; }
+            if (!parsedCommand) { return; }
 
             // Assume tsc with no argument.
             const configFile = TscUtils.findConfigFile(pkg.directory, parsedCommand);
             const configJson = TscUtils.readConfigFile(configFile);
+            if (configJson === undefined) {
+                this.logWarn(pkg, `Failed to load config file '${configFile}'`, false);
+                return;
+            }
 
             let changed = false;
-            if (await this.checkTsConfigExtend(pkg, fix, configJson)) {
+            if (await this.checkTsConfigExtend(pkg, fix, configJson, configFile)) {
                 changed = true;
             }
 
@@ -509,7 +569,7 @@ export class FluidPackageCheck {
                 }
 
                 const types: string[] | undefined = configJson.compilerOptions.types;
-                if (types && types.includes("mocha")) {
+                if (types && types.includes("mocha") && !pkg.name.startsWith("@fluid-tools/")) {
                     this.logWarn(pkg, "tsc config for main src shouldn't depend on mocha", fix);
                     if (fix) {
                         const newTypes = types.filter((v) => v !== "mocha");
@@ -544,63 +604,124 @@ export class FluidPackageCheck {
         }
         return false;
     }
-    private static async checkOneTestDir(pkg: Package, fix: boolean, testSrcDir: string, subDir?: string) {
-        const configFile = path.join(testSrcDir, subDir ?? "", "tsconfig.json");
-        const outDir = subDir ? `../../../dist/test/${subDir}` : `../../dist/test`;
+    private static async checkOneTestDir(pkg: Package, fix: boolean, subDir: string) {
+        const configFile = path.join(this.getTestBaseDir(pkg), subDir, "tsconfig.json");
+        let configJson;
+        configJson = TscUtils.readConfigFile(configFile);
+        if (!configJson) {
+            this.logWarn(pkg, `Unable to read ${configFile}`, false);
+            return;
+        }
+
+        const baseDir = !subDir && configJson.compilerOptions?.rootDir === "../";
+        const rootDir = baseDir ? "../" : "./";
+        const outDir = subDir ? `../../../dist/test/${subDir}` :
+            baseDir ? "../../dist" : "../../dist/test";
+
         const referencePath = subDir ? "../../.." : "../..";
         const compilerOptions = {
-            rootDir: "./",
+            rootDir,
             outDir,
             types: ["node", ...(subDir === "jest" ?
                 ["jest", "jest-environment-puppeteer", "puppeteer"] : ["mocha"])]
         };
-        const references = [{ path: referencePath }];
-        let configJson;
+
         let changed = false;
-        configJson = TscUtils.readConfigFile(configFile);
-        if (await this.checkTsConfigExtend(pkg, fix, configJson)) {
+
+        if (await this.checkTsConfigExtend(pkg, fix, configJson, configFile)) {
             changed = true;
         }
         if (!configJson.compilerOptions) {
-            this.logWarn(pkg, `Missing compilerOptions in test tsconfig.json`, fix);
+            this.logWarn(pkg, `Missing compilerOptions in ${configFile}`, fix);
             if (fix) {
                 configJson.compilerOptions = compilerOptions;
                 changed = true;
             }
         } else {
+            if (this.checkProperty(configFile, pkg, configJson.compilerOptions, "rootDir", rootDir, fix)) {
+                changed = true;
+            }
             if (this.checkProperty(configFile, pkg, configJson.compilerOptions, "outDir", outDir, fix)) {
                 changed = true;
             }
         }
 
-        if (!isEqual(configJson.references, references)) {
-            this.logWarn(pkg, `Unexpected references in test tsconfig.json`, fix);
-            if (fix) {
-                configJson.references = references;
-                changed = true;
+        if (this.hasMainBuild(pkg)) {
+            // We should only have references if we have a main build.
+            const references = [{ path: referencePath }];
+            if (!isEqual(configJson.references, references)) {
+                this.logWarn(pkg, `Unexpected references in ${configFile}`, fix);
+                if (fix) {
+                    configJson.references = references;
+                    changed = true;
+                }
             }
         }
+
         if (changed) {
             await writeFileAsync(configFile, JSON.stringify(configJson, undefined, 4));
         }
     }
 
     public static async checkTestDir(pkg: Package, fix: boolean) {
-        if (!this.splitTestBuild(pkg)) { return; }
-        const testSrcDir = this.getTestDir(pkg);
-        const mochaTestDir = path.join(testSrcDir, "mocha");
-        if (existsSync(mochaTestDir)) {
-            await this.checkOneTestDir(pkg, fix, testSrcDir, "mocha");
-            return this.checkOneTestDir(pkg, fix, testSrcDir, "jest");
-        }
-        return this.checkOneTestDir(pkg, fix, testSrcDir);
+        const testSrcDirs = this.getTestDirs(pkg);
+        await Promise.all(testSrcDirs.map((dir) => this.checkOneTestDir(pkg, fix, dir)))
     }
 
-    public static getTestDir(pkg: Package) {
+    public static splitTestBuild(pkg: Package, warnNoSource = false) {
+        if (!this.hasMainBuild(pkg)) {
+            // don't split test build if there is no main build
+            return false;
+        }
+        const testDirs = this.getTestDirs(pkg, warnNoSource);
+        return testDirs.length !== 0;
+    }
+
+    private static hasMainBuild(pkg: Package) {
+        return existsSync(path.join(pkg.directory, "tsconfig.json"));
+    }
+
+    private static getTestBaseDir(pkg: Package) {
         return path.join(pkg.directory, "src", "test");
     }
 
-    public static splitTestBuild(pkg: Package) {
-        return existsSync(path.join(this.getTestDir(pkg), "tsconfig.json"));
+    private static getTestDirs(pkg: Package, warnNoSource = false) {
+        const testSrcBaseDir = this.getTestBaseDir(pkg);
+        if (this.isTestDir(pkg, testSrcBaseDir, warnNoSource)) {
+            return [""];
+        }
+
+        const testSrcDirNames = ["mocha", "jest", "types"];
+        return testSrcDirNames.filter((maybeTestDirName) => {
+            const maybeTestDir = path.join(testSrcBaseDir, maybeTestDirName);
+            return this.isTestDir(pkg, maybeTestDir, warnNoSource);
+        });
+    }
+
+    private static isTestDir(pkg: Package, maybeTestDir: string, warnNoSource: boolean) {
+        if (!existsSync(path.join(maybeTestDir, "tsconfig.json"))) {
+            return false;
+        }
+
+        // Only split test build if there is some ts files in the test directory
+        const dirs = [maybeTestDir];
+        while (true) {
+            const dir = dirs.pop();
+            if (!dir) {
+                if (warnNoSource) {
+                    this.logWarn(pkg, "src/test/tsconfig.json exists, but no test file detected", false);
+                }
+                return false;
+            }
+            if (dir !== maybeTestDir && existsSync(path.join(dir, "tsconfig.json"))) {
+                // skip test dir already covered.
+                continue;
+            }
+            const files = fs.readdirSync(dir, { withFileTypes: true });
+            if (files.some((dirent) => !dirent.isDirectory() && (dirent.name.endsWith(".ts") || dirent.name.endsWith(".spec.js")))) {
+                return true;
+            }
+            dirs.push(...files.filter((dirent) => dirent.isDirectory()).map((dirent) => path.join(dir, dirent.name)));
+        }
     }
 };

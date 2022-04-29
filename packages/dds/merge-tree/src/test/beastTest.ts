@@ -1,9 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, max-len, no-bitwise, no-shadow */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise */
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import fs from "fs";
@@ -11,18 +13,131 @@ import path from "path";
 import { Trace } from "@fluidframework/common-utils";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import JsDiff from "diff";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import random from "random-js";
-import * as MergeTree from "../";
-import * as Base from "../base";
+import {
+    KeyComparer,
+    Property,
+    PropertyAction,
+    SortedDictionary,
+} from "../base";
+import {
+    ProxString,
+    RedBlackTree,
+    Stack,
+    TST,
+} from "../collections";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
+import {
+    IJSONMarkerSegment,
+    IMergeNode,
+    ISegment,
+    Marker,
+    MergeTree,
+    reservedMarkerIdKey,
+    reservedRangeLabelsKey,
+    reservedTileLabelsKey,
+} from "../mergeTree";
+import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { createRemoveRangeOp } from "../opBuilder";
-import { TextSegment } from "../textSegment";
+import {
+    IMergeTreeOp,
+    MergeTreeDeltaType,
+    ReferenceType,
+} from "../ops";
+import { SnapshotLegacy } from "../snapshotlegacy";
+import {
+    IJSONTextSegment,
+    MergeTreeTextHelper,
+    TextSegment,
+} from "../textSegment";
 import { specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
+
+function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData> {
+    const props: Property<TKey, TData>[] = [];
+    const compareProps = (a: Property<TKey, TData>, b: Property<TKey, TData>) => compareKeys(a.key, b.key);
+    function mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey) {
+        let _start = start;
+        let _end = end;
+
+        if (props.length !== 0) { return; }
+
+        if (_start === undefined) {
+            _start = min()!.key;
+        }
+        if (_end === undefined) {
+            _end = max()!.key;
+        }
+        for (let i = 0, len = props.length; i < len; i++) {
+            if (compareKeys(_start, props[i].key) <= 0) {
+                const ecmp = compareKeys(_end, props[i].key);
+                if (ecmp < 0) {
+                    break;
+                }
+                if (!action(props[i], accum)) {
+                    break;
+                }
+            }
+        }
+    }
+
+    function map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum) {
+        mapRange(action, accum);
+    }
+
+    function min() {
+        if (props.length > 0) {
+            return props[0];
+        }
+    }
+    function max() {
+        if (props.length > 0) {
+            return props[props.length - 1];
+        }
+    }
+
+    function get(key: TKey) {
+        for (let i = 0, len = props.length; i < len; i++) {
+            if (props[i].key === key) {
+                return props[i];
+            }
+        }
+    }
+
+    function put(key: TKey, data: TData) {
+        if (key !== undefined) {
+            if (data === undefined) {
+                remove(key);
+            } else {
+                props.push({ key, data });
+                props.sort(compareProps); // Go to insertion sort if too slow
+            }
+        }
+    }
+    function remove(key: TKey) {
+        if (key !== undefined) {
+            for (let i = 0, len = props.length; i < len; i++) {
+                if (props[i].key === key) {
+                    props[i] = props[len - 1];
+                    props.length--;
+                    props.sort(compareProps);
+                    break;
+                }
+            }
+        }
+    }
+    return {
+        min,
+        max,
+        map,
+        mapRange,
+        remove,
+        get,
+        put,
+    };
+}
 
 let logLines: string[];
 function log(message: any) {
@@ -35,12 +150,12 @@ const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 const compareNumbers = (a: number, b: number) => a - b;
 
-function printStringProperty(p: Base.Property<string, string>) {
-    log(`[${p.key}, ${p.data}]`);
+function printStringProperty(p?: Property<string, string>) {
+    log(`[${p?.key}, ${p?.data}]`);
     return true;
 }
 
-function printStringNumProperty(p: Base.Property<string, number>) {
+function printStringNumProperty(p: Property<string, number>) {
     log(`[${p.key}, ${p.data}]`);
     return true;
 }
@@ -53,7 +168,7 @@ export function simpleTest() {
         "Dingo", "wild",
     ];
 
-    const beast = new MergeTree.RedBlackTree<string, string>(compareStrings);
+    const beast = new RedBlackTree<string, string>(compareStrings);
     for (let i = 0; i < a.length; i += 2) {
         beast.put(a[i], a[i + 1]);
     }
@@ -83,7 +198,7 @@ export function integerTest1() {
     const imax = 10000000;
     const intCount = 1100000;
     const distribution = random.integer(imin, imax);
-    const beast = new MergeTree.RedBlackTree<number, number>(compareNumbers);
+    const beast = new RedBlackTree<number, number>(compareNumbers);
 
     const randInt = () => distribution(mt);
     const pos = new Array<number>(intCount);
@@ -100,8 +215,7 @@ export function integerTest1() {
         beast.put(pos[i], i, onConflict);
         if (!redo) {
             i++;
-        }
-        else {
+        } else {
             conflictCount++;
             redo = false;
         }
@@ -115,7 +229,6 @@ export function integerTest1() {
     }
     const getdur = took("get all keys", start);
     log(`cost per get is ${(1000.0 * getdur / intCount).toFixed(3)} us`);
-    beast.diag();
     log(`duplicates ${conflictCount}, errors ${errorCount}`);
     return errorCount;
 }
@@ -128,8 +241,8 @@ export function fileTest1() {
     log(`len: ${a.length}`);
 
     for (let k = 0; k < iterCount; k++) {
-        const beast = new MergeTree.RedBlackTree<string, number>(compareStrings);
-        const linearBeast = MergeTree.LinearDictionary<string, number>(compareStrings);
+        const beast = new RedBlackTree<string, number>(compareStrings);
+        const linearBeast = LinearDictionary<string, number>(compareStrings);
         for (let i = 0, len = a.length; i < len; i++) {
             a[i] = a[i].trim();
             if (a[i].length > 0) {
@@ -137,7 +250,7 @@ export function fileTest1() {
                 linearBeast.put(a[i], i);
             }
         }
-        if (k == 0) {
+        if (k === 0) {
             beast.map(printStringNumProperty);
             log("BTREE...");
         }
@@ -156,32 +269,29 @@ export function fileTest1() {
                 // log(`Trying key ${animal}`);
                 if (prop) {
                     // printStringNumProperty(prop);
-                    if ((linProp === undefined) || (prop.key != linProp.key) || (prop.data != linProp.data)) {
+                    if ((linProp === undefined) || (prop.key !== linProp.key) || (prop.data !== linProp.data)) {
                         log(`Linear BST does not match RB BST at key ${animal}`);
                     }
-                }
-                else {
+                } else {
                     log(`hmm...bad key: ${animal}`);
                 }
             }
         }
-        beast.diag();
-        linearBeast.diag();
     }
 }
 
-function printTextSegment(textSegment: MergeTree.ISegment, pos: number) {
+function printTextSegment(textSegment: ISegment, pos: number) {
     log(textSegment.toString());
     log(`at [${pos}, ${pos + textSegment.cachedLength})`);
     return true;
 }
 
-export function makeTextSegment(text: string): MergeTree.IMergeNode {
-    return new MergeTree.TextSegment(text);
+export function makeTextSegment(text: string): IMergeNode {
+    return new TextSegment(text);
 }
 
 function makeCollabTextSegment(text: string) {
-    return new MergeTree.TextSegment(text);
+    return new TextSegment(text);
 }
 
 function editFlat(source: string, s: number, dl: number, nt = "") {
@@ -191,17 +301,17 @@ function editFlat(source: string, s: number, dl: number, nt = "") {
 let accumTime = 0;
 
 function checkInsertMergeTree(
-    mergeTree: MergeTree.MergeTree,
-    pos: number, textSegment: MergeTree.TextSegment,
+    mergeTree: MergeTree,
+    pos: number, textSegment: TextSegment,
     verbose = false) {
-    let checkText = new MergeTree.MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
+    let checkText = new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
     const clockStart = clock();
     insertText(mergeTree, pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber,
         textSegment.text, undefined, undefined);
     accumTime += elapsedMicroseconds(clockStart);
-    const updatedText = new MergeTree.MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
-    const result = (checkText == updatedText);
+    const updatedText = new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId);
+    const result = (checkText === updatedText);
     if ((!result) && verbose) {
         log(`mismatch(o): ${checkText}`);
         log(`mismatch(u): ${updatedText}`);
@@ -209,15 +319,15 @@ function checkInsertMergeTree(
     return result;
 }
 
-function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number, end: number, verbose = false) {
-    const helper = new MergeTree.MergeTreeTextHelper(mergeTree);
+function checkMarkRemoveMergeTree(mergeTree: MergeTree, start: number, end: number, verbose = false) {
+    const helper = new MergeTreeTextHelper(mergeTree);
     const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
     const checkText = editFlat(origText, start, end - start);
     const clockStart = clock();
-    mergeTree.markRangeRemoved(start, end, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined);
+    mergeTree.markRangeRemoved(start, end, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, { op: createRemoveRangeOp(start, end) });
     accumTime += elapsedMicroseconds(clockStart);
     const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
-    const result = (checkText == updatedText);
+    const result = (checkText === updatedText);
     if ((!result) && verbose) {
         log(`mismatch(o): ${origText}`);
         log(`mismatch(c): ${checkText}`);
@@ -227,9 +337,9 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
 }
 
 export function mergeTreeTest1() {
-    const mergeTree = new MergeTree.MergeTree();
+    const mergeTree = new MergeTree();
     mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, undefined);
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId);
+    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
     let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
     checkInsertMergeTree(mergeTree, 4, fuzzySeg);
     fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
@@ -237,16 +347,16 @@ export function mergeTreeTest1() {
     checkMarkRemoveMergeTree(mergeTree, 4, 13);
     // checkRemoveSegTree(segTree, 4, 13);
     checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
-    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId);
+    mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
     const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
-    log(mergeTree.getPosition(segoff.segment, UniversalSequenceNumber, LocalClientId));
-    log(new MergeTree.MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
+    log(mergeTree.getPosition(segoff.segment!, UniversalSequenceNumber, LocalClientId));
+    log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
     log(mergeTree.toString());
     TestPack().firstTest();
 }
 
 export function mergeTreeLargeTest() {
-    const mergeTree = new MergeTree.MergeTree();
+    const mergeTree = new MergeTree();
     mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, undefined);
     const insertCount = 1000000;
     const removeCount = 980000;
@@ -275,7 +385,7 @@ export function mergeTreeLargeTest() {
         insertText(mergeTree, pos, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber,
             s, undefined, undefined);
         accumTime += elapsedMicroseconds(clockStart);
-        if ((i > 0) && (0 == (i % 50000))) {
+        if ((i > 0) && (0 === (i % 50000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -293,10 +403,10 @@ export function mergeTreeLargeTest() {
         const pos = random.integer(0, preLen)(mt);
         // Log(itree.toString());
         const clockStart = clock();
-        mergeTree.markRangeRemoved(pos, pos + dlen, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined);
+        mergeTree.markRangeRemoved(pos, pos + dlen, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined as any);
         accumTime += elapsedMicroseconds(clockStart);
 
-        if ((i > 0) && (0 == (i % 50000))) {
+        if ((i > 0) && (0 === (i % 50000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -307,7 +417,7 @@ export function mergeTreeLargeTest() {
 }
 
 export function mergeTreeCheckedTest() {
-    const mergeTree = new MergeTree.MergeTree();
+    const mergeTree = new MergeTree();
     mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, undefined);
     const insertCount = 2000;
     const removeCount = 1400;
@@ -342,7 +452,7 @@ export function mergeTreeCheckedTest() {
             errorCount++;
             break;
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -363,7 +473,7 @@ export function mergeTreeCheckedTest() {
             log(mergeTree.toString());
             break;
         }
-        if ((i > 0) && (0 == (i % 10))) {
+        if ((i > 0) && (0 === (i % 10))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -386,8 +496,7 @@ export function mergeTreeCheckedTest() {
                 errorCount++;
                 break;
             }
-        }
-        else {
+        } else {
             if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
                 log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
                 log(mergeTree.toString());
@@ -395,7 +504,7 @@ export function mergeTreeCheckedTest() {
                 break;
             }
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -417,7 +526,7 @@ export function mergeTreeCheckedTest() {
             errorCount++;
             break;
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -440,8 +549,7 @@ export function mergeTreeCheckedTest() {
                 errorCount++;
                 break;
             }
-        }
-        else {
+        } else {
             if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
                 log(`i: ${i} preLen ${preLen} pos: ${pos} dlen: ${dlen} itree len: ${mergeTree.getLength(UniversalSequenceNumber, LocalClientId)}`);
                 log(mergeTree.toString());
@@ -449,7 +557,7 @@ export function mergeTreeCheckedTest() {
                 break;
             }
         }
-        if ((i > 0) && (0 == (i % 1000))) {
+        if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
             treeCount++;
             accumTreeSize += mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
@@ -460,7 +568,7 @@ export function mergeTreeCheckedTest() {
     return errorCount;
 }
 
-type SharedStringJSONSegment = MergeTree.IJSONTextSegment & MergeTree.IJSONMarkerSegment;
+type SharedStringJSONSegment = IJSONTextSegment & IJSONMarkerSegment;
 
 // enum AsyncRoundState {
 //     Insert,
@@ -512,7 +620,7 @@ export function TestPack(verbose = true) {
         const aveTime = (client.accumTime / client.accumOps).toFixed(1);
         const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
         const stats = client.mergeTree.getStats();
-        const windowTime = stats.windowTime;
+        const windowTime = stats.windowTime!;
         const packTime = stats.packTime;
         const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
         const avePackTime = ((packTime || 0) / (client.accumOps)).toFixed(1);
@@ -538,9 +646,9 @@ export function TestPack(verbose = true) {
 
     function manyMergeTrees() {
         const mergeTreeCount = 2000000;
-        const a = <MergeTree.MergeTree[]>Array(mergeTreeCount);
+        const a = <MergeTree[]>Array(mergeTreeCount);
         for (let i = 0; i < mergeTreeCount; i++) {
-            a[i] = new MergeTree.MergeTree();
+            a[i] = new MergeTree();
         }
         for (; ;) { }
     }
@@ -586,13 +694,13 @@ export function TestPack(verbose = true) {
                 const serverIncrText = server.incrementalGetText();
                 incrGetTextTime += elapsedMicroseconds(clockStart);
                 incrGetTextCalls++;
-                if (serverIncrText != serverText) {
+                if (serverIncrText !== serverText) {
                     log("incr get text mismatch");
                 }
             }
             for (const client of clients) {
                 const cliText = client.getText();
-                if (cliText != serverText) {
+                if (cliText !== serverText) {
                     log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
                     // log(serverText);
                     // log(cliText);
@@ -601,8 +709,7 @@ export function TestPack(verbose = true) {
                         let annotes = "";
                         if (diffPart.added) {
                             annotes += "added ";
-                        }
-                        else if (diffPart.removed) {
+                        } else if (diffPart.removed) {
                             annotes += "removed ";
                         }
                         if (diffPart.count) {
@@ -625,23 +732,21 @@ export function TestPack(verbose = true) {
             let countToApply: number;
             if (all) {
                 countToApply = cliMsgCount;
-            }
-            else {
+            } else {
                 countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
             }
             client.applyMessages(countToApply);
         }
 
-        function serverProcessSome(server: TestClient, all = false) {
-            const svrMsgCount = server.getMessageCount();
+        function serverProcessSome(_server: TestClient, all = false) {
+            const svrMsgCount = _server.getMessageCount();
             let countToApply: number;
             if (all) {
                 countToApply = svrMsgCount;
-            }
-            else {
+            } else {
                 countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
             }
-            return server.applyMessages(countToApply);
+            return _server.applyMessages(countToApply);
         }
 
         function randomSpateOfInserts(client: TestClient, charIndex: number) {
@@ -650,12 +755,12 @@ export function TestPack(verbose = true) {
             const preLen = client.getLength();
             const pos = random.integer(0, preLen)(mt);
             if (includeMarkers) {
-                const insertMarkerOp = client.insertMarkerLocal(pos, MergeTree.ReferenceType.Tile,
-                    { [MergeTree.reservedTileLabelsKey]: "test" });
-                server.enqueueMsg(client.makeOpMessage(insertMarkerOp, UnassignedSequenceNumber));
+                const insertMarkerOp = client.insertMarkerLocal(pos, ReferenceType.Tile,
+                    { [reservedTileLabelsKey]: "test" });
+                server.enqueueMsg(client.makeOpMessage(insertMarkerOp!, UnassignedSequenceNumber));
             }
             const insertTextOp = client.insertTextLocal(pos, text);
-            server.enqueueMsg(client.makeOpMessage(insertTextOp, UnassignedSequenceNumber));
+            server.enqueueMsg(client.makeOpMessage(insertTextOp!, UnassignedSequenceNumber));
 
             if (TestClient.useCheckQ) {
                 client.enqueueTestString();
@@ -667,7 +772,7 @@ export function TestPack(verbose = true) {
             const preLen = client.getLength();
             const pos = random.integer(0, preLen)(mt);
             const op = client.removeRangeLocal(pos, pos + dlen);
-            server.enqueueMsg(client.makeOpMessage(op));
+            server.enqueueMsg(client.makeOpMessage(op!));
             if (TestClient.useCheckQ) {
                 client.enqueueTestString();
             }
@@ -679,7 +784,7 @@ export function TestPack(verbose = true) {
                 const removeStart = word1.pos;
                 const removeEnd = removeStart + word1.text.length;
                 const removeOp = client.removeRangeLocal(removeStart, removeEnd);
-                server.enqueueMsg(client.makeOpMessage(removeOp, UnassignedSequenceNumber));
+                server.enqueueMsg(client.makeOpMessage(removeOp!, UnassignedSequenceNumber));
                 if (TestClient.useCheckQ) {
                     client.enqueueTestString();
                 }
@@ -689,7 +794,7 @@ export function TestPack(verbose = true) {
                 }
                 const pos = word2.pos + word2.text.length;
                 const insertOp = client.insertTextLocal(pos, word1.text);
-                server.enqueueMsg(client.makeOpMessage(insertOp, UnassignedSequenceNumber));
+                server.enqueueMsg(client.makeOpMessage(insertOp!, UnassignedSequenceNumber));
 
                 if (TestClient.useCheckQ) {
                     client.enqueueTestString();
@@ -700,11 +805,11 @@ export function TestPack(verbose = true) {
         let errorCount = 0;
 
         // function asyncRoundStep(asyncInfo: AsyncRoundInfo, roundCount: number) {
-        //     if (asyncInfo.state == AsyncRoundState.Insert) {
+        //     if (asyncInfo.state === AsyncRoundState.Insert) {
         //         if (!asyncInfo.insertSegmentCount) {
         //             asyncInfo.insertSegmentCount = randSmallSegmentCount();
         //         }
-        //         if (asyncInfo.clientIndex == clients.length) {
+        //         if (asyncInfo.clientIndex === clients.length) {
         //             asyncInfo.state = AsyncRoundState.Remove;
         //             asyncInfo.iterIndex = 0;
         //         }
@@ -717,21 +822,21 @@ export function TestPack(verbose = true) {
         //                 randomSpateOfInserts(client, asyncInfo.iterIndex);
         //             }
         //             asyncInfo.iterIndex++;
-        //             if (asyncInfo.iterIndex == asyncInfo.insertSegmentCount) {
+        //             if (asyncInfo.iterIndex === asyncInfo.insertSegmentCount) {
         //                 asyncInfo.clientIndex++;
         //                 asyncInfo.insertSegmentCount = undefined;
         //                 asyncInfo.iterIndex = 0;
         //             }
         //         }
         //     }
-        //     if (asyncInfo.state == AsyncRoundState.Remove) {
+        //     if (asyncInfo.state === AsyncRoundState.Remove) {
         //         if (!asyncInfo.removeSegmentCount) {
         //             asyncInfo.removeSegmentCount = Math.floor(3 * asyncInfo.insertSegmentCount / 4);
         //             if (asyncInfo.removeSegmentCount < 1) {
         //                 asyncInfo.removeSegmentCount = 1;
         //             }
         //         }
-        //         if (asyncInfo.clientIndex == clients.length) {
+        //         if (asyncInfo.clientIndex === clients.length) {
         //             asyncInfo.state = AsyncRoundState.Tail;
         //         }
         //         else {
@@ -743,14 +848,14 @@ export function TestPack(verbose = true) {
         //                 randomSpateOfInserts(client, asyncInfo.iterIndex);
         //             }
         //             asyncInfo.iterIndex++;
-        //             if (asyncInfo.iterIndex == asyncInfo.removeSegmentCount) {
+        //             if (asyncInfo.iterIndex === asyncInfo.removeSegmentCount) {
         //                 asyncInfo.clientIndex++;
         //                 asyncInfo.removeSegmentCount = undefined;
         //                 asyncInfo.iterIndex = 0;
         //             }
         //         }
         //     }
-        //     if (asyncInfo.state == AsyncRoundState.Tail) {
+        //     if (asyncInfo.state === AsyncRoundState.Tail) {
         //         finishRound(roundCount);
         //     }
         //     else {
@@ -787,7 +892,7 @@ export function TestPack(verbose = true) {
             // log(server.getText());
             // log(server.mergeTree.toString());
             // log(server.mergeTree.getStats());
-            if (0 == (roundCount % 100)) {
+            if (0 === (roundCount % 100)) {
                 const clockStart = clock();
                 if (checkTextMatch()) {
                     log(`round: ${roundCount} BREAK`);
@@ -831,8 +936,7 @@ export function TestPack(verbose = true) {
                 for (let j = 0; j < insertSegmentCount; j++) {
                     if (startFile) {
                         randomWordMove(client);
-                    }
-                    else {
+                    } else {
                         randomSpateOfInserts(client, j);
                     }
                 }
@@ -848,8 +952,7 @@ export function TestPack(verbose = true) {
                 for (let j = 0; j < removeSegmentCount; j++) {
                     if (startFile) {
                         randomWordMove(client);
-                    }
-                    else {
+                    } else {
                         randomSpateOfRemoves(client);
                         if (includeMarkers) {
                             if (client.getLength() > 200) {
@@ -880,8 +983,7 @@ export function TestPack(verbose = true) {
 
         if (asyncExec) {
             setImmediate(asyncStep);
-        }
-        else {
+        } else {
             for (let i = 0; i < rounds; i++) {
                 round(i);
                 if (errorCount > 0) {
@@ -911,17 +1013,17 @@ export function TestPack(verbose = true) {
         cliB.startOrUpdateCollaboration("FredB");
         function checkTextMatch(checkSeq: number) {
             let error = false;
-            if (cliA.getCurrentSeq() != checkSeq) {
+            if (cliA.getCurrentSeq() !== checkSeq) {
                 log(`client A has seq number ${cliA.getCurrentSeq()} mismatch with ${checkSeq}`);
                 error = true;
             }
-            if (cliB.getCurrentSeq() != checkSeq) {
+            if (cliB.getCurrentSeq() !== checkSeq) {
                 log(`client B has seq number ${cliB.getCurrentSeq()} mismatch with ${checkSeq}`);
                 error = true;
             }
             const aText = cliA.getText();
             const bText = cliB.getText();
-            if (aText != bText) {
+            if (aText !== bText) {
                 log(`mismatch @${checkSeq}:`);
                 log(aText);
                 log(bText);
@@ -952,13 +1054,13 @@ export function TestPack(verbose = true) {
                     const preLen = cliA.getLength();
                     const pos = random.integer(0, preLen)(mt);
 
-                    const msg = cliA.makeOpMessage(cliA.insertTextLocal(pos, text), sequenceNumber++);
+                    const msg = cliA.makeOpMessage(cliA.insertTextLocal(pos, text)!, sequenceNumber++);
                     msg.minimumSequenceNumber = min;
                     cliAMsgs.push(msg);
                     cliB.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliA.applyMsg(cliAMsgs.shift());
+                    cliA.applyMsg(cliAMsgs.shift()!);
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -975,13 +1077,13 @@ export function TestPack(verbose = true) {
                     const text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
                     const preLen = cliB.getLength();
                     const pos = random.integer(0, preLen)(mt);
-                    const msg = cliB.makeOpMessage(cliB.insertTextLocal(pos, text), sequenceNumber++);
+                    const msg = cliB.makeOpMessage(cliB.insertTextLocal(pos, text)!, sequenceNumber++);
                     msg.minimumSequenceNumber = min;
                     cliBMsgs.push(msg);
                     cliA.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliB.applyMsg(cliBMsgs.shift());
+                    cliB.applyMsg(cliBMsgs.shift()!);
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -1002,13 +1104,13 @@ export function TestPack(verbose = true) {
                     const dlen = randTextLength();
                     const preLen = cliA.getLength();
                     const pos = random.integer(0, preLen)(mt);
-                    const msg = cliA.makeOpMessage(cliA.removeRangeLocal(pos, pos + dlen), sequenceNumber++);
+                    const msg = cliA.makeOpMessage(cliA.removeRangeLocal(pos, pos + dlen)!, sequenceNumber++);
                     msg.minimumSequenceNumber = min;
                     cliAMsgs.push(msg);
                     cliB.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliA.applyMsg(cliAMsgs.shift());
+                    cliA.applyMsg(cliAMsgs.shift()!);
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -1024,13 +1126,13 @@ export function TestPack(verbose = true) {
                     const dlen = randTextLength();
                     const preLen = cliB.getLength() - 1;
                     const pos = random.integer(0, preLen)(mt);
-                    const msg = cliB.makeOpMessage(cliB.removeRangeLocal(pos, pos + dlen), sequenceNumber++);
+                    const msg = cliB.makeOpMessage(cliB.removeRangeLocal(pos, pos + dlen)!, sequenceNumber++);
                     msg.minimumSequenceNumber = min;
                     cliBMsgs.push(msg);
                     cliA.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
-                    cliB.applyMsg(cliBMsgs.shift());
+                    cliB.applyMsg(cliBMsgs.shift()!);
                 }
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
@@ -1045,8 +1147,7 @@ export function TestPack(verbose = true) {
             log(cliA.mergeTree.toString());
             log(cliB.mergeTree.toString());
             errorCount++;
-        }
-        else {
+        } else {
             log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.getCollabWindow().minSeq}`);
             //            log(cliA.mergeTree.toString());
 
@@ -1078,7 +1179,7 @@ export function TestPack(verbose = true) {
         cli.insertTextLocal(0, "on the mat.");
         cli.startOrUpdateCollaboration("Fred1");
         for (const cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.insertTextRemote(0, "that ", undefined, 1, 0, "1");
         if (verbose) {
@@ -1099,7 +1200,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 3));
+        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTreeDeltaType.INSERT, 3));
         if (verbose) {
             log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1108,8 +1209,8 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.insertMarkerRemote(0, { refType: MergeTree.ReferenceType.Tile },
-            { [MergeTree.reservedTileLabelsKey]: ["peach"] },
+        cli.insertMarkerRemote(0, { refType: ReferenceType.Tile },
+            { [reservedTileLabelsKey]: ["peach"] },
             5, 0, "2");
         cli.insertTextRemote(6, "very ", undefined, 6, 2, "2");
         if (verbose) {
@@ -1120,7 +1221,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        const segs = <SharedStringJSONSegment[]>new MergeTree.SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
+        const segs = <SharedStringJSONSegment[]> new SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
         if (verbose) {
             for (const seg of segs) {
                 log(`${specToSegment(seg)}`);
@@ -1130,7 +1231,7 @@ export function TestPack(verbose = true) {
         cli.insertTextLocal(0, " old sock!");
         cli.startOrUpdateCollaboration("Fred2");
         for (const cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.insertTextRemote(0, "abcde", undefined, 1, 0, "2");
         cli.insertTextRemote(0, "yyy", undefined, 2, 0, "1");
@@ -1139,7 +1240,7 @@ export function TestPack(verbose = true) {
         cli.insertTextRemote(4, "HAS", undefined, 5, 1, "5");
         cli.insertTextLocal(19, " LANDED");
         cli.insertTextRemote(0, "yowza: ", undefined, 6, 4, "2");
-        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 7));
+        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTreeDeltaType.INSERT, 7));
         if (verbose) {
             log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 6; clientId++) {
@@ -1161,7 +1262,7 @@ export function TestPack(verbose = true) {
         cli.insertTextLocal(0, "abcdefgh");
         cli.startOrUpdateCollaboration("Fred3");
         for (const cname of clientNames) {
-            cli.addLongClientId(cname, null);
+            cli.addLongClientId(cname);
         }
         cli.applyMsg(cli.makeOpMessage(createRemoveRangeOp(1, 3), 1, 0, "3"));
         if (verbose) {
@@ -1171,25 +1272,9 @@ export function TestPack(verbose = true) {
         if (verbose) {
             log(cli.mergeTree.toString());
         }
-        let fwdRanges = cli.mergeTree.findHistorialRange(0, 5, 1, 2, cli.getClientId());
-        if (verbose) {
-            log(`fwd range 0 5 on 1 => 2`);
-            for (const r of fwdRanges) {
-                log(`fwd range (${r.start}, ${r.end})`);
-            }
-        }
-        const fwdPos = cli.mergeTree.findHistorialPosition(2, 1, 2, cli.getClientId());
-        if (verbose) {
-            log(`fwd pos 2 on 1 => 2 is ${fwdPos}`);
-            for (let clientId = 0; clientId < 4; clientId++) {
-                for (let refSeq = 0; refSeq < 3; refSeq++) {
-                    log(cli.relText(clientId, refSeq));
-                }
-            }
-        }
         cli.insertTextRemote(9, " chaser", undefined, 3, 2, "3");
         cli.removeRangeLocal(12, 14);
-        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.REMOVE, 4));
+        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTreeDeltaType.REMOVE, 4));
         if (verbose) {
             log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1200,9 +1285,9 @@ export function TestPack(verbose = true) {
         }
         cli.insertTextLocal(14, "*yolumba*");
         cli.insertTextLocal(17, "-zanzibar-");
-        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 5));
+        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTreeDeltaType.INSERT, 5));
         cli.insertTextRemote(2, "(aaa)", undefined, 6, 4, "2");
-        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTree.MergeTreeDeltaType.INSERT, 7));
+        cli.mergeTree.ackPendingSegment(createLocalOpArgs(MergeTreeDeltaType.INSERT, 7));
         if (verbose) {
             log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1228,16 +1313,8 @@ export function TestPack(verbose = true) {
             }
         }
         const removeOp = cli.removeRangeLocal(3, 5);
-        fwdRanges = cli.mergeTree.findHistorialRangeFromClient(3, 6, 9, 10, 2);
-        if (verbose) {
-            log(cli.mergeTree.toString());
-            log(`fwd range 3 6 on cli 2 refseq 9 => cli 0 local`);
-            for (const r of fwdRanges) {
-                log(`fwd range (${r.start}, ${r.end})`);
-            }
-        }
         cli.applyMsg(cli.makeOpMessage(createRemoveRangeOp(3, 6), 10, 9, "2"));
-        cli.applyMsg(cli.makeOpMessage(removeOp, 11));
+        cli.applyMsg(cli.makeOpMessage(removeOp!, 11));
         if (verbose) {
             log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1255,14 +1332,14 @@ export function TestPack(verbose = true) {
     };
 }
 
-function compareProxStrings(a: MergeTree.ProxString<number>, b: MergeTree.ProxString<number>) {
+function compareProxStrings(a: ProxString<number>, b: ProxString<number>) {
     const ascore = (a.invDistance * 200) + a.val;
     const bscore = (b.invDistance * 200) + b.val;
     return bscore - ascore;
 }
 
-const createLocalOpArgs = (type: MergeTree.MergeTreeDeltaType, sequenceNumber: number): MergeTree.IMergeTreeDeltaOpArgs => ({
-    op: { type } as MergeTree.IMergeTreeOp,
+const createLocalOpArgs = (type: MergeTreeDeltaType, sequenceNumber: number): IMergeTreeDeltaOpArgs => ({
+    op: { type } as IMergeTreeOp,
     sequencedMessage: {
         sequenceNumber,
     } as ISequencedDocumentMessage,
@@ -1289,7 +1366,7 @@ function shuffle<T>(a: T[]) {
 }
 
 function tst() {
-    const tree = new MergeTree.TST<boolean>();
+    const tree = new TST<boolean>();
     const entries = ["giraffe", "hut", "aardvark", "gold", "hover", "yurt", "hot", "antelope", "gift", "banana"];
     for (const entry of entries) {
         tree.put(entry, true);
@@ -1303,28 +1380,27 @@ function tst() {
     log(p2);
     const p3 = tree.neighbors("hat");
     log(p3);
-    const ntree = new MergeTree.TST<number>();
+    const ntree = new TST<number>();
     const filename = path.join(__dirname, "../../public/literature/dict.txt");
     const content = fs.readFileSync(filename, "utf8");
     const splitContent = content.split(/\r\n|\n/g);
     let corpusFilename = path.join(__dirname, "../../../public/literature/pp.txt");
     let corpusContent = fs.readFileSync(corpusFilename, "utf8");
-    const corpusTree = new MergeTree.TST<number>();
-    function addCorpus(corpusContent: string, corpusTree: MergeTree.TST<number>) {
+    const corpusTree = new TST<number>();
+    function addCorpus(_corpusContent: string, _corpusTree: TST<number>) {
         let count = 0;
         const re = /\b\w+\b/g;
-        let result: RegExpExecArray;
+        let result: RegExpExecArray | null;
         do {
-            result = re.exec(corpusContent);
+            result = re.exec(_corpusContent);
             if (result) {
                 const candidate = result[0];
                 count++;
-                const val = corpusTree.get(candidate);
+                const val = _corpusTree.get(candidate);
                 if (val !== undefined) {
-                    corpusTree.put(candidate, val + 1);
-                }
-                else {
-                    corpusTree.put(candidate, 1);
+                    _corpusTree.put(candidate, val + 1);
+                } else {
+                    _corpusTree.put(candidate, 1);
                 }
             }
         } while (result);
@@ -1340,8 +1416,7 @@ function tst() {
         const freq = corpusTree.get(entry);
         if (freq !== undefined) {
             ntree.put(entry, freq);
-        }
-        else {
+        } else {
             ntree.put(entry, 1);
         }
     }
@@ -1407,7 +1482,7 @@ export type DocumentNode = string | DocumentTree;
 export class DocumentTree {
     pos = 0;
     ids = { box: 0, row: 0 };
-    id: string;
+    id: string | undefined;
     static randPack = new RandomPack();
 
     constructor(public name: string, public children: DocumentNode[]) {
@@ -1419,11 +1494,11 @@ export class DocumentTree {
             client.insertTextLocal(this.pos, text);
             this.pos += text.length;
         } else {
-            let id: number;
+            let id: number | undefined;
             if (docNode.name === "pg") {
-                client.insertMarkerLocal(this.pos, MergeTree.ReferenceType.Tile,
+                client.insertMarkerLocal(this.pos, ReferenceType.Tile,
                     {
-                        [MergeTree.reservedTileLabelsKey]: [docNode.name],
+                        [reservedTileLabelsKey]: [docNode.name],
                     },
                 );
                 this.pos++;
@@ -1433,13 +1508,13 @@ export class DocumentTree {
                 docNode.id = trid;
                 id = this.ids[docNode.name]++;
                 const props = {
-                    [MergeTree.reservedMarkerIdKey]: trid,
-                    [MergeTree.reservedRangeLabelsKey]: [docNode.name],
+                    [reservedMarkerIdKey]: trid,
+                    [reservedRangeLabelsKey]: [docNode.name],
                 };
-                let behaviors = MergeTree.ReferenceType.NestBegin;
+                let behaviors = ReferenceType.NestBegin;
                 if (docNode.name === "row") {
-                    props[MergeTree.reservedTileLabelsKey] = ["pg"];
-                    behaviors |= MergeTree.ReferenceType.Tile;
+                    props[reservedTileLabelsKey] = ["pg"];
+                    behaviors |= ReferenceType.Tile;
                 }
 
                 client.insertMarkerLocal(this.pos, behaviors, props);
@@ -1449,11 +1524,11 @@ export class DocumentTree {
                 this.addToMergeTree(client, child);
             }
             if (docNode.name !== "pg") {
-                const etrid = `end-${docNode.name}${id.toString()}`;
-                client.insertMarkerLocal(this.pos, MergeTree.ReferenceType.NestEnd,
+                const etrid = `end-${docNode.name}${id?.toString()}`;
+                client.insertMarkerLocal(this.pos, ReferenceType.NestEnd,
                     {
-                        [MergeTree.reservedMarkerIdKey]: etrid,
-                        [MergeTree.reservedRangeLabelsKey]: [docNode.name],
+                        [reservedMarkerIdKey]: etrid,
+                        [reservedRangeLabelsKey]: [docNode.name],
                     },
                 );
                 this.pos++;
@@ -1466,11 +1541,11 @@ export class DocumentTree {
         let pos = 0;
         const verbose = false;
         const stacks = {
-            box: new MergeTree.Stack<string>(),
-            row: new MergeTree.Stack<string>(),
+            box: new Stack<string>(),
+            row: new Stack<string>(),
         };
 
-        function printStack(stack: MergeTree.Stack<string>) {
+        function printStack(stack: Stack<string>) {
             // eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in, no-restricted-syntax
             for (const item in stack.items) {
                 log(item);
@@ -1484,7 +1559,7 @@ export class DocumentTree {
             }
         }
 
-        function checkTreeStackEmpty(treeStack: MergeTree.Stack<string>) {
+        function checkTreeStackEmpty(treeStack: Stack<string>) {
             if (!treeStack.empty()) {
                 errorCount++;
                 log("mismatch: client stack empty; tree stack not");
@@ -1502,7 +1577,7 @@ export class DocumentTree {
                 const cliStacks = client.getStackContext(pos, ["box", "row"]);
                 for (const name of ["box", "row"]) {
                     const cliStack = cliStacks[name];
-                    const treeStack = <MergeTree.Stack<string>>stacks[name];
+                    const treeStack = <Stack<string>>stacks[name];
                     if (cliStack) {
                         const len = cliStack.items.length;
                         if (len > 0) {
@@ -1511,7 +1586,7 @@ export class DocumentTree {
                                 errorCount++;
                             }
                             for (let i = 0; i < len; i++) {
-                                const cliMarkerId = (cliStack.items[i] as MergeTree.Marker).getId();
+                                const cliMarkerId = (cliStack.items[i] as Marker).getId();
                                 const treeMarkerId = treeStack.items[i];
                                 if (cliMarkerId !== treeMarkerId) {
                                     errorCount++;
@@ -1544,15 +1619,15 @@ export class DocumentTree {
         };
 
         let prevPos = -1;
-        let prevChild: DocumentNode;
+        let prevChild: DocumentNode | undefined;
 
         // log(client.mergeTree.toString());
         for (const rootChild of this.children) {
             if (prevPos >= 0) {
-                if ((typeof prevChild !== "string") && (prevChild.name === "row")) {
+                if ((typeof prevChild !== "string") && (prevChild?.name === "row")) {
                     const id = prevChild.id;
                     const endId = `end-${id}`;
-                    const endRowMarker = <MergeTree.Marker>client.getMarkerFromId(endId);
+                    const endRowMarker = <Marker>client.getMarkerFromId(endId);
                     const endRowPos = client.getPosition(endRowMarker);
                     prevPos = endRowPos;
                 }
@@ -1576,7 +1651,7 @@ export class DocumentTree {
     }
 
     private generateClient() {
-        const client = new TestClient({ blockUpdateMarkers: true });
+        const client = new TestClient();
         client.startOrUpdateCollaboration("Fred");
         for (const child of this.children) {
             this.addToMergeTree(client, child);
@@ -1596,22 +1671,21 @@ export class DocumentTree {
     }
 
     static generateContent(rowProbability: number) {
+        let _rowProbability = rowProbability;
         const items = <DocumentNode[]>[];
         const docLen = DocumentTree.randPack.randInteger(7, 25);
         for (let i = 0; i < docLen; i++) {
-            const rowThreshold = rowProbability * 1000;
+            const rowThreshold = _rowProbability * 1000;
             const selector = DocumentTree.randPack.randInteger(1, 1000);
             if (selector >= rowThreshold) {
                 const pg = DocumentTree.generateParagraph();
                 items.push(pg);
             } else {
-                // eslint-disable-next-line no-param-reassign
-                rowProbability /= 2;
-                if (rowProbability < 0.08) {
-                    // eslint-disable-next-line no-param-reassign
-                    rowProbability = 0;
+                _rowProbability /= 2;
+                if (_rowProbability < 0.08) {
+                    _rowProbability = 0;
                 }
-                const row = DocumentTree.generateRow(rowProbability);
+                const row = DocumentTree.generateRow(_rowProbability);
                 items.push(row);
             }
         }
@@ -1642,7 +1716,7 @@ export class DocumentTree {
 }
 
 function findReplacePerf(filename: string) {
-    const client = new TestClient({ blockUpdateMarkers: true });
+    const client = new TestClient();
     loadTextFromFile(filename, client.mergeTree);
 
     const clockStart = clock();
@@ -1654,8 +1728,8 @@ function findReplacePerf(filename: string) {
         cFetches++;
 
         const curSeg = curSegOff.segment;
-        const textSeg = <MergeTree.TextSegment>curSeg;
-        if (textSeg != null) {
+        const textSeg = <TextSegment>curSeg;
+        if (textSeg !== null) {
             const text = textSeg.text;
             const i = text.indexOf("the");
             if (i >= 0) {
@@ -1666,7 +1740,7 @@ function findReplacePerf(filename: string) {
                     client.getClientId(),
                     1,
                     false,
-                    undefined);
+                    undefined as any);
                 insertText(
                     client.mergeTree,
                     pos + i,
@@ -1679,7 +1753,7 @@ function findReplacePerf(filename: string) {
                 pos = pos + i + 3;
                 cReplaces++;
             } else {
-                pos += (curSeg.cachedLength - curSegOff.offset);
+                pos += (curSeg!.cachedLength - curSegOff!.offset!);
             }
         }
     }
@@ -1707,7 +1781,7 @@ describe("Routerlicious", () => {
         });
 
         it("hierarchy", () => {
-            assert(DocumentTree.test1() == 0, logLines.join("\n"));
+            assert(DocumentTree.test1() === 0, logLines.join("\n"));
         }).timeout(testTimeout);
 
         it("randolicious", () => {

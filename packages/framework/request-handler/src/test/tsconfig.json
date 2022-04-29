@@ -4,11 +4,11 @@
         "rootDir": "./",
         "outDir": "../../dist/test",
         "types": [
-            "node",
             "mocha"
         ],
         "declaration": false,
-        "declarationMap": false
+        "declarationMap": false,
+        "skipLibCheck": true
     },
     "include": [
         "./**/*"

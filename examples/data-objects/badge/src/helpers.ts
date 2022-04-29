@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 import {
@@ -83,7 +83,8 @@ export const getTextColor = (c: IColor) => {
 };
 
 export const getButtonStyles = (baseColor: string): IButtonStyles => {
-    const color = getColorFromString(baseColor);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const color = getColorFromString(baseColor)!;
     const colorHover = getColorFromHSV({
         h: color.h,
         s: color.s,
@@ -121,31 +122,4 @@ export const getButtonStyles = (baseColor: string): IButtonStyles => {
             backgroundColor: colorPressed.str,
         },
     };
-};
-
-export const getRelativeDate = (timestamp: Date): string => {
-    // https://stackoverflow.com/questions/7641791/javascript-library-for-human-friendly-relative-date-formatting
-    const delta = Math.round(
-        (new Date().getTime() - new Date(timestamp).getTime()) / 1000,
-    );
-
-    const minute = 60;
-    const hour = minute * 60;
-    const day = hour * 24;
-
-    if (delta < 30) {
-        return "just now";
-    } else if (delta < 3 * minute) {
-        return "a few minutes ago";
-    } else if (delta < hour) {
-        return `${Math.floor(delta / minute)} minutes ago`;
-    } else if (Math.floor(delta / hour) < 3) {
-        return "a few hours ago.";
-    } else if (delta < day) {
-        return `${Math.floor(delta / hour)} hours ago`;
-    } else if (delta < day * 2) {
-        return "yesterday";
-    } else {
-        return timestamp.toUTCString();
-    }
 };

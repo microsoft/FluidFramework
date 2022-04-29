@@ -1,7 +1,7 @@
 # Fluid
 
-The Fluid Framework is a TypeScript library for building distributed, real-time collaborative web
-applications.
+The Fluid Framework is a library for building distributed, real-time collaborative web
+applications using JavaScript or TypeScript.
 
 ## Getting started using the Fluid Framework
 
@@ -16,8 +16,7 @@ Hello World repo can be found at <https://github.com/microsoft/FluidHelloWorld>.
 
 Core Examples repo can be found at <https://github.com/microsoft/FluidExamples>.
 
-Have questions? Engage with other Fluid Framework users and developers on
-[StackOverflow](https://stackoverflow.com/questions/tagged/fluid-framework)
+Have questions? Engage with other Fluid Framework users and developers in the [Discussions] section of our GitHub repo.
 
 ## Code structure
 
@@ -51,12 +50,11 @@ Dependencies between packages in various layers of the system are enforced via a
 [docs/PACKAGES.md](./docs/PACKAGES.md).
 
 ## Building
-
-In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and
-[Node.js](https://nodejs.org/).
+In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and the version of
+[Node.js](https://nodejs.org/) noted in the [.nvmrc file](https://raw.githubusercontent.com/microsoft/FluidFramework/main/.nvmrc).
 
 Note: we recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or
-[MacOS/Linux](https://github.com/nvm-sh/nvm)) to install Node.js, in case you find yourself needing to install different
+[MacOS/Linux](https://github.com/nvm-sh/nvm)) or [fnm](https://github.com/Schniz/fnm) to install Node.js, in case you find yourself needing to install different
 versions of Node.js side-by-side.
 
 Clone a copy of the repo and change to the repo root directory:
@@ -153,7 +151,7 @@ Then:
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
 
-* Participate in Q&A on [StackOverflow](https://stackoverflow.com/questions/tagged/fluid-framework)
+* Participate in Q&A in our [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
 * [Submit bugs](https://github.com/microsoft/FluidFramework/issues) and help us verify fixes as they are checked in.
 * Review the [source code changes](https://github.com/microsoft/FluidFramework/pulls).
 * [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).

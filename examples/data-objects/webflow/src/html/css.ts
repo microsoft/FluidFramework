@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { areStringsEquivalent } from "@fluid-example/flow-util-lib";
 import { ISegment } from "@fluidframework/merge-tree";
 import { getCss } from "../document";
+import { areStringsEquivalent } from "../util";
 
 // Note: Similar to TokenList.set(..), but elides the search for duplicate tokens.
 const concat = (leftTokens: string, rightTokens: string) => !rightTokens

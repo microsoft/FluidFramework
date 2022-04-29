@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -50,8 +50,6 @@ export interface IConnectMessage {
 export interface IConnectedMessage {
     clientId: string;
     existing: boolean;
-    // Back-compat, removal tracked with issue #4346
-    parentBranch: null;
     maxMessageSize: number;
     serviceConfiguration: IServiceConfiguration;
 }
@@ -78,5 +76,5 @@ export interface ILocalOrdererSetup {
 export interface IKafkaSubscriber {
     readonly context: IContext;
 
-    process(message: IQueuedMessage): void;
+    process(message: IQueuedMessage): Promise<void> | undefined;
 }

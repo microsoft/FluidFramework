@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -30,6 +30,7 @@ export class TestThrottler implements IThrottler {
 
     private checkThrottled(count: number): void {
         if (this.limit && count > this.limit) {
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new ThrottlingError("throttled", count - this.limit);
         }
     }

@@ -1,14 +1,20 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import fs from "fs";
-import { IMergeBlock, IMergeTreeDeltaOpArgs, Marker, MergeTree, TextSegment } from "../";
-import * as ops from "../ops";
-import * as Properties from "../properties";
-import { loadText } from "../text";
+import {
+    IMergeBlock,
+    Marker,
+    MergeTree,
+} from "../mergeTree";
+import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
+import { TextSegment } from "../textSegment";
+import { ReferenceType } from "../ops";
+import { PropertySet } from "../properties";
+import { loadText } from "./text";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
     const content = fs.readFileSync(filename, "utf8");
@@ -26,7 +32,7 @@ export function insertMarker(
     refSeq: number,
     clientId: number,
     seq: number,
-    behaviors: ops.ReferenceType, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpArgs,
+    behaviors: ReferenceType, props: PropertySet | undefined, opArgs: IMergeTreeDeltaOpArgs,
 ) {
     mergeTree.insertSegments(pos, [Marker.make(behaviors, props)], refSeq, clientId, seq, opArgs);
 }
@@ -38,8 +44,8 @@ export function insertText(
     clientId: number,
     seq: number,
     text: string,
-    props: Properties.PropertySet,
-    opArgs: IMergeTreeDeltaOpArgs,
+    props?: PropertySet,
+    opArgs?: IMergeTreeDeltaOpArgs,
 ) {
     mergeTree.insertSegments(pos, [TextSegment.make(text, props)], refSeq, clientId, seq, opArgs);
 }

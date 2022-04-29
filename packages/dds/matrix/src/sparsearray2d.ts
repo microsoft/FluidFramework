@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -14,12 +14,11 @@ import { IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 // (Array<T> ~2% faster than typed array on Node v12 x64)
 const x8ToInterlacedX16 =
     new Array(256).fill(0).map((value, i) => {
-        /* eslint-disable no-param-reassign */
-        i = (i | (i << 4)) & 0x0f0f; // .... 7654 .... 3210
-        i = (i | (i << 2)) & 0x3333; // ..76 ..54 ..32 ..10
-        i = (i | (i << 1)) & 0x5555; // .7.6 .5.4 .3.2 .1.0
-        /* eslint-enable no-param-reassign */
-        return i;
+        let j = i;
+        j = (j | (j << 4)) & 0x0f0f; // .... 7654 .... 3210
+        j = (j | (j << 2)) & 0x3333; // ..76 ..54 ..32 ..10
+        j = (j | (j << 1)) & 0x5555; // .7.6 .5.4 .3.2 .1.0
+        return j;
     });
 
 // Selects individual bytes from a given 32b integer.  The left shift are used to
@@ -43,8 +42,8 @@ const r0c0ToMorton2x16 = (row: number, col: number) => (r0ToMorton16(row) | c0To
 type RecurArrayHelper<T> = RecurArray<T> | T;
 type RecurArray<T> = RecurArrayHelper<T>[];
 
+/** Undo JSON serialization's coercion of 'undefined' to null. */
 const nullToUndefined = <T>(array: RecurArray<T | null>): RecurArray<T | undefined> => array.map((value) => {
-    // eslint-disable-next-line no-null/no-null
     return value === null
         ? undefined
         : Array.isArray(value)
@@ -57,13 +56,13 @@ type UA<T> = (T | undefined)[];
 /**
  * A sparse 4 billion x 4 billion array stored as 16x16 tiles.
  */
-export class SparseArray2D<T> implements IMatrixReader<T | undefined | null>, IMatrixWriter<T | undefined> {
+export class SparseArray2D<T> implements IMatrixReader<T | undefined>, IMatrixWriter<T | undefined> {
     constructor(private readonly root: UA<UA<UA<UA<UA<T>>>>> = [undefined]) { }
 
     public get rowCount() { return 0xFFFFFFFF; }
     public get colCount() { return 0xFFFFFFFF; }
 
-    public getCell(row: number, col: number): T | undefined | null {
+    public getCell(row: number, col: number): T | undefined {
         const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
         const level0 = this.root[keyHi];
         if (level0 !== undefined) {
@@ -163,7 +162,7 @@ export class SparseArray2D<T> implements IMatrixReader<T | undefined | null>, IM
         });
     }
 
-    /** Clears the all cells contained within the specifed span of rows. */
+    /** Clears the all cells contained within the specified span of rows. */
     public clearRows(rowStart: number, rowCount: number) {
         const rowEnd = rowStart + rowCount;
         for (let row = rowStart; row < rowEnd; row++) {

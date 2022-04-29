@@ -1,11 +1,12 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { strict as assert } from "assert";
 import { DocumentContext } from "../../document-router/documentContext";
-import { TestKafka } from "@fluidframework/server-test-utils";
+import { DebugLogger, TestKafka } from "@fluidframework/server-test-utils";
+import { IContextErrorData, IRoutingKey } from "@fluidframework/server-services-core";
 
 function validateException(fn: () => void) {
     try {
@@ -19,11 +20,15 @@ function validateException(fn: () => void) {
 describe("document-router", () => {
     describe("DocumentContext", () => {
         let testContext: DocumentContext;
+        let routingKey: IRoutingKey = {
+            tenantId: "test-tenant-id",
+            documentId: "test-document-id",
+        }
         let offset0 = TestKafka.createdQueuedMessage(0);
         let contextTailOffset = TestKafka.createdQueuedMessage(-1);
 
         beforeEach(async () => {
-            testContext = new DocumentContext(offset0, () => contextTailOffset);
+            testContext = new DocumentContext(routingKey, offset0, DebugLogger.create("fluid-server:TestDocumentContext"), () => contextTailOffset);
         });
 
         describe(".setHead", () => {
@@ -80,13 +85,13 @@ describe("document-router", () => {
         describe(".error", () => {
             it("Should be able to update the head offset of the manager", async () => {
                 return new Promise<void>((resolve, reject) => {
-                    testContext.on("error", (error, restart) => {
+                    testContext.on("error", (error, errorData: IContextErrorData) => {
                         assert.ok(error);
-                        assert.equal(restart, true);
+                        assert.equal(errorData.restart, true);
                         resolve();
                     });
 
-                    testContext.error("Test error", true);
+                    testContext.error("Test error", { restart: true });
                 });
             });
         });

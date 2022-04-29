@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
 # server-routerlicious pipeline
@@ -35,6 +35,7 @@ trigger:
   branches:
     include:
     - main
+    - next
     - release/*
   paths:
     include:
@@ -46,6 +47,7 @@ trigger:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
@@ -57,6 +59,7 @@ pr:
   branches:
     include:
     - main
+    - next
     - release/*
   paths:
     include:
@@ -80,7 +83,7 @@ extends:
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
     tagName: server
-    pool: Main
+    pool: Large
     pack: true
     lint: true
     test: ci:test

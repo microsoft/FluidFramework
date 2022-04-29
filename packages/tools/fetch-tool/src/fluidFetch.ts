@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import fs from "fs";
 import util from "util";
-import { isSharepointURL, IOdspDriveItem } from "@fluidframework/odsp-doclib-utils";
+import { isOdspHostname, IOdspDriveItem } from "@fluidframework/odsp-doclib-utils";
 import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs";
 import { connectionInfo, fluidFetchInit } from "./fluidFetchInit";
 import { fluidFetchMessages } from "./fluidFetchMessages";
@@ -32,16 +32,16 @@ async function fluidFetchOneFile(urlStr: string, name?: string) {
 }
 
 async function tryFluidFetchOneSharePointFile(server: string, driveItem: IOdspDriveItem) {
-    const { path, name, drive, item } = driveItem;
+    const { path, name, driveId, itemId } = driveItem;
     console.log(`File: ${path}/${name}`);
-    await fluidFetchOneFile(`https://${server}/_api/v2.1/drives/${drive}/items/${item}`, name);
+    await fluidFetchOneFile(`https://${server}/_api/v2.1/drives/${driveId}/items/${itemId}`, name);
 }
 
-function getSharePointSpecificDriveItem(url: URL): { drive: string; item: string } | undefined {
+function getSharePointSpecificDriveItem(url: URL): { driveId: string; itemId: string } | undefined {
     if (url.searchParams.has("driveId") && url.searchParams.has("itemId")) {
         return {
-            drive: url.searchParams.get("driveId") as string,
-            item: url.searchParams.get("itemId") as string,
+            driveId: url.searchParams.get("driveId") as string,
+            itemId: url.searchParams.get("itemId") as string,
         };
     }
 }
@@ -73,11 +73,11 @@ async function fluidFetchMain() {
 
     const url = new URL(paramURL);
     const server = url.hostname;
-    if (isSharepointURL(server)) {
+    if (isOdspHostname(server)) {
         // See if the url already has the specific item
         const driveItem = getSharePointSpecificDriveItem(url);
         if (driveItem) {
-            const file = await getSingleSharePointFile(server, driveItem.drive, driveItem.item);
+            const file = await getSingleSharePointFile(server, driveItem.driveId, driveItem.itemId);
             await tryFluidFetchOneSharePointFile(server, file);
             return;
         }
@@ -106,9 +106,12 @@ fluidFetchMain()
         if (error instanceof Error) {
             let extraMsg = "";
             for (const key of Object.keys(error)) {
-                if (key !== "message" && key !== "stack") {
-                    extraMsg += `\n${key}: ${JSON.stringify(error[key], undefined, 2)}`;
-                }
+                // error[key] might have circular structure
+                try {
+                    if (key !== "message" && key !== "stack") {
+                        extraMsg += `\n${key}: ${JSON.stringify(error[key], undefined, 2)}`;
+                    }
+                } catch (_) {}
             }
             console.error(`ERROR: ${error.stack}${extraMsg}`);
         } else if (typeof error === "object") {

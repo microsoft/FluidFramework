@@ -1,318 +1,120 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from './Common';
-import { DetachedSequenceId, NodeId, TraitLabel } from './Identifiers';
-import {
-	EditResult,
-	Build,
-	Change,
-	ChangeType,
-	Detach,
-	EditNode,
-	Insert,
-	TreeNode,
-	Constraint,
-	ConstraintEffect,
-	SetValue,
-} from './PersistedTypes';
-import { EditValidationResult, SnapshotNode, Snapshot } from './Snapshot';
-
-export type EditingResult =
-	| { result: EditResult.Invalid | EditResult.Malformed; changes: readonly Change[] }
-	| { result: EditResult.Applied; changes: readonly Change[]; snapshot: Snapshot };
+import { IErrorEvent } from '@fluidframework/common-definitions';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { ChangeInternal, Edit, EditStatus } from './persisted-types';
+import { newEditId } from './EditUtilities';
+import { TreeView } from './TreeView';
+import { Change } from './ChangeTypes';
+import { SharedTree } from './SharedTree';
+import { GenericTransaction, TransactionInternal } from './TransactionInternal';
+import { CachingLogViewer } from './LogViewer';
 
 /**
- * A mutable transaction for applying sequences of changes to a Snapshot.
- * Allows viewing the intermediate states.
- *
- * Contains necessary state to apply changes within an edit to a Snapshot.
- *
- * May have any number of changes applied to make up the edit.
- * Use `close` to complete the transaction, returning the array of changes and an EditingResult showing the
- * results of applying the changes as an Edit to the initial Snapshot (passed to the constructor).
- *
- * No data outside the Transaction is modified by Transaction:
- * the results from `close` must be used to actually submit an `Edit`.
+ * An event emitted by a `Transaction` to indicate a state change. See {@link TransactionEvents} for event argument information.
+ * @public
  */
-export class Transaction {
-	private _view: Snapshot;
-	private _result: EditResult = EditResult.Applied;
-	private readonly changes: Change[] = [];
-	private readonly detached: Map<DetachedSequenceId, readonly NodeId[]> = new Map();
-	private isOpen = true;
+export enum TransactionEvent {
+	/**
+	 * `currentView` has changed from `before` to `after`
+	 */
+	ViewChange = 'viewChange',
+}
+
+/**
+ * Events which may be emitted by `Transaction`
+ * @public
+ */
+export interface TransactionEvents extends IErrorEvent {
+	(event: TransactionEvent.ViewChange, listener: (before: TreeView, after: TreeView) => void);
+}
+
+/**
+ * Buffers changes to be applied to an isolated view of a `SharedTree` over time before applying them directly to the tree itself as a
+ * single edit
+ */
+export class Transaction extends TypedEventEmitter<TransactionEvents> {
+	/** The view of the tree when this transaction was created */
+	public readonly startingView: TreeView;
+	private readonly transaction: GenericTransaction;
 
 	/**
-	 * Create and open an edit of the provided `Snapshot`. After applying 0 or more changes, this editor should be closed via `close()`.
-	 * @param view - the `Snapshot` at which this edit begins. The first change will be applied against this view.
+	 * Create a new transaction over the given tree. The tree's `currentView` at this time will become the `startingView` for this
+	 * transaction.
+	 * @param tree - the `SharedTree` that this transaction applies changes to
 	 */
-	public constructor(view: Snapshot) {
-		this._view = view;
-	}
-
-	/** The most up-to-date `Snapshot` for this edit. This is the state of the tree after all changes applied so far. */
-	public get view(): Snapshot {
-		return this._view;
-	}
-
-	/** The result of the most recent attempted change */
-	public get result(): EditResult {
-		return this._result;
-	}
-
-	/** @returns the final `EditResult` and `Snapshot` after all changes are applied. */
-	public close(): EditingResult {
-		assert(this.isOpen, 'transaction has already been closed');
-		this.isOpen = false;
-		if (this.result === EditResult.Applied) {
-			// Making the policy choice that storing a detached sequences in an edit but not using it is an error.
-			this._result = this.detached.size !== 0 ? EditResult.Malformed : EditResult.Applied;
-		}
-
-		if (this.result === EditResult.Applied) {
-			return {
-				result: EditResult.Applied,
-				snapshot: this._view,
-				changes: this.changes,
-			};
-		}
-		return {
-			result: this.result,
-			changes: this.changes,
-		};
+	public constructor(public readonly tree: SharedTree) {
+		super();
+		const { currentView } = tree;
+		this.transaction = new GenericTransaction(currentView, new TransactionInternal.Policy());
+		this.startingView = currentView;
 	}
 
 	/**
-	 * A helper to apply a sequence of changes. Changes will be applied one after the other. If a change fails to apply,
-	 * the remaining changes in `changes` will be ignored.
-	 * @param changes - the sequence of changes to apply
-	 * @returns this
+	 * True if this transaction is open, false if it is closed. A transaction may be closed manually via `closeAndApplyEdit()`, or may
+	 * be automatically closed by a change in this transaction failing to apply (see `applyChange()`).
 	 */
-	public applyChanges(changes: Iterable<Change>): this {
-		for (const change of changes) {
-			if (this.applyChange(change).result !== EditResult.Applied) {
-				return this;
-			}
-		}
-
-		return this;
+	public get isOpen(): boolean {
+		return this.transaction.isOpen && this.status === EditStatus.Applied;
 	}
 
 	/**
-	 * Attempt to apply the given change as part of this edit. This method should not be called if a previous change in this edit failed to
-	 * apply.
-	 * @param change - the change to apply
-	 * @returns this
+	 * The status of the most recently applied change in this transaction
 	 */
-	public applyChange(change: Change): this {
-		assert(this.isOpen, 'Editor must be open to apply changes.');
-		if (this.result !== EditResult.Applied) {
-			fail('Cannot apply change to an edit unless all previous changes have applied');
-		}
-
-		this.changes.push(change);
-		this._result = this.dispatchChange(change);
-		return this;
+	public get status(): EditStatus {
+		return this.transaction.status;
 	}
 
-	private dispatchChange(change: Change): EditResult {
-		switch (change.type) {
-			case ChangeType.Build:
-				return this.applyBuild(change);
-			case ChangeType.Insert:
-				return this.applyInsert(change);
-			case ChangeType.Detach:
-				return this.applyDetach(change);
-			case ChangeType.Constraint:
-				return this.applyConstraint(change);
-			case ChangeType.SetValue:
-				return this.applySetValue(change);
-			default:
-				return fail('Attempted to apply unsupported change');
-		}
+	/**
+	 * The state of the tree following the most change that was successfully applied. If no changes have been applied, this is the same as
+	 * `startingView`.
+	 */
+	public get currentView(): TreeView {
+		return this.transaction.view;
 	}
 
-	private applyBuild(change: Build): EditResult {
-		if (this.detached.has(change.destination)) {
-			return EditResult.Malformed;
-		}
-
-		const map = new Map<NodeId, SnapshotNode>();
-		let detachedSequenceNotFound = false;
-		const newIds = [
-			...this.createSnapshotNodesForTree(change.source, map, () => {
-				detachedSequenceNotFound = true;
-			}),
-		];
-		if (detachedSequenceNotFound) {
-			return EditResult.Malformed;
-		}
-		let duplicateId = false;
-		const view = this.view.mergeWith(map, (old, _new, _key) => {
-			duplicateId = true;
-			return old;
-		});
-		if (duplicateId) {
-			return EditResult.Invalid;
-		}
-
-		this._view = view;
-		this.detached.set(change.destination, newIds);
-		return EditResult.Applied;
-	}
-
-	private applyInsert(change: Insert): EditResult {
-		const source = this.detached.get(change.source);
-		if (source === undefined) {
-			return EditResult.Malformed;
-		}
-
-		const destinationChangeResult = this.view.validateStablePlace(change.destination);
-		if (destinationChangeResult !== EditValidationResult.Valid) {
-			return destinationChangeResult === EditValidationResult.Invalid ? EditResult.Invalid : EditResult.Malformed;
-		}
-
-		this.detached.delete(change.source);
-		const place = this.view.placeFromStablePlace(change.destination);
-		const nodes = this.view.getTrait(place.trait);
-		const index = this.view.findIndexWithinTrait(place);
-		const newNodes = [...nodes.slice(0, index), ...source, ...nodes.slice(index)];
-		this._view = this.view.updateTraitContents(place.trait, newNodes);
-
-		return EditResult.Applied;
-	}
-
-	private applyDetach(change: Detach): EditResult {
-		const sourceChangeResult = this.view.validateStableRange(change.source);
-		if (sourceChangeResult !== EditValidationResult.Valid) {
-			return sourceChangeResult === EditValidationResult.Invalid ? EditResult.Invalid : EditResult.Malformed;
-		}
-
-		const { start, end } = this.view.rangeFromStableRange(change.source);
-		const { trait: traitLocation } = start;
-		const nodes = this.view.getTrait(traitLocation);
-
-		const startIndex = this.view.findIndexWithinTrait(start);
-		const endIndex = this.view.findIndexWithinTrait(end);
-
-		const detached: NodeId[] = nodes.slice(startIndex, endIndex);
-		const keep = [...nodes.slice(0, startIndex), ...nodes.slice(endIndex)];
-
-		let modifiedView = this.view.updateTraitContents(traitLocation, keep);
-
-		// Store or dispose detached
-		if (change.destination !== undefined) {
-			if (this.detached.has(change.destination)) {
-				return EditResult.Malformed;
-			}
-			this.detached.set(change.destination, detached);
-		} else {
-			modifiedView = modifiedView.deleteNodes(detached);
-		}
-
-		this._view = modifiedView;
-		return EditResult.Applied;
-	}
-
-	private applyConstraint(change: Constraint): EditResult {
-		// TODO: Implement identityHash and contentHash
-		assert(change.identityHash === undefined, 'identityHash constraint is not implemented');
-		assert(change.contentHash === undefined, 'contentHash constraint is not implemented');
-
-		const sourceChangeResult = this.view.validateStableRange(change.toConstrain);
-		const onViolation = change.effect === ConstraintEffect.ValidRetry ? EditResult.Applied : EditResult.Invalid;
-		if (sourceChangeResult !== EditValidationResult.Valid) {
-			return sourceChangeResult === EditValidationResult.Invalid ? onViolation : EditResult.Malformed;
-		}
-
-		const { start, end } = this.view.rangeFromStableRange(change.toConstrain);
-		const startIndex = this.view.findIndexWithinTrait(start);
-		const endIndex = this.view.findIndexWithinTrait(end);
-
-		if (change.length !== undefined && change.length !== endIndex - startIndex) {
-			return onViolation;
-		}
-
-		if (change.parentNode !== undefined && change.parentNode !== end.trait.parent) {
-			return onViolation;
-		}
-
-		if (change.label !== undefined && change.label !== end.trait.label) {
-			return onViolation;
-		}
-
-		return EditResult.Applied;
-	}
-
-	private applySetValue(change: SetValue): EditResult {
-		if (!this.view.hasNode(change.nodeToModify)) {
-			return EditResult.Invalid;
-		}
-
-		const node = this.view.getSnapshotNode(change.nodeToModify);
-		const { payload } = change;
-		const newNode = { ...node };
-		if (payload === null) {
-			delete newNode.payload;
-		} else {
-			if (typeof payload.base64 !== 'string') {
-				return EditResult.Malformed;
-			}
-			newNode.payload = { base64: payload.base64 };
-		}
-		this._view = this.view.replaceNode(change.nodeToModify, newNode);
-		return EditResult.Applied;
-	}
-
-	private createSnapshotNodeForTree(
-		node: TreeNode<EditNode>,
-		map: Map<NodeId, SnapshotNode>,
-		onInvalidDetachedId: () => void
-	): NodeId {
-		const traits = new Map<TraitLabel, readonly NodeId[]>();
-		// eslint-disable-next-line no-restricted-syntax
-		for (const key in node.traits) {
-			if (Object.prototype.hasOwnProperty.call(node.traits, key)) {
-				const element = node.traits[key];
-				traits.set(key as TraitLabel, [...this.createSnapshotNodesForTree(element, map, onInvalidDetachedId)]);
-			}
-		}
-
-		const newNode: SnapshotNode = {
-			identifier: node.identifier,
-			...(node.payload ? { payload: node.payload } : {}),
-			definition: node.definition,
-			traits,
-		};
-
-		map.set(newNode.identifier, newNode);
-		return newNode.identifier;
-	}
-
-	private *createSnapshotNodesForTree(
-		sequence: Iterable<EditNode>,
-		map: Map<NodeId, SnapshotNode>,
-		onInvalidDetachedId: () => void
-	): Iterable<NodeId> {
-		function isDetachedSequenceId(node: EditNode): node is DetachedSequenceId {
-			return typeof node !== 'object';
-		}
-
-		for (const node of sequence) {
-			if (isDetachedSequenceId(node)) {
-				// Retrieve the detached sequence from the void.
-				const detachedNodeIds = this.detached.get(node);
-				if (detachedNodeIds === undefined) {
-					onInvalidDetachedId();
-					break;
+	/**
+	 * Attempt to apply a sequence of changes in this transaction. The `currentView` will be updated to reflect the new tree state after all
+	 * applied changes. If any change fails to apply, the remaining changes will be ignored and this transaction will be automatically
+	 * closed (see `isOpen`). If this transaction is already closed, this method has no effect. This method will emit a
+	 * `TransactionEvent.ViewChange` event at most once per call.
+	 * @param changes - the changes to apply
+	 * @returns either the `EditStatus` of the given changes or the `EditStatus` of the last change before the transaction was closed
+	 */
+	public apply(...changes: Change[]): EditStatus;
+	public apply(changes: Change[]): EditStatus;
+	public apply(headOrChanges: Change | Change[], ...tail: Change[]): EditStatus {
+		if (this.isOpen) {
+			const changes = Array.isArray(headOrChanges) ? headOrChanges : [headOrChanges, ...tail];
+			if (changes.length > 0) {
+				const previousView = this.currentView;
+				this.transaction.applyChanges(changes.map((c) => this.tree.internalizeChange(c)));
+				if (
+					this.listenerCount(TransactionEvent.ViewChange) > 0 &&
+					!previousView.hasEqualForest(this.currentView)
+				) {
+					this.emit(TransactionEvent.ViewChange, previousView, this.currentView);
 				}
-				// Since we have retrieved the sequence, remove it from the void to prevent a second tree from multiparenting it later
-				this.detached.delete(node);
-				yield* detachedNodeIds;
-			} else {
-				yield this.createSnapshotNodeForTree(node, map, onInvalidDetachedId);
+			}
+		}
+		return this.status;
+	}
+
+	/**
+	 * Close this transaction and apply its changes to the `SharedTree`. If this transaction is already closed, this method has no effect.
+	 */
+	public closeAndCommit(): void {
+		if (this.isOpen) {
+			if (this.transaction.changes.length > 0) {
+				const result = this.transaction.close();
+				const edit: Edit<ChangeInternal> = { id: newEditId(), changes: result.changes };
+				if (this.tree.edits instanceof CachingLogViewer) {
+					this.tree.edits.setKnownEditingResult(edit, result);
+				}
+				this.tree.applyEditInternal(edit);
 			}
 		}
 	}

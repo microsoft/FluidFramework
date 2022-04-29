@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -22,7 +22,7 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
     clients: IConfigRange;
 }
 
-const allOpertaions: TestOperation[] = [
+const allOperations: TestOperation[] = [
     removeRange,
     annotateRange,
     insertAtRefPos,
@@ -33,7 +33,7 @@ export const debugOptions: IConflictFarmConfig = {
     clients: { min: 3, max: 3 },
     opsPerRoundRange: { min: 1, max: 100 },
     rounds: 1000,
-    operations: allOpertaions,
+    operations: allOperations,
     incrementalLog: true,
     growthFunc: (input: number) => input + 1,
 };
@@ -43,8 +43,9 @@ export const defaultOptions: IConflictFarmConfig = {
     clients: { min: 1, max: 8 },
     opsPerRoundRange: { min: 1, max: 128 },
     rounds: 8,
-    operations: allOpertaions,
+    operations: allOperations,
     growthFunc: (input: number) => input * 2,
+    // resultsFilePostfix: "default-conflict-farm-0.40.json",
 };
 
 export const longOptions: IConflictFarmConfig = {
@@ -52,7 +53,7 @@ export const longOptions: IConflictFarmConfig = {
     clients: { min: 1, max: 32 },
     opsPerRoundRange: { min: 1, max: 512 },
     rounds: 32,
-    operations: allOpertaions,
+    operations: allOperations,
     growthFunc: (input: number) => input * 2,
 };
 
@@ -65,13 +66,12 @@ describe("MergeTree.Client", () => {
     // Generate a list of single character client names, support up to 69 clients
     const clientNames = generateClientNames();
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
         it(`ConflictFarm_${minLength}`, async () => {
             const mt = random.engines.mt19937();
             mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, minLength]);
 
-            const clients: TestClient[] = [new TestClient({ blockUpdateMarkers: true })];
+            const clients: TestClient[] = [new TestClient()];
             clients.forEach(
                 (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 
@@ -91,10 +91,10 @@ describe("MergeTree.Client", () => {
                     seq,
                     clients,
                     minLength,
-                    opts);
+                    opts,
+                );
             }
         })
-
-            .timeout(30 * 1000);
+        .timeout(30 * 10000);
     });
 });

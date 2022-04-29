@@ -1,20 +1,17 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import {
-    IFluidObject,
     IFluidHandle,
     IFluidHandleContext,
+    FluidObject,
 } from "@fluidframework/core-interfaces";
-import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
-export class FluidObjectHandle<T extends IFluidObject = IFluidObject> implements IFluidHandle {
-    // This is used to break the recursion while attaching the graph. Also tells the attach state of the graph.
-    private graphAttachState: AttachState = AttachState.Detached;
-    private bound: Set<IFluidHandle> | undefined;
+export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
+    private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
     public readonly absolutePath: string;
 
     public get IFluidHandle(): IFluidHandle { return this; }
@@ -24,8 +21,28 @@ export class FluidObjectHandle<T extends IFluidObject = IFluidObject> implements
     }
 
     /**
+     * Tells whether the object of this handle is visible in the container locally or globally.
+     */
+    private get visible(): boolean {
+        /**
+         * If the object of this handle is attached, it is visible in the container. Ideally, checking local visibility
+         * should be enough for a handle. However, there are scenarios where the object becomes locally visible but the
+         * handle does not know this - This will happen is attachGraph is never called on the handle. Couple of examples
+         * where this can happen:
+         * 1. Handles to DDS other than the default handle won't know if the DDS becomes visible after the handle was
+         *    created.
+         * 2. Handles to root data stores will never know that it was visible because the handle will not be stores in
+         *    another DDS and so, attachGraph will never be called on it.
+         */
+        return this.isAttached || this.locallyVisible;
+    }
+
+    // Tracks whether this handle is locally visible in the container.
+    private locallyVisible: boolean = false;
+
+    /**
      * Creates a new FluidObjectHandle.
-     * @param value - The IFluidObject object this handle is for.
+     * @param value - The FluidObject object this handle is for.
      * @param path - The path to this handle relative to the routeContext.
      * @param routeContext - The parent IFluidHandleContext that has a route to this handle.
      */
@@ -42,33 +59,24 @@ export class FluidObjectHandle<T extends IFluidObject = IFluidObject> implements
     }
 
     public attachGraph(): void {
-        // If this handle is already in attaching state in the graph or attached, no need to attach again.
-        if (this.graphAttachState !== AttachState.Detached) {
+        if (this.visible) {
             return;
         }
-        this.graphAttachState = AttachState.Attaching;
-        if (this.bound !== undefined) {
-            for (const handle of this.bound) {
-                handle.attachGraph();
-            }
 
-            this.bound = undefined;
-        }
+        this.locallyVisible = true;
+        this.pendingHandlesToMakeVisible.forEach((handle) => {
+            handle.attachGraph();
+        });
+        this.pendingHandlesToMakeVisible.clear();
         this.routeContext.attachGraph();
-        this.graphAttachState = AttachState.Attached;
     }
 
     public bind(handle: IFluidHandle) {
-        // If the dds is already attached or its graph is already in attaching or attached state,
-        // then attach the incoming handle too.
-        if (this.isAttached || this.graphAttachState !== AttachState.Detached) {
+        // If this handle is visible, attach the graph of the incoming handle as well.
+        if (this.visible) {
             handle.attachGraph();
             return;
         }
-        if (this.bound === undefined) {
-            this.bound = new Set<IFluidHandle>();
-        }
-
-        this.bound.add(handle);
+        this.pendingHandlesToMakeVisible.add(handle);
     }
 }

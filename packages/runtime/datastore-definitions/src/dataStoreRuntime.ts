@@ -1,26 +1,23 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidHandleContext,
-    IFluidSerializer,
     IFluidRouter,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import {
     IAudience,
     IDeltaManager,
-    ContainerWarning,
-    ILoader,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
-    IQuorum,
+    IQuorumClients,
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { IInboundSignalMessage, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions";
@@ -28,7 +25,8 @@ import { IChannel } from ".";
 
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (
-        event: "disconnected" | "dispose" | "leader" | "notleader" | "attaching" | "attached",
+        // eslint-disable-next-line @typescript-eslint/unified-signatures
+        event: "disconnected" | "dispose" | "attaching" | "attached",
         listener: () => void,
     );
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
@@ -47,8 +45,6 @@ export interface IFluidDataStoreRuntime extends
 
     readonly id: string;
 
-    readonly IFluidSerializer: IFluidSerializer;
-
     readonly IFluidHandleContext: IFluidHandleContext;
 
     readonly rootRoutingContext: IFluidHandleContext;
@@ -61,13 +57,7 @@ export interface IFluidDataStoreRuntime extends
 
     readonly clientId: string | undefined;
 
-    readonly documentId: string;
-
-    readonly existing: boolean;
-
     readonly connected: boolean;
-
-    readonly loader: ILoader;
 
     readonly logger: ITelemetryLogger;
 
@@ -111,7 +101,7 @@ export interface IFluidDataStoreRuntime extends
     /**
      * Returns the current quorum.
      */
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorumClients;
 
     /**
      * Returns the current audience.
@@ -122,9 +112,4 @@ export interface IFluidDataStoreRuntime extends
      * Resolves when a local data store is attached.
      */
     waitAttached(): Promise<void>;
-
-    /**
-     * Errors raised by distributed data structures
-     */
-    raiseContainerWarning(warning: ContainerWarning): void;
 }

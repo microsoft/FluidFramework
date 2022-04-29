@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -13,7 +13,7 @@ export class SnapshotableArray<T> extends Array {
     }
 
     public async loadFrom(from: T[]): Promise<void> {
-        assert(this.data.length === 0, "Loading snapshot into a non-empty collection");
+        assert(this.data.length === 0, 0x06b /* "Loading snapshot into a non-empty collection" */);
         this.data = from;
     }
 

@@ -1,22 +1,31 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { AsyncLocalStorage } from "async_hooks";
 import * as uuid from "uuid";
 import { Request, Response, NextFunction } from "express";
+import { CorrelationIdHeaderName } from "@fluidframework/server-services-client";
 
-const asyncLocalStorage = new AsyncLocalStorage<string>();
+const defaultAsyncLocalStorage = new AsyncLocalStorage<string>();
 
-export function getCorrelationId(): string | undefined {
-    const id = asyncLocalStorage.getStore();
-    return id;
+export function getCorrelationId(altAsyncLocalStorage?: AsyncLocalStorage<string>): string | undefined {
+    if (altAsyncLocalStorage) {
+        return altAsyncLocalStorage.getStore();
+    } else {
+        return defaultAsyncLocalStorage.getStore();
+    }
 }
 
-export const bindCorrelationId = (headerName: string = "x-correlation-id") =>
-    ((req: Request, res: Response, next: NextFunction): void => {
-        const id: string = req.header(headerName) || uuid.v4();
-        res.setHeader(headerName, id);
-        asyncLocalStorage.run(id, () => next());
-    });
+export const bindCorrelationId =
+    (altAsyncLocalStorage?: AsyncLocalStorage<string>, headerName: string = CorrelationIdHeaderName) =>
+        ((req: Request, res: Response, next: NextFunction): void => {
+            const id: string = req.header(headerName) || uuid.v4();
+            res.setHeader(headerName, id);
+            if (altAsyncLocalStorage) {
+                altAsyncLocalStorage.run(id, () => next());
+            } else {
+                defaultAsyncLocalStorage.run(id, () => next());
+            }
+        });

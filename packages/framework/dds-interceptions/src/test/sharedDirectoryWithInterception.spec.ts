@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -331,9 +331,8 @@ describe("Shared Directory with Interception", () => {
             let asserted: boolean = false;
             try {
                 sharedDirectoryWithInterception.set("color", "green");
-            } catch (error) {
-                assert.strictEqual(error.message,
-                    "set called recursively from the interception callback",
+            } catch (error: any) {
+                assert.strictEqual(error.message, "0x0bf",
                     "We should have caught an assert in replaceText because it detects an infinite recursion");
                 asserted = true;
             }

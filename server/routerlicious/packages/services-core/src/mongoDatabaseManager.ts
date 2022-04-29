@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -14,7 +14,9 @@ import { INode } from "./orderer";
  */
 export class MongoDatabaseManager implements IDatabaseManager {
     constructor(
-        private readonly mongoManager: MongoManager,
+        private readonly globalDbEnabled: boolean,
+        private readonly operationsDbMongoManager: MongoManager,
+        private readonly globalDbMongoManager: MongoManager,
         private readonly nodeCollectionName: string,
         private readonly documentsCollectionName: string,
         private readonly deltasCollectionName: string,
@@ -43,7 +45,10 @@ export class MongoDatabaseManager implements IDatabaseManager {
     }
 
     private async getCollection<T>(name: string) {
-        const db = await this.mongoManager.getDatabase();
+        const db = name === this.documentsCollectionName && this.globalDbEnabled ?
+            await this.globalDbMongoManager.getDatabase() :
+            await this.operationsDbMongoManager.getDatabase();
+
         return db.collection<T>(name);
     }
 }

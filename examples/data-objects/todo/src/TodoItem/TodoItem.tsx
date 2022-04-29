@@ -1,22 +1,20 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { ClickerInstantiationFactory } from "@fluid-example/clicker";
+import { Clicker, ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { DataObject, DataObjectFactory, waitForAttach } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import {
-    IFluidHandle, IFluidLoadable,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
-import { TextBoxInstantiationFactory } from "../TextBox";
-import { TextListInstantiationFactory } from "../TextList";
-import { TodoItemSupportedComponents } from "./supportedComponent";
+import { TextBox, TextBoxInstantiationFactory } from "../TextBox";
+import { TextList, TextListInstantiationFactory } from "../TextList";
+import { ITodoItemInnerComponent, TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItemView } from "./TodoItemView";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -39,10 +37,9 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements IFluidHTMLView {
+export class TodoItem extends DataObject<{ InitialState: ITodoItemInitialState }> implements IFluidHTMLView {
     private text: SharedString;
-    private innerIdCell: ISharedCell<IFluidHandle>;
+    private innerIdCell: ISharedCell<{ type: TodoItemSupportedComponents, handle: IFluidHandle }>;
     private _absoluteUrl: string | undefined;
 
     public get IFluidHTMLView() { return this; }
@@ -110,20 +107,21 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
 
     public static getFactory() { return TodoItem.factory; }
 
-    private static readonly factory = new DataObjectFactory(
-        TodoItemName,
-        TodoItem,
-        [
-            SharedString.getFactory(),
-            SharedCell.getFactory(),
-        ],
-        {},
-        new Map([
-            TextBoxInstantiationFactory.registryEntry,
-            TextListInstantiationFactory.registryEntry,
-            ClickerInstantiationFactory.registryEntry,
-        ]),
-    );
+    private static readonly factory =
+        new DataObjectFactory(
+            TodoItemName,
+            TodoItem,
+            [
+                SharedString.getFactory(),
+                SharedCell.getFactory(),
+            ],
+            {},
+            new Map([
+                TextBoxInstantiationFactory.registryEntry,
+                TextListInstantiationFactory.registryEntry,
+                ClickerInstantiationFactory.registryEntry,
+            ]),
+        );
 
     // start IFluidHTMLView
 
@@ -153,15 +151,38 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
     }
 
     public hasInnerComponent(): boolean {
-        return !!this.innerIdCell.get();
+        return this.innerIdCell.get() !== undefined;
     }
 
-    public async getInnerComponent() {
-        const innerComponentHandle = this.innerIdCell.get();
-        if (innerComponentHandle) {
-            return innerComponentHandle.get();
-        } else {
+    public async getInnerComponent(): Promise<ITodoItemInnerComponent> {
+        const innerComponentInfo = this.innerIdCell.get();
+        if (innerComponentInfo === undefined) {
             return undefined;
+        }
+
+        switch (innerComponentInfo.type) {
+            case "todo":
+                return {
+                    type: innerComponentInfo.type,
+                    component: await innerComponentInfo.handle.get() as TodoItem,
+                };
+            case "clicker":
+                return {
+                    type: innerComponentInfo.type,
+                    component: await innerComponentInfo.handle.get() as Clicker,
+                };
+            case "textBox":
+                return {
+                    type: innerComponentInfo.type,
+                    component: await innerComponentInfo.handle.get() as TextBox,
+                };
+            case "textList":
+                return {
+                    type: innerComponentInfo.type,
+                    component: await innerComponentInfo.handle.get() as TextList,
+                };
+            default:
+                throw new Error("Unknown inner component type");
         }
     }
 
@@ -192,7 +213,7 @@ export class TodoItem extends DataObject<{}, ITodoItemInitialState> implements I
         }
 
         // Update the inner component id
-        this.innerIdCell.set(component.handle);
+        this.innerIdCell.set({ type, handle: component.handle });
 
         this.emit("innerComponentChanged");
     }

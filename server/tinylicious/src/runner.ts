@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -11,8 +11,8 @@ import {
     IWebServerFactory,
     MongoManager,
     DefaultMetricClient,
+    IRunner,
 } from "@fluidframework/server-services-core";
-import * as utils from "@fluidframework/server-services-utils";
 import { Deferred } from "@fluidframework/common-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -21,8 +21,8 @@ import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
 import * as app from "./app";
 
-export class TinyliciousRunner implements utils.IRunner {
-    private server: IWebServer;
+export class TinyliciousRunner implements IRunner {
+    private server?: IWebServer;
     private runningDeferred: Deferred<void>;
 
     constructor(
@@ -36,6 +36,9 @@ export class TinyliciousRunner implements utils.IRunner {
     ) { }
 
     public async start(): Promise<void> {
+        const version = process.env.npm_package_version;
+        winston.info(`Starting tinylicious@${version}`);
+
         this.runningDeferred = new Deferred<void>();
 
         // Make sure provided port is unoccupied
@@ -43,7 +46,7 @@ export class TinyliciousRunner implements utils.IRunner {
             await this.ensurePortIsFree();
         } catch (e) {
             if (this.config.get("exitOnPortConflict")) {
-                winston.info(e.message);
+                winston.info(e);
                 return;
             }
             throw e;
@@ -74,15 +77,19 @@ export class TinyliciousRunner implements utils.IRunner {
     }
 
     public stop(): Promise<void> {
-        // Close the underlying server and then resolve the runner once closed
-        this.server.close().then(
-            () => {
-                this.runningDeferred.resolve();
-            },
-            (error) => {
-                this.runningDeferred.reject(error);
-            },
-        );
+        if (this.server) {
+            // Close the underlying server and then resolve the runner once closed
+            this.server.close().then(
+                () => {
+                    this.runningDeferred.resolve();
+                },
+                (error) => {
+                    this.runningDeferred.reject(error);
+                },
+            );
+        } else {
+            this.runningDeferred.resolve();
+        }
 
         return this.runningDeferred.promise;
     }

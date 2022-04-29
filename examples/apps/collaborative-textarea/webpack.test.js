@@ -1,10 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 const path = require("path");
-const merge = require("webpack-merge");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const pkg = require("./package.json");
@@ -21,11 +20,11 @@ module.exports = env => {
         module: {
             rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: require.resolve("ts-loader")
             },
             {
                 test: /\.css$/i,
-                use: ['style-loader', 'css-loader'],
+                use: [require.resolve('style-loader'), require.resolve('css-loader')],
             }]
         },
         output: {
@@ -38,7 +37,9 @@ module.exports = env => {
             libraryTarget: "umd"
         },
         devServer: {
-            contentBase: path.join(__dirname, 'tests')
+            static: {
+                directory: path.join(__dirname, 'tests')
+            }
         },
         plugins: [
             new HtmlWebpackPlugin({

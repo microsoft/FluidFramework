@@ -1,17 +1,14 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { Dom, hasTagName, isTextNode, Scheduler, TagName } from "@fluid-example/flow-util-lib";
-import { IFluidObject } from "@fluidframework/core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
 import { SequenceEvent } from "@fluidframework/sequence";
 import { FlowDocument } from "../document";
-import { IFluidHTMLViewFactory } from "../editor";
-import { clamp, done, emptyObject, getSegmentRange } from "../util";
+import { clamp, Dom, done, emptyObject, getSegmentRange, hasTagName, isTextNode, TagName } from "../util";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
 import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter";
@@ -93,10 +90,23 @@ export class Layout extends EventEmitter {
     private renderPromise = done;
     private renderResolver: () => void;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, scheduler = new Scheduler(), public readonly viewFactoryRegistry: Map<string, IFluidHTMLViewFactory> = new Map(), public readonly scope?: IFluidObject) {
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>) {
         super();
 
-        this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
+        let scheduled = false;
+        this.scheduleRender = () => {
+            if (scheduled) {
+                return;
+            }
+
+            Promise.resolve().then(() => {
+                scheduled = false;
+                this.render();
+            }).catch(console.error);
+
+            scheduled = true;
+        };
+
         this.initialCheckpoint = new LayoutCheckpoint([], { parent: this.slot, previous: null });
         this.rootFormatInfo = Object.freeze({ formatter: new BootstrapFormatter(formatter), state: emptyObject });
 
@@ -115,42 +125,47 @@ export class Layout extends EventEmitter {
     }
 
     public sync(start = 0, end = this.doc.length) {
+        let _start = start;
+        let _end = end;
+
         const doc = this.doc;
         const length = doc.length;
 
         console.time("Layout.sync()");
 
-        const oldStart = start;
-        const oldEnd = end;
+        const oldStart = _start;
+        const oldEnd = _end;
         {
-            ({ start, end } = (this.rootFormatInfo.formatter as RootFormatter<IFormatterState>).prepare(
-                this, clamp(0, start, length), clamp(start, end, length)));
+            const startEndInfo = (this.rootFormatInfo.formatter as RootFormatter<IFormatterState>).prepare(
+                this, clamp(0, _start, length), clamp(_start, _end, length));
+            _start = startEndInfo.start;
+            _end = startEndInfo.end;
 
             let checkpoint = this.initialCheckpoint;
 
-            while (start > 0) {
-                const position = start - 1;
+            while (_start > 0) {
+                const position = _start - 1;
                 const { segment, offset } = doc.getSegmentAndOffset(position);
                 const range = getSegmentRange(position, segment, offset);
 
                 // If the segment ends at our start position, we can resume here.
-                if (range.end === start) {
+                if (range.end === _start) {
                     checkpoint = this.segmentToCheckpoint.get(segment);
                     break;
                 }
 
                 // Otherwise backtrack to the previous segment
-                start = range.start;
+                _start = range.start;
             }
 
-            if (start === 0) {
+            if (_start === 0) {
                 checkpoint = this.initialCheckpoint;
             }
 
             this.restoreCheckpoint(checkpoint);
 
-            debug("Begin: sync([%d..%d)) -> [%d..%d) len: %d -> %d", oldStart, oldEnd, start, end, oldEnd - oldStart, end - start);
-            this.emit("render", { start, end });
+            debug("Begin: sync([%d..%d)) -> [%d..%d) len: %d -> %d", oldStart, oldEnd, _start, _end, oldEnd - oldStart, _end - _start);
+            this.emit("render", { _start, _end });
         }
 
         try {
@@ -256,7 +271,8 @@ export class Layout extends EventEmitter {
     }
 
     public popFormat(count = 1) {
-        while (count-- > 0) {
+        let _count = count;
+        while (_count-- > 0) {
             const { formatter, state } = this.formatStack.pop();
             debug("  popFormat(%o@%d):", formatter, this.position);
             formatter.end(this, state);
@@ -330,7 +346,8 @@ export class Layout extends EventEmitter {
     }
 
     public popNode(count = 1) {
-        while (count-- > 0) {
+        let _count = count;
+        while (_count-- > 0) {
             const cursor = this._cursor;
             const parent = cursor.parent;
             debug("    popNode(%o@%d):", parent, this.position);
@@ -377,6 +394,7 @@ export class Layout extends EventEmitter {
     }
 
     private segmentAndOffsetToNodeAndOffsetHelper(cursor: ILayoutCursor, offset: number) {
+        let _offset = offset;
         let { previous: node } = cursor;
 
         // If there was no previous node, the cursor is located at the first child of the parent.
@@ -400,14 +418,14 @@ export class Layout extends EventEmitter {
 
             // If we've found a text node, set the offset to the just after the end of the text.
             if (node.nodeType === Node.TEXT_NODE) {
-                offset = node.textContent.length;
+                _offset = node.textContent.length;
             }
         }
 
         // Coerce NaN to the position after the last character
         {
             const { length } = node.textContent;
-            return { node, nodeOffset: offset < length ? offset : length };
+            return { node, nodeOffset: _offset < length ? _offset : length };
         }
     }
 
@@ -537,17 +555,19 @@ export class Layout extends EventEmitter {
     }
 
     private invalidate(start: number, end: number) {
+        let _start = start;
+        let _end = end;
         // Union the delta range with the current invalidated range (if any).
         const doc = this.doc;
         /* eslint-disable @typescript-eslint/unbound-method */
-        start = this.unionRef(doc, start, this.startInvalid, Math.min, +Infinity);
-        end = this.unionRef(doc, end, this.endInvalid, Math.max, -Infinity);
+        _start = this.unionRef(doc, _start, this.startInvalid, Math.min, +Infinity);
+        _end = this.unionRef(doc, _end, this.endInvalid, Math.max, -Infinity);
         /* eslint-enable @typescript-eslint/unbound-method */
-        this.startInvalid = updateRef(doc, this.startInvalid, start);
-        this.endInvalid = updateRef(doc, this.endInvalid, end);
+        this.startInvalid = updateRef(doc, this.startInvalid, _start);
+        this.endInvalid = updateRef(doc, this.endInvalid, _end);
         this.scheduleRender();
 
-        this.renderPromise = new Promise((accept) => { this.renderResolver = accept; });
+        this.renderPromise = new Promise((resolve) => { this.renderResolver = resolve; });
     }
 
     private render() {

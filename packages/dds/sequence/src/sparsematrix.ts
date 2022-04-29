@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -9,23 +9,27 @@ import {
     createGroupOp,
     IJSONSegment,
     ISegment,
-    PropertySet,
     LocalReferenceCollection,
+    PropertySet,
 } from "@fluidframework/merge-tree";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelServices,
-    Jsonable,
-    JsonablePrimitive,
     IChannelFactory,
+    Serializable,
+    Jsonable,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
 import { SharedSegmentSequence, SubSequence } from "./";
 
-// An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
-// to "pad" a run of unoccupied cells.
+/**
+ * An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
+ * to "pad" a run of unoccupied cells.
+ *
+ * @deprecated PaddingSegment is part of an abandoned prototype.  Use SharedMatrix instead.
+ */
 export class PaddingSegment extends BaseSegment {
     public static readonly typeString = "PaddingSegment";
     public static is(segment: ISegment): segment is PaddingSegment {
@@ -93,7 +97,14 @@ export class PaddingSegment extends BaseSegment {
     }
 }
 
-export type SparseMatrixItem = Jsonable<JsonablePrimitive | IFluidHandle>;
+/**
+ * @deprecated SparseMatrixItem is part of an abandoned prototype.  Use SharedMatrix instead.
+ */
+export type SparseMatrixItem = Serializable;
+
+/**
+ * @deprecated RunSegment is part of an abandoned prototype.  Use SharedMatrix instead.
+ */
 export class RunSegment extends SubSequence<SparseMatrixItem> {
     public static readonly typeString = "RunSegment";
     public static is(segment: ISegment): segment is RunSegment {
@@ -171,24 +182,53 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
     }
 }
 
+/**
+ * @deprecated MatrixSegment is part of an abandoned prototype.  Use SharedMatrix instead.
+ */
 export type MatrixSegment = RunSegment | PaddingSegment;
 
+/**
+ * @deprecated maxCol is part of an abandoned prototype.  Use SharedMatrix instead.
+ */
 export const maxCol = 0x200000;         // X128 Excel maximum of 16,384 columns
+
+/**
+ * @deprecated maxCols is part of an abandoned prototype.  Use SharedMatrix instead.
+ */
 export const maxCols = maxCol + 1;
 
+/**
+ * @deprecated maxRow is part of an abandoned prototype.  Use SharedMatrix instead.
+ */
 export const maxRow = 0xFFFFFFFF;       // X4096 Excel maximum of 1,048,576 rows
+
+/**
+ * @deprecated maxRows is part of an abandoned prototype.  Use SharedMatrix instead.
+ */
 export const maxRows = maxRow + 1;
 
+/**
+ * @deprecated maxCellPosition is part of an abandoned prototype.  Use SharedMatrix instead.
+ */
 export const maxCellPosition = maxCol * maxRow;
 
+/**
+ * @deprecated positionToRowCol is part of an abandoned prototype.  Use SharedMatrix instead.
+ */
 export const rowColToPosition = (row: number, col: number) => row * maxCols + col;
 
+/**
+ * @deprecated positionToRowCol is part of an abandoned prototype.  Use SharedMatrix instead.
+ */
 export function positionToRowCol(position: number) {
     const row = Math.floor(position / maxCols);
     const col = position - (row * maxCols);
     return { row, col };
 }
 
+/**
+ * @deprecated SparseMatrix is an abandoned prototype.  Use SharedMatrix instead.
+ */
 export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     /**
      * Create a new sparse matrix
@@ -234,11 +274,13 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         this.replaceRange(start, end, segment);
     }
 
-    public getItem(row: number, col: number) {
+    public getItem(row: number, col: number):
+        // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
+        Jsonable<string | number | boolean | IFluidHandle> {
         const pos = rowColToPosition(row, col);
-        const { segment, offset } =
-            this.getContainingSegment(pos);
+        const { segment, offset } = this.getContainingSegment(pos);
         if (RunSegment.is(segment)) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return segment.items[offset];
         } else if (PaddingSegment.is(segment)) {
             return undefined;
@@ -307,7 +349,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         const removeColEnd = srcCol + numCols;
         const ops = [];
 
-        for (let r = 0, rowStart = 0; r < this.numRows; r++ , rowStart += maxCols) {
+        for (let r = 0, rowStart = 0; r < this.numRows; r++, rowStart += maxCols) {
             ops.push(this.client.removeRangeLocal(rowStart + removeColStart, rowStart + removeColEnd));
             const insertPos = rowStart + destCol;
             const segment = new PaddingSegment(numCols);
@@ -323,6 +365,9 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 }
 
+/**
+ * @deprecated SparseMatrixFactory is an abandoned prototype.  Use SharedMatrixFactory instead.
+ */
 export class SparseMatrixFactory implements IChannelFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";
 

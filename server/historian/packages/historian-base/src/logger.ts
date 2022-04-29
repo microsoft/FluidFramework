@@ -1,64 +1,40 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import * as debug from "debug";
-import * as winston from "winston";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import Transport = require("winston-transport");
-
-export interface IWinstonConfig {
-    colorize: boolean;
-    json: boolean;
-    label: string;
-    level: string;
-    timestamp: boolean;
-    additionalTransportList: Transport[];
-}
+import nconf, { Provider } from "nconf";
+import { WinstonLumberjackEngine } from "@fluidframework/server-services-utils";
+import { ILumberjackEngine, ILumberjackSchemaValidator, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
- * Configures the default behavior of the Winston logger based on the provided config
+ * Helps to avoid package version mismatch issues with usage of global Lumberjack instance.
+ * Configures the default behavior of the Winston and Lumberjack loggers based on the provided config.
+ *
+ * IMPORTANT: call this after `configureLogging` has been called, if calling both, so that Lumberjack is not
+ * setup twice, which will throw an error. `configureLogging` does not do a safety check when setting up Lumberjack.
  */
-export function configureLogging(config: IWinstonConfig) {
-    const formatters = [winston.format.label({ label: config.label })];
+export function configureHistorianLogging(configOrPath: Provider | string) {
+    // if package versions are not mismatched, this check will ensure this function does nothing.
+    if (!Lumberjack.isSetupCompleted()) {
+        // TODO: this is duplicate code from `@fluidframework/server-services-utils` configureLogging()
+        // to avoid adding duplicate transports to the global `winston` instance. This should just call
+        // configureLogging() once global winston usage is removed in favor of Lumberjack.
+        const config = typeof configOrPath === "string"
+        ? nconf.argv().env({ separator: "__", parseValues: true }).file(configOrPath).use("memory")
+        : configOrPath;
 
-    if (config.colorize) {
-        formatters.push(winston.format.colorize());
+        const lumberjackConfig = config.get("lumberjack");
+        const engineList =
+            lumberjackConfig && lumberjackConfig.engineList ?
+            lumberjackConfig.engineList as ILumberjackEngine[] :
+            [new WinstonLumberjackEngine()];
+
+        const schemaValidatorList =
+            lumberjackConfig && lumberjackConfig.schemaValidator ?
+            lumberjackConfig.schemaValidator as ILumberjackSchemaValidator[] :
+            undefined;
+
+        Lumberjack.setup(engineList, schemaValidatorList);
     }
-
-    if (config.timestamp) {
-        formatters.push(winston.format.timestamp());
-    }
-
-    if (config.json) {
-        formatters.push(winston.format.json());
-    } else {
-        formatters.push(winston.format.simple());
-    }
-
-    winston.configure({
-        format: winston.format.combine(...formatters),
-        transports: [
-            new winston.transports.Console({
-                handleExceptions: true,
-                level: config.level,
-            }),
-        ],
-    });
-
-    if (config.additionalTransportList) {
-        for (const transport of config.additionalTransportList) {
-            winston.add(transport);
-        }
-    }
-
-    // Forward all debug library logs through winston
-    (debug as any).log = (msg, ...args) => winston.info(msg, ...args);
-    // Override the default log format to not include the timestamp since winston will do this for us
-    // eslint-disable-next-line space-before-function-paren
-    (debug as any).formatArgs = function (args) {
-        const name = this.namespace;
-        args[0] = `${name} ${args[0]}`;
-    };
 }

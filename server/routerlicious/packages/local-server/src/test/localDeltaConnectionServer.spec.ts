@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -39,7 +39,7 @@ describe("LocalDeltaConnectionServer", () => {
 
         const claims: ITokenClaims = {
             documentId: "document",
-            scopes:  [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+            scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
             tenantId: "tenant",
             user,
             iat: now,
@@ -48,8 +48,7 @@ describe("LocalDeltaConnectionServer", () => {
         };
 
         const utf8Key = { utf8: "key" };
-         // eslint-disable-next-line no-null/no-null
-        const token = jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg:"HS256", typ: "JWT" }), claims, utf8Key);
+        const token = jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 
         return deltaConnectionServer.connectWebSocket(
             "tenant",
@@ -110,6 +109,10 @@ describe("LocalDeltaConnectionServer", () => {
         deltaConnectionServer = LocalDeltaConnectionServer.create();
     });
 
+    afterEach(async () => {
+        await deltaConnectionServer.close();
+    });
+
     it("can connect to web socket and join client", async () => {
         // Connect the first client.
         const [socket1, connected1P] = connectNewClient("write", "userId1");
@@ -119,7 +122,7 @@ describe("LocalDeltaConnectionServer", () => {
 
         // Wait for the first client to be connected and joined.
         const connected1 = await connected1P;
-        assert.equal(connected1.existing, false, "The document should not be existing for the first client");
+        assert.equal(connected1.existing, true, "The document should be existing for the first client");
 
         const join1 = await join1P;
         assert.equal(

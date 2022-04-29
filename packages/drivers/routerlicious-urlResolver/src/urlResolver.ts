@@ -1,9 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { parse } from "url";
+import { assert } from "@fluidframework/common-utils";
 import {
     IRequest,
 } from "@fluidframework/core-interfaces";
@@ -24,7 +25,8 @@ const r11sServers = [
 export class RouterliciousUrlResolver implements IUrlResolver {
     constructor(
         private readonly config: { provider: Provider, tenantId: string, documentId: string } | undefined,
-        private readonly getToken: () => Promise<string>) {
+        private readonly getToken: () => Promise<string>,
+        private readonly hostUrl: string) {
     }
 
     /**
@@ -118,6 +120,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 deltaStorageUrl,
                 ordererUrl,
             },
+            id: documentId,
             tokens: { jwt: token },
             type: "fluid",
             url: fluidUrl,
@@ -129,7 +132,21 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
     ): Promise<string> {
-        throw new Error("Not implmented");
+        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
+        const [, tenantId, documentId] = parsedUrl.pathname.split("/");
+        assert(!!tenantId, 0x0ba /* "Tenant id should exist" */);
+        assert(!!documentId, 0x0bb /* "Document id should exist" */);
+
+        let url = relativeUrl;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
+        }
+
+        return `${this.hostUrl}/${encodeURIComponent(
+            tenantId)}/${encodeURIComponent(documentId)}/${url}`;
     }
 }
 

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -13,6 +13,9 @@ import { Task, TaskExec } from "../task";
 import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync, ExecAsyncResult } from "../../../common/utils";
 import chalk from "chalk";
 
+interface TaskExecResult extends ExecAsyncResult {
+    worker?: boolean
+}
 export abstract class LeafTask extends Task {
 
     private dependentTasks?: LeafTask[];
@@ -51,6 +54,9 @@ export abstract class LeafTask extends Task {
         this.parentCount++;
     }
 
+    protected get useWorker() {
+        return false;
+    }
     public async exec(): Promise<BuildResult> {
         if (this.isDisabled) { return BuildResult.UpToDate; }
         if (options.showExec) {
@@ -63,24 +69,58 @@ export abstract class LeafTask extends Task {
         if (this.recheckLeafIsUpToDate && !this.forced && await this.checkLeafIsUpToDate()) {
             return this.execDone(startTime, BuildResult.UpToDate);
         }
-        const ret = await execAsync(this.command, {
-            cwd: this.node.pkg.directory,
-            env: { PATH: `${path.join(this.node.pkg.directory, "node_modules", ".bin")}${path.delimiter}${process.env["PATH"]}` }
-        });
+        const ret = await this.execCore();
 
         if (ret.error) {
-            console.error(`${this.node.pkg.nameColored}: error during command ${this.command}`)
+            const codeStr = ret.error.code !== undefined? ` (exit code ${ret.error.code})` : "";
+            console.error(`${this.node.pkg.nameColored}: error during command '${this.command}'`)
             console.error(this.getExecErrors(ret));
             return this.execDone(startTime, BuildResult.Failed);
         }
         if (ret.stderr) {
             // no error code but still error messages, treat them is non fatal warnings
-            console.warn(`${this.node.pkg.nameColored}: warning during command ${this.command}`);
+            console.warn(`${this.node.pkg.nameColored}: warning during command '${this.command}'`);
             console.warn(this.getExecErrors(ret));
         }
 
         await this.markExecDone();
-        return this.execDone(startTime, BuildResult.Success);
+        return this.execDone(startTime, BuildResult.Success, ret.worker);
+    }
+
+    private async execCore(): Promise<TaskExecResult> {
+        const workerPool = this.node.buildContext.workerPool;
+        if (workerPool && this.useWorker) {
+            const workerResult = await workerPool.runOnWorker(this.executable, this.command, this.node.pkg.directory);
+            if (workerResult.code === 0 || !workerResult.error) {
+                return {
+                    error: workerResult.code === 0? null : { name: "Worker error", message: "Worker error", cmd: this.command, code: workerResult.code },
+                    stdout: workerResult.stdout?? "",
+                    stderr: workerResult.stderr?? "",
+                    worker: true,
+                }
+            }
+            // rerun on the main thread in case the work has an unknown exception
+            const result = await this.execCommand();
+            if (!result.error) {
+                console.warn(`${this.node.pkg.nameColored}: warning: worker failed with code ${workerResult.code} but succeeded directly '${this.command}'`);
+                if (workerResult.error) {
+                    if (workerResult.error.stack) {
+                        console.warn(workerResult.error.stack);
+                    } else {
+                        console.warn(`${workerResult.error.name}: ${workerResult.error.message}`);
+                    }
+                }
+            }
+            return result;
+        }
+        return this.execCommand();
+    }
+
+    private async execCommand(): Promise<ExecAsyncResult> {
+        return execAsync(this.command, {
+            cwd: this.node.pkg.directory,
+            env: { PATH: `${path.join(this.node.pkg.directory, "node_modules", ".bin")}${path.delimiter}${process.env["PATH"]}` }
+        })
     }
 
     private getExecErrors(ret: ExecAsyncResult) {
@@ -98,7 +138,7 @@ export abstract class LeafTask extends Task {
         return errorMessages;
     }
 
-    private execDone(startTime: number, status: BuildResult) {
+    private execDone(startTime: number, status: BuildResult, worker?: boolean) {
         if (!options.showExec) {
             let statusCharacter: string = " ";
             switch (status) {
@@ -117,7 +157,12 @@ export abstract class LeafTask extends Task {
             const taskNum = this.node.buildContext.taskStats.leafBuiltCount.toString().padStart(3, " ");
             const totalTask = this.node.buildContext.taskStats.leafTotalCount - this.node.buildContext.taskStats.leafUpToDateCount;
             const elapsedTime = (Date.now() - startTime) / 1000;
-            logStatus(`[${taskNum}/${totalTask}] ${statusCharacter} ${this.node.pkg.nameColored}: ${this.command} - ${elapsedTime.toFixed(3)}s`);
+            const workerMsg = worker? "[worker] " : "";
+            const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${this.node.pkg.nameColored}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s`;
+            logStatus(statusString);
+            if (status === BuildResult.Failed) {
+                this.node.buildContext.failedTaskLines.push(statusString);
+            }
             this.node.buildContext.taskStats.leafExecTimeTotal += elapsedTime;
         }
         return status;
@@ -214,7 +259,7 @@ export abstract class LeafTask extends Task {
     protected abstract addDependentTasks(dependentTasks: LeafTask[]): void;
 
     // check if this task is up to date
-    protected abstract async checkLeafIsUpToDate(): Promise<boolean>;
+    protected abstract checkLeafIsUpToDate(): Promise<boolean>;
 
     // do this task support recheck when it time to execute (even when the dependent task is out of date)
     protected get recheckLeafIsUpToDate(): boolean { return false; }

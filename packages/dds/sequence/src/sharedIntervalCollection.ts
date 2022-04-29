@@ -1,16 +1,9 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
-import {
-    MapKernel,
-} from "@fluidframework/map";
-import {
-    FileMode, ISequencedDocumentMessage, ITree, MessageType, TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { bufferToString } from "@fluidframework/common-utils";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
@@ -18,16 +11,20 @@ import {
     IChannelServices,
     IChannelFactory,
 } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
+    createSingleBlobSummary,
+    IFluidSerializer,
     SharedObject,
 } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
 import {
     Interval,
     IntervalCollection,
     IntervalCollectionValueType,
     ISerializableInterval,
 } from "./intervalCollection";
+import { MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
@@ -148,61 +145,40 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return sharedCollection;
     }
 
-    protected snapshotCore(serializer: IFluidSerializer): ITree {
-        const tree: ITree = {
-            entries: [
-                {
-                    mode: FileMode.File,
-                    path: snapshotFileName,
-                    type: TreeEntry.Blob,
-                    value: {
-                        contents: this.intervalMapKernel.serialize(serializer),
-                        encoding: "utf-8",
-                    },
-                },
-            ],
-        };
-
-        return tree;
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+        return createSingleBlobSummary(snapshotFileName, this.intervalMapKernel.serialize(serializer));
     }
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
     }
 
-    protected onDisconnect() {
-        debug(`${this.id} is now disconnected`);
-    }
+    protected onDisconnect() { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService) {
-        const header = await storage.read(snapshotFileName);
-
-        const data: string = header ? fromBase64ToUtf8(header) : undefined;
-        this.intervalMapKernel.populate(data);
+        const blob = await storage.readBlob(snapshotFileName);
+        const header = bufferToString(blob, "utf8");
+        this.intervalMapKernel.populate(header);
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.intervalMapKernel.tryProcessMessage(message, local, localOpMetadata);
-        }
-    }
-
-    protected registerCore() {
-        for (const value of this.intervalMapKernel.values()) {
-            if (SharedObject.is(value)) {
-                value.bindToContext();
-            }
+            this.intervalMapKernel.tryProcessMessage(message.contents, local, message, localOpMetadata);
         }
     }
 
     /**
      * Creates the full path of the intervalCollection label
-     * @param label - the incoming lable
+     * @param label - the incoming label
      */
     protected getIntervalCollectionPath(label: string): string {
         return label;
+    }
+
+    protected applyStashedOp() {
+        throw new Error("not implemented");
     }
 }
