@@ -57,6 +57,13 @@ export function compareFiniteNumbers<T extends number>(a: T, b: T): number {
 }
 
 /**
+ * A numeric comparator used for sorting in descending order.
+ */
+ export function compareFiniteNumbersReversed<T extends number>(a: T, b: T): number {
+	return b - a;
+}
+
+/**
  * Compares strings lexically to form a strict partial ordering.
  */
 export function compareStrings<T extends string>(a: T, b: T): number {
