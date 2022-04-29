@@ -6,7 +6,12 @@
 import { PathLike, Stats } from "fs";
 import * as path from "path";
 import { Request } from "express";
-import { IGetRefParamsExternal, IWholeFlatSummary, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
+import {
+    IGetRefParamsExternal,
+    IWholeFlatSummary,
+    isNetworkError,
+    NetworkError,
+} from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
     BaseGitRestTelemetryProperties,
@@ -169,5 +174,9 @@ export function logAndThrowApiError(error: any, request: Request, params: IRepoM
     if (isNetworkError(error)) {
         throw error;
     }
-    throw new NetworkError(500, `Internal error when processing ${request.method} request to ${request.url}`);
+    // TODO: some APIs might expect 400 responses by default, like GetRef in GitManager. Since `handleResponse` uses
+    // 400 by default, using something different here would override the expected behavior and cause issues. Because
+    // of that, for now, we use 400 here. But ideally, we would revisit every RepoManager API and make sure that API
+    // is actively throwing NetworkErrors with appropriate status codes according to what the protocols expect.
+    throw new NetworkError(error?.code ?? 400, `Error when processing ${request.method} request to ${request.url}`);
 }

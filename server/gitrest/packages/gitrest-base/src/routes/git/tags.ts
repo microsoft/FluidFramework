@@ -27,7 +27,7 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => repoManager.getTag(request.params[0]))
-            .catch((error) => logAndThrowApiError(error, request, repoManagerParams);
+            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response);
     });
