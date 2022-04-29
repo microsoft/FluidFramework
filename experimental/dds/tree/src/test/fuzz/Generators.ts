@@ -4,7 +4,6 @@
  */
 
 import Random from 'random-js';
-import { v5 } from 'uuid';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { Side, TraitMap, WriteFormat } from '../../persisted-types';
@@ -34,10 +33,6 @@ import {
 	createWeightedAsyncGenerator,
 	done,
 } from '../../stochastic-test-utilities';
-
-function uuid(rand: Random): string {
-	return v5(rand.string(16), '33f960ec-f1e4-4fca-8dcd-223c6647fcc7');
-}
 
 const defaultJoinConfig: Required<JoinGenerationConfig> = {
 	maximumActiveCollaborators: 10,
@@ -103,11 +98,11 @@ const defaultEditConfig: Required<EditGenerationConfig> = {
 const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<Operation, FuzzTestState> => {
 	const config = { ...defaultEditConfig, ...passedConfig };
 	const insertConfig = { ...defaultInsertConfig, ...config.insertConfig };
-	const poolRand = new Random(/* mathNative engine */);
-	const traitLabelPool = Array.from({ length: config.traitLabelPoolSize }, () => uuid(poolRand) as TraitLabel);
+	const poolRand = new Random(Random.engines.mt19937().seed(0));
+	const traitLabelPool = Array.from({ length: config.traitLabelPoolSize }, () => poolRand.uuid4() as TraitLabel);
 	const traitLabelGenerator = ({ rand }: FuzzTestState) => rand.pick(traitLabelPool);
 
-	const definitionPool = Array.from({ length: insertConfig.definitionPoolSize }, () => uuid(poolRand) as Definition);
+	const definitionPool = Array.from({ length: insertConfig.definitionPoolSize }, () => poolRand.uuid4() as Definition);
 	const definitionGenerator = ({ rand }: FuzzTestState) => rand.pick(definitionPool);
 	type EditState = FuzzTestState & TreeContext;
 
