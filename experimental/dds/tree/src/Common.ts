@@ -59,7 +59,7 @@ export function compareFiniteNumbers<T extends number>(a: T, b: T): number {
 /**
  * A numeric comparator used for sorting in descending order.
  */
- export function compareFiniteNumbersReversed<T extends number>(a: T, b: T): number {
+export function compareFiniteNumbersReversed<T extends number>(a: T, b: T): number {
 	return b - a;
 }
 

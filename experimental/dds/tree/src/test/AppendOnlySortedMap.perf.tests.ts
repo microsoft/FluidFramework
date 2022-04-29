@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-bitwise */
-
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import Prando from 'prando';
 import { compareFiniteNumbers } from '../Common';
@@ -14,7 +12,7 @@ function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number,
 	const type = BenchmarkType.Measurement;
 	let map: AppendOnlySortedMap<number, number>;
 	let rand: Prando;
-	let keyChoices: number[] = [];
+	const keyChoices: number[] = [];
 	let localChoice = 0;
 	const before = () => {
 		rand = new Prando(42);

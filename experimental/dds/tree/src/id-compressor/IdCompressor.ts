@@ -356,11 +356,7 @@ export class IdCompressor {
 		LocalCompressedId,
 		[FinalCompressedId, IdCluster],
 		FinalCompressedId
-	> = new AppendOnlyDoublySortedMap(
-		compareFiniteNumbersReversed,
-		(value) => value[0],
-		compareFiniteNumbers
-	);
+	> = new AppendOnlyDoublySortedMap(compareFiniteNumbersReversed, (value) => value[0], compareFiniteNumbers);
 
 	/**
 	 * Contains entries for cluster base UUIDs and override strings (both local and final).
