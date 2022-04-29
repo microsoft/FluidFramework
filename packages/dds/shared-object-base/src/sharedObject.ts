@@ -416,10 +416,21 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         this.reSubmitCore(content, localOpMetadata);
     }
 
+    /**
+     * Revert an op
+     */
     protected rollback(content: any, localOpMetadata: unknown) {
         throw new Error("rollback not supported");
     }
 
+    /**
+     * Apply changes from an op. Used when rehydrating an attached container
+     * with pending changes. This prepares the SharedObject for seeing an ACK
+     * for the op or resubmitting the op upon reconnection.
+     * @param content - Contents of a stashed op.
+     * @returns localMetadata of the op, to be passed to process() or resubmit()
+     * when the op is ACKed or resubmitted, respectively
+     */
     protected abstract applyStashedOp(content: any): unknown;
 }
 

@@ -37,13 +37,21 @@ The `IDocumentStorageService.write(...)` method within the `@fluidframework/driv
 The method `IDeltaManager.close()` was deprecated in 0.54 and is now removed.
 Use IContainer.close() or IContainerContext.closeFn() instead, and pass an error object if applicable.
 
+### Require enableOfflineLoad to use IContainer.closeAndGetPendingLocalState()
+Offline load functionality has been placed behind a feature flag as part of [ongoing offline work](https://github.com/microsoft/FluidFramework/pull/9557).
+In order to use `IContainer.closeAndGetPendingLocalState`, pass a set of options to the container runtime including `{ enableOfflineLoad: true }`.
+
 # 0.59
 
 ## 0.59 Upcoming changes
 - [Remove ICodeLoader interface](#Remove-ICodeLoader-interface)
+- [IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release](#ifluidcontainer-connect-and-ifluidcontainer-disconnect-will-be-made-mandatory-in-future-major-release)
 
 ### Remove ICodeLoader interface
 ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
+
+### IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release
+In major release 1.0, the optional functions `IFluidContainer.connect()` and `IFluidContainer.disconnect()` will be made mandatory functions.
 
 ## 0.59 Breaking changes
 - [Removing Commit from TreeEntry and commits from SnapShotTree](#Removing-Commit-from-TreeEntry-and-commits-from-SnapShotTree)

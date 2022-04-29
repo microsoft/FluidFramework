@@ -45,6 +45,9 @@ describe("Garbage Collection Tests", () => {
     const eventPkg = { value:`/${testPkgPath.join("/")}`, tag: TelemetryDataTag.PackageData };
 
     const getNodeType = (nodePath: string) => {
+        if (nodePath.split("/").length !== 2) {
+            return GCNodeType.Other;
+        }
         return GCNodeType.DataStore;
     };
     // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
@@ -437,13 +440,12 @@ describe("Garbage Collection Tests", () => {
      * In these tests, V = nodes and E = edges between nodes. Root nodes that are always referenced are marked as *.
      */
     describe("References between summaries", () => {
-        const unknownRouteEvent = "GarbageCollector:gcUnknownOutboundRoute";
-
         let garbageCollector: IGarbageCollector;
         const nodeA = "/A";
         const nodeB = "/B";
         const nodeC = "/C";
         const nodeD = "/D";
+        const nodeE = "/A/E";
 
         // Runs GC and returns the unreferenced timestamps of all nodes in the GC summary.
         async function getUnreferencedTimestamps() {
@@ -474,10 +476,18 @@ describe("Garbage Collection Tests", () => {
             }
             return nodeTimestamps;
         }
-
+        const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
         beforeEach(() => {
+            closeCalled = false;
+            const settings = { "Fluid.GarbageCollection.LogUnknownOutboundReferences": "true" };
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            sessionStorageConfigProvider.value.getRawConfig = (name) => settings[name];
             defaultGCData.gcNodes = {};
             garbageCollector = createGarbageCollector();
+        });
+
+        afterEach(() => {
+            sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
         });
 
         /**
@@ -751,27 +761,48 @@ describe("Garbage Collection Tests", () => {
          * to GC.
          */
         it(`Scenario 7 - Reference added without notifying GC`, async () => {
-            // Initialize node A.
-            defaultGCData.gcNodes["/"] = [ nodeA ];
+            // Initialize nodes A & D.
+            defaultGCData.gcNodes["/"] = [ nodeA, nodeD ];
             defaultGCData.gcNodes[nodeA] = [];
+            defaultGCData.gcNodes[nodeD] = [];
 
             // 1. Run GC and generate summary 1. E = [].
             const timestamps1 = await getUnreferencedTimestamps();
             assert(timestamps1.get(nodeA) === undefined, "A should be referenced");
+            assert(timestamps1.get(nodeD) === undefined, "D should be referenced");
 
-            // 2. Create node B. E = [].
+            // 2. Create nodes B & C. E = [].
             defaultGCData.gcNodes[nodeB] = [];
+            defaultGCData.gcNodes[nodeC] = [];
 
-            // 3. Add reference from A to B without calling addedOutboundReference. E = [A -> B].
-            defaultGCData.gcNodes[nodeA] = [ nodeB ];
+            // 3. Add reference from A to B, A to C, A to E, D to C, and E to A without calling addedOutboundReference.
+            // E = [A -> B, A -> C, A -> E, D -> C, E -> A].
+            defaultGCData.gcNodes[nodeA] = [ nodeB, nodeC, nodeE ];
+            defaultGCData.gcNodes[nodeD] = [ nodeC ];
+            defaultGCData.gcNodes[nodeE] = [ nodeA ];
 
-            // 4. Run GC and generate summary 2. E = [A -> B].
+            // 4. Add reference from A to D with calling addedOutboundReference
+            defaultGCData.gcNodes[nodeA].push(nodeD);
+            garbageCollector.addedOutboundReference(nodeA, nodeD);
+
+            // 5. Run GC and generate summary 2. E = [A -> B, A -> C, A -> E, D -> C, E -> A].
             await getUnreferencedTimestamps();
 
-            // Validate that we got the "gcUnknownOutboundRoute" error.
-            mockLogger.matchEvents([
-                { eventName: unknownRouteEvent, route: nodeB },
+            // Validate that we got the "gcUnknownOutboundReferences" error.
+            const unknownReferencesEvent = "GarbageCollector:gcUnknownOutboundReferences";
+            const eventsFound = mockLogger.matchEvents([
+                {
+                    eventName: unknownReferencesEvent,
+                    gcNodeId: "/A",
+                    gcRoutes: JSON.stringify(["/B", "/C"]),
+                },
+                {
+                    eventName: unknownReferencesEvent,
+                    gcNodeId: "/D",
+                    gcRoutes: JSON.stringify(["/C"]),
+                },
             ]);
+            assert(eventsFound, `Expected unknownReferenceEvent event!`);
         });
     });
 });

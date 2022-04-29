@@ -100,7 +100,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 // @public
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
     protected abstract applyStashedOp(content: any): unknown;
     // (undocumented)
     readonly attributes: IChannelAttributes;

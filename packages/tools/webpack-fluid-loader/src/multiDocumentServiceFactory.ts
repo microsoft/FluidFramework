@@ -59,6 +59,7 @@ export function getDocumentServiceFactory(
                 enableWholeSummaryUpload: options.mode === "r11s" || options.mode === "docker"
                     ? options.enableWholeSummaryUpload
                     : undefined,
+                enableDiscovery: options.mode === "r11s" && options.discoveryEndpoint !== undefined,
             }),
     ]);
 }

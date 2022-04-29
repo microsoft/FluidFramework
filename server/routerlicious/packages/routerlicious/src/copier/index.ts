@@ -11,13 +11,12 @@ import { Provider } from "nconf";
 // Establish a connection to Mongo, get the 'rawdeltas' collection and invoke
 // the rest of the Copier instantiation:
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
-    const mongoUrl = config.get("mongo:operationsDbEndpoint") as string;
-    const bufferMaxEntries = config.get("mongo:bufferMaxEntries") as number | undefined;
     const collectionName = config.get("mongo:collectionNames:rawdeltas");
-    const mongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
-    const mongoManager = new MongoManager(mongoFactory, false);
 
-    const db = await mongoManager.getDatabase();
+    const factory = await services.getDbFactory(config);
+    const dbManager = new MongoManager(factory, false);
+    const db = await dbManager.getDatabase();
+
     const collection = db.collection(collectionName);
 
     // The rawdeltas collection uses the IRawOperationMessageBatch type, which
@@ -30,5 +29,5 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         },
         true);
 
-    return new CopierLambdaFactory(mongoManager, collection);
+    return new CopierLambdaFactory(dbManager, collection);
 }

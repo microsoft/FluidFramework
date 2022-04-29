@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
+import { benchmark, BenchmarkType, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
 
 import { assert } from '../Common';
@@ -17,8 +17,10 @@ import { refreshTestTree } from './utilities/TestUtilities';
 
 describe('Forest Perf', () => {
 	const testTree = refreshTestTree();
+	// Larger sizes can slow down correctness test runs, or even time out, so only run smaller sizes as correctness tests.
+	const sizes = isInPerformanceTestingMode ? [100, 1_000, 10_000, 100_000] : [100, 1_000];
 
-	for (const count of [100, 1_000, 10_000, 100_000]) {
+	for (const count of sizes) {
 		// Pick a single representative size for the 'Measurement' suite to keep it small.
 		const type = count === 10_000 ? BenchmarkType.Measurement : BenchmarkType.Perspective;
 
@@ -71,7 +73,7 @@ describe('Forest Perf', () => {
 		});
 
 		let otherForest: Forest | undefined;
-		for (const otherCount of [100, 1_000, 10_000, 100_000]) {
+		for (const otherCount of sizes) {
 			benchmark({
 				type,
 				title: `invoke delta on Forest with ${count} nodes against Forest with ${otherCount} nodes`,
